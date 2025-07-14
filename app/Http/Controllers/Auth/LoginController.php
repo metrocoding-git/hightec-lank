@@ -62,6 +62,14 @@ class LoginController extends Controller
         return view('auth.login');
     }
 
+    public function recoveryPassword(){
+        return view('auth.recoverypassword');
+    }
+
+    public function register(){
+        return view ('template.auth.register');
+    }
+
 
    
     

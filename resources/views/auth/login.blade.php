@@ -137,7 +137,7 @@ $css = 'background: url(' . url('backEnd/img/login-bg.png') . ')  no-repeat cent
                                     {{ old('remember') ? 'checked' : '' }}>
                                 <span class="checkbox-title">@lang('auth.remember_me')</span>
                             </label>
-                            <a href="{{ route('recoveryPassord') }}" id='forget'>@lang('auth.forget_password')?</a>
+                            <a href="{{ route('recoveryPassword') }}" id='forget'>@lang('auth.forget_password')?</a>
                         </div>
                         <div class="input-control">
                             <input type="submit" class='input-control-input' value="Sign In">
