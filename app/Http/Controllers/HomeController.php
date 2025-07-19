@@ -50,6 +50,11 @@ class HomeController extends Controller
     // for display dashboard
     public function index()
     {
-        return view('auth.login');
+        return view('master');
     }
+    public function index1()
+    {
+        return view('testv1');
+    }
+    
 }
