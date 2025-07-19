@@ -9,11 +9,12 @@ use Illuminate\Support\Facades\Route;
 // });
 
 Route::controller(HomeController::class)->group(function () {
-    Route::get('admin-dashboard', 'index')->name('admin-dashboard');
+    Route::get('dashboard', 'index')->name('dashboard');
+    Route::get('dashboard1', 'index1')->name('dashboard');
+
 });
 Route::controller(LoginController::class)->group(function () {
     Route::get('login', 'index')->name('login');
     Route::get('recoveryPassword', 'recoveryPassword')->name('recoveryPassword');
-    Route::get('register','register')->name('register');
-
+    Route::get('register', 'register')->name('register');
 });
