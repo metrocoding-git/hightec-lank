@@ -48,13 +48,39 @@ class HomeController extends Controller
 
 
     // for display dashboard
-    public function index()
+    public function dashboard()
     {
-        return view('master');
+        return view('pages.dashboard.dashboard');
     }
-    public function index1()
+
+
+    public function intake()
     {
-        return view('testv1');
+        return view('pages.administration.academic.intake');
+    }
+
+    public function subjects()
+    {
+        return view('pages.administration.academic.subject');
+    }
+
+    public function courses()
+    {
+        return view('pages.administration.academic.course');
+    }
+    public function assignsubject()
+    {
+        return view('pages.administration.academic.assign-subject');
+    }
+
+    public function studentCategory()
+    {
+        return view('pages.student.student-info.student-category');
+    }
+
+    public function addStudent()
+    {
+        return view('pages.student.student-info.add-student');
     }
     
 }

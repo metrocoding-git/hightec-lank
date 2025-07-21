@@ -100,7 +100,10 @@
                     <select name="#" class="nice_Select bgLess mb-0 infix_session" id="infix_session">
                        
                                 <option value="1" selected>
-                                  eervfe
+                                  2025 [Jan-Dec]
+                                </option>
+                                 <option value="2" selected>
+                                  2024 [Jan-Dec]
                                 </option>
                         
                     </select>
@@ -120,7 +123,7 @@
                             </select>
                         @endif
                     @endif --}}
-                        <select class="nice_Select bgLess mb-0 languageChange" id="languageChange">
+                        {{-- <select class="nice_Select bgLess mb-0 languageChange" id="languageChange">
                             <option data-display="@lang('common.select_language')"
                                 value="0">@lang('common.select_language')
                             </option>
@@ -128,7 +131,7 @@
                                 <option data-display="ee" value="ee" selected>
                                     En</option>
                            
-                        </select>
+                        </select> --}}
 
                   
 
