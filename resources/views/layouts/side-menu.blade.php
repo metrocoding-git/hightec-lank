@@ -1,11 +1,11 @@
 <nav id="sidebar" class="sidebar">
 
     <div class="sidebar-header update_sidebar">
-        
-            <a href="/" id="admin-dashboard">
-                <img src="{{ asset('uploads/settings/logo.png') }}" alt="logo">
-            </a>
-       
+
+        <a href="/" id="admin-dashboard">
+            <img src="{{ asset('uploads/settings/logo.png') }}" alt="logo">
+        </a>
+
         <a id="close_sidebar" class="d-lg-none">
             <i class="ti-close"></i>
         </a>
@@ -37,7 +37,8 @@
         </span>
 
         {{-- Academics --}}
-        <li class="administration_section {{ request()->is('administration') || request()->is('administration/*') ? 'mm-active' : '' }}">
+        <li
+            class="administration_section {{ request()->is('administration') || request()->is('administration/*') ? 'mm-active' : '' }}">
             <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
                 <div class="nav_icon_small">
                     <span class="fas fa-bars"></span>
@@ -46,24 +47,31 @@
                     <span>Academic</span>
                 </div>
             </a>
-            <ul class="mm-collapse {{ request()->is('administration') || request()->is('administration/*') ? 'mm-show' : '' }} ">
+            <ul
+                class="mm-collapse {{ request()->is('administration') || request()->is('administration/*') ? 'mm-show' : '' }} ">
                 <li>
-                    <a href="/administration/intake" class="{{ request()->is('administration/intake') ? 'active a' : '' }}">
+                    <a href="/administration/courses"
+                        class="{{ request()->is('administration/courses') ? 'active a' : '' }}">
+                        Courses
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/administration/intake"
+                        class="{{ request()->is('administration/intake') ? 'active a' : '' }}">
                         Intake
                     </a>
                 </li>
                 <li>
-                    <a href="/administration/subjects" class="{{ request()->is('administration/subjects') ? 'active a' : '' }}">
+                    <a href="/administration/subjects"
+                        class="{{ request()->is('administration/subjects') ? 'active a' : '' }}">
                         Subjects
                     </a>
                 </li>
+
                 <li>
-                    <a href="/administration/courses" class="{{ request()->is('administration/courses') ? 'active a' : '' }}">
-                        Courses
-                    </a>
-                </li>
-                <li>
-                    <a href="/administration/assign-subject" class="{{ request()->is('administration/assign-subject') ? 'active a' : '' }}">
+                    <a href="/administration/assign-subject"
+                        class="{{ request()->is('administration/assign-subject') ? 'active a' : '' }}">
                         Assign Subject
                     </a>
                 </li>
@@ -177,12 +185,14 @@
             </a>
             <ul class="mm-collapse {{ request()->is('student') || request()->is('student/*') ? 'mm-show' : '' }}">
                 <li>
-                    <a href="/student/student-category" class="{{ request()->is('student/student-category') ? 'active a' : '' }}">
+                    <a href="/student/student-category"
+                        class="{{ request()->is('student/student-category') ? 'active a' : '' }}">
                         Student Category
                     </a>
                 </li>
                 <li>
-                    <a href="/student/add-student" class="{{ request()->is('student/add-student') ? 'active a' : '' }}">
+                    <a href="/student/add-student"
+                        class="{{ request()->is('student/add-student') ? 'active a' : '' }}">
                         Add Student
                     </a>
                 </li>

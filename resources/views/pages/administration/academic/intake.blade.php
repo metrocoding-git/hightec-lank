@@ -69,7 +69,22 @@
                                         </h3>
                                     </div>
                                     <div class="add-visitor">
-                                        <div class="row">
+                                        <div class="row ">
+                                            <div class="col-lg-12">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label" for="">Branch
+                                                        <span>*</span></label>
+                                                    <select
+                                                        class="primary_select form-control {{ $errors->has('branch') ? ' is-invalid' : '' }}"
+                                                        id="branch" name="branch">
+                                                        <option value="b1">Branch 1</option>
+                                                        <option value="b2"> Branch 2</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mt-20">
                                             <div class="col-lg-12">
                                                 <div class="primary_input">
                                                     <label class="primary_input_label" for="">@lang('common.name')
@@ -99,13 +114,13 @@
 
                                                 <div class="">
                                                     <input type="checkbox" id="Courses1"
-                                                        class="common-checkbox form-control"
-                                                        name="section[]" value="1">
+                                                        class="common-checkbox form-control" name="section[]"
+                                                        value="1">
                                                     <label for="Courses1"> Courses 1</label>
 
                                                     <input type="checkbox" id="Courses2"
-                                                        class="common-checkbox form-control"
-                                                        name="section[]" value="2">
+                                                        class="common-checkbox form-control" name="section[]"
+                                                        value="2">
                                                     <label for="Courses2"> Courses 2</label>
 
                                                 </div>
@@ -137,7 +152,7 @@
                 </div>
 
                 <div class="col-lg-9">
-        
+
                     <div class="row white-box">
                         <div class="col-lg-12">
 
@@ -152,6 +167,7 @@
 
                                         <tr>
                                             <th>Intake</th>
+                                            <th>Branch</th>
                                             <th>Courses</th>
                                             <th>@lang('student.students')</th>
                                             <th>@lang('common.action')</th>
@@ -161,6 +177,8 @@
 
                                         <tr>
                                             <td valign="top">Intake 1</td>
+                                                                                        <td>Branch 1 </td>
+
                                             <td>
                                                 Course 1, Course 2, Course 3, Course 4
                                             </td>
@@ -191,6 +209,7 @@
 
                                         <tr>
                                             <td valign="top">Intake 2</td>
+                                            <td>Branch 1 </td>
                                             <td>
                                                 Course 1, Course 2
                                             </td>
