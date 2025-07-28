@@ -12,6 +12,7 @@ Route::get('courses', [CourseController::class, 'index']);
 Route::put('courses/{id}', [CourseController::class, 'update']);
 Route::delete('courses/{id}', [CourseController::class, 'destroy']);
 
+
 // branch routes
 Route::post('/branches', [BranchController::class, 'store']);
 Route::get('branches', [BranchController::class, 'index']);

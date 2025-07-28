@@ -21,4 +21,10 @@ class CourseIntakeController extends Controller
             "intake" => $courseIntake
         ], 201);
     }
+
+
+    public function index() {
+
+        $$courseIntakes = CourseIntake::with(['course', intake])->get();
+    }
 }
