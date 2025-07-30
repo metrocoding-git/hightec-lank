@@ -65,6 +65,9 @@
     <link rel="stylesheet" href="{{ asset('backEnd/assets/vendors/js/jquery-3.6.0.min.js') }}" />
 
     <link rel="stylesheet" href="{{ asset('css/backend_design_v2.css') }}">
+
+  
+
     @include('components.partials.css')
     <style>
         * {

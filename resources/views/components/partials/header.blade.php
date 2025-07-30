@@ -12,33 +12,33 @@
     @if( ! is_null(schoolConfig() ))
         <link rel="icon" href="{{asset(schoolConfig()->favicon)}}" type="image/png"/>
     @else
-        <link rel="icon" href="{{asset('public/uploads/settings/favicon.png')}}" type="image/png"/>
+        <link rel="icon" href="{{ asset('uploads/settings/favicon.png')}}" type="image/png"/>
     @endif
     <title>{{@schoolConfig()->school_name ? @schoolConfig()->school_name : 'Infix Edu ERP'}} |
         @yield('title')
     </title>
 
     <meta name="_token" content="{!! csrf_token() !!}"/>
-<link rel="stylesheet" href="{{ asset('public/backEnd/vendors/css/jquery-ui.css') }}" />
-<link rel="stylesheet" href="{{ asset('public/backEnd/vendors/css/bootstrap-datepicker.min.css') }}" />
-<link rel="stylesheet" href="{{ asset('public/backEnd/vendors/font_awesome/css/all.min.css') }}" />
-<link rel="stylesheet" href="{{asset('public/backEnd/vendors/themefy_icon/themify-icons.css')}}" />
-<link rel="stylesheet" href="{{ asset('public/backEnd/vendors/css/flaticon.css') }}" />
-<link rel="stylesheet" href="{{ asset('public/backEnd/vendors/css/fnt.min.css') }}" />
-<link rel="stylesheet" href="{{ asset('public/backEnd/vendors/css/nice-select.css') }}" />
-<link rel="stylesheet" href="{{ asset('public/backEnd/vendors/css/toastr.min.css') }}" />
+<link rel="stylesheet" href="{{ asset('backEnd/vendors/css/jquery-ui.css') }}" />
+<link rel="stylesheet" href="{{ asset('backEnd/vendors/css/bootstrap-datepicker.min.css') }}" />
+<link rel="stylesheet" href="{{ asset('backEnd/vendors/font_awesome/css/all.min.css') }}" />
+<link rel="stylesheet" href="{{ asset('backEnd/vendors/themefy_icon/themify-icons.css')}}" />
+<link rel="stylesheet" href="{{ asset('backEnd/vendors/css/flaticon.css') }}" />
+<link rel="stylesheet" href="{{ asset('backEnd/vendors/css/fnt.min.css') }}" />
+<link rel="stylesheet" href="{{ asset('backEnd/vendors/css/nice-select.css') }}" />
+<link rel="stylesheet" href="{{ asset('backEnd/vendors/css/toastr.min.css') }}" />
 @if(userRtlLtl() ==1)
-    <link rel="stylesheet" href="{{ asset('public/backEnd/assets/css/rtl/bootstrap.rtl.min.css') }}" />
-    <link rel="stylesheet" href="{{ asset('public/backEnd/assets/css/global_rtl.css') }}">
+    <link rel="stylesheet" href="{{ asset('backEnd/assets/css/rtl/bootstrap.rtl.min.css') }}" />
+    <link rel="stylesheet" href="{{ asset('backEnd/assets/css/global_rtl.css') }}">
 @else
-    <link rel="stylesheet" href="{{ asset('public/backEnd/vendors/css/bootstrap.min.css') }}" />
+    <link rel="stylesheet" href="{{ asset('backEnd/vendors/css/bootstrap.min.css') }}" />
 @endif
-<link rel="stylesheet" href="{{ asset('public/backEnd/assets/css/style.css')}}" />
+<link rel="stylesheet" href="{{ asset('backEnd/assets/css/style.css')}}" />
 @if(moduleStatusCheck('WhatsappSupport'))
-<link rel="stylesheet" href="{{ asset('public/whatsapp-support/style.css') }}">
+<link rel="stylesheet" href="{{ asset('whatsapp-support/style.css') }}">
 @endif 
 @if(\Request::route()->getName() == "fees.fees-invoice-settings")
-<link rel="stylesheet" href="{{ asset('public/backEnd/vendors/select2/css/select2.min.css')}}" />
+<link rel="stylesheet" href="{{ asset('backEnd/vendors/select2/css/select2.min.css')}}" />
 @endif 
 @include('backEnd.partials.css')
 @if(userRtlLtl() ==1)
@@ -51,7 +51,7 @@
 @endif
     <x-root-css/>
     @stack('css')
-    <script src="{{asset('public/backEnd/')}}/vendors/js/jquery-3.2.1.min.js"></script>
+    <script src="{{ asset('backEnd/')}}/vendors/js/jquery-3.2.1.min.js"></script>
     <script>
         window.Laravel = {
             "baseUrl": '{{ url('/') }}' + '/',
@@ -65,7 +65,7 @@
 </head>
 @php
 if (empty(color_theme())) {
-//  $css = "background: url('".asset('/public/backEnd/img/body-bg.jpg')."')  no-repeat center; background-size: cover ; ";
+//  $css = "background: url('".asset('/ backEnd/img/body-bg.jpg')."')  no-repeat center; background-size: cover ; ";
     $css = "background: var(--background)";
 } else {
  if (!empty(color_theme()->background_type == 'image')) {
@@ -78,7 +78,7 @@ if (empty(color_theme())) {
 @endphp
 @php
     if(session()->has('homework_zip_file')){
-        $file_path='public/uploads/homeworkcontent/'.session()->get('homework_zip_file');
+        $file_path=' uploads/homeworkcontent/'.session()->get('homework_zip_file');
         if (file_exists($file_path)) {
             unlink($file_path);
         }
@@ -101,7 +101,7 @@ if (empty(color_theme())) {
         if (file_exists($generalSetting->logo)) {
             $tt = file_get_contents(base_path($generalSetting->logo));
         } else {
-            $tt = file_get_contents(base_path('public/uploads/settings/logo.png'));
+            $tt = file_get_contents(base_path(' uploads/settings/logo.png'));
         }
     @endphp
 <input type="text" hidden value="{{ base64_encode($tt) }}" id="logo_img">

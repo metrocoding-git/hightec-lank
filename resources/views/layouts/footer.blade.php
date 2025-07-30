@@ -101,6 +101,9 @@
 <script src="{{ asset('') }}/js/registration_custom.js"></script>
 <script src="{{ asset('backEnd/') }}/js/developer.js"></script>
 <script src="{{ url('Modules\Wallet\Resources\assets\js\wallet.js') }}"></script>
+
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script>
     $('.close_modal').on('click', function() {
         $('.custom_notification').removeClass('open_notification');
@@ -129,5 +132,3 @@
 @yield('script')
 @stack('script')
 @stack('scripts')
-
-

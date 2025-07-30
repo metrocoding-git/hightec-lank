@@ -1,9 +1,9 @@
 @push('css')
-<link rel="stylesheet" href="{{ asset('public/backEnd/vendors/css/daterangepicker.css') }}" />
+<link rel="stylesheet" href="{{ asset('backEnd/vendors/css/daterangepicker.css') }}" />
 @endpush
 
 @push('script')
-<script src="{{asset('public/backEnd/')}}/vendors/js/daterangepicker.min.js"></script>
+<script src="{{asset('backEnd/')}}/vendors/js/daterangepicker.min.js"></script>
 <script type="text/javascript">
     @if (@$date_from && @$date_to)
         $('input[name="date_range"]').daterangepicker({

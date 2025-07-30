@@ -94,7 +94,7 @@
                                         <td>{{ $key + 1 }}</td>
                                         <td>{{ $student->admission_no }}</td>
                                         <td>{{ $student->roll_no }}</td>
-                                        <td><img src="{{ file_exists($student->student_photo) ? asset($student->student_photo) : asset('public/uploads/staff/demo/staff.jpg') }}"
+                                        <td><img src="{{ file_exists($student->student_photo) ? asset($student->student_photo) : asset(' uploads/staff/demo/staff.jpg') }}"
                                                 class="user_img" alt=""></td>
                                         <td><a href="{{ route('frontend.frontend-single-student-details', $student->id) }}"
                                                 class="link_to_details" target="_blank">{{ $student->full_name }}</a></td>
@@ -118,7 +118,7 @@
                             <div class="d-flex single-student-info">
                                 <div><a href="{{ route('frontend.frontend-single-student-details', $student->id) }}"
                                         class="link_to_details" target="_blank">
-                                        <img src="{{ file_exists($student->student_photo) ? asset($student->student_photo) : asset('public/uploads/staff/demo/staff.jpg') }}"
+                                        <img src="{{ file_exists($student->student_photo) ? asset($student->student_photo) : asset(' uploads/staff/demo/staff.jpg') }}"
                                             class="user_photo" alt="student photo">
                                     </a>
                                 </div>

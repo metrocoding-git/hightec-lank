@@ -113,38 +113,38 @@
     }
 </script>
 
-<script src="{{asset('public/backEnd/')}}/vendors/js/jquery-ui.js"></script>
-<script src="{{asset('public/backEnd/')}}/vendors/js/popper.js"></script>
+<script src="{{ asset('backEnd/')}}/vendors/js/jquery-ui.js"></script>
+<script src="{{ asset('backEnd/')}}/vendors/js/popper.js"></script>
 
-<script src="{{asset('public/backEnd/assets/js/metisMenu.js')}}"></script>
+<script src="{{ asset('backEnd/assets/js/metisMenu.js')}}"></script>
 
 @if(userRtlLtl() ==1)
-<script src="{{asset('public/backEnd/assets/js/bootstrap.rtl.min.js') }}"></script>
+<script src="{{ asset('backEnd/assets/js/bootstrap.rtl.min.js') }}"></script>
 @else
-<script src="{{asset('public/backEnd/assets/js/bootstrap.min.js') }}"></script>
+<script src="{{ asset('backEnd/assets/js/bootstrap.min.js') }}"></script>
 @endif
-<script src="{{asset('public/backEnd/')}}/vendors/js/nice-select.min.js"></script>
+<script src="{{ asset('backEnd/')}}/vendors/js/nice-select.min.js"></script>
 
-<script src="{{asset('public/backEnd/')}}/vendors/js/jquery.magnific-popup.min.js"></script>
+<script src="{{ asset('backEnd/')}}/vendors/js/jquery.magnific-popup.min.js"></script>
 
-<script src="{{asset('public/backEnd/')}}/vendors/js/raphael-min.js"></script>
-<script src="{{asset('public/backEnd/')}}/vendors/js/morris.min.js"></script>
-<script type="text/javascript" src="{{asset('public/backEnd/')}}/vendors/js/toastr.min.js"></script>
-<script type="text/javascript" src="{{asset('public/backEnd/')}}/vendors/js/moment.min.js"></script>
+<script src="{{ asset('backEnd/')}}/vendors/js/raphael-min.js"></script>
+<script src="{{ asset('backEnd/')}}/vendors/js/morris.min.js"></script>
+<script type="text/javascript" src="{{ asset('backEnd/')}}/vendors/js/toastr.min.js"></script>
+<script type="text/javascript" src="{{ asset('backEnd/')}}/vendors/js/moment.min.js"></script>
 
 @if(moduleStatusCheck('WhatsappSupport'))
-<script src="{{ asset('public/whatsapp-support/scripts.js') }}"></script>
+<script src="{{ asset('whatsapp-support/scripts.js') }}"></script>
 @endif 
 
 
-<script type="text/javascript" src="{{asset('public/backEnd/')}}/js/jquery.validate.min.js"></script>
+<script type="text/javascript" src="{{ asset('backEnd/')}}/js/jquery.validate.min.js"></script>
 
 
-<script src="{{asset('public/backEnd/')}}/js/main.js"></script>
+<script src="{{ asset('backEnd/')}}/js/main.js"></script>
 
-<script src="{{asset('public/backEnd/')}}/js/custom.js"></script>
-<script src="{{asset('public/')}}/js/registration_custom.js"></script>
-<script src="{{asset('public/backEnd/')}}/js/developer.js"></script>
+<script src="{{ asset('backEnd/')}}/js/custom.js"></script>
+<script src="{{ asset('')}}/js/registration_custom.js"></script>
+<script src="{{ asset('backEnd/')}}/js/developer.js"></script>
 <script src="{{url('Modules\Wallet\Resources\assets\js\wallet.js')}}"></script>
 <script>
     $('.close_modal').on('click', function() {
@@ -167,11 +167,11 @@
         return true;
     }
 </script>
-<script src="{{asset('public/backEnd/')}}/js/search.js"></script>
+<script src="{{ asset('backEnd/')}}/js/search.js"></script>
 
 {!! Toastr::message() !!}
-<script src="{{ asset('public/js/app.js') }}"></script>
-<script src="{{ asset('public/chat/js/custom.js') }}"></script>
+<script src="{{ asset('js/app.js') }}"></script>
+<script src="{{ asset('chat/js/custom.js') }}"></script>
 @yield('script')
 @stack('script')
 @stack('scripts')
