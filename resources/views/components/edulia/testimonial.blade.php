@@ -1,7 +1,7 @@
 <div class="tesimonials_slider owl-carousel">
     @foreach ($testimonials as $testimonial)
         <div class="tesimonials_slider_item"
-            data-dot="<button role='button' class='owl-dot'><img src='{{ file_exists(@$testimonial->image) ? asset($testimonial->image) : asset('public/uploads/staff/demo/staff.jpg') }}'/></button>">
+            data-dot="<button role='button' class='owl-dot'><img src='{{ file_exists(@$testimonial->image) ? asset($testimonial->image) : asset(' uploads/staff/demo/staff.jpg') }}'/></button>">
             <div class="tesimonials_slider_item_star">
                 @for ($i = 1; $i <= $testimonial->star_rating; $i++)
                     <i><svg xmlns="http://www.w3.org/2000/svg" width="19.021" height="18.09"

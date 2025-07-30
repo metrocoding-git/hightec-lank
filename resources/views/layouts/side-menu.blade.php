@@ -38,7 +38,7 @@
 
         {{-- Academics --}}
         <li
-            class="administration_section {{ request()->is('administration') || request()->is('administration/*') ? 'mm-active' : '' }}">
+            class="administration_section {{ request()->is('academic') || request()->is('administration/academic/*') ? 'mm-active' : '' }}">
             <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
                 <div class="nav_icon_small">
                     <span class="fas fa-bars"></span>
@@ -48,30 +48,28 @@
                 </div>
             </a>
             <ul
-                class="mm-collapse {{ request()->is('administration') || request()->is('administration/*') ? 'mm-show' : '' }} ">
+                class="mm-collapse {{ request()->is('academic') || request()->is('administration/academic/*') ? 'mm-show' : '' }} ">
                 <li>
-                    <a href="/administration/courses"
-                        class="{{ request()->is('administration/courses') ? 'active a' : '' }}">
+                    <a href="/administration/academic/courses"
+                        class="{{ request()->is('administration/academic/courses') ? 'active a' : '' }}">
                         Courses
                     </a>
                 </li>
-
                 <li>
-                    <a href="/administration/intake"
-                        class="{{ request()->is('administration/intake') ? 'active a' : '' }}">
+                    <a href="/administration/academic/intake"
+                        class="{{ request()->is('administration/academic/intake') ? 'active a' : '' }}">
                         Intake
                     </a>
                 </li>
                 <li>
-                    <a href="/administration/subjects"
-                        class="{{ request()->is('administration/subjects') ? 'active a' : '' }}">
+                    <a href="/administration/academic/subjects"
+                        class="{{ request()->is('administration/academic/subjects') ? 'active a' : '' }}">
                         Subjects
                     </a>
                 </li>
-
                 <li>
-                    <a href="/administration/assign-subject"
-                        class="{{ request()->is('administration/assign-subject') ? 'active a' : '' }}">
+                    <a href="/administration/academic/assign-subject"
+                        class="{{ request()->is('administration/academic/assign-subject') ? 'active a' : '' }}">
                         Assign Subject
                     </a>
                 </li>
@@ -80,7 +78,8 @@
         {{-- ----- --}}
 
         {{-- Study Material --}}
-        <li class="administration_section">
+        {{-- <li
+            class="administration_section {{ request()->is('study-material') || request()->is('administration/study-material/*') ? 'mm-active' : '' }}">
             <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
                 <div class="nav_icon_small">
                     <span class="fas fa-bars"></span>
@@ -89,23 +88,33 @@
                     <span>Study Material</span>
                 </div>
             </a>
-            <ul class="mm-collapse">
+            <ul
+                class="mm-collapse {{ request()->is('study-material') || request()->is('administration/study-material/*') ? 'mm-show' : '' }}">
                 <li>
-                    <a href="upload-content" class="">
+                    <a href="/administration/study-material/upload-content"
+                        class="{{ request()->is('administration/study-material/upload-content') ? 'active a' : '' }}">
                         Upload Content
                     </a>
                 </li>
                 <li>
-                    <a href="other-downloads" class="">
-                        Other Downloads
+                    <a href="/administration/study-material/study-material-download"
+                        class="{{ request()->is('administration/study-material/study-material-download') ? 'active a' : '' }}">
+                        Study Material Download
+                    </a>
+                </li>
+                <li>
+                    <a href="/administration/study-material/other-download"
+                        class="{{ request()->is('administration/study-material/other-download') ? 'active a' : '' }}">
+                        Other Download
                     </a>
                 </li>
             </ul>
-        </li>
+        </li> --}}
         {{-- ----- --}}
 
         {{-- Lesson Plane --}}
-        <li class="administration_section">
+        <li
+            class="administration_section {{ request()->is('lesson-plan') || request()->is('administration/lesson-plan/*') ? 'mm-active' : '' }}">
             <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
                 <div class="nav_icon_small">
                     <span class="fas fa-bars"></span>
@@ -114,15 +123,25 @@
                     <span>Lesson Plane</span>
                 </div>
             </a>
-            <ul class="mm-collapse ">
+            <ul
+                class="mm-collapse {{ request()->is('lesson-plan') || request()->is('administration/lesson-plan/*') ? 'mm-show' : '' }} ">
                 <li>
-                    <a href="lesson" class="">
+                    <a href="/administration/lesson-plan/lesson"
+                        class="{{ request()->is('administration/lesson-plan/lesson') ? 'active a' : '' }}">
                         Lesson
                     </a>
                 </li>
                 <li>
-                    <a href="topic" class="">
+                    <a href="/administration/lesson-plan/topic"
+                        class="{{ request()->is('administration/lesson-plan/topic') ? 'active a' : '' }}">
                         Topic
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/administration/lesson-plan/topic-overview"
+                        class="{{ request()->is('administration/lesson-plan/topic-overview') ? 'active a' : '' }}">
+                        Topic Overview
                     </a>
                 </li>
             </ul>
@@ -174,7 +193,8 @@
 
 
         {{-- Student Info Section --}}
-        <li class="studentInfo_section {{ request()->is('student') || request()->is('student/*') ? 'mm-active' : '' }}">
+        <li
+            class="studentInfo_section {{ request()->is('student') || request()->is('student/*') ? 'mm-active' : '' }}">
             <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
                 <div class="nav_icon_small">
                     <span class="fas fa-bars"></span>

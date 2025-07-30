@@ -11,18 +11,22 @@ Route::get('/', function () {
 Route::controller(HomeController::class)->group(callback: function () {
     Route::get('dashboard', 'dashboard')->name('dashboard');
 
-    Route::get('administration/intake', 'intake')->name('intake');
-    Route::get('administration/subjects', 'subjects')->name('subjects');
-    Route::get('administration/courses', 'courses')->name('courses');
-    Route::get('administration/assign-subject', 'assignSubject')->name('"assign-subject');
+    Route::get('administration/academic/intake', 'intake')->name('intake');
+    Route::get('administration/academic/subjects', 'subjects')->name('subjects');
+    Route::get('administration/academic/courses', 'courses')->name('courses');
+    Route::get('administration/academic/assign-subject', 'assignSubject')->name('"assign-subject');
 
 
-    Route::get('upload-content', 'uploadContent')->name('upload-content');
-    Route::get('other-downloads', 'otherDownloads')->name('other-downloads');
+    Route::get('administration/study-material/upload-content', 'uploadContent')->name('upload-content');
+    Route::get('administration/study-material/study-material-download', 'studyMaterialDownload')->name('study-material-download  ');
+    Route::get('administration/study-material/other-download', 'otherDownload')->name('other-download');
 
 
-    Route::get('lesson', 'lesson')->name('lesson');
-    Route::get('topic', 'topic')->name('topic');
+
+    
+    Route::get('administration/lesson-plan/lesson', 'lesson')->name('lesson');
+    Route::get('administration/lesson-plan/topic', 'topic')->name('topic');
+    Route::get('administration/lesson-plan/topic-overview', 'topicOverview')->name('topic-overview');
 
 
     Route::get('student/student-category', 'studentCategory')->name('student-category');

@@ -6,7 +6,7 @@
 $.fn.dataTable.pipeline = function ( opts ) {
     // Configuration options
     var conf = $.extend( {
-        pages: "{{generalSetting()->ss_page_load}}",     // number of pages to cache
+        pages: "",     // number of pages to cache
         url: '',      // script url
         data: null,   // function or object with parameters to send to the server
                       // matching how `ajax.data` works in DataTables

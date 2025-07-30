@@ -29,7 +29,7 @@
                                 </div>
                             </div>
                         </div>
-    
+
                         <div class="row">
                             <div class="col-lg-12">
                                 <x-table>
@@ -50,7 +50,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-    
+
                                         </tbody>
                                     </table>
                                 </x-table>
@@ -64,8 +64,7 @@
 
     {{-- delete other downlaod  --}}
 
-    <div class="modal fade admin-query"
-        id="deleteOtherDownloadModal">
+    <div class="modal fade admin-query" id="deleteOtherDownloadModal">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -81,12 +80,10 @@
                     </div>
 
                     <div class="mt-40 d-flex justify-content-between">
-                        <button type="button" class="primary-btn tr-bg"
-                            data-dismiss="modal">@lang('common.cancel')</button>
+                        <button type="button" class="primary-btn tr-bg" data-dismiss="modal">@lang('common.cancel')</button>
                         {{ Form::open(['route' => 'delete-upload-content', 'method' => 'POST']) }}
                         <input type="hidden" name="id" value=" ">
-                        <button class="primary-btn fix-gr-bg"
-                            type="submit">@lang('common.delete')</button>
+                        <button class="primary-btn fix-gr-bg" type="submit">@lang('common.delete')</button>
                         {{ Form::close() }}
                         </a>
                     </div>

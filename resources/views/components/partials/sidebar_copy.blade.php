@@ -30,7 +30,7 @@
         @if (!is_null($school_config->logo))
             <img src="{{ asset($school_config->logo) }}" alt="logo">
         @else
-            <img src="{{ asset('public/uploads/settings/logo.png') }}" alt="logo">
+            <img src="{{ asset('uploads/settings/logo.png') }}" alt="logo">
         @endif
         </a>
         <a id="close_sidebar" class="d-lg-none">

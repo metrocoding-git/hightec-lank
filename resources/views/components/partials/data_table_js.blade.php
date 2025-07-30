@@ -1,24 +1,24 @@
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('public/backEnd/assets/vendors/css/jquery.data-tables.css') }}">
-<link rel="stylesheet" href="{{ asset('public/backEnd/assets/vendors/css/buttons.dataTables.min.css') }}">
-<link rel="stylesheet" href="{{ asset('public/backEnd/assets/vendors/css/rowReorder.dataTables.min.css') }}">
-<link rel="stylesheet" href="{{ asset('public/backEnd/assets/vendors/css/responsive.dataTables.min.css') }}">
+<link rel="stylesheet" href="{{ asset('backEnd/assets/vendors/css/jquery.data-tables.css') }}">
+<link rel="stylesheet" href="{{ asset('backEnd/assets/vendors/css/buttons.dataTables.min.css') }}">
+<link rel="stylesheet" href="{{ asset('backEnd/assets/vendors/css/rowReorder.dataTables.min.css') }}">
+<link rel="stylesheet" href="{{ asset('backEnd/assets/vendors/css/responsive.dataTables.min.css') }}">
 @endpush
 
 @push('script')
-<script src="{{asset('public/backEnd/')}}/vendors/js/jquery.data-tables.js"></script>
-<script src="{{asset('public/backEnd/')}}/vendors/js/dataTables.buttons.min.js"></script>
-<script src="{{asset('public/backEnd/')}}/vendors/js/buttons.flash.min.js"></script>
-<script src="{{asset('public/backEnd/')}}/vendors/js/jszip.min.js"></script>
-<script src="{{asset('public/backEnd/')}}/vendors/js/pdfmake.min.js"></script>
-<script src="{{asset('public/backEnd/')}}/vendors/js/vfs_fonts.js"></script>
-<script src="{{asset('public/backEnd/js/vfs_fonts.js')}}"></script>
-<script src="{{asset('public/backEnd/')}}/vendors/js/buttons.html5.min.js"></script>
-<script src="{{asset('public/backEnd/')}}/vendors/js/buttons.print.min.js"></script>
-<script src="{{asset('public/backEnd/')}}/vendors/js/dataTables.rowReorder.min.js"></script>
-<script src="{{asset('public/backEnd/')}}/vendors/js/dataTables.responsive.min.js"></script>
-<script src="{{asset('public/backEnd/')}}/vendors/js/buttons.colVis.min.js"></script>
+<script src="{{asset('backEnd/')}}/vendors/js/jquery.data-tables.js"></script>
+<script src="{{asset('backEnd/')}}/vendors/js/dataTables.buttons.min.js"></script>
+<script src="{{asset('backEnd/')}}/vendors/js/buttons.flash.min.js"></script>
+<script src="{{asset('backEnd/')}}/vendors/js/jszip.min.js"></script>
+<script src="{{asset('backEnd/')}}/vendors/js/pdfmake.min.js"></script>
+<script src="{{asset('backEnd/')}}/vendors/js/vfs_fonts.js"></script>
+<script src="{{asset('backEnd/js/vfs_fonts.js')}}"></script>
+<script src="{{asset('backEnd/')}}/vendors/js/buttons.html5.min.js"></script>
+<script src="{{asset('backEnd/')}}/vendors/js/buttons.print.min.js"></script>
+<script src="{{asset('backEnd/')}}/vendors/js/dataTables.rowReorder.min.js"></script>
+<script src="{{asset('backEnd/')}}/vendors/js/dataTables.responsive.min.js"></script>
+<script src="{{asset('backEnd/')}}/vendors/js/buttons.colVis.min.js"></script>
 
 <script type="text/javascript">
 

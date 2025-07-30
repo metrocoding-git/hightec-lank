@@ -61,7 +61,7 @@
                 <div class="small_logo_crm d-lg-none">
                     <a href="#">
                         
-                            <img src="{{ asset('public/uploads/settings/logo.png') }}" alt="logo">
+                            <img src="{{ asset('uploads/settings/logo.png') }}" alt="logo">
                     </a>
                 </div>
                 <div id="sidebarCollapse" class="sidebar_icon  d-lg-none">
@@ -158,7 +158,7 @@
                         <li class="scroll_notification_list">
                             <a class="pulse theme_color bell_notification_clicker show_notifications" href="#">
                                 <!-- bell   -->
-                                <img src="{{asset('public/backEnd/assets/img/icons/notification.svg')}}" alt="">
+                                <img src="{{ asset('backEnd/assets/img/icons/notification.svg')}}" alt="">
 
                                 <!--/ bell   -->
                                 <span

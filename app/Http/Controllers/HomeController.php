@@ -73,6 +73,39 @@ class HomeController extends Controller
         return view('pages.administration.academic.assign-subject');
     }
 
+    public function uploadContent()
+    {
+        return view('pages.administration.study-material.upload-content');
+    }
+
+    public function studyMaterialDownload()
+    {
+        return view('pages.administration.study-material.study-material-download');
+    }
+
+    public function otherDownload()
+    {
+        return view('pages.administration.study-material.other-download');
+    }
+
+    public function lesson()
+    {
+        return view('pages.administration.lesson-plan.lesson');
+    }
+
+    public function topic()
+    {
+        return view('pages.administration.lesson-plan.topic');
+    }
+
+    public function topicOverview()
+    {
+        return view('pages.administration.lesson-plan.topic-overview');
+    }
+
+
+
+
     public function studentCategory()
     {
         return view('pages.student.student-info.student-category');
@@ -82,5 +115,4 @@ class HomeController extends Controller
     {
         return view('pages.student.student-info.add-student');
     }
-    
 }

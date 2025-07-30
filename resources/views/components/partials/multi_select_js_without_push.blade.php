@@ -1,4 +1,4 @@
-<script src="{{asset('public/backEnd/multiselect/')}}/js/jquery.multiselect.js"></script>
+<script src="{{ asset('backEnd/multiselect/')}}/js/jquery.multiselect.js"></script>
 <script type="text/javascript">
      $(function () {
             $("select[multiple].active.multypol_check_select").multiselect({

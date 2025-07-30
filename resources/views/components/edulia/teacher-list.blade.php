@@ -9,11 +9,11 @@
                     <div class="teacher_wrapper_img">
                             @if (config('app.app_sync'))
                             <img
-                                src="{{asset('public/uploads/expert_teacher/teacher-'.($key+1).'.jpg') }}"
+                                src="{{ asset('uploads/expert_teacher/teacher-'.($key+1).'.jpg') }}"
                             alt="">
                             @else 
                             <img
-                                src="{{ @$staff->staff->staff_photo ? asset(@$staff->staff->staff_photo) : asset('public/uploads/expert_teacher/teacher-1.jpg') }}"
+                                src="{{ @$staff->staff->staff_photo ? asset(@$staff->staff->staff_photo) : asset(' uploads/expert_teacher/teacher-1.jpg') }}"
                                 alt="">
                             
                             @endif
