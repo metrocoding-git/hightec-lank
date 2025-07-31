@@ -149,7 +149,8 @@
         {{-- ----- --}}
 
         {{-- Download Center --}}
-        <li class="administration_section">
+        <li
+            class="administration_section {{ request()->is('download-center') || request()->is('administration/download-center/*') ? 'mm-active' : '' }}">
             <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
                 <div class="nav_icon_small">
                     <span class="fas fa-bars"></span>
@@ -158,24 +159,29 @@
                     <span>Download Center</span>
                 </div>
             </a>
-            <ul class="mm-collapse">
+            <ul
+                class="mm-collapse {{ request()->is('download-center') || request()->is('administration/download-center/*') ? 'mm-show' : '' }} ">
                 <li>
-                    <a href="content-type" class="">
+                    <a href="/administration/download-center/content-type"
+                        class="{{ request()->is('administration/download-center/content-type') ? 'active a' : '' }}">
                         Content-Type
                     </a>
                 </li>
                 <li>
-                    <a href="content-list" class="">
+                    <a href="/administration/download-center/content-list"
+                        class="{{ request()->is('administration/download-center/content-list') ? 'active a' : '' }}">
                         Content List
                     </a>
                 </li>
                 <li>
-                    <a href="shared-content-list" class="">
+                    <a href="/administration/download-center/shared-content-list"
+                        class="{{ request()->is('administration/download-center/shared-content-list') ? 'active a' : '' }}">
                         Shared Content List
                     </a>
                 </li>
                 <li>
-                    <a href="video-list" class="">
+                    <a href="/administration/download-center/video-list"
+                        class="{{ request()->is('administration/download-center/video-list') ? 'active a' : '' }}">
                         Video List
                     </a>
                 </li>
@@ -194,7 +200,7 @@
 
         {{-- Student Info Section --}}
         <li
-            class="studentInfo_section {{ request()->is('student') || request()->is('student/*') ? 'mm-active' : '' }}">
+            class="studentInfo_section {{ request()->is('student-info') || request()->is('student/student-info/*') ? 'mm-active' : '' }}">
             <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
                 <div class="nav_icon_small">
                     <span class="fas fa-bars"></span>
@@ -203,34 +209,40 @@
                     <span>Student Info</span>
                 </div>
             </a>
-            <ul class="mm-collapse {{ request()->is('student') || request()->is('student/*') ? 'mm-show' : '' }}">
+            <ul class="mm-collapse {{ request()->is('student-info') || request()->is('student/student-info/*') ? 'mm-show' : '' }}">
                 <li>
-                    <a href="/student/student-category"
-                        class="{{ request()->is('student/student-category') ? 'active a' : '' }}">
+                    <a href="/student/student-info/student-category"
+                        class="{{ request()->is('student/student-info/student-category') ? 'active a' : '' }}">
                         Student Category
                     </a>
                 </li>
                 <li>
-                    <a href="/student/add-student"
-                        class="{{ request()->is('student/add-student') ? 'active a' : '' }}">
+                    <a href="/student/student-info/add-student"
+                        class="{{ request()->is('student/student-info/add-student') ? 'active a' : '' }}">
                         Add Student
                     </a>
                 </li>
                 <li>
-                    <a href="disabled-students" class="">
+                    <a href="/student/student-info/student-list"
+                        class="{{ request()->is('student/student-info/student-list') ? 'active a' : '' }}">
+                        Student List
+                    </a>
+                </li>
+                <li>
+                    <a href="/student/student-info/disabled-student" class="{{ request()->is('student/student-info/disabled-student') ? 'active a' : '' }}">
                         Disabled Students
                     </a>
                 </li>
                 <li>
-                    <a href="student-attendance" class="">
+                    <a href="/student/student-info/student-attendance" class="{{ request()->is('student/student-info/student-attendance') ? 'active a' : '' }}">
                         Student Attendance
                     </a>
                 </li>
-                <li>
-                    <a href="student-export" class="">
+                {{-- <li>
+                    <a href="/student/student-info/student-export" class="{{ request()->is('student/student-info/student-export') ? 'active a' : '' }}">
                         Student Export
                     </a>
-                </li>
+                </li> --}}
             </ul>
         </li>
         {{-- ----- --}}

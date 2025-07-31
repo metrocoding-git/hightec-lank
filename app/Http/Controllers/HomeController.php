@@ -23,6 +23,7 @@ use App\Models\SmAcademicYear;
 use App\Models\SmClassSection;
 use App\Models\SmGeneralSettings;
 use App\InfixModuleManager;
+use App\Models\Course;
 use App\Models\DueFeesLoginPrevent;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -66,8 +67,59 @@ class HomeController extends Controller
 
     public function courses()
     {
-        return view('pages.administration.academic.course');
+        $courses = Course::get();
+        $title = 'All Active Courses';
+
+        return view('pages.administration.academic.course', [
+            'courses' => $courses
+        ]);
     }
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|unique:courses,code',
+            'price' => 'required|numeric',
+            'description' => 'nullable|string',
+        ]);
+
+        Course::create($request->all());
+
+        return redirect()->back()->with('message-success', 'Course added successfully!');
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|unique:courses,code,' . $id,
+            'price' => 'required|numeric',
+            'description' => 'nullable|string',
+        ]);
+
+        $course = Course::findOrFail($id);
+        $course->update($request->all());
+
+        return redirect()->route('course.index')->with('message-success', 'Course updated successfully!');
+    }
+
+    public function edit($id)
+    {
+        $course = Course::findOrFail($id);
+        $courses = Course::get();
+        return view('pages.administration.academic.course', ['course' => $course, 'courses' => $courses, 'courseId' => $id,]);
+    }
+
+
+    public function destroy($id)
+    {
+        Course::findOrFail($id)->delete();
+        return redirect()->route('course.index')->with('message-success-delete', 'Course deleted successfully.');
+    }
+
+
+
+
     public function assignsubject()
     {
         return view('pages.administration.academic.assign-subject');
@@ -104,6 +156,24 @@ class HomeController extends Controller
     }
 
 
+    public function contentType()
+    {
+        return view('pages.administration.download-center.content-type');
+    }
+    public function contentList()
+    {
+        return view('pages.administration.download-center.content-list');
+    }
+    public function sharedContentList()
+    {
+        return view('pages.administration.download-center.shared-content-list');
+    }
+    public function videoList()
+    {
+        return view('pages.administration.download-center.video-list');
+    }
+
+
 
 
     public function studentCategory()
@@ -114,5 +184,31 @@ class HomeController extends Controller
     public function addStudent()
     {
         return view('pages.student.student-info.add-student');
+    }
+
+    public function studentList()
+    {
+        return view('pages.student.student-info.student-list');
+    }
+
+    public function studentView($id)
+    {
+        return view('pages.student.student-info.student-view', compact('id'));
+    }
+
+
+
+
+    public function disabledStudents()
+    {
+        return view('pages.student.student-info.disabled-students');
+    }
+    public function studentAttendance()
+    {
+        return view('pages.student.student-info.student-attendance');
+    }
+    public function studentExport()
+    {
+        return view('pages.student.student-info.student-export');
     }
 }
