@@ -29,23 +29,23 @@
     <link rel="stylesheet" href="{{ asset('backEnd/assets/vendors/css/jquery-ui.css') }}" />
     {{-- metsimenu --}}
     <link rel="stylesheet" href="{{ asset('backEnd/assets/css/metisMenu.css') }}" />
-    
+
     <link rel="stylesheet" href="{{ asset('backEnd/assets/css/loade.css') }}" />
     <link rel="stylesheet" href="{{ asset('css/app.css') }}" />
-    <link rel="stylesheet" href="{{asset('backEnd/assets/css/croppie.css')}}" />
-     
+    <link rel="stylesheet" href="{{ asset('backEnd/assets/css/croppie.css') }}" />
+
     <link rel="stylesheet" href="{{ asset('backEnd/assets/css/backend_static_style.css') }}" />
     <link rel="stylesheet" href="{{ asset('backEnd/assets/css/infix.css') }}" />
-    
+
     <link rel="stylesheet" href="{{ asset('backEnd/assets/vendors/vendors_static_style.css') }}" />
-    <link rel="stylesheet" href="{{asset('backEnd/assets/css/preloader.css')}}" />
-    <link rel="stylesheet" href="{{asset('backEnd/assets/css/solid_style.css')}}" />
-    <link rel="stylesheet" href="{{asset('backEnd/multiselect/css/jquery.multiselect.css')}}" />
-    <link rel="stylesheet" href="{{asset('backEnd/multiselect/css/custom_style.css')}}" />
-    <link rel="stylesheet" href="{{asset('backEnd/assets/css/radio_checkbox.css')}}" />
-    
-    <link rel="stylesheet" href="{{asset('css/backend_design_v2.css')}}">   
-     <link rel="stylesheet" href="{{ asset('backEnd/assets/css/metisMenu.css') }}" />
+    <link rel="stylesheet" href="{{ asset('backEnd/assets/css/preloader.css') }}" />
+    <link rel="stylesheet" href="{{ asset('backEnd/assets/css/solid_style.css') }}" />
+    <link rel="stylesheet" href="{{ asset('backEnd/multiselect/css/jquery.multiselect.css') }}" />
+    <link rel="stylesheet" href="{{ asset('backEnd/multiselect/css/custom_style.css') }}" />
+    <link rel="stylesheet" href="{{ asset('backEnd/assets/css/radio_checkbox.css') }}" />
+
+    <link rel="stylesheet" href="{{ asset('css/backend_design_v2.css') }}">
+    <link rel="stylesheet" href="{{ asset('backEnd/assets/css/metisMenu.css') }}" />
 
     <link rel="stylesheet" href="{{ asset('backEnd/assets/css/loade.css') }}" />
     <link rel="stylesheet" href="{{ asset('css/app.css') }}" />
@@ -66,7 +66,17 @@
 
     <link rel="stylesheet" href="{{ asset('css/backend_design_v2.css') }}">
 
-  
+    <link rel="stylesheet" href="{{ asset('backEnd/vendors/css/jquery-ui.css') }}" />
+    <link rel="stylesheet" href="{{ asset('backEnd/vendors/css/bootstrap-datepicker.min.css') }}" />
+    <link rel="stylesheet" href="{{ asset('backEnd/vendors/font_awesome/css/all.min.css') }}" />
+    <link rel="stylesheet" href="{{ asset('backEnd/vendors/themefy_icon/themify-icons.css') }}" />
+    <link rel="stylesheet" href="{{ asset('backEnd/vendors/css/flaticon.css') }}" />
+    <link rel="stylesheet" href="{{ asset('backEnd/vendors/css/fnt.min.css') }}" />
+    <link rel="stylesheet" href="{{ asset('backEnd/vendors/css/nice-select.css') }}" />
+    <link rel="stylesheet" href="{{ asset('backEnd/vendors/css/toastr.min.css') }}" />
+
+
+
 
     @include('components.partials.css')
     <style>
@@ -174,53 +184,55 @@
             <input type="hidden" name="url" id="url" value="{{ url('/') }}">
             @include('layouts.top-menu')
 
-        {{-- </div>
+            {{-- </div>
     </div> --}}
 
-    <script>
-        $(window).on('resize', function() {
-            var win = $(this);
-            if (win.width() <= 991) {
-                $('#sidebar.sidebar').removeClass('mini_sidebar');
-                $('#main-content').removeClass('mini_main_content');
-                $('.footer-area').removeClass('mini_main_content');
-            }
-        });
+            <script>
+                $(window).on('resize', function() {
+                    var win = $(this);
+                    if (win.width() <= 991) {
+                        $('#sidebar.sidebar').removeClass('mini_sidebar');
+                        $('#main-content').removeClass('mini_main_content');
+                        $('.footer-area').removeClass('mini_main_content');
+                    }
+                });
 
-        // slider
-        $(document).ready(function() {
-            var sections = [];
-            $('.menu_seperator').each(function() {
-                sections.push($(this).data('section'));
-            });
+                // slider
+                $(document).ready(function() {
+                    var sections = [];
+                    $('.menu_seperator').each(function() {
+                        sections.push($(this).data('section'));
+                    });
 
-            jQuery.each(sections, function(index, section) {
-                if ($('.' + section).length == 0) {
-                    $('#seperator_' + section).addClass('d-none');
-                } else {
-                    $('#seperator_' + section).removeClass('d-none');
-                }
-            });
-        })
-
-
+                    jQuery.each(sections, function(index, section) {
+                        if ($('.' + section).length == 0) {
+                            $('#seperator_' + section).addClass('d-none');
+                        } else {
+                            $('#seperator_' + section).removeClass('d-none');
+                        }
+                    });
+                })
 
 
 
 
-        $(document).ready(function(){
-            var sections=[];
-            $('.menu_seperator').each(function() { sections.push($(this).data('section')); });
 
-            jQuery.each(sections, function(index, section) {
-                if($('.'+section).length == 0) {
-                    $('#seperator_'+section).addClass('d-none');
-                }else{
-                    $('#seperator_'+section).removeClass('d-none');
-                }
-            });
-        })
-    </script>
+
+                $(document).ready(function() {
+                    var sections = [];
+                    $('.menu_seperator').each(function() {
+                        sections.push($(this).data('section'));
+                    });
+
+                    jQuery.each(sections, function(index, section) {
+                        if ($('.' + section).length == 0) {
+                            $('#seperator_' + section).addClass('d-none');
+                        } else {
+                            $('#seperator_' + section).removeClass('d-none');
+                        }
+                    });
+                })
+            </script>
 
 </body>
 

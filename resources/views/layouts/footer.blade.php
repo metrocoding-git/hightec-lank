@@ -102,6 +102,39 @@
 <script src="{{ asset('backEnd/') }}/js/developer.js"></script>
 <script src="{{ url('Modules\Wallet\Resources\assets\js\wallet.js') }}"></script>
 
+
+<!-- Toastr JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+
+<script>
+    @if (session()->has('message-success'))
+        toastr.success("{{ session('message-success') }}");
+    @endif
+
+    @if (session()->has('message-danger'))
+        toastr.error("{{ session('message-danger') }}");
+    @endif
+
+    @if (session()->has('message-success-delete'))
+        toastr.success("{{ session('message-success-delete') }}");
+    @endif
+
+    @if (session()->has('message-danger-delete'))
+        toastr.error("{{ session('message-danger-delete') }}");
+    @endif
+
+
+    toastr.options = {
+        "closeButton": true,
+        "progressBar": true,
+        "positionClass": "toast-top-right",
+        "timeOut": "500"
+    };
+</script>
+
+
+
 <!-- DataTables JS -->
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script>
