@@ -2,71 +2,88 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Branch;
+use App\Models\Course;
 use Illuminate\Http\Request;
 use App\Models\Intake;
 
 class IntakeController extends Controller
 {
-    public function store(Request $request) {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'branch_id' => 'required|integer|exists:branch_id',
-            'student_count' => 'required|numeric',
-            
-        ]);
-    
-        $intake = Intake::create($validated);
-    
-        return response()->json([
-            "message" => "Intake created successfully.",
-            "intake" => $intake
-        ], 201);
-    }
-
-    // get course
     public function index()
     {
-        $intakes = Intake::with('branch')->get();
+        $intakes = Intake::with('courses', 'branch')->get();
+        $branches = Branch::all();
+        $courses = Course::all();
 
-        return response()->json([
-            "intakes" => $intakes
-        ], 200);
+        return view('pages.administration.academic.intake', compact('intakes', 'branches', 'courses'));
     }
 
-    // update course
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'branch_id' => 'required|exists:branches,id',
+            'courses' => 'required|array',
+            'courses.*' => 'exists:courses,id',
+        ]);
+
+        $intake = Intake::create([
+            'name' => $request->name,
+            'branch_id' => $request->branch_id,
+        ]);
+
+        $intake->courses()->sync($request->courses);
+
+        $intake->courses()->sync($request->courses); // assuming many-to-many
+
+        return redirect()->route('intake.index')->with('message-success', 'Intake added successfully!');
+    }
+
+    public function edit($id)
+    {
+        $intake = Intake::with('courses')->findOrFail($id);
+        $intakes = Intake::with('courses', 'branch')->get();
+        $branches = Branch::all();
+        $courses = Course::all();
+
+        return view('pages.administration.academic.intake', [
+            'intake' => $intake,
+            'intakes' => $intakes,
+            'branches' => $branches,
+            'courses' => $courses,
+            'intakeId' => $id,
+        ]);
+    }
+
     public function update(Request $request, $id)
     {
-        $intake = Intake::find($id);
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'branch_id' => 'required|exists:branches,id',
+            'courses' => 'required|array',
+            'courses.*' => 'exists:courses,id',
+        ]);
 
-        if (!$intake) {
-            return response()->json(['message' => 'intakes not found'], 404);
-        }
-    
-        $validated = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'branch_id' => 'sometimes|required|integer',
-            'student_count' => 'sometimes|required|numeric',
+        $intake = Intake::findOrFail($id);
+
+        $intake->update([
+            'name' => $request->name,
+            'branch_id' => $request->branch_id,
         ]);
-    
-        $intake->update($validated);
-    
-        return response()->json([
-            'message' => 'Intake updated successfully.',
-            'intake' => $intake
-        ]);
+
+        $intake->courses()->sync($request->courses);
+
+        return redirect()->route('intake.index')->with('message-success', 'Intake updated successfully!');
     }
 
 
     public function destroy($id)
     {
-        $intake  = Intake::find($id);
+        $intake = Intake::findOrFail($id);
 
-        if (!$intake) {
-            return response()->json(['message' => 'Intake not found'], 404);
-        }
-
+        $intake->courses()->detach();
         $intake->delete();
 
-        return response()->json(['message' => 'Intake deleted successfully.']);
+        return redirect()->route('intake.index')->with('message-success-delete', 'Intake deleted successfully!');
     }
 }
