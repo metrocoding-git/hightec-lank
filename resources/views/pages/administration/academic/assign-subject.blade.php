@@ -54,101 +54,114 @@
                     <div class="row">
                         <div class="col-lg-12">
 
-                            {{-- @if (isset($sectionId))
-                                {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'global_class_update', 'method' => 'POST']) }}
-                            @else
-                                @if (userPermission(266))
-                                    {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'global_class_store', 'method' => 'POST']) }}
-                                @endif
-                            @endif --}}
-                            <form class="form-horizontal">
+                            {{-- Update form --}}
+                            <form method="POST" class="form-horizontal"
+                                action="{{ isset($assignSubjectId) ? route('assign-subject.update', $assignSubjectId) : route('assign-subject.store') }}">
+
+                                @csrf
+
                                 <div class="white-box">
                                     <div class="main-title">
                                         <h3 class="mb-20">
-                                            @lang('academics.assign_subject_create')
+                                            @if (isset($assignSubjectId))
+                                            Update Assign Subject
+                                            @else
+                                                @lang('academics.assign_subject_create')
+                                            @endif
                                         </h3>
                                     </div>
+
                                     <div class="add-visitor">
+                                        {{-- Intake --}}
                                         <div class="row">
                                             <div class="col-lg-12">
                                                 <div class="primary_input">
-                                                    <label class="primary_input_label" for="">Intake
-                                                        <span>*</span></label>
-                                                    <select
-                                                        class="primary_select form-control {{ $errors->has('exam_system') ? ' is-invalid' : '' }}"
-                                                        id="exam_system" name="exam_system">
-                                                        <option value="i1">Intake 1</option>
-                                                        <option value="i2"> Intake 2</option>
-                                                        <option value="i3"> Intake 3</option>
-                                                        <option value="i4"> Intake 4</option>
-
-                                                    </select>
+                                                    <label class="primary_input_label">Intake <span>*</span></label>
+                                                    @if (isset($assignSubjectId))
+                                                        <input class="primary_input_field form-control" type="text"
+                                                            name="intake_id" id="intake_id"
+                                                            value="{{ $intakes->firstWhere('id', $selectedIntake)?->name }}"
+                                                            readonly>
+                                                    @else
+                                                        <select name="intake_id"
+                                                            class="primary_select form-control {{ $errors->has('intake_id') ? ' is-invalid' : '' }}">
+                                                            <option value="">Select intake</option>
+                                                            @foreach ($intakes as $intake)
+                                                                <option value="{{ $intake->id }}"
+                                                                    {{ old('intake_id', $selectedIntake ?? '') == $intake->id ? 'selected' : '' }}>
+                                                                    {{ $intake->name }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    @endif
                                                 </div>
                                             </div>
                                         </div>
 
+
+
+                                        {{-- Course --}}
                                         <div class="row mt-20">
                                             <div class="col-lg-12">
                                                 <div class="primary_input">
-                                                    <label class="primary_input_label" for="">Course
-                                                        <span>*</span></label>
-                                                    <select
-                                                        class="primary_select form-control {{ $errors->has('exam_system') ? ' is-invalid' : '' }}"
-                                                        id="exam_system" name="exam_system">
-                                                        <option value="c1">Course 1</option>
-                                                        <option value="c2"> Course 2</option>
-                                                    </select>
+                                                    <label class="primary_input_label">Course <span>*</span></label>
+
+                                                    @if (isset($assignSubjectId))
+                                                        {{-- Read-only: Show course name and keep value via hidden input --}}
+                                                        <input class="primary_input_field form-control" type="text"
+                                                            name="course_id" id="course_id"
+                                                            value="{{ $courses->firstWhere('id', $selectedCourse)?->name }}"
+                                                            readonly>
+                                                    @else
+                                                        {{-- Normal selectable dropdown --}}
+                                                        <select name="course_id"
+                                                            class="primary_select form-control {{ $errors->has('course_id') ? ' is-invalid' : '' }}">
+                                                            <option value="">Select course</option>
+                                                            @foreach ($courses as $course)
+                                                                <option value="{{ $course->id }}"
+                                                                    {{ old('course_id', $selectedCourse ?? '') == $course->id ? 'selected' : '' }}>
+                                                                    {{ $course->name }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                        @if ($errors->has('course_id'))
+                                                            <span
+                                                                class="text-danger">{{ $errors->first('course_id') }}</span>
+                                                        @endif
+                                                    @endif
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div class="row  mt-20">
+
+                                        {{-- Subjects --}}
+                                        <div class="row mt-20">
                                             <div class="col-lg-12">
-                                                <label class="primary_input_label" for="">@lang('academics.subject')
-                                                    <span>*</span></label>
+                                                <label class="primary_input_label">@lang('academics.subject') <span>*</span></label>
                                                 <div class="d-block radio-btn-flex">
-
-
-                                                    <div class="ml-30 mt-1">
-                                                        <input type="checkbox" id="sub1" value="s1"
-                                                            name="section[]" class="common-checkbox relationButton" checked>
-                                                        <label for="sub1">Subject 1</label>
-                                                    </div>
-                                                    <div class="ml-30 mt-1">
-                                                        <input type="checkbox" id="sub2" value="s2"
-                                                            name="section[]" class="common-checkbox relationButton">
-                                                        <label for="sub2">Subject 2</label>
-                                                    </div>
-                                                    <div class="ml-30 mt-1">
-                                                        <input type="checkbox" id="sub3" value="s3"
-                                                            name="section[]" class="common-checkbox relationButton">
-                                                        <label for="sub3">Subject 3</label>
-                                                    </div>
-                                                    <div class="ml-30 mt-1">
-                                                        <input type="checkbox" id="sub4" value="s3"
-                                                            name="section[]" class="common-checkbox relationButton">
-                                                        <label for="sub4">Subject 3</label>
-                                                    </div>
-                                                    <div class="ml-30 mt-1">
-                                                        <input type="checkbox" id="sub5" value="s5"
-                                                            class="common-checkbox relationButton">
-                                                        <label for="sub5">Subject 5</label>
-                                                    </div>
-
+                                                    @foreach ($subjects as $subject)
+                                                        <div class="ml-30 mt-1">
+                                                            <input type="checkbox" id="sub{{ $subject->id }}"
+                                                                value="{{ $subject->id }}" name="subjects[]"
+                                                                class="common-checkbox"
+                                                                {{ in_array($subject->id, old('subjects', $selectedSubjects ?? [])) ? 'checked' : '' }}>
+                                                            <label
+                                                                for="sub{{ $subject->id }}">{{ $subject->name }}</label>
+                                                        </div>
+                                                    @endforeach
+                                                    @if ($errors->has('subjects'))
+                                                        <span class="text-danger">{{ $errors->first('subjects') }}</span>
+                                                    @endif
                                                 </div>
                                             </div>
                                         </div>
 
-
-
+                                        {{-- Submit --}}
                                         <div class="row mt-40">
                                             <div class="col-lg-12 text-center">
-                                                <button class="primary-btn fix-gr-bg submit" data-toggle="tooltip">
+                                                <button class="primary-btn fix-gr-bg submit" type="submit">
                                                     <span class="ti-check"></span>
-
-                                                    @lang('academics.save_class')
-
-
+                                                    {{ isset($assignSubjectId) ? __('common.update') : __('academics.save_class') }}
                                                 </button>
                                             </div>
                                         </div>
@@ -156,6 +169,7 @@
                                 </div>
                             </form>
                         </div>
+
                     </div>
                 </div>
 
@@ -170,113 +184,94 @@
 
                             <x-table>
                                 <table id="table_id" class="table Crm_table_active3" cellspacing="0" width="100%">
-
                                     <thead>
-
                                         <tr>
-                                            <th> @lang('common.sl')</th>
-                                            <th> Intake </th>
+                                            <th>@lang('common.sl')</th>
+                                            <th>Intake</th>
                                             <th>Course</th>
                                             <th>Subjects</th>
                                             <th>@lang('common.action')</th>
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        @foreach ($assign_subjects as $key => $assign)
+                                            @if ($key == 2)
+                                            @endif
+                                            <tr>
+                                                <td>{{ $key + 1 }}</td>
 
-                                        <tr>
-                                            <td>1</td>
-                                            <td>
-                                                Intake 2
-                                            </td>
-                                            <td>
-                                                <a href="/Course">Course 1</a>
-                                            </td>
+                                                <td>{{ $assign[0]->intake->name ?? '-' }}</td>
 
-                                            <td>
-                                                Subject 1, Subject 2
-                                            </td>
+                                                <td>
+                                                    <a href="#">
+                                                        {{ $assign[0]->course->name ?? '-' }}
+                                                    </a>
+                                                </td>
 
-                                            <td valign="top">
-                                                @php
-                                                    $routeList = [
-                                                        '<a class="dropdown-item"
-                                                               href="/">' .
-                                                        __('common.edit') .
-                                                        '</a>',
-                                                        '<a class="dropdown-item" data-toggle="modal"
-                                                               data-target="#deleteClassModal' .
-                                                        1 .
-                                                        '"
-                                                               href="/">' .
-                                                        __('common.delete') .
-                                                        '</a>',
-                                                    ];
-                                                @endphp
-                                                <x-drop-down-action-component :routeList="$routeList" />
-                                            </td>
-                                        </tr>
+                                                <td>
+                                                    @foreach ($assign as $index => $assignSubject)
+                                                        {{ $assignSubject->subject->name }}
+                                                        @if (!$loop->last)
+                                                            /
+                                                        @endif
+                                                    @endforeach
+                                                </td>
 
-                                        <tr>
-                                            <td>2</td>
-                                            <td>
-                                                Intake 2
-                                            </td>
-                                            <td>
-                                                <a href="/Course">Course 4</a>
-                                            </td>
+                                                <td valign="top">
+                                                    @php
+                                                        $routeList = [
+                                                            '<a class="dropdown-item" href="' .
+                                                            route('assign-subject.edit', $assign[0]->id) .
+                                                            '">' .
+                                                            __('common.edit') .
+                                                            '</a>',
+                                                            '<a class="dropdown-item" data-toggle="modal" data-target="#deleteClassModal' .
+                                                            $assign[0]->id .
+                                                            '">' .
+                                                            __('common.delete') .
+                                                            '</a>',
+                                                        ];
+                                                    @endphp
+                                                    <x-drop-down-action-component :routeList="$routeList" />
+                                                </td>
+                                            </tr>
 
-                                            <td>
-                                                Subject 2, Subject 4
-                                            </td>
-
-                                            <td valign="top">
-                                                @php
-                                                    $routeList = [
-                                                        '<a class="dropdown-item"
-                                                               href="/">' .
-                                                        __('common.edit') .
-                                                        '</a>',
-                                                        '<a class="dropdown-item" data-toggle="modal"
-                                                               data-target="#deleteClassModal' .
-                                                        1 .
-                                                        '"
-                                                               href="/">' .
-                                                        __('common.delete') .
-                                                        '</a>',
-                                                    ];
-                                                @endphp
-                                                <x-drop-down-action-component :routeList="$routeList" />
-                                            </td>
-                                        </tr>
-
-                                        <div class="modal fade admin-query" id="deleteClassModal1">
-                                            <div class="modal-dialog modal-dialog-centered">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h4 class="modal-title">@lang('academics.delete_class')</h4>
-                                                        <button type="button" class="close"
-                                                            data-dismiss="modal">&times;
-                                                        </button>
-                                                    </div>
-
-                                                    <div class="modal-body">
-                                                        <div class="text-center">
-                                                            <h4>@lang('common.are_you_sure_to_delete')</h4>
+                                            {{-- Delete Modal --}}
+                                            <div class="modal fade admin-query" id="deleteClassModal{{ $assign[0]->id }}">
+                                                <div class="modal-dialog modal-dialog-centered">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h4 class="modal-title">@lang('academics.delete_class')</h4>
+                                                            <button type="button" class="close"
+                                                                data-dismiss="modal">&times;</button>
                                                         </div>
 
-                                                        <div class="mt-40 d-flex justify-content-between">
-                                                            <button type="button" class="primary-btn tr-bg"
-                                                                data-dismiss="modal">@lang('common.cancel')</button>
-                                                            <a href="/" class="text-light">
-                                                                <button class="primary-btn fix-gr-bg"
-                                                                    type="submit">@lang('common.delete')</button>
-                                                            </a>
-                                                        </div>
-                                                    </div>
+                                                        <div class="modal-body">
+                                                            <div class="text-center">
+                                                                <h4>@lang('common.are_you_sure_to_delete')</h4>
+                                                            </div>
 
+                                                            <div class="mt-40 d-flex justify-content-between">
+                                                                <button type="button" class="primary-btn tr-bg"
+                                                                    data-dismiss="modal">
+                                                                    @lang('common.cancel')
+                                                                </button>
+                                                                <form
+                                                                    action="{{ route('assign-subject.destroy', $assign[0]->id) }}"
+                                                                    method="POST">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <button class="primary-btn fix-gr-bg" type="submit">
+                                                                        @lang('common.delete')
+                                                                    </button>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        @endforeach
                                     </tbody>
                                 </table>
                             </x-table>

@@ -7,69 +7,55 @@ use App\Models\Course;
 
 class CourseController extends Controller
 {
-    // post course
-    public function store(Request $request) {
-        $validated = $request->validate([
+    public function index()
+    {
+        $courses = Course::get();
+        $title = 'All Active Courses';
+
+        return view('pages.administration.academic.course', [
+            'courses' => $courses
+        ]);
+    }
+    public function store(Request $request)
+    {
+        $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|unique:courses,code',
             'price' => 'required|numeric',
             'description' => 'nullable|string',
         ]);
-    
-        $course = Course::create($validated);
-    
-        return response()->json([
-            "message" => "Course created successfully.",
-            "course" => $course
-        ], 201);
+
+        Course::create($request->all());
+
+        return redirect()->back()->with('message-success', 'Course added successfully!');
     }
 
-    // get course
-    public function index()
-    {
-        $courses = Course::all();
-
-        return response()->json([
-            "courses" => $courses
-        ], 200);
-    }
-
-    // update course
     public function update(Request $request, $id)
     {
-        $course = Course::find($id);
-
-        if (!$course) {
-            return response()->json(['message' => 'Course not found'], 404);
-        }
-    
-        $validated = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'code' => 'sometimes|required|string|unique:courses,code,' . $id,
-            'price' => 'sometimes|required|numeric',
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|unique:courses,code,' . $id,
+            'price' => 'required|numeric',
             'description' => 'nullable|string',
         ]);
-    
-        $course->update($validated);
-    
-        return response()->json([
-            'message' => 'Course updated successfully.',
-            'course' => $course
-        ]);
+
+        $course = Course::findOrFail($id);
+        $course->update($request->all());
+
+        return redirect()->route('course.index')->with('message-success', 'Course updated successfully!');
+    }
+
+    public function edit($id)
+    {
+        $course = Course::findOrFail($id);
+        $courses = Course::get();
+        return view('pages.administration.academic.course', ['course' => $course, 'courses' => $courses, 'courseId' => $id,]);
     }
 
 
     public function destroy($id)
     {
-        $course = Course::find($id);
-
-        if (!$course) {
-            return response()->json(['message' => 'Course not found'], 404);
-        }
-
-        $course->delete();
-
-        return response()->json(['message' => 'Course deleted successfully.']);
+        Course::findOrFail($id)->delete();
+        return redirect()->route('course.index')->with('message-success-delete', 'Course deleted successfully.');
     }
-    
 }

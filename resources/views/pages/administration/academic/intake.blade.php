@@ -54,99 +54,76 @@
                     <div class="row">
                         <div class="col-lg-12">
 
-                            {{-- @if (isset($sectionId))
-                                {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'global_class_update', 'method' => 'POST']) }}
-                            @else
-                                @if (userPermission(266))
-                                    {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'global_class_store', 'method' => 'POST']) }}
-                                @endif
-                            @endif --}}
-                            <form class="form-horizontal">
+                            <form method="POST"
+                                action="{{ isset($intakeId) ? route('intake.update', $intake->id) : route('intake.store') }}">
+                                @csrf
                                 <div class="white-box">
                                     <div class="main-title">
-                                        <h3 class="mb-20">
-                                            Add Intake
-                                        </h3>
+                                        <h3 class="mb-20">{{ isset($intakeId) ? 'Edit Intake' : 'Add Intake' }}</h3>
                                     </div>
-                                    <div class="add-visitor">
-                                        <div class="row ">
-                                            <div class="col-lg-12">
-                                                <div class="primary_input">
-                                                    <label class="primary_input_label" for="">Branch
-                                                        <span>*</span></label>
-                                                    <select
-                                                        class="primary_select form-control {{ $errors->has('branch') ? ' is-invalid' : '' }}"
-                                                        id="branch" name="branch">
-                                                        <option value="b1">Branch 1</option>
-                                                        <option value="b2"> Branch 2</option>
-                                                    </select>
-                                                </div>
+
+                                    <div class="row">
+                                        {{-- Branch --}}
+                                        <div class="col-lg-12">
+                                            <div class="primary_input">
+                                                <label class="primary_input_label">Branch <span>*</span></label>
+                                                <select name="branch_id"
+                                                    class="primary_select form-control @error('branch_id') is-invalid @enderror">
+                                                        <option value=""> Select Branch </option>
+                                                    @foreach ($branches as $key => $branche)
+                                                        <option value="{{ $branche->id }}"
+                                                            {{ isset($intakeId) && $intake->branch->id === $branche->id ? 'selected' : '' }}>
+                                                            {{ $branche->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                                @error('branch_id')
+                                                    <span class="text-danger">{{ $message }}</span>
+                                                @enderror
                                             </div>
                                         </div>
 
-                                        <div class="row mt-20">
-                                            <div class="col-lg-12">
-                                                <div class="primary_input">
-                                                    <label class="primary_input_label" for="">@lang('common.name')
-                                                        <span>*</span></label>
-                                                    <input
-                                                        class="primary_input_field form-control{{ @$errors->has('name') ? ' is-invalid' : '' }}"
-                                                        type="text" name="name" autocomplete="off"
-                                                        value="{{ isset($classById) ? @$classById->class_name : '' }}">
-                                                    <input type="hidden" name="id"
-                                                        value="{{ isset($classById) ? $classById->id : '' }}">
-
-
-                                                    @if ($errors->has('name'))
-                                                        <span class="invalid-feedback" role="alert">
-                                                            <strong>{{ @$errors->first('name') }}</strong>
-                                                        </span>
-                                                    @endif
-                                                </div>
+                                        {{-- Intake Name --}}
+                                        <div class="col-lg-12 mt-20">
+                                            <div class="primary_input">
+                                                <label class="primary_input_label">Intake Name <span>*</span></label>
+                                                <input type="text" name="name"
+                                                    class="primary_input_field form-control @error('name') is-invalid @enderror"
+                                                    value="{{ old('name', $intake->name ?? '') }}" autocomplete="off">
+                                                @error('name')
+                                                    <span class="text-danger">{{ $message }}</span>
+                                                @enderror
                                             </div>
                                         </div>
 
-
-                                        <div class="row mt-30">
-                                            <div class="col-lg-12">
-                                                <label class="primary_input_label" for="">Courses<span
-                                                        class="text-danger">*</span></label>
-
-                                                <div class="">
-                                                    <input type="checkbox" id="Courses1"
-                                                        class="common-checkbox form-control" name="section[]"
-                                                        value="1">
-                                                    <label for="Courses1"> Courses 1</label>
-
-                                                    <input type="checkbox" id="Courses2"
-                                                        class="common-checkbox form-control" name="section[]"
-                                                        value="2">
-                                                    <label for="Courses2"> Courses 2</label>
-
+                                        {{-- Courses --}}
+                                        <div class="col-lg-12 mt-20">
+                                            <label class="primary_input_label">Courses <span>*</span></label>
+                                            @foreach ($courses as $course)
+                                                <div class="form-check">
+                                                    <input type="checkbox" class="common-checkbox form-control"
+                                                        name="courses[]" id="{{ $course->id }}"
+                                                        value="{{ $course->id }}"
+                                                        {{ isset($intakeId) && in_array($course->id, old('courses', $intake->courses->pluck('id')->toArray() ?? [])) ? 'checked' : '' }}>
+                                                    <label for="{{ $course->id }}">{{ $course->name }}</label>
                                                 </div>
-
-                                                @if ($errors->has('section'))
-                                                    <span class="text-danger validate-textarea-checkbox" role="alert">
-                                                        <strong>{{ @$errors->first('section') }}</strong>
-                                                    </span>
-                                                @endif
-                                            </div>
+                                            @endforeach
+                                            @error('courses')
+                                                <span class="text-danger">{{ $message }}</span>
+                                            @enderror
                                         </div>
 
-                                        <div class="row mt-40">
-                                            <div class="col-lg-12 text-center">
-                                                <button class="primary-btn fix-gr-bg submit" data-toggle="tooltip">
-                                                    <span class="ti-check"></span>
 
-                                                    @lang('academics.save_class')
-
-
-                                                </button>
-                                            </div>
+                                        {{-- Submit --}}
+                                        <div class="col-lg-12 mt-30 text-center">
+                                            <button type="submit" class="primary-btn fix-gr-bg">
+                                                <span class="ti-check"></span> {{ isset($intakeId) ? 'Update' : 'Save' }}
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
                             </form>
+
+
                         </div>
                     </div>
                 </div>
@@ -169,102 +146,71 @@
                                             <th>Intake</th>
                                             <th>Branch</th>
                                             <th>Courses</th>
-                                            <th>@lang('student.students')</th>
+                                            <th>Student Count</th>
                                             <th>@lang('common.action')</th>
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        @foreach ($intakes as $index => $intake)
+                                            <tr>
+                                                <td valign="top">{{ $intake->name }}</td>
+                                                <td>{{ $intake->branch->name }}</td>
+                                                <td>
+                                                    @foreach ($intake->courses as $index => $course)
+                                                        {{ $course->name }} ({{ $course->code }})
+                                                        @if (!$loop->last)
+                                                            /
+                                                        @endif
+                                                    @endforeach
+                                                </td>
+                                                <td><a href="/count">{{ $intake->student_count }}</a></td>
+                                                <td valign="top">
 
-                                        <tr>
-                                            <td valign="top">Intake 1</td>
-                                                                                        <td>Branch 1 </td>
+                                                    @php
+                                                        $routeList = [
+                                                            '<a class="dropdown-item" href="' .
+                                                            route('intake.edit', $intake->id) .
+                                                            '">' .
+                                                            __('common.edit') .
+                                                            '</a>',
+                                                            '<a class="dropdown-item" data-toggle="modal" data-target="#deleteClassModal' .
+                                                            $intake->id .
+                                                            '" href="#">' .
+                                                            __('common.delete') .
+                                                            '</a>',
+                                                        ];
+                                                    @endphp
+                                                    <x-drop-down-action-component :routeList="$routeList" />
+                                                </td>
+                                            </tr>
 
-                                            <td>
-                                                Course 1, Course 2, Course 3, Course 4
-                                            </td>
-                                            <td>
-                                                <a href="/count">23</a>
-                                            </td>
-
-
-                                            <td valign="top">
-                                                @php
-                                                    $routeList = [
-                                                        '<a class="dropdown-item"
-                                                               href="/">' .
-                                                        __('common.edit') .
-                                                        '</a>',
-                                                        '<a class="dropdown-item" data-toggle="modal"
-                                                               data-target="#deleteClassModal' .
-                                                        1 .
-                                                        '"
-                                                               href="/">' .
-                                                        __('common.delete') .
-                                                        '</a>',
-                                                    ];
-                                                @endphp
-                                                <x-drop-down-action-component :routeList="$routeList" />
-                                            </td>
-                                        </tr>
-
-                                        <tr>
-                                            <td valign="top">Intake 2</td>
-                                            <td>Branch 1 </td>
-                                            <td>
-                                                Course 1, Course 2
-                                            </td>
-                                            <td>
-                                                <a href="/count">60</a>
-                                            </td>
-
-
-                                            <td valign="top">
-                                                @php
-                                                    $routeList = [
-                                                        '<a class="dropdown-item"
-                                                               href="/">' .
-                                                        __('common.edit') .
-                                                        '</a>',
-                                                        '<a class="dropdown-item" data-toggle="modal"
-                                                               data-target="#deleteClassModal' .
-                                                        1 .
-                                                        '"
-                                                               href="/">' .
-                                                        __('common.delete') .
-                                                        '</a>',
-                                                    ];
-                                                @endphp
-                                                <x-drop-down-action-component :routeList="$routeList" />
-                                            </td>
-                                        </tr>
-
-                                        <div class="modal fade admin-query" id="deleteClassModal1">
-                                            <div class="modal-dialog modal-dialog-centered">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h4 class="modal-title">@lang('academics.delete_class')</h4>
-                                                        <button type="button" class="close" data-dismiss="modal">&times;
-                                                        </button>
-                                                    </div>
-
-                                                    <div class="modal-body">
-                                                        <div class="text-center">
+                                            {{-- Delete Modal --}}
+                                            <div class="modal fade admin-query" id="deleteClassModal{{ $intake->id }}">
+                                                <div class="modal-dialog modal-dialog-centered">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h4 class="modal-title">@lang('academics.delete_class')</h4>
+                                                            <button type="button" class="close"
+                                                                data-dismiss="modal">&times;</button>
+                                                        </div>
+                                                        <div class="modal-body text-center">
                                                             <h4>@lang('common.are_you_sure_to_delete')</h4>
-                                                        </div>
-
-                                                        <div class="mt-40 d-flex justify-content-between">
-                                                            <button type="button" class="primary-btn tr-bg"
-                                                                data-dismiss="modal">@lang('common.cancel')</button>
-                                                            <a href="/" class="text-light">
-                                                                <button class="primary-btn fix-gr-bg"
-                                                                    type="submit">@lang('common.delete')</button>
-                                                            </a>
+                                                            <div class="mt-40 d-flex justify-content-between">
+                                                                <button type="button" class="primary-btn tr-bg"
+                                                                    data-dismiss="modal">@lang(key: 'common.cancel')</button>
+                                                                <form action="{{ route('intake.destroy', $intake->id) }}"
+                                                                    method="POST">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <button class="primary-btn fix-gr-bg"
+                                                                        type="submit">@lang('common.delete')</button>
+                                                                </form>
+                                                            </div>
                                                         </div>
                                                     </div>
-
                                                 </div>
                                             </div>
-                                        </div>
+                                        @endforeach
                                     </tbody>
                                 </table>
                             </x-table>
@@ -275,171 +221,23 @@
         </div>
     </section>
 @endsection
+@include('components.partials.data_table_css')
 @include('components.partials.data_table_js')
+
+
 @push('script')
-    {{-- <script>
-    $(document).on("change", ".assignedClassSection", function() {
-        var id = $(this).val();
-        var url = '{{url('/')}}';
-        var formData = {
-            assignedClass: $(this).val(),
-        };
-        $.ajax({
-                type:'GET',
-                data: formData,
-                dataType:"json",
-                url: "{{route('loadAssignedSubject')}}",
-                success:function(data){
-                    $('#classSectionWiseSubjects_'+ data.class_id).html(data.html);
-                    $('#classSectionWiseStudyMat_'+ data.class_id).html(data.html2);
-                    
-                },
-                error:function(error){
-                    console.log(error);
-                }
-            });
-    });
-
-    $('.primary_select').niceSelect('update');
-
-     function deleteSubject(id){
-        alert(id);
-        $(".assignedSubject"+id).remove();
-     }
-
-
-     $(document).on('click', '.saveAssignedSubject', function(event) 
-        {
-                var submit_btn = $(this).find("button[type=submit]");
-                event.preventDefault();
-                var url = $("#url").val();
-                var class_id = $(this).data('class_id');
-                var formData = $("#form_"+class_id).serialize();
-                console.log(formData);
-                    $.ajax({
-                        type: "POST",                   
-                        data:formData, 
-                        dataType: "json",
-                        url: "{{route('saveAssignedSubject')}}" ,
-                        beforeSend: function() {
-                            submit_btn.button('loading');
-                        },
-                        success: function(data) {
-                            if (data.status == true) {
-                                toastr.success(data.message, 'Success');                           
-                            } else {
-                                toastr.error(data.message, 'Error'); 
-                            }
-                            submit_btn.button('reset');
-                        },
-                        error: function(xhr) { 
-                            toastr.error("Error occured. please try again", "Error");
-                        },
-                        complete: function() {
-                            submit_btn.button('reset');
-                        }
-                    });
+    <script>
+        $('#table_id').DataTable({
+            dom: 'Bfrtip',
+            buttons: [
+                'copy', 'csv', 'excel', 'pdf', 'print'
+            ],
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
         });
-
-        function addMoreGlobalSubject(id){
-            var url = $("#url").val();
-            var count = $("#assign-subject").children().length;
-            var divCount = count + 1;
-
-            // get section for student
-            $.ajax({
-                type: "GET",
-                dataType: "json",
-                url: url + "/" + "global-assign-subject-get-by-ajax",
-                success: function(data) {
-                    var subject_teacher = "";
-                    subject_teacher +=
-                        "<div class='assignedSubject" +id + "' id='assign-subject-" +
-                        divCount +
-                        "'>";
-                    subject_teacher += "<div class='row'>";
-                    subject_teacher += "<div class='col-lg-5 mt-30-md'>";
-                    subject_teacher +=
-                        "<select class='primary_select' name='subjects[]' style='display:none'>";
-                    subject_teacher +=
-                        "<option data-display='"+window.jsLang('select_subject')+"'  value=''>"+window.jsLang('select_subject')+"</option>";
-                    $.each(data[0], function(key, subject) {
-                        subject_teacher +=
-                            "<option value=" +
-                            subject.id +
-                            ">" +
-                            subject.subject_name +
-                            "</option>";
-                    });
-                    subject_teacher += "</select>";
-
-                    subject_teacher +=
-                        "<div class='nice-select primary_select form-control' tabindex='0'>";
-                    subject_teacher += "<span class='current'>"+window.jsLang('select_subject')+"</span>";
-                    subject_teacher +=
-                        "<div class='nice-select-search-box'><input type='text' class='nice-select-search' placeholder='Search...'></div>";
-                    subject_teacher += "<ul class='list'>";
-                    subject_teacher +=
-                        "<li data-value='' data-display='"+window.jsLang('select_subject')+"' class='option selected'>"+window.jsLang('select_subject')+"</li>";
-                    $.each(data[0], function(key, subject) {
-                        subject_teacher +=
-                            "<li data-value=" +
-                            subject.id +
-                            " class='option'>" +
-                            subject.subject_name +
-                            "</li>";
-                    });
-                    subject_teacher += "</ul>";
-                    subject_teacher += "</div>";
-                    subject_teacher += "</div>";
-                    subject_teacher += "<div class='col-lg-5 mt-30-md'>";
-                    subject_teacher +=
-                        "<select class='primary_select form-control' name='teachers[]' style='display:none'>";
-                    subject_teacher +=
-                        "<option data-display='"+window.jsLang('select_teacher')+"' value=''>"+window.jsLang('select_teacher')+"</option>";
-                    $.each(data[1], function(key, teacher) {
-                        subject_teacher +=
-                            "<option value=" +
-                            teacher.id +
-                            ">" +
-                            teacher.full_name +
-                            "</option>";
-                    });
-                    subject_teacher += "</select>";
-                    subject_teacher +=
-                        "<div class='nice-select primary_select form-control' tabindex='0'>";
-                    subject_teacher += "<span class='current'>"+window.jsLang('select_teacher')+"</span>";
-                    subject_teacher +=
-                        "<div class='nice-select-search-box'><input type='text' class='nice-select-search' placeholder='Search...'></div>";
-                    subject_teacher += "<ul class='list'>";
-                    subject_teacher +=
-                        "<li data-value='' data-display='"+window.jsLang('select_teacher')+"' class='option selected'>"+window.jsLang('select_teacher')+"</li>";
-                    $.each(data[1], function(key, teacher) {
-                        subject_teacher +=
-                            "<li data-value=" +
-                            teacher.id +
-                            " class='option'>" +
-                            teacher.full_name +
-                            "</li>";
-                    });
-                    subject_teacher += "</ul>";
-                    subject_teacher += "</div>";
-                    subject_teacher += "</div>";
-                    subject_teacher += "<div class='col-lg-2'>";
-                    subject_teacher +=
-                        "<button class='primary-btn icon-only fix-gr-bg id='removeSubject' onclick='deleteSubject(" +id + ")' type='button'>";
-                    subject_teacher += "<span class='ti-trash' ></span>";
-                    subject_teacher += "</button>";
-                    subject_teacher += "</div>";
-                    subject_teacher += "</div>";
-                    subject_teacher += "</div>";
-                    $("#assign-subject_"+id).append(subject_teacher);
-                },
-                error: function(data) {
-                    // console.log("Error:", data);
-                },
-            });
-        }
-
-</script> --}}
+    </script>
+    
 @endpush
+

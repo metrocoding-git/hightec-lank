@@ -1,29 +1,54 @@
 <?php
 
+use App\Http\Controllers\AssignSubjectController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\CourseController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\IntakeController;
+use App\Http\Controllers\SubjectController;
 use Illuminate\Support\Facades\Route;
+use PhpParser\Node\Expr\Assign;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
+});
+
+Route::controller(CourseController::class)->prefix('administration/academic/courses')->group(callback: function () {
+    Route::get('/', 'index')->name('course.index');
+    Route::post('store', 'store')->name('course.store');
+    Route::post('update/{id}', 'update')->name('course.update');
+    Route::get('edit/{id}', 'edit')->name('course.edit');
+    Route::delete('destroy/{id}', 'destroy')->name('course.destroy');
+});
+
+Route::controller(IntakeController::class)->prefix('administration/academic/intake')->group(callback: function () {
+    Route::get('/', 'index')->name('intake.index');
+    Route::post('store', 'store')->name('intake.store');
+    Route::post('update/{id}', 'update')->name(name: 'intake.update');
+    Route::get('edit/{id}', 'edit')->name('intake.edit');
+    Route::delete('destroy/{id}', 'destroy')->name('intake.destroy');
+});
+
+Route::controller(SubjectController::class)->prefix('administration/academic/subjects')->group(callback: function () {
+    Route::get('/', 'index')->name('subject.index');
+    Route::post('store', 'store')->name('subject.store');
+    Route::post('update/{id}', 'update')->name('subject.update');
+    Route::get('edit/{id}', 'edit')->name('subject.edit');
+    Route::delete('destroy/{id}', 'destroy')->name('subject.destroy');
+});
+
+Route::controller(AssignSubjectController::class)->prefix('administration/academic/assign-subject')->group(callback: function () {
+    Route::get('/', 'index')->name('assign-subject.index');
+    Route::post('store', 'store')->name('assign-subject.store');
+    Route::post('update/{id}', 'update')->name('assign-subject.update');
+    Route::get('edit/{id}', 'edit')->name('assign-subject.edit');
+    Route::delete('destroy/{id}', 'destroy')->name('assign-subject.destroy');
 });
 
 Route::controller(HomeController::class)->group(callback: function () {
     Route::get('dashboard', 'dashboard')->name('dashboard');
 
 
-    Route::get('administration/academic/courses', 'courses')->name('course.index');
-    Route::post('administration/academic/courses/store', 'store')->name('course.store');
-    Route::post('administration/academic/courses/update/{id}', 'update')->name('course.update');
-    Route::get('administration/academic/courses/edit/{id}', 'edit')->name('course.edit');
-    Route::delete('/course/destroy/{id}', 'destroy')->name('course.destroy');
-
-
-
-    Route::get('administration/academic/intake', 'intake')->name('intake');
-    Route::get('administration/academic/subjects', 'subjects')->name('subjects');
-
-    Route::get('administration/academic/assign-subject', 'assignSubject')->name('"assign-subject');
 
 
     Route::get('administration/study-material/upload-content', 'uploadContent')->name('upload-content');

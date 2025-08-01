@@ -37,7 +37,7 @@
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
             <div class="row justify-content-between">
-               <h1>@lang('academics.subject')</h1>
+                <h1>@lang('academics.subject')</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
                     <a href="#">@lang('academics.academics')</a>
@@ -54,113 +54,106 @@
                     <div class="row">
                         <div class="col-lg-12">
 
-                            {{-- @if (isset($sectionId))
-                                {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'global_class_update', 'method' => 'POST']) }}
-                            @else
-                                @if (userPermission(266))
-                                    {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'global_class_store', 'method' => 'POST']) }}
-                                @endif
-                            @endif --}}
-                            <form class="form-horizontal">
-                                <div class="white-box">
-                                    <div class="main-title">
-                                        <h3 class="mb-20">
+                            @if (isset($subjectId))
+                                {{-- Update form --}}
+                                <form class="form-horizontal" action="{{ route('subject.update', $subject->id) }}"
+                                    method="POST" enctype="multipart/form-data">
+                                    @method('POST') {{-- Or PATCH/PUT depending on your route --}}
+                                @else
+                                    {{-- Store form --}}
+                                    {{-- You can remove this check if not needed --}}
+                                    <form class="form-horizontal" action="{{ route('subject.store') }}" method="POST"
+                                        enctype="multipart/form-data">
+                            @endif
+
+                            @csrf
+
+                            <div class="white-box">
+                                <div class="main-title">
+                                    <h3 class="mb-20">
+                                        @if (isset($subjectId))
+                                            @lang('academics.update_subject')
+                                        @else
                                             @lang('academics.add_subject')
-                                        </h3>
-                                    </div>
-                                    <div class="add-visitor">
-                                        <div class="row">
-                                            <div class="col-lg-12">
-                                                <div class="primary_input">
-                                                    <label class="primary_input_label" for="">@lang('academics.subject_name')
-                                                        <span>*</span></label>
-                                                    <input
-                                                        class="primary_input_field form-control{{ @$errors->has('subject_name') ? ' is-invalid' : '' }}"
-                                                        type="text" name="subject_name" autocomplete="off"
-                                                        value="{{ isset($subject) ? $subject->subject_name : old('subject_name') }}">
-                                                    <input type="hidden" name="id"
-                                                        value="{{ isset($subject) ? $subject->id : '' }}">
+                                        @endif
 
-
-                                                    @if ($errors->has('subject_name'))
-                                                        <span class="invalid-feedback" role="alert">
-                                                            <strong>{{ @$errors->first('subject_name') }}</strong>
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </div>
-
-
-                                        <div class="row  mt-20">
-                                            <div class="col-lg-12">
-                                                <label class="primary_input_label" for="">@lang('academics.subject_type')
-                                                        <span>*</span></label>
-                                                <div class="d-flex radio-btn-flex">
-                                                    @if (isset($subject))
-                                                        <div class="mr-30">
-                                                            <input type="radio" name="subject_type" id="relationFather"
-                                                                value="T" class="common-radio relationButton"
-                                                                {{ @$subject->subject_type == 'T' ? 'checked' : '' }}>
-                                                            <label for="relationFather">@lang('academics.theory')</label>
-                                                        </div>
-                                                        <div class="mr-30">
-                                                            <input type="radio" name="subject_type" id="relationMother"
-                                                                value="P" class="common-radio relationButton"
-                                                                {{ @$subject->subject_type == 'P' ? 'checked' : '' }}>
-                                                            <label for="relationMother">@lang('academics.practical')</label>
-                                                        </div>
-                                                    @else
-                                                        <div class="mr-30">
-                                                            <input type="radio" name="subject_type" id="relationFather"
-                                                                value="T" class="common-radio relationButton" checked>
-                                                            <label for="relationFather">@lang('academics.theory')</label>
-                                                        </div>
-                                                        <div class="mr-30">
-                                                            <input type="radio" name="subject_type" id="relationMother"
-                                                                value="P" class="common-radio relationButton">
-                                                            <label for="relationMother">@lang('academics.practical')</label>
-                                                        </div>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="row  mt-20">
-                                            <div class="col-lg-12">
-                                                <div class="primary_input">
-                                                    <label class="primary_input_label" for="">@lang('academics.subject_code')
-                                                        <span>*</span></label>
-                                                    <input
-                                                        class="primary_input_field form-control{{ $errors->has('subject_code') ? ' is-invalid' : '' }}"
-                                                        type="text" name="subject_code" autocomplete="off"
-                                                        value="{{ isset($subject) ? $subject->subject_code : old('subject_code') }}">
-
-
-                                                    @if ($errors->has('subject_code'))
-                                                        <span class="invalid-feedback" role="alert">
-                                                            <strong>{{ @$errors->first('subject_code') }}</strong>
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="row mt-20">
-                                            <div class="col-lg-12 text-center">
-                                                <button class="primary-btn fix-gr-bg submit" data-toggle="tooltip">
-                                                    <span class="ti-check"></span>
-
-                                                    @lang('academics.save_class')
-
-
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    </h3>
                                 </div>
+                                <div class="add-visitor">
+                                    {{-- Subject Name --}}
+                                    <div class="row">
+                                        <div class="col-lg-12">
+                                            <div class="primary_input">
+                                                <label class="primary_input_label" for="name">@lang('academics.subject_name')
+                                                    <span>*</span></label>
+                                                <input
+                                                    class="primary_input_field form-control{{ $errors->has('name') ? ' is-invalid' : '' }}"
+                                                    type="text" name="name" id="name" autocomplete="off"
+                                                    value="{{ old('name', $subject->name ?? '') }}">
+                                                @if ($errors->has('name'))
+                                                    <span class="invalid-feedback" role="alert">
+                                                        <strong>{{ $errors->first('name') }}</strong>
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {{-- Subject Type --}}
+                                    <div class="row mt-20">
+                                        <div class="col-lg-12">
+                                            <label class="primary_input_label">@lang('academics.subject_type') <span>*</span></label>
+                                            <div class="d-flex radio-btn-flex">
+                                                <div class="mr-30">
+                                                    <input type="radio" name="type" id="theory" value="T"
+                                                        class="common-radio relationButton"
+                                                        {{ old('type', $subject->type ?? 'T') == 'T' ? 'checked' : '' }}>
+                                                    <label for="theory">@lang('academics.theory')</label>
+                                                </div>
+                                                <div class="mr-30">
+                                                    <input type="radio" name="type" id="practical" value="P"
+                                                        class="common-radio relationButton"
+                                                        {{ old('type', $subject->type ?? '') == 'P' ? 'checked' : '' }}>
+                                                    <label for="practical">@lang('academics.practical')</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {{-- Subject Code --}}
+                                    <div class="row mt-20">
+                                        <div class="col-lg-12">
+                                            <div class="primary_input">
+                                                <label class="primary_input_label" for="code">@lang('academics.subject_code')
+                                                    <span>*</span></label>
+                                                <input
+                                                    class="primary_input_field form-control{{ $errors->has('code') ? ' is-invalid' : '' }}"
+                                                    type="text" name="code" id="code" autocomplete="off"
+                                                    value="{{ old('code', $subject->code ?? '') }}">
+                                                @if ($errors->has('code'))
+                                                    <span class="invalid-feedback" role="alert">
+                                                        <strong>{{ $errors->first('code') }}</strong>
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {{-- Submit --}}
+                                    <div class="row mt-20">
+                                        <div class="col-lg-12 text-center">
+                                            <button class="primary-btn fix-gr-bg submit" type="submit">
+                                                <span class="ti-check"></span>
+                                                {{ isset($subjectId) ? __('common.update') : __('academics.save_class') }}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
                             </form>
                         </div>
+
                     </div>
                 </div>
 
@@ -170,7 +163,7 @@
                         <div class="col-lg-12">
 
                             <div class="main-title">
-                                  <h3 class="mb-20">@lang('academics.subject_list')</h3>
+                                <h3 class="mb-20">@lang('academics.subject_list')</h3>
                             </div>
 
                             <x-table>
@@ -187,103 +180,63 @@
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        @foreach ($subjects as $key => $subject)
+                                            <tr>
+                                                <td>{{ $key + 1 }}</td>
+                                                <td>{{ $subject->name }}</td>
+                                                <td>
+                                                    {{ $subject->type == 'T' ? __('academics.theory') : __('academics.practical') }}
+                                                </td>
+                                                <td>
+                                                    <a href="#">{{ $subject->code }}</a>
+                                                </td>
+                                                <td valign="top">
+                                                    @php
+                                                        $routeList = [
+                                                            '<a class="dropdown-item" href="' .
+                                                            route('subject.edit', $subject->id) .
+                                                            '">' .
+                                                            __('common.edit') .
+                                                            '</a>',
+                                                            '<a class="dropdown-item" data-toggle="modal" data-target="#deleteClassModal' .
+                                                            $subject->id .
+                                                            '" href="#">' .
+                                                            __('common.delete') .
+                                                            '</a>',
+                                                        ];
+                                                    @endphp
+                                                    <x-drop-down-action-component :routeList="$routeList" />
+                                                </td>
+                                            </tr>
 
-                                        <tr>
-                                            <td>1</td>
-                                            <td>
-                                               Subject 1
-                                            </td>
+                                            {{-- Delete Modal --}}
+                                            <div class="modal fade admin-query" id="deleteClassModal{{ $subject->id }}">
+                                                <div class="modal-dialog modal-dialog-centered">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h4 class="modal-title">@lang('academics.delete_class')</h4>
+                                                            <button type="button" class="close"
+                                                                data-dismiss="modal">&times;</button>
+                                                        </div>
 
-                                            <td>
-                                               Theory
-                                            </td>
-                                            <td>
-                                                <a href="/subject-code">T123</a>
-                                            </td>
-
-
-                                            <td valign="top">
-                                                @php
-                                                    $routeList = [
-                                                        '<a class="dropdown-item"
-                                                               href="/">' .
-                                                        __('common.edit') .
-                                                        '</a>',
-                                                        '<a class="dropdown-item" data-toggle="modal"
-                                                               data-target="#deleteClassModal' .
-                                                        1 .
-                                                        '"
-                                                               href="/">' .
-                                                        __('common.delete') .
-                                                        '</a>',
-                                                    ];
-                                                @endphp
-                                                <x-drop-down-action-component :routeList="$routeList" />
-                                            </td>
-                                        </tr>
-
-                                        <tr>
-                                            <td>2</td>
-                                            <td>
-                                                Subject 2
-                                            </td>
-
-                                            <td>
-                                                Practical
-                                            </td>
-                                            <td>
-                                                <a href="/subject-code">P223</a>
-                                            </td>
-
-
-                                            <td valign="top">
-                                                @php
-                                                    $routeList = [
-                                                        '<a class="dropdown-item"
-                                                               href="/">' .
-                                                        __('common.edit') .
-                                                        '</a>',
-                                                        '<a class="dropdown-item" data-toggle="modal"
-                                                               data-target="#deleteClassModal' .
-                                                        1 .
-                                                        '"
-                                                               href="/">' .
-                                                        __('common.delete') .
-                                                        '</a>',
-                                                    ];
-                                                @endphp
-                                                <x-drop-down-action-component :routeList="$routeList" />
-                                            </td>
-                                        </tr>
-
-                                        <div class="modal fade admin-query" id="deleteClassModal1">
-                                            <div class="modal-dialog modal-dialog-centered">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h4 class="modal-title">@lang('academics.delete_class')</h4>
-                                                        <button type="button" class="close"
-                                                            data-dismiss="modal">&times;
-                                                        </button>
-                                                    </div>
-
-                                                    <div class="modal-body">
-                                                        <div class="text-center">
+                                                        <div class="modal-body text-center">
                                                             <h4>@lang('common.are_you_sure_to_delete')</h4>
-                                                        </div>
-
-                                                        <div class="mt-40 d-flex justify-content-between">
-                                                            <button type="button" class="primary-btn tr-bg"
-                                                                data-dismiss="modal">@lang('common.cancel')</button>
-                                                            <a href="/" class="text-light">
-                                                                <button class="primary-btn fix-gr-bg"
-                                                                    type="submit">@lang('common.delete')</button>
-                                                            </a>
+                                                            <div class="mt-40 d-flex justify-content-between">
+                                                                <button type="button" class="primary-btn tr-bg"
+                                                                    data-dismiss="modal">@lang('common.cancel')</button>
+                                                                <form action="{{ route('subject.destroy', $subject->id) }}"
+                                                                    method="POST">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <button class="primary-btn fix-gr-bg"
+                                                                        type="submit">@lang('common.delete')</button>
+                                                                </form>
+                                                            </div>
                                                         </div>
                                                     </div>
-
                                                 </div>
                                             </div>
-                                        </div>
+                                        @endforeach
                                     </tbody>
                                 </table>
                             </x-table>
