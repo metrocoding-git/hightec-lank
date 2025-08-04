@@ -82,21 +82,22 @@ Route::controller(HomeController::class)->group(callback: function () {
     Route::get('student/student-info/student-export', 'studentExport')->name('student-export');
 
 
-    Route::get('fee-group', 'feeGroup')->name('fee-group');
-    Route::get('fee-type', 'feeType')->name('fee-type');
-    Route::get('fee-invoice', 'feeInvoice')->name('fee-invoice');
-    Route::get('add-invoice', 'addInvoice')->name('add-invoice');
-    Route::get('fee-invoice-setting', 'feeInvoiceSetting')->name('fee-invoice-setting');
-    Route::get('fee-return', 'feeReturn')->name('fee-return');
+    Route::get('student/fees/fee-group', 'feeGroup')->name('fee-group');
+    Route::get('student/fees/fee-type', 'feeType')->name('fee-type');
+    Route::get('student/fees/fee-invoice', 'feeInvoice')->name('fee-invoice');
+    Route::get('student/fees/add-invoice', 'addInvoice')->name('add-invoice');
+    Route::get('student/fees/fee-invoice-setting', 'feeInvoiceSetting')->name('fee-invoice-setting');
+    Route::get('student/fees/fee-return', 'feeReturn')->name('fee-return');
 
+    Route::get('account/inventory/item-category', 'itemCategory')->name('item-category');
+    Route::get('account/inventory/item-list', 'itemList')->name('item-list');
+    Route::get('account/inventory/supplier', 'supplier')->name('supplier');
+    Route::get('account/inventory/item-receive', 'itemReceive')->name('item-receive');
+    Route::get('account/inventory/item-receive-list', 'itemReceiveList')->name('item-receive-list');
+    Route::get('account/inventory/item-issue', 'itemIssue')->name('item-issue');
+    Route::get('account/inventory/item-sell', 'itemSell')->name('item-sell');
+    Route::get('account/inventory/item-sell-list', 'itemSellList')->name('item-sell-list');
 
-    Route::get('item-category', 'itemCategory')->name('item-category');
-    Route::get('item-list', 'itemList')->name('item-list');
-    Route::get('supplier', 'supplier')->name('supplier');
-    Route::get('item-receive', 'itemReceive')->name('item-receive');
-    Route::get('item-receive-list', 'itemReceiveList')->name('item-receive-list');
-    Route::get('item-issue', 'itemIssue')->name('item-issue');
-    Route::get('item-sell', 'itemSell')->name('item-sell');
 });
 Route::controller(LoginController::class)->group(function () {
     Route::get('login', 'index')->name('login');
