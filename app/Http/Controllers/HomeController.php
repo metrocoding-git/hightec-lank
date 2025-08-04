@@ -151,4 +151,78 @@ class HomeController extends Controller
     {
         return view('pages.student.student-info.student-export');
     }
+
+
+
+    public function feeGroup()
+    {
+        return view('pages.student.fees.fee-group');
+    }
+
+    public function feeType()
+    {
+        return view('pages.student.fees.fee-type');
+    }
+
+    public function feeInvoice()
+    {
+        return view('pages.student.fees.fee-invoice');
+    }
+
+    public function addInvoice()
+    {
+        return view('pages.student.fees.add-invoice');
+    }
+
+    public function feeInvoiceSetting()
+    {
+        return view('pages.student.fees.fee-invoice-setting');
+    }
+
+    public function feeReturn()
+    {
+        return view('pages.student.fees.fee-return');
+    }
+
+
+
+    public function itemCategory()
+    {
+        return view('pages.account.inventory.item-category');
+    }
+
+
+    public function itemList()
+    {
+        return view('pages.account.inventory.item-list');
+    }
+
+    public function supplier()
+    {
+        return view('pages.account.inventory.supplier');
+    }
+
+    public function itemReceive()
+    {
+        return view('pages.account.inventory.item-receive');
+    }
+
+    public function itemReceiveList()
+    {
+        return view('pages.account.inventory.item-receive-list');
+    }
+
+    public function itemIssue()
+    {
+        return view('pages.account.inventory.item-issue');
+    }
+    public function itemSell()
+    {
+        return view('pages.account.inventory.item-sell');
+    }
+
+    public function itemSellList()
+    {
+        return view('pages.account.inventory.item-sell-list');
+    }
 }

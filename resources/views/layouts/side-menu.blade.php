@@ -209,7 +209,8 @@
                     <span>Student Info</span>
                 </div>
             </a>
-            <ul class="mm-collapse {{ request()->is('student-info') || request()->is('student/student-info/*') ? 'mm-show' : '' }}">
+            <ul
+                class="mm-collapse {{ request()->is('student-info') || request()->is('student/student-info/*') ? 'mm-show' : '' }}">
                 <li>
                     <a href="/student/student-info/student-category"
                         class="{{ request()->is('student/student-info/student-category') ? 'active a' : '' }}">
@@ -229,12 +230,14 @@
                     </a>
                 </li>
                 <li>
-                    <a href="/student/student-info/disabled-student" class="{{ request()->is('student/student-info/disabled-student') ? 'active a' : '' }}">
+                    <a href="/student/student-info/disabled-student"
+                        class="{{ request()->is('student/student-info/disabled-student') ? 'active a' : '' }}">
                         Disabled Students
                     </a>
                 </li>
                 <li>
-                    <a href="/student/student-info/student-attendance" class="{{ request()->is('student/student-info/student-attendance') ? 'active a' : '' }}">
+                    <a href="/student/student-info/student-attendance"
+                        class="{{ request()->is('student/student-info/student-attendance') ? 'active a' : '' }}">
                         Student Attendance
                     </a>
                 </li>
@@ -248,7 +251,7 @@
         {{-- ----- --}}
 
         {{-- Fees Section --}}
-        <li class="fees_section">
+        <li class="fees_section {{ request()->is('fees') || request()->is('student/fees/*') ? 'mm-active' : '' }}">
             <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
                 <div class="nav_icon_small">
                     <span class="fas fa-bars"></span>
@@ -257,34 +260,40 @@
                     <span>Fees</span>
                 </div>
             </a>
-            <ul class="mm-collapse">
+            <ul class="mm-collapse {{ request()->is('fees') || request()->is('student/fees/*') ? 'mm-show' : '' }}">
                 <li>
-                    <a href="fee-group" class="">
+                    <a href="/student/fees/fee-group"
+                        class="{{ request()->is('student/fees/fee-group') ? 'active a' : '' }}">
                         Fee Group
                     </a>
                 </li>
                 <li>
-                    <a href="fee-type" class="">
+                    <a href="/student/fees/fee-type"
+                        class="{{ request()->is('student/fees/fee-type') ? 'active a' : '' }}">
                         Fee Type
                     </a>
                 </li>
                 <li>
-                    <a href="fee-invoice" class="">
+                    <a href="/student/fees/fee-invoice"
+                        class="{{ request()->is('student/fees/fee-invoice') ? 'active a' : '' }}">
                         Fee Invoice
                     </a>
                 </li>
                 <li>
-                    <a href="add-invoice" class="">
+                    <a href="/student/fees/add-invoice"
+                        class="{{ request()->is('student/fees/add-invoice') ? 'active a' : '' }}">
                         Add Invoice
                     </a>
                 </li>
                 <li>
-                    <a href="fee-invoice-setting" class="">
+                    <a href="/student/fees/fee-invoice-setting"
+                        class="{{ request()->is('student/fees/fee-invoice-setting') ? 'active a' : '' }}">
                         Fee Invoice Setting
                     </a>
                 </li>
                 <li>
-                    <a href="fee-return" class="">
+                    <a href="/student/fees/fee-return"
+                        class="{{ request()->is('student/fees/fee-return') ? 'active a' : '' }}">
                         Fee Return
                     </a>
                 </li>
@@ -295,12 +304,13 @@
 
 
         {{-- Inventory Section --}}
-        <span class="menu_seperator" id="seperator_inventory_section" data-section="inventory_section">Inventory
+        <span class="menu_seperator" id="seperator_inventory_section" data-section="inventory_section">Account
             Section
         </span>
 
         {{-- Inventory Section --}}
-        <li class="inventory_section">
+        <li
+            class="inventory_section {{ request()->is('inventory') || request()->is('account/inventory/*') ? 'mm-active' : '' }}">
             <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
                 <div class="nav_icon_small">
                     <span class="fas fa-bars"></span>
@@ -309,40 +319,54 @@
                     <span>Inventory</span>
                 </div>
             </a>
-            <ul class="mm-collapse">
+            <ul
+                class="mm-collapse {{ request()->is('inventory') || request()->is('account/inventory/*') ? 'mm-show' : '' }}">
                 <li>
-                    <a href="item-category" class="">
+                    <a href="/account/inventory/item-category"
+                        class="{{ request()->is('account/inventory/item-category') ? 'active a' : '' }}">
                         Item Category
                     </a>
                 </li>
                 <li>
-                    <a href="item-list" class="">
+                    <a href="/account/inventory/item-list"
+                        class="{{ request()->is('account/inventory/item-list') ? 'active a' : '' }}">
                         Item List
                     </a>
                 </li>
                 <li>
-                    <a href="supplier" class="">
+                    <a href="/account/inventory/supplier"
+                        class="{{ request()->is('account/inventory/supplier') ? 'active a' : '' }}">
                         Supplier
                     </a>
                 </li>
                 <li>
-                    <a href="item-receive" class="">
+                    <a href="/account/inventory/item-receive"
+                        class="{{ request()->is('account/inventory/item-receive') ? 'active a' : '' }}">
                         Item Receive
                     </a>
                 </li>
                 <li>
-                    <a href="item-receive-list" class="">
+                    <a href="/account/inventory/item-receive-list"
+                        class="{{ request()->is('account/inventory/item-receive-list') ? 'active a' : '' }}">
                         Item Receive List
                     </a>
                 </li>
                 <li>
-                    <a href="item-issue" class="">
+                    <a href="/account/inventory/item-issue"
+                        class="{{ request()->is('account/inventory/item-issue') ? 'active a' : '' }}">
                         Item Issue
                     </a>
                 </li>
                 <li>
-                    <a href="item-sell" class="">
+                    <a href="/account/inventory/item-sell"
+                        class="{{ request()->is('account/inventory/item-sell') ? 'active a' : '' }}">
                         Item Sell
+                    </a>
+                </li>
+                <li>
+                    <a href="/account/inventory/item-sell-list"
+                        class="{{ request()->is('account/inventory/item-sell-list') ? 'active a' : '' }}">
+                        Item Sell List
                     </a>
                 </li>
             </ul>
