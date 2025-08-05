@@ -25,6 +25,6 @@ class CourseIntakeController extends Controller
 
     public function index() {
 
-        $$courseIntakes = CourseIntake::with(['course', intake])->get();
+        // $$courseIntakes = CourseIntake::with(['course', intake])->get();
     }
 }

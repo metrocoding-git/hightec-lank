@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\IntakeController;
+use App\Http\Controllers\LessonController;
 use App\Http\Controllers\SubjectController;
 use Illuminate\Support\Facades\Route;
 use PhpParser\Node\Expr\Assign;
@@ -45,11 +46,17 @@ Route::controller(AssignSubjectController::class)->prefix('administration/academ
     Route::delete('destroy/{id}', 'destroy')->name('assign-subject.destroy');
 });
 
+Route::controller(LessonController::class)->prefix('administration/lesson-plan/lesson')->group(callback: function () {
+    Route::get('/', 'index')->name('lesson.index');
+    Route::post('store', 'store')->name('lesson.store');
+    Route::post('update/{id}', 'update')->name('lesson.update');
+    Route::get('edit/{id}', 'edit')->name('lesson.edit');
+    Route::delete('destroy/{id}', 'destroy')->name('lesson.destroy');
+
+});
+
 Route::controller(HomeController::class)->group(callback: function () {
     Route::get('dashboard', 'dashboard')->name('dashboard');
-
-
-
 
     Route::get('administration/study-material/upload-content', 'uploadContent')->name('upload-content');
     Route::get('administration/study-material/study-material-download', 'studyMaterialDownload')->name('study-material-download  ');
@@ -58,7 +65,7 @@ Route::controller(HomeController::class)->group(callback: function () {
 
 
 
-    Route::get('administration/lesson-plan/lesson', 'lesson')->name('lesson');
+
     Route::get('administration/lesson-plan/topic', 'topic')->name('topic');
     Route::get('administration/lesson-plan/topic-overview', 'topicOverview')->name('topic-overview');
 
@@ -97,7 +104,6 @@ Route::controller(HomeController::class)->group(callback: function () {
     Route::get('account/inventory/item-issue', 'itemIssue')->name('item-issue');
     Route::get('account/inventory/item-sell', 'itemSell')->name('item-sell');
     Route::get('account/inventory/item-sell-list', 'itemSellList')->name('item-sell-list');
-
 });
 Route::controller(LoginController::class)->group(function () {
     Route::get('login', 'index')->name('login');
