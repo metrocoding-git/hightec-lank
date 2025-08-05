@@ -21,7 +21,7 @@
                 {{-- @if (userPermission('lesson.create-store')) --}}
                 <div class="row">
                     <div class="offset-lg-10 col-lg-2 text-right col-md-12 mb-20">
-                        <a href="{{ route('exam') }}" class="primary-btn small fix-gr-bg">
+                        <a href="{{ route('lesson.index') }}" class="primary-btn small fix-gr-bg">
                             <span class="ti-plus pr-2"></span>
                             @lang('common.add')
                         </a>
@@ -36,7 +36,12 @@
                 {{ Form::open(['class' => 'form-horizontal', 'route' => 'lesson.storelesson', 'method' => 'POST']) }}
             @endif
         @endif --}}
-            <form class="form-horizontal" method="POST">
+
+
+            <form class="form-horizontal" method="POST"
+                action="{{ isset($lesson) ? route('lesson.update', $lesson->id) : route('lesson.store') }}">
+                @csrf
+                @method('POST')
                 <div class="row">
                     <div class="col-lg-4 col-xl-3">
                         <div class="row">
@@ -44,178 +49,172 @@
                                 <div class="white-box">
                                     <div class="main-title">
                                         <h3 class="mb-15">
-                                            @if (isset($data))
-                                                @lang('lesson::lesson.edit_lesson')
-                                            @else
-                                                Lesson Adding
-                                            @endif
+                                            {{ isset($lesson) ? __('lesson::lesson.edit_lesson') : 'Lesson Adding' }}
                                         </h3>
                                     </div>
+
                                     <div class="add-visitor">
-
-
+                                        {{-- Course --}}
                                         <div class="row">
                                             <div class="col-lg-12">
-                                                <label class="primary_input_label" for="">
-                                                    Course
-                                                    <span class="text-danger"> *</span>
-                                                </label>
+                                                <label class="primary_input_label">Course <span
+                                                        class="text-danger">*</span></label>
                                                 <select
-                                                    class="primary_select form-control {{ $errors->has('class') ? ' is-invalid' : '' }}"
-                                                    id="select_class_lesson" name="class">
-                                                    <option data-display="Select Course *" value="">
-                                                        Select Course *
-                                                    </option>
-                                                    <option value="class1">
-                                                        Course 1</option>
-                                                    <option value="class2">
-                                                        Course 2</option>
+                                                    class="primary_select form-control @error('course_id') is-invalid @enderror"
+                                                    name="course_id">
+                                                    <option value="">Select Course *</option>
+                                                    @foreach ($courses as $course)
+                                                        <option value="{{ $course->id }}"
+                                                            {{ old('course_id', $lesson->course_id ?? '') == $course->id ? 'selected' : '' }}>
+                                                            {{ $course->name }}
+                                                        </option>
+                                                    @endforeach
                                                 </select>
-                                                @if ($errors->has('class'))
-                                                    <span class="text-danger invalid-select" role="alert">
-                                                        {{ $errors->first('class') }}
-                                                    </span>
-                                                @endif
+                                                @error('course_id')
+                                                    <span class="text-danger invalid-select"
+                                                        role="alert">{{ $message }}</span>
+                                                @enderror
                                             </div>
                                         </div>
 
+                                        {{-- Intake --}}
                                         <div class="row mt-15">
                                             <div class="col-lg-12">
-                                                <label class="primary_input_label" for="">
-                                                    Intake
-                                                    <span class="text-danger"> *</span>
-                                                </label>
+                                                <label class="primary_input_label">Intake <span
+                                                        class="text-danger">*</span></label>
                                                 <select
-                                                    class="primary_select form-control {{ $errors->has('class') ? ' is-invalid' : '' }}"
-                                                    id="select_class_lesson" name="class">
-                                                    <option data-display="Select Intake *" value="">
-                                                        Select Intake *
-                                                    </option>
-                                                    <option value="class1">
-                                                        Intake 1</option>
-                                                    <option value="class2">
-                                                        Intake 2</option>
+                                                    class="primary_select form-control @error('intake_id') is-invalid @enderror"
+                                                    name="intake_id">
+                                                    <option value="">Select Intake *</option>
+                                                    @foreach ($intakes as $intake)
+                                                        <option value="{{ $intake->id }}"
+                                                            {{ old('intake_id', $lesson->intake_id ?? '') == $intake->id ? 'selected' : '' }}>
+                                                            {{ $intake->name }}
+                                                        </option>
+                                                    @endforeach
                                                 </select>
-                                                @if ($errors->has('class'))
-                                                    <span class="text-danger invalid-select" role="alert">
-                                                        {{ $errors->first('class') }}
-                                                    </span>
-                                                @endif
+                                                @error('intake_id')
+                                                    <span class="text-danger invalid-select"
+                                                        role="alert">{{ $message }}</span>
+                                                @enderror
                                             </div>
                                         </div>
 
+                                        {{-- Subject --}}
                                         <div class="row mt-15">
-                                            <div class="col-lg-12" id="select_subject_div">
-                                                <label class="primary_input_label" for="">
-                                                    {{ __('common.subject') }}
-                                                    <span class="text-danger"> *</span>
-                                                </label>
+                                            <div class="col-lg-12">
+                                                <label class="primary_input_label">Subject <span
+                                                        class="text-danger">*</span></label>
                                                 <select
-                                                    class="primary_select form-control{{ $errors->has('subject') ? ' is-invalid' : '' }}"
-                                                    id="select_subject" name="subject">
-                                                    <option data-display="@lang('common.select_subjects') *" value="">
-                                                        @lang('common.select_subjects')*
-                                                    </option>
+                                                    class="primary_select form-control @error('subject_id') is-invalid @enderror"
+                                                    name="subject_id">
+                                                    <option value="">Select Subject *</option>
+                                                    @foreach ($subjects as $subject)
+                                                        <option value="{{ $subject->id }}"
+                                                            {{ old('subject_id', $lesson->subject_id ?? '') == $subject->id ? 'selected' : '' }}>
+                                                            {{ $subject->name }}
+                                                        </option>
+                                                    @endforeach
                                                 </select>
-                                                <div class="pull-right loader" id="select_subject_loader"
-                                                    style="margin-top: -30px;padding-right: 21px;">
-                                                    <img src="{{ asset('Modules/Lesson/Resources/assets/images/pre-loader.gif') }}"
-                                                        alt="" style="width: 28px;height:28px;">
-                                                </div>
-                                                @if ($errors->has('subject'))
-                                                    <span class="text-danger invalid-select" role="alert">
-                                                        {{ $errors->first('subject') }}
-                                                    </span>
-                                                @endif
+                                                @error('subject_id')
+                                                    <span class="text-danger invalid-select"
+                                                        role="alert">{{ $message }}</span>
+                                                @enderror
                                             </div>
                                         </div>
 
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-lg-12">
-                                <div class="white-box mt-10">
-                                    <div class="row mb-3 align-items-center">
-                                        <div class="col-xl-9 col-lg-8 col-md-10 col-9">
-                                            <div class="main-title my-0 md:mt-auto">
-                                                <h5 class="mb-0">Lesson Names</h5>
-                                            </div>
-                                        </div>
-                                        <div class="col-xl-3 col-lg-4 col-md-2 col-3 text-right">
-                                            <button type="button" class="primary-btn icon-only fix-gr-bg"
-                                                onclick="addRowLesson();" id="addRowBtn">
-                                                <span class="ti-plus"></span></button>
-                                        </div>
-                                    </div>
-                                    <table class="" id="productTable">
-                                        <thead>
-                                            <tr>
-
-
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr id="row1" class="mt-40">
-                                                <td class="">
-                                                    <input type="hidden" name="url" id="url"
-                                                        value="{{ URL::to('/') }}">
-                                                    <div class="primary_input">
-
-                                                        <input
-                                                            class="primary_input_field form-control{{ $errors->has('topic') ? ' is-invalid' : '' }}"
-                                                            type="text" id="lesson"
-                                                            placeholder="{{ __('common.title') }}" name="lesson[]"
-                                                            autocomplete="off"
-                                                            value="{{ isset($editData) ? $editData->exam_title : '' }}">
-
+                                        {{-- Lesson Names --}}
+                                        <div class="row">
+                                            <div class="col-lg-12">
+                                                <div class="white-box mt-10">
+                                                    <div class="row mb-3 align-items-center">
+                                                        <div class="col-xl-9 col-lg-8 col-md-10 col-9">
+                                                            <div class="main-title my-0 md:mt-auto">
+                                                                <h5 class="mb-0">Lesson Names</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-xl-3 col-lg-4 col-md-2 col-3 text-right">
+                                                            <button type="button" class="primary-btn icon-only fix-gr-bg"
+                                                                onclick="addRowLesson();" id="addRowBtn">
+                                                                <span class="ti-plus"></span>
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                </td>
 
-                                                <td>
-                                                    <button class="primary-btn icon-only fix-gr-bg ml-2" type="button">
-                                                        <span class="ti-trash"></span>
-                                                    </button>
+                                                    <table class="" id="productTable">
+                                                        <thead></thead>
+                                                        <tbody>
+                                                            @if (isset($lesson) && $lesson->titles)
+                                                                @foreach ($lesson->titles as $index => $title)
+                                                                    <tr id="row{{ $index + 1 }}">
+                                                                        <td>
+                                                                            <input type="hidden" name="url"
+                                                                                id="url" value="{{ URL::to('/') }}">
+                                                                            <div class="primary_input">
+                                                                                <input
+                                                                                    class="primary_input_field form-control"
+                                                                                    type="text" name="lesson[]"
+                                                                                    value="{{ old('lesson.' . $index, $title) }}"
+                                                                                    placeholder="{{ __('common.title') }}"
+                                                                                    autocomplete="off">
 
-                                                </td>
-                                            </tr>
+                                                                                @if ($errors->has('lesson.' . $index))
+                                                                                    <span
+                                                                                        class="text-danger">{{ $errors->first('lesson.' . $index) }}</span>
+                                                                                @endif
+                                                                            </div>
+                                                                        </td>
+                                                                        <td>
+                                                                            <button
+                                                                                class="primary-btn icon-only fix-gr-bg ml-2"
+                                                                                type="button" onclick="removeRow(this)">
+                                                                                <span class="ti-trash"></span>
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                @endforeach
+                                                            @else
+                                                                <tr id="row1">
+                                                                    <td>
+                                                                        <div class="primary_input">
+                                                                            <input class="primary_input_field form-control"
+                                                                                type="text" name="lesson[]"
+                                                                                value="{{ old('lesson.0') }}"
+                                                                                placeholder="{{ __('common.title') }}"
+                                                                                autocomplete="off">
 
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
+                                                                            @if ($errors->has('lesson.0'))
+                                                                                <span
+                                                                                    class="text-danger">{{ $errors->first('lesson.0') }}</span>
+                                                                            @endif
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        <button class="primary-btn icon-only fix-gr-bg ml-2"
+                                                                            type="button" onclick="removeRow(this)">
+                                                                            <span class="ti-trash"></span>
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                            @endif
+                                                        </tbody>
+                                                    </table>
 
-                        {{-- @php
-                            $tooltip = '';
-                            if (userPermission('lesson.create-store')) {
-                                $tooltip = '';
-                            } elseif (userPermission('lesson-edit') && isset($data)) {
-                                $tooltip = '';
-                            } else {
-                                $tooltip = 'You have no permission to add';
-                            }
-                        @endphp --}}
-                        <div class="row mt-15">
-                            <div class="col-lg-12">
-                                <div class="white-box">
-                                    <div class="row mt-40">
-                                        <div class="col-lg-12 text-center">
-                                            <button class="primary-btn fix-gr-bg" data-toggle="tooltip"
-                                                title="{{ @$tooltip }}">
-                                                <span class="ti-check"></span>
-                                                @if (isset($data))
-                                                    @lang('lesson::lesson.update_lesson')
-                                                @else
-                                                    Save Lesson
-                                                @endif
-
-
-                                            </button>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
+
+                                        {{-- Submit --}}
+                                        <div class="row mt-40">
+                                            <div class="col-lg-12 text-center">
+                                                <button class="primary-btn fix-gr-bg" data-toggle="tooltip"
+                                                    title="{{ $tooltip ?? '' }}">
+                                                    <span class="ti-check"></span>
+                                                    {{ isset($lesson) ? __('lesson::lesson.update_lesson') : 'Save Lesson' }}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div> {{-- /.add-visitor --}}
                                 </div>
                             </div>
                         </div>
@@ -237,83 +236,90 @@
                             <x-table>
                                 <table id="table_id" class="table data-table" cellspacing="0" width="100%">
                                     <thead>
-
                                         <tr>
                                             <th>@lang('common.sl')</th>
-
                                             <th>Course</th>
-                                            <th> Intake </th>
+                                            <th>Intake</th>
                                             <th>Subject</th>
                                             <th>Lessons</th>
                                             <th>@lang('common.action')</th>
                                         </tr>
                                     </thead>
-
                                     <tbody>
+                                        @foreach ($lessons as $index => $lesson)
+                                            <tr>
+                                                <td>{{ $index + 1 }}</td>
 
-                                        <tr>
-                                            <td>1</td>
-                                            <td> Intake 20 </td>
+                                                {{-- Assuming relations are set in Lesson model --}}
+                                                <td>{{ $lesson->course->name ?? 'N/A' }}</td>
+                                                <td>{{ $lesson->intake->name ?? 'N/A' }}</td>
+                                                <td>{{ $lesson->subject->name ?? 'N/A' }}</td>
 
-                                            <td>Course 1</td>
-                                            <td>Subject 1</td>
+                                                <td>
+                                                    @php
+                                                        // Decode the JSON stored in 'name' column to array
+                                                        $titles = json_decode($lesson->name, true) ?? [];
+                                                    @endphp
 
-
-                                            <td>
-                                                <div class="row">
-                                                    <div class="col-sm-10">Introduction,</div>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-sm-10">Chapter 1,</div>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-sm-10">Conclusion</div>
-                                                </div>
-                                            </td>
-
-                                            <td>
-                                                <x-drop-down>
-                                                    <a class="dropdown-item" href="/">
-                                                        @lang('common.edit')
-                                                    </a>
-                                                    <a class="dropdown-item" data-toggle="modal"
-                                                        data-target="#deleteExamModal1" href="#">
-                                                        @lang('common.delete')
-                                                    </a>
-                                                </x-drop-down>
-                                            </td>
-                                        </tr>
-
-                                        <div class="modal fade admin-query" id="deleteExamModal1">
-                                            <div class="modal-dialog modal-dialog-centered">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h4 class="modal-title">@lang('lesson::lesson.delete_lesson')</h4>
-                                                        <button type="button" class="close"
-                                                            data-dismiss="modal">&times;</button>
-                                                    </div>
-
-                                                    <div class="modal-body">
-                                                        <div class="text-center">
-                                                            <h4>@lang('common.are_you_sure_to_delete')</h4>
+                                                    @foreach ($titles as $title)
+                                                        <div class="row">
+                                                            <div class="col-sm-10">{{ $title }},</div>
                                                         </div>
+                                                    @endforeach
+                                                </td>
 
-                                                        <div class="mt-40 d-flex justify-content-between">
-                                                            <button type="button" class="primary-btn tr-bg"
-                                                                data-dismiss="modal">
-                                                                @lang('common.cancel')
-                                                            </button>
-                                                            <form>
-                                                                <button class="primary-btn fix-gr-bg" type="submit">
-                                                                    @lang('common.delete')
-                                                                </button>
-                                                            </form>
+                                                <td>
+                                                    <x-drop-down>
+                                                        <a class="dropdown-item"
+                                                            href="{{ route('lesson.edit', $lesson->id) }}">
+                                                            @lang('common.edit')
+                                                        </a>
+                                                        <a class="dropdown-item" data-toggle="modal"
+                                                            data-target="#deleteLessonModal{{ $lesson->id }}"
+                                                            href="#">
+                                                            @lang('common.delete')
+                                                        </a>
+                                                    </x-drop-down>
+
+                                                    {{-- Delete confirmation modal --}}
+                                                    <div class="modal fade admin-query"
+                                                        id="deleteLessonModal{{ $lesson->id }}">
+                                                        <div class="modal-dialog modal-dialog-centered">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <h4 class="modal-title">@lang('lesson::lesson.delete_lesson')</h4>
+                                                                    <button type="button" class="close"
+                                                                        data-dismiss="modal">&times;</button>
+                                                                </div>
+
+                                                                <div class="modal-body">
+                                                                    <div class="text-center">
+                                                                        <h4>@lang('common.are_you_sure_to_delete')</h4>
+                                                                    </div>
+
+                                                                    <div class="mt-40 d-flex justify-content-between">
+                                                                        <button type="button" class="primary-btn tr-bg"
+                                                                            data-dismiss="modal">
+                                                                            @lang('common.cancel')
+                                                                        </button>
+                                                                        <form
+                                                                            action="{{ route('lesson.destroy', $lesson->id) }}"
+                                                                            method="POST">
+                                                                            @csrf
+                                                                            @method('DELETE')
+                                                                            <button class="primary-btn fix-gr-bg"
+                                                                                type="submit">
+                                                                                @lang('common.delete')
+                                                                            </button>
+                                                                        </form>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
+                                                </td>
+                                            </tr>
+                                        @endforeach
                                     </tbody>
                                 </table>
                             </x-table>
@@ -331,38 +337,21 @@
         addRowLesson = () => {
             $("#addRowBtn").button("loading");
             var tableLength = $("#productTable tbody tr").length;
-            var url = $("#url").val();
-            var tableRow;
-            var arrayNumber;
-            var count;
-            if (tableLength > 0) {
-                tableRow = $("#productTable tbody tr:last").attr("id");
-                arrayNumber = $("#productTable tbody tr:last").attr("class");
-                count = tableRow.substring(3);
-                count = Number(count) + 1;
-                arrayNumber = Number(arrayNumber) + 1;
-            } else {
-                // no table row
-                count = 1;
-                arrayNumber = 0;
-            }
+            var count = tableLength + 1;
 
             $("#addRowBtn").button("reset");
-            var newRow = "<tr id='row1' class='mt-30'>";
-            newRow += "<td class=''>";
+
+            var newRow = "<tr id='row" + count + "'>";
+            newRow += "<td>";
             newRow += "<div class='primary_input pt-10'>";
             newRow +=
-                "<input class='primary_input_field form-control' type='text' placeholder='title' id='lesson' name='lesson[]' autocomplete='off'>";
-
+                "<input class='primary_input_field form-control' type='text' placeholder='title' name='lesson[]' autocomplete='off'>";
             newRow += "</div>";
             newRow += "</td>";
-
-            newRow += "<td  class=''>";
-            newRow +=
-                "<button class='primary-btn icon-only fix-gr-bg' type='button' id='removeMark'>";
+            newRow += "<td>";
+            newRow += "<button class='primary-btn icon-only fix-gr-bg ml-2' type='button' onclick='removeRow(this)'>";
             newRow += "<span class='ti-trash'></span>";
             newRow += "</button>";
-
             newRow += "</td>";
             newRow += "</tr>";
 
@@ -373,6 +362,19 @@
             }
             $(".common-select").addClass("new_select_css");
         };
+
+
+        function removeRow(button) {
+            const row = $(button).closest('tr');
+            const rowIndex = row.index();
+
+            // Prevent removing the first row (index 0)
+            if (rowIndex === 0) {
+                return;
+            }
+
+            row.remove();
+        }
 
         function deleteLesson(id) {
             var modal = $('#deleteLessonModal');
