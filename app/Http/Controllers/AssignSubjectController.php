@@ -65,42 +65,51 @@ class AssignSubjectController extends Controller
     {
 
         $request->validate([
-            'intake_id' => 'required|exists:intakes,id',
-            'course_id' => 'required|exists:courses,id',
+            'intake_id' => 'required',
+            'course_id' => 'required',
             'subjects' => 'required|array|min:1',
             'subjects.*' => 'exists:subjects,id',
         ]);
 
-        $intakeId = $request->intake_id;
-        $courseId = $request->course_id;
-        $newSubjectIds = $request->subjects;
+        // Fetch the original lesson just to validate it exists
+        $assignSubject = AssignSubject::findOrFail($id);
 
-        // Get current subject_ids for this intake_id + course_id
-        $currentSubjectIds = AssignSubject::where('intake_id', $intakeId)
-            ->where('course_id', $courseId)
-            ->pluck('subject_id')
-            ->toArray();
+        // Get all existing lessons for the same course + intake + subject
+        $existingSubjects = AssignSubject::where('course_id', $assignSubject->course_id)
+            ->where('intake_id', $assignSubject->intake_id)
+            ->get();
 
-        // Find subjects to add and delete
-        $toAdd = array_diff($newSubjectIds, $currentSubjectIds);
-        $toDelete = array_diff($currentSubjectIds, $newSubjectIds);
 
-        // Delete removed subjects
-        if (!empty($toDelete)) {
-            AssignSubject::where('intake_id', $intakeId)
-                ->where('course_id', $courseId)
-                ->whereIn('subject_id', $toDelete)
-                ->delete();
+        $newTitles = $request->subjects;
+        $existingCount = $existingSubjects->count();
+        $newCount = count($newTitles);
+
+
+        // Update existing lessons
+        foreach ($existingSubjects as $index => $existingSubject) {
+            if (isset($newTitles[$index])) {
+                $existingSubject->update([
+                    'name' => $newTitles[$index],
+                    'course_id' => $request->course_id,
+                    'intake_id' => $request->intake_id
+                ]);
+            } else {
+                // Remove extra old lessons not in new list
+                $existingSubject->delete();
+            }
         }
 
-        // Add new subjects
-        foreach ($toAdd as $subjectId) {
-            AssignSubject::create([
-                'intake_id' => $intakeId,
-                'course_id' => $courseId,
-                'subject_id' => $subjectId,
-            ]);
+        // Add any new lesson titles if more than existing
+        if ($newCount > $existingCount) {
+            for ($i = $existingCount; $i < $newCount; $i++) {
+                AssignSubject::create([
+                    'course_id' => $request->course_id,
+                    'intake_id' => $request->intake_id,
+                    'subject_id' => $newTitles[$i],
+                ]);
+            }
         }
+
         return redirect()->route('assign-subject.index')->with('message-success', 'Assignment updated successfully!');
     }
 
@@ -132,7 +141,12 @@ class AssignSubjectController extends Controller
 
     public function destroy($id)
     {
-        Subject::findOrFail($id)->delete();
+        $assignSubject = AssignSubject::findOrFail($id);
+        $selectedIntake = $assignSubject->intake_id;
+        $selectedCourse = $assignSubject->course_id;
+
+        AssignSubject::where('intake_id', $selectedIntake)->where('course_id', $selectedCourse)->delete();
+
         return redirect()->route('assign-subject.index')->with('message-success-delete', 'Subject deleted successfully.');
     }
 }

@@ -64,7 +64,7 @@
                                     <div class="main-title">
                                         <h3 class="mb-20">
                                             @if (isset($assignSubjectId))
-                                            Update Assign Subject
+                                                Update Assign Subject
                                             @else
                                                 @lang('academics.assign_subject_create')
                                             @endif
@@ -78,10 +78,15 @@
                                                 <div class="primary_input">
                                                     <label class="primary_input_label">Intake <span>*</span></label>
                                                     @if (isset($assignSubjectId))
-                                                        <input class="primary_input_field form-control" type="text"
-                                                            name="intake_id" id="intake_id"
-                                                            value="{{ $intakes->firstWhere('id', $selectedIntake)?->name }}"
-                                                            readonly>
+                                                        <select name="intake_id"
+                                                            class="primary_select form-control {{ $errors->has('intake_id') ? ' is-invalid' : '' }}" readonly>
+                                                            <option
+                                                                value="{{ $intakes->firstWhere('id', $selectedIntake)?->id }}"
+                                                                selected>
+                                                                {{ $intakes->firstWhere('id', $selectedIntake)?->name }}
+                                                            </option>
+
+                                                        </select>
                                                     @else
                                                         <select name="intake_id"
                                                             class="primary_select form-control {{ $errors->has('intake_id') ? ' is-invalid' : '' }}">
@@ -107,11 +112,16 @@
                                                     <label class="primary_input_label">Course <span>*</span></label>
 
                                                     @if (isset($assignSubjectId))
-                                                        {{-- Read-only: Show course name and keep value via hidden input --}}
-                                                        <input class="primary_input_field form-control" type="text"
-                                                            name="course_id" id="course_id"
-                                                            value="{{ $courses->firstWhere('id', $selectedCourse)?->name }}"
-                                                            readonly>
+
+                                                         <select name="course_id"
+                                                            class="primary_select form-control {{ $errors->has('course_id') ? ' is-invalid' : '' }}" readonly>
+                                                            <option
+                                                                value="{{ $courses->firstWhere('id', $selectedCourse)?->id }}"
+                                                                selected>
+                                                               {{ $courses->firstWhere('id', $selectedCourse)?->name }}
+                                                            </option>
+
+                                                        </select>
                                                     @else
                                                         {{-- Normal selectable dropdown --}}
                                                         <select name="course_id"

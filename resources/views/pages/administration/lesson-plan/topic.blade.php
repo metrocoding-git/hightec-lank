@@ -57,7 +57,7 @@
                                         <div class="row">
                                             <div class="col-lg-12">
                                                 <label class="primary_input_label" for="">
-                                                   Course
+                                                    Course
                                                     <span class="text-danger"> *</span>
                                                 </label>
                                                 <select
@@ -87,7 +87,7 @@
                                         <div class="row mt-15">
                                             <div class="col-lg-12">
                                                 <label class="primary_input_label" for="">
-                                                   Intake
+                                                    Intake
                                                     <span class="text-danger"> *</span>
                                                 </label>
                                                 <select
@@ -138,7 +138,7 @@
                                         <div class="row mt-15">
                                             <div class="col-lg-12">
                                                 <label class="primary_input_label" for="">
-                                                   Lesson
+                                                    Lesson
                                                     <span class="text-danger"> *</span>
                                                 </label>
                                                 <select
@@ -160,78 +160,63 @@
                                             </div>
                                         </div>
 
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
 
-                        <div class="row">
-                            <div class="col-lg-12">
-                                <div class="white-box mt-10">
-                                    <div class="row mb-3 align-items-center">
-                                        <div class="col-xl-9 col-lg-8 col-md-10 col-9">
-                                            <div class="main-title my-0 md:mt-auto">
-                                                <h5 class="mb-0">Topic Names</h5>
+                                        <div class="row">
+                                            <div class="col-lg-12">
+                                                <div class="white-box mt-10">
+                                                    <div class="row mb-3 align-items-center">
+                                                        <div class="col-xl-9 col-lg-8 col-md-10 col-9">
+                                                            <div class="main-title my-0 md:mt-auto">
+                                                                <h5 class="mb-0">Topic Names</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-xl-3 col-lg-4 col-md-2 col-3 text-right">
+                                                            <button type="button" class="primary-btn icon-only fix-gr-bg"
+                                                                onclick="addRowLesson();" id="addRowBtn">
+                                                                <span class="ti-plus"></span></button>
+                                                        </div>
+                                                    </div>
+                                                    <table class="" id="productTable">
+                                                        <thead>
+                                                            <tr>
+
+
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr id="row1" class="mt-40">
+                                                                <td class="">
+                                                                    <input type="hidden" name="url" id="url"
+                                                                        value="{{ URL::to('/') }}">
+                                                                    <div class="primary_input">
+
+                                                                        <input
+                                                                            class="primary_input_field form-control{{ $errors->has('topic') ? ' is-invalid' : '' }}"
+                                                                            type="text" id="lesson"
+                                                                            placeholder="{{ __('common.title') }}"
+                                                                            name="lesson[]" autocomplete="off"
+                                                                            value="{{ isset($editData) ? $editData->exam_title : '' }}">
+
+                                                                    </div>
+                                                                </td>
+
+                                                                <td>
+                                                                    <button class="primary-btn icon-only fix-gr-bg ml-2"
+                                                                        type="button">
+                                                                        <span class="ti-trash"></span>
+                                                                    </button>
+
+                                                                </td>
+                                                            </tr>
+
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div class="col-xl-3 col-lg-4 col-md-2 col-3 text-right">
-                                            <button type="button" class="primary-btn icon-only fix-gr-bg"
-                                                onclick="addRowLesson();" id="addRowBtn">
-                                                <span class="ti-plus"></span></button>
-                                        </div>
-                                    </div>
-                                    <table class="" id="productTable">
-                                        <thead>
-                                            <tr>
 
 
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr id="row1" class="mt-40">
-                                                <td class="">
-                                                    <input type="hidden" name="url" id="url"
-                                                        value="{{ URL::to('/') }}">
-                                                    <div class="primary_input">
-
-                                                        <input
-                                                            class="primary_input_field form-control{{ $errors->has('topic') ? ' is-invalid' : '' }}"
-                                                            type="text" id="lesson"
-                                                            placeholder="{{ __('common.title') }}" name="lesson[]"
-                                                            autocomplete="off"
-                                                            value="{{ isset($editData) ? $editData->exam_title : '' }}">
-
-                                                    </div>
-                                                </td>
-
-                                                <td>
-                                                    <button class="primary-btn icon-only fix-gr-bg ml-2" type="button">
-                                                        <span class="ti-trash"></span>
-                                                    </button>
-
-                                                </td>
-                                            </tr>
-
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- @php
-                            $tooltip = '';
-                            if (userPermission('lesson.create-store')) {
-                                $tooltip = '';
-                            } elseif (userPermission('lesson-edit') && isset($data)) {
-                                $tooltip = '';
-                            } else {
-                                $tooltip = 'You have no permission to add';
-                            }
-                        @endphp --}}
-                        <div class="row mt-15">
-                            <div class="col-lg-12">
-                                <div class="white-box">
-                                    <div class="row mt-40">
+                                         <div class="row mt-40">
                                         <div class="col-lg-12 text-center">
                                             <button class="primary-btn fix-gr-bg" data-toggle="tooltip"
                                                 title="{{ @$tooltip }}">
@@ -246,9 +231,25 @@
                                             </button>
                                         </div>
                                     </div>
+
+
+                                    </div>
                                 </div>
                             </div>
                         </div>
+
+
+                        {{-- @php
+                            $tooltip = '';
+                            if (userPermission('lesson.create-store')) {
+                                $tooltip = '';
+                            } elseif (userPermission('lesson-edit') && isset($data)) {
+                                $tooltip = '';
+                            } else {
+                                $tooltip = 'You have no permission to add';
+                            }
+                        @endphp --}}
+                       
                     </div>
 
             </form>
@@ -276,7 +277,7 @@
                                             <th>Subject</th>
                                             <th>Lesson</th>
                                             <th>Topic</th>
-                                            
+
                                             <th>@lang('common.action')</th>
                                         </tr>
                                     </thead>
@@ -291,7 +292,7 @@
 
                                             <td>Subject 1</td>
                                             <td>Lesson 2 </td>
-                                           
+
 
                                             <td>
                                                 <div class="row">

@@ -7,6 +7,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\IntakeController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\TopicController;
 use Illuminate\Support\Facades\Route;
 use PhpParser\Node\Expr\Assign;
 
@@ -52,7 +53,14 @@ Route::controller(LessonController::class)->prefix('administration/lesson-plan/l
     Route::post('update/{id}', 'update')->name('lesson.update');
     Route::get('edit/{id}', 'edit')->name('lesson.edit');
     Route::delete('destroy/{id}', 'destroy')->name('lesson.destroy');
+});
 
+Route::controller(TopicController::class)->prefix('administration/lesson-plan/topic')->group(callback: function () {
+    Route::get('/', 'index')->name('topic.index');
+    Route::post('store', 'store')->name('topic.store');
+    Route::post('update/{id}', 'update')->name('topic.update');
+    Route::get('edit/{id}', 'edit')->name('topic.edit');
+    Route::delete('destroy/{id}', 'destroy')->name('topic.destroy');
 });
 
 Route::controller(HomeController::class)->group(callback: function () {
@@ -64,9 +72,6 @@ Route::controller(HomeController::class)->group(callback: function () {
 
 
 
-
-
-    Route::get('administration/lesson-plan/topic', 'topic')->name('topic');
     Route::get('administration/lesson-plan/topic-overview', 'topicOverview')->name('topic-overview');
 
 
