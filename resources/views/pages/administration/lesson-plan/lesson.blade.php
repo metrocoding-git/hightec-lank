@@ -144,8 +144,8 @@
                                                     <table class="" id="productTable">
                                                         <thead></thead>
                                                         <tbody>
-                                                            @if (isset($lesson) && $lesson->titles)
-                                                                @foreach ($lesson->titles as $index => $title)
+                                                            @if (isset($groupLessons) && $groupLessons->count())
+                                                                @foreach ($groupLessons as $index => $l)
                                                                     <tr id="row{{ $index + 1 }}">
                                                                         <td>
                                                                             <input type="hidden" name="url"
@@ -154,10 +154,9 @@
                                                                                 <input
                                                                                     class="primary_input_field form-control"
                                                                                     type="text" name="lesson[]"
-                                                                                    value="{{ old('lesson.' . $index, $title) }}"
+                                                                                    value="{{ old('lesson.' . $index, $l->name) }}"
                                                                                     placeholder="{{ __('common.title') }}"
                                                                                     autocomplete="off">
-
                                                                                 @if ($errors->has('lesson.' . $index))
                                                                                     <span
                                                                                         class="text-danger">{{ $errors->first('lesson.' . $index) }}</span>
@@ -182,7 +181,6 @@
                                                                                 value="{{ old('lesson.0') }}"
                                                                                 placeholder="{{ __('common.title') }}"
                                                                                 autocomplete="off">
-
                                                                             @if ($errors->has('lesson.0'))
                                                                                 <span
                                                                                     class="text-danger">{{ $errors->first('lesson.0') }}</span>
@@ -198,6 +196,7 @@
                                                                 </tr>
                                                             @endif
                                                         </tbody>
+
                                                     </table>
 
                                                 </div>
@@ -246,44 +245,37 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($lessons as $index => $lesson)
+                                        @foreach ($lessons as $groupIndex => $lessonGroup)
+                                            @php
+                                                $firstLesson = $lessonGroup->first();
+                                            @endphp
                                             <tr>
-                                                <td>{{ $index + 1 }}</td>
-
-                                                {{-- Assuming relations are set in Lesson model --}}
-                                                <td>{{ $lesson->course->name ?? 'N/A' }}</td>
-                                                <td>{{ $lesson->intake->name ?? 'N/A' }}</td>
-                                                <td>{{ $lesson->subject->name ?? 'N/A' }}</td>
-
+                                                <td>{{ $loop->iteration }}</td>
+                                                <td>{{ $firstLesson->course->name ?? 'N/A' }}</td>
+                                                <td>{{ $firstLesson->intake->name ?? 'N/A' }}</td>
+                                                <td>{{ $firstLesson->subject->name ?? 'N/A' }}</td>
+                                            
                                                 <td>
-                                                    @php
-                                                        // Decode the JSON stored in 'name' column to array
-                                                        $titles = json_decode($lesson->name, true) ?? [];
-                                                    @endphp
-
-                                                    @foreach ($titles as $title)
-                                                        <div class="row">
-                                                            <div class="col-sm-10">{{ $title }},</div>
-                                                        </div>
+                                                    @foreach ($lessonGroup as $lesson)
+                                                        <div>{{ $lesson->name }}</div>
                                                     @endforeach
                                                 </td>
-
                                                 <td>
                                                     <x-drop-down>
                                                         <a class="dropdown-item"
-                                                            href="{{ route('lesson.edit', $lesson->id) }}">
+                                                            href="{{ route('lesson.edit', $firstLesson->id) }}">
                                                             @lang('common.edit')
                                                         </a>
                                                         <a class="dropdown-item" data-toggle="modal"
-                                                            data-target="#deleteLessonModal{{ $lesson->id }}"
+                                                            data-target="#deleteLessonModal{{ $firstLesson->id }}"
                                                             href="#">
                                                             @lang('common.delete')
                                                         </a>
                                                     </x-drop-down>
 
-                                                    {{-- Delete confirmation modal --}}
+                                                    {{-- Only showing delete for one record; optionally allow bulk delete --}}
                                                     <div class="modal fade admin-query"
-                                                        id="deleteLessonModal{{ $lesson->id }}">
+                                                        id="deleteLessonModal{{ $firstLesson->id }}">
                                                         <div class="modal-dialog modal-dialog-centered">
                                                             <div class="modal-content">
                                                                 <div class="modal-header">
@@ -299,11 +291,9 @@
 
                                                                     <div class="mt-40 d-flex justify-content-between">
                                                                         <button type="button" class="primary-btn tr-bg"
-                                                                            data-dismiss="modal">
-                                                                            @lang('common.cancel')
-                                                                        </button>
+                                                                            data-dismiss="modal">@lang('common.cancel')</button>
                                                                         <form
-                                                                            action="{{ route('lesson.destroy', $lesson->id) }}"
+                                                                            action="{{ route('lesson.destroy', $firstLesson->id) }}"
                                                                             method="POST">
                                                                             @csrf
                                                                             @method('DELETE')
@@ -320,6 +310,7 @@
                                                 </td>
                                             </tr>
                                         @endforeach
+
                                     </tbody>
                                 </table>
                             </x-table>
