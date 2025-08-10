@@ -84,7 +84,8 @@
                                 <label class="primary_input_label" for="">Subject
                                     <span class="text-danger">*</span>
                                 </label>
-                                <select class="primary_select form-control {{ $errors->has('class') ? ' is-invalid' : '' }}"
+                                <select
+                                    class="primary_select form-control {{ $errors->has('class') ? ' is-invalid' : '' }}"
                                     id="select_class" name="intake">
                                     <option data-display="" value="">
                                         Select Subject *</option>
@@ -114,6 +115,22 @@
                 </div>
             </div>
         </div>
+
+        <?php
+            $topics_detail = collect([
+                (object) [
+                    'lesson_title' => (object) ['lesson_title' => 'Mathematics - Algebra'],
+                    'topic_title'  => 'Introduction to Equations | Newton’s Laws of Motion',
+                    
+                ],
+                (object) [
+                    'lesson_title' => (object) ['lesson_title' => 'Science - Physics'],
+                    'topic_title'  => 'Newton’s Laws of Motion',
+                   
+                ],
+            ]);
+        ?>
+
         @if (isset($topics_detail))
             <div class="row mt-40">
                 <div class="col-lg-12">
@@ -130,57 +147,19 @@
                                 <table id="table_id" class="table school-table-style" cellspacing="0" width="100%">
                                     <thead>
                                         <tr>
-                                            <th>@lang('lesson::lesson.lesson')</th>
-                                            <th>@lang('lesson::lesson.topic')</th>
-                                            <th>@lang('lesson::lesson.completed_date') </th>
-                                            <th>@lang('lesson::lesson.teacher') </th>
-                                            <th>@lang('common.status')</th>
-
+                                            <th>Lesson</th>
+                                            <th>Topic</th>
                                         </tr>
                                     </thead>
 
                                     <tbody>
+                                        
                                         @foreach ($topics_detail as $data)
                                             <tr>
                                                 <td>{{ $data->lesson_title != '' ? $data->lesson_title->lesson_title : '' }}
                                                 </td>
                                                 <td> {{ @$data->topic_title != '' ? @$data->topic_title : '' }}</td>
-                                                <td>
-                                                    @foreach ($data->lessonPlan as $status)
-                                                        @if ($status->competed_date != '' && $status->completed_status != '')
-                                                            {{ $status->competed_date }} <br>
-                                                        @else
-                                                            @if (date('Y-m-d') < $status->lessonDetail->lesson_date)
-                                                                Assign
-                                                            @else
-                                                                Assigned
-                                                            @endif
-                                                            Date ({{ $status->lessonDetail->lesson_date }})<br>
-                                                        @endif
-                                                    @endforeach
-                                                </td>
-                                                <td>
-                                                    @foreach ($data->lessonPlan as $status)
-                                                        @if ($status->lessonDetail->competed_date != '' && $status->lessonDetail->completed_status != '')
-                                                            <strong>
-                                                                {{ $status->lessonDetail->teacherName->full_name }}
-                                                            </strong> <br>
-                                                        @else
-                                                            <span>
-                                                                {{ $status->lessonDetail->teacherName->full_name }}
-                                                            </span><br>
-                                                        @endif
-                                                    @endforeach
-                                                </td>
-                                                <td>
-                                                    @foreach ($data->lessonPlan as $status)
-                                                        @if ($status->lessonDetail->competed_date != '' && $status->lessonDetail->completed_status != '')
-                                                            <strong class="gradient-color2">@lang('lesson::lesson.completed')</strong> <br>
-                                                        @else
-                                                            <span class="gradient-color">@lang('lesson::lesson.incomplete')</span><br>
-                                                        @endif
-                                                    @endforeach
-                                                </td>
+                                               
                                             </tr>
                                         @endforeach
                                     </tbody>
