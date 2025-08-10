@@ -55,13 +55,13 @@
                                         </li>
                                         <li class="nav-item">
                                             <a class="nav-link" href="#previous_school_info" role="tab"
-                                                data-toggle="tab">@lang('student.previous_school_info')</a>
+                                                data-toggle="tab">Previous Institute Information</a>
                                         </li>
                                         <li class="nav-item">
                                             <a class="nav-link" href="#Other_info" role="tab"
                                                 data-toggle="tab">@lang('student.Other_info')</a>
                                         </li>
-      
+
                                         <li class="nav-item flex-grow-1 text-right">
                                             {{-- <div class="row">
                                 <div class="col-lg-12 text-center"> --}}
@@ -717,11 +717,9 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div class="col-lg-6 guardian_section">
-                                                        <div class="form-section">
-                                                            <div class="row m-0">
-
-                                                                <input type="hidden" name="staff_parent"
+                                                    
+                                                    <div>
+                                                        <input type="hidden" name="staff_parent"
                                                                     id="staff_parent">
                                                                 <!-- Start Sibling Add Modal -->
                                                                 <div class="modal fade admin-query" id="editStudent">
@@ -739,35 +737,7 @@
                                                                             <div class="modal-body">
                                                                                 <div class="container-fluid">
                                                                                     <form action="">
-                                                                                        <div class="row">
-                                                                                            <div class="col-lg-12">
-                                                                                                <div
-                                                                                                    class="d-flex radio-btn-flex">
-                                                                                                    <div class="mr-30">
-                                                                                                        <input
-                                                                                                            type="radio"
-                                                                                                            name="subject_type"
-                                                                                                            id="siblingParentRadio"
-                                                                                                            value="sibling"
-                                                                                                            class="common-radio relationButton addParent"
-                                                                                                            checked>
-                                                                                                        <label
-                                                                                                            for="siblingParentRadio">@lang('student.From Sibling')</label>
-                                                                                                    </div>
-
-                                                                                                    <div class="mr-30">
-                                                                                                        <input
-                                                                                                            type="radio"
-                                                                                                            name="subject_type"
-                                                                                                            id="staffParentRadio"
-                                                                                                            value="staff"
-                                                                                                            class="common-radio relationButton addParent">
-                                                                                                        <label
-                                                                                                            for="staffParentRadio">@lang('student.From Staff')</label>
-                                                                                                    </div>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                        </div>
+                                                                                     
                                                                                         <div class="row mt-15"
                                                                                             id="siblingParent">
                                                                                             <div class="col-lg-12">
@@ -913,242 +883,9 @@
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                <!-- End Sibling Add Modal -->
-                                                                <div class="parent_details" id="parent_details">
-
-                                                                    <div class="row">
-                                                                        <div class="col-lg-12">
-                                                                            <div class="main-title">
-                                                                                <h4 class="stu-sub-head">
-                                                                                    @lang('common.fathers_info')
-                                                                                </h4>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <div class="row">
-
-                                                                        <div class="col-lg-6 mt-4">
-                                                                            <div class="primary_input ">
-                                                                                <label class="primary_input_label"
-                                                                                    for="">@lang('student.father_name')
-
-                                                                                    <span class="text-danger">
-                                                                                        *</span>
-
-                                                                                </label>
-                                                                                <input
-                                                                                    class="primary_input_field form-control{{ $errors->has('fathers_name') ? ' is-invalid' : '' }}"
-                                                                                    type="text" name="fathers_name"
-                                                                                    id="fathers_name"
-                                                                                    value="{{ old('fathers_name') }}">
-
-
-                                                                                @if ($errors->has('fathers_name'))
-                                                                                    <span class="text-danger">
-                                                                                        {{ $errors->first('fathers_name') }}
-                                                                                    </span>
-                                                                                @endif
-                                                                            </div>
-                                                                        </div>
-
-                                                                        <div class="col-lg-6 mt-4">
-                                                                            <div class="primary_input ">
-                                                                                <label class="primary_input_label"
-                                                                                    for="">@lang('student.occupation')
-
-                                                                                    <span class="text-danger">
-                                                                                        *</span>
-
-                                                                                </label>
-                                                                                <input
-                                                                                    class="primary_input_field form-control{{ $errors->has('fathers_occupation') ? ' is-invalid' : '' }}"
-                                                                                    type="text"
-                                                                                    name="fathers_occupation"
-                                                                                    id="fathers_occupation"
-                                                                                    value="{{ old('fathers_occupation') }}">
-
-
-                                                                                @if ($errors->has('fathers_occupation'))
-                                                                                    <span class="text-danger">
-                                                                                        {{ $errors->first('fathers_occupation') }}
-                                                                                    </span>
-                                                                                @endif
-                                                                            </div>
-                                                                        </div>
-
-                                                                        <div class="col-lg-6 mt-4">
-                                                                            <div class="primary_input ">
-                                                                                <label class="primary_input_label"
-                                                                                    for="">@lang('student.father_phone')
-
-                                                                                    <span class="text-danger">
-                                                                                        *</span>
-
-                                                                                </label>
-                                                                                <input oninput="phoneCheck(this)"
-                                                                                    class="primary_input_field form-control{{ $errors->has('fathers_phone') ? ' is-invalid' : '' }}"
-                                                                                    type="text" name="fathers_phone"
-                                                                                    id="fathers_phone"
-                                                                                    value="{{ old('fathers_phone') }}">
-
-
-                                                                                @if ($errors->has('fathers_phone'))
-                                                                                    <span class="text-danger">
-                                                                                        {{ $errors->first('fathers_phone') }}
-                                                                                    </span>
-                                                                                @endif
-                                                                            </div>
-                                                                        </div>
-
-
-                                                                        <div class="col-lg-6 mt-4">
-                                                                            <div class="primary_input">
-                                                                                <label class="primary_input_label"
-                                                                                    for="">@lang('student.fathers_photo')
-
-                                                                                </label>
-                                                                                <div class="primary_file_uploader">
-                                                                                    <input class="primary_input_field"
-                                                                                        type="text"
-                                                                                        id="placeholderFathersName"
-                                                                                        placeholder="@lang('student.photo')"
-                                                                                        readonly="">
-                                                                                    <button class="" type="button">
-                                                                                        <label
-                                                                                            class="primary-btn small fix-gr-bg"
-                                                                                            for="addFatherImage">{{ __('common.browse') }}</label>
-                                                                                        <input type="file"
-                                                                                            class="d-none"
-                                                                                            name="fathers_photo"
-                                                                                            id="addFatherImage">
-                                                                                    </button>
-                                                                                </div>
-                                                                                <span
-                                                                                    class="text-danger">{{ $errors->first('fathers_photo') }}</span>
-                                                                            </div>
-                                                                        </div>
-
-                                                                        <div class="col-md-12 mt-15">
-                                                                            <img class="d-none previewImageSize"
-                                                                                src="" alt=""
-                                                                                id="fatherImageShow" height="100%"
-                                                                                width="100%">
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-
-                                                            </div>
-                                                            <div class="row mt-4">
-
-
-                                                                <div class="col-lg-6 mt-4">
-                                                                    <div class="primary_input ">
-                                                                        <label class="primary_input_label"
-                                                                            for="">@lang('student.mother_name')
-
-                                                                            <span class="text-danger">
-                                                                                *</span>
-
-                                                                        </label>
-                                                                        <input
-                                                                            class="primary_input_field form-control{{ $errors->has('mothers_name') ? ' is-invalid' : '' }}"
-                                                                            type="text" name="mothers_name"
-                                                                            id="mothers_name"
-                                                                            value="{{ old('mothers_name') }}">
-
-
-                                                                        @if ($errors->has('mothers_name'))
-                                                                            <span class="text-danger">
-                                                                                {{ $errors->first('mothers_name') }}
-                                                                            </span>
-                                                                        @endif
-                                                                    </div>
-                                                                </div>
-
-                                                                <div class="col-lg-6 mt-4">
-                                                                    <div class="primary_input ">
-                                                                        <label class="primary_input_label"
-                                                                            for="">@lang('student.occupation')
-
-                                                                            <span class="text-danger">
-                                                                                *</span>
-
-                                                                        </label>
-                                                                        <input
-                                                                            class="primary_input_field form-control{{ $errors->has('mothers_occupation') ? ' is-invalid' : '' }}"
-                                                                            type="text" name="mothers_occupation"
-                                                                            id="mothers_occupation"
-                                                                            value="{{ old('mothers_occupation') }}">
-
-
-                                                                        @if ($errors->has('mothers_occupation'))
-                                                                            <span class="text-danger">
-                                                                                {{ $errors->first('mothers_occupation') }}
-                                                                            </span>
-                                                                        @endif
-                                                                    </div>
-                                                                </div>
-
-
-                                                                <div class="col-lg-6 mt-4">
-                                                                    <div class="primary_input ">
-                                                                        <label class="primary_input_label"
-                                                                            for="">@lang('student.mother_phone')
-
-                                                                        </label>
-                                                                        <input oninput="phoneCheck(this)"
-                                                                            class="primary_input_field form-control{{ $errors->has('mothers_phone') ? ' is-invalid' : '' }}"
-                                                                            type="text" name="mothers_phone"
-                                                                            id="mothers_phone"
-                                                                            value="{{ old('mothers_phone') }}">
-
-
-                                                                        @if ($errors->has('mothers_phone'))
-                                                                            <span class="text-danger">
-                                                                                {{ $errors->first('mothers_phone') }}
-                                                                            </span>
-                                                                        @endif
-                                                                    </div>
-                                                                </div>
-
-
-                                                                <div class="col-lg-6 mt-4">
-                                                                    <div class="primary_input mb-15">
-                                                                        <label class="primary_input_label"
-                                                                            for="">@lang('student.mothers_photo')
-
-                                                                            <span class="text-danger">
-                                                                                *</span>
-
-                                                                        </label>
-                                                                        <div class="primary_file_uploader">
-                                                                            <input class="primary_input_field"
-                                                                                type="text" id="placeholderMothersName"
-                                                                                placeholder="@lang('student.photo')"
-                                                                                readonly="">
-                                                                            <button class="" type="button">
-                                                                                <label class="primary-btn small fix-gr-bg"
-                                                                                    for="addMotherImage">{{ __('common.browse') }}</label>
-                                                                                <input type="file" class="d-none"
-                                                                                    name="mothers_photo"
-                                                                                    id="addMotherImage">
-                                                                            </button>
-                                                                        </div>
-                                                                        <span
-                                                                            class="text-danger">{{ $errors->first('mothers_photo') }}</span>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div class="col-md-12 mt-15">
-                                                                    <img class="d-none previewImageSize" src=""
-                                                                        alt="" id="motherImageShow"
-                                                                        height="100%" width="100%">
-                                                                </div>
-                                                            </div>
-                                                        </div>
                                                     </div>
-                                                    <div class="col-lg-6 guardian_section">
+
+                                                    <div class="col-lg-12 guardian_section">
                                                         <div class="form-section">
                                                             <div class="row">
                                                                 <div class="col-lg-12">
@@ -1382,7 +1119,7 @@
                                             </div>
                                             <div role="tabpanel" class="tab-pane fade" id="document_info">
                                                 <div class="row pt-4 row-gap-24">
-                                                    <div class="col-lg-6">
+                                                    <div class="col-lg-12">
                                                         <div class="form-section">
                                                             <div class="row">
                                                                 <div class="col-lg-12">
@@ -1456,84 +1193,7 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="col-lg-6">
-                                                        <div class="form-section">
-                                                            <div class="row">
-                                                                <div class="col-lg-12">
-                                                                    <div class="main-title">
-                                                                        <h4 class="stu-sub-head">@lang('student.bank_info')</h4>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div class="col-lg-6 mt-4">
-                                                                    <div class="primary_input ">
-                                                                        <label class="primary_input_label"
-                                                                            for="">@lang('student.bank_name')
-
-                                                                            <span class="text-danger"> *</span>
-
-                                                                        </label>
-                                                                        <input
-                                                                            class="primary_input_field form-control{{ $errors->has('bank_name') ? ' is-invalid' : '' }}"
-                                                                            type="text" name="bank_name"
-                                                                            value="{{ old('bank_name') }}">
-
-
-                                                                        @if ($errors->has('bank_name'))
-                                                                            <span class="text-danger">
-                                                                                {{ $errors->first('bank_name') }}
-                                                                            </span>
-                                                                        @endif
-                                                                    </div>
-                                                                </div>
-
-                                                                <div class="col-lg-6 mt-4">
-                                                                    <div class="primary_input ">
-                                                                        <label class="primary_input_label"
-                                                                            for="">@lang('accounts.bank_account_number')
-
-                                                                            <span class="text-danger"> *</span>
-
-                                                                        </label>
-                                                                        <input
-                                                                            class="primary_input_field form-control{{ $errors->has('bank_account_number') ? ' is-invalid' : '' }}"
-                                                                            type="text" name="bank_account_number"
-                                                                            value="{{ old('bank_account_number') }}">
-
-
-                                                                        @if ($errors->has('bank_account_number'))
-                                                                            <span class="text-danger">
-                                                                                {{ $errors->first('bank_account_number') }}
-                                                                            </span>
-                                                                        @endif
-                                                                    </div>
-                                                                </div>
-
-                                                                <div class="col-lg-6 mt-4">
-                                                                    <div class="primary_input">
-                                                                        <label class="primary_input_label"
-                                                                            for="">@lang('student.ifsc_code')
-
-                                                                            <span class="text-danger"> *</span>
-
-                                                                        </label>
-                                                                        <input
-                                                                            class="primary_input_field form-control{{ $errors->has('ifsc_code') ? ' is-invalid' : '' }}"
-                                                                            type="text" name="ifsc_code"
-                                                                            value="{{ old('ifsc_code') }}">
-
-
-                                                                        @if ($errors->has('ifsc_code'))
-                                                                            <span class="text-danger">
-                                                                                {{ $errors->first('ifsc_code') }}
-                                                                            </span>
-                                                                        @endif
-                                                                    </div>
-                                                                </div>
-
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                
 
                                                     <div class="col-lg-12">
                                                         <div class="form-section">
@@ -1742,8 +1402,7 @@
                                                                 <div class="col-lg-12">
                                                                     <div class="primary_input ">
                                                                         <label class="primary_input_label"
-                                                                            for="">@lang('student.previous_school_details')
-
+                                                                            for="">Previous Institute Information
                                                                         </label>
                                                                         <textarea class="primary_input_field form-control{{ $errors->has('previous_school_details') ? ' is-invalid' : '' }}"
                                                                             cols="0" rows="5" name="previous_school_details">{{ old('previous_school_details') }}</textarea>
@@ -1805,8 +1464,8 @@
                                                                         </span>
                                                                     @endif
                                                                 </div>
-                                                               
-                                                            
+
+
 
 
                                                             </div>
@@ -1815,7 +1474,7 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                          
+
                                         </div>
                                     </div>
                                 </div>

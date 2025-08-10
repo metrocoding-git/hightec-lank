@@ -107,19 +107,11 @@
                                     <div class="main-title">
                                         @isset($search_info)
                                             <h3 class="mb-15">@lang('student.student_attendance') | <small>
-                                                    @if (moduleStatusCheck('University'))
-                                                        @lang('university::un.faculty_department')
-                                                        :
-                                                        {{ isset($unFaculty) ? $unFaculty->name . '(' . (isset($unDepartment) ? $unDepartment->name : '') . ')' : '' }},
-                                                        @lang('university::un.semester(label)')
-                                                        :
-                                                        {{ isset($unSemester) ? $unSemester->name . '(' . (isset($unSemesterLabel) ? $unSemesterLabel->name : '') . ')' : '' }},
-                                                        @lang('common.date')
-                                                    @else
+                                                   
                                                         @lang('common.class')
                                                         : {{ $search_info['class_name'] }}, @lang('common.section')
                                                         : {{ $search_info['section_name'] }}, @lang('common.date')
-                                                    @endif
+                                                    
                                                     : {{ dateConvert($search_info['date']) }}
                                                 </small></h3>
                                         @endisset
@@ -145,20 +137,7 @@
                                             <input type="hidden" name="section_id" value="{{ $section_id }}">
 
                                             <input type="hidden" name="attendance_date" value="{{ $date }}">
-                                            @if (moduleStatusCheck('University'))
-                                                <input type="hidden" name="un_session_id"
-                                                    value="{{ isset($unSession) ? $unSession->id : '' }}">
-                                                <input type="hidden" name="un_faculty_id"
-                                                    value="{{ isset($unFaculty) ? $unFaculty->id : '' }}">
-                                                <input type="hidden" name="un_department_id"
-                                                    value="{{ isset($unDepartment) ? $unDepartment->id : '' }}">
-                                                <input type="hidden" name="un_academic_id"
-                                                    value="{{ isset($unAcademic) ? $unAcademic->id : '' }}">
-                                                <input type="hidden" name="un_semester_id"
-                                                    value="{{ isset($unSemester) ? $unSemester->id : '' }}">
-                                                <input type="hidden" name="un_section_id"
-                                                    value="{{ isset($unSection) ? $unSection->id : '' }}">
-                                            @endif
+                                          
                                             <button type="submit" class="primary-btn fix-gr-bg">
                                                 @lang('student.mark_holiday')
                                             </button>
@@ -170,22 +149,7 @@
                                             <input type="hidden" name="class_id" value="{{ $class_id }}">
                                             <input type="hidden" name="section_id" value="{{ $section_id }}">
                                             <input type="hidden" name="attendance_date" value="{{ $date }}">
-                                            @if (moduleStatusCheck('University'))
-                                                <input type="hidden" name="un_session_id"
-                                                    value="{{ isset($unSession) ? $unSession->id : '' }}">
-                                                <input type="hidden" name="un_faculty_id"
-                                                    value="{{ isset($unFaculty) ? $unFaculty->id : '' }}">
-                                                <input type="hidden" name="un_department_id"
-                                                    value="{{ isset($unDepartment) ? $unDepartment->id : '' }}">
-                                                <input type="hidden" name="un_academic_id"
-                                                    value="{{ isset($unAcademic) ? $unAcademic->id : '' }}">
-                                                <input type="hidden" name="un_semester_id"
-                                                    value="{{ isset($unSemester) ? $unSemester->id : '' }}">
-                                                <input type="hidden" name="un_semester_label_id"
-                                                    value="{{ isset($unSemesterLabel) ? $unSemesterLabel->id : '' }}">
-                                                <input type="hidden" name="un_section_id"
-                                                    value="{{ isset($unSection) ? $unSection->id : '' }}">
-                                            @endif
+                                       
                                             <button type="submit" class="primary-btn fix-gr-bg">
                                                 @lang('student.unmark_holiday')
                                             </button>
@@ -225,29 +189,7 @@
                                                                 <input type="hidden"
                                                                     name="attendance[{{ $student->id }}][section]"
                                                                     value="{{ $student->section_id }}">
-                                                                @if (moduleStatusCheck('University'))
-                                                                    <input type="hidden"
-                                                                        name="attendance[{{ $student->id }}][un_session_id]"
-                                                                        value="{{ $student->un_session_id }}">
-                                                                    <input type="hidden"
-                                                                        name="attendance[{{ $student->id }}][un_faculty_id]"
-                                                                        value="{{ $student->un_faculty_id }}">
-                                                                    <input type="hidden"
-                                                                        name="attendance[{{ $student->id }}][un_department_id]"
-                                                                        value="{{ $student->un_department_id }}">
-                                                                    <input type="hidden"
-                                                                        name="attendance[{{ $student->id }}][un_academic_id]"
-                                                                        value="{{ $student->un_academic_id }}">
-                                                                    <input type="hidden"
-                                                                        name="attendance[{{ $student->id }}][un_semester_id]"
-                                                                        value="{{ $student->un_semester_id }}">
-                                                                    <input type="hidden"
-                                                                        name="attendance[{{ $student->id }}][un_semester_label_id]"
-                                                                        value="{{ $student->un_semester_label_id }}">
-                                                                    <input type="hidden"
-                                                                        name="attendance[{{ $student->id }}][un_section_id]"
-                                                                        value="{{ $student->un_section_id }}">
-                                                                @endif
+                                            
 
                                                             </td>
                                                             <td>{{ $student->studentDetail->first_name . ' ' . $student->studentDetail->last_name }}
