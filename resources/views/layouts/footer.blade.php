@@ -124,6 +124,12 @@
         toastr.error("{{ session('message-danger-delete') }}");
     @endif
 
+    @if ($errors->any())
+        @foreach ($errors->all() as $error)
+            toastr.error("{{ $error }}");
+        @endforeach
+    @endif
+
 
     toastr.options = {
         "closeButton": true,

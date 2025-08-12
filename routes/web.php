@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AddStudentController;
 use App\Http\Controllers\AssignSubjectController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CourseController;
@@ -79,12 +80,12 @@ Route::controller(StudentCategoryController::class)->prefix('student/student-inf
     Route::delete('destroy/{id}', 'destroy')->name('student-category.destroy');
 });
 
-Route::controller(StudentController::class)->prefix('student/student-info/add-student')->group(callback: function () {
-    Route::get('/', 'index')->name('student.index');
-    Route::post('store', 'store')->name('student.store');
-    Route::put('update/{id}', 'update')->name('student.update');
-    Route::get('edit/{id}', 'edit')->name('student.edit');
-    Route::delete('destroy/{id}', 'destroy')->name('student.destroy');
+Route::controller(AddStudentController::class)->prefix('student/student-info/add-student')->group(callback: function () {
+    Route::get('/', 'index')->name('add-student.index');
+    Route::post('store', 'store')->name('add-student.store');
+    Route::put('update/{id}', 'update')->name('add-student.update');
+    Route::get('edit/{id}', 'edit')->name('add-student.edit');
+    Route::delete('destroy/{id}', 'destroy')->name('add-student.destroy');
 });
 
 Route::controller(HomeController::class)->group(callback: function () {
@@ -96,7 +97,6 @@ Route::controller(HomeController::class)->group(callback: function () {
 
 
 
-    
 
 
 
