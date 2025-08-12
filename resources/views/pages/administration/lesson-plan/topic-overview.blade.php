@@ -108,27 +108,20 @@
                         </div>
                         <div class="table-responsive">
                             <x-table>
-                                <table id="table_id" class="table school-table-style" cellspacing="0" width="100%">
+                               <table id="table_id" class="table school-table-style" cellspacing="0" width="100%">
                                     <thead>
                                         <tr>
-                                            <th>Lesson</th>
-                                            <th>Topic</th>
+                                            <th style="text-align:center;">Lesson</th>
+                                            <th style="text-align:center;">Topic</th>
                                         </tr>
                                     </thead>
                                     <tbody id="resultsBody">
-    @forelse ($topics_detail as $data)
-        <tr>
-            <td>{{ $data->lesson->lesson_title ?? 'No Lesson' }}</td>
-            <td>{{ $data->topic_title ?? 'No Topic' }}</td>
-        </tr>
-    @empty
-        <tr>
-            <td colspan="2" class="text-center">No topics found</td>
-        </tr>
-    @endforelse
-</tbody>
-
+                                        <tr>
+                                            <td colspan="2" class="text-center">Please search to view topics</td>
+                                        </tr>
+                                    </tbody>
                                 </table>
+
                             </x-table>
                         </div>
                     </div>
@@ -156,13 +149,13 @@ $(document).ready(function() {
             url: $(this).attr('action'),
             type: 'GET',
             data: formData,
-            success: function(data) {
+           success: function(data) {
     let rows = '';
     if (data.length > 0) {
         data.forEach(function(item) {
             rows += `<tr>
-                <td>${item.lesson ? item.lesson.lesson_title : 'No Lesson'}</td>
-                <td>${item.topic_title ?? 'No Topic'}</td>
+                <td class="text-center">${item.lesson ? item.lesson.name : 'N/A'}</td>
+                <td class="text-center">${item.name ? item.name : 'N/A'}</td>
             </tr>`;
         });
     } else {

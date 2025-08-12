@@ -13,8 +13,12 @@
                         <div class="col-lg-12">
 
 
-                            <form action="" method="POST" class="form-horizontal">
-                                <div class="white-box">
+                          <form action="{{ isset($student_type) ? route('student-category.update', ['id' => $student_type->id]) : route('student-category.store') }}" method="POST" class="form-horizontal">
+                                @csrf
+                                @if(isset($student_type))
+                                    @method('PUT')
+                                @endif
+                                     <div class="white-box">
                                     <div class="main-title">
                                         <h3 class="mb-15">
                                             @lang('student.add_student_category')
@@ -26,21 +30,25 @@
                                             <div class="col-lg-12">
 
                                                 <div class="primary_input">
-                                                    <label class="primary_input_label" for="">@lang('common.type')
-                                                        <span class="text-danger"> *</span></label>
-                                                    <input
-                                                        class="primary_input_field form-control{{ $errors->has('category') ? ' is-invalid' : '' }}"
-                                                        type="text" name="category" autocomplete="off"
-                                                        value="{{ isset($student_type) ? $student_type->category_name : '' }}">
-                                                    <input type="hidden" name="id"
-                                                        value="{{ isset($student_type) ? $student_type->id : '' }}">
+                                            <label class="primary_input_label" for="">@lang('common.type')
+                                                <span class="text-danger"> *</span>
+                                            </label>
+                                                <input
+                                                    class="primary_input_field form-control{{ $errors->has('category') ? ' is-invalid' : '' }}"
+                                                    type="text" 
+                                                    name="category" 
+                                                    autocomplete="off"
+                                                    placeholder="@lang('student.enter_category_name')"
+                                                    value="{{ isset($student_type) ? $student_type->category_name : old('category') }}">
+                                                <input type="hidden" name="id"
+                                                    value="{{ isset($student_type) ? $student_type->id : '' }}">
 
-                                                    @if ($errors->has('category'))
-                                                        <span class="text-danger">
-                                                            {{ $errors->first('category') }}
-                                                        </span>
-                                                    @endif
-                                                </div>
+                                                @if ($errors->has('category'))
+                                                    <span class="text-danger">
+                                                        {{ $errors->first('category') }}
+                                                    </span>
+                                                @endif
+                                            </div>
 
                                             </div>
                                         </div>
@@ -84,18 +92,20 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-
+                                            @foreach($categories as $key => $category)
                                             <tr>
-                                                <td>1</td>
-                                                <td>Normal</td>
+                                                <td>{{ $key + 1 }}</td>
+                                                <td>{{ $category->category_name }}</td>
                                                 <td>
                                                     @php
                                                         $routeList = [
-                                                            '<a class="dropdown-item" href="/">' .
+                                                            '<a class="dropdown-item editCategory" data-id="'.$category->id.'"
+                                                            data-name="'.$category->category_name.'" href="#">' .
                                                             __('common.edit') .
                                                             '</a>',
-                                                            '<a class="dropdown-item" data-toggle="modal" data-target="" 
-                                                                href="#">' .
+                                                            '<a class="dropdown-item deleteCategory" data-id="'.$category->id.'" 
+                                                            data-toggle="modal" data-target="#deleteStudentTypeModal'.$category->id.'" 
+                                                            href="#">' .
                                                             __('common.delete') .
                                                             '</a>',
                                                         ];
@@ -103,49 +113,36 @@
                                                     <x-drop-down-action-component :routeList="$routeList" />
                                                 </td>
                                             </tr>
-
-                                            <tr>
-                                                <td>2</td>
-                                                <td>High Level</td>
-                                                <td>
-                                                    @php
-                                                        $routeList = [
-                                                            '<a class="dropdown-item" href="/">' .
-                                                            __('common.edit') .
-                                                            '</a>',
-                                                            '<a class="dropdown-item" data-toggle="modal" data-target="" 
-                                                                href="#">' .
-                                                            __('common.delete') .
-                                                            '</a>',
-                                                        ];
-                                                    @endphp
-                                                    <x-drop-down-action-component :routeList="$routeList" />
-                                                </td>
-                                            </tr>
-
-                                            <div class="modal fade admin-query" id="deleteStudentTypeModal1">
+                                            
+                                            <!-- Delete Modal for each category -->
+                                            <div class="modal fade admin-query" id="deleteStudentTypeModal{{ $category->id }}">
                                                 <div class="modal-dialog modal-dialog-centered">
                                                     <div class="modal-content">
                                                         <div class="modal-header">
                                                             <h4 class="modal-title">@lang('student.delete_category')</h4>
-                                                            <button type="button" class="close"
-                                                                data-dismiss="modal">&times;</button>
+                                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
                                                         </div>
                                                         <div class="modal-body">
                                                             <div class="text-center">
                                                                 <h4>@lang('common.are_you_sure_to_delete')</h4>
                                                             </div>
                                                             <div class="mt-40 d-flex justify-content-between">
-                                                                <button type="button" class="primary-btn tr-bg"
-                                                                    data-dismiss="modal">@lang('common.cancel')</button>
-                                                                <a href=""><button class="primary-btn fix-gr-bg"
-                                                                        type="submit">@lang('common.delete')</button></a>
+                                                                <button type="button" class="primary-btn tr-bg" data-dismiss="modal">
+                                                                    @lang('common.cancel')
+                                                                </button>
+                                                                <form action="{{ route('student-category.destroy', $category->id) }}" method="POST">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <button class="primary-btn fix-gr-bg" type="submit">
+                                                                        @lang('common.delete')
+                                                                    </button>
+                                                                </form>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-
+                                            @endforeach
                                         </tbody>
                                     </table>
                                 </x-table>
@@ -157,3 +154,69 @@
         </div>
     </section>
 @endsection
+
+@section('script')
+    <script>
+        $(document).ready(function() {
+            let currentDeleteId = null;
+            
+            // Handle edit button click
+            $(document).on('click', '.editCategory', function(e) {
+                e.preventDefault();
+                
+                var id = $(this).data('id');
+                var name = $(this).data('name');
+                
+                // Set form values
+                $('input[name="category"]').val(name);
+                $('input[name="id"]').val(id);
+                
+                // Update form action with correct parameter name
+                $('form').attr('action', '/student/student-info/student-category/update/' + id);
+                $('form').find('input[name="_method"]').remove();
+                $('form').append('<input type="hidden" name="_method" value="PUT">');
+                
+                // UI updates
+                $('.main-title h3').text('@lang("student.edit_student_category")');
+                $('.submit span').removeClass('ti-check').addClass('ti-pencil');
+                $('.submit').html('<span class="ti-pencil"></span> @lang("student.update_category")');
+            });
+            
+            // Reset form when clicking cancel (optional)
+            $(document).on('click', '.cancel-edit', function() {
+                resetForm();
+            });
+            
+            // Handle delete button click
+           $(document).on('click', '.deleteCategory', function(e) {
+                e.preventDefault();
+                currentDeleteId = $(this).data('id');
+                $('#deleteStudentTypeModal' + currentDeleteId).modal('show');
+            });
+            
+            // Confirm delete action - now using form submission
+            $(document).on('click', '.confirm-delete', function() {
+                if (!currentDeleteId) return;
+                
+                // Find the form in the modal and submit it
+                $('#deleteStudentTypeModal' + currentDeleteId)
+                    .find('form')
+                    .trigger('submit');
+            });
+        
+            
+            function resetForm() {
+                $('input[name="category"]').val('');
+                $('input[name="id"]').val('');
+                $('.main-title h3').text('@lang("student.add_student_category")');
+                $('.submit span').removeClass('ti-pencil').addClass('ti-check');
+                $('.submit').html('<span class="ti-check"></span> @lang("student.save_category")');
+                $('form').attr('action', '{{ route("student-category.store") }}');
+                $('input[name="_method"]').remove();
+            }
+        });
+    </script>
+@endsection
+
+
+
