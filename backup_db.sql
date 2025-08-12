@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Aug 10, 2025 at 10:10 PM
+-- Generation Time: Aug 12, 2025 at 08:55 PM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -46,6 +46,25 @@ INSERT INTO `assign_subjects` (`id`, `intake_id`, `subject_id`, `course_id`, `cr
 (11, 3, 1, 1, '2025-08-06 05:50:19', '2025-08-06 05:50:19'),
 (12, 3, 2, 1, '2025-08-06 05:50:19', '2025-08-06 05:50:19'),
 (13, 1, 1, 7, '2025-08-06 05:50:38', '2025-08-06 05:50:38');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `blood_groups`
+--
+
+CREATE TABLE `blood_groups` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `blood_groups`
+--
+
+INSERT INTO `blood_groups` (`id`, `name`) VALUES
+(1, 'A'),
+(2, 'A+');
 
 -- --------------------------------------------------------
 
@@ -160,6 +179,27 @@ CREATE TABLE `failed_jobs` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `genders`
+--
+
+CREATE TABLE `genders` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(50) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `genders`
+--
+
+INSERT INTO `genders` (`id`, `name`, `created_at`, `updated_at`) VALUES
+(1, 'Male', '2025-08-12 16:34:04', '2025-08-12 16:34:04'),
+(2, 'Femail', '2025-08-12 16:34:04', '2025-08-12 16:34:04');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `intakes`
 --
 
@@ -237,8 +277,7 @@ CREATE TABLE `lessons` (
 
 INSERT INTO `lessons` (`id`, `name`, `course_id`, `intake_id`, `subject_id`, `created_at`, `updated_at`) VALUES
 (13, 'fghf', 7, 1, 1, '2025-08-06 05:45:43', '2025-08-06 06:11:29'),
-(16, 'ijkiopkl', 7, 1, 1, '2025-08-06 06:28:25', '2025-08-06 06:28:25'),
-(17, 'ijk', 7, 1, 1, '2025-08-06 06:28:25', '2025-08-06 06:28:25');
+(16, 'cvbfxcvb', 7, 1, 1, '2025-08-06 06:28:25', '2025-08-11 21:36:06');
 
 -- --------------------------------------------------------
 
@@ -296,6 +335,85 @@ CREATE TABLE `sessions` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `students`
+--
+
+CREATE TABLE `students` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `branch_id` bigint(20) UNSIGNED NOT NULL,
+  `admission_number` varchar(255) NOT NULL,
+  `admission_date` date NOT NULL,
+  `student_category_id` int(11) NOT NULL,
+  `gender_id` int(10) UNSIGNED NOT NULL,
+  `first_name` varchar(255) NOT NULL,
+  `last_name` varchar(255) NOT NULL,
+  `student_name` varchar(255) NOT NULL,
+  `date_of_birth` date NOT NULL,
+  `photo` varchar(255) DEFAULT NULL,
+  `email_address` varchar(255) NOT NULL,
+  `phone_number` varchar(20) NOT NULL,
+  `current_address` text NOT NULL,
+  `permanent_address` text NOT NULL,
+  `blood_group_id` int(10) DEFAULT NULL,
+  `height` varchar(10) DEFAULT NULL,
+  `weight` varchar(10) DEFAULT NULL,
+  `guardians_name` varchar(255) NOT NULL,
+  `relation_guardian_id` int(50) DEFAULT NULL,
+  `guardians_email` varchar(255) NOT NULL,
+  `guardians_photo` varchar(255) DEFAULT NULL,
+  `guardians_phone` varchar(20) NOT NULL,
+  `guardians_occupation` varchar(255) NOT NULL,
+  `guardians_address` text NOT NULL,
+  `national_id_number` varchar(12) NOT NULL,
+  `additional_notes` text DEFAULT NULL,
+  `document_title_1` varchar(255) DEFAULT NULL,
+  `document_file_1` varchar(255) DEFAULT NULL,
+  `document_title_2` varchar(255) DEFAULT NULL,
+  `document_file_2` varchar(255) DEFAULT NULL,
+  `document_title_3` varchar(255) DEFAULT NULL,
+  `document_file_3` varchar(255) DEFAULT NULL,
+  `document_title_4` varchar(255) DEFAULT NULL,
+  `document_file_4` varchar(255) DEFAULT NULL,
+  `previous_institute_details` text DEFAULT NULL,
+  `dormitory_id` int(100) DEFAULT NULL,
+  `sibling_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `students`
+--
+
+INSERT INTO `students` (`id`, `branch_id`, `admission_number`, `admission_date`, `student_category_id`, `gender_id`, `first_name`, `last_name`, `student_name`, `date_of_birth`, `photo`, `email_address`, `phone_number`, `current_address`, `permanent_address`, `blood_group_id`, `height`, `weight`, `guardians_name`, `relation_guardian_id`, `guardians_email`, `guardians_photo`, `guardians_phone`, `guardians_occupation`, `guardians_address`, `national_id_number`, `additional_notes`, `document_title_1`, `document_file_1`, `document_title_2`, `document_file_2`, `document_title_3`, `document_file_3`, `document_title_4`, `document_file_4`, `previous_institute_details`, `dormitory_id`, `sibling_id`, `created_at`, `updated_at`) VALUES
+(1, 1, '11', '2025-08-12', 1, 1, 'sadeesha', 'kaushalya', 'sadeesha kaushalya', '2003-09-15', NULL, 'pmsck@gmail.com', '0717467162', 'No. 144, thorayaya, kurunegala,srilanka', 'Thoraya Kiriwaula', NULL, NULL, NULL, '56rtfk', NULL, 'pmsck@gmail.com', NULL, '0717467162', 'xcszxcf', 'No. 144, thorayaya, kurunegala,srilanka\r\nThoraya Kiriwaula', '200325913230', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'cxcvxdcgsd', NULL, NULL, '2025-08-12 11:40:45', '2025-08-12 11:40:45'),
+(2, 2, '1190-o', '2025-08-12', 1, 1, 'sadeesha', 'kaushalya', 'sadeesha kaushalya', '2025-08-14', 'student_photos/311fo9sbT2V7kDv1dgmrDZBQDAfRGY2t37zBiTeS.png', 'kaumadhiharindra@gmail.com', '0719662670', 'No 455/1 Pahala Bujjamuwa, Bujjomuwa, Alawwa', 'Thoraya Kiriwaula', NULL, '234', '345', '56rtfk', NULL, 'info@theunion.org', 'guardian_photos/lAZxRSPgU2SaXpSQ5btqOAUtK0ggOzxSQalPvTgM.png', '0762330035', 'v jhkgv', '2 Rue Jean Lantier', '200325913230', 'xzczx', NULL, 'documents/RXSKbobdKSstTNsZSyCb665gXWPt6L9vJKZyTx6U.pdf', NULL, NULL, NULL, NULL, NULL, NULL, 'zxczxfc', NULL, NULL, '2025-08-12 12:52:30', '2025-08-12 12:52:30');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_categories`
+--
+
+CREATE TABLE `student_categories` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `category_name` varchar(255) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `student_categories`
+--
+
+INSERT INTO `student_categories` (`id`, `category_name`, `created_at`, `updated_at`) VALUES
+(3, '0l,.00 y5435', '2025-08-12 11:01:48', '2025-08-12 13:04:04'),
+(6, 'xcvxc', '2025-08-12 13:15:10', '2025-08-12 13:15:10'),
+(7, 'sdfsdf hjgh', '2025-08-12 13:15:17', '2025-08-12 13:15:24');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `subjects`
 --
 
@@ -315,6 +433,32 @@ CREATE TABLE `subjects` (
 INSERT INTO `subjects` (`id`, `name`, `type`, `code`, `created_at`, `updated_at`) VALUES
 (1, 'dasdas11', 'P', 'sd!!!', '2025-08-01 09:23:37', '2025-08-01 09:33:56'),
 (2, 'fgdfg33', 'T', 'fgdf333', '2025-08-01 09:23:54', '2025-08-01 09:33:32');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `topics`
+--
+
+CREATE TABLE `topics` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `intake_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `subject_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `course_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `lesson_id` int(10) UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `topics`
+--
+
+INSERT INTO `topics` (`id`, `name`, `intake_id`, `subject_id`, `course_id`, `lesson_id`, `created_at`, `updated_at`) VALUES
+(18, 'dfdf', 3, 2, 1, 16, '2025-08-11 21:34:42', '2025-08-11 21:34:42'),
+(19, 'sdfsd', 3, 2, 1, 16, '2025-08-11 21:34:42', '2025-08-11 21:34:42'),
+(20, 'cvbcv', 3, 1, 10, 16, '2025-08-11 21:35:33', '2025-08-11 21:35:33');
 
 -- --------------------------------------------------------
 
@@ -341,6 +485,12 @@ CREATE TABLE `users` (
 -- Indexes for table `assign_subjects`
 --
 ALTER TABLE `assign_subjects`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `blood_groups`
+--
+ALTER TABLE `blood_groups`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -381,6 +531,13 @@ ALTER TABLE `course_intake`
 ALTER TABLE `failed_jobs`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `failed_jobs_uuid_unique` (`uuid`);
+
+--
+-- Indexes for table `genders`
+--
+ALTER TABLE `genders`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `name` (`name`);
 
 --
 -- Indexes for table `intakes`
@@ -429,11 +586,37 @@ ALTER TABLE `sessions`
   ADD KEY `sessions_last_activity_index` (`last_activity`);
 
 --
+-- Indexes for table `students`
+--
+ALTER TABLE `students`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `students_admission_number_unique` (`admission_number`),
+  ADD UNIQUE KEY `students_email_address_unique` (`email_address`),
+  ADD UNIQUE KEY `students_phone_number_unique` (`phone_number`);
+
+--
+-- Indexes for table `student_categories`
+--
+ALTER TABLE `student_categories`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `category_name` (`category_name`);
+
+--
 -- Indexes for table `subjects`
 --
 ALTER TABLE `subjects`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `subjects_code_unique` (`code`);
+
+--
+-- Indexes for table `topics`
+--
+ALTER TABLE `topics`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_topics_intake` (`intake_id`),
+  ADD KEY `fk_topics_subject` (`subject_id`),
+  ADD KEY `fk_topics_course` (`course_id`),
+  ADD KEY `fk_topics_lesson` (`lesson_id`);
 
 --
 -- Indexes for table `users`
@@ -451,6 +634,12 @@ ALTER TABLE `users`
 --
 ALTER TABLE `assign_subjects`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
+-- AUTO_INCREMENT for table `blood_groups`
+--
+ALTER TABLE `blood_groups`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `branches`
@@ -477,6 +666,12 @@ ALTER TABLE `failed_jobs`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `genders`
+--
+ALTER TABLE `genders`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- AUTO_INCREMENT for table `intakes`
 --
 ALTER TABLE `intakes`
@@ -501,10 +696,28 @@ ALTER TABLE `migrations`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
+-- AUTO_INCREMENT for table `students`
+--
+ALTER TABLE `students`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `student_categories`
+--
+ALTER TABLE `student_categories`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
 -- AUTO_INCREMENT for table `subjects`
 --
 ALTER TABLE `subjects`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `topics`
+--
+ALTER TABLE `topics`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -528,6 +741,15 @@ ALTER TABLE `course_intake`
 --
 ALTER TABLE `intakes`
   ADD CONSTRAINT `intakes_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `topics`
+--
+ALTER TABLE `topics`
+  ADD CONSTRAINT `fk_topics_course` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_topics_intake` FOREIGN KEY (`intake_id`) REFERENCES `intakes` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_topics_lesson` FOREIGN KEY (`lesson_id`) REFERENCES `lessons` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_topics_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE SET NULL;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
