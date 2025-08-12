@@ -357,32 +357,29 @@
 @include('components.partials.data_table_js')
 @push('script')
     <script>
-        addRowLesson = () => {
+     // Add new Topic row
+addRowTopic = () => {
     $("#addRowBtn").button("loading");
     var tableLength = $("#productTable tbody tr").length;
-    var count;
-    if (tableLength > 0) {
-        var lastRowId = $("#productTable tbody tr:last").attr("id");
-        count = parseInt(lastRowId.replace('row', '')) + 1;
-    } else {
-        count = 1;
-    }
+    var count = tableLength > 0
+        ? parseInt($("#productTable tbody tr:last").attr("id").replace('row', '')) + 1
+        : 1;
 
     $("#addRowBtn").button("reset");
 
     var newRow = "<tr id='row" + count + "' class='mt-30'>";
+    // Input column
     newRow += "<td>";
     newRow += "<div class='primary_input pt-10'>";
-    newRow += "<input class='primary_input_field form-control' type='text' placeholder='title' name='topic[]' autocomplete='off'>";
+    newRow += "<input class='primary_input_field form-control' type='text' placeholder='{{ __('common.title') }}' name='topic[]' autocomplete='off'>";
     newRow += "</div>";
     newRow += "</td>";
-
+    // Delete button column
     newRow += "<td>";
-    newRow += "<button class='primary-btn icon-only fix-gr-bg' type='button' onclick='removeRow(this)'>";
+    newRow += "<button class='primary-btn icon-only fix-gr-bg ml-2' type='button' onclick='removeRow(this)'>";
     newRow += "<span class='ti-trash'></span>";
     newRow += "</button>";
     newRow += "</td>";
-
     newRow += "</tr>";
 
     if (tableLength > 0) {
@@ -394,11 +391,18 @@
 };
 
 
-        function deleteTopic(id) {
-            var modal = $('#deleteExamModal1');
-            modal.find('input[name=id]').val(id)
-            modal.modal('show');
-             $(button).closest('tr').remove();
-        }
+// Remove row without affecting first one
+function removeRow(button) {
+    const row = $(button).closest('tr');
+    row.remove();
+}
+
+// Show delete modal for Topic (server delete)
+function deleteTopic(id) {
+    var modal = $('#deleteExamModal1');
+    modal.find('input[name=id]').val(id);
+    modal.modal('show');
+}
+
     </script>
 @endpush

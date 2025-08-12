@@ -6,6 +6,8 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\IntakeController;
 use App\Http\Controllers\LessonController;
+use App\Http\Controllers\StudentCategoryController;
+use App\Http\Controllers\StudentController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TopicController;
 use App\Http\Controllers\TopicOverviewController;
@@ -69,6 +71,22 @@ Route::controller(TopicOverviewController::class)->prefix('administration/lesson
     Route::post('store', 'store')->name('topic-overview.store');
 });
 
+Route::controller(StudentCategoryController::class)->prefix('student/student-info/student-category')->group(callback: function () {
+    Route::get('/', 'index')->name('student-category.index');
+    Route::post('store', 'store')->name('student-category.store');
+    Route::put('update/{id}', 'update')->name('student-category.update');
+    Route::get('edit/{id}', 'edit')->name('student-category.edit');
+    Route::delete('destroy/{id}', 'destroy')->name('student-category.destroy');
+});
+
+Route::controller(StudentController::class)->prefix('student/student-info/add-student')->group(callback: function () {
+    Route::get('/', 'index')->name('student.index');
+    Route::post('store', 'store')->name('student.store');
+    Route::put('update/{id}', 'update')->name('student.update');
+    Route::get('edit/{id}', 'edit')->name('student.edit');
+    Route::delete('destroy/{id}', 'destroy')->name('student.destroy');
+});
+
 Route::controller(HomeController::class)->group(callback: function () {
     Route::get('dashboard', 'dashboard')->name('dashboard');
 
@@ -90,8 +108,8 @@ Route::controller(HomeController::class)->group(callback: function () {
 
 
 
-    Route::get('student/student-info/student-category', 'studentCategory')->name('student-category');
-    Route::get('student/student-info/add-student', 'addStudent')->name('add-student');
+ 
+    // Route::get('student/student-info/add-student', 'addStudent')->name('add-student');
     Route::get('student/student-info/student-list', 'studentList')->name('student-list');
     Route::get('student/student-info/student-view/{id}', 'studentView')->name('student-details');
 
