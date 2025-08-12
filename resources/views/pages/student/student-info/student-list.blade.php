@@ -31,7 +31,7 @@
 
 
                                 <div class="col-lg-4 col-md-6 col-sm-6 text-left text-sm-right mb-4 mb-sm-0">
-                                    <a href="{{ route('add-student') }}" class="primary-btn small fix-gr-bg">
+                                    <a href="{{ route('add-student.index') }}" class="primary-btn small fix-gr-bg">
                                         <span class="ti-plus pr-2"></span>
                                         @lang('student.add_student')
                                     </a>

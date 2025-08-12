@@ -97,20 +97,18 @@
                                                 <td>{{ $key + 1 }}</td>
                                                 <td>{{ $category->category_name }}</td>
                                                 <td>
-                                                    @php
-                                                        $routeList = [
-                                                            '<a class="dropdown-item editCategory" data-id="'.$category->id.'"
-                                                            data-name="'.$category->category_name.'" href="#">' .
-                                                            __('common.edit') .
-                                                            '</a>',
-                                                            '<a class="dropdown-item deleteCategory" data-id="'.$category->id.'" 
-                                                            data-toggle="modal" data-target="#deleteStudentTypeModal'.$category->id.'" 
-                                                            href="#">' .
-                                                            __('common.delete') .
-                                                            '</a>',
-                                                        ];
-                                                    @endphp
-                                                    <x-drop-down-action-component :routeList="$routeList" />
+
+                                                     <x-drop-down>
+                                                        <a class="dropdown-item editCategory"
+                                                            href="{{ route('student-category.edit', $category->id) }}">
+                                                            @lang('common.edit')
+                                                        </a>
+                                                        <a class="dropdown-item" data-toggle="modal"
+                                                            data-target="#deleteStudentTypeModal{{ $category->id }}"
+                                                            href="#">
+                                                            @lang('common.delete')
+                                                        </a>
+                                                    </x-drop-down>
                                                 </td>
                                             </tr>
                                             
@@ -157,64 +155,64 @@
 
 @section('script')
     <script>
-        $(document).ready(function() {
-            let currentDeleteId = null;
+        // $(document).ready(function() {
+        //     let currentDeleteId = null;
             
-            // Handle edit button click
-            $(document).on('click', '.editCategory', function(e) {
-                e.preventDefault();
+        //     // Handle edit button click
+        //     $(document).on('click', '.editCategory', function(e) {
+        //         e.preventDefault();
                 
-                var id = $(this).data('id');
-                var name = $(this).data('name');
+        //         var id = $(this).data('id');
+        //         var name = $(this).data('name');
                 
-                // Set form values
-                $('input[name="category"]').val(name);
-                $('input[name="id"]').val(id);
+        //         // Set form values
+        //         $('input[name="category"]').val(name);
+        //         $('input[name="id"]').val(id);
                 
-                // Update form action with correct parameter name
-                $('form').attr('action', '/student/student-info/student-category/update/' + id);
-                $('form').find('input[name="_method"]').remove();
-                $('form').append('<input type="hidden" name="_method" value="PUT">');
+        //         // Update form action with correct parameter name
+        //         $('form').attr('action', '/student/student-info/student-category/update/' + id);
+        //         $('form').find('input[name="_method"]').remove();
+        //         $('form').append('<input type="hidden" name="_method" value="PUT">');
                 
-                // UI updates
-                $('.main-title h3').text('@lang("student.edit_student_category")');
-                $('.submit span').removeClass('ti-check').addClass('ti-pencil');
-                $('.submit').html('<span class="ti-pencil"></span> @lang("student.update_category")');
-            });
+        //         // UI updates
+        //         $('.main-title h3').text('@lang("student.edit_student_category")');
+        //         $('.submit span').removeClass('ti-check').addClass('ti-pencil');
+        //         $('.submit').html('<span class="ti-pencil"></span> @lang("student.update_category")');
+        //     });
             
-            // Reset form when clicking cancel (optional)
-            $(document).on('click', '.cancel-edit', function() {
-                resetForm();
-            });
+        //     // Reset form when clicking cancel (optional)
+        //     $(document).on('click', '.cancel-edit', function() {
+        //         resetForm();
+        //     });
             
-            // Handle delete button click
-           $(document).on('click', '.deleteCategory', function(e) {
-                e.preventDefault();
-                currentDeleteId = $(this).data('id');
-                $('#deleteStudentTypeModal' + currentDeleteId).modal('show');
-            });
+        //     // Handle delete button click
+        //    $(document).on('click', '.deleteCategory', function(e) {
+        //         e.preventDefault();
+        //         currentDeleteId = $(this).data('id');
+        //         $('#deleteStudentTypeModal' + currentDeleteId).modal('show');
+        //     });
             
-            // Confirm delete action - now using form submission
-            $(document).on('click', '.confirm-delete', function() {
-                if (!currentDeleteId) return;
+        //     // Confirm delete action - now using form submission
+        //     $(document).on('click', '.confirm-delete', function() {
+        //         if (!currentDeleteId) return;
                 
-                // Find the form in the modal and submit it
-                $('#deleteStudentTypeModal' + currentDeleteId)
-                    .find('form')
-                    .trigger('submit');
-            });
+        //         // Find the form in the modal and submit it
+        //         $('#deleteStudentTypeModal' + currentDeleteId)
+        //             .find('form')
+        //             .trigger('submit');
+        //     });
         
             
-            function resetForm() {
-                $('input[name="category"]').val('');
-                $('input[name="id"]').val('');
-                $('.main-title h3').text('@lang("student.add_student_category")');
-                $('.submit span').removeClass('ti-pencil').addClass('ti-check');
-                $('.submit').html('<span class="ti-check"></span> @lang("student.save_category")');
-                $('form').attr('action', '{{ route("student-category.store") }}');
-                $('input[name="_method"]').remove();
-            }
-        });
+        //     function resetForm() {
+        //         $('input[name="category"]').val('');
+        //         $('input[name="id"]').val('');
+        //         $('.main-title h3').text('@lang("student.add_student_category")');
+        //         $('.submit span').removeClass('ti-pencil').addClass('ti-check');
+        //         $('.submit').html('<span class="ti-check"></span> @lang("student.save_category")');
+        //         $('form').attr('action', '{{ route("student-category.store") }}');
+        //         $('input[name="_method"]').remove();
+        //     }
+        // });
     </script>
 @endsection
 
