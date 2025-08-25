@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Student extends Model
 {
@@ -58,5 +59,20 @@ class Student extends Model
     public function scopeInactive(Builder $query)
     {
         $query->where('is_active', false);
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function gender(): BelongsTo
+    {
+        return $this->belongsTo(Gender::class);
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(StudentCategory::class);
     }
 }
