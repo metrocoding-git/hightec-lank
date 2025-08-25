@@ -129,9 +129,26 @@
                                                     <td>{{ $student->date_of_birth }}</td>
                                                     <td>-</td>
                                                     <td>{{ $student->gender->name }}</td>
-                                                    <td>-</td>
+                                                    <td>{{ $student->studentCategory->category_name }}</td>
                                                     <td>{{ $student->phone_number }}</td>
-                                                    <td></td>
+                                                    <td valign="top">
+                                                    {{-- @php
+                                                        $studentLink = $student->is_active ? 'student.disable' : 'student.enable';
+                                                        $routeList = [
+                                                            '<a class="dropdown-item" href="' .
+                                                            route('course.edit', $student->id) .
+                                                            '">' .
+                                                            __('common.edit') .
+                                                            '</a>',
+                                                            '<a class="dropdown-item" data-toggle="modal" data-target="#deleteClassModal' .
+                                                            $course->id .
+                                                            '" href="'.$studentLink.'">' .
+                                                            __('common.disable') .
+                                                            '</a>',
+                                                        ];
+                                                    @endphp --}}
+                                                    {{-- <x-drop-down-action-component :routeList="$routeList" /> --}}
+                                                </td>
                                                 </tr>
                                             @empty
                                                 <tr>

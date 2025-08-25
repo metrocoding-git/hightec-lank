@@ -132,15 +132,17 @@ class HomeController extends Controller
         $students = Student::with([
             'branch',
             'gender',
-            'category',
+            'studentCategory',
         ])->select([
             'admission_number',
+            'branch_id',
+            'student_category_id',
             'gender_id',
             'student_name',
             'date_of_birth',
             'phone_number',
         ])->active()->orderBy('id', 'desc')->get();
-               
+                      
         return view('pages.student.student-info.student-list', compact('students'));
     }
 

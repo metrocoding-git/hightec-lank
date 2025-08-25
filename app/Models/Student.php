@@ -71,7 +71,7 @@ class Student extends Model
         return $this->belongsTo(Gender::class);
     }
 
-    public function category(): BelongsTo
+    public function studentCategory(): BelongsTo
     {
         return $this->belongsTo(StudentCategory::class);
     }
