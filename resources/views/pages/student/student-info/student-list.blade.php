@@ -132,23 +132,22 @@
                                                     <td>{{ $student->studentCategory->category_name }}</td>
                                                     <td>{{ $student->phone_number }}</td>
                                                     <td valign="top">
-                                                    {{-- @php
-                                                        $studentLink = $student->is_active ? 'student.disable' : 'student.enable';
-                                                        $routeList = [
-                                                            '<a class="dropdown-item" href="' .
-                                                            route('course.edit', $student->id) .
-                                                            '">' .
-                                                            __('common.edit') .
-                                                            '</a>',
-                                                            '<a class="dropdown-item" data-toggle="modal" data-target="#deleteClassModal' .
-                                                            $course->id .
-                                                            '" href="'.$studentLink.'">' .
-                                                            __('common.disable') .
-                                                            '</a>',
-                                                        ];
-                                                    @endphp --}}
-                                                    {{-- <x-drop-down-action-component :routeList="$routeList" /> --}}
-                                                </td>
+                                                        @php
+                                                            $studentLink = $student->is_active
+                                                                ? "student.disable"
+                                                                : "student.enable";
+                                                            $routeList = [
+                                                                '<a class="dropdown-item" data-toggle="modal" data-target="#statusUpdateModal' .
+                                                                $student->id .
+                                                                '" href="' .
+                                                                route("student.update-status", $student) .
+                                                                '">' .
+                                                                __("common.disable") .
+                                                                "</a>",
+                                                            ];
+                                                        @endphp
+                                                        <x-drop-down-action-component :routeList="$routeList" />
+                                                    </td>
                                                 </tr>
                                             @empty
                                                 <tr>
@@ -185,6 +184,28 @@
                             <input type="hidden" name="id" value="{{ @$student->id }}" id="student_delete_i">
                             {{-- using js in main.js --}}
                             <button class="primary-btn fix-gr-bg" type="submit">@lang("common.disable")</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade admin-query" id="statusUpdateModal{{ $student->id }}">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">@lang("academics.delete_class")</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body text-center">
+                    <h4>@lang("common.are_you_sure_to_update_student_status")</h4>
+                    <div class="mt-40 d-flex justify-content-between">
+                        <button type="button" class="primary-btn tr-bg" data-dismiss="modal">@lang("common.cancel")</button>
+                        <form action="{{ route("student.update-status", $student->id) }}" method="POST">
+                            @csrf
+                            @method("patch")
+                            <button class="primary-btn fix-gr-bg" type="submit">@lang("common.update")</button>
                         </form>
                     </div>
                 </div>
