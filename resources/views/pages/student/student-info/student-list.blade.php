@@ -132,14 +132,12 @@
                                                     <td>{{ $student->studentCategory->category_name }}</td>
                                                     <td>{{ $student->phone_number }}</td>
                                                     <td valign="top">
-                                                        @php
-                                                            $studentLink = $student->is_active
-                                                                ? "student.disable"
-                                                                : "student.enable";
+                                                        @php                                                           
                                                             $routeList = [
-                                                                '<a class="dropdown-item" data-toggle="modal" data-target="#statusUpdateModal' .
+                                                                '<a class="dropdown-item" data-toggle="modal" data-student-id="' .
                                                                 $student->id .
-                                                                '" href="' .
+                                                                '" data-target="#statusUpdateModal" 
+                                                                href="' .
                                                                 route("student.update-status", $student) .
                                                                 '">' .
                                                                 __("common.disable") .
@@ -158,6 +156,7 @@
                                     </table>
                                 </x-table>
                             </div>
+
                         </div>
                     </div>
                 </div>
@@ -191,7 +190,7 @@
         </div>
     </div>
 
-    <div class="modal fade admin-query" id="statusUpdateModal{{ $student->id }}">
+    <div class="modal fade admin-query" id="statusUpdateModal">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -202,9 +201,10 @@
                     <h4>@lang("common.are_you_sure_to_update_student_status")</h4>
                     <div class="mt-40 d-flex justify-content-between">
                         <button type="button" class="primary-btn tr-bg" data-dismiss="modal">@lang("common.cancel")</button>
-                        <form action="{{ route("student.update-status", $student->id) }}" method="POST">
+                        <form action="{{ route("student.update-status") }}" method="POST">
                             @csrf
                             @method("patch")
+                            <input type="hidden" id="student-id-form" name="student_id" value="">
                             <button class="primary-btn fix-gr-bg" type="submit">@lang("common.update")</button>
                         </form>
                     </div>
@@ -238,6 +238,13 @@
 
 @push("script")
     <script>
+        $('#statusUpdateModal').on('show.bs.modal', function(event) {
+            var input = $('#student-id-form');
+            var button = $(event.relatedTarget);
+            var studentId = button.data('student-id');
+            input.val(studentId);
+        });
+
         $('#table_id').DataTable({
             dom: 'Bfrtip',
             paging: true,

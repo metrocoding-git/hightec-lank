@@ -143,12 +143,17 @@ class HomeController extends Controller
             'date_of_birth',
             'phone_number',
         ])->active()->orderBy('id', 'desc')->get();
-        
+
         return view('pages.student.student-info.student-list', compact('students'));
     }
 
-    public function updateStudetStatus(Student $student)
+    public function updateStudetStatus(Request $request)
     {
+        $request->validate([
+            'student_id' => 'required|exists:students,id',
+        ]);
+
+        $student = Student::findOrFail($request->student_id);
         $student->update([
             'is_active' => !$student->is_active
         ]);
@@ -161,12 +166,24 @@ class HomeController extends Controller
         return view('pages.student.student-info.student-view', compact('id'));
     }
 
-
-
-
     public function disabledStudents()
     {
-        return view('pages.student.student-info.disabled-students');
+        $students = $students = Student::with([
+            'branch',
+            'gender',
+            'studentCategory',
+        ])->select([
+            'id',
+            'admission_number',
+            'branch_id',
+            'student_category_id',
+            'gender_id',
+            'student_name',
+            'date_of_birth',
+            'phone_number',
+        ])->inactive()->orderBy('id', 'desc')->get();
+
+        return view('pages.student.student-info.disabled-students', compact('students'));
     }
     public function studentAttendance()
     {
