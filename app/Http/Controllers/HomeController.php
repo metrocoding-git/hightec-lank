@@ -134,6 +134,7 @@ class HomeController extends Controller
             'gender',
             'studentCategory',
         ])->select([
+            'id',
             'admission_number',
             'branch_id',
             'student_category_id',
@@ -142,8 +143,17 @@ class HomeController extends Controller
             'date_of_birth',
             'phone_number',
         ])->active()->orderBy('id', 'desc')->get();
-                      
+        
         return view('pages.student.student-info.student-list', compact('students'));
+    }
+
+    public function updateStudetStatus(Student $student)
+    {
+        $student->update([
+            'is_active' => !$student->is_active
+        ]);
+
+        return redirect()->back()->with('message-success', 'Student status update successfully!');
     }
 
     public function studentView($id)
