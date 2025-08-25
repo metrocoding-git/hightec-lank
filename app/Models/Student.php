@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Student extends Model
@@ -45,6 +46,17 @@ class Student extends Model
         'document_file_4',
         'previous_institute_details',
         'dormitory_id',
-        'sibling_id'
+        'sibling_id',
+        'is_active'
     ];
+
+    public function scopeActive(Builder $query)
+    {
+        $query->where('is_active', true);
+    }
+
+    public function scopeInactive(Builder $query)
+    {
+        $query->where('is_active', false);
+    }
 }
