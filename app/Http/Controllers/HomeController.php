@@ -28,6 +28,7 @@ use App\Models\DueFeesLoginPrevent;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\SmCalendarSetting;
+use App\Models\Student;
 use Flasher\Toastr\Laravel\Facade\Toastr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -128,7 +129,19 @@ class HomeController extends Controller
 
     public function studentList()
     {
-        return view('pages.student.student-info.student-list');
+        $students = Student::with([
+            'branch',
+            'gender',
+            'category',
+        ])->select([
+            'admission_number',
+            'gender_id',
+            'student_name',
+            'date_of_birth',
+            'phone_number',
+        ])->active()->orderBy('id', 'desc')->get();
+               
+        return view('pages.student.student-info.student-list', compact('students'));
     }
 
     public function studentView($id)
