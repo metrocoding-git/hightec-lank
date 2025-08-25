@@ -1,15 +1,15 @@
-@extends('layouts.app')
-@section('title')
-    @lang('academics.About')
+@extends("layouts.app")
+@section("title")
+    @lang("academics.About")
 @endsection
-@section('mainContent')
+@section("mainContent")
     <section class="sms-breadcrumb mb-20 up_breadcrumb">
         <div class="container-fluid">
             <div class="row justify-content-between">
                 <h1>{{ @$pt }}</h1>
                 <div class="bc-pages">
-                    <a href="{{ url('dashboard') }}">@lang('common.dashboard')</a>
-                    <a href="#">@lang('student.student_information')</a>
+                    <a href="{{ url("dashboard") }}">@lang("common.dashboard")</a>
+                    <a href="#">@lang("student.student_information")</a>
                     <a href="#">{{ @$pt }}</a>
                 </div>
             </div>
@@ -32,33 +32,33 @@
                             <div class="row">
                                 <div class="col-lg-8 col-md-6">
                                     <div class="main-title">
-                                        <h3 class="mb-15">@lang('common.select_criteria') </h3>
+                                        <h3 class="mb-15">@lang("common.select_criteria") </h3>
                                     </div>
                                 </div>
                             </div>
                             <div class="row">
-                                <input type="hidden" name="url" id="url" value="{{ URL::to('/') }}">
+                                <input type="hidden" name="url" id="url" value="{{ URL::to("/") }}">
 
-                                @include('components.common.search_criteria', [
-                                    'div' => 'col-lg-3',
-                                    'required' => ['class'],
-                                    'visiable' => ['class', 'section'],
+                                @include("components.common.search_criteria", [
+                                    "div" => "col-lg-3",
+                                    "required" => ["class"],
+                                    "visiable" => ["class", "section"],
                                 ])
                                 <div class="col-lg-3">
                                     <div class="primary_input ">
-                                        <label class="primary_input_label" for="">@lang('student.search_by_name')</label>
+                                        <label class="primary_input_label" for="">@lang("student.search_by_name")</label>
 
                                         <input class="primary_input_field" type="text" name="name"
-                                            value="{{ isset($name) ? $name : '' }}">
+                                            value="{{ isset($name) ? $name : "" }}">
 
                                     </div>
                                 </div>
                                 <div class="col-lg-3">
                                     <div class="primary_input md_mb_20">
-                                        <label class="primary_input_label" for="">@lang('student.search_by_admission_no')</label>
+                                        <label class="primary_input_label" for="">@lang("student.search_by_admission_no")</label>
 
                                         <input class="primary_input_field" type="text" name="admission_no"
-                                            id="admission_no" value="{{ isset($admission_no) ? $admission_no : '' }}">
+                                            id="admission_no" value="{{ isset($admission_no) ? $admission_no : "" }}">
 
                                     </div>
                                 </div>
@@ -66,7 +66,7 @@
                                 <div class="col-lg-12 mt-20 text-right">
                                     <button type="submit" class="primary-btn small fix-gr-bg">
                                         <span class="ti-search pr-2"></span>
-                                        @lang('common.search')
+                                        @lang("common.search")
                                     </button>
                                 </div>
                             </div>
@@ -90,160 +90,88 @@
                         <div class="row">
                             <div class="col-lg-12">
                                 <x-table>
-                                    <table id="table_id" class="table data-table" cellspacing="0" width="100%">
+                                    <table id="table_id"
+                                        class="table data-table Crm_table_active3 no-footer dtr-inline collapsed"
+                                        cellspacing="0" width="100%">
                                         <thead>
-
                                             <tr>
-                                                <th>@lang('student.admission_no')</th>
-                                                <th>@lang('student.roll_no')</th>
-                                                <th>@lang('student.name')</th>
-                                                <th>@lang('common.class')</th>
+                                                <th>@lang("student.admission_no")</th>
+                                                <th>@lang("student.name")</th>
 
-                                                <th>@lang('common.date_of_birth')</th>
-                                                <th>@lang('common.gender')</th>
-                                                <th>@lang('common.type')</th>
-                                                <th>@lang('common.phone')</th>
-                                                <th>@lang('common.actions')</th>
+                                                <th>@lang("student.date_of_birth")</th>
+
+                                                <th>@lang("student.class_sec")</th>
+
+                                                <th>@lang("common.gender")</th>
+                                                <th>@lang("common.type")</th>
+                                                <th>@lang("common.phone")</th>
+                                                <th>@lang("common.actions")</th>
                                             </tr>
                                         </thead>
-
                                         <tbody>
-                                            <?php
-                                            $students = collect([
-                                                (object) [
-                                                    'id' => 1,
-                                                    'admission_no' => 'A001',
-                                                    'roll_no' => 'R001',
-                                                    'first_name' => 'Kasun',
-                                                    'last_name' => 'Perera',
-                                                    'mobile' => '0771234567',
-                                                    'date_of_birth' => '2005-05-10',
-                                                    'gender' => (object) ['base_setup_name' => 'Male'],
-                                                    'category' => (object) ['category_name' => 'General'],
-                                                    'studentRecords' => [
-                                                        (object) [
-                                                            'class' => (object) ['class_name' => 'Grade 10'],
-                                                            'section' => (object) ['section_name' => 'A'],
-                                                        ],
-                                                        (object) [
-                                                            'class' => (object) ['class_name' => 'Grade 9'],
-                                                            'section' => (object) ['section_name' => 'B'],
-                                                        ],
-                                                    ],
-                                                    'recordClass' => (object) [
-                                                        'class' => (object) ['class_name' => 'Grade 10'],
-                                                    ],
-                                                    'recordSection' => (object) [
-                                                        'section' => (object) ['section_name' => 'A'],
-                                                    ],
-                                                    'recordClasses' => [(object) ['section' => (object) ['section_name' => 'A']], (object) ['section' => (object) ['section_name' => 'B']]],
-                                                    'parents' => (object) ['fathers_name' => 'Sunil Perera'],
-                                                ],
-                                                (object) [
-                                                    'id' => 2,
-                                                    'admission_no' => 'A002',
-                                                    'roll_no' => 'R002',
-                                                    'first_name' => 'Nimali',
-                                                    'last_name' => 'Fernando',
-                                                    'mobile' => '0719876543',
-                                                    'date_of_birth' => '2006-08-20',
-                                                    'gender' => (object) ['base_setup_name' => 'Female'],
-                                                    'category' => (object) ['category_name' => 'Scholarship'],
-                                                    'studentRecords' => [
-                                                        (object) [
-                                                            'class' => (object) ['class_name' => 'Grade 11'],
-                                                            'section' => (object) ['section_name' => 'C'],
-                                                        ],
-                                                    ],
-                                                    'recordClass' => (object) [
-                                                        'class' => (object) ['class_name' => 'Grade 11'],
-                                                    ],
-                                                    'recordSection' => (object) [
-                                                        'section' => (object) ['section_name' => 'C'],
-                                                    ],
-                                                    'recordClasses' => [(object) ['section' => (object) ['section_name' => 'C']]],
-                                                    'parents' => (object) ['fathers_name' => 'Ranjith Fernando'],
-                                                ],
-                                            ]);
-                                            
-                                            ?>
-                                            @foreach ($students as $student)
+                                            @forelse ($students as $student)
                                                 <tr>
-                                                    <td>{{ $student->admission_no }}</td>
-                                                    <td>{{ $student->roll_no }}</td>
-                                                    <td>{{ $student->first_name . ' ' . $student->last_name }}</td>
-                                                    <td>
+                                                    <td>{{ $student->admission_number }}</td>
+                                                    <td>{{ $student->student_name }}</td>
+                                                    <td>{{ $student->date_of_birth }}</td>
+                                                    <td>-</td>
+                                                    <td>{{ $student->gender->name }}</td>
+                                                    <td>{{ $student->studentCategory->category_name }}</td>
+                                                    <td>{{ $student->phone_number }}</td>
+                                                    <td valign="top">
                                                         @php
-                                                            $class_sec = [];
-                                                            foreach ($student->studentRecords as $classSec) {
-                                                                $class_sec[] =
-                                                                    $classSec->class->class_name .
-                                                                    '(' .
-                                                                    $classSec->section->section_name .
-                                                                    '), ';
-                                                            }
-                                                            if (request()->class) {
-                                                                $sections = [];
-                                                                $class = $student->recordClass
-                                                                    ? $student->recordClass->class->class_name
-                                                                    : '';
-                                                                if (request()->section) {
-                                                                    $sections[] =
-                                                                        $student->recordSection != ''
-                                                                            ? $student->recordSection->section
-                                                                                ->section_name
-                                                                            : '';
-                                                                } else {
-                                                                    foreach ($student->recordClasses as $section) {
-                                                                        $sections[] = $section->section->section_name;
-                                                                    }
-                                                                }
-                                                                echo $class . '(' . implode(', ', $sections) . '), ';
-                                                            } else {
-                                                                echo implode(', ', $class_sec);
-                                                            }
+                                                            $studentLink = $student->is_active
+                                                                ? "student.disable"
+                                                                : "student.enable";
+                                                            $routeList = [
+                                                                '<a class="dropdown-item" data-toggle="modal" data-student-id="' .
+                                                                $student->id .
+                                                                '" data-target="#statusUpdateModal" href="' .
+                                                                route("student.update-status") .
+                                                                '">' .
+                                                                __("common.enable") .
+                                                                "</a>",
+                                                            ];
                                                         @endphp
+                                                        <x-drop-down-action-component :routeList="$routeList" />
                                                     </td>
-
-
-                                                    <td data-sort="{{ strtotime($student->date_of_birth) }}">
-                                                        {{ $student->date_of_birth }}
-                                                    </td>
-                                                    <td>{{ $student->gender != '' ? $student->gender->base_setup_name : '' }}
-                                                    </td>
-                                                    <td>{{ $student->category != '' ? $student->category->category_name : '' }}
-                                                    </td>
-                                                    <td>{{ $student->mobile }}</td>
-                                                    <td>
-                                                        <x-drop-down>
-                                                        <a class="dropdown-item"
-                                                            href="">@lang('common.view')</a>
-
-
-                                                        <a onclick="deleteId({{ $student->id }});" class="dropdown-item"
-                                                            href="#" data-toggle="modal"
-                                                            data-target="#deleteStudentModal"
-                                                            data-id="{{ $student->id }}">@lang('common.delete')</a>
-
-                                                        <a onclick="enableId({{ $student->id }});" class="dropdown-item"
-                                                            href="#" data-toggle="modal"
-                                                            data-target="#enableStudentModal"
-                                                            data-id="{{ $student->id }}">@lang('common.enable')</a>
-                                                        </x-drop-down>
-                                                    </td>
+                                                </tr>
+                                            @empty
+                                                <tr>
+                                                    <td></td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </x-table>
                             </div>
                         </div>
-                        </td>
-                        </tr>
-                        @endforeach
-                        </tbody>
-                        </table>
-                        </x-table>
+                    </div>
+                    <div class="modal fade admin-query" id="statusUpdateModal">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h4 class="modal-title">@lang("academics.delete_class")</h4>
+                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                </div>
+                                <div class="modal-body text-center">
+                                    <h4>@lang("common.are_you_sure_to_update_student_status")</h4>
+                                    <div class="mt-40 d-flex justify-content-between">
+                                        <button type="button" class="primary-btn tr-bg"
+                                            data-dismiss="modal">@lang("common.cancel")</button>
+                                        <form action="{{ route("student.update-status") }}" method="POST">
+                                            @csrf
+                                            @method("patch")
+                                            <input type="hidden" id="student-id-form" name="student_id" value="">
+                                            <button class="primary-btn fix-gr-bg" type="submit">@lang("common.update")</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        </div>
         </div>
     </section>
 
@@ -260,7 +188,7 @@
                     <div class="text-center">
                         {{-- <h4>@lang('student.are_you_sure_to_delete')</h4> --}}
                         <h4 class="text-danger">You are going to remove
-                            {{ @$student->first_name . ' ' . @$student->last_name }}. Removed data CANNOT be
+                            {{ @$student->first_name . " " . @$student->last_name }}. Removed data CANNOT be
                             restored! Are
                             you
                             ABSOLUTELY Sure!</h4>
@@ -268,40 +196,12 @@
                     </div>
 
                     <div class="mt-40 d-flex justify-content-between">
-                        <button type="button" class="primary-btn tr-bg" data-dismiss="modal">@lang('common.cancel')</button>
+                        <button type="button" class="primary-btn tr-bg" data-dismiss="modal">@lang("common.cancel")</button>
                         {{-- {{ Form::open(['route' => 'disable_student_delete', 'method' => 'POST', 'enctype' => 'multipart/form-data']) }} --}}
                         <form class="">
                             <input type="hidden" name="id" value="" id="student_delete_i">
                             {{-- using js in main.js --}}
-                            <button class="primary-btn fix-gr-bg" type="submit">@lang('common.delete')</button>
-                        </form>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade admin-query" id="enableStudentModal">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title">@lang('student.enable_student')</h4>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                </div>
-
-                <div class="modal-body">
-                    <div class="text-center">
-                        <h4>@lang('student.are_you_sure_to_enable')</h4>
-                    </div>
-
-                    <div class="mt-40 d-flex justify-content-between">
-                        <button type="button" class="primary-btn tr-bg" data-dismiss="modal">@lang('common.cancel')</button>
-                        {{-- {{ Form::open(['route' => 'enable_student', 'method' => 'POST', 'enctype' => 'multipart/form-data']) }} --}}
-                        <form>
-                            <input type="hidden" name="id" value="" id="student_enable_i">
-                            {{-- using js in main.js --}}
-                            <button class="primary-btn fix-gr-bg" type="submit">@lang('common.enable')</button>
+                            <button class="primary-btn fix-gr-bg" type="submit">@lang("common.delete")</button>
                         </form>
                     </div>
                 </div>
@@ -310,10 +210,21 @@
         </div>
     </div>
 @endsection
-@include('components.partials.data_table_js')
-@include('components.partials.server_side_datatable')
+@include("components.partials.data_table_js")
+@include("components.partials.server_side_datatable")
 
-{{-- @push('script')
+@pushOnce("scripts")
+    <script>
+        $('#statusUpdateModal').on('show.bs.modal', function(event) {
+            var input = $('#student-id-form');
+            var button = $(event.relatedTarget);
+            var studentId = button.data('student-id');
+            input.val(studentId);
+        });
+    </script>
+@endPushOnce
+
+{{-- @push("script")
     <script>
         $(document).ready(function() {
             $('.data-table').DataTable({
@@ -341,7 +252,7 @@
                         data: 'full_name',
                         name: 'full_name'
                     },
-                    @if (moduleStatusCheck('University'))
+                    @if (moduleStatusCheck("University"))
                         {
                             data: 'semester_label',
                             name: 'semester_label'
@@ -356,7 +267,7 @@
                         },
                     @endif
 
-                    @if (!moduleStatusCheck('University') && generalSetting()->with_guardian)
+                    @if (!moduleStatusCheck("University") && generalSetting()->with_guardian)
                         {
                             data: 'parents.fathers_name',
                             name: 'parents.fathers_name'

@@ -155,6 +155,7 @@
     "update_information" => "Save Information",
     "search_by_name" => "Search by Name",
     "are_you_sure_to_delete" => "Are you sure to delete this item?",
+    "are_you_sure_to_update_student_status" => "Are you sure to update student status?",
     "are_you_sure_to_disable" => "Are you sure to disable this item?",
     "are_you_sure_to_enable" => "Are you sure to enable this item?",
     "are_you_sure_to_approve" => "Are You Sure To Approve",

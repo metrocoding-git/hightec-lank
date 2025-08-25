@@ -22,8 +22,6 @@ class AddStudentController extends Controller
         return view('pages.student.student-info.add-student', compact('branches', 'genders', 'categories', 'bloodGroups', 'intakes'));
     }
 
-
-
     public function store(Request $request)
     {
         $validatedData = $request->validate([

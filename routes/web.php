@@ -111,6 +111,7 @@ Route::controller(HomeController::class)->group(callback: function () {
  
     // Route::get('student/student-info/add-student', 'addStudent')->name('add-student');
     Route::get('student/student-info/student-list', 'studentList')->name('student-list');
+    Route::patch('student/update-status', 'updateStudetStatus')->name('student.update-status');
     Route::get('student/student-info/student-view/{id}', 'studentView')->name('student-details');
 
     Route::get('student/student-info/disabled-student', 'disabledStudents')->name('disabled-students');

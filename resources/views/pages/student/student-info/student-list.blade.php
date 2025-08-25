@@ -1,16 +1,16 @@
-@extends('layouts.app')
-@section('title')
-    @lang('academics.About')
+@extends("layouts.app")
+@section("title")
+    @lang("academics.About")
 @endsection
-@section('mainContent')
+@section("mainContent")
     <section class="sms-breadcrumb mb-20 up_breadcrumb">
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1>@lang('student.manage_student')</h1>
+                <h1>@lang("student.manage_student")</h1>
                 <div class="bc-pages">
-                    <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
-                    <a href="#">@lang('student.student_information')</a>
-                    <a href="#">@lang('student.student_list')</a>
+                    <a href="{{ route("dashboard") }}">@lang("common.dashboard")</a>
+                    <a href="#">@lang("student.student_information")</a>
+                    <a href="#">@lang("student.student_list")</a>
                 </div>
             </div>
         </div>
@@ -25,43 +25,43 @@
                             <div class="row">
                                 <div class="col-lg-8 col-md-6 col-sm-6">
                                     <div class="main-title mt_0_sm mt_0_md">
-                                        <h3 class="mb-15">@lang('common.select_criteria')</h3>
+                                        <h3 class="mb-15">@lang("common.select_criteria")</h3>
                                     </div>
                                 </div>
 
 
                                 <div class="col-lg-4 col-md-6 col-sm-6 text-left text-sm-right mb-4 mb-sm-0">
-                                    <a href="{{ route('add-student.index') }}" class="primary-btn small fix-gr-bg">
+                                    <a href="{{ route("add-student.index") }}" class="primary-btn small fix-gr-bg">
                                         <span class="ti-plus pr-2"></span>
-                                        @lang('student.add_student')
+                                        @lang("student.add_student")
                                     </a>
                                 </div>
 
                             </div>
                             <div class="row row-gap-24">
-                                <input type="hidden" name="url" id="url" value="{{ URL::to('/') }}">
+                                <input type="hidden" name="url" id="url" value="{{ URL::to("/") }}">
 
 
-                                @include('components.common.search_criteria', [
-                                    'mt' => 'mt-0',
-                                    'div' => 'col-lg-4 col-md-6',
-                                    'required' => ['academic'],
-                                    'visiable' => ['academic', 'class', 'section'],
+                                @include("components.common.search_criteria", [
+                                    "mt" => "mt-0",
+                                    "div" => "col-lg-4 col-md-6",
+                                    "required" => ["academic"],
+                                    "visiable" => ["academic", "class", "section"],
                                 ])
                                 <div class="col-lg-4 col-md-6">
                                     <div class="primary_input sm_mb_20 ">
-                                        <label class="primary_input_label" for="">@lang('student.search_by_name')</label>
+                                        <label class="primary_input_label" for="">@lang("student.search_by_name")</label>
 
                                         <input class="primary_input_field" type="text" placeholder="Name" name="name"
-                                            value="{{ isset($name) ? $name : old('name') }}">
+                                            value="{{ isset($name) ? $name : old("name") }}">
 
                                     </div>
                                 </div>
                                 <div class="col-lg-4 col-md-6">
                                     <div class="primary_input sm_mb_20 ">
-                                        <label class="primary_input_label" for="">@lang('student.search_by_roll')</label>
+                                        <label class="primary_input_label" for="">@lang("student.search_by_roll")</label>
                                         <input class="primary_input_field" type="text" placeholder="Roll" name="roll_no"
-                                            value="{{ isset($roll_no) ? $roll_no : old('roll_no') }}">
+                                            value="{{ isset($roll_no) ? $roll_no : old("roll_no") }}">
 
 
                                     </div>
@@ -70,7 +70,7 @@
                                 <div class="col-lg-12 mt-20 text-right">
                                     <button type="submit" class="primary-btn small fix-gr-bg" id="btnsubmit">
                                         <span class="ti-search pr-2"></span>
-                                        @lang('common.search')
+                                        @lang("common.search")
                                     </button>
                                 </div>
                             </div>
@@ -82,12 +82,12 @@
                 <input type="hidden" id="section" value="{{ @$section }}">
                 <input type="hidden" id="roll" value="{{ @$roll_no }}">
                 <input type="hidden" id="name" value="{{ @$name }}">
-                <input type="hidden" id="un_session" value="{{ @$data['un_session_id'] }}">
-                <input type="hidden" id="un_academic" value="{{ @$data['un_academic_id'] }}">
-                <input type="hidden" id="un_faculty" value="{{ @$data['un_faculty_id'] }}">
-                <input type="hidden" id="un_department" value="{{ @$data['un_department_id'] }}">
-                <input type="hidden" id="un_semester_label" value="{{ @$data['un_semester_label_id'] }}">
-                <input type="hidden" id="un_section" value="{{ @$data['un_section_id'] }}">
+                <input type="hidden" id="un_session" value="{{ @$data["un_session_id"] }}">
+                <input type="hidden" id="un_academic" value="{{ @$data["un_academic_id"] }}">
+                <input type="hidden" id="un_faculty" value="{{ @$data["un_faculty_id"] }}">
+                <input type="hidden" id="un_department" value="{{ @$data["un_department_id"] }}">
+                <input type="hidden" id="un_semester_label" value="{{ @$data["un_semester_label_id"] }}">
+                <input type="hidden" id="un_section" value="{{ @$data["un_section_id"] }}">
             </form>
             {{-- @if (@$students) --}}
             <div class="row mt-40 full_wide_table">
@@ -96,7 +96,7 @@
                         <div class="row">
                             <div class="col-lg-4 no-gutters">
                                 <div class="main-title">
-                                    <h3 class="mb-15">@lang('student.student_list')</h3>
+                                    <h3 class="mb-15">@lang("student.student_list")</h3>
                                 </div>
                             </div>
                         </div>
@@ -108,24 +108,55 @@
                                         cellspacing="0" width="100%">
                                         <thead>
                                             <tr>
-                                                <th>@lang('student.admission_no')</th>
-                                                <th>@lang('student.name')</th>
+                                                <th>@lang("student.admission_no")</th>
+                                                <th>@lang("student.name")</th>
 
-                                                <th>@lang('student.date_of_birth')</th>
+                                                <th>@lang("student.date_of_birth")</th>
 
-                                                <th>@lang('student.class_sec')</th>
+                                                <th>@lang("student.class_sec")</th>
 
-                                                <th>@lang('common.gender')</th>
-                                                <th>@lang('common.type')</th>
-                                                <th>@lang('common.phone')</th>
-                                                <th>@lang('common.actions')</th>
+                                                <th>@lang("common.gender")</th>
+                                                <th>@lang("common.type")</th>
+                                                <th>@lang("common.phone")</th>
+                                                <th>@lang("common.actions")</th>
                                             </tr>
                                         </thead>
                                         <tbody>
+                                            @forelse ($students as $student)
+                                                <tr>
+                                                    <td>{{ $student->admission_number }}</td>
+                                                    <td>{{ $student->student_name }}</td>
+                                                    <td>{{ $student->date_of_birth }}</td>
+                                                    <td>-</td>
+                                                    <td>{{ $student->gender->name }}</td>
+                                                    <td>{{ $student->studentCategory->category_name }}</td>
+                                                    <td>{{ $student->phone_number }}</td>
+                                                    <td valign="top">
+                                                        @php                                                           
+                                                            $routeList = [
+                                                                '<a class="dropdown-item" data-toggle="modal" data-student-id="' .
+                                                                $student->id .
+                                                                '" data-target="#statusUpdateModal" 
+                                                                href="' .
+                                                                route("student.update-status", $student) .
+                                                                '">' .
+                                                                __("common.disable") .
+                                                                "</a>",
+                                                            ];
+                                                        @endphp
+                                                        <x-drop-down-action-component :routeList="$routeList" />
+                                                    </td>
+                                                </tr>
+                                            @empty
+                                                <tr>
+                                                    <td></td>
+                                                </tr>
+                                            @endforelse
                                         </tbody>
                                     </table>
                                 </x-table>
                             </div>
+
                         </div>
                     </div>
                 </div>
@@ -138,20 +169,43 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">@lang('student.disable_student')</h4>
+                    <h4 class="modal-title">@lang("student.disable_student")</h4>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="text-center">
-                        <h4>@lang('student.are_you_sure_to_disable')</h4>
+                        <h4>@lang("student.are_you_sure_to_disable")</h4>
                     </div>
                     <div class="mt-40 d-flex justify-content-between">
-                        <button type="button" class="primary-btn tr-bg" data-dismiss="modal">@lang('common.cancel')</button>
+                        <button type="button" class="primary-btn tr-bg" data-dismiss="modal">@lang("common.cancel")</button>
                         {{-- {{ Form::open(['route' => 'student-delete', 'method' => 'POST', 'enctype' => 'multipart/form-data']) }} --}}
                         <form class="">
                             <input type="hidden" name="id" value="{{ @$student->id }}" id="student_delete_i">
                             {{-- using js in main.js --}}
-                            <button class="primary-btn fix-gr-bg" type="submit">@lang('common.disable')</button>
+                            <button class="primary-btn fix-gr-bg" type="submit">@lang("common.disable")</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade admin-query" id="statusUpdateModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">@lang("academics.delete_class")</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body text-center">
+                    <h4>@lang("common.are_you_sure_to_update_student_status")</h4>
+                    <div class="mt-40 d-flex justify-content-between">
+                        <button type="button" class="primary-btn tr-bg" data-dismiss="modal">@lang("common.cancel")</button>
+                        <form action="{{ route("student.update-status") }}" method="POST">
+                            @csrf
+                            @method("patch")
+                            <input type="hidden" id="student-id-form" name="student_id" value="">
+                            <button class="primary-btn fix-gr-bg" type="submit">@lang("common.update")</button>
                         </form>
                     </div>
                 </div>
@@ -162,178 +216,41 @@
     @php
         if (isset($academic_year) || isset($class_id)) {
             $ajax_url = url(
-                'student-list-datatable?academic_year=' .
+                "student-list-datatable?academic_year=" .
                     $academic_year .
-                    '&class=' .
+                    "&class=" .
                     $class_id .
-                    '&section=' .
+                    "&section=" .
                     $section .
-                    '&roll_no=' .
+                    "&roll_no=" .
                     $roll_no .
-                    '&name=' .
+                    "&name=" .
                     $name,
             );
         } else {
-            $ajax_url = url('student-list-datatable');
+            $ajax_url = url("student-list-datatable");
         }
     @endphp
 @endsection
 
-@include('components.partials.data_table_js')
-@include('components.partials.server_side_datatable')
+@include("components.partials.data_table_js")
+@include("components.partials.server_side_datatable")
 
-@push('script')
+@push("script")
     <script>
-        $(document).ready(function() {
-            $('.data-table').DataTable({
-                processing: true,
-                serverSide: true,
-                "ajax": $.fn.dataTable.pipeline({
-                    url: "{{ url('student-list-datatable') }}",
-                    data: {
-                        academic_year: $('#academic_id').val(),
-                        class: $('#class').val(),
-                        section: $('#section').val(),
-                        roll_no: $('#roll').val(),
-                        name: $('#name').val(),
-                        un_session_id: $('#un_session').val(),
-                        un_academic_id: $('#un_academic').val(),
-                        un_faculty_id: $('#un_faculty').val(),
-                        un_department_id: $('#un_department').val(),
-                        un_semester_label_id: $('#un_semester_label').val(),
-                        un_section_id: $('#un_section').val(),
-                    },
-                    pages: "" // number of pages to cache
-                }),
-                columns: [{
-                        data: 'admission_no',
-                        name: 'admission_no'
-                    },
-                    {
-                        data: 'full_name',
-                        name: 'full_name'
-                    },
-                    {
-                        data: 'dob',
-                        name: 'dob'
-                    },
+        $('#statusUpdateModal').on('show.bs.modal', function(event) {
+            var input = $('#student-id-form');
+            var button = $(event.relatedTarget);
+            var studentId = button.data('student-id');
+            input.val(studentId);
+        });
 
-                    {
-                        data: 'class_sec',
-                        name: 'class_sec'
-                    },
-                    {
-                        data: 'gender.base_setup_name',
-                        name: 'gender.base_setup_name'
-                    },
-                    {
-                        data: 'category.category_name',
-                        name: 'category.category_name'
-                    },
-                    {
-                        data: 'mobile',
-                        name: 'sm_students.mobile'
-                    },
-                    {
-                        data: 'action',
-                        name: 'action',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'first_name',
-                        name: 'first_name',
-                        visible: false
-                    },
-                    {
-                        data: 'last_name',
-                        name: 'last_name',
-                        visible: false
-                    },
-                ],
-                bLengthChange: false,
-                bDestroy: true,
-                language: {
-                    search: "<i class='ti-search'></i>",
-                    searchPlaceholder: window.jsLang('quick_search'),
-                    paginate: {
-                        next: "<i class='ti-arrow-right'></i>",
-                        previous: "<i class='ti-arrow-left'></i>",
-                    },
-                },
-                dom: "Bfrtip",
-                buttons: [{
-                        extend: "copyHtml5",
-                        text: '<i class="fa fa-files-o"></i>',
-                        title: $("#logo_title").val(),
-                        titleAttr: window.jsLang('copy_table'),
-                        exportOptions: {
-                            columns: ':visible:not(.not-export-col)'
-                        },
-                    },
-                    {
-                        extend: "excelHtml5",
-                        text: '<i class="fa fa-file-excel-o"></i>',
-                        titleAttr: window.jsLang('export_to_excel'),
-                        title: $("#logo_title").val(),
-                        margin: [10, 10, 10, 0],
-                        exportOptions: {
-                            columns: ':visible:not(.not-export-col)'
-                        },
-                    },
-                    {
-                        extend: "csvHtml5",
-                        text: '<i class="fa fa-file-text-o"></i>',
-                        titleAttr: window.jsLang('export_to_csv'),
-                        exportOptions: {
-                            columns: ':visible:not(.not-export-col)'
-                        },
-                    },
-                    {
-                        extend: "pdfHtml5",
-                        text: '<i class="fa fa-file-pdf-o"></i>',
-                        title: $("#logo_title").val(),
-                        titleAttr: window.jsLang('export_to_pdf'),
-                        exportOptions: {
-                            columns: ':visible:not(.not-export-col)'
-                        },
-                        orientation: "landscape",
-                        pageSize: "A4",
-                        margin: [0, 0, 0, 12],
-                        alignment: "center",
-                        header: true,
-                        customize: function(doc) {
-                            doc.content[1].margin = [100, 0, 100, 0]; //left, top, right, bottom
-                            doc.content.splice(1, 0, {
-                                margin: [0, 0, 0, 12],
-                                alignment: "center",
-                                image: "data:image/png;base64," + $("#logo_img").val(),
-                            });
-                            doc.defaultStyle = {
-                                font: 'DejaVuSans'
-                            }
-                        },
-                    },
-                    {
-                        extend: "print",
-                        text: '<i class="fa fa-print"></i>',
-                        titleAttr: window.jsLang('print'),
-                        title: $("#logo_title").val(),
-                        exportOptions: {
-                            columns: ':visible:not(.not-export-col)'
-                        },
-                    },
-                    {
-                        extend: "colvis",
-                        text: '<i class="fa fa-columns"></i>',
-                        postfixButtons: ["colvisRestore"],
-                    },
-                ],
-                columnDefs: [{
-                    visible: false,
-                }, ],
-                responsive: true,
-            });
+        $('#table_id').DataTable({
+            dom: 'Bfrtip',
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
         });
     </script>
 @endpush
