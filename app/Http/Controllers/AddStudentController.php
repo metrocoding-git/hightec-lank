@@ -88,6 +88,11 @@ class AddStudentController extends Controller
     }
 
 
+    public function edit(Student $student)
+    {
+        return view('pages.student.student-info.edit-student', compact('student'));
+    }
+
     public function update(Request $request, Student $student)
     {
         $validatedData = $request->validate([
