@@ -329,6 +329,7 @@ return [
     'edit_student' => 'Edit Student',
     'import_student' => 'Import Student',
     'save_student' => 'Save Student',
+    'update_student' => 'Update Student',
     'admission_no' => 'Admission No',
     'name' => 'Name',
     'roll_no' => 'Roll No',
