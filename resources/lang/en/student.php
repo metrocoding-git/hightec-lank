@@ -326,7 +326,7 @@ return [
     'custom_field' => 'Custom Field',
     'delete_custom_field' => 'Delete Custom Field',
     'add_student' => 'Add Student',
-    'update_student' => 'Update Student',
+    'edit_student' => 'Edit Student',
     'import_student' => 'Import Student',
     'save_student' => 'Save Student',
     'admission_no' => 'Admission No',
