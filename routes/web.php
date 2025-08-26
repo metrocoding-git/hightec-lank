@@ -8,12 +8,10 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\IntakeController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\StudentCategoryController;
-use App\Http\Controllers\StudentController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TopicController;
 use App\Http\Controllers\TopicOverviewController;
 use Illuminate\Support\Facades\Route;
-use PhpParser\Node\Expr\Assign;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
