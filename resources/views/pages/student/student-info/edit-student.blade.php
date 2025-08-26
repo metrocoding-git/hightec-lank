@@ -32,7 +32,7 @@
     <section class="admin-visitor-area up_st_admin_visitor">
         <div class="container-fluid p-0">
 
-            <form method="POST" action="{{ route("student.update") }}" enctype="multipart/form-data">
+            <form method="POST" action="{{ route("add-student.update") }}" enctype="multipart/form-data">
                 @csrf
                 <div class="row">
                     <div class="col-lg-12">
@@ -95,7 +95,7 @@
                                             <button class="primary-btn fix-gr-bg submit" id="_submit_btn_admission"
                                                 data-toggle="tooltip">
                                                 <span class="ti-check"></span>
-                                                @lang("student.save_student")
+                                                @lang("student.update_student")
                                             </button>
                                             {{-- </div>
                             </div> --}}
@@ -201,7 +201,7 @@
                                                                             class="primary_input_field  form-control{{ $errors->has("admission_number") ? " is-invalid" : "" }}"
                                                                             type="text" onkeyup="GetAdmin(this.value)"
                                                                             name="admission_number"
-                                                                            value="{{ 10 != "" ? 10 + 1 : 1 }}">
+                                                                            value="{{ old("admission_number",$student->admission_number) }}">
 
 
                                                                         @if ($errors->has("admission_number"))
@@ -231,7 +231,7 @@
                                                                                             id="admission_date"
                                                                                             type="date"
                                                                                             name="admission_date"
-                                                                                            value="{{ old("admission_date") != "" ? old("admission_date") : date("m/d/Y") }}"
+                                                                                            value="{{ old("admission_date",$student->admission_date) }}"
                                                                                             autocomplete="off">
                                                                                     </div>
                                                                                 </div>
@@ -266,6 +266,11 @@
                                                                                 id="student_category_id">
                                                                                 <option value="">Select Student
                                                                                     Category</option>
+                                                                                <option
+                                                                                    value="{{ $student->studentCategory->id }}"
+                                                                                    selected>
+                                                                                    {{ $student->studentCategory->category }}
+                                                                                </option>
                                                                                 @foreach ($categories as $category)
                                                                                     <option value="{{ $category->id }}"
                                                                                         @if (old("student_category_id", isset($student) ? $student->student_category_id : "") == $category->id) selected @endif>
@@ -308,7 +313,7 @@
                                                                         <input
                                                                             class="primary_input_field form-control{{ $errors->has("first_name") ? " is-invalid" : "" }}"
                                                                             type="text" name="first_name"
-                                                                            value="{{ old("first_name") }}">
+                                                                            value="{{ old("first_name",$student->first_name) }}">
 
 
                                                                         @if ($errors->has("first_name"))
@@ -330,7 +335,7 @@
                                                                         <input
                                                                             class="primary_input_field form-control{{ $errors->has("last_name") ? " is-invalid" : "" }}"
                                                                             type="text" name="last_name"
-                                                                            value="{{ old("last_name") }}">
+                                                                            value="{{ old("last_name",$student->last_name) }}">
 
 
                                                                         @if ($errors->has("last_name"))
@@ -345,14 +350,13 @@
                                                                     <div class="primary_input ">
                                                                         <label class="primary_input_label"
                                                                             for="">@lang("common.gender")
-
                                                                             <span class="text-danger"> *</span>
-
                                                                         </label>
                                                                         <select
                                                                             class="primary_select form-control{{ $errors->has("gender_id") ? " is-invalid" : "" }}"
                                                                             name="gender_id">
-                                                                            <option value="">Select Gender</option>
+                                                                            <option value="{{ $student->gender->id }}">
+                                                                                {{ $student->gender->name }}</option>
                                                                             @foreach ($genders as $gender)
                                                                                 <option value="{{ $gender->id }}"
                                                                                     {{ old("gender_id") == $gender->id ? "selected" : "" }}>
@@ -386,7 +390,7 @@
                                                                                             id="date_of_birth"
                                                                                             type="date"
                                                                                             name="date_of_birth"
-                                                                                            value="{{ old("date_of_birth") != "" ? old("date_of_birth") : "" }}"
+                                                                                            value="{{ old("date_of_birth",$student->date_of_birth) }}"
                                                                                             autocomplete="off">
                                                                                     </div>
                                                                                 </div>
@@ -469,7 +473,7 @@
                                                                             class="primary_input_field email_address form-control{{ $errors->has("email_address") ? " is-invalid" : "" }}"
                                                                             id="email_address" type="text"
                                                                             name="email_address"
-                                                                            value="{{ old("email_address") }}">
+                                                                            value="{{ old("email_address",$student->email_address) }}">
 
 
                                                                         @if ($errors->has("email_address"))
@@ -492,10 +496,7 @@
                                                                             class="primary_input_field phone_number form-control{{ $errors->has("phone_number") ? " is-invalid" : "" }}"
                                                                             type="tel" name="phone_number"
                                                                             id="phone_number"
-                                                                            value="{{ old("phone_number") }}">
-
-
-
+                                                                            value="{{ old("phone_number",$student->phone_number) }}">
 
                                                                         @if ($errors->has("phone_number"))
                                                                             <span class="text-danger">
@@ -542,7 +543,7 @@
 
                                                                                 </label>
                                                                                 <textarea class="primary_input_field form-control{{ $errors->has("current_address") ? " is-invalid" : "" }}"
-                                                                                    cols="0" rows="3" name="current_address" id="current_address">{{ old("current_address") }}</textarea>
+                                                                                    cols="0" rows="3" name="current_address" id="current_address">{{ old("current_address",$student->current_address) }}</textarea>
 
 
                                                                                 @if ($errors->has("current_address"))
@@ -563,7 +564,7 @@
 
                                                                                 </label>
                                                                                 <textarea class="primary_input_field form-control{{ $errors->has("current_address") ? " is-invalid" : "" }}"
-                                                                                    cols="0" rows="3" name="permanent_address" id="permanent_address">{{ old("permanent_address") }}</textarea>
+                                                                                    cols="0" rows="3" name="permanent_address" id="permanent_address">{{ old("permanent_address",$student->permanent_address) }}</textarea>
 
 
                                                                                 @if ($errors->has("permanent_address"))
@@ -599,9 +600,9 @@
                                                                         <select
                                                                             class="primary_select form-control{{ $errors->has("blood_group_id") ? " is-invalid" : "" }}"
                                                                             name="blood_group_id">
-                                                                            <option value=""> Select Blood Group
+                                                                            <option value="{{ $student->bloodGroup->id }}"
+                                                                                selected>{{ $student->bloodGroup->name }}
                                                                             </option>
-
                                                                             @foreach ($bloodGroups as $group)
                                                                                 <option value="{{ $gender->id }}"
                                                                                     {{ old("blood_group_id") == $group->id ? "selected" : "" }}>
@@ -618,10 +619,6 @@
                                                                     </div>
                                                                 </div>
 
-
-
-
-
                                                                 <div class="col-lg-6 mt-4">
                                                                     <div class="primary_input ">
                                                                         <label class="primary_input_label" for="">
@@ -630,7 +627,7 @@
                                                                         <input
                                                                             class="primary_input_field form-control{{ $errors->has("height") ? " is-invalid" : "" }}"
                                                                             type="text" name="height"
-                                                                            value="{{ old("height") }}">
+                                                                            value="{{ old("height",$student->height) }}">
                                                                         @if ($errors->has("height"))
                                                                             <span class="text-danger">
                                                                                 {{ $errors->first("height") }}
@@ -638,7 +635,6 @@
                                                                         @endif
                                                                     </div>
                                                                 </div>
-
 
                                                                 <div class="col-lg-6 mt-4">
                                                                     <div class="primary_input ">
@@ -648,7 +644,7 @@
                                                                         <input
                                                                             class="primary_input_field form-control{{ $errors->has("weight") ? " is-invalid" : "" }}"
                                                                             type="text" name="weight"
-                                                                            value="{{ old("weight") }}">
+                                                                            value="{{ old("weight",$student->weight) }}">
 
 
                                                                         @if ($errors->has("weight"))
@@ -658,8 +654,6 @@
                                                                         @endif
                                                                     </div>
                                                                 </div>
-
-
                                                             </div>
                                                         </div>
                                                     </div>
@@ -731,9 +725,7 @@
                                                                                                 <select
                                                                                                     class="primary_select form-control @error("intake_id") is-invalid @enderror"
                                                                                                     name="intake_id">
-                                                                                                    <option value="">
-                                                                                                        Select Intake *
-                                                                                                    </option>
+
                                                                                                     @foreach ($intakes as $intake)
                                                                                                         <option
                                                                                                             value="{{ $intake->id }}"
@@ -759,8 +751,9 @@
                                                                                                     class="primary_select"
                                                                                                     name="branch"
                                                                                                     id="branch">
-                                                                                                    <option value="">
-                                                                                                        Select Branch
+                                                                                                    <option
+                                                                                                        value="{{ $student->branch->id }}">
+                                                                                                        {{ $student->branch->name }}
                                                                                                     </option>
                                                                                                     @foreach ($branches as $branch)
                                                                                                         <option
@@ -816,9 +809,8 @@
                                                                                                         @lang("hr.select_staff")
                                                                                                         *
                                                                                                     </option>
-                                                                                                    option
-                                                                                                    value="1">
-                                                                                                    1
+                                                                                                    <option value="1">
+                                                                                                        1
                                                                                                     </option>
                                                                                                     <option value="2">
                                                                                                         2
@@ -916,9 +908,7 @@
                                                                             class="primary_input_field form-control{{ $errors->has("guardians_name") ? " is-invalid" : "" }}"
                                                                             type="text" name="guardians_name"
                                                                             id="guardians_name"
-                                                                            value="{{ old("guardians_name") }}">
-
-
+                                                                            value="{{ old("guardians_name",$student->guardians_name) }}">
                                                                         @if ($errors->has("guardians_name"))
                                                                             <span class="text-danger">
                                                                                 {{ $errors->first("guardians_name") }}
@@ -964,8 +954,7 @@
                                                                             class="primary_input_field form-control{{ $errors->has("guardians_email") ? " is-invalid" : "" }}"
                                                                             type="text" name="guardians_email"
                                                                             id="guardians_email"
-                                                                            value="{{ old("guardians_email") }}">
-
+                                                                            value="{{ old("guardians_email",$student->guardians_email) }}">
 
                                                                         @if ($errors->has("guardians_email"))
                                                                             <span class="text-danger">
@@ -1021,7 +1010,7 @@
                                                                             class="primary_input_field form-control{{ $errors->has("guardians_phone") ? " is-invalid" : "" }}"
                                                                             type="text" name="guardians_phone"
                                                                             id="guardians_phone"
-                                                                            value="{{ old("guardians_phone") }}">
+                                                                            value="{{ old("guardians_phone",$student->guardians_phone) }}">
 
 
                                                                         @if ($errors->has("guardians_phone"))
@@ -1045,7 +1034,7 @@
                                                                             class="primary_input_field form-control{{ $errors->has("guardians_occupation") ? " is-invalid" : "" }}"
                                                                             type="text" name="guardians_occupation"
                                                                             id="guardians_occupation"
-                                                                            value="{{ old("guardians_occupation") }}">
+                                                                            value="{{ old("guardians_occupation",$student->guardians_occupation) }}">
 
 
                                                                         @if ($errors->has("guardians_occupation"))
@@ -1066,7 +1055,7 @@
 
                                                                         </label>
                                                                         <textarea class="primary_input_field form-control{{ $errors->has("guardians_address") ? " is-invalid" : "" }}"
-                                                                            cols="0" rows="3" name="guardians_address" id="guardians_address">{{ old("guardians_address") }}</textarea>
+                                                                            cols="0" rows="3" name="guardians_address" id="guardians_address">{{ old("guardians_address", $student->guardians_address) }}</textarea>
 
 
                                                                         @if ($errors->has("guardians_address"))
@@ -1109,7 +1098,7 @@
                                                                         <input
                                                                             class="primary_input_field form-control{{ $errors->has("national_id_number") ? " is-invalid" : "" }}"
                                                                             type="text" name="national_id_number"
-                                                                            value="{{ old("national_id_number") }}"
+                                                                            value="{{ old("national_id_number", $student->national_id_number) }}"
                                                                             maxlength="12" pattern="[0-9]{12}"
                                                                             title="Please enter a valid 12-digit Sri Lankan ID number"
                                                                             oninput="this.value = this.value.replace(/[^0-9]/g, '')">
@@ -1132,7 +1121,7 @@
                                                                             for="">@lang("student.additional_notes")
                                                                         </label>
                                                                         <textarea class="primary_input_field form-control{{ $errors->has("additional_notes") ? " is-invalid" : "" }}"
-                                                                            cols="0" rows="3" name="additional_notes">{{ old("additional_notes") }}</textarea>
+                                                                            cols="0" rows="3" name="additional_notes">{{ old("additional_notes", $student->additional_notes) }}</textarea>
 
 
                                                                         @if ($errors->has("additional_notes"))
@@ -1172,7 +1161,7 @@
                                                                                 <input
                                                                                     class="primary_input_field form-control{{ $errors->has("document_title_1") ? " is-invalid" : "" }}"
                                                                                     type="text" name="document_title_1"
-                                                                                    value="{{ old("document_title_1") }}">
+                                                                                    value="{{ old("document_title_1", $student->document_title_1) }}">
                                                                                 @if ($errors->has("document_title_1"))
                                                                                     <span class="text-danger">
                                                                                         {{ $errors->first("document_title_1") }}
@@ -1216,7 +1205,7 @@
                                                                                 <input
                                                                                     class="primary_input_field form-control{{ $errors->has("document_title_2") ? " is-invalid" : "" }}"
                                                                                     type="text" name="document_title_2"
-                                                                                    value="{{ old("document_title_2") }}">
+                                                                                    value="{{ old("document_title_2", $student->document_title_2) }}">
 
 
                                                                                 @if ($errors->has("document_title_2"))
@@ -1261,7 +1250,7 @@
                                                                                 <input
                                                                                     class="primary_input_field form-control{{ $errors->has("document_title_3") ? " is-invalid" : "" }}"
                                                                                     type="text" name="document_title_3"
-                                                                                    value="{{ old("document_title_3") }}">
+                                                                                    value="{{ old("document_title_3", $student->document_title_3) }}">
 
 
                                                                                 @if ($errors->has("document_title_3"))
@@ -1307,7 +1296,7 @@
                                                                                 <input
                                                                                     class="primary_input_field form-control{{ $errors->has("document_title_4") ? " is-invalid" : "" }}"
                                                                                     type="text" name="document_title_4"
-                                                                                    value="{{ old("document_title_4") }}">
+                                                                                    value="{{ old("document_title_4", $student->document_title_4) }}">
 
                                                                                 @if ($errors->has("document_title_4"))
                                                                                     <span class="text-danger">
@@ -1359,7 +1348,7 @@
                                                                         </label>
                                                                         <textarea
                                                                             class="primary_input_field form-control{{ $errors->has("previous_institute_details") ? " is-invalid" : "" }}"
-                                                                            cols="0" rows="5" name="previous_institute_details">{{ old("previous_institute_details") }}</textarea>
+                                                                            cols="0" rows="5" name="previous_institute_details">{{ old("previous_institute_details", $student->previous_institute_details) }}</textarea>
 
 
                                                                         @if ($errors->has("previous_institute_details"))
@@ -1380,7 +1369,6 @@
 
                                                     <div class="col-lg-12">
                                                         <div class="form-section">
-
                                                             <div class="row">
                                                                 <div class="col-lg-12">
                                                                     <div class="main-title">
