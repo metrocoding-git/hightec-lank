@@ -90,14 +90,27 @@ class AddStudentController extends Controller
 
     public function edit(Student $student)
     {
-        return view('pages.student.student-info.edit-student', compact('student'));
+        $branches = Branch::all();
+        $genders = Gender::all();
+        $categories = StudentCategory::all();
+        $bloodGroups = BloodGroup::all();
+        $intakes = Intake::all();
+
+        return view('pages.student.student-info.edit-student', compact([
+            'student',
+            'branches',
+            'genders',
+            'categories',
+            'bloodGroups',
+            'intakes',
+        ]));
     }
 
     public function update(Request $request, Student $student)
     {
         $validatedData = $request->validate([
             'branch_id' => 'required|exists:branches,id',
-            'admission_number' => 'required|string|unique:students,admission_number',
+            'admission_number' => 'required|string', //need to add ignore rule for this. Dont have auth access yet
             'admission_date' => 'required|date',
             'student_category_id' => 'required|exists:student_categories,id',
             'gender_id' => 'required|exists:genders,id',
@@ -105,8 +118,8 @@ class AddStudentController extends Controller
             'last_name' => 'required|string|max:255',
             'date_of_birth' => 'required|date',
             'photo' => 'nullable|image|max:2048',
-            'email_address' => 'required|email|max:255|unique:students,email_address',
-            'phone_number' => 'required|string|max:20|unique:students,phone_number',
+            'email_address' => 'required|email|max:255', //need to add ignore rule for this. Dont have auth access yet
+            'phone_number' => 'required|string|max:20', //need to add ignore rule for this. Dont have auth access yet
             'current_address' => 'required|string',
             'permanent_address' => 'required|string',
             'blood_group_id' => 'nullable|string|max:10',
@@ -157,6 +170,6 @@ class AddStudentController extends Controller
         $validatedData['student_name'] = $validatedData['first_name'] . ' ' . $validatedData['last_name'];
 
         $student->update($validatedData);
-        return redirect()->route('student.index')->with('success', 'Student updated successfully');
+        return back()->with('success', 'Student updated successfully');
     }
 }

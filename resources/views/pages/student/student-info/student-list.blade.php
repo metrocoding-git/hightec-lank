@@ -41,13 +41,13 @@
                             <div class="row row-gap-24">
                                 <input type="hidden" name="url" id="url" value="{{ URL::to("/") }}">
 
-
                                 @include("components.common.search_criteria", [
                                     "mt" => "mt-0",
                                     "div" => "col-lg-4 col-md-6",
                                     "required" => ["academic"],
                                     "visiable" => ["academic", "class", "section"],
                                 ])
+
                                 <div class="col-lg-4 col-md-6">
                                     <div class="primary_input sm_mb_20 ">
                                         <label class="primary_input_label" for="">@lang("student.search_by_name")</label>
@@ -62,8 +62,6 @@
                                         <label class="primary_input_label" for="">@lang("student.search_by_roll")</label>
                                         <input class="primary_input_field" type="text" placeholder="Roll" name="roll_no"
                                             value="{{ isset($roll_no) ? $roll_no : old("roll_no") }}">
-
-
                                     </div>
                                 </div>
 
@@ -129,11 +127,16 @@
                                                     <td>{{ $student->date_of_birth }}</td>
                                                     <td>-</td>
                                                     <td>{{ $student->gender->name }}</td>
-                                                    <td>{{ $student->studentCategory->category_name }}</td>
+                                                    <td>{{ $student->studentCategory->category ?? "" }}</td>
                                                     <td>{{ $student->phone_number }}</td>
                                                     <td valign="top">
-                                                        @php                                                           
+                                                        @php
                                                             $routeList = [
+                                                                '<a class="dropdown-item" href="' .
+                                                                route("add-student.edit", $student->id) .
+                                                                '">' .
+                                                                __("common.edit") .
+                                                                "</a>",
                                                                 '<a class="dropdown-item" data-toggle="modal" data-student-id="' .
                                                                 $student->id .
                                                                 '" data-target="#statusUpdateModal" 

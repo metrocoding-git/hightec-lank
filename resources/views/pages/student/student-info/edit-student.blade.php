@@ -32,8 +32,9 @@
     <section class="admin-visitor-area up_st_admin_visitor">
         <div class="container-fluid p-0">
 
-            <form method="POST" action="{{ route("add-student.update") }}" enctype="multipart/form-data">
+            <form method="POST" action="{{ route("add-student.update", $student->id) }}" enctype="multipart/form-data">
                 @csrf
+                @method('PUT')
                 <div class="row">
                     <div class="col-lg-12">
 
