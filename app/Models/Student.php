@@ -9,8 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Student extends Model
 {
     protected $table = 'students';
-    protected $fillable = [
 
+    protected $fillable = [
         'branch_id',
         'admission_number',
         'admission_date',
@@ -75,4 +75,10 @@ class Student extends Model
     {
         return $this->belongsTo(StudentCategory::class);
     }
+
+    public function bloodGroup(): BelongsTo
+    {
+        return $this->belongsTo(BloodGroup::class);
+    }
+    
 }
