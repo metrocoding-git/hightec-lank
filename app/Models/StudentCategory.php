@@ -8,5 +8,5 @@ class StudentCategory extends Model
 {
   protected $table = 'student_categories';
 
-  protected $fillable = ['category'];
+  protected $fillable = ['category_name'];
 }

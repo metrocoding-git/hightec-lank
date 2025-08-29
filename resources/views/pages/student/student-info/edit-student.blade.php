@@ -268,9 +268,9 @@
                                                                                 <option value="">Select Student
                                                                                     Category</option>
                                                                                 <option
-                                                                                    value="{{ $student->studentCategory->id }}"
+                                                                                    value="{{ $student->studentCategory?->id ?? '' }}"
                                                                                     selected>
-                                                                                    {{ $student->studentCategory->category }}
+                                                                                     {{ $student->studentCategory?->category_name ?? 'N/A' }}
                                                                                 </option>
                                                                                 @foreach ($categories as $category)
                                                                                     <option value="{{ $category->id }}"
@@ -601,8 +601,8 @@
                                                                         <select
                                                                             class="primary_select form-control{{ $errors->has("blood_group_id") ? " is-invalid" : "" }}"
                                                                             name="blood_group_id">
-                                                                            <option value="{{ $student->bloodGroup->id }}"
-                                                                                selected>{{ $student->bloodGroup->name }}
+                                                                            <option value="{{ $student->bloodGroup?->id ?? 'N/A' }}"
+                                                                                selected>{{ $student->bloodGroup?->name ?? 'N/A' }}
                                                                             </option>
                                                                             @foreach ($bloodGroups as $group)
                                                                                 <option value="{{ $gender->id }}"

@@ -80,5 +80,15 @@ class Student extends Model
     {
         return $this->belongsTo(BloodGroup::class);
     }
-    
+
+public function intakes()
+{
+    return $this->belongsToMany(Intake::class, 'course_intake', 'course_id', 'intake_id')
+                ->where('branch_id', $this->branch_id);
+}
+
+public function courses()
+{
+    return $this->belongsToMany(Course::class, 'course_intake', 'intake_id', 'course_id');
+}
 }
