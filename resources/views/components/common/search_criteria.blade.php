@@ -425,7 +425,7 @@ $visiable = $visiable ?? [];
         <div class="primary_input">
             <label class="primary_input_label" for="intake_id">Intake <span class="text-danger">*</span></label>
               <select class="primary_select form-control" name="intake_id" id="intake_id">
-                <option value="1">Select Intake</option>
+                <option value="1">Select Intake</option>{{-- testing for set dumy id  --}}
                  <option value="2">Select Intake</option>
              </select>
         </div>
@@ -491,7 +491,7 @@ $visiable = $visiable ?? [];
         let intakeId = $(this).val();
         if(intakeId) {
             $.ajax({
-                url: "{{ url('student/student-info/get-intakes') }}/"+ intakeId,
+                url: "{{ url('student/student-info/get-courses') }}/"+ intakeId,
                 type: 'GET',
                 dataType: 'json',
                 success: function(data) {
