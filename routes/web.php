@@ -8,12 +8,10 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\IntakeController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\StudentCategoryController;
-use App\Http\Controllers\StudentController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TopicController;
 use App\Http\Controllers\TopicOverviewController;
 use Illuminate\Support\Facades\Route;
-use PhpParser\Node\Expr\Assign;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
@@ -83,8 +81,8 @@ Route::controller(StudentCategoryController::class)->prefix('student/student-inf
 Route::controller(AddStudentController::class)->prefix('student/student-info/add-student')->group(callback: function () {
     Route::get('/', 'index')->name('add-student.index');
     Route::post('store', 'store')->name('add-student.store');
-    Route::put('update/{id}', 'update')->name('add-student.update');
-    Route::get('edit/{id}', 'edit')->name('add-student.edit');
+    Route::put('update/{student}', 'update')->name('add-student.update');
+    Route::get('edit/{student}', 'edit')->name('add-student.edit');
     Route::delete('destroy/{id}', 'destroy')->name('add-student.destroy');
 });
 
