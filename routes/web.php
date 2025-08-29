@@ -117,6 +117,15 @@ Route::controller(HomeController::class)->group(callback: function () {
     Route::get('student/student-info/student-export', 'studentExport')->name('student-export');
 
 
+    //  New dependent dropdown AJAX routes 
+// web.php
+    Route::get('student/student-info/get-intakes/{branchId}', 'getIntakes')->name('student.get-intakes');
+    Route::get('student/student-info/get-courses/{intakeId}', 'getCourses')->name('student.get-courses');
+    //filter student list by branch
+    Route::get('student/student-info/filter-student-list', 'filterStudentList')->name('student-filterStudentList');
+
+
+
     Route::get('student/fees/fee-group', 'feeGroup')->name('fee-group');
     Route::get('student/fees/fee-type', 'feeType')->name('fee-type');
     Route::get('student/fees/fee-invoice', 'feeInvoice')->name('fee-invoice');

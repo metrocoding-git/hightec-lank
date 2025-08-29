@@ -13,6 +13,8 @@ use App\Models\SmSection;
 use App\Models\SmStudent;
 use App\Models\SmUserLog;
 use App\Models\YearCheck;
+use App\Models\Branch;
+use App\Models\Intake;
 use Carbon\Carbon;
 use App\Models\SmAddIncome;
 use App\CheckSection;
@@ -143,9 +145,85 @@ class HomeController extends Controller
             'date_of_birth',
             'phone_number',
         ])->active()->orderBy('id', 'desc')->get();
+        $branches = Branch::all();
 
-        return view('pages.student.student-info.student-list', compact('students'));
+        return view('pages.student.student-info.student-list', compact('students', 'branches'));
+    } 
+    // App\Http\Controllers\StudentController.php
+
+    public function getIntakes($branchId)
+    {
+        $intakes = Intake::where('branch_id', $branchId)->get(['id','name']);
+        return response()->json($intakes);
     }
+
+
+
+    // Get courses for an intake
+    public function getCourses($intakeId)
+    {
+        $intake = Intake::find($intakeId);
+
+        if(!$intake) {
+         return response()->json([]);
+        }
+
+         $courses = $intake->courses()->get(['courses.id', 'courses.name']); // related courses
+         return response()->json($courses);
+    }
+    public function filterStudentList(Request $request)
+    {
+         $branchId = $request->input('branch_id');
+         $intakeId = $request->input('intake_id');
+         $courseId = $request->input('course_id');
+         
+
+        $query = Student::with([
+            'branch',
+            'gender',
+            'studentCategory',
+        ])->select([
+            'id',
+            'admission_number',
+            'branch_id',
+            'student_category_id',
+            'gender_id',
+            'student_name',
+            'date_of_birth',
+            'phone_number',
+        ]);
+
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
+    if ($intakeId) {
+    
+         $query->whereHas('intakes', function($q) use ($intakeId){
+           $q->where('intakes.id', $intakeId);
+         });
+     }
+
+    if ($courseId) {
+      // join with courses via course_intake
+       $query->whereHas('courses', function($q) use ($courseId){
+          $q->where('courses.id', $courseId);
+      });
+}   
+       
+
+         
+
+       
+        $branches = Branch::all();
+
+        $students = $query->active()->orderBy('id', 'desc')->get();
+        $disabledstudents = $query->orderBy('id', 'desc')->get();
+
+           
+           return view('pages.student.student-info.student-list', compact('students', 'branches' ,'disabledstudents'));
+    }
+
+ 
 
     public function updateStudetStatus(Request $request)
     {
@@ -168,7 +246,7 @@ class HomeController extends Controller
 
     public function disabledStudents()
     {
-        $students = $students = Student::with([
+        $disabledstudents = $students = Student::with([
             'branch',
             'gender',
             'studentCategory',
@@ -183,7 +261,9 @@ class HomeController extends Controller
             'phone_number',
         ])->inactive()->orderBy('id', 'desc')->get();
 
-        return view('pages.student.student-info.disabled-students', compact('students'));
+        $branches = Branch::all();
+
+        return view('pages.student.student-info.disabled-students', compact('disabledstudents', 'branches'));
     }
     public function studentAttendance()
     {

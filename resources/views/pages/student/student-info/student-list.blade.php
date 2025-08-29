@@ -2,6 +2,8 @@
 @section("title")
     @lang("academics.About")
 @endsection
+
+
 @section("mainContent")
     <section class="sms-breadcrumb mb-20 up_breadcrumb">
         <div class="container-fluid">
@@ -42,28 +44,12 @@
                                 <input type="hidden" name="url" id="url" value="{{ URL::to("/") }}">
 
                                 @include("components.common.search_criteria", [
-                                    "mt" => "mt-0",
-                                    "div" => "col-lg-4 col-md-6",
-                                    "required" => ["academic"],
-                                    "visiable" => ["academic", "class", "section"],
-                                ])
+                                    
 
-                                <div class="col-lg-4 col-md-6">
-                                    <div class="primary_input sm_mb_20 ">
-                                        <label class="primary_input_label" for="">@lang("student.search_by_name")</label>
+                                ]);
+                      
 
-                                        <input class="primary_input_field" type="text" placeholder="Name" name="name"
-                                            value="{{ isset($name) ? $name : old("name") }}">
-
-                                    </div>
-                                </div>
-                                <div class="col-lg-4 col-md-6">
-                                    <div class="primary_input sm_mb_20 ">
-                                        <label class="primary_input_label" for="">@lang("student.search_by_roll")</label>
-                                        <input class="primary_input_field" type="text" placeholder="Roll" name="roll_no"
-                                            value="{{ isset($roll_no) ? $roll_no : old("roll_no") }}">
-                                    </div>
-                                </div>
+                                
 
                                 <div class="col-lg-12 mt-20 text-right">
                                     <button type="submit" class="primary-btn small fix-gr-bg" id="btnsubmit">
@@ -127,7 +113,7 @@
                                                     <td>{{ $student->date_of_birth }}</td>
                                                     <td>-</td>
                                                     <td>{{ $student->gender->name }}</td>
-                                                    <td>{{ $student->studentCategory->category ?? "" }}</td>
+                                                    <td>{{ $student->studentCategory->category_name?? 'N/A' }}</td>
                                                     <td>{{ $student->phone_number }}</td>
                                                     <td valign="top">
                                                         @php
@@ -197,7 +183,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">@lang("academics.delete_class")</h4>
+                    <h4 class="modal-title">@lang("student.disable_student")</h4>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body text-center">
@@ -208,7 +194,7 @@
                             @csrf
                             @method("patch")
                             <input type="hidden" id="student-id-form" name="student_id" value="">
-                            <button class="primary-btn fix-gr-bg" type="submit">@lang("common.update")</button>
+                            <button class="primary-btn fix-gr-bg" type="submit">@lang("common.disable")</button>
                         </form>
                     </div>
                 </div>

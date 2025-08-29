@@ -109,14 +109,14 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @forelse ($students as $student)
+                                            @forelse ($disabledstudents as $student)
                                                 <tr>
                                                     <td>{{ $student->admission_number }}</td>
                                                     <td>{{ $student->student_name }}</td>
                                                     <td>{{ $student->date_of_birth }}</td>
                                                     <td>-</td>
                                                     <td>{{ $student->gender->name }}</td>
-                                                    <td>{{ $student->studentCategory->category_name }}</td>
+                                                    <td>{{ $student->studentCategory->category_name?? 'N/A' }}</td>
                                                     <td>{{ $student->phone_number }}</td>
                                                     <td valign="top">
                                                         @php

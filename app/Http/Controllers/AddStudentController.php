@@ -84,7 +84,7 @@ class AddStudentController extends Controller
         $validatedData['student_name'] = $validatedData['first_name'] . ' ' . $validatedData['last_name'];
 
         Student::create($validatedData);
-        return redirect()->route('student.index')->with('success', 'Student created successfully');
+        return redirect()->route('student-list')->with('success', 'Student created successfully');
     }
 
 
@@ -95,6 +95,8 @@ class AddStudentController extends Controller
         $categories = StudentCategory::all();
         $bloodGroups = BloodGroup::all();
         $intakes = Intake::all();
+        $student = Student::findOrFail($student->id);
+        // ds($student);
 
         return view('pages.student.student-info.edit-student', compact([
             'student',
@@ -103,6 +105,7 @@ class AddStudentController extends Controller
             'categories',
             'bloodGroups',
             'intakes',
+            'student',
         ]));
     }
 
