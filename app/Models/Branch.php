@@ -13,6 +13,9 @@ class Branch extends Model
 
     protected $fillable = ['name'];
 
-
+    public function intakes()
+    {
+        return $this->hasMany(Intake::class);
+    }
   
 }

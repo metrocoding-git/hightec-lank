@@ -403,14 +403,12 @@ $visiable = $visiable ?? [];
     });
 </script>
 @endpush --}}
-<form action="{{ route('student-filterStudentList') }}" method="POST">
-    @csrf
 
     {{-- Branch --}}
     <div class="col-lg-4 mb-15">
         <div class="primary_input">
             <label class="primary_input_label" for="branch_id">Branch <span class="text-danger">*</span></label>
-            <select class="primary_select form-control" name="branch_id" id="branch_id">
+            <select class="primary_select form-control ajax_select" name="branch_id" id="branch_id">
                 <option value="">Select Branch</option>
                 @foreach($branches as $branch)
                     <option value="{{ $branch->id }}">{{ $branch->name }}</option>
@@ -424,9 +422,9 @@ $visiable = $visiable ?? [];
     <div class="col-lg-4 mb-15">
         <div class="primary_input">
             <label class="primary_input_label" for="intake_id">Intake <span class="text-danger">*</span></label>
-              <select class="primary_select form-control" name="intake_id" id="intake_id">
-                <option value="1">Select Intake</option>{{-- testing for set dumy id  --}}
-                 <option value="2">Select Intake</option>
+              <select class="primary_select form-control ajax_select" name="intake_id" id="intake_id">
+                <option value="">Select Intake</option>{{-- testing for set dumy id  --}}
+                 
              </select>
         </div>
     </div>
@@ -435,19 +433,30 @@ $visiable = $visiable ?? [];
     <div class="col-lg-4 mb-15">
         <div class="primary_input">
             <label class="primary_input_label" for="course_id">Course <span class="text-danger">*</span></label>
-            <select class="primary_select form-control" name="course_id" id="course_id">
+            <select class="primary_select form-control ajax_select" name="course_id" id="course_id">
                 <option value="">Select Course</option>
             </select>
         
         </div>
     </div>
-</form>
+
+
+
+
+
 
 {{-- jQuery --}}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
+    
+
+
+
     $(document).ready(function() {
+
+        
+        
 
     $('#branch_id').change(function() {
         let branchId = $(this).val();
@@ -473,7 +482,11 @@ $visiable = $visiable ?? [];
                          
                     $('#intake_id').append('<option value="' + intake.id + '">' + intake.name + '</option>');
                     });
+
+                    $('#intake_id').niceSelect('update');//errr fix add for append data
+                   
                 },
+               
                 error: function(xhr, status, error) {
                     $('#intake_loader').hide();
                     console.error('AJAX Error:', status, error);
@@ -500,6 +513,7 @@ $visiable = $visiable ?? [];
                     $.each(data, function(i, course) {
                         $('#course_id').append('<option value="'+course.id+'">'+course.name+'</option>');
                     });
+                    $('#course_id').niceSelect('update');
                 }
             });
         } else {

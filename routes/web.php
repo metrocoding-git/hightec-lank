@@ -122,7 +122,9 @@ Route::controller(HomeController::class)->group(callback: function () {
     Route::get('student/student-info/get-intakes/{branchId}', 'getIntakes')->name('student.get-intakes');
     Route::get('student/student-info/get-courses/{intakeId}', 'getCourses')->name('student.get-courses');
     //filter student list by branch
-    Route::get('student/student-info/filter-student-list', 'filterStudentList')->name('student-filterStudentList');
+    Route::post('student/student-info/diabled-filter', 'filter_disabled_StudentList')->name('frontend.disabled-student.search');
+
+    Route::post('student/student-info/filtert', 'filterStudentList')->name('frontend.student.search');
 
 
 

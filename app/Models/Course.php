@@ -14,9 +14,15 @@ class Course extends Model
 
     protected $fillable = ['name', 'code', 'price', 'description'];
 
+
     public function intakes()
     {
         return $this->belongsToMany(Intake::class, 'course_intake', 'course_id', 'intake_id');
+    }
+
+    public function students()
+    {
+        return $this->belongsToMany(Student::class, 'student_courses');
     }
 
 

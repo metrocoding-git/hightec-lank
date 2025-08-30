@@ -20,7 +20,8 @@
         <div class="container-fluid p-0">
 
             {{-- {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'disabled_student_search', 'method' => 'POST', 'enctype' => 'multipart/form-data']) }} --}}
-            <form class="form-horizontal">
+            <form class="form-horizontal" action="{{ route('frontend.disabled-student.search') }}" method="post">
+               @csrf
                 <input type="hidden" id="class_id" value="{{ @$class_id }}">
                 <input type="hidden" id="section_id" value="{{ @$section_id }}">
                 <input type="hidden" id="admission_no" value="{{ @$admission_no }}">
@@ -44,24 +45,7 @@
                                     "required" => ["class"],
                                     "visiable" => ["class", "section"],
                                 ])
-                                <div class="col-lg-3">
-                                    <div class="primary_input ">
-                                        <label class="primary_input_label" for="">@lang("student.search_by_name")</label>
-
-                                        <input class="primary_input_field" type="text" name="name"
-                                            value="{{ isset($name) ? $name : "" }}">
-
-                                    </div>
-                                </div>
-                                <div class="col-lg-3">
-                                    <div class="primary_input md_mb_20">
-                                        <label class="primary_input_label" for="">@lang("student.search_by_admission_no")</label>
-
-                                        <input class="primary_input_field" type="text" name="admission_no"
-                                            id="admission_no" value="{{ isset($admission_no) ? $admission_no : "" }}">
-
-                                    </div>
-                                </div>
+                               
 
                                 <div class="col-lg-12 mt-20 text-right">
                                     <button type="submit" class="primary-btn small fix-gr-bg">
@@ -109,7 +93,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @forelse ($disabledstudents as $student)
+                                            @forelse ($students as $student)
                                                 <tr>
                                                     <td>{{ $student->admission_number }}</td>
                                                     <td>{{ $student->student_name }}</td>
