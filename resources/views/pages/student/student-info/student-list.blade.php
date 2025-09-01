@@ -20,7 +20,8 @@
     <section class="admin-visitor-area up_admin_visitor">
         <div class="container-fluid p-0">
             {{-- {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'student-list-search', 'method' => 'POST', 'enctype' => 'multipart/form-data', 'id' => 'infix_form']) }} --}}
-            <form class="form-horizontal">
+            <form class="form-horizontal" action="{{ route('frontend.student.search') }}" method="post">
+                @csrf
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="white-box filter_card">
@@ -41,22 +42,25 @@
 
                             </div>
                             <div class="row row-gap-24">
-                                <input type="hidden" name="url" id="url" value="{{ URL::to("/") }}">
+                                
+                                {{-- <input type="hidden" name="url" id="url" value="{{ URL::to("/") }}"> --}}
+
+
 
                                 @include("components.common.search_criteria", [
                                     
 
                                 ]);
-                      
+            <div class="col-lg-12 mt-20 text-right">
+            <button type="submit" class="primary-btn small fix-gr-bg">
+            <span class="ti-search pr-2"></span> @lang("common.search")
+            </button>
+            </div>                      
+                                
 
                                 
 
-                                <div class="col-lg-12 mt-20 text-right">
-                                    <button type="submit" class="primary-btn small fix-gr-bg" id="btnsubmit">
-                                        <span class="ti-search pr-2"></span>
-                                        @lang("common.search")
-                                    </button>
-                                </div>
+                               
                             </div>
                         </div>
                     </div>

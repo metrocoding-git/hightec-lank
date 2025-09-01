@@ -21,9 +21,14 @@ class Intake extends Model
          return $this->belongsTo(Branch::class, 'branch_id');
      }
 
-     public function courses()
+    public function courses()
     {
         return $this->belongsToMany(Course::class, 'course_intake', 'intake_id', 'course_id');
+    }
+
+    public function students()
+    {
+        return $this->belongsToMany(Student::class, 'student_courses');
     }
 
 }
