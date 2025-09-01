@@ -4,6 +4,7 @@ use App\Http\Controllers\AddStudentController;
 use App\Http\Controllers\AssignSubjectController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\FeesGroupController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\IntakeController;
 use App\Http\Controllers\LessonController;
@@ -12,6 +13,9 @@ use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TopicController;
 use App\Http\Controllers\TopicOverviewController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\FeeTypeController;
+use App\Http\Controllers\InvoiceController;
+
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
@@ -106,7 +110,7 @@ Route::controller(HomeController::class)->group(callback: function () {
 
 
 
- 
+
     // Route::get('student/student-info/add-student', 'addStudent')->name('add-student');
     Route::get('student/student-info/student-list', 'studentList')->name('student-list');
     Route::patch('student/update-status', 'updateStudetStatus')->name('student.update-status');
@@ -118,20 +122,23 @@ Route::controller(HomeController::class)->group(callback: function () {
 
 
     //  New dependent dropdown AJAX routes 
-// web.php
+
     Route::get('student/student-info/get-intakes/{branchId}', 'getIntakes')->name('student.get-intakes');
     Route::get('student/student-info/get-courses/{intakeId}', 'getCourses')->name('student.get-courses');
+
     //filter student list by branch
     Route::post('student/student-info/diabled-filter', 'filter_disabled_StudentList')->name('frontend.disabled-student.search');
-
     Route::post('student/student-info/filtert', 'filterStudentList')->name('frontend.student.search');
 
 
 
-    Route::get('student/fees/fee-group', 'feeGroup')->name('fee-group');
-    Route::get('student/fees/fee-type', 'feeType')->name('fee-type');
-    Route::get('student/fees/fee-invoice', 'feeInvoice')->name('fee-invoice');
-    Route::get('student/fees/add-invoice', 'addInvoice')->name('add-invoice');
+
+
+
+
+
+    // Route::get('student/fees/fee-invoice', 'feeInvoice')->name('fee-invoice');
+    // Route::get('student/fees/add-invoice', 'addInvoice')->name('add-invoice');
     Route::get('student/fees/fee-invoice-setting', 'feeInvoiceSetting')->name('fee-invoice-setting');
     Route::get('student/fees/fee-return', 'feeReturn')->name('fee-return');
 
@@ -148,4 +155,39 @@ Route::controller(LoginController::class)->group(function () {
     Route::get('login', 'index')->name('login');
     Route::get('recoveryPassword', 'recoveryPassword')->name('recoveryPassword');
     Route::get('register', 'register')->name('register');
+});
+
+
+
+Route::controller(FeesGroupController::class)->group(function () {
+    Route::get('student/fees/fee-group', 'index')->name('fee-group'); // GET list
+    Route::post('student/fees/fee-group-create', 'store')->name('fee-group-create'); // POST create
+    Route::get('student/fees/fee-group-edit/{id}', 'edit')->name('fee-group-edit'); // GET edit
+    Route::put('student/fees/fee-group-update/{id}', 'update')->name('fee-group-update'); // POST update
+    Route::delete('student/fees/fee-group-delete/{id}', 'delete')->name('fee-group-delete'); // POST delete
+});
+
+
+
+Route::controller(FeeTypeController::class)->group(function () {
+
+    Route::get('student/fees/fee-type', 'index')->name('fees.fees-type');
+    Route::post('student/fees/fee-type-store', 'store')->name('fees.fees-type-store');
+    Route::get('student/fees/fee-type-edit/{id}', 'edit')->name('fees.fees-type-edit');
+    Route::put('student/fees/fee-type-update/{id}', 'update')->name('fees.fees-type-update');
+    Route::delete('student/fees/fee-type-delete/{id}', 'destroy')->name('fees.fees-type-delete');
+});
+
+Route::controller(InvoiceController::class)->group(function () {
+    Route::get('student/fees/fee-invoice', 'index')->name('fee-invoice');
+     Route::get('student/fees/add-invoice', 'create')->name('add-invoice');
+          Route::get('student/invoice/get-student/{branchId}', 'show')->name('get-student');
+          Route::get('student/invoice/types_get_by_group/{groupId}', 'dropdown_fee_types')->name('get-types-by-group');
+        
+
+     
+    Route::post('student/fees/fee-store', 'store')->name('fees.fee-store');
+    Route::get('student/fees/fee-edit/{id}', 'edit')->name('fees.fee-edit');
+    Route::put('student/fees/fee-update/{id}', 'update')->name('fees.fee-update');
+    Route::delete('student/fees/fee-delete/{id}', 'destroy')->name('fees.fee-delete');
 });

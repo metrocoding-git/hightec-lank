@@ -166,6 +166,7 @@
 </script>
 <script src="{{ asset('backEnd/') }}/js/search.js"></script>
 
+
 <script src="{{ asset('js/app.js') }}"></script>
 <script src="{{ asset('chat/js/custom.js') }}"></script>
 @yield('script')

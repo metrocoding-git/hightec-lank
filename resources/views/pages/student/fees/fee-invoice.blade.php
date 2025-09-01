@@ -66,15 +66,15 @@
                                         <thead>
                                             <tr>
 
-                                                <th>@lang('common.sl')</th>
+                                                
                                                 <th>@lang('common.student')</th>
                                                 <th>@lang('student.class_section')</th>
                                                 <th>@lang('admin.admission_no')</th>
                                                 <th>@lang('accounts.amount')</th>
-                                                <th>@lang('fees::feesModule.waiver')</th>
-                                                <th>@lang('fees.fine')</th>
+                                              
+                                               
                                                 <th>@lang('fees.paid')</th>
-                                                <th>@lang('accounts.balance')</th>
+                                                
                                                 <th>@lang('common.status')</th>
                                                 <th>@lang('common.date')</th>
                                                 <th>@lang('common.action')</th>
