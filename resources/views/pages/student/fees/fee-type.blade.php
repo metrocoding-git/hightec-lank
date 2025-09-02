@@ -22,25 +22,27 @@
     <section class="admin-visitor-area up_st_admin_visitor">
         <div class="container-fluid p-0">
             @if (isset($feesType))
-                @if (userPermission('fees.fees-type-store'))
-                    <div class="row">
-                        <div class="offset-lg-10 col-lg-2 text-right col-md-12 mb-20">
-                            <a href="{{ route('fees.fees-type') }}" class="primary-btn small fix-gr-bg">
-                                <span class="ti-plus pr-2"></span>
-                                @lang('common.add')
-                            </a>
-                        </div>
+                <div class="row">
+                    <div class="offset-lg-10 col-lg-2 text-right col-md-12 mb-20">
+                        <a href="{{ route('fees.fees-type') }}" class="primary-btn small fix-gr-bg">
+                            <span class="ti-plus pr-2"></span>
+                            @lang('common.add')
+                        </a>
                     </div>
-                @endif
+                </div>
             @endif
             <div class="row">
                 <div class="col-lg-3">
                     <div class="row">
                         <div class="col-lg-12">
-                            <form class="form-horizontal" {{-- action="{{ isset($feesType) ? route('fees.fees-type-update') : route('fees.fees-type-store') }}" --}} method="POST">
+                            <form class="form-horizontal"
+                                action="{{ isset($feesType) ? route('fees.fees-type-update', $feesType->id) : route('fees.fees-type-store') }}"
+                                method="POST">
+
                                 @csrf
+
                                 @if (isset($feesType))
-                                    <input type="hidden" name="id" value="{{ $feesType->id }}">
+                                    @method('PUT')
                                 @endif
 
                                 <div class="white-box">
@@ -61,7 +63,7 @@
                                                     <input
                                                         class="primary_input_field form-control{{ $errors->has('name') ? ' is-invalid' : '' }}"
                                                         type="text" name="name" autocomplete="off"
-                                                        value="{{ old('name', $feesType->name ?? '') }}">
+                                                        value="{{ old('name', $feesType->name ?? '') }}" required>
                                                     @if ($errors->has('name'))
                                                         <span class="text-danger">{{ $errors->first('name') }}</span>
                                                     @endif
@@ -75,16 +77,16 @@
                                                 <label class="primary_input_label">
                                                     {{ __('fees.fees_group') }} <span class="text-danger">*</span>
                                                 </label>
-                                                <select name="fees_group" id="fees_group"
+                                                <select name="fee_group_id" id="fee_group_id"
                                                     class="primary_select form-control{{ $errors->has('fees_group') || session()->has('message-exist') ? ' is-invalid' : '' }}"
                                                     {{ isset($fees_master) ? 'disabled' : '' }}>
                                                     <option value="">@lang('fees.fees_group')</option>
-                                                    {{-- @foreach ($feesGroups as $group)
+                                                    @foreach ($feesGroups as $group)
                                                         <option value="{{ $group->id }}"
-                                                            {{ old('fees_group', $feesType->fees_group_id ?? '') == $group->id ? 'selected' : '' }}>
+                                                            {{ old('fees_group', $feesType->fee_group_id ?? '') == $group->id ? 'selected' : '' }}>
                                                             {{ $group->name }}
                                                         </option>
-                                                    @endforeach --}}
+                                                    @endforeach
                                                 </select>
 
                                                 @if (session()->has('message-exist'))
@@ -97,6 +99,22 @@
                                                         {{ $errors->first('fees_group') }}
                                                     </span>
                                                 @endif
+                                            </div>
+                                        </div>
+
+                                        {{-- Amount Field --}}
+                                        <div class="row mt-25">
+                                            <div class="col-lg-12">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label">@lang('price')
+                                                        <input
+                                                            class="primary_input_field form-control{{ $errors->has('price') ? ' is-invalid' : '' }}"
+                                                            type="number" name="price" autocomplete="off"
+                                                            value="{{ old('amount', $feesType->price ?? '') }}">
+                                                        @if ($errors->has('price'))
+                                                            <span class="text-danger">{{ $errors->first('price') }}</span>
+                                                        @endif
+                                                </div>
                                             </div>
                                         </div>
 
@@ -146,26 +164,31 @@
                                                 <th> @lang('common.name')</th>
                                                 <th> @lang('fees.fees_group')</th>
                                                 <th> @lang('common.description')</th>
+                                                <th> @lang('price')</th>
                                                 <th> @lang('common.action')</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {{-- @foreach ($feesTypes as $feesType)
+                                            @foreach ($feesTypes as $feesType)
                                                 <tr>
+                                                    {{-- @php
+                                                        dd($feesType);
+                                                    @endphp --}}
                                                     <td>{{ $feesType->name }}</td>
-                                                    <td>{{ @$feesType->fessGroup->name }}</td>
-                                                    <td>{{ @$feesType->description }}</td>
+                                                    <td>{{ $feesType->feeGroup?->name ?? 'No Group' }}</td>
+                                                    <td>{{ $feesType->description }}</td>
+                                                    <td>{{ $feesType->price }}</td>
                                                     <td>
                                                         <x-drop-down>
-                                                            @if (userPermission('fees.fees-type-edit'))
-                                                                <a class="dropdown-item"
-                                                                    href="{{ route('fees.fees-type-edit', [$feesType->id]) }}">@lang('common.edit')</a>
-                                                            @endif
-                                                            @if (userPermission('fees.fees-type-delete'))
-                                                                <a class="dropdown-item" data-toggle="modal"
-                                                                    data-target="#deleteFeesTypeModal{{ $feesType->id }}"
-                                                                    href="#">@lang('common.delete')</a>
-                                                            @endif
+
+                                                            <a class="dropdown-item"
+                                                                href="{{ route('fees.fees-type-edit', [$feesType->id]) }}">@lang('common.edit')</a>
+
+
+                                                            <a class="dropdown-item" data-toggle="modal"
+                                                                data-target="#deleteFeesTypeModal{{ $feesType->id }}"
+                                                                href="#">@lang('common.delete')</a>
+
                                                         </x-drop-down>
                                                     </td>
                                                 </tr>
@@ -185,20 +208,26 @@
                                                                 </div>
                                                                 <div class="mt-40 d-flex justify-content-between">
                                                                     <button type="button" class="primary-btn tr-bg"
-                                                                        data-dismiss="modal">@lang('common.cancel')</button>
-                                                                    {{ Form::open(['route' => 'fees.fees-type-delete', 'method' => 'POST']) }}
-                                                                    <input type="hidden" name="id"
-                                                                        value="{{ $feesType->id }}">
-                                                                    <button class="primary-btn fix-gr-bg" type="submit">
-                                                                        @lang('common.delete')</button>
-                                                                    {{ Form::close() }}
+                                                                        data-dismiss="modal">
+                                                                        @lang('common.cancel')
+                                                                    </button>
+                                                                    <form
+                                                                        action="{{ route('fees.fees-type-delete', $feesType->id) }}"
+                                                                        method="POST">
+                                                                        @csrf
+                                                                        @method('DELETE')
+                                                                        <button class="primary-btn fix-gr-bg"
+                                                                            type="submit">
+                                                                            @lang('common.delete')
+                                                                        </button>
+                                                                    </form>
                                                                 </div>
                                                             </div>
 
                                                         </div>
                                                     </div>
                                                 </div>
-                                            @endforeach --}}
+                                            @endforeach
                                         </tbody>
                                     </table>
                                 </x-table>

@@ -148,12 +148,12 @@ class HomeController extends Controller
         $branches = Branch::all();
 
         return view('pages.student.student-info.student-list', compact('students', 'branches'));
-    } 
+    }
     // App\Http\Controllers\StudentController.php
 
     public function getIntakes($branchId)
     {
-        $intakes = Intake::where('branch_id', $branchId)->get(['id','name']);
+        $intakes = Intake::where('branch_id', $branchId)->get(['id', 'name']);
         return response()->json($intakes);
     }
 
@@ -164,20 +164,20 @@ class HomeController extends Controller
     {
         $intake = Intake::find($intakeId);
 
-        if(!$intake) {
-         return response()->json([]);
+        if (!$intake) {
+            return response()->json([]);
         }
 
-         $courses = $intake->courses()->get(['courses.id', 'courses.name']); // related courses
-         return response()->json($courses);
+        $courses = $intake->courses()->get(['courses.id', 'courses.name']); // related courses
+        return response()->json($courses);
     }
     public function filterStudentList(Request $request)
     {
-        
-         $branchId = $request->input('branch_id');
-         $intakeId = $request->input('intake_id');
-         $courseId = $request->input('course_id');
-        
+
+        $branchId = $request->input('branch_id');
+        $intakeId = $request->input('intake_id');
+        $courseId = $request->input('course_id');
+
 
         $query = Student::with([
             'branch',
@@ -197,42 +197,42 @@ class HomeController extends Controller
         if ($branchId) {
             $query->where('branch_id', $branchId);
         }
-    if ($intakeId) {
-    
-         $query->whereHas('intakes', function($q) use ($intakeId){
-           $q->where('intakes.id', $intakeId);
-         });
-     }
+        if ($intakeId) {
 
-    if ($courseId) {
-      // join with courses via course_intake
-       $query->whereHas('courses', function($q) use ($courseId){
-          $q->where('courses.id', $courseId);
-      });
-}   
-       
+            $query->whereHas('intakes', function ($q) use ($intakeId) {
+                $q->where('intakes.id', $intakeId);
+            });
+        }
 
-         
+        if ($courseId) {
+            // join with courses via course_intake
+            $query->whereHas('courses', function ($q) use ($courseId) {
+                $q->where('courses.id', $courseId);
+            });
+        }
 
-       
+
+
+
+
         $branches = Branch::all();
 
         $students = $query->active()->orderBy('id', 'desc')->get();
-       
 
-           
-           return view('pages.student.student-info.student-list', compact('students', 'branches' ));
+
+
+        return view('pages.student.student-info.student-list', compact('students', 'branches'));
     }
 
 
 
-        public function filter_disabled_StudentList(Request $request)
+    public function filter_disabled_StudentList(Request $request)
     {
-        
-         $branchId = $request->input('branch_id');
-         $intakeId = $request->input('intake_id');
-         $courseId = $request->input('course_id');
-        
+
+        $branchId = $request->input('branch_id');
+        $intakeId = $request->input('intake_id');
+        $courseId = $request->input('course_id');
+
 
         $query = Student::with([
             'branch',
@@ -252,34 +252,34 @@ class HomeController extends Controller
         if ($branchId) {
             $query->where('branch_id', $branchId);
         }
-    if ($intakeId) {
-    
-         $query->whereHas('intakes', function($q) use ($intakeId){
-           $q->where('intakes.id', $intakeId);
-         });
-     }
+        if ($intakeId) {
 
-    if ($courseId) {
-      // join with courses via course_intake
-       $query->whereHas('courses', function($q) use ($courseId){
-          $q->where('courses.id', $courseId);
-      });
-}   
-       
+            $query->whereHas('intakes', function ($q) use ($intakeId) {
+                $q->where('intakes.id', $intakeId);
+            });
+        }
 
-         
+        if ($courseId) {
+            // join with courses via course_intake
+            $query->whereHas('courses', function ($q) use ($courseId) {
+                $q->where('courses.id', $courseId);
+            });
+        }
 
-       
+
+
+
+
         $branches = Branch::all();
 
         $students = $query->inactive()->orderBy('id', 'desc')->get();
-       
 
-           
-           return view('pages.student.student-info.disabled-students', compact('students', 'branches' ));
+
+
+        return view('pages.student.student-info.disabled-students', compact('students', 'branches'));
     }
 
- 
+
 
     public function updateStudetStatus(Request $request)
     {
@@ -334,23 +334,25 @@ class HomeController extends Controller
 
     public function feeGroup()
     {
-        return view('pages.student.fees.fee-group');
     }
+
+
+
 
     public function feeType()
     {
         return view('pages.student.fees.fee-type');
     }
 
-    public function feeInvoice()
-    {
-        return view('pages.student.fees.fee-invoice');
-    }
+    // public function feeInvoice()
+    // {
+    //     return view('pages.student.fees.fee-invoice');
+    // }
 
-    public function addInvoice()
-    {
-        return view('pages.student.fees.add-invoice');
-    }
+    // public function addInvoice()
+    // {
+    //     return view('pages.student.fees.add-invoice');
+    // }
 
     public function feeInvoiceSetting()
     {

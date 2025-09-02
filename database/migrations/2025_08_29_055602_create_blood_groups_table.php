@@ -24,5 +24,10 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('blood_groups');
+         Schema::table('blood_groups', function (Blueprint $table) {
+            // revert to previous state (nullable without unique)
+            $table->string('name')->nullable(false)->change();
+            $table->dropUnique(['name']); // remove unique index
+        });
     }
 };
