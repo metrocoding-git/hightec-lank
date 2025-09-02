@@ -13,16 +13,7 @@ return new class extends Migration
     {
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('branch_id');
-
-            $table->foreignId('student_id')->constrained('students')->onDelete('cascade');
-            $table->foreignId('fee_type_id');
-           
-            $table->date('dreate_date');
-            $table->date('due_date');
-            $table->integer('status');
-             
-
+            
             $table->timestamps();
         });
     }

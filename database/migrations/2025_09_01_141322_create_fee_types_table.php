@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->text('description');
             $table->foreignId('fee_group_id')->constrained('fees_groups')->onDelete('cascade');
-            $table->double('price');
+            $table->double('price')->nullable();
             $table->timestamps();
         });
     }
