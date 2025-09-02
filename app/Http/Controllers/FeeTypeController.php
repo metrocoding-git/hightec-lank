@@ -42,7 +42,7 @@ class FeeTypeController extends Controller
          $request->validate([
             'name' => 'required|string|max:255',
             'fee_group_id' => 'required',
-            'price' => 'required|numeric|min:0',
+            'price' => 'min:0',
             'description' => 'nullable|string',
         ]);
 
@@ -83,7 +83,7 @@ class FeeTypeController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'fee_group_id' => 'required|exists:fees_groups,id',
-            'price' => 'required|numeric|min:0',
+            'price' => 'min:0',
             'description' => 'nullable|string',
         ]);
 

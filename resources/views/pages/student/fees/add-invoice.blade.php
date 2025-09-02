@@ -224,16 +224,16 @@
                                                 </label>
                                                 <select
                                                     class="primary_select  form-control{{ $errors->has('payment_status') ? ' is-invalid' : '' }}"
-                                                    name="payment_status" id="paymentStatus">
+                                                    name="payment_status" id="status">
                                                     <option data-display="@lang('fees.payment_status') *" value="">
                                                         @lang('fees.payment_status') *</option>
-                                                    <option value="not"
+                                                    <option value="not" data-status="not"
                                                         {{ isset($invoiceInfo) ? ($invoiceInfo->payment_status == 'not' ? 'selected' : '') : (old('payment_status') == 'not' ? 'selected' : '') }}>
                                                         @lang('fees.not_paid')</option>
-                                                    <option value="partial"
+                                                    <option value="partial" data-status="partial"
                                                         {{ isset($invoiceInfo) ? ($invoiceInfo->payment_status == 'partial' ? 'selected' : '') : (old('payment_status') == 'partial' ? 'selected' : '') }}>
                                                         @lang('fees.partial_paid')</option>
-                                                    <option value="full"
+                                                    <option value="full" data-status="full"
                                                         {{ isset($invoiceInfo) ? ($invoiceInfo->payment_status == 'full' ? 'selected' : '') : (old('payment_status') == 'full' ? 'selected' : '') }}>
                                                         @lang('fees.full_paid')</option>
                                                 </select>
@@ -244,7 +244,24 @@
                                             </div>
                                         </div>
 
-                                        <div class="row mt-15 d-none" id="paymentMethod">
+
+                                        <div class="row mt-15" id="priceSection">
+                                            <div class="col-lg-12" id="priceWrapper">
+                                                <label class="primary_input_label" for="payment_price">
+                                                    {{ __('fees.payment_amount') }}
+                                                    <span class="text-danger">*</span>
+                                                </label>
+
+                                                <input
+                                                    class="primary_input_field form-control{{ $errors->has('price') ? ' is-invalid' : '' }}"
+                                                    type="number" name="price" id="payment_price"
+                                                    value="{{ old('price', isset($invoiceInfo) ? $invoiceInfo->price : '') }}"
+                                                    autocomplete="off">
+                                            </div>
+                                        </div>
+
+
+                                        <div class="row mt-15 " id="paymentMethod">
                                             <div class="col-lg-12">
                                                 <label class="primary_input_label" for="">
                                                     {{ __('fees.payment_method') }}
@@ -252,7 +269,7 @@
                                                 </label>
 
                                                 <?php
-                                                $paymentMethods = collect([(object) ['method' => 'Cash'], (object) ['method' => 'Card'], (object) ['method' => 'Bank Transfer'], (object) ['method' => 'Cheque']]);
+                                                $paymentMethods = collect([(object) ['method' => 'Cash'], (object) ['method' => 'Card'], (object) ['method' => 'Bank Transfer']]);
                                                 
                                                 ?>
                                                 <select
@@ -274,27 +291,52 @@
                                         </div>
 
                                         <div class="row mt-15 d-none" id="bankPayment">
-                                            <?php
-                                            $bankAccounts = collect([(object) ['id' => 1, 'bank_name' => 'Commercial Bank', 'account_number' => '1234567890'], (object) ['id' => 2, 'bank_name' => 'BOC', 'account_number' => '9876543210']]);
-                                            ?>
+
                                             <div class="col-lg-12">
                                                 <label class="primary_input_label" for="">
-                                                    {{ __('fees.bank') }}
-                                                    <span class="text-danger"> *</span>
+
                                                 </label>
-                                                <select
-                                                    class="primary_select  form-control{{ $errors->has('bank') ? ' is-invalid' : '' }}"
-                                                    name="bank">
-                                                    <option data-display="@lang('fees.select_bank')*" value="">
-                                                        @lang('fees.select_bank')*</option>
-                                                    @foreach ($bankAccounts as $bankAccount)
-                                                        <option value="{{ $bankAccount->id }}"
-                                                            {{ isset($invoiceInfo) ? ($invoiceInfo->bank_id == $bankAccount->id ? 'selected' : '') : (old('bank') == $bankAccount->id ? 'selected' : '') }}>
-                                                            {{ $bankAccount->bank_name }}
-                                                            ({{ $bankAccount->account_number }})
-                                                        </option>
-                                                    @endforeach
-                                                </select>
+                                                <div class="row mt-15" id="fileUploadSection">
+                                                    <div class="col-lg-12">
+                                                        <label class="primary_input_label" for="payment_file">
+                                                            {{ __('fees.upload_document') }}
+                                                            <span class="text-danger">*</span>
+                                                        </label>
+
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="primary_input">
+                                                                <!-- Hidden file input -->
+                                                                <input type="file" name="payment_file"
+                                                                    id="payment_file" class="d-none"
+                                                                    accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+
+                                                                <!-- Custom button -->
+                                                                <button type="button" id="uploadBtn"
+                                                                    class="primary-btn small fix-gr-bg">
+                                                                    <span class="ti-upload"></span>
+                                                                    {{ __('common.browse') }}
+                                                                </button>
+                                                            </div>
+
+                                                            <!-- Show selected file name -->
+                                                            <span id="fileName" class="ml-3 text-muted"></span>
+                                                        </div>
+                                                        @if ($errors->has('payment_file'))
+                                                            <span class="text-danger" role="alert">
+                                                                {{ $errors->first('payment_file') }}
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+
+
+
+
+
+
+
+
+
                                                 @if ($errors->has('bank'))
                                                     <span class="text-danger invalid-select" role="alert">
                                                         {{ $errors->first('bank') }}</span>
@@ -310,15 +352,16 @@
 
                                         <div class="row mt-40">
                                             <div class="col-lg-12 text-center">
-                                                <button type="submit" class="primary-btn fix-gr-bg submit fmInvoice"
-                                                    data-tooltip="tooltip" title="{{ $tooltip }}">
+                                                <a href="" type="submit"
+                                                    class="primary-btn fix-gr-bg submit fmInvoice" data-tooltip="tooltip"
+                                                    title="{{ $tooltip }}">
                                                     <span class="ti-check"></span>
                                                     @if (isset($invoiceInfo))
                                                         @lang('common.update')
                                                     @else
                                                         @lang('common.save')
                                                     @endif
-                                                </button>
+                                                </a>
                                             </div>
                                         </div>
                                     </div>
@@ -337,7 +380,6 @@
                                     </div>
                                 </div>
                             </div>
-
                             <div class="row mt-15">
                                 <div class="col-lg-12">
                                     <div class="pb-0 fees_invoice_type_div">
@@ -348,17 +390,17 @@
                                                 <select
                                                     class="primary_select form-control {{ $errors->has('fee_group_id') ? 'is-invalid' : '' }}"
                                                     id="fee_group_id" name="fee_group_id">
-                                                    <option value="" disabled selected>-- Select Fee Group --
+                                                    <option value="" selected>-- Select Fee Group --
                                                     </option>
                                                     @foreach ($feesgroups as $feesGroup)
-                                                        <option value="{{ $feesGroup->id }}"
-                                                            value="{{ $feesGroup->id }}" disabled>
+                                                        <option value="{{ $feesGroup->id }}" disabled>
                                                             {{ $feesGroup->name }}
                                                         </option>
 
                                                         {{-- Fee Types as sub-options --}}
                                                         @foreach ($feesGroup->feeType as $feeType)
-                                                            <option value="{{ $feeType->id }}">
+                                                            <option value="{{ $feeType->id }}"
+                                                                data-price="{{ $feeType->price }}">
                                                                 &nbsp;&nbsp;&nbsp;{{ $feeType->name }}
                                                             </option>
                                                         @endforeach
@@ -372,177 +414,131 @@
 
                                                 {{-- Fee Type Select (dynamic via AJAX if needed) --}}
 
+
+
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                               
-                         
-                            <div class="row mt-20">
-                                <div class="col-lg-12 justify-content-end d-flex">
-                                    <div class="text-right">
-                                        <input type="checkbox" name="singleInvoice" id="singleInvoice"
-                                            class="common-checkbox form-control" value="1">
-                                        <label for="singleInvoice">@lang('fees::feesModule.group_fees_generate_seperate_invoice')</label>
+
+
+
+
+
+
+
+
+
+                                <div class="row mt-20">
+                                    <div class="col-lg-12 justify-content-end d-flex">
+                                        <div class="text-right">
+                                            <input type="checkbox" name="singleInvoice" id="singleInvoice"
+                                                class="common-checkbox form-control" value="1">
+                                            <label for="singleInvoice">@lang('fees::feesModule.group_fees_generate_seperate_invoice')</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mt-20">
+                                    <div class="col-lg-12 justify-content-end d-flex">
+                                        <div class="text-right">
+                                            <input type="checkbox" id="cloneAmount"
+                                                class="common-checkbox form-control permission-checkAll">
+                                            <label for="cloneAmount">@lang('fees::feesModule.clone_amount')</label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="row mt-20">
-                                <div class="col-lg-12 justify-content-end d-flex">
-                                    <div class="text-right">
-                                        <input type="checkbox" id="cloneAmount"
-                                            class="common-checkbox form-control permission-checkAll">
-                                        <label for="cloneAmount">@lang('fees::feesModule.clone_amount')</label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <input type="hidden" class="weaverType" value="amount">
 
-                         </form>
-                        <div class="big-table">
-                            <table class="table school-table-style fees_invoice_type_table" cellspacing="0"
-                                width="100%">
-                                <thead>
-                                    <tr>
-                                        <th>@lang('common.sl')</th>
-                                        <th>@lang('student.name')</th>
-                                        <th>@lang('fees.fees_type')</th>
-                                        <th>@lang('accounts.amount')</th>
-                                        <th>@lang('create date')</th>
-                                        <th>@lang('Due date')</th>
+                            <input type="hidden" class="weaverType" value="amount">
 
- 
-                                        @if (!isset($invoiceInfo))
-                                            <th>@lang('fees.paid_amount')</th>
-                                        @endif
-                                        <th>@lang('common.action')</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="allFeesTypes">
-                                    @if (isset($invoiceInfo))
-                                        @foreach ($invoiceDetails as $key => $invoiceDetail)
-                                            <tr>
-                                                <td></td>
-                                                <td>{{ $invoiceDetail->feesType->name }}</td>
-                                                <input type="hidden" name="feesType[]"
-                                                    value="{{ $invoiceDetail->fees_type }}">
-                                                <td>
-                                                    <div class="primary_input">
-                                                        <input
-                                                            class="primary_input_field form-control amount{{ $errors->has('amount') ? ' is-invalid' : '' }}"
-                                                            type="number" name="amount[]" autocomplete="off"
-                                                            value="{{ isset($invoiceDetail) ? $invoiceDetail->amount : old('amount') }}">
 
-                                                        @if ($errors->has('amount'))
-                                                            <span class="text-danger">
-                                                                {{ $errors->first('amount') }}
-                                                            </span>
-                                                        @endif
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <div class="primary_input">
-                                                        <input
-                                                            class="primary_input_field form-control weaver{{ $errors->has('weaver') ? ' is-invalid' : '' }}"
-                                                            type="number" name="weaver[]" autocomplete="off"
-                                                            value="{{ isset($invoiceDetail) ? $invoiceDetail->weaver : old('weaver') }}">
+                            <div class="big-table">
+                                <table class="table school-table-style fees_invoice_type_table" cellspacing="0"
+                                    width="100%">
+                                    <thead>
+                                        <tr>
+                                            <th>@lang('common.sl')</th>
+                                            <th>@lang('student.name')</th>
+                                            <th>@lang('fees.fees_type')</th>
+                                            <th>@lang('accounts.amount')</th>
+                                            <th>@lang('create date')</th>
+                                            <th> @lang ('status')</th>
+                                            <th>@lang('fees.payment')</th>
+                                            <th>@lang('Due date')</th>
+                                            <th>@lang('payment price')</th>
 
-                                                        @if ($errors->has('weaver'))
-                                                            <span class="text-danger">
-                                                                {{ $errors->first('weaver') }}
-                                                            </span>
-                                                        @endif
-                                                    </div>
-                                                </td>
-                                                <td class="subTotal">
-                                                    {{ isset($invoiceDetail) ? $invoiceDetail->sub_total : '' }}
-                                                </td>
-                                                <input type="hidden" name="sub_total[]" class="inputSubTotal"
-                                                    value="{{ isset($invoiceDetail) ? $invoiceDetail->sub_total : '' }}">
-                                                @if (!isset($invoiceDetail))
-                                                    <td>
-                                                        <input
-                                                            class="primary_input_field form-control paidAmount{{ $errors->has('paid_amount') ? ' is-invalid' : '' }}"
-                                                            type="number" name="paid_amount[]" autocomplete="off"
-                                                            disabled
-                                                            value="{{ isset($invoiceDetail) ? $invoiceDetail->paid_amount : old('paid_amount') }}">
-                                                    </td>
-                                                @endif
-                                                <td>
-                                                    <button class="primary-btn icon-only fix-gr-bg" data-toggle="modal"
-                                                        data-tooltip="tooltip"
-                                                        data-target="#addNotesModal{{ $invoiceDetail->fees_type }}"
-                                                        type="button" title="@lang('common.edit_note')">
-                                                        <span class="ti-pencil-alt"></span>
-                                                    </button>
-                                                    <button class="primary-btn icon-only fix-gr-bg" type="button"
-                                                        data-tooltip="tooltip" title="@lang('common.delete')"
-                                                        id="deleteField">
-                                                        <span class="ti-trash"></span>
-                                                    </button>
-                                                    {{-- Notes Modal Start --}}
-                                                    <div class="modal fade admin-query"
-                                                        id="addNotesModal{{ $invoiceDetail->fees_type }}">
-                                                        <div class="modal-dialog modal-dialog-centered">
-                                                            <div class="modal-content">
-                                                                <div class="modal-header">
-                                                                    <h4 class="modal-title">@lang('common.edit_note')
-                                                                    </h4>
-                                                                    <button type="button" class="close"
-                                                                        data-dismiss="modal">&times;</button>
-                                                                </div>
 
-                                                                <div class="modal-body">
-                                                                    <div class="primary_input">
-                                                                        <input
-                                                                            class="primary_input_field form-control has-content"
-                                                                            type="text" name="note[]"
-                                                                            autocomplete="off"
-                                                                            value="{{ isset($invoiceDetail) ? $invoiceDetail->note : '' }}">
-                                                                        <label class="primary_input_label"
-                                                                            for="">@lang('common.note')</label>
+                                            {{-- @if (!isset($invoiceInfo))
+                                <th>@lang('fees.paid_amount')</th>
+                            @endif --}}
+                                            <th>@lang('common.action')</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="allFeesTypes">
+                                        <td id="sl"> </td>
+                                        <td id="tdName"> </td>
+                                        <td id="fees_type"> </td>
+                                        <td id="amount_cell">
+                                            <span id="amount_text"></span>
+                                            <input class="primary_input_field form-control" type="number" name="price"
+                                                autocomplete="off" value="" id="input_price"
+                                                style="display:none;">
 
-                                                                    </div>
-                                                                    </br>
-                                                                    <div class="mt-40 d-flex justify-content-between">
-                                                                        <button type="button" class="primary-btn tr-bg"
-                                                                            data-dismiss="modal">@lang('common.cancel')</button>
-                                                                        <button type="button"
-                                                                            class="primary-btn fix-gr-bg"
-                                                                            data-dismiss="modal">@lang('common.update')</button>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    {{-- Notes Modal End --}}
-                                                    <input type="hidden" class="fees"
-                                                        value="grp{{ $invoiceDetail->feesType->fees_group_id }}">
-                                                    <input type="hidden" class="fees"
-                                                        value="typ{{ $invoiceDetail->fees_type }}">
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    @endif
-                                </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <td>@lang('exam.result')</td>
-                                        <td></td>
-                                        <td class="showTotalAmount">0.00</td>
-                                        
-                                        @if (!isset($invoiceInfo))
-                                            <td class="showPaidAmount">0.00</td>
-                                        @endif
-                                        <td></td>
-                                        <input class="totalPaidAmount" type="hidden" name="total_paid_amount">
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+
+
+            </form>
+            </td>
+
+
+
+
+
+            <td id="tdcreate_date">
+                {{ isset($invoiceInfo) ? date('m/d/Y', strtotime($invoiceInfo->create_date)) : date('m/d/Y') }}
+            </td>
+            </td>
+
+            <td id="tdstatus"> </td>
+            <td id="tdpayment_method"> </td>
+            <td id="tddue_date">
+                {{ isset($invoiceInfo) ? date('m/d/Y', strtotime($invoiceInfo->create_date)) : date('m/d/Y') }}
+            </td>
+
+
+
+            <td id="payment_cell">
+                 <span id="amount_text"></span>
+                <span id="tdpayment_price"></span>
+
+
+
+
+
+            </td>
+
+
+            <td>
+
+                <button id="clear_btn" type="button"
+                    class="primary-btn small bg-danger text-white border-0 ">@lang('common.delete')</button>
+
+
+
+
+            </td>
+
+
+
+            {{-- @if (!isset($invoiceInfo))
+                            <td> </td>
+                        @endif --}}
+
+            </tbody>
+
+            </table>
+        </div>
+        </div>
+        </div>
         </div>
         </div>
         </div>
@@ -558,166 +554,252 @@
 
 
 
-                $('#branch_id').change(function() {
-                    let branchId = $(this).val();
-                    console.log('Selected branchId:', branchId);
+        $('#branch_id').change(function() {
+            let branchId = $(this).val();
+            console.log('Selected branchId:', branchId);
 
-                    $('#selectStudentLoader').show();
-                    $('#student_id').html('<option value="">Loading...</option>');
+            $('#selectStudentLoader').show();
+            $('#student_id').html('<option value="">Loading...</option>');
 
-                    if (branchId) {
-                        $.ajax({
-                            url: "{{ url('student/invoice/get-student') }}/" + branchId,
-                            type: 'GET',
-                            success: function(data) {
-                                console.log('AJAX response:', data);
+            if (branchId) {
+                $.ajax({
+                    url: "{{ url('student/invoice/get-student') }}/" + branchId,
+                    type: 'GET',
+                    success: function(data) {
+                        console.log('AJAX response:', data);
 
-                                $('#selectStudentLoader').hide();
-                                $('#student_id').empty().append(
-                                    '<option value="">Select Student</option>');
-
-                                $.each(data, function(index, student) {
-                                    $('#student_id').append('<option value="' + student.id +
-                                        '">' +
-                                        student.name + '</option>');
-                                });
-
-                                $('#student_id').niceSelect('update');
-                            },
-                            error: function(xhr, status, error) {
-                                $('#selectStudentLoader').hide();
-                                console.error('AJAX Error:', status, error, xhr.responseText);
-                                alert('Failed to load students.');
-                            }
-                        });
-                    } else {
                         $('#selectStudentLoader').hide();
-                        $('#student_id').html('<option value="">Select Student</option>');
+                        $('#student_id').empty().append(
+                            '<option value="">Select Student</option>');
+
+                        $.each(data, function(index, student) {
+                            $('#student_id').append('<option value="' + student.id +
+                                '">' +
+                                student.name + '</option>');
+                        });
+
+                        $('#student_id').niceSelect('update');
+                    },
+                    error: function(xhr, status, error) {
+                        $('#selectStudentLoader').hide();
+                        console.error('AJAX Error:', status, error, xhr.responseText);
+                        alert('Failed to load students.');
                     }
                 });
-                });
+            } else {
+                $('#selectStudentLoader').hide();
+                $('#student_id').html('<option value="">Select Student</option>');
+            }
+        });
+    });
+</script>
+<script>
+    // real time forme data set to table js code
+    $(document).ready(function() {
 
+        // Student name update
 
-                //    $('#fee_group_id').on('change', function(){
+$(document).ready(function () {
+    // Function to toggle label + input visibility
+    function togglePriceSection(status) {
+        if (status === 'partial') {
+            $('#priceWrapper').removeClass('d-none'); // show input
+        } else if (status === 'full') {
+            $('#priceWrapper').addClass('d-none'); // hide input
 
+            // get price from hidden span OR directly from select box
+            let price = $('#amount_text').text().trim(); 
 
-                //         let groupId = $(this).val();
-                //         $('#fee_type_id').html('<option value="">-- Select Fee Type --</option>'); // reset
+            if (price) {
+                $('#tdpayment_price').text(price); // ✅ set fee price
+            } else {
+                $('#tdpayment_price').text('0');
+            }
+        } else {
+            $('#priceWrapper').addClass('d-none'); // hide input
+            $('#tdpayment_price').text('no payment');
+        }
+    }
 
-                //         if(groupId){
-                //              console.log('Selected groupId:', groupId);
+    // Run once on page load (important if editing)
+    togglePriceSection($('#status').find("option:selected").data('status'));
 
-                //             $.ajax({
-                //                 url: "{{ url('student/invoice/types_get_by_group') }}/" + groupId,
-                //                 type: "GET",
-                //                 success: function(data){
-                //                     console.log('fee types:', data);
-                //                     if(data.length > 0){
-                //                         $.each(data, function(key, feeTypes){
-                //                             $('#fee_type_id').append('<option value="'+ feeTypes.id +'">'+ feeTypes.name +'</option>');
-                //                         });
-                //                         $('#fee_type_id').niceSelect('update');
-                //                     } else {
-                //                         $('#fee_type_id').append('<option value="">No Fee Types found</option>');
-                //                     }
-                //                 }
-                //             });
-                //         }
-                //     });
+    // On status change
+    $('#status').on('change', function () {
+        let selectedOption = $(this).find("option:selected");
+        let selectedStatus = selectedOption.data('status');
+        let selectedText = selectedOption.text().trim();
 
-                // $('#fee_group_id').on('change', function() {
-                //     let groupId = $(this).val();
-                //     $('#fee_type_id').html('<option value="">-- Select Fee Type --</option>'); // reset
+        $('#tdstatus').text(selectedText);
+        togglePriceSection(selectedStatus);
+    });
 
-                //     if (groupId) {
-                //         console.log('Selected groupId:', groupId);
-
-                //         // Check if fee_type_id is currently open
-                //         let isOpen = $('#fee_type_id').parent().hasClass('open');
-
-                //         $.ajax({
-                //             url: "{{ url('student/invoice/types_get_by_group') }}/" + groupId,
-                //             type: "GET",
-                //             success: function(data) {
-                //                 console.log('fee types:', data);
-
-                //                 if (data.length > 0) {
-                //                     $.each(data, function(key, feeTypes) {
-                //                         $('#fee_type_id').append('<option value="' + feeTypes.id + '">' + feeTypes.name + '</option>');
-                //                     });
-                //                 } else {
-                //                     $('#fee_type_id').append('<option value="">No Fee Types found</option>');
-                //                 }
-
-                //                 // Update niceSelect
-                //                 $('#fee_type_id').niceSelect('update');
-
-                //                 // Reopen dropdown if it was open
-                //                 if (isOpen) {
-                //                     $('#fee_type_id').parent().addClass('open');
-                //                 }
-                //             }
-                //         });
-                //     }
-                // });
-
-
-                // });
-
-let rowCount = 0;
-
-    // === Add Row to Table ===
+    // On fee group change (to update amount_text + maybe re-run toggle)
     $('#fee_group_id').on('change', function () {
-        let studentName = $('#student_id option:selected').text();
-        let feeType = $('#fee_group_id option:selected').text();
-        let amount = 0; // default amount
-        let createDate = $('#create_date').val();
-        let dueDate = $('#due_date').val();
+        let selectedOption = $(this).find("option:selected");
+        let selectedText = selectedOption.text().trim();
+        let amount = selectedOption.data('price');
 
-        if (!studentName || !feeType) {
-            alert("Please select student and fee type.");
-            return;
+        $('#fees_type').text(selectedText);
+
+        if (amount !== undefined && amount !== null && amount !== '') {
+            $('#amount_text').text(amount).show();
+            $('#input_price').hide();
+        } else {
+            $('#amount_text').hide();
+            $('#input_price').val('').show();
         }
 
-        rowCount++;
-
-        let newRow = `
-            <tr>
-                <td>${rowCount}</td>
-                <td>${studentName}</td>
-                <td>${feeType}</td>
-                <td>${amount}</td>
-                <td>${createDate}</td>
-                <td>${dueDate}</td>
-                <td>
-                    <button type="button" class="primary-btn icon-only fix-gr-bg deleteRow">
-                        <span class="ti-trash"></span>
-                    </button>
-                </td>
-            </tr>
-        `;
-
-        $('.allFeesTypes').append(newRow);
-
-        // Reset fee_group select
-        $('#fee_group_id').val("").niceSelect('update');
+        // re-apply price section logic (in case status=full)
+        let currentStatus = $('#status').find("option:selected").data('status');
+        togglePriceSection(currentStatus);
     });
+});
 
-    // === Delete Row from Table ===
-    $(document).on('click', '.deleteRow', function () {
-        $(this).closest('tr').remove();
-        updateSL();
-    });
 
-    // === Update SL Numbers ===
-    function updateSL() {
-        rowCount = 0;
-        $('.allFeesTypes tr').each(function () {
-            rowCount++;
-            $(this).find('td:first').text(rowCount);
+
+
+
+
+
+
+
+        // Amount update
+
+
+        // Create date update
+        $('#create_date').on('change input', function() {
+            $('#tdcreate_date').text($(this).val());
         });
-    }
-                
+
+        // Due date update
+        $('#due_date').on('change input', function() {
+            $('#tddue_date').text($(this).val());
+        });
+
+
+
+
+         $('#payment_price').on('change input', function() {
+            $('#tdpayment_price').text($(this).val());
+        });
+
+        // Status update
+
+
+
+
+        //payemt set tabel
+        $('#paymentMethodName').on('change', function() {
+            let selectedText = $(this).find("option:selected").text();
+            $('#tdpayment_method').text(selectedText);
+        });
+
+        // Auto-generate SL (serial number)
+        $('#sl').text("1");
+
+
+
+        //button to cler table and input feelds
+        $('#clear_btn').on('click', function() {
+
+            const today = new Date();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const year = today.getFullYear();
+
+            // Reset the select box
+            $('#fee_group_id').val('').trigger('change');
+            $('#student_id').val(''); // set value to empty, which matches the default option
+            $('#student_id').niceSelect('update');
+            $('#branch_id').val('');
+            $('#branch_id').niceSelect('update');
+
+
+            $('#fee_group_id').val('');
+            $('#fee_group_id').niceSelect('update');
+            $('#create_date').val(`${month}/${day}/${year}`).trigger('change');
+            $('#due_date').val(`${month}/${day}/${year}`).trigger('change');
+
+
+            $('#status').val('');
+            $('#status').niceSelect('update');
+
+            $('#paymentMethodName').val("");
+            $('#paymentMethodName').niceSelect('update');
+
+            $('#priceWrapper').addClass('d-none');
+
+            $('#payment_price').val('');
+
+
+
+
+            // Clear table and input fields
+            $('#fees_type').text('');
+            $('#amount_text').text('');
+            $('#input_price').hide();
+            $('#tdpayment_price').text('');
+            $('#tdName').text('');
+            $('#tdpayment_method').text('');
+            $('#tdcreate_date').text(
+                ' {{ isset($invoiceInfo) ? date('m/d/Y', strtotime($invoiceInfo->create_date)) : date('m/d/Y') }}'
+            );
+            $('#tddue_date').text(
+                ' {{ isset($invoiceInfo) ? date('m/d/Y', strtotime($invoiceInfo->create_date)) : date('m/d/Y') }}'
+            );
+            $('#tdstatus').text('');
+
+
+        });
+
+
+
+
+
+    });
+    $(document).ready(function() {
+        // Show payment method section on page load
+        $('#paymentMethod').removeClass('d-none');
+
+        // Trigger once on page load (important if editing an invoice)
+        toggleBankPayment($('#paymentMethodName').val());
+
+        // When payment method changes
+        $('#paymentMethodName').on('change', function() {
+            let selectedMethod = $(this).val();
+            console.log('Selected payment method:', selectedMethod);
+            toggleBankPayment(selectedMethod);
+        });
+
+        function toggleBankPayment(method) {
+            if (method === 'Bank Transfer' || method === 'Card') {
+                $('#bankPayment').removeClass('d-none'); // show bank selection
+            } else {
+                $('#bankPayment').addClass('d-none'); // hide it
+            }
+        }
+    });
+
+
+
+
+
+
+    //file fetch script
+    $(document).ready(function() {
+        // When clicking the custom button, trigger hidden input
+        $('#uploadBtn').on('click', function() {
+            $('#payment_file').click();
+        });
+
+        // Show file name after selecting
+        $('#payment_file').on('change', function() {
+            let fileName = this.files[0] ? this.files[0].name : '';
+            $('#fileName').text(fileName);
+            console.log('Selected file:', fileName);
+        });
+    });
 </script>
 
 
