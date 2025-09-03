@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('invoices', function (Blueprint $table) {
+        Schema::create('invoice_items', function (Blueprint $table) {
             $table->id();
-            
+            $table->unsignedBigInteger('invoice_id')->references('id')->on('fee_invoices')->onDelete('cascade');
+            $table->unsignedBigInteger('fee_type_id');
+            $table->double('amount');
             $table->timestamps();
         });
     }
@@ -23,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('invoices');
+        Schema::dropIfExists('invoice_items');
     }
 };

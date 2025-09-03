@@ -186,7 +186,7 @@ Route::controller(InvoiceController::class)->group(function () {
         
 
      
-    Route::post('student/fees/fee-store', 'store')->name('fees.fee-store');
+    Route::post('student/fees/fee-store', 'store')->name('fees.invoice.store');
     Route::get('student/fees/fee-edit/{id}', 'edit')->name('fees.fee-edit');
     Route::put('student/fees/fee-update/{id}', 'update')->name('fees.fee-update');
     Route::delete('student/fees/fee-delete/{id}', 'destroy')->name('fees.fee-delete');
