@@ -42,59 +42,60 @@
                                         'method' => 'POST',
                                         'enctype' => 'multipart/form-data',
                                     ]) }}
-                                @endif
-                            @endif --}}
-                            <form class="form-horizontal">
-                            <div class="white-box">
-                                <div class="main-title">
-                                    <h3 class="mb-15">
-                                        @if (isset($editData))
-                                            @lang('inventory.edit_item_category')
-                                        @else
-                                            @lang('inventory.add_item_category')
-                                        @endif
-                                    </h3>
-                                </div>
-                                <div class="add-visitor">
-                                    <div class="row">
-                                        <div class="col-lg-12 mb-20">
-                                            <div class="primary_input">
-                                                <label class="primary_input_label" for="">@lang('inventory.category_name') <span
-                                                        class="text-danger"> *</span> </label>
-                                                <input
-                                                    class="primary_input_field form-control{{ $errors->has('category_name') ? ' is-invalid' : '' }}"
-                                                    type="text" name="category_name" autocomplete="off"
-                                                    value="{{ isset($editData) ? $editData->category_name : Request::old('category_name') }}">
+                                                                    @endif
+                                                                @endif --}}
+                                                    <form id="categoryForm" class="form-horizontal"
+                                                        @isset($editData) 
+                                action="{{ route('item-category-update', $editData->id) }}" 
+                                method="POST" 
+                            @else 
+                                action="{{ route('item-category-store') }}" 
+                                method="POST"
+                            @endisset>
+                                @csrf
+                                @isset($editData)
+                                    @method('PUT')
+                                @endisset
 
-
-                                                @if ($errors->has('category_name'))
-                                                    <span class="text-danger">
-                                                        {{ $errors->first('category_name') }}
-                                                    </span>
-                                                @endif
+                                <div class="white-box">
+                                    <div class="main-title">
+                                        <h3 class="mb-15">
+                                            @if (isset($editData))
+                                                @lang('inventory.edit_item_category')
+                                            @else
+                                                @lang('inventory.add_item_category')
+                                            @endif
+                                        </h3>
+                                    </div>
+                                    <div class="add-visitor">
+                                        <div class="row">
+                                            <div class="col-lg-12 mb-20">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label">@lang('inventory.category_name') <span
+                                                            class="text-danger">*</span></label>
+                                                    <input class="primary_input_field form-control" type="text"
+                                                        name="name" id="name"
+                                                        value="{{ isset($editData) ? $editData->name : old('category_name') }}">
+                                                    <span class="text-danger" id="category_name_error"></span>
+                                                </div>
                                             </div>
                                         </div>
-
-                                        <input type="hidden" name="url" id="url" value="{{ URL::to('/') }}">
-
-                                    </div>
-                                   
-                                    <div class="row mt-40">
-                                        <div class="col-lg-12 text-center">
-                                            <button class="primary-btn fix-gr-bg submit" data-toggle="tooltip"
-                                                >
-                                                <span class="ti-check"></span>
-                                                @if (isset($editData))
-                                                    @lang('common.update')
-                                                @else
-                                                    @lang('common.save')
-                                                @endif
-                                            </button>
+                                        <div class="row mt-40">
+                                            <div class="col-lg-12 text-center">
+                                                <button type="submit" class="primary-btn fix-gr-bg">
+                                                    <span class="ti-check"></span>
+                                                    @if (isset($editData))
+                                                        @lang('common.update')
+                                                    @else
+                                                        @lang('common.save')
+                                                    @endif
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
                             </form>
+
                         </div>
                     </div>
                 </div>
@@ -125,40 +126,137 @@
                                             </tr>
                                         </thead>
 
-                                        {{-- <tbody>
-                                            @if (isset($itemCategories))
-                                                @foreach ($itemCategories as $key => $value)
-                                                    <tr>
-                                                        <td>{{ $key + 1 }}</td>
-                                                        <td>{{ $value->category_name }}</td>
-                                                        <td>
-                                                            <x-drop-down>
-                                                                @if (userPermission('item-category-edit'))
-                                                                    <a class="dropdown-item"
-                                                                        href="{{ route('item-category-edit', $value->id) }}">
-                                                                        @lang('common.edit')</a>
-                                                                @endif
-                                                                @if (userPermission('delete-item-category-view'))
-                                                                    <a class="deleteUrl dropdown-item"
-                                                                        data-modal-size="modal-md"
-                                                                        title="{{ __('inventory.delete_item_category') }}"
-                                                                        href="{{ route('delete-item-category-view', @$value->id) }}">
-                                                                        @lang('common.delete')</a>
-                                                                @endif
-                                                            </x-drop-down>
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                            @endif
-                                        </tbody> --}}
+                                        <tbody>
+                                            @foreach ($categories as $key => $category)
+                                                <tr>
+                                                    <td>{{ $key + 1 }}</td>
+                                                    <td>{{ $category->name }}</td>
+                                                    <td>
+                                                        <x-drop-down>
+                                                            <a class="dropdown-item"
+                                                                href="{{ route('item-category-edit', $category->id) }}">
+                                                                @lang('common.edit')
+                                                            </a>
+                                                            
+                                                            <a class="dropdown-item" data-toggle="modal"
+                                                                data-target="#deletecategoryModal{{ $category->id }}"
+                                                                href="#">@lang('common.delete')</a>
+
+                                                        </x-drop-down>
+                                                    </td>
+                                                </tr>
+
+
+
+
+                                                <div class="modal fade admin-query"
+                                                    id="deletecategoryModal{{ $category->id }}">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h4 class="modal-title">@lang('fees.delete_fees_type')</h4>
+                                                                <button type="button" class="close"
+                                                                    data-dismiss="modal">&times;</button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <div class="text-center">
+                                                                    <h4>@lang('common.are_you_sure_to_delete')</h4>
+                                                                </div>
+                                                                <div class="mt-40 d-flex justify-content-between">
+                                                                    <button type="button" class="primary-btn tr-bg"
+                                                                        data-dismiss="modal">
+                                                                        @lang('common.cancel')
+                                                                    </button>
+                                                                    <form
+                                                                        action="{{ route('delete-item-category', $category->id) }}"
+                                                                        method="POST">
+                                                                        @csrf
+                                                                        @method('DELETE')
+                                                                        <button class="primary-btn fix-gr-bg"
+                                                                            type="submit">
+                                                                            @lang('common.delete')
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </tbody>
                                     </table>
                                 </x-table>
                             </div>
+                            
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
+    
 @endsection
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 @include('components.partials.data_table_js')
+
+
+@push('scripts')
+    {{-- <script>
+        $(document).ready(function() {
+            $('#categoryForm').on('submit', function(e) {
+                e.preventDefault();
+
+                let form = $(this);
+                let formData = new FormData(this);
+                let actionUrl = form.attr('action');
+
+                $.ajax({
+                    url: actionUrl,
+                    type: 'POST', // always POST
+                    headers: {
+                        'X-CSRF-TOKEN': $('input[name="_token"]').val() // CSRF token
+                    },
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                            $('#categoryForm')[0].reset();
+                            $('#category_name_error').text('');
+
+                            // Reload to show updated table
+                            location.reload();
+                        }
+                    },
+                    error: function(xhr) {
+                        if (xhr.status === 422) {
+                            let errors = xhr.responseJSON.errors;
+                            $('#category_name_error').text(errors.name ? errors.name[0] : '');
+                        } else {
+                            toastr.error("Something went wrong!");
+                        }
+                    }
+                });
+            });
+        });
+
+
+         --}}
+         <script>
+    @if(session('message-success'))
+        toastr.success("{{ session('message-success') }}");
+    @endif
+
+    @if(session('message-error'))
+        toastr.error("{{ session('message-error') }}");
+    @endif
+</script>
+
+    </script>
+
+
+
+@endpush

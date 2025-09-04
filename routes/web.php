@@ -15,8 +15,14 @@ use App\Http\Controllers\TopicOverviewController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FeeTypeController;
 use App\Http\Controllers\InvoiceController;
-
-
+use App\Http\Controllers\InvoiceItemController;
+use App\Http\Controllers\StudentController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\InventoryItemController;
+use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\ContentTypeController;
+use App\Models\Supplier;
+use App\Http\Controllers\ContentController;
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
@@ -102,8 +108,8 @@ Route::controller(HomeController::class)->group(callback: function () {
 
 
 
-    Route::get('administration/download-center/content-type', 'contentType')->name('content-type');
-    Route::get('administration/download-center/content-list', 'contentList')->name('content-list');
+    // Route::get('administration/download-center/content-type', 'contentType')->name('content-type');
+    // Route::get('administration/download-center/content-list', 'contentList')->name('content-list');
     Route::get('administration/download-center/shared-content-list', 'sharedContentList')->name('shared-content-list');
     Route::get('administration/download-center/video-list', 'videoList')->name('video-list');
 
@@ -142,9 +148,9 @@ Route::controller(HomeController::class)->group(callback: function () {
     Route::get('student/fees/fee-invoice-setting', 'feeInvoiceSetting')->name('fee-invoice-setting');
     Route::get('student/fees/fee-return', 'feeReturn')->name('fee-return');
 
-    Route::get('account/inventory/item-category', 'itemCategory')->name('item-category');
-    Route::get('account/inventory/item-list', 'itemList')->name('item-list');
-    Route::get('account/inventory/supplier', 'supplier')->name('supplier');
+
+    // Route::get('account/inventory/item-list', 'itemList')->name('item-list');
+    // Route::get('account/inventory/supplier', 'supplier')->name('supplier');
     Route::get('account/inventory/item-receive', 'itemReceive')->name('item-receive');
     Route::get('account/inventory/item-receive-list', 'itemReceiveList')->name('item-receive-list');
     Route::get('account/inventory/item-issue', 'itemIssue')->name('item-issue');
@@ -180,14 +186,67 @@ Route::controller(FeeTypeController::class)->group(function () {
 
 Route::controller(InvoiceController::class)->group(function () {
     Route::get('student/fees/fee-invoice', 'index')->name('fee-invoice');
-     Route::get('student/fees/add-invoice', 'create')->name('add-invoice');
-          Route::get('student/invoice/get-student/{branchId}', 'show')->name('get-student');
-          Route::get('student/invoice/types_get_by_group/{groupId}', 'dropdown_fee_types')->name('get-types-by-group');
-        
+    Route::get('student/fees/add-invoice', 'create')->name('add-invoice');
+    Route::get('student/invoice/get-student/{branchId}', 'show')->name('get-student');
+    Route::get('student/invoice/types_get_by_group/{groupId}', 'dropdown_fee_types')->name('get-types-by-group');
 
-     
+
+
     Route::post('student/fees/fee-store', 'store')->name('fees.invoice.store');
     Route::get('student/fees/fee-edit/{id}', 'edit')->name('fees.fee-edit');
     Route::put('student/fees/fee-update/{id}', 'update')->name('fees.fee-update');
     Route::delete('student/fees/fee-delete/{id}', 'destroy')->name('fees.fee-delete');
 });
+
+
+
+
+Route::controller(CategoryController::class)->group(function () {
+
+
+
+    Route::get('account/inventory/item-category', 'index')->name('item-category');
+    Route::post('account/inventory/item-category/store', 'store')->name('item-category-store');
+    Route::get('account/inventory/item-category/edit/{id}', 'edit')->name('item-category-edit');
+    Route::put('account/inventory/item-category/update/{id}', 'update')->name('item-category-update');
+    Route::delete('account/inventory/item-category/delete/{id}', 'destroy')->name('delete-item-category');
+});
+
+
+
+Route::controller(InventoryItemController::class)->group(function () {
+    Route::get('account/inventory/item-list', 'index')->name('item-list');
+    Route::post('account/inventory/item-store', 'store')->name('item-store');
+    Route::get('account/inventory/item-edit/{id}', 'edit')->name('item-edit');
+    Route::put('account/inventory/item-update/{id}', 'update')->name('item-update');
+    Route::delete('account/inventory/item-delete/{id}', 'destroy')->name('item-delete');
+});
+
+Route::controller(SupplierController::class)->group(function () {
+    Route::get('account/inventory/supplier', 'index')->name('supplier');
+    Route::post('account/inventory/supplier-store', 'store')->name('supplier-store');
+    Route::get('account/inventory/supplier-edit/{id}', 'edit')->name('supplier-edit');
+    Route::put('account/inventory/supplier-update/{id}', 'update')->name('supplier-update');
+    Route::delete('account/inventory/supplier-delete/{id}', 'destroy')->name('supplier-delete');
+});
+Route::controller(ContentTypeController::class)->group(function () {
+   Route::get('administration/download-center/content-type', 'index')->name('content-type');
+    Route::post('account/content-type-store', 'store')->name('content-type-store');
+    Route::get('account/content-type-edit/{id}', 'edit')->name('content-type-edit');
+    Route::put('account/content-type-update/{id}', 'update')->name('content-type-update');
+    Route::delete('account/content-type-delete/{id}', 'destroy')->name('content-type-delete');
+});
+
+Route::controller(ContentController::class)->group(function () {
+
+    Route::get('administration/download-center/content-list', 'index')->name('content-list');
+    Route::post('account/content-store', 'store')->name('content-store');
+    Route::get('account/content-edit/{id}', 'edit')->name('content-edit');
+    Route::put('account/content-update/{id}', 'update')->name('content-update');
+    Route::delete('account/content-delete/{id}', 'destroy')->name('content-delete');
+});
+
+
+
+
+

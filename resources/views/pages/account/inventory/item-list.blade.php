@@ -40,11 +40,19 @@
                                     {{ Form::open(['class' => 'form-horizontal', 'route' => 'item-list-store', 'method' => 'POST']) }}
                                 @endif
                             @endif --}}
-                            <form class="form-horizontal">
+                            <form class="form-horizontal"
+                                action="{{ isset($editData) ? route('item-update', $editData->id) : route('item-store') }}"
+                                method="POST">
+                                @csrf
+                                @if (isset($editData))
+                                    @method('PUT')
+                                @endif
+
                                 <div class="white-box">
                                     <div class="main-title">
                                         <h3 class="mb-15">
                                             @if (isset($editData))
+
                                                 @lang('inventory.edit_item')
                                             @else
                                                 @lang('inventory.add_item')
@@ -80,14 +88,17 @@
                                                         name="category_name" id="category_name">
                                                         <option data-display="@lang('inventory.select_item_category') *" value="">
                                                             @lang('common.select')</option>
-                                                        {{-- @foreach ($itemCategories as $key => $value)
+                                                        @foreach ($itemCategories as $key => $value)
                                                             <option value="{{ $value->id }}"
                                                                 @if (isset($editData)) @if ($editData->item_category_id == $value->id)
                                                     selected @endif
                                                                 @endif
-                                                                >{{ $value->category_name }}</option>
-                                                        @endforeach --}}
+                                                                >{{ $value->name }}</option>
+                                                        @endforeach
                                                     </select>
+
+
+
 
                                                     @if ($errors->has('category_name'))
                                                         <span class="text-danger invalid-select" role="alert">
@@ -108,7 +119,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                       
+
                                         <div class="row mt-40">
                                             <div class="col-lg-12 text-center">
                                                 <button class="primary-btn fix-gr-bg submit" data-toggle="tooltip">
@@ -151,7 +162,66 @@
                                                 <th>@lang('common.action')</th>
                                             </tr>
                                         </thead>
-                                        <tbody></tbody>
+                                        <tbody>
+                                            @foreach ($items as $key => $item)
+                                                <tr>
+                                                    <td>{{ $loop->iteration }}</td>
+                                                    <td>{{ $item->item_name }}</td>
+                                                    <td>{{ $item->category->name ?? '' }}</td>
+                                                    <td>{{ $item->description }}</td>
+                                                    <td>{{ $item->stock ?? 0 }}</td>
+                                                    <td>
+                                                        <x-drop-down>
+                                                            <a class="dropdown-item"
+                                                                href="{{ route('item-edit', $item->id) }}">
+                                                                @lang('common.edit')
+                                                            </a>
+                                                            
+                                                            <a class="dropdown-item" data-toggle="modal"
+                                                                data-target="#deletecategoryModal{{ $item->id }}"
+                                                                href="#">@lang('common.delete')</a>
+
+                                                        </x-drop-down>
+                                                    </td>
+                                                </tr>
+
+                                                
+                                                <div class="modal fade admin-query"
+                                                    id="deletecategoryModal{{ $item->id }}">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h4 class="modal-title">@lang('fees.delete_item')</h4>
+                                                                <button type="button" class="close"
+                                                                    data-dismiss="modal">&times;</button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <div class="text-center">
+                                                                    <h4>@lang('common.are_you_sure_to_delete')</h4>
+                                                                </div>
+                                                                <div class="mt-40 d-flex justify-content-between">
+                                                                    <button type="button" class="primary-btn tr-bg"
+                                                                        data-dismiss="modal">
+                                                                        @lang('common.cancel')
+                                                                    </button>
+                                                                    <form
+                                                                        action="{{ route('item-delete', $item->id) }}"
+                                                                        method="POST">
+                                                                        @csrf
+                                                                        @method('DELETE')
+                                                                        <button class="primary-btn fix-gr-bg"
+                                                                            type="submit">
+                                                                            @lang('common.delete')
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </tbody>
                                     </table>
                                 </x-table>
                             </div>

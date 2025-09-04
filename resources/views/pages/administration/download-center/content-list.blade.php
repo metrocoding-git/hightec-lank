@@ -155,7 +155,13 @@
                             @else
                                 {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'download-center.content-list-save', 'method' => 'POST', 'enctype' => 'multipart/form-data']) }}
                             @endif --}}
-                            <form class="form-horizontal">
+                            <form class="form-horizontal"
+                                action="{{ isset($editContent) ? route('content-update', $editContent->id) : route('content-store') }}"
+                                method="POST" enctype="multipart/form-data">
+                                @csrf
+                                @if (isset($editContent))
+                                    @method('PUT')
+                                @endif
                                 <div class="white-box">
                                     <div class="main-title">
                                         <h3 class="mb-15">
@@ -168,27 +174,27 @@
                                         </h3>
                                     </div>
                                     <div class="add-visitor">
-                                        @if (isset($editContent))
-                                            <div class="row no-gutters input-right-icon mb-20">
-                                                <div class="col-lg-12">
-                                                    <div class="primary_input">
-                                                        <label>
-                                                            @lang('downloadCenter.file_name')
-                                                            <span class="text-danger"> *</span>
-                                                        </label>
-                                                        <input
-                                                            class="primary_input_field form-control{{ $errors->has('file_name') ? ' is-invalid' : '' }}"
-                                                            type="text" name="file_name" autocomplete="off"
-                                                            value="{{ isset($editContent) ? @$editContent->file_name : '' }}">
-                                                    </div>
-                                                    @if ($errors->has('file_name'))
-                                                        <span class="text-danger invalid-select" role="alert">
-                                                            {{ $errors->first('file_name') }}
-                                                        </span>
-                                                    @endif
+
+                                        <div class="row no-gutters input-right-icon mb-20">
+                                            <div class="col-lg-12">
+                                                <div class="primary_input">
+                                                    <label>
+                                                        @lang('content name')
+                                                        <span class="text-danger"> *</span>
+                                                    </label>
+                                                    <input
+                                                        class="primary_input_field form-control{{ $errors->has('file_name') ? ' is-invalid' : '' }}"
+                                                        type="text" name="file_name" autocomplete="off"
+                                                        value="{{ isset($editContent) ? @$editContent->file_name : '' }}">
                                                 </div>
+                                                @if ($errors->has('file_name'))
+                                                    <span class="text-danger invalid-select" role="alert">
+                                                        {{ $errors->first('file_name') }}
+                                                    </span>
+                                                @endif
                                             </div>
-                                        @endif
+                                        </div>
+
 
                                         <div class="row">
                                             <div class="col-lg-12 mb-30">
@@ -202,14 +208,12 @@
                                                     <option data-display="@lang('downloadCenter.content_type') *" value="">
                                                         @lang('downloadCenter.content_type')
                                                         *</option>
-                                                    {{-- @foreach (@$contentTpyes as $contentTpye)
+                                                    @foreach ($content_Types as $contentTpye)
                                                         <option value="{{ $contentTpye->id }}"
                                                             {{ isset($editContent) && $editContent->content_type_id == $contentTpye->id ? 'selected' : '' }}>
                                                             {{ $contentTpye->name }}
                                                         </option>
-                                                    @endforeach --}}
-                                                    <option value="1">sdsd </option>
-                                                    <option value="1">33 </option>
+                                                    @endforeach
 
 
                                                 </select>
@@ -221,58 +225,61 @@
                                             </div>
                                         </div>
 
-                                        @if (!isset($editContent))
-                                            <div class="row no-gutters input-right-icon mb-20">
-                                                <div class="col-lg-12">
-                                                    <div class="primary_input">
-                                                        <label>@lang('downloadCenter.youtube_link')</label>
+
+                                        <div class="row no-gutters input-right-icon mb-20">
+                                            <div class="col-lg-12">
+                                                <div class="primary_input">
+                                                    <label>@lang('downloadCenter.youtube_link')</label>
+                                                    <input
+                                                        class="primary_input_field form-control{{ $errors->has('youtube_link') ? ' is-invalid' : '' }}"
+                                                        type="text" name="youtube_link" autocomplete="off"
+                                                        value="{{ isset($editContent) ? @$editContent->youtube_link : '' }}">
+                                                </div>
+                                                @if ($errors->has('youtube_link'))
+                                                    <span class="text-danger invalid-select" role="alert">
+                                                        {{ $errors->first('youtube_link') }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        <div class="orline">
+                                            <span>
+                                                @lang('downloadCenter.or')
+                                            </span>
+                                        </div>
+
+
+                                        <div class="row mb-20">
+                                            <div class="col-lg-12 mt-15">
+                                                <div class="primary_input">
+                                                    <div class="primary_file_uploader">
                                                         <input
-                                                            class="primary_input_field form-control{{ $errors->has('youtube_link') ? ' is-invalid' : '' }}"
-                                                            type="text" name="youtube_link" autocomplete="off"
-                                                            value="{{ isset($editContent) ? @$editContent->youtube_link : '' }}">
+                                                            class="primary_input_field form-control{{ $errors->has('content_file') ? ' is-invalid' : '' }}"
+                                                            readonly="true" type="text"
+                                                            value="{{ isset($editContent->upload_file) && $editContent->upload_file != ''
+                                                                ? basename($editContent->upload_file)
+                                                                : '' }}"
+                                                            id="placeholderUploadContent">
+                                                        <button class="" type="button">
+                                                            <label class="primary-btn small fix-gr-bg"
+                                                                for="upload_content_file">{{ __('common.browse') }}</label>
+                                                            <input type="file" class="d-none" name="upload_file"
+                                                                id="upload_content_file">
+                                                        </button>
+                                                        <code>(jpg,png,jpeg,pdf,doc,docx,txt,xlsx,rar,zip are allowed
+                                                            for
+                                                            upload)</code>
                                                     </div>
-                                                    @if ($errors->has('youtube_link'))
-                                                        <span class="text-danger invalid-select" role="alert">
-                                                            {{ $errors->first('youtube_link') }}
-                                                        </span>
-                                                    @endif
                                                 </div>
+                                                @if ($errors->has('content_file'))
+                                                    <span class="text-danger invalid-select" role="alert">
+                                                        {{ $errors->first('content_file') }}
+                                                    </span>
+                                                @endif
                                             </div>
+                                        </div>
 
-                                            <div class="orline">
-                                                <span>
-                                                    @lang('downloadCenter.or')
-                                                </span>
-                                            </div>
-
-                                            <div class="row mb-20">
-                                                <div class="col-lg-12 mt-15">
-                                                    <div class="primary_input">
-                                                        <div class="primary_file_uploader">
-                                                            <input
-                                                                class="primary_input_field form-control{{ $errors->has('content_file') ? ' is-invalid' : '' }}"
-                                                                readonly="true" type="text"
-                                                                placeholder="{{ isset($editContent->upload_file) && @$editContent->upload_file != '' ? getFilePath3(@$editContent->upload_file) : trans('downloadCenter.file') . '' }}"
-                                                                id="placeholderUploadContent">
-                                                            <button class="" type="button">
-                                                                <label class="primary-btn small fix-gr-bg"
-                                                                    for="upload_content_file">{{ __('common.browse') }}</label>
-                                                                <input type="file" class="d-none" name="content_file"
-                                                                    id="upload_content_file">
-                                                            </button>
-                                                            <code>(jpg,png,jpeg,pdf,doc,docx,txt,xlsx,rar,zip are allowed
-                                                                for
-                                                                upload)</code>
-                                                        </div>
-                                                    </div>
-                                                    @if ($errors->has('content_file'))
-                                                        <span class="text-danger invalid-select" role="alert">
-                                                            {{ $errors->first('content_file') }}
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        @endif
                                         <div class="row mt-20">
                                             <div class="col-lg-12 text-center">
                                                 <button class="primary-btn fix-gr-bg">
@@ -308,8 +315,9 @@
                                     href="#">@lang('downloadCenter.generate_url')</a>
                                 <div class="mt-3">
                                     <x-table>
-                                        <table id="table_id" class="table Crm_table_active3 content-table"
-                                            cellspacing="0" width="100%">
+                                        <table id="table_id "
+                                            class="table Crm_table_active3 content-table table-responsive" cellspacing="0"
+                                            width="100%">
                                             <thead>
                                                 <tr>
                                                     <th>@lang('downloadCenter.sl')</th>
@@ -322,18 +330,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {{-- @foreach (@$contents as $key => $content)
-                                                    @php
-                                                        $fileSize = '';
-                                                        $dataUnit = '';
-                                                        if ($content->file_size < 1000000) {
-                                                            $fileSize = $content->file_size / 1000;
-                                                            $dataUnit = 'KB';
-                                                        } else {
-                                                            $fileSize = $content->file_size / 1000000;
-                                                            $dataUnit = 'MB';
-                                                        }
-                                                    @endphp
+                                                @foreach (@$contents as $key => $content)
                                                     <tr>
                                                         <td>
                                                             <input type="checkbox" id="content{{ $content->id }}"
@@ -344,15 +341,14 @@
                                                             {{ $key + 1 }}
                                                         </td>
                                                         <td class="text-break">{{ $content->file_name }}</td>
-                                                        <td>{{ $content->contentType->name }}</td>
-                                                        <td>{{ number_format($fileSize, 2, '.', ',') }}
-                                                            {{ $dataUnit }}</td>
-                                                        <td>{{ $content->user->full_name }}</td>
+                                                        <td>{{ $content->content_type->name }}</td>
+                                                        <td>{{ $content->file_size }}</td>
+
                                                         <td>{{ $content->created_at }}</td>
                                                         <td>
                                                             <x-drop-down>
                                                                 <a class="dropdown-item"
-                                                                    href="{{ route('download-center.content-list-edit', $content->id) }}">@lang('common.edit')</a>
+                                                                    href="{{ route('content-edit', $content->id) }}">@lang('common.edit')</a>
                                                                 <a class="dropdown-item" data-toggle="modal"
                                                                     data-target="#deleteContentModal{{ @$content->id }}"
                                                                     href="#">@lang('common.delete')</a>
@@ -381,73 +377,24 @@
                                                                             data-dismiss="modal">
                                                                             @lang('common.cancel')
                                                                         </button>
-                                                                        <a href="{{ route('download-center.content-list-delete', [@$content->id]) }}"
-                                                                            class="text-light">
+                                                                        <form
+                                                                            action="{{ route('content-delete', $content->id) }}"
+                                                                            method="POST" enctype="multipart/form-data">
+                                                                            @csrf
+                                                                            @method('DELETE')
                                                                             <button class="primary-btn fix-gr-bg"
                                                                                 type="submit">
                                                                                 @lang('common.delete')
                                                                             </button>
-                                                                        </a>
+                                                                        </form>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                @endforeach --}}
-                                                <tr>
-                                                    <td>
-                                                        <input type="checkbox" id="content1"
-                                                            class="common-checkbox video-list contentDataCheckbox"
-                                                            data-name="sadee" name="content[]" value="1">
-                                                        <label for="content1"></label>
-                                                        1
-                                                    </td>
-                                                    <td class="text-break">sadee</td>
-                                                    <td>asdas d</td>
-                                                    <td>sadsa</td>
-                                                    <td>dasds dsd</td>
-                                                    <td>2003/10//04</td>
-                                                    <td>
-                                                        <x-drop-down>
-                                                            <a class="dropdown-item" href="/">@lang('common.edit')</a>
-                                                            <a class="dropdown-item" data-toggle="modal"
-                                                                data-target="#deleteContentModal1"
-                                                                href="#">@lang('common.delete')</a>
-                                                        </x-drop-down>
-                                                    </td>
-                                                </tr>
-                                                <div class="modal fade admin-query" id="deleteContentModal1">
-                                                    <div class="modal-dialog modal-dialog-centered">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h4 class="modal-title">
-                                                                    @lang('downloadCenter.delete_content')
-                                                                </h4>
-                                                                <button type="button" class="close"
-                                                                    data-dismiss="modal">
-                                                                    &times;
-                                                                </button>
-                                                            </div>
-                                                            <div class="modal-body">
-                                                                <div class="text-center">
-                                                                    <h4>@lang('common.are_you_sure_to_delete')</h4>
-                                                                </div>
-                                                                <div class="mt-40 d-flex justify-content-between">
-                                                                    <button type="button" class="primary-btn tr-bg"
-                                                                        data-dismiss="modal">
-                                                                        @lang('common.cancel')
-                                                                    </button>
-                                                                    <a href="/" class="text-light">
-                                                                        <button class="primary-btn fix-gr-bg"
-                                                                            type="submit">
-                                                                            @lang('common.delete')
-                                                                        </button>
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                @endforeach
+
+
                                             </tbody>
                                         </table>
                                     </x-table>
