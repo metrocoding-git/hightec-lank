@@ -26,7 +26,13 @@
                             @else
                                 {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'download-center.content-type-save', 'method' => 'POST']) }}
                             @endif --}}
-                            <form class="form-horizontal">
+                           <form class="form-horizontal"
+                                action="{{ isset($type) ? route('content-type-update', $type->id) : route('content-type-store') }}"
+                                method="POST">
+                                @csrf
+                                @if (isset($type))
+                                    @method('PUT')
+                                @endif
                                 <div class="white-box">
                                     <div class="main-title">
                                         <h3 class="mb-15">
@@ -143,45 +149,57 @@
                                                 </div>
                                             @endforeach --}}
 
-                                            <tr>
-                                                <td>type 1</td>
-                                                <td>sadas das das asdasd asdasdasdasd sdasdasd fweq f</td>
+                                           @foreach ($content_Types as $key => $content_Type)
+                                                <tr>
+                                                    <td>{{ $content_Type->name }}</td>
+                                                    <td>{{ $content_Type->description }}</td>
                                                 <td>
                                                     <x-drop-down>
                                                         <a class="dropdown-item"
-                                                            href="/">@lang('common.edit')</a>
-                                                        <a class="dropdown-item" data-toggle="modal"
-                                                            data-target="#deleteTypeModal2"
-                                                            href="#">@lang('common.delete')</a>
+                                                            href="{{ route('content-type-edit', $content_Type->id) }}">@lang('common.edit')</a>
+                                                         <a class="dropdown-item" data-toggle="modal"
+                                                                data-target="#deletecategoryModal{{ $content_Type->id }}"
+                                                                href="#">@lang('common.delete')</a>
                                                     </x-drop-down>
                                                 </td>
                                             </tr>
-                                            <div class="modal fade admin-query" id="deleteTypeModal2">
-                                                <div class="modal-dialog modal-dialog-centered">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header">
-                                                            <h4 class="modal-title">@lang('downloadCenter.delete_type')</h4>
-                                                            <button type="button" class="close"
-                                                                data-dismiss="modal">&times;</button>
-                                                        </div>
-                                                        <div class="modal-body">
-                                                            <div class="text-center">
-                                                                <h4>@lang('common.are_you_sure_to_delete')</h4>
+                                            
+                                            <div class="modal fade admin-query"
+                                                    id="deletecategoryModal{{ $content_Type->id }}">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h4 class="modal-title">@lang('fees.delete_item')</h4>
+                                                                <button type="button" class="close"
+                                                                    data-dismiss="modal">&times;</button>
                                                             </div>
-                                                            <div class="mt-40 d-flex justify-content-between">
-                                                                <button type="button" class="primary-btn tr-bg"
-                                                                    data-dismiss="modal">@lang('common.cancel')</button>
-                                                                <a href="/"
-                                                                    class="text-light">
-                                                                    <button class="primary-btn fix-gr-bg"
-                                                                        type="submit">@lang('common.delete')</button>
-                                                                </a>
+                                                            <div class="modal-body">
+                                                                <div class="text-center">
+                                                                    <h4>@lang('common.are_you_sure_to_delete')</h4>
+                                                                </div>
+                                                                <div class="mt-40 d-flex justify-content-between">
+                                                                    <button type="button" class="primary-btn tr-bg"
+                                                                        data-dismiss="modal">
+                                                                        @lang('common.cancel')
+                                                                    </button>
+                                                                    <form
+                                                                        action="{{ route('content-type-delete', $content_Type->id) }}"
+                                                                        method="POST">
+                                                                        @csrf
+                                                                        @method('DELETE')
+                                                                        <button class="primary-btn fix-gr-bg"
+                                                                            type="submit">
+                                                                            @lang('common.delete')
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
                                                             </div>
+
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
-
+                                                
+                                            @endforeach
 
                                         </tbody>
                                     </table>

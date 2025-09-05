@@ -20,4 +20,9 @@ class FeeType extends Model
     {
         return $this->belongsTo(FeesGroup::class);
     }
+
+        public function invoice_item()
+    {
+        return $this->hasMany(Invoice_item::class);
+    }
 }
