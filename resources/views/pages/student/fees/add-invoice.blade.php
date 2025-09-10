@@ -19,7 +19,7 @@
     @endpush
 
     <section class="sms-breadcrumb mb-20">
-{{-- <div id="toastContainer" class="position-fixed top-0 end-0 p-3" ></div> --}}
+        {{-- <div id="toastContainer" class="position-fixed top-0 end-0 p-3" ></div> --}}
 
         <div class="container-fluid">
             <div class="row justify-content-between">
@@ -39,7 +39,8 @@
 
     <section class="admin-visitor-area up_st_admin_visitor">
         <div class="container-fluid p-0">
-            <form class="form-horizontal" id="invoiceForm" enctype="multipart/form-data" method="POST">
+            <form action="{{ route('fees.invoice.store') }}" class="form-horizontal" id="invoiceForm"
+                enctype="multipart/form-data" method="POST">
                 @csrf
                 <div class="row">
                     <!-- Left Section: Invoice Info -->
@@ -112,14 +113,6 @@
                                     </div>
                                 </div>
 
-                                {{-- Payment Amount --}}
-                                <div class="row mt-15 d-none" id="priceWrapper">
-                                    <div class="col-lg-12">
-                                        <label>@lang('fees.payment_amount') <span class="text-danger">*</span></label>
-                                        <input type="number" class="primary_input_field form-control" id="payment_price"
-                                            name="payment_amount">
-                                    </div>
-                                </div>
 
                                 {{-- Payment Method --}}
                                 <div class="row mt-15">
@@ -138,12 +131,12 @@
                                 {{-- Bank Payment Section --}}
                                 <div class="row mt-15 d-none" id="bankPayment">
                                     <div class="col-lg-12">
-                                        <label>@lang('fees.upload_document')</label>
+                                        <label>Upload Document</label>
                                         <div class="d-flex align-items-center">
                                             <input type="file" name="payment_file" id="payment_file" class="d-none"
                                                 accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
-                                            <button type="button" id="uploadBtn"
-                                                class="primary-btn small fix-gr-bg"><span class="ti-upload"></span>
+                                            <button type="button" id="uploadBtn" class="primary-btn fix-gr-bg col-12"><span
+                                                    class="ti-upload"></span>
                                                 Browse</button>
                                             <span id="fileName" class="ml-3 text-muted"></span>
                                         </div>
@@ -152,8 +145,8 @@
 
                                 <div class="row mt-40">
                                     <div class="col-lg-12 text-center">
-                                        <button type="submit"
-                                            class="primary-btn fix-gr-bg fmInvoice">@lang('common.save')</button>
+                                        <button id="submit"
+                                            class="primary-btn fix-gr-bg fmInvoice col-12">@lang('common.save')</button>
                                     </div>
                                 </div>
                             </div>
@@ -171,9 +164,9 @@
                             <div class="row mt-15">
                                 <div class="col-lg-12">
                                     <select class="primary_select form-control" id="fee_group_id" name="fee_group_id">
-                                        <option value="">-- Select Fee Group --</option>
+                                        <option value="">Select Fee Group</option>
                                         @foreach ($feesgroups as $feesGroup)
-                                            <option data-type="group">
+                                            <option data-type="group" class=" font-weight-bolder">
                                                 {{ $feesGroup->name }}</option>
                                             @foreach ($feesGroup->feeType as $feeType)
                                                 <option value="{{ $feeType->id }}" data-type="fee"
@@ -290,7 +283,6 @@
             function addFeeTypeRow(id, name, price) {
                 let paymentStatus = $('#status').find("option:selected").data('status') || 'not';
                 let paymentCell = '';
-
                 if (paymentStatus === 'full') {
                     paymentCell = `<span class="amount_text">${price}</span>`;
                 } else if (paymentStatus === 'partial') {
@@ -300,41 +292,138 @@
                     paymentCell = `<span class="amount_text">0</span>`;
                 }
 
+                if (paymentStatus === 'full') {
+                    paymentCell = `
+                            <div class="input-group input-group-sm" style="max-width: 120px;">
+                                <input type="number"
+                                    class="form-control"
+                                    name="paidPrice[${id}]"
+                                    value="${price}"
+                                    readonly
+                                >
+                                <div class="input-group-append">
+                                    <span class="input-group-text">.00</span>
+                                </div>
+                            </div>
+                        `;
+                } else if (paymentStatus === 'partial') {
+                    paymentCell = `
+                            <div class="input-group input-group-sm" style="max-width: 120px;">
+                                <input type="number"
+                                    class="form-control payment_input"
+                                    name="paidPrice[${id}]"
+                                    value="0"
+                                >
+                                <div class="input-group-append">
+                                    <span class="input-group-text">.00</span>
+                                </div>
+                            </div>
+                        `;
+                } else {
+                    paymentCell = `
+                            <div class="input-group input-group-sm" style="max-width: 120px;">
+                                <input type="number"
+                                    class="form-control"
+                                   name="paidPrice[${id}]"
+                                    value="0"
+                                    readonly
+                                >
+                                <div class="input-group-append">
+                                    <span class="input-group-text">.00</span>
+                                </div>
+                            </div>
+                        `;
+                }
+
+
+
                 let row = `<tr data-id="${id}">
-        <td class="sl"></td>
-        <td class="tdName">${name}</td>
-        <td class="fees_type">${name}</td>
-        <td class="amount_cell">
-            ${price ? `<span class="amount_text">${price}</span>` : `<input type="number" class="primary_input_field form-control price_input" name="price[${id}]" id="price[${id}]" value="${price}" autocomplete="off">`}
-        </td>
-        <td class="payment_cell">${paymentCell}</td>
-        <td><button type="button" class="primary-btn small bg-danger text-white border-0 clear_btn">Delete</button></td>
-    </tr>`;
+                    <td class="sl"></td>
+                    <td class="tdName">${name}</td>
+                    <td class="fees_type">${name}</td>
+                    <td class="amount_cell">
+                        <div class="input-group input-group-sm" style="max-width: 120px;">
+                            <input type="number"
+                                class="form-control price_input"
+                                name="price[${id}]"
+                                value="${price}"
+                                ${price ? `readonly` : `` }
+                                >
+                                <div class="input-group-append">
+                                    <span class="input-group-text">.00</span>
+                                </div>
+                        </div>
+                    </td>
+                    <td class="payment_cell">${paymentCell}</td>
+                    <td><button type="button" class="primary-btn small bg-danger text-white border-0 clear_btn">Delete</button></td>
+                </tr>`;
                 $('.allFeesTypes').append(row);
                 updateSerialNumbers();
             }
 
-            // Update all payment cells when payment status changes
-            $('#status').on('change', function() {
-                let selectedStatus = $(this).find("option:selected").data('status');
+            function updatePaymentFields() {
+                let selectedStatus = $('#status').find("option:selected").data('status');
+
                 $('.allFeesTypes tr').each(function() {
-                    let price = parseFloat($(this).find('.amount_text').text()) || 0;
+                    let price = parseFloat($(this).find('.price_input').val()) || 0;
+                    let rowId = $(this).data('id');
+
                     if (selectedStatus === 'full') {
-                        $(this).find('.payment_cell').html(
-                            `<span class="amount_text">${price}</span>`);
+                        $(this).find('.payment_cell').html(`
+                            <div class="input-group input-group-sm" style="max-width: 120px;">
+                                <input type="number"
+                                    class="form-control"
+                                    name="paidPrice[${rowId}]"
+                                    value="${price}"
+                                    readonly
+                                >
+                                <div class="input-group-append">
+                                    <span class="input-group-text">.00</span>
+                                </div>
+                            </div>
+                        `);
                     } else if (selectedStatus === 'partial') {
-                        $(this).find('.payment_cell').html(
-                            `<input type="number" class="primary_input_field form-control payment_input" name="price[${$(this).data('id')}]" value="${price}" autocomplete="off">`
-                        );
+                        $(this).find('.payment_cell').html(`
+                            <div class="input-group input-group-sm" style="max-width: 120px;">
+                                <input type="number"
+                                    class="form-control payment_input"
+                                    name="paidPrice[${rowId}]"
+                                    value="0"
+                                >
+                                <div class="input-group-append">
+                                    <span class="input-group-text">.00</span>
+                                </div>
+                            </div>
+                        `);
                     } else {
-                        $(this).find('.payment_cell').html(`<span class="amount_text">0</span>`);
+                        $(this).find('.payment_cell').html(`
+                            <div class="input-group input-group-sm" style="max-width: 120px;">
+                                <input type="number"
+                                    class="form-control"
+                                    name="paidPrice[${rowId}]"
+                                    value="0"
+                                    readonly
+                                >
+                                <div class="input-group-append">
+                                    <span class="input-group-text">.00</span>
+                                </div>
+                            </div>
+                        `);
                     }
                 });
+            }
 
-                // Show/hide manual price input at top if partial
-                if (selectedStatus === 'partial') $('#priceWrapper').removeClass('d-none');
-                else $('#priceWrapper').addClass('d-none');
+            // When status changes
+            $('#status').on('change', updatePaymentFields);
+
+            // When price input value changes
+            $(document).on('input', '.price_input', function() {
+                let selectedStatus = $('#status').find("option:selected").data('status');
+                if (selectedStatus === 'full') {
+                    updatePaymentFields();
+                }
             });
+
 
             function updateSerialNumbers() {
                 $('.allFeesTypes tr').each(function(index) {
@@ -344,21 +433,18 @@
 
             // Delete row
             $(document).on('click', '.clear_btn', function() {
-                let feeId = $(this).closest('tr').data('id');
-                addedFeeTypes.delete(feeId);
+                let feeId = String($(this).closest('tr').data('id')); // Ensure string type
+                addedFeeTypes.delete(feeId); // Match the type used when adding
                 $(this).closest('tr').remove();
                 updateSerialNumbers();
             });
 
             // Payment Status toggle
-            function togglePriceSection(status) {
-                if (status === 'partial') $('#priceWrapper').removeClass('d-none');
-                else $('#priceWrapper').addClass('d-none');
-            }
-            $('#status').on('change', function() {
-                let selectedStatus = $(this).find("option:selected").data('status');
-                togglePriceSection(selectedStatus);
-            });
+
+            // $('#status').on('change', function() {
+            //     let selectedStatus = $(this).find("option:selected").data('status');
+            //     togglePriceSection(selectedStatus);
+            // });
 
             // Payment Method toggle
             function toggleBankPayment(method) {
@@ -400,9 +486,66 @@
 
 
             //form submit ajex
-
             $('#invoiceForm').on('submit', function(e) {
                 e.preventDefault(); // prevent form submit
+                let branch = $('#branch_id').val();
+                let student = $('#student_id').val();
+                let createDate = $('#create_date').val();
+                let dueDate = $('#due_date').val();
+                let status = $('#status').val();
+                let paymentMethod = $('#paymentMethodName').val();
+
+                // Validate
+                if (!branch) {
+                    toastr.error('Branch is required');
+                    return;
+                }
+
+                if (!student) {
+                    toastr.error('Student is required');
+                    return;
+                }
+
+                if (!createDate) {
+                    toastr.error('Create date is required');
+                    return;
+                }
+
+                if (!dueDate) {
+                    toastr.error('Due date is required');
+                    return;
+                }
+
+                if (!status) {
+                    toastr.error('Payment status is required');
+                    return;
+                }
+
+                if (!paymentMethod) {
+                    toastr.error('Payment method is required');
+                    return;
+                }
+
+                const feeRows = $('.allFeesTypes tr');
+                if (feeRows.length === 0) {
+                    toastr.error('Please add at least one fee type');
+                    return;
+                }
+
+
+                let invalidPrice = false;
+                feeRows.each(function() {
+                    const priceVal = parseFloat($(this).find('.price_input').val());
+                    if (isNaN(priceVal) || priceVal <= 0) {
+                        invalidPrice = true;
+                        return false; // Exit .each early
+                    }
+                });
+
+                if (invalidPrice) {
+                    toastr.error('All added fee types must have a valid price greater than 0');
+                    return;
+                }
 
                 let formData = new FormData();
                 formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
@@ -411,12 +554,7 @@
                 formData.append('create_date', $('#create_date').val());
                 formData.append('due_date', $('#due_date').val());
                 formData.append('payment_status', $('#status').val());
-                // Loop over all payment inputs
-                $('.payment_input').each(function() {
-                    let inputName = $(this).attr('name'); // e.g., "price[5]"
-                    let value = $(this).val() || '';
-                    formData.append(inputName, value);
-                });
+
 
                 $('.price_input').each(function() {
                     let inputName = $(this).attr('name'); // e.g., "price[5]"
@@ -425,17 +563,38 @@
                 });
 
 
-
-
                 $('.allFeesTypes tr').each(function() {
                     let feeId = $(this).data('id');
                     if (feeId) formData.append('fee_type_id[]', feeId);
                 });
 
+                if (status === 'full') {
+                    $('.price_input').each(function() {
+                        let inputName = $(this).attr('name'); // e.g. "price[8]"
+                        let feeIdMatch = inputName.match(/\[(\d+)\]/);
+                        if (feeIdMatch) {
+                            let feeId = feeIdMatch[1]; // "8"
+                            let value = $(this).val() || '';
+                            formData.append(`paidPrice[${feeId}]`, value);
+                        }
+                    });
 
 
-
-
+                } else if (status === 'not') {
+                    console.log('Status is NOT full - sending zero paidPrice');
+                    $('.allFeesTypes tr').each(function() {
+                        let feeId = $(this).data('id');
+                        if (feeId) {
+                            formData.append(`paidPrice[${feeId}]`, '0');
+                        }
+                    });
+                } else {
+                    $('.payment_input').each(function() {
+                        let inputName = $(this).attr('name'); 
+                        let value = $(this).val() || '';
+                        formData.append(inputName, value);
+                    });
+                }
 
                 formData.append('payment_method', $('#paymentMethodName').val());
 
@@ -443,11 +602,6 @@
                     formData.append('payment_file', $('#payment_file')[0].files[0]);
                 }
 
-                // Log all FormData entries
-                console.log("FormData contents:");
-                for (let pair of formData.entries()) {
-                    console.log(pair[0] + ':', pair[1]);
-                }
 
                 $.ajax({
                     url: '{{ route('fees.invoice.store') }}',
@@ -457,30 +611,46 @@
                     processData: false,
                     success: function(response) {
                         if (response.success) {
-                            showToast(response.message, 'success');
-                            console.log('Invoice ID:', response.invoice_id);
-                        } else {
-                            showToast('Something went wrong', 'danger');
+                            // Redirect with flash message in the URL (encoded)
+                            const message = encodeURIComponent('successfully!');
+                            window.location.href = '{{ route('fees.add-invoice') }}' +
+                                '?message-success=' + message;
                         }
                     },
                     error: function(xhr) {
                         let msg = 'An unexpected error occurred';
+
+                        // Check if it's a validation error (422)
+                        if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                            const errors = xhr.responseJSON.errors;
+                            // Loop through all validation errors and show them using Toastr
+                            Object.values(errors).forEach((messages) => {
+                                messages.forEach((message) => {
+                                    toastr.error(message);
+                                });
+                            });
+                            return;
+                        }
+
+                        // If it's not a validation error but has a message
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             msg = xhr.responseJSON.message;
                         }
-                        showToast(msg, 'danger');
+
+                        toastr.error(msg);
                     }
+
                 });
             });
 
             function showToast(message, type = 'success') {
                 let toastHTML = `
-    <div class="toast align-items-center text-bg-${type} border-0 mb-2" role="alert">
-        <div class="d-flex">
-            <div class="toast-body">${message}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>
-    </div>`;
+                    <div class="toast align-items-center text-bg-${type} border-0 mb-2" role="alert">
+                        <div class="d-flex">
+                            <div class="toast-body">${message}</div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                        </div>
+                    </div>`;
 
                 $('#toastContainer').append(toastHTML);
 
