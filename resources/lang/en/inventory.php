@@ -87,7 +87,7 @@ return[
     'paid'=>'Paid',
     'quantity'=>'Quantity',
     'selected'=>'Selected',
-    'select_store_warehouse'=>'Select Store/Warehouse',
+    'select_store_warehouse'=>'Select Store/Branch',
     'reference_no'=>'Reference No',
     'expense_head'=>'Expense Head',
     'income_head'=>'Income Head',
@@ -123,7 +123,7 @@ return[
     'partial' => 'Partial',
     'view_payment' => 'View Payment',
     'supplier_company_name'=> ' Supplier Company Name',
-    'store_warehouse'=>'Store Warehouse',
+    'store_warehouse'=>'Branch',
     'due_date'=>'Due Date',
     'category'=>'Category',
 

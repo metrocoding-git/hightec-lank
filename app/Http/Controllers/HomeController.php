@@ -2,6 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BankAccount;
+use App\Models\Inventory_item;
+use App\Models\ItemReceive;
+use App\Models\ItemStore;
+use App\Models\Supplier;
 use App\Models\User;
 use App\Models\SmToDo;
 use App\Models\SmClass;
@@ -136,15 +141,15 @@ class HomeController extends Controller
             'gender',
             'studentCategory',
         ])->select([
-            'id',
-            'admission_number',
-            'branch_id',
-            'student_category_id',
-            'gender_id',
-            'student_name',
-            'date_of_birth',
-            'phone_number',
-        ])->active()->orderBy('id', 'desc')->get();
+                    'id',
+                    'admission_number',
+                    'branch_id',
+                    'student_category_id',
+                    'gender_id',
+                    'student_name',
+                    'date_of_birth',
+                    'phone_number',
+                ])->active()->orderBy('id', 'desc')->get();
         $branches = Branch::all();
 
         return view('pages.student.student-info.student-list', compact('students', 'branches'));
@@ -184,15 +189,15 @@ class HomeController extends Controller
             'gender',
             'studentCategory',
         ])->select([
-            'id',
-            'admission_number',
-            'branch_id',
-            'student_category_id',
-            'gender_id',
-            'student_name',
-            'date_of_birth',
-            'phone_number',
-        ]);
+                    'id',
+                    'admission_number',
+                    'branch_id',
+                    'student_category_id',
+                    'gender_id',
+                    'student_name',
+                    'date_of_birth',
+                    'phone_number',
+                ]);
 
         if ($branchId) {
             $query->where('branch_id', $branchId);
@@ -239,15 +244,15 @@ class HomeController extends Controller
             'gender',
             'studentCategory',
         ])->select([
-            'id',
-            'admission_number',
-            'branch_id',
-            'student_category_id',
-            'gender_id',
-            'student_name',
-            'date_of_birth',
-            'phone_number',
-        ]);
+                    'id',
+                    'admission_number',
+                    'branch_id',
+                    'student_category_id',
+                    'gender_id',
+                    'student_name',
+                    'date_of_birth',
+                    'phone_number',
+                ]);
 
         if ($branchId) {
             $query->where('branch_id', $branchId);
@@ -307,15 +312,15 @@ class HomeController extends Controller
             'gender',
             'studentCategory',
         ])->select([
-            'id',
-            'admission_number',
-            'branch_id',
-            'student_category_id',
-            'gender_id',
-            'student_name',
-            'date_of_birth',
-            'phone_number',
-        ])->inactive()->orderBy('id', 'desc')->get();
+                    'id',
+                    'admission_number',
+                    'branch_id',
+                    'student_category_id',
+                    'gender_id',
+                    'student_name',
+                    'date_of_birth',
+                    'phone_number',
+                ])->inactive()->orderBy('id', 'desc')->get();
 
         $branches = Branch::all();
 
@@ -383,9 +388,60 @@ class HomeController extends Controller
     }
 
     public function itemReceive()
+{
+    $items = Inventory_item::all();
+    $suppliers = Supplier::all();
+    $branches = Branch::all();
+    $account_id = BankAccount::all();
+
+    return view('pages.account.inventory.item-receive', compact(
+        'items',
+        'suppliers',
+        'branches',
+        'account_id'
+    ));
+}
+
+    public function itemReceivePost(Request $request)
     {
-        return view('pages.account.inventory.item-receive');
+         $request->validate([
+        'payment_method' => 'required|string',
+        'supplier_id' => 'required|integer',
+        'store_id' => 'required|integer',
+        'receive_date' => 'required|date',
+        'item_id.*' => 'required|integer',
+        'unit_price.*' => 'required|numeric',
+        'quantity.*' => 'required|numeric',
+    ]);
+
+    // Create master record
+    $receive = ItemReceive::create([
+        'payment_method' => $request->payment_method,
+        'supplier_id' => $request->supplier_id,
+        'store_id' => $request->store_id,
+        'reference_no' => $request->reference_no,
+        'receive_date' => $request->receive_date,
+        'description' => $request->description,
+        'total' => $request->subTotal,
+        'paid' => $request->totalPaid,
+        'due' => $request->totalDueValue,
+    ]);
+
+    // Save items
+    foreach ($request->item_id as $index => $itemId) {
+        ItemReceive::create([
+            'item_receive_id' => $receive->id,
+            'item_id' => $itemId,
+            'unit_price' => $request->unit_price[$index],
+            'quantity' => $request->quantity[$index],
+            'total' => $request->total[$index],
+        ]);
     }
+
+    return response()->json(['success' => true, 'message' => 'Item received successfully!']);
+
+    }
+
 
     public function itemReceiveList()
     {
