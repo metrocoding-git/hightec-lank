@@ -40,7 +40,10 @@
                      ]) }}
                  @endif
              @endif --}}
-            <form class="form-horizontal">
+            <form class="form-horizontal" id="item-receive-form" method="POST"
+                action="{{ route('save-item-receive-data') }}">
+                @csrf
+
                 <div class="row">
 
                     <div class="col-lg-3">
@@ -59,7 +62,7 @@
                                     </div>
                                     <div class="add-visitor">
                                         <div class="row">
-                                            <div class="col-lg-12 mb-15">
+                                            {{-- <div class="col-lg-12 mb-15">
                                                 <div class="primary_input">
                                                     <label class="primary_input_label" for="">@lang('inventory.expense_head')
                                                         <span class="text-danger"> *</span> </label>
@@ -83,7 +86,7 @@
                                                         </span>
                                                     @endif
                                                 </div>
-                                            </div>
+                                            </div> --}}
                                             <div class="col-lg-12 mb-15">
                                                 <div class="primary_input">
                                                     <label class="primary_input_label" for="">@lang('inventory.payment_method')
@@ -91,12 +94,11 @@
                                                     <select
                                                         class="primary_select  form-control{{ $errors->has('payment_method') ? ' is-invalid' : '' }}"
                                                         name="payment_method" id="item_receive_payment_method">
-                                                        <option data-display="@lang('inventory.payment_method')*" value="">
+                                                        <option data-display="@lang('inventory.payment_method')*" value="" selected
+                                                            disabled>
                                                             @lang('inventory.payment_method')*</option>
-                                                        {{-- @foreach ($paymentMethhods as $key => $value)
-                                                            <option data-string="{{ $value->method }}"
-                                                                value="{{ $value->id }}">{{ $value->method }}</option>
-                                                        @endforeach --}}
+                                                        <option value="Cash">Cash</option>
+                                                        <option value="Cheque">Cheque</option>
                                                     </select>
                                                     <div class="text-danger" id="paymentError"></div>
 
@@ -168,13 +170,13 @@
                                                         name="store_id" id="store_id">
                                                         <option data-display="@lang('inventory.select_store_warehouse') *" value="">
                                                             @lang('common.select')</option>
-                                                        @if (isset($itemStores))
-                                                            @foreach ($itemStores as $key => $value)
+                                                        @if (isset($branches))
+                                                            @foreach ($branches as $key => $value)
                                                                 <option value="{{ $value->id }}"
                                                                     @if (isset($editData)) @if ($editData->category_name == $value->id)
                                                         @lang('inventory.selected') @endif
                                                                     @endif
-                                                                    >{{ $value->store_name }}</option>
+                                                                    >{{ $value->name }}</option>
                                                             @endforeach
                                                         @endif
                                                     </select>
@@ -301,13 +303,13 @@
                                                                     <option data-display="@lang('common.select_item')*"
                                                                         value="">
                                                                         @lang('common.select')*</option>
-                                                                    {{-- @foreach ($items as $key => $value)
+                                                                    @foreach ($items as $key => $value)
                                                                         <option value="{{ $value->id }}"
                                                                             @if (isset($editData)) @if ($editData->category_name == $value->id)
                                                   @lang('inventory.selected') @endif
                                                                             @endif
                                                                             >{{ $value->item_name }}</option>
-                                                                    @endforeach --}}
+                                                                    @endforeach
                                                                 </select>
 
                                                                 @if ($errors->has('item_id'))
@@ -370,13 +372,16 @@
                                                                 autocomplete="off" class="form-control" />
                                                         </td>
                                                         <td>
-                                                            <button class="primary-btn icon-only fix-gr-bg"
-                                                                type="button">
+                                                            <button type="button" class="primary-btn icon-only fix-gr-bg"
+                                                                onclick="removeRow(${rowCount})">
                                                                 <span class="ti-trash"></span>
                                                             </button>
 
+
                                                         </td>
                                                     </tr>
+
+                                                </tbody>
                                                 <tfoot>
                                                     <tr>
                                                         <th class="border-top-0" colspan="2">@lang('inventory.total')</th>
@@ -407,8 +412,6 @@
                                                         <th class="border-top-0"></th>
                                                     </tr>
                                                 </tfoot>
-
-                                                </tbody>
                                             </table>
                                         </div>
                                     </div>
@@ -457,10 +460,9 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                           
+
                                             <div class="col-lg-12 mt-20 text-center">
-                                                <button class="primary-btn fix-gr-bg" data-toggle="tooltip"
-                                                    >
+                                                <button class="primary-btn fix-gr-bg" data-toggle="tooltip">
                                                     <span class="ti-check"></span>
                                                     @lang('inventory.receive')
                                                 </button>
@@ -477,5 +479,149 @@
             </form>
         </div>
     </section>
+
+    <script>
+        // Store all items in JS
+        const itemOptions = `
+        <option value="">Select Item*</option>
+        @foreach ($items as $item)
+            <option value="{{ $item->id }}">{{ $item->item_name }}</option>
+        @endforeach
+    `;
+
+        let rowCount = 1;
+
+        // Add a new row
+        function addRow() {
+            rowCount++;
+            const newRow = `
+<tr id="row${rowCount}">
+    <td>
+        <div class="primary_input">
+            <select class="primary_select form-control" name="item_id[]" id="productName${rowCount}">
+                ${itemOptions}
+            </select>
+        </div>
+    </td>
+    <td>
+        <input type="number" step="0.1" name="unit_price[]" id="unit_price${rowCount}"
+               class="primary_input_field form-control"
+               oninput="getTotalByPrice(${rowCount})">
+    </td>
+    <td>
+        <input type="number" name="quantity[]" id="quantity${rowCount}"
+               class="primary_input_field form-control"
+               oninput="getTotal(${rowCount})">
+    </td>
+    <td>
+        <input type="text" readonly name="total[]" id="total${rowCount}" class="primary_input_field form-control" value="0.00">
+        <input type="hidden" name="totalValue[]" id="totalValue${rowCount}">
+    </td>
+    <td>
+        <button type="button" class="primary-btn icon-only fix-gr-bg" onclick="removeRow(${rowCount})">
+            <span class="ti-trash"></span>
+        </button>
+    </td>
+</tr>`;
+            const $newRow = $(newRow);
+            $("#productTable tbody").append($newRow);
+
+            // Initialize select2 for new row
+            $newRow.find('.primary_select').select2();
+
+        }
+
+        // Remove a row
+        function removeRow(id) {
+            $("#row" + id).remove();
+            calculateGrandTotal();
+        }
+
+        // Update total for a row
+        function getTotalByPrice(row) {
+            const price = parseFloat($("#unit_price" + row).val()) || 0;
+            const qty = parseFloat($("#quantity" + row).val()) || 0;
+            const total = price * qty;
+
+            $("#total" + row).val(total.toFixed(2));
+            $("#totalValue" + row).val(total.toFixed(2));
+
+            calculateGrandTotal();
+        }
+
+        function getTotal(row) {
+            getTotalByPrice(row); // Same calculation works for quantity change
+        }
+
+        // Calculate subtotal & grand total
+        function calculateGrandTotal() {
+            let totalQty = 0,
+                totalPrice = 0;
+
+            $("input[name='quantity[]']").each(function() {
+                totalQty += parseFloat($(this).val()) || 0;
+            });
+
+            $("input[name='total[]']").each(function() {
+                totalPrice += parseFloat($(this).val()) || 0;
+            });
+
+            $("#subTotalQuantity").val(totalQty);
+            $("#subTotalQuantityValue").val(totalQty);
+            $("#subTotal").val(totalPrice.toFixed(2));
+            $("#subTotalValue").val(totalPrice.toFixed(2));
+
+            updateDue();
+        }
+
+        // Paid/Due calculations
+        function updateDue() {
+            const total = parseFloat($("#subTotal").val()) || 0;
+            const paid = parseFloat($("#totalPaid").val()) || 0;
+            const due = total - paid;
+            $("#totalDue").val(due.toFixed(2));
+            $("#totalDueValue").val(due.toFixed(2));
+        }
+
+        function paidAmount() {
+            updateDue();
+        }
+
+        // Full paid checkbox
+        $("#full_paid").on("change", function() {
+            if ($(this).is(":checked")) {
+                $("#totalPaid").val($("#subTotal").val());
+            } else {
+                $("#totalPaid").val(0);
+            }
+            updateDue();
+        });
+
+        // Initial row total calculation
+        $(document).ready(function() {
+            calculateGrandTotal();
+        });
+
+        $('#item-receive-form').on('submit', function(e) {
+            e.preventDefault(); // prevent normal form submit
+            let formData = $(this).serialize();
+
+            $.ajax({
+                url: '{{ route('save-item-receive-data') }}',
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    alert('Item received successfully!');
+                    location.reload(); // or reset form if you want
+                },
+                error: function(xhr) {
+                    let errors = xhr.responseJSON.errors;
+                    console.log(errors);
+                    // display errors if needed
+                }
+            });
+        });
+        x`
+    </script>
 @endsection
 @include('components.partials.date_picker_css_js')

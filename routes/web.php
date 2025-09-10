@@ -156,6 +156,8 @@ Route::controller(HomeController::class)->group(callback: function () {
     Route::get('account/inventory/item-issue', 'itemIssue')->name('item-issue');
     Route::get('account/inventory/item-sell', 'itemSell')->name('item-sell');
     Route::get('account/inventory/item-sell-list', 'itemSellList')->name('item-sell-list');
+    Route::post('/item-receive/save', [HomeController::class, 'itemReceivePost'])
+        ->name('save-item-receive-data');
 });
 Route::controller(LoginController::class)->group(function () {
     Route::get('login', 'index')->name('login');
@@ -230,7 +232,7 @@ Route::controller(SupplierController::class)->group(function () {
     Route::delete('account/inventory/supplier-delete/{id}', 'destroy')->name('supplier-delete');
 });
 Route::controller(ContentTypeController::class)->group(function () {
-   Route::get('administration/download-center/content-type', 'index')->name('content-type');
+    Route::get('administration/download-center/content-type', 'index')->name('content-type');
     Route::post('account/content-type-store', 'store')->name('content-type-store');
     Route::get('account/content-type-edit/{id}', 'edit')->name('content-type-edit');
     Route::put('account/content-type-update/{id}', 'update')->name('content-type-update');
