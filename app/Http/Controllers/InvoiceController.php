@@ -42,7 +42,7 @@ class InvoiceController extends Controller
         return view('pages.student.fees.add-invoice', compact('branches', 'feesgroups', 'feeTypes'));
     }
 
-   
+
 
 
     public function store(Request $request)
@@ -55,40 +55,37 @@ class InvoiceController extends Controller
             'due_date'       => 'required|date_format:m/d/Y',
             'payment_status' => 'required',
             'fee_type_id'    => 'required|array',
+            'price'          => 'required|array',
+            'paidPrice'      => 'required|array',
+            'payment_file'   => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
         ]);
 
-        DB::beginTransaction();
-
         try {
-            // Total paid amount
-            // $paidAmount = $request->payment_amount ?? 0;
 
-            // Create Invoice
+            $total_amount = array_sum($request->price);
+            $total_paid_amount = array_sum($request->paidPrice);
+
+
             $fee_invoice = Fee_invoices::create([
-                'branch_id'      => $request->branch_id,
-                'student_id'     => $request->student_id,
-                'create_date'    => Carbon::createFromFormat('m/d/Y', $request->create_date)->format('Y-m-d'),
-                'due_date'       => Carbon::createFromFormat('m/d/Y', $request->due_date)->format('Y-m-d'),
-                'payment_status' => $request->payment_status,
-                //'payment_amount' => $request->payment_amount,
-                'payment_method' => $request->payment_method,
-                'payment_file'   => ($request->payment_method === 'Card' || $request->payment_method === 'Bank Transfer')
+                'branch_id'       => $request->branch_id,
+                'student_id'      => $request->student_id,
+                'create_date'     => Carbon::createFromFormat('m/d/Y', $request->create_date)->format('Y-m-d'),
+                'due_date'        => Carbon::createFromFormat('m/d/Y', $request->due_date)->format('Y-m-d'),
+                'payment_status'  => $request->payment_status,
+                'payment_method'  => $request->payment_method,
+                'payment_file'    => ($request->payment_method === 'Card' || $request->payment_method === 'Bank Transfer')
                     && $request->file('payment_file')
                     ? $request->file('payment_file')->store('invoices', 'public')
                     : null,
+                'total_amount'    => $total_amount,
+                'paid_amount'     => $total_paid_amount,
             ]);
 
-            // Save Invoice Items
-            foreach ($request->fee_type_id as $index => $feetypeId) {
-                // If amount entered use it, else fetch from DB
-                $amount = !empty($request->price[$index])
-                    ? $request->price[$index]
-                    : (FeeType::where('id', $feetypeId)->value('price') ?? 0);
 
-                // If paid_amount entered use it, else fetch from DB
-                $paid_price = !empty($request->paid_amount[$index])
-                    ? $request->paid_amount[$index]
-                    : (FeeType::where('id', $feetypeId)->value('price') ?? null);
+            // Save Invoice Items
+            foreach ($request->fee_type_id as $feetypeId) {
+                $amount = $request->price[$feetypeId] ?? (FeeType::where('id', $feetypeId)->value('price') ?? 0);
+                $paid_price = $request->paidPrice[$feetypeId] ?? 0;
 
                 Invoice_item::create([
                     'invoice_id'  => $fee_invoice->id,
@@ -98,16 +95,13 @@ class InvoiceController extends Controller
                 ]);
             }
 
-            DB::commit();
-
             return response()->json([
                 'success'    => true,
                 'message'    => 'Invoice and items created successfully',
                 'invoice_id' => $fee_invoice->id,
-            ]);
+            ], 200);
+            
         } catch (\Exception $e) {
-            DB::rollBack();
-
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred',

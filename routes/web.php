@@ -185,10 +185,10 @@ Route::controller(FeeTypeController::class)->group(function () {
 });
 
 Route::controller(InvoiceController::class)->group(function () {
-    Route::get('student/fees/fee-invoice', 'index')->name('fee-invoice');
-    Route::get('student/fees/add-invoice', 'create')->name('add-invoice');
-    Route::get('student/invoice/get-student/{branchId}', 'show')->name('get-student');
-    Route::get('student/invoice/types_get_by_group/{groupId}', 'dropdown_fee_types')->name('get-types-by-group');
+    Route::get('student/fees/fee-invoice', 'index')->name('fees.fee-invoice');
+    Route::get('student/fees/add-invoice', 'create')->name('fees.add-invoice');
+    Route::get('student/invoice/get-student/{branchId}', 'show')->name('fees.get-student');
+    Route::get('student/invoice/types_get_by_group/{groupId}', 'dropdown_fee_types')->name('fees.get-types-by-group');
 
 
 

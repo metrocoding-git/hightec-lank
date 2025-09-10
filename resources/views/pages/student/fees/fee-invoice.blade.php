@@ -33,7 +33,7 @@
 
                 <div class="row">
                     <div class="col-lg-12 text-left col-md-12">
-                        <a href="{{ route('add-invoice') }}" class="primary-btn small fix-gr-bg">
+                        <a href="{{ route('fees.add-invoice') }}" class="primary-btn small fix-gr-bg">
                             <span class="ti-plus pr-2"></span>
                             @lang('common.add')
                         </a>

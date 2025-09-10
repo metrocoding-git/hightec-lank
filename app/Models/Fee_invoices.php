@@ -11,18 +11,13 @@ class Fee_invoices extends Model
      protected $fillable = [
         'branch_id',
         'student_id',
-        'fee_type_id',
         'total_amount',
         'paid_amount',
-        'due_amount',
         'create_date',
         'due_date',
         'payment_status',
-        'payment_amount',
         'payment_method',
         'payment_file',
-        'single_invoice',
-        'clone_amount',
     ];
 
     protected $casts = [
