@@ -10,10 +10,12 @@ use App\Models\Fee_invoices;
 use App\Models\FeesGroup;
 use App\Models\FeeType;
 use App\Models\Invoice_item;
+use App\Models\Invoices_payments;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 class InvoiceController extends Controller
 {
@@ -22,12 +24,8 @@ class InvoiceController extends Controller
      */
     public function index()
     {
-        //
-
-
-
-
-        return view('pages.student.fees.fee-invoice');
+        $fee_invoices = Fee_invoices::with('student', 'branch', 'invoice_item')->get();
+        return view('pages.student.fees.fee-invoice', compact('fee_invoices'));
     }
 
     /**
@@ -35,15 +33,11 @@ class InvoiceController extends Controller
      */
     public function create()
     {
-        //
         $branches = Branch::all();
         $feesgroups = FeesGroup::all();
         $feeTypes = FeeType::all();
         return view('pages.student.fees.add-invoice', compact('branches', 'feesgroups', 'feeTypes'));
     }
-
-
-
 
     public function store(Request $request)
     {
@@ -57,15 +51,15 @@ class InvoiceController extends Controller
             'fee_type_id'    => 'required|array',
             'price'          => 'required|array',
             'paidPrice'      => 'required|array',
+            'payment_method' => 'required',
             'payment_file'   => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
         ]);
 
         try {
-
             $total_amount = array_sum($request->price);
             $total_paid_amount = array_sum($request->paidPrice);
 
-
+            // Create Fee Invoice
             $fee_invoice = Fee_invoices::create([
                 'branch_id'       => $request->branch_id,
                 'student_id'      => $request->student_id,
@@ -73,34 +67,43 @@ class InvoiceController extends Controller
                 'due_date'        => Carbon::createFromFormat('m/d/Y', $request->due_date)->format('Y-m-d'),
                 'payment_status'  => $request->payment_status,
                 'payment_method'  => $request->payment_method,
-                'payment_file'    => ($request->payment_method === 'Card' || $request->payment_method === 'Bank Transfer')
-                    && $request->file('payment_file')
-                    ? $request->file('payment_file')->store('invoices', 'public')
-                    : null,
                 'total_amount'    => $total_amount,
                 'paid_amount'     => $total_paid_amount,
             ]);
-
 
             // Save Invoice Items
             foreach ($request->fee_type_id as $feetypeId) {
                 $amount = $request->price[$feetypeId] ?? (FeeType::where('id', $feetypeId)->value('price') ?? 0);
                 $paid_price = $request->paidPrice[$feetypeId] ?? 0;
 
-                Invoice_item::create([
+                $invoiceItem = Invoice_item::create([
                     'invoice_id'  => $fee_invoice->id,
                     'fee_type_id' => $feetypeId,
                     'amount'      => $amount,
                     'paid_amount' => $paid_price,
                 ]);
+
+                // Save initial payment in invoices_payments table if any
+                if ($paid_price > 0) {
+                    Invoices_payments::create([
+                        'invoice_id'      => $fee_invoice->id,
+                        'amount'          => $paid_price,
+                        'payment_method'  => $request->payment_method,
+                        'payment_file'    => ($request->payment_method === 'Card' || $request->payment_method === 'Bank Transfer')
+                            && $request->file('payment_file')
+                            ? $request->file('payment_file')->store('invoices', 'public')
+                            : null,
+                        'created_at'      => now(),
+                        'updated_at'      => now(),
+                    ]);
+                }
             }
 
             return response()->json([
                 'success'    => true,
-                'message'    => 'Invoice and items created successfully',
+                'message'    => 'Invoice, items, and initial payments created successfully',
                 'invoice_id' => $fee_invoice->id,
             ], 200);
-            
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -113,8 +116,6 @@ class InvoiceController extends Controller
 
     public function show(Fee_invoices $fee_invoicese, $branchId)
     {
-        //
-
         $student = Student::where('branch_id', $branchId)
             ->select('id', DB::raw("CONCAT(first_name, ' ', last_name) as name"))
             ->get();
@@ -130,24 +131,143 @@ class InvoiceController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Fee_invoices $fee_invoices)
+    public function edit($id)
     {
-        //
+        $invoice = Fee_invoices::with('invoice_item.fee_type', 'student')->findOrFail($id);
+        $branches = Branch::all();
+        $feesgroups = FeesGroup::all();
+        $feeTypes = FeeType::all();
+
+        return view('pages.student.fees.edit-invoice', compact(
+            'invoice',
+            'branches',
+            'feesgroups',
+            'feeTypes'
+        ));
     }
+
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Fee_invoices $fee_invoices, $id)
+    public function update(Request $request, $id)
     {
-        //
+        $invoice = Fee_invoices::findOrFail($id);
+
+        $request->validate([
+            'branch_id'      => 'required',
+            'student_id'     => 'required',
+            'create_date'    => 'required|date_format:m/d/Y',
+            'due_date'       => 'required|date_format:m/d/Y',
+            'payment_status' => 'required',
+            'fee_type_id'    => 'required|array',
+            'price'          => 'required|array',
+            'paidPrice'      => 'required|array',
+            'payment_file'   => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
+        ]);
+
+        try {
+            $total_amount = array_sum($request->price);
+            $total_paid_amount = array_sum($request->paidPrice);
+
+            $invoice->update([
+                'branch_id'      => $request->branch_id,
+                'student_id'     => $request->student_id,
+                'create_date'    => Carbon::createFromFormat('m/d/Y', $request->create_date)->format('Y-m-d'),
+                'due_date'       => Carbon::createFromFormat('m/d/Y', $request->due_date)->format('Y-m-d'),
+                'payment_status' => $request->payment_status,
+                'payment_method' => $request->payment_method,
+                'total_amount'   => $total_amount,
+                'paid_amount'    => $total_paid_amount,
+                'payment_file'   => $request->hasFile('payment_file') ? $request->file('payment_file')->store('invoices', 'public') : $invoice->payment_file,
+            ]);
+
+            // Delete old items
+            Invoice_item::where('invoice_id', $invoice->id)->delete();
+
+            // Add updated items
+            foreach ($request->fee_type_id as $feeTypeId) {
+                $amount = $request->price[$feeTypeId] ?? 0;
+                $paid_amount = $request->paidPrice[$feeTypeId] ?? 0;
+
+                Invoice_item::create([
+                    'invoice_id'  => $invoice->id,
+                    'fee_type_id' => $feeTypeId,
+                    'amount'      => $amount,
+                    'paid_amount' => $paid_amount,
+                ]);
+            }
+
+            return redirect()->route('fees.fee-invoice')->with('success', 'Invoice updated successfully!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
+
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Fee_invoices $fee_invoices, $invoice)
+    public function destroy($id)
     {
-        //
+        try {
+            // Find invoice
+            $invoice = Fee_invoices::findOrFail($id);
+
+            // Delete related invoice items
+            Invoice_item::where('invoice_id', $invoice->id)->delete();
+
+            // Delete related invoice payments
+            Invoices_payments::where('invoice_id', $invoice->id)->delete();
+
+            // Delete uploaded payment file if exists
+            if ($invoice->payment_file && Storage::disk('public')->exists($invoice->payment_file)) {
+                Storage::disk('public')->delete($invoice->payment_file);
+            }
+
+            // Delete the invoice
+            $invoice->delete();
+
+            return redirect()->route('fees.fee-invoice')->with('message-success-delete', 'Invoice, items, and related payments deleted successfully.');
+        } catch (\Exception $e) {
+            return redirect()->route('fees.fee-invoice')->with('message-danger', $e->getMessage());
+        }
+    }
+
+
+    public function addPayment(Request $request, $invoiceId)
+    {
+        $invoice = Fee_invoices::with('invoice_item')->findOrFail($invoiceId);
+
+        $payAmounts = $request->input('pay_amount', []); // array: [item_id => amount]
+
+        $totalPaidNow = 0;
+
+        foreach ($invoice->invoice_item as $item) {
+            if (isset($payAmounts[$item->id]) && $payAmounts[$item->id] > 0) {
+                $payNow = min($payAmounts[$item->id], $item->amount - $item->paid_amount);
+
+                $item->paid_amount += $payNow;
+                $item->save();
+
+                $totalPaidNow += $payNow;
+            }
+        }
+        $paymentFile = $request->file('payment_file') ? $request->file('payment_file')->store('payments', 'public') : null;
+
+        Invoices_payments::create([
+            'invoice_id'     => $invoice->id,
+            'amount'         => $totalPaidNow,
+            'payment_method' => $request->payment_method,
+            'payment_file'   => $paymentFile,
+        ]);
+
+        // Update invoice summary
+        $invoice->paid_amount += $totalPaidNow;
+        $invoice->payment_status = $invoice->paid_amount >= $invoice->total_amount ? 'full' : 'partial';
+        $invoice->payment_method = $request->payment_method;
+        $invoice->save();
+
+        return redirect()->back()->with('success', 'Payment added successfully!');
     }
 }

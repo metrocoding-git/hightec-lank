@@ -8,7 +8,7 @@ class Fee_invoices extends Model
 {
     //
     protected $table = 'fee_invoices';
-     protected $fillable = [
+    protected $fillable = [
         'branch_id',
         'student_id',
         'total_amount',
@@ -27,6 +27,8 @@ class Fee_invoices extends Model
         'clone_amount' => 'boolean',
     ];
 
+
+
     // Relationships
     public function branch()
     {
@@ -37,8 +39,9 @@ class Fee_invoices extends Model
     {
         return $this->belongsTo(Student::class);
     }
+    // Fee_invoices.php
     public function invoice_item()
     {
-        return $this->hasMany(Invoice_item::class);
+        return $this->hasMany(Invoice_item::class, 'invoice_id', 'id');
     }
 }

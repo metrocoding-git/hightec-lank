@@ -392,13 +392,13 @@ class HomeController extends Controller
     $items = Inventory_item::all();
     $suppliers = Supplier::all();
     $branches = Branch::all();
-    $account_id = BankAccount::all();
+    // $account_id = BankAccount::all();
 
     return view('pages.account.inventory.item-receive', compact(
         'items',
         'suppliers',
         'branches',
-        'account_id'
+        // 'account_id'
     ));
 }
 

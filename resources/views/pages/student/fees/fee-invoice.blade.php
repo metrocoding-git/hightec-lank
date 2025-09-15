@@ -18,7 +18,7 @@
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1>@lang('fees::feesModule.fees_invoice')</h1>
+                <h1>Fees Invoice List</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
                     <a href="#">@lang('fees.fees')</a>
@@ -44,99 +44,208 @@
 
 
                     <div class="col-lg-12 student-details up_admin_visitor mt-0">
-                        <ul class="nav nav-tabs tabs_scroll_nav mt-0 ml-0" role="tablist">
-                            {{-- @foreach ($records as $key => $record)
-                                    <li class="nav-item mb-0">
-                                        <a class="nav-link mb-0 @if ($key == 0) active @endif "
-                                            href="#tab{{ $key }}" role="tab"
-                                            data-toggle="tab">{{ moduleStatusCheck('University') ? $record->unSemesterLabel->name : $record->class->class_name }}
-                                            ({{ $record->section->section_name }})
-                                        </a>
-                                    </li>
-                                @endforeach --}}
-                        </ul>
 
-                        <div class="tab-content" style="margin-top:70px">
+                        <div class="tab-content">
                             {{-- @foreach ($records as $key => $record) --}}
-                            <div role="tabpanel" {{-- class="tab-pane fade  @if ($key == 0) active show @endif"
-                                        id="tab{{ $key }}" --}}
-                                        >
+                            <div role="tabpanel">
                                 <x-table>
                                     <table id="table_id" class="table" cellspacing="0" width="100%">
+
                                         <thead>
                                             <tr>
-
-                                                
+                                                <th>Sl</th>
                                                 <th>@lang('common.student')</th>
-                                                <th>@lang('student.class_section')</th>
+                                                <th>Branch</th>
                                                 <th>@lang('admin.admission_no')</th>
                                                 <th>@lang('accounts.amount')</th>
-                                              
-                                               
                                                 <th>@lang('fees.paid')</th>
-                                                
-                                                <th>@lang('common.status')</th>
-                                                <th>@lang('common.date')</th>
+                                                <th>@lang('accounts.balance')</th>
+                                                <th>Payment Method</th>
+                                                <th>Payment Status</th>
+                                                <th>Payment Date</th>
+                                                <th>Due Date</th>
                                                 <th>@lang('common.action')</th>
                                             </tr>
                                         </thead>
-                                        {{-- <tbody>
-                                                    @foreach ($record->feesInvoice as $key => $studentInvoice)
-                                                        @php
-                                                            $amount = $studentInvoice->Tamount;
-                                                            $weaver = $studentInvoice->Tweaver;
-                                                            $fine = $studentInvoice->Tfine;
-                                                            $paid_amount = $studentInvoice->Tpaidamount;
-                                                            $sub_total = $studentInvoice->Tsubtotal;
-                                                            $balance = $amount + $fine - ($paid_amount + $weaver);
-                                                        @endphp
-                                                        <tr>
-                                                            <td>{{ $key + 1 }}</td>
-                                                            <td>
-                                                                <a href="{{ route('fees.fees-invoice-view', ['id' => $studentInvoice->id, 'state' => 'view']) }}"
-                                                                    target="_blank">
-                                                                    {{ @$studentInvoice->studentInfo->full_name }}
+
+
+                                        <tbody>
+                                            @foreach ($fee_invoices as $key => $invoice)
+                                                @php
+                                                    $amount = $invoice->total_amount;
+                                                    $paid_amount = $invoice->paid_amount;
+                                                    $balance = $amount - $paid_amount;
+                                                @endphp
+                                                <tr>
+                                                    <td>{{ $key + 1 }}</td>
+                                                    <td>
+                                                        <a href="{{ route('fees.fee-invoice-view', ['id' => $invoice->id, 'state' => 'view']) }}"
+                                                            target="_blank">
+                                                            {{ $invoice->student->student_name }}
+                                                        </a>
+                                                    </td>
+                                                    <td>{{ $invoice->branch->name }}</td>
+                                                    <td>{{ $invoice->student->admission_number }}</td>
+
+                                                    <td>{{ $amount }}</td>
+                                                    <td>{{ $paid_amount }}</td>
+                                                    <td>{{ $balance }}</td>
+                                                    <td>{{ $invoice->payment_method }}</td>
+
+                                                    <td>
+                                                        @if ($invoice->payment_status == 'partial')
+                                                            <button
+                                                                class="primary-btn small bg-warning text-white border-0">@lang('fees.partial')</button>
+                                                        @elseif ($invoice->payment_status == 'full')
+                                                            <button
+                                                                class="primary-btn small bg-success text-white border-0">@lang('fees.paid')</button>
+                                                        @elseif ($invoice->payment_status == 'not')
+                                                            <button
+                                                                class="primary-btn small bg-danger text-white border-0">@lang('fees.unpaid')</button>
+                                                        @endif
+
+                                                    </td>
+                                                    <td>{{ $invoice->create_date }}</td>
+                                                    <td>{{ $invoice->due_date }}</td>
+                                                    <td>
+                                                        <x-drop-down>
+                                                            <a class="dropdown-item"
+                                                                href="{{ route('fees.fee-invoice-view', ['id' => $invoice->id, 'state' => 'view']) }}">@lang('common.view')</a>
+                                                            @if ($invoice->payment_status != 'full')
+                                                                <a class="dropdown-item" data-toggle="modal"
+                                                                    data-target="#addPaymentModal{{ $invoice->id }}">
+                                                                    @lang('inventory.add_payment')
                                                                 </a>
-                                                            </td>
-                                                            <td>{{ @$studentInvoice->recordDetail->class->class_name }}
-                                                                ({{ @$studentInvoice->recordDetail->section->section_name }})
-                                                            </td>
-                                                            <td>{{ $amount }}</td>
-                                                            <td>{{ $weaver }}</td>
-                                                            <td>{{ $fine }}</td>
-                                                            <td>{{ $paid_amount }}</td>
-                                                            <td>{{ $balance }}</td>
-                                                            <td>
-                                                                @if ($balance == 0)
-                                                                    <button
-                                                                        class="primary-btn small bg-success text-white border-0">@lang('fees.paid')</button>
-                                                                @else
-                                                                    @if ($paid_amount > 0)
-                                                                        <button
-                                                                            class="primary-btn small bg-warning text-white border-0">@lang('fees.partial')</button>
-                                                                    @else
-                                                                        <button
-                                                                            class="primary-btn small bg-danger text-white border-0">@lang('fees.unpaid')</button>
-                                                                    @endif
-                                                                @endif
-                                                            </td>
-                                                            <td>{{ dateConvert($studentInvoice->create_date) }}</td>
-                                                            <td>
-                                                                <x-drop-down>
-                                                                    <a class="dropdown-item"
-                                                                        href="{{ route('fees.fees-invoice-view', ['id' => $studentInvoice->id, 'state' => 'view']) }}">@lang('common.view')</a>
-                                                                    @if ($balance != 0)
-                                                                        <a class="dropdown-item"
-                                                                            href="{{ route('fees.student-fees-payment', $studentInvoice->id) }}">@lang('inventory.add_payment')</a>
-                                                                    @endif
-                                                                </x-drop-down>
-                                                            </td>
-                                                        </tr>
-                                                    @endforeach
-                                                </tbody> --}}
+                                                            @endif
+                                                            <a class="dropdown-item"
+                                                                href="{{ route('fees.fee-invoice-edit', $invoice->id) }}">@lang('common.edit')</a>
+                                                            <a class="dropdown-item" data-toggle="modal"
+                                                                data-target="#deletecategoryModal{{ $invoice->id }}"
+                                                                href="#">@lang('common.delete')</a>
+                                                        </x-drop-down>
+                                                    </td>
+                                                </tr>
+
+                                                <div class="modal fade admin-query"
+                                                    id="deletecategoryModal{{ $invoice->id }}">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h4 class="modal-title">@lang('fees.delete_fees_type')</h4>
+                                                                <button type="button" class="close"
+                                                                    data-dismiss="modal">&times;</button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <div class="text-center">
+                                                                    <h4>@lang('common.are_you_sure_to_delete')</h4>
+                                                                </div>
+                                                                <div class="mt-40 d-flex justify-content-between">
+                                                                    <button type="button" class="primary-btn tr-bg"
+                                                                        data-dismiss="modal">
+                                                                        @lang('common.cancel')
+                                                                    </button>
+                                                                    <form
+                                                                        action="{{ route('fees.fee-delete', $invoice->id) }}"
+                                                                        method="POST">
+                                                                        @csrf
+                                                                        @method('DELETE')
+                                                                        <button class="primary-btn fix-gr-bg"
+                                                                            type="submit">
+                                                                            @lang('common.delete')
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+
+                                                <!-- Add Payment Modal -->
+                                            @endforeach
+                                        </tbody>
                                     </table>
                                 </x-table>
                             </div>
+
+                            <!-- Place modals here, outside table -->
+                            @foreach ($fee_invoices as $invoice)
+                                <div class="modal fade admin-query" id="addPaymentModal{{ $invoice->id }}">
+                                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h4 class="modal-title">@lang('fees.add_payment') - Invoice #{{ $invoice->id }}
+                                                </h4>
+                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                            </div>
+                                            <form action="{{ route('fees.fees-invoice-payment', $invoice->id) }}"
+                                                method="POST">
+                                                @csrf
+                                                <div class="modal-body">
+                                                    <table class="table table-bordered text-center">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>@lang('fees.fee_type')</th>
+                                                                <th>@lang('accounts.amount')</th>
+                                                                <th>@lang('fees.paid')</th>
+                                                                <th>@lang('accounts.balance')</th>
+                                                                <th>@lang('fees.pay_now')</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach ($invoice->invoice_item as $item)
+                                                                @php $balance = $item->amount - $item->paid_amount; @endphp
+                                                                <tr>
+                                                                    <td>{{ $item->fee_type->name ?? 'N/A' }}</td>
+                                                                    <td>{{ $item->amount }}</td>
+                                                                    <td>{{ $item->paid_amount }}</td>
+                                                                    <td>{{ $balance }}</td>
+                                                                    
+
+                                                                    <td class="text-center">
+                                                                        <div class="input-group input-group-sm"
+                                                                            style="max-width: 120px;">
+                                                                            <input type="number"
+                                                                                name="pay_amount[{{ $item->id }}]"
+                                                                                class="form-control text-center"
+                                                                                min="0" max="{{ $balance }}"
+                                                                                value="0"
+                                                                               >
+                                                                            <div class="input-group-append">
+                                                                                <span class="input-group-text">.00</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
+
+                                                    <div class="form-group mt-3">
+                                                        <label>@lang('accounts.payment_method')</label>
+                                                        <select name="payment_method" class="form-control" required>
+                                                            <option value="Cash">Cash</option>
+                                                            <option value="Card">Card</option>
+                                                            <option value="Bank Transfer">Bank Transfer</option>
+                                                        </select>
+                                                    </div>
+
+
+
+                                                </div>
+
+                                                <div class="modal-footer">
+
+                                                    <button type="submit"
+                                                        class="primary-btn fix-gr-bg col-12">@lang('common.submit')</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+
                             {{-- @endforeach --}}
                         </div>
                     </div>
@@ -146,227 +255,28 @@
         </div>
     </section>
 
-    {{-- Delete Modal Start --}}
-    <div class="modal fade admin-query" id="deleteFeesPayment">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title">@lang('fees::feesModule.delete_fees_invoice')</h4>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                </div>
 
-                <div class="modal-body">
-                    <div class="text-center">
-                        <h4>@lang('common.are_you_sure_to_delete')</h4>
-                    </div>
-                    <div class="mt-40 d-flex justify-content-between">
-                        <button type="button" class="primary-btn tr-bg" data-dismiss="modal">@lang('common.cancel')</button>
-                        {{-- {{ Form::open(['method' => 'POST', 'route' => 'fees.fees-invoice-delete']) }} --}}
-                        <input type="hidden" name="feesInvoiceId" value="">
-                        <button class="primary-btn fix-gr-bg" type="submit">@lang('common.delete')</button>
-                        {{-- {{ Form::close() }} --}}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {{-- Delete Modal End --}}
-
-    {{-- View Fees Modal Start --}}
-    <div class="modal fade admin-query" id="viewFeesPayment">
-        <div class="modal-dialog modal-dialog-centered max_modal">
-            <div class="modal-content">
-            </div>
-        </div>
-    </div>
     {{-- View Fees Modal End --}}
-
-    @include('components.partials.data_table_js')
-    @include('components.partials.server_side_datatable')
-    {{-- <script>
-        function feesInvoiceDelete(id) {
-            var modal = $('#deleteFeesPayment');
-            modal.find('input[name=feesInvoiceId]').val(id)
-            modal.modal('show');
-        }
-
-        function viewPaymentDetailModal(id) {
-            $('#viewFeesPayment').modal('show');
-            let invoiceId = id;
-            console.log(invoiceId);
-            $.ajax({
-                url: "{{ route('fees.fees-view-payment') }}",
-                method: "POST",
-                data: {
-                    invoiceId: invoiceId
-                },
-                success: function(response) {
-                    $('#viewFeesPayment .modal-content').html(response);
-                },
-            });
-        }
-        $(document).ready(function() {
-            $('.data-table').DataTable({
-                processing: true,
-                serverSide: true,
-                "ajax": $.fn.dataTable.pipeline({
-                    url: "{{ url('fees/fees-invoice-datatable') }}",
-                    data: {},
-                    pages: "{{ generalSetting()->ss_page_load }}" // number of pages to cache
-                }),
-                columns: [{
-                        data: 'DT_RowIndex',
-                        name: 'id'
-                    },
-                    {
-                        data: 'student_name',
-                        name: 'student_name',
-                        orderable: false,
-                        searchable: true
-                    },
-                    {
-                        data: 'admission_no',
-                        name: 'admission_no',
-                        orderable: false,
-                        searchable: true
-                    },
-                    {
-                        data: 'amount',
-                        name: 'amount',
-                        orderable: false,
-                        searchable: true
-                    },
-                    {
-                        data: 'weaver',
-                        name: 'weaver',
-                        orderable: false,
-                        searchable: true
-                    },
-                    {
-                        data: 'fine',
-                        name: 'fine',
-                        orderable: false,
-                        searchable: true
-                    },
-                    {
-                        data: 'paid_amount',
-                        name: 'paid_amount',
-                        orderable: false,
-                        searchable: true
-                    },
-                    {
-                        data: 'balance',
-                        name: 'balance',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'status',
-                        name: 'status',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'create_date',
-                        name: 'create_date',
-                        orderable: true,
-                        searchable: true
-                    },
-                    {
-                        data: 'action',
-                        name: 'action',
-                        orderable: false,
-                        searchable: false
-                    },
-                    // {
-                    //     data: 'full_name',
-                    //     name: 'studentInfo.full_name',
-                    //     visible: false
-                    // },
-                ],
-                bLengthChange: false,
-                bDestroy: true,
-                language: {
-                    search: "<i class='ti-search'></i>",
-                    searchPlaceholder: window.jsLang('quick_search'),
-                    paginate: {
-                        next: "<i class='ti-arrow-right'></i>",
-                        previous: "<i class='ti-arrow-left'></i>",
-                    },
-                },
-                dom: "Bfrtip",
-                buttons: [{
-                        extend: "copyHtml5",
-                        text: '<i class="fa fa-files-o"></i>',
-                        title: $("#logo_title").val(),
-                        titleAttr: window.jsLang('copy_table'),
-                        exportOptions: {
-                            columns: ':visible:not(.not-export-col)'
-                        },
-                    },
-                    {
-                        extend: "excelHtml5",
-                        text: '<i class="fa fa-file-excel-o"></i>',
-                        titleAttr: window.jsLang('export_to_excel'),
-                        title: $("#logo_title").val(),
-                        margin: [10, 10, 10, 0],
-                        exportOptions: {
-                            columns: ':visible:not(.not-export-col)'
-                        },
-                    },
-                    {
-                        extend: "csvHtml5",
-                        text: '<i class="fa fa-file-text-o"></i>',
-                        titleAttr: window.jsLang('export_to_csv'),
-                        exportOptions: {
-                            columns: ':visible:not(.not-export-col)'
-                        },
-                    },
-                    {
-                        extend: "pdfHtml5",
-                        text: '<i class="fa fa-file-pdf-o"></i>',
-                        title: $("#logo_title").val(),
-                        titleAttr: window.jsLang('export_to_pdf'),
-                        exportOptions: {
-                            columns: ':visible:not(.not-export-col)'
-                        },
-                        orientation: "landscape",
-                        pageSize: "A4",
-                        margin: [0, 0, 0, 12],
-                        alignment: "center",
-                        header: true,
-                        customize: function(doc) {
-                            doc.content[1].margin = [100, 0, 100, 0]; //left, top, right, bottom
-                            doc.content.splice(1, 0, {
-                                margin: [0, 0, 0, 12],
-                                alignment: "center",
-                                image: "data:image/png;base64," + $("#logo_img").val(),
-                            });
-                            doc.defaultStyle = {
-                                font: 'DejaVuSans'
-                            }
-                        },
-                    },
-                    {
-                        extend: "print",
-                        text: '<i class="fa fa-print"></i>',
-                        titleAttr: window.jsLang('print'),
-                        title: $("#logo_title").val(),
-                        exportOptions: {
-                            columns: ':visible:not(.not-export-col)'
-                        },
-                    },
-                    {
-                        extend: "colvis",
-                        text: '<i class="fa fa-columns"></i>',
-                        postfixButtons: ["colvisRestore"],
-                    },
-                ],
-                columnDefs: [{
-                    visible: false,
-                }, ],
-                responsive: true,
-            });
-        });
-    </script> --}}
 @endsection
+
+
+@include('components.partials.data_table_css')
+@include('components.partials.data_table_js')
+
+
+@push('script')
+    <script>
+        $('#table_id').DataTable({
+            responsive: true, // ✅ Enable responsive extension
+            dom: 'Bfrtip',
+            buttons: [
+                'copy', 'csv', 'excel', 'pdf', 'print'
+            ],
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+            // scrollX: true, 
+        });
+    </script>
+@endpush

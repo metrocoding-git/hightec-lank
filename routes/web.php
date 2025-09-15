@@ -187,6 +187,10 @@ Route::controller(FeeTypeController::class)->group(function () {
 });
 
 Route::controller(InvoiceController::class)->group(function () {
+
+    Route::get('student/fees/invoice/view/{id}', 'edit')->name('fees.fee-invoice-view');
+    Route::post('student/fees/invoice/{id}', 'addPayment')->name('fees.fees-invoice-payment');
+
     Route::get('student/fees/fee-invoice', 'index')->name('fees.fee-invoice');
     Route::get('student/fees/add-invoice', 'create')->name('fees.add-invoice');
     Route::get('student/invoice/get-student/{branchId}', 'show')->name('fees.get-student');
@@ -194,9 +198,10 @@ Route::controller(InvoiceController::class)->group(function () {
 
 
 
+    
     Route::post('student/fees/fee-store', 'store')->name('fees.invoice.store');
-    Route::get('student/fees/fee-edit/{id}', 'edit')->name('fees.fee-edit');
-    Route::put('student/fees/fee-update/{id}', 'update')->name('fees.fee-update');
+    Route::get('student/fees/fee-edit/{id}', 'edit')->name('fees.fee-edit-invoice');
+    Route::put('student/fees/fee-update/{id}', 'update')->name('fees.fee-update-invoice');
     Route::delete('student/fees/fee-delete/{id}', 'destroy')->name('fees.fee-delete');
 });
 

@@ -116,13 +116,13 @@
                                                     <select
                                                         class="primary_select  form-control{{ $errors->has('bank_id') ? ' is-invalid' : '' }}"
                                                         name="bank_id" id="account_id">
-                                                        @if (isset($account_id))
+                                                        {{-- @if (isset($account_id))
                                                             @foreach ($account_id as $key => $value)
                                                                 <option value="{{ $value->id }}">
                                                                     {{ $value->account_name }} ({{ $value->bank_name }})
                                                                 </option>
                                                             @endforeach
-                                                        @endif
+                                                        @endif --}}
                                                     </select>
 
                                                     @if ($errors->has('bank_id'))
@@ -264,8 +264,7 @@
                                 </div>
 
                                 <div class="offset-lg-6 col-lg-2 col-6 text-right col-md-6 col-5">
-                                    <button type="button" class="primary-btn small fix-gr-bg" onclick="addRow();"
-                                        id="addRowBtn">
+                                    <button type="button" class="primary-btn small fix-gr-bg" id="addRowBtn">
                                         <span class="ti-plus pr-2"></span>
                                         @lang('common.add')
                                     </button>
@@ -292,95 +291,7 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <tr id="row1" class="0">
-                                                        <td class="border-top-0">
-                                                            <input type="hidden" name="url" id="url"
-                                                                value="{{ URL::to('/') }}">
-                                                            <div class="primary_input">
-                                                                <select
-                                                                    class="primary_select  form-control{{ $errors->has('category_name') ? ' is-invalid' : '' }}"
-                                                                    name="item_id[]" id="productName1">
-                                                                    <option data-display="@lang('common.select_item')*"
-                                                                        value="">
-                                                                        @lang('common.select')*</option>
-                                                                    @foreach ($items as $key => $value)
-                                                                        <option value="{{ $value->id }}"
-                                                                            @if (isset($editData)) @if ($editData->category_name == $value->id)
-                                                  @lang('inventory.selected') @endif
-                                                                            @endif
-                                                                            >{{ $value->item_name }}</option>
-                                                                    @endforeach
-                                                                </select>
-
-                                                                @if ($errors->has('item_id'))
-                                                                    <span class="text-danger invalid-select"
-                                                                        role="alert">
-                                                                        {{ $errors->first('item_id') }}
-                                                                    </span>
-                                                                @endif
-                                                            </div>
-                                                        </td>
-                                                        <td class="border-top-0">
-                                                            <div class="primary_input">
-                                                                <input oninput="numberCheckWithDot(this)"
-                                                                    class="primary_input_field form-control{{ $errors->has('unit_price') ? ' is-invalid' : '' }}"
-                                                                    type="text" step="0.1" id="unit_price1"
-                                                                    name="unit_price[]" autocomplete="off"
-                                                                    value="{{ isset($editData) ? $editData->unit_price : '' }}"
-                                                                    onkeyup="getTotalByPrice(1)">
-
-
-                                                                @if ($errors->has('unit_price'))
-                                                                    <span class="text-danger">
-                                                                        {{ $errors->first('unit_price') }}
-                                                                    </span>
-                                                                @endif
-                                                            </div>
-                                                        </td>
-                                                        <td class="border-top-0">
-                                                            <div class="primary_input">
-                                                                <input oninput="numberCheckWithDot(this)"
-                                                                    class="primary_input_field form-control{{ $errors->has('quantity') ? ' is-invalid' : '' }}"
-                                                                    type="text" id="quantity1" name="quantity[]"
-                                                                    autocomplete="off" onkeyup="getTotal(1);"
-                                                                    value="{{ isset($editData) ? $editData->quantity : '' }}">
-
-
-                                                                @if ($errors->has('quantity'))
-                                                                    <span class="text-danger">
-                                                                        {{ $errors->first('quantity') }}
-                                                                    </span>
-                                                                @endif
-                                                            </div>
-                                                        </td>
-                                                        <td class="border-top-0">
-                                                            <div class="primary_input">
-                                                                <input oninput="numberCheckWithDot(this)"
-                                                                    class="primary_input_field form-control{{ $errors->has('sub_total') ? ' is-invalid' : '' }}"
-                                                                    type="text" name="total[]" id="total1"
-                                                                    autocomplete="off"
-                                                                    value="{{ isset($editData) ? $editData->sub_total : '0.00' }}">
-
-
-                                                                @if ($errors->has('sub_total'))
-                                                                    <span class="text-danger">
-                                                                        {{ $errors->first('sub_total') }}
-                                                                    </span>
-                                                                @endif
-                                                            </div>
-                                                            <input type="hidden" name="totalValue[]" id="totalValue1"
-                                                                autocomplete="off" class="form-control" />
-                                                        </td>
-                                                        <td>
-                                                            <button type="button" class="primary-btn icon-only fix-gr-bg"
-                                                                onclick="removeRow(${rowCount})">
-                                                                <span class="ti-trash"></span>
-                                                            </button>
-
-
-                                                        </td>
-                                                    </tr>
-
+                                                   
                                                 </tbody>
                                                 <tfoot>
                                                     <tr>
@@ -481,61 +392,66 @@
     </section>
 
     <script>
-        // Store all items in JS
-        const itemOptions = `
-        <option value="">Select Item*</option>
-        @foreach ($items as $item)
-            <option value="{{ $item->id }}">{{ $item->item_name }}</option>
-        @endforeach
-    `;
+        $(document).ready(function() {
+            let rowCount = 1; // initialize as needed
 
-        let rowCount = 1;
+            $('#addRowBtn').on('click', function() {
+                rowCount++;
 
-        // Add a new row
-        function addRow() {
-            rowCount++;
-            const newRow = `
-<tr id="row${rowCount}">
-    <td>
-        <div class="primary_input">
-            <select class="primary_select form-control" name="item_id[]" id="productName${rowCount}">
-                ${itemOptions}
-            </select>
-        </div>
-    </td>
-    <td>
-        <input type="number" step="0.1" name="unit_price[]" id="unit_price${rowCount}"
-               class="primary_input_field form-control"
-               oninput="getTotalByPrice(${rowCount})">
-    </td>
-    <td>
-        <input type="number" name="quantity[]" id="quantity${rowCount}"
-               class="primary_input_field form-control"
-               oninput="getTotal(${rowCount})">
-    </td>
-    <td>
-        <input type="text" readonly name="total[]" id="total${rowCount}" class="primary_input_field form-control" value="0.00">
-        <input type="hidden" name="totalValue[]" id="totalValue${rowCount}">
-    </td>
-    <td>
-        <button type="button" class="primary-btn icon-only fix-gr-bg" onclick="removeRow(${rowCount})">
-            <span class="ti-trash"></span>
-        </button>
-    </td>
-</tr>`;
-            const $newRow = $(newRow);
-            $("#productTable tbody").append($newRow);
+                let newRow = `
+    <tr id="row${rowCount}" class="0">
+        <td class="border-top-0">
+            <input type="hidden" name="url" id="url" value="{{ URL::to('/') }}">
+            <div class="primary_input">
+                <select class="primary_select form-control" name="item_id[]" id="productName${rowCount}">
+                    <option value="">@lang('common.select')*</option>
+                    @foreach ($items as $key => $value)
+                        <option value="{{ $value->id }}">{{ $value->item_name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </td>
+        <td class="border-top-0">
+            <div class="primary_input">
+                <input oninput="numberCheckWithDot(this)" class="primary_input_field form-control"
+                       type="text" step="0.1" id="unit_price${rowCount}" name="unit_price[]"
+                       autocomplete="off" value="" onkeyup="getTotalByPrice(${rowCount})">
+            </div>
+        </td>
+        <td class="border-top-0">
+            <div class="primary_input">
+                <input oninput="numberCheckWithDot(this)" class="primary_input_field form-control"
+                       type="text" id="quantity${rowCount}" name="quantity[]" autocomplete="off"
+                       onkeyup="getTotal(${rowCount});" value="">
+            </div>
+        </td>
+        <td class="border-top-0">
+            <div class="primary_input">
+                <input oninput="numberCheckWithDot(this)" class="primary_input_field form-control"
+                       type="text" name="total[]" id="total${rowCount}" autocomplete="off" value="0.00">
+            </div>
+            <input type="hidden" name="totalValue[]" id="totalValue${rowCount}" autocomplete="off" class="form-control" />
+        </td>
+        <td>
+            <button type="button" class="primary-btn icon-only fix-gr-bg" onclick="removeRow(${rowCount})">
+                <span class="ti-trash"></span>
+            </button>
+        </td>
+    </tr>`;
 
-            // Initialize select2 for new row
-            $newRow.find('.primary_select').select2();
+                $('tbody').append(newRow);
+            });
 
+
+
+        });
+
+        // Remove row function
+        function removeRow(rowNum) {
+            $('#row' + rowNum).remove();
         }
 
-        // Remove a row
-        function removeRow(id) {
-            $("#row" + id).remove();
-            calculateGrandTotal();
-        }
+
 
         // Update total for a row
         function getTotalByPrice(row) {
@@ -621,7 +537,6 @@
                 }
             });
         });
-        x`
     </script>
 @endsection
 @include('components.partials.date_picker_css_js')
