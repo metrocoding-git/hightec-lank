@@ -405,7 +405,7 @@ $visiable = $visiable ?? [];
 @endpush --}}
 
     {{-- Branch --}}
-    <div class="col-lg-4 mb-15">
+    {{-- <div class="col-lg-4 mb-15">
         <div class="primary_input">
             <label class="primary_input_label" for="branch_id">Branch <span class="text-danger">*</span></label>
             <select class="primary_select form-control ajax_select" name="branch_id" id="branch_id">
@@ -416,7 +416,7 @@ $visiable = $visiable ?? [];
             </select>
           
         </div>
-    </div>
+    </div> --}}
 
     {{-- Intake --}}
     <div class="col-lg-4 mb-15">
