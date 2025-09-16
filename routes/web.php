@@ -251,9 +251,6 @@ Route::controller(ContentController::class)->group(function () {
     Route::get('account/content-edit/{id}', 'edit')->name('content-edit');
     Route::put('account/content-update/{id}', 'update')->name('content-update');
     Route::delete('account/content-delete/{id}', 'destroy')->name('content-delete');
+    // Save shared content list (Share modal)
+    Route::post('administration/download-center/content-share-list-save', 'shareListSave')->name('content-share-list-save');
 });
-
-
-
-
-

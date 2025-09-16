@@ -106,148 +106,75 @@
                                     <table id="table_id" class="table Crm_table_active3" cellspacing="0" width="100%">
                                         <thead>
                                             <tr>
-                                                <th>@lang('downloadCenter.sl')</th>
-                                                <th>@lang('downloadCenter.title')</th>
-                                                <th>@lang('downloadCenter.send_to')</th>
-                                                <th>@lang('downloadCenter.share_date')</th>
-                                                <th>@lang('downloadCenter.valid_upto')</th>
-                                                <th>@lang('downloadCenter.shared_by')</th>
-                                                <th>@lang('downloadCenter.description')</th>
-                                                <th>@lang('common.action')</th>
+                                                <th>ID</th>
+                                                <th>TITLE</th>
+                                                <th>ROLE</th>
+                                                <th>SHARE DATE</th>
+                                                <th>VALID UPTO</th>
+                                                <th>SHARED BY</th>
+                                                <th>DESCRIPTION</th>
+                                                <th>ACTION</th>
                                             </tr>
                                         </thead>
-                                        <?php
-                                        $sharedContents = collect([
-                                            (object) [
-                                                'id' => 1,
-                                                'title' => 'Math Grade 10 Notes',
-                                                'send_type' => 'G',
-                                                'share_date' => '2025-07-25',
-                                                'valid_upto' => '2025-08-10',
-                                                'description' => 'Includes algebra and geometry',
-                                                'url' => 'https://example.com/shared/math10',
-                                                'user' => (object) [
-                                                    'full_name' => 'Mr. Ruwan Fernando',
-                                                ],
-                                            ],
-                                            (object) [
-                                                'id' => 2,
-                                                'title' => 'Science Presentation',
-                                                'send_type' => 'I',
-                                                'share_date' => '2025-07-26',
-                                                'valid_upto' => '2025-08-15',
-                                                'description' => null,
-                                                'url' => null,
-                                                'user' => (object) [
-                                                    'full_name' => 'Ms. Dilani Perera',
-                                                ],
-                                            ],
-                                            (object) [
-                                                'id' => 3,
-                                                'title' => 'ICT Class Notes',
-                                                'send_type' => 'C',
-                                                'share_date' => '2025-07-20',
-                                                'valid_upto' => '2025-08-05',
-                                                'description' => 'PDF files for the entire syllabus.',
-                                                'url' => 'https://example.com/shared/ict',
-                                                'user' => (object) [
-                                                    'full_name' => 'Mr. Harsha Madusanka',
-                                                ],
-                                            ],
-                                            (object) [
-                                                'id' => 4,
-                                                'title' => 'Public Workshop Guide',
-                                                'send_type' => 'P',
-                                                'share_date' => '2025-07-28',
-                                                'valid_upto' => '2025-08-12',
-                                                'description' => 'General guide for all attendees.',
-                                                'url' => 'https://example.com/shared/workshop',
-                                                'user' => (object) [
-                                                    'full_name' => 'Admin User',
-                                                ],
-                                            ],
-                                        ]);
-                                        
-                                        ?>
+                                       
                                         <tbody>
-                                            @foreach ($sharedContents as $key => $sharedContent)
+                                            @forelse($sharedContents as $key => $sharedContent)
                                                 @php
-                                                    $send_type = '';
-                                                    if ($sharedContent->send_type == 'G') {
-                                                        $send_type = 'Group';
-                                                    } elseif ($sharedContent->send_type == 'I') {
-                                                        $send_type = 'Individual';
-                                                    } elseif ($sharedContent->send_type == 'C') {
-                                                        $send_type = 'Class';
-                                                    } else {
-                                                        $send_type = 'Public';
-                                                    }
+                                                    $sendTypeMap = ['G' => 'Group', 'I' => 'Individual', 'C' => 'Class', 'P' => 'Public'];
+                                                    $sendType = $sendTypeMap[$sharedContent->send_to ?? 'I'] ?? 'Individual';
+                                                    $roleName = optional($sharedContent->role)->role_name ?? '-';
+                                                    $shareDate = $sharedContent->save_date ? \Carbon\Carbon::parse($sharedContent->save_date)->format('d/m/Y') : '-';
+                                                    $validUpto = $sharedContent->valid_date ? \Carbon\Carbon::parse($sharedContent->valid_date)->format('d/m/Y') : '-';
+                                                    $sharedByNames = $sharedContent->users->pluck('name')->implode(', ');
+                                                    if(empty($sharedByNames)) { $sharedByNames = '-'; }
+                                                    $description = $sharedContent->description ?? 'No Description';
                                                 @endphp
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
                                                     <td>{{ $sharedContent->title }}</td>
-                                                    <td>{{ $send_type }}</td>
-                                                    <td>{{ $sharedContent->share_date }}</td>
-                                                    <td>{{ $sharedContent->valid_upto }}</td>
-                                                    <td>{{ $sharedContent->user->full_name }}</td>
-                                                    <td>{{ $sharedContent->description ? $sharedContent->description : 'No Description' }}
-                                                    </td>
+                                                    <td>{{ $roleName }}</td>
+                                                    <td>{{ $shareDate }}</td>
+                                                    <td>{{ $validUpto }}</td>
+                                                    <td>{{ $sharedByNames }}</td>
+                                                    <td>{{ $description }}</td>
                                                     <td>
                                                         <x-drop-down>
-                                                            @if ($sharedContent->url)
+                                                            {{-- If you later add a public/share URL, show it here --}}
+                                                            {{-- @if ($sharedContent->url)
                                                                 <a class="modalLink dropdown-item"
-                                                                    title="@lang('downloadCenter.shared_content_link')" href="/"
-                                                                    {{-- href="{{ route('download-center.content-share-link-modal', [$sharedContent->id]) }}" --}}>
+                                                                    title="@lang('downloadCenter.shared_content_link)" href="{{ $sharedContent->url }}">
                                                                     @lang('downloadCenter.link')
                                                                 </a>
-                                                            @endif
+                                                            @endif --}}
                                                             <a class="modalLink dropdown-item" data-modal-size="large-modal"
-                                                                title="@lang('downloadCenter.view_shared_content')" href="/"
-                                                                {{-- href="{{ route('download-center.content-view-link-modal', [$sharedContent->id]) }}" --}}
-                                                                >
+                                                                title="@lang('downloadCenter.view_shared_content')" href="#">
                                                                 @lang('common.view')
                                                             </a>
-                                                            {{-- @if (auth()->user()->role_id != 2)
-                                                                <a class="dropdown-item" data-toggle="modal"
-                                                                    data-target="#deleteModal{{ @$sharedContent->id }}"
-                                                                    href="#">
-                                                                    @lang('common.delete')
-                                                                </a>
-                                                            @endif --}}
                                                             <a class="dropdown-item" data-toggle="modal"
-                                                                data-target="#deleteModal{{ @$sharedContent->id }}"
-                                                                href="#"
-                                                                >
+                                                                data-target="#deleteModal{{ $sharedContent->id }}" href="#">
                                                                 @lang('common.delete')
                                                             </a>
                                                         </x-drop-down>
                                                     </td>
                                                 </tr>
                                                 {{-- Start Delete Modal --}}
-                                                <div class="modal fade admin-query"
-                                                    id="deleteModal{{ @$sharedContent->id }}">
+                                                <div class="modal fade admin-query" id="deleteModal{{ $sharedContent->id }}">
                                                     <div class="modal-dialog modal-dialog-centered">
                                                         <div class="modal-content">
                                                             <div class="modal-header">
-                                                                <h4 class="modal-title">
-                                                                    @lang('downloadCenter.delete_shared_content')
-                                                                </h4>
-                                                                <button type="button" class="close" data-dismiss="modal">
-                                                                    &times;
-                                                                </button>
+                                                                <h4 class="modal-title">@lang('downloadCenter.delete_shared_content')</h4>
+                                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
                                                             </div>
                                                             <div class="modal-body">
                                                                 <div class="text-center">
                                                                     <h4>@lang('common.are_you_sure_to_delete')</h4>
                                                                 </div>
                                                                 <div class="mt-40 d-flex justify-content-between">
-                                                                    <button type="button" class="primary-btn tr-bg"
-                                                                        data-dismiss="modal">
+                                                                    <button type="button" class="primary-btn tr-bg" data-dismiss="modal">
                                                                         @lang('common.cancel')
                                                                     </button>
-                                                                    <a href="/" class="text-light">
-                                                                        <button class="primary-btn fix-gr-bg"
-                                                                            type="submit">
+                                                                    <a href="#" class="text-light">
+                                                                        <button class="primary-btn fix-gr-bg" type="button">
                                                                             @lang('common.delete')
                                                                         </button>
                                                                     </a>
@@ -257,7 +184,11 @@
                                                     </div>
                                                 </div>
                                                 {{-- End Delete Modal --}}
-                                            @endforeach
+                                            @empty
+                                                <tr>
+                                                    <td colspan="8" class="text-center">@lang('common.no_data_available')</td>
+                                                </tr>
+                                            @endforelse
                                         </tbody>
                                     </table>
                                 </x-table>

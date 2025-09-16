@@ -7,6 +7,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Content_Type;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Role;
+use App\Models\User;
+use App\Models\ShareContentList;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+
 class ContentController extends Controller
 {
     /**
@@ -18,9 +24,10 @@ class ContentController extends Controller
 
      $content_Types = Content_Type::all();
        $contents=Content::all();
-        
+        $roles = Role::all();
+        $users = User::all();
       
-        return view('pages.administration.download-center.content-list', compact('content_Types','contents'));
+        return view('pages.administration.download-center.content-list', compact('content_Types','contents','roles','users'));
     }
     
 
@@ -81,8 +88,9 @@ class ContentController extends Controller
         $editContent = Content::findOrFail($id);
         $content_Types = Content_Type::all();
             $contents=Content::all();
-        
-        return view('pages.administration.download-center.content-list', compact('editContent', 'content_Types','contents'));
+            $roles = Role::all();
+        $users = User::all();
+        return view('pages.administration.download-center.content-list', compact('editContent', 'content_Types','contents','roles','users'));
         
     }
 
@@ -138,5 +146,58 @@ class ContentController extends Controller
         $content->delete();
 
         return redirect()->route('content-list')->with('success', 'Content deleted successfully!');
+    }
+
+    /**
+     * Save shared content list (Share modal)
+     */
+    public function shareListSave(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'shareDate' => 'required|string',
+            'validUpto' => 'required|string',
+            'content_ids' => 'required|array|min:1',
+            'content_ids.*' => 'integer|exists:contents,id',
+            'role_id' => 'required|integer|exists:roles,id',
+            'individual_content_user' => 'required|array|min:1',
+            'individual_content_user.*' => 'integer|exists:users,id',
+        ]);
+
+        // Parse dates (incoming as m/d/Y)
+        $saveDate = Carbon::createFromFormat('m/d/Y', $validated['shareDate'])->format('Y-m-d');
+        $validDate = Carbon::createFromFormat('m/d/Y', $validated['validUpto'])->format('Y-m-d');
+
+        DB::beginTransaction();
+        try {
+            $share = ShareContentList::create([
+                'role_id' => $validated['role_id'],
+                'send_to' => 'I', 
+                'title' => $validated['title'],
+                'description' => $validated['description'] ?? null,
+                'save_date' => $saveDate,
+                'valid_date' => $validDate,
+            ]);
+
+            // Attach users and contents via pivot tables
+            $share->users()->sync($validated['individual_content_user']);
+            $share->contents()->sync($validated['content_ids']);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Shared content saved successfully',
+                'id' => $share->id,
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to save shared content',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

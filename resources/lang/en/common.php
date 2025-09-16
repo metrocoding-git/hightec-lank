@@ -32,6 +32,7 @@
     "actions" => "Actions",
     "created_by" => "Created By",
     "class" => "Class",
+    "course" => "Course",
     "section" => "Section",
     "teacher" => "Teacher",
     "staff" => "Staff",

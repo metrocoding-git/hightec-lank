@@ -11,7 +11,6 @@ use App\Models\User;
 use App\Models\SmToDo;
 use App\Models\SmClass;
 use App\Models\SmEvent;
-use App\Models\SmStaff;
 use App\Models\SmSchool;
 use App\Models\SmHoliday;
 use App\Models\SmSection;
@@ -47,6 +46,7 @@ use Modules\Saas\Entities\SmPackagePlan;
 use Modules\RolePermission\Entities\InfixRole;
 use Modules\Wallet\Entities\WalletTransaction;
 use Modules\Saas\Entities\SmSubscriptionPayment;
+use App\Models\ShareContentList;
 
 class HomeController extends Controller
 {
@@ -114,7 +114,11 @@ class HomeController extends Controller
     }
     public function sharedContentList()
     {
-        return view('pages.administration.download-center.shared-content-list');
+        $sharedContents = ShareContentList::with(['role', 'users'])
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return view('pages.administration.download-center.shared-content-list', compact('sharedContents'));
     }
     public function videoList()
     {
