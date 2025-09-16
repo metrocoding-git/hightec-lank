@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\ShareContentList;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class ContentController extends Controller
 {
@@ -199,5 +200,49 @@ class ContentController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Generate a shareable URL for selected content (Generate URL modal)
+     */
+    public function generateUrlSave(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'shareDate' => 'required|string',
+            'validUpto' => 'required|string',
+            'content_ids' => 'required|array|min:1',
+            'content_ids.*' => 'integer|exists:contents,id',
+        ]);
+
+        // Parse/normalize dates (incoming as m/d/Y)
+        try {
+            $saveDate = Carbon::createFromFormat('m/d/Y', $validated['shareDate'])->format('Y-m-d');
+            $validDate = Carbon::createFromFormat('m/d/Y', $validated['validUpto'])->format('Y-m-d');
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => false,
+                'errors' => [
+                    'validUpto' => __('Invalid date format'),
+                ],
+            ], 422);
+        }
+
+        // Generate token
+        $token = Str::uuid()->toString();
+
+        // Generate shareable URL
+        $idsParam = implode(',', $validated['content_ids']);
+        $shareUrl = url('administration/download-center/shared/'.$token) . '?ids=' . $idsParam;
+
+        return response()->json([
+            'status' => true,
+            'url' => $shareUrl,
+            'token' => $token,
+            'title' => $validated['title'],
+            'save_date' => $saveDate,
+            'valid_date' => $validDate,
+            'content_ids' => $validated['content_ids'],
+        ]);
     }
 }

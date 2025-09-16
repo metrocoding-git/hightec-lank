@@ -100,7 +100,7 @@ Route::controller(HomeController::class)->group(callback: function () {
     Route::get('dashboard', 'dashboard')->name('dashboard');
 
     Route::get('administration/study-material/upload-content', 'uploadContent')->name('upload-content');
-    Route::get('administration/study-material/study-material-download', 'studyMaterialDownload')->name('study-material-download  ');
+    Route::get('administration/study-material/study-material-download', 'studyMaterialDownload')->name('study-material-download');
     Route::get('administration/study-material/other-download', 'otherDownload')->name('other-download');
 
 
@@ -253,4 +253,6 @@ Route::controller(ContentController::class)->group(function () {
     Route::delete('account/content-delete/{id}', 'destroy')->name('content-delete');
     // Save shared content list (Share modal)
     Route::post('administration/download-center/content-share-list-save', 'shareListSave')->name('content-share-list-save');
+    // Generate URL for selected contents (Generate URL modal)
+    Route::post('administration/download-center/content-generate-url-save', 'generateUrlSave')->name('download-center.content-generate-url-save');
 });

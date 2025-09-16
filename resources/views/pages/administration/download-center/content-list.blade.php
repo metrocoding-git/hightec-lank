@@ -314,6 +314,7 @@
                                     href="#">@lang('downloadCenter.share')</a>
                                 <a class="primary-btn fix-gr-bg submit mt-0 shareContentData" id="generateUrlModal"
                                     href="#">@lang('downloadCenter.generate_url')</a>
+                                    {{-- <!-- generate Url btn --> --}}
                                 <div class="mt-3">
                                     <x-table>
                                         <table id="table_id "
@@ -346,6 +347,7 @@
                                                         <td>{{ $content->content_type->name }}</td>
                                                         <td>{{ $content->file_size }}</td>
 
+                                                        <td>{{ $content->created_at }}</td>
                                                         <td>{{ $content->created_at }}</td>
                                                         <td>
                                                             <x-drop-down>
@@ -717,7 +719,8 @@
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 {{-- {{ Form::open(['class' => 'form-horizontal', 'id' => 'generate-url-form', 'files' => true, 'route' => 'download-center.content-generate-url-save', 'method' => 'POST', 'enctype' => 'multipart/form-data']) }} --}}
-                <form class="form-horizontal">
+                <form class="form-horizontal" id="generate-url-form" action="{{ route('download-center.content-generate-url-save') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
                     <div class="modal-body">
                         <div class="container-fluid">
                             <div class="row">
@@ -794,13 +797,24 @@
 
                                         </div>
                                     </div>
+                                    <div class="row mt-20" id="generatedUrlContainer" style="display:none;">
+                                        <div class="col-lg-12">
+                                            <div class="primary_input">
+                                                <label class="primary_input_label" for="generatedUrlOutput">Generated URL</label>
+                                                <div class="d-flex">
+                                                    <input class="primary_input_field read-only-input form-control" type="text" id="generatedUrlOutput" readonly>
+                                                    <button type="button" class="primary-btn small fix-gr-bg ml-10" id="copyGeneratedUrl">@lang('common.copy')</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="col-lg-12 text-center mt-40">
                                     <div class="d-flex justify-content-between">
                                         <button type="button" class="primary-btn tr-bg"
                                             data-dismiss="modal">@lang('downloadCenter.cancel')</button>
                                         <button class="primary-btn fix-gr-bg submit" id="save_button_q"
-                                            type="submit">@lang('downloadCenter.share')</button>
+                                            type="submit">@lang('downloadCenter.generate_url')</button>
                                     </div>
                                 </div>
                             </div>
@@ -994,10 +1008,13 @@
                 processData: false,
                 dataType: 'JSON',
                 success: function(response) {
-                    location.reload();
-                    toastr.success("Save Successfully", "Successful", {
-                        timeOut: 5000,
-                    });
+                    if (response && response.url) {
+                        $('#generatedUrlOutput').val(response.url);
+                        $('#generatedUrlContainer').show();
+                        toastr.success("URL generated successfully", "Successful", { timeOut: 5000 });
+                    } else {
+                        toastr.warning("Generated, but no URL returned", "Warning", { timeOut: 5000 });
+                    }
                 },
                 error: function(xhr) {
                     console.log(xhr.responseJSON.errors.title);
@@ -1008,6 +1025,14 @@
                     submitButton.prop('disabled', false);
                 }
             });
+        });
+    </script>
+    <script>
+        $(document).on('click', '#copyGeneratedUrl', function() {
+            const $input = $('#generatedUrlOutput');
+            $input.trigger('select');
+            document.execCommand('copy');
+            toastr.success("copied_to_clipboard", "Successful", { timeOut: 3000 });
         });
     </script>
 @endpush

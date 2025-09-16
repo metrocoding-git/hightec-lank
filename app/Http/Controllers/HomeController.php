@@ -115,7 +115,8 @@ class HomeController extends Controller
     public function sharedContentList()
     {
         $sharedContents = ShareContentList::with(['role', 'users'])
-            ->orderBy('id', 'desc')
+            ->orderBy('id')
+            
             ->get();
 
         return view('pages.administration.download-center.shared-content-list', compact('sharedContents'));
