@@ -304,6 +304,7 @@
                             <div class="col-lg-4 no-gutters">
                                 <div class="main-title">
                                     <h3 class="mb-15">@lang('downloadCenter.content_list')</h3>
+                                    {{-- content List table --}}
                                 </div>
                             </div>
                         </div>
@@ -313,6 +314,7 @@
                                     href="#">@lang('downloadCenter.share')</a>
                                 <a class="primary-btn fix-gr-bg submit mt-0 shareContentData" id="generateUrlModal"
                                     href="#">@lang('downloadCenter.generate_url')</a>
+                                    {{-- <!-- generate Url btn --> --}}
                                 <div class="mt-3">
                                     <x-table>
                                         <table id="table_id "
@@ -333,6 +335,7 @@
                                                 @foreach (@$contents as $key => $content)
                                                     <tr>
                                                         <td>
+                                                            {{-- Content List Id  --}}
                                                             <input type="checkbox" id="content{{ $content->id }}"
                                                                 class="common-checkbox video-list contentDataCheckbox"
                                                                 data-name="{{ $content->file_name }}" name="content[]"
@@ -344,6 +347,7 @@
                                                         <td>{{ $content->content_type->name }}</td>
                                                         <td>{{ $content->file_size }}</td>
 
+                                                        <td>{{ $content->created_at }}</td>
                                                         <td>{{ $content->created_at }}</td>
                                                         <td>
                                                             <x-drop-down>
@@ -415,7 +419,8 @@
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 {{-- {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'download-center.content-share-list-save', 'method' => 'POST', 'enctype' => 'multipart/form-data', 'id' => 'share-content-form']) }} --}}
-                <form class="form-horizontal">
+                <form class="form-horizontal" id="share-content-form" action="{{ route('content-share-list-save') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
                     <div class="modal-body">
                         <div class="container-fluid">
                             <div class="row">
@@ -515,30 +520,30 @@
                                                 <span class="text-danger"> *</span>
                                             </label>
                                             <ul class="nav nav-tabs mt_0_sm" role="tablist">
-                                                <li class="nav-item">
+                                                {{-- <li class="nav-item">
                                                     <a class="nav-link active" href="#group_video" selectTab="G"
                                                         role="tab" data-toggle="tab">@lang('communicate.group')</a>
-                                                </li>
+                                                </li> --}}
                                                 <li class="nav-item">
-                                                    <a class="nav-link" selectTab="I" href="#indivitual_video"
+                                                    <a class="nav-link " selectTab="I" href="#indivitual_video"
                                                         role="tab" data-toggle="tab">@lang('communicate.individual')</a>
                                                 </li>
                                                 <li class="nav-item">
                                                     <a class="nav-link" selectTab="C" href="#class_section_video"
                                                         role="tab" data-toggle="tab">
 
-                                                        @lang('common.class')
+                                                        @lang('common.course')
 
                                                     </a>
                                                 </li>
                                             </ul>
 
                                             <div class="tab-content">
-                                                <input type="hidden" name="selectTab" id="selectTab" value="G">
-                                                <div role="tabpanel" class="tab-pane fade show active mt-2"
+                                                {{-- <input type="hidden" name="selectTab" id="selectTab" value="G"> --}}
+                                                {{-- <div role="tabpanel" class="tab-pane fade show active mt-2"
                                                     id="group_video">
                                                     <div class="white-box">
-                                                        <div class="col-lg-12">
+                                                        <div class="col-lg-12"> --}}
                                                             {{-- @foreach (@$roles as $role)
                                                                 <div class="">
                                                                     <input type="checkbox" id="role_{{ @$role->id }}"
@@ -553,7 +558,7 @@
                                                                     {{ $errors->first('role') }}
                                                                 </span>
                                                             @endif --}}
-                                                            <div class="">
+                                                            {{-- <div class="">
                                                                 <input type="checkbox" id="role_1"
                                                                     class="common-checkbox" value="1"
                                                                     name="role[]">
@@ -581,7 +586,7 @@
                                                     </div>
                                                     <span class="text-danger" id="groupError">
                                                     </span>
-                                                </div>
+                                                </div> --}}
 
                                                 <div role="tabpanel" class="tab-pane fade mt-2" id="indivitual_video">
                                                     <div class="white-box">
@@ -593,26 +598,17 @@
                                                                     <option data-display="@lang('communicate.role')"
                                                                         value="">
                                                                         @lang('communicate.role')</option>
-                                                                    {{-- @foreach ($roles as $value)
-                                                                        @if (isset($editData))
-                                                                            <option value="{{ @$value->id }}"
-                                                                                {{ @$value->id == @$editData->role_id ? 'selected' : '' }}>
-                                                                                {{ @$value->name }}</option>
-                                                                        @else
-                                                                            <option value="{{ @$value->id }}"
-                                                                                {{ old($value->id) ? 'selected' : '' }}>
-                                                                                {{ @$value->name }}</option>
-                                                                        @endif
-                                                                    @endforeach --}}
-                                                                    <option value="1">
-                                                                        2w2</option>
-                                                                    <option value="2">
-                                                                        2w2</option>
+                                                                    @foreach ($roles as $value)
+                                                                    {{-- {{ dd($value) }} --}}
+                                                                        <option value="{{ $value->id }}"
+                                                                            {{ (isset($editData) && $value->id == ($editData->role_id ?? null)) || old('role_id') == $value->id ? 'selected' : '' }}>
+                                                                            {{ $value->role_name }}</option>
+                                                                    @endforeach
                                                                 </select>
-                                                                @if ($errors->has('leave_type'))
+                                                                @if ($errors->has('role_id'))
                                                                     <span class="text-danger invalid-select"
                                                                         role="alert">
-                                                                        {{ $errors->first('leave_type') }}
+                                                                        {{ $errors->first('role_id') }}
                                                                     </span>
                                                                 @endif
                                                             </div>
@@ -623,6 +619,11 @@
                                                                     class="multypol_check_select active position-relative"
                                                                     id="individualContentUser"
                                                                     name="individual_content_user[]" style="width:300px">
+                                                                    @foreach ($users as $user)
+                                                                        <option value="{{ $user->id }}"
+                                                                            {{ (isset($editData) && $user->id == ($editData->user_id ?? null)) || old('user_id') == $user->id ? 'selected' : '' }}>
+                                                                            {{ $user->name }}</option>
+                                                                    @endforeach
                                                                 </select>
                                                             </div>
                                                         </div>
@@ -718,7 +719,8 @@
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 {{-- {{ Form::open(['class' => 'form-horizontal', 'id' => 'generate-url-form', 'files' => true, 'route' => 'download-center.content-generate-url-save', 'method' => 'POST', 'enctype' => 'multipart/form-data']) }} --}}
-                <form class="form-horizontal">
+                <form class="form-horizontal" id="generate-url-form" action="{{ route('download-center.content-generate-url-save') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
                     <div class="modal-body">
                         <div class="container-fluid">
                             <div class="row">
@@ -795,13 +797,24 @@
 
                                         </div>
                                     </div>
+                                    <div class="row mt-20" id="generatedUrlContainer" style="display:none;">
+                                        <div class="col-lg-12">
+                                            <div class="primary_input">
+                                                <label class="primary_input_label" for="generatedUrlOutput">Generated URL</label>
+                                                <div class="d-flex">
+                                                    <input class="primary_input_field read-only-input form-control" type="text" id="generatedUrlOutput" readonly>
+                                                    <button type="button" class="primary-btn small fix-gr-bg ml-10" id="copyGeneratedUrl">@lang('common.copy')</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="col-lg-12 text-center mt-40">
                                     <div class="d-flex justify-content-between">
                                         <button type="button" class="primary-btn tr-bg"
                                             data-dismiss="modal">@lang('downloadCenter.cancel')</button>
                                         <button class="primary-btn fix-gr-bg submit" id="save_button_q"
-                                            type="submit">@lang('downloadCenter.share')</button>
+                                            type="submit">@lang('downloadCenter.generate_url')</button>
                                     </div>
                                 </div>
                             </div>
@@ -995,10 +1008,13 @@
                 processData: false,
                 dataType: 'JSON',
                 success: function(response) {
-                    location.reload();
-                    toastr.success("Save Successfully", "Successful", {
-                        timeOut: 5000,
-                    });
+                    if (response && response.url) {
+                        $('#generatedUrlOutput').val(response.url);
+                        $('#generatedUrlContainer').show();
+                        toastr.success("URL generated successfully", "Successful", { timeOut: 5000 });
+                    } else {
+                        toastr.warning("Generated, but no URL returned", "Warning", { timeOut: 5000 });
+                    }
                 },
                 error: function(xhr) {
                     console.log(xhr.responseJSON.errors.title);
@@ -1009,6 +1025,14 @@
                     submitButton.prop('disabled', false);
                 }
             });
+        });
+    </script>
+    <script>
+        $(document).on('click', '#copyGeneratedUrl', function() {
+            const $input = $('#generatedUrlOutput');
+            $input.trigger('select');
+            document.execCommand('copy');
+            toastr.success("copied_to_clipboard", "Successful", { timeOut: 3000 });
         });
     </script>
 @endpush
