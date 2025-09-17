@@ -34,6 +34,7 @@
     "class" => "Class",
     "course" => "Course",
     "section" => "Section",
+    "intake"=> "Intake",
     "teacher" => "Teacher",
     "staff" => "Staff",
     "save" => "Save",

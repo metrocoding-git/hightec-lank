@@ -112,11 +112,11 @@ Route::controller(HomeController::class)->group(callback: function () {
     // Route::get('administration/download-center/content-list', 'contentList')->name('content-list');
     Route::get('administration/download-center/shared-content-list', 'sharedContentList')->name('shared-content-list');
     Route::get('administration/download-center/video-list', 'videoList')->name('video-list');
-
-
-
-
-
+    Route::post('administration/download-center/video-list-save', 'videoListStore')->name('download-center.video-list-save');
+    Route::put('administration/download-center/video-list-update/{id}', 'videoListUpdate')->name('download-center.video-list-update');
+    Route::delete('administration/download-center/video-list-destroy/{id}', 'videoListDestroy')->name('download-center.video-list-destroy');
+    // Optionally, add edit/update later
+    // Route::get('administration/download-center/video-list-edit/{id}', 'videoListEdit')->name('download-center.video-list-edit');
     // Route::get('student/student-info/add-student', 'addStudent')->name('add-student');
     Route::get('student/student-info/student-list', 'studentList')->name('student-list');
     Route::patch('student/update-status', 'updateStudetStatus')->name('student.update-status');
@@ -255,4 +255,6 @@ Route::controller(ContentController::class)->group(function () {
     Route::post('administration/download-center/content-share-list-save', 'shareListSave')->name('content-share-list-save');
     // Generate URL for selected contents (Generate URL modal)
     Route::post('administration/download-center/content-generate-url-save', 'generateUrlSave')->name('download-center.content-generate-url-save');
+    // Dependent dropdown: get courses for a given intake (used in Share/Generate URL modals)
+    Route::get('administration/download-center/get-courses/{intakeId}', 'getCoursesByIntake')->name('download-center.get-courses-by-intake');
 });

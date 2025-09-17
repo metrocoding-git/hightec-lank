@@ -24,6 +24,11 @@ class Course extends Model
     {
         return $this->belongsToMany(Student::class, 'student_courses');
     }
+    public function videoLists()
+    {
+        return $this->belongsToMany(VideoList::class, 'video_list_courses');
+    }
+
 
 
 }
