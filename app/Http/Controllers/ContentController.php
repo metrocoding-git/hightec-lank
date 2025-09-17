@@ -6,6 +6,7 @@ use App\Models\Content;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Content_Type;
+use App\Models\Intake;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Role;
 use App\Models\User;
@@ -27,8 +28,9 @@ class ContentController extends Controller
        $contents=Content::all();
         $roles = Role::all();
         $users = User::all();
+        $intakes = Intake::all();
       
-        return view('pages.administration.download-center.content-list', compact('content_Types','contents','roles','users'));
+        return view('pages.administration.download-center.content-list', compact('content_Types','contents','roles','users','intakes'));
     }
     
 
@@ -91,7 +93,8 @@ class ContentController extends Controller
             $contents=Content::all();
             $roles = Role::all();
         $users = User::all();
-        return view('pages.administration.download-center.content-list', compact('editContent', 'content_Types','contents','roles','users'));
+        $intakes = Intake::all();
+        return view('pages.administration.download-center.content-list', compact('editContent', 'content_Types','contents','roles','users','intakes'));
         
     }
 
@@ -244,5 +247,41 @@ class ContentController extends Controller
             'valid_date' => $validDate,
             'content_ids' => $validated['content_ids'],
         ]);
+    }
+
+    /**
+     * Dependent dropdown: fetch courses by intake id for Download Center modals.
+     */
+    public function getCoursesByIntake($intakeId)
+    {
+        try {
+            $intake = Intake::with(['courses' => function ($q) {
+                $q->select('courses.id', 'courses.name');
+            }])->find($intakeId);
+
+            if (!$intake) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Intake not found',
+                    'data' => []
+                ], 404);
+            }
+
+            return response()->json([
+                'status' => true,
+                'data' => $intake->courses->map(function ($c) {
+                    return [
+                        'id' => $c->id,
+                        'name' => $c->name,
+                    ];
+                })->values(),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to load courses',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

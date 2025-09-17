@@ -314,7 +314,7 @@
                                     href="#">@lang('downloadCenter.share')</a>
                                 <a class="primary-btn fix-gr-bg submit mt-0 shareContentData" id="generateUrlModal"
                                     href="#">@lang('downloadCenter.generate_url')</a>
-                                    {{-- <!-- generate Url btn --> --}}
+                                {{-- <!-- generate Url btn --> --}}
                                 <div class="mt-3">
                                     <x-table>
                                         <table id="table_id "
@@ -419,7 +419,8 @@
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 {{-- {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'download-center.content-share-list-save', 'method' => 'POST', 'enctype' => 'multipart/form-data', 'id' => 'share-content-form']) }} --}}
-                <form class="form-horizontal" id="share-content-form" action="{{ route('content-share-list-save') }}" method="POST" enctype="multipart/form-data">
+                <form class="form-horizontal" id="share-content-form" action="{{ route('content-share-list-save') }}"
+                    method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="modal-body">
                         <div class="container-fluid">
@@ -525,7 +526,7 @@
                                                         role="tab" data-toggle="tab">@lang('communicate.group')</a>
                                                 </li> --}}
                                                 <li class="nav-item">
-                                                    <a class="nav-link " selectTab="I" href="#indivitual_video"
+                                                    <a class="nav-link active" selectTab="I" href="#indivitual_video"
                                                         role="tab" data-toggle="tab">@lang('communicate.individual')</a>
                                                 </li>
                                                 <li class="nav-item">
@@ -544,7 +545,7 @@
                                                     id="group_video">
                                                     <div class="white-box">
                                                         <div class="col-lg-12"> --}}
-                                                            {{-- @foreach (@$roles as $role)
+                                                {{-- @foreach (@$roles as $role)
                                                                 <div class="">
                                                                     <input type="checkbox" id="role_{{ @$role->id }}"
                                                                         class="common-checkbox"
@@ -558,7 +559,7 @@
                                                                     {{ $errors->first('role') }}
                                                                 </span>
                                                             @endif --}}
-                                                            {{-- <div class="">
+                                                {{-- <div class="">
                                                                 <input type="checkbox" id="role_1"
                                                                     class="common-checkbox" value="1"
                                                                     name="role[]">
@@ -587,8 +588,8 @@
                                                     <span class="text-danger" id="groupError">
                                                     </span>
                                                 </div> --}}
-
-                                                <div role="tabpanel" class="tab-pane fade mt-2" id="indivitual_video">
+                                                <div role="tabpanel" class="tab-pane fade show active mt-2"
+                                                    id="indivitual_video">
                                                     <div class="white-box">
                                                         <div class="row mb-15">
                                                             <div class="col-lg-12">
@@ -599,7 +600,7 @@
                                                                         value="">
                                                                         @lang('communicate.role')</option>
                                                                     @foreach ($roles as $value)
-                                                                    {{-- {{ dd($value) }} --}}
+                                                                        {{-- {{ dd($value) }} --}}
                                                                         <option value="{{ $value->id }}"
                                                                             {{ (isset($editData) && $value->id == ($editData->role_id ?? null)) || old('role_id') == $value->id ? 'selected' : '' }}>
                                                                             {{ $value->role_name }}</option>
@@ -657,14 +658,18 @@
 
                                                             <div class="col-lg-12">
                                                                 <select
-                                                                    class="primary_select  form-control{{ $errors->has('class_id') ? ' is-invalid' : '' }}"
+                                                                    class="primary_select form-control{{ $errors->has('class_id') ? ' is-invalid' : '' }}"
                                                                     name="class_id" id="class_id_email_sms">
-                                                                    <option data-display="@lang('common.class')  *"
-                                                                        value="">@lang('common.class') *</option>
-                                                                    @if (isset($classes))
-                                                                        @foreach ($classes as $value)
-                                                                            <option value="{{ @$value->id }}">
-                                                                                {{ @$value->class_name }}</option>
+                                                                    <option data-display="@lang('common.intake') *"
+                                                                        value="">
+                                                                        @lang('common.intake') *
+                                                                    </option>
+                                                                    @if (isset($intakes))
+                                                                        @foreach ($intakes as $intake)
+                                                                            <option value="{{ $intake->id }}"
+                                                                                {{ (isset($editData) && $intake->id == ($editData->class_id ?? null)) || old('class_id') == $intake->id ? 'selected' : '' }}>
+                                                                                {{ $intake->name }}
+                                                                            </option>
                                                                         @endforeach
                                                                     @endif
                                                                 </select>
@@ -676,7 +681,7 @@
                                                                 @endif
                                                             </div>
                                                             <div class="col-lg-12 mt-30" id="selectSectionsDiv">
-                                                                <label for="checkbox" class="mb-2">@lang('common.section')
+                                                                <label for="checkbox" class="mb-2">@lang('common.course')
                                                                     <span class="text-danger">*</span></label>
                                                                 <select multiple
                                                                     class="multypol_check_select active position-relative"
@@ -719,7 +724,9 @@
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 {{-- {{ Form::open(['class' => 'form-horizontal', 'id' => 'generate-url-form', 'files' => true, 'route' => 'download-center.content-generate-url-save', 'method' => 'POST', 'enctype' => 'multipart/form-data']) }} --}}
-                <form class="form-horizontal" id="generate-url-form" action="{{ route('download-center.content-generate-url-save') }}" method="POST" enctype="multipart/form-data">
+                <form class="form-horizontal" id="generate-url-form"
+                    action="{{ route('download-center.content-generate-url-save') }}" method="POST"
+                    enctype="multipart/form-data">
                     @csrf
                     <div class="modal-body">
                         <div class="container-fluid">
@@ -800,10 +807,13 @@
                                     <div class="row mt-20" id="generatedUrlContainer" style="display:none;">
                                         <div class="col-lg-12">
                                             <div class="primary_input">
-                                                <label class="primary_input_label" for="generatedUrlOutput">Generated URL</label>
+                                                <label class="primary_input_label" for="generatedUrlOutput">Generated
+                                                    URL</label>
                                                 <div class="d-flex">
-                                                    <input class="primary_input_field read-only-input form-control" type="text" id="generatedUrlOutput" readonly>
-                                                    <button type="button" class="primary-btn small fix-gr-bg ml-10" id="copyGeneratedUrl">@lang('common.copy')</button>
+                                                    <input class="primary_input_field read-only-input form-control"
+                                                        type="text" id="generatedUrlOutput" readonly>
+                                                    <button type="button" class="primary-btn small fix-gr-bg ml-10"
+                                                        id="copyGeneratedUrl">@lang('common.copy')</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -1011,9 +1021,13 @@
                     if (response && response.url) {
                         $('#generatedUrlOutput').val(response.url);
                         $('#generatedUrlContainer').show();
-                        toastr.success("URL generated successfully", "Successful", { timeOut: 5000 });
+                        toastr.success("URL generated successfully", "Successful", {
+                            timeOut: 5000
+                        });
                     } else {
-                        toastr.warning("Generated, but no URL returned", "Warning", { timeOut: 5000 });
+                        toastr.warning("Generated, but no URL returned", "Warning", {
+                            timeOut: 5000
+                        });
                     }
                 },
                 error: function(xhr) {
@@ -1032,7 +1046,120 @@
             const $input = $('#generatedUrlOutput');
             $input.trigger('select');
             document.execCommand('copy');
-            toastr.success("copied_to_clipboard", "Successful", { timeOut: 3000 });
+            toastr.success("copied_to_clipboard", "Successful", {
+                timeOut: 3000
+            });
         });
+    </script>
+    <script>
+        // Dependent dropdown: Load courses when intake changes (in Share/Generate URL modals)
+        (function () {
+            const intakeSelect = '#class_id_email_sms';
+            const courseSelect = '#selectMultiSections';
+            const courseContainer = '#selectSectionsDiv';
+
+            function ensureMultiSelectInitialized() {
+                if ($.fn.multiselect) {
+                    const instance = $(courseSelect).data('plugin_multiselect-instance');
+                    if (!instance) {
+                        // initialize with defaults used in partial
+                        $(courseSelect).multiselect({
+                            columns: 1,
+                            placeholder: 'Select',
+                            search: true,
+                            searchOptions: { delay: 250, showOptGroups: false, searchText: true, searchValue: false },
+                            selectAll: true
+                        });
+                    }
+                }
+            }
+
+            function disableCoursesUI() {
+                if ($.fn.multiselect) {
+                    ensureMultiSelectInitialized();
+                    $(courseSelect).multiselect('disable', true);
+                }
+                $(courseSelect).prop('disabled', true);
+            }
+
+            function enableCoursesUI() {
+                if ($.fn.multiselect) {
+                    ensureMultiSelectInitialized();
+                    $(courseSelect).multiselect('disable', false);
+                }
+                $(courseSelect).prop('disabled', false);
+            }
+
+            function clearCourses() {
+                $(courseSelect).empty();
+                // refresh plugin after clearing
+                if ($.fn.multiselect) {
+                    ensureMultiSelectInitialized();
+                    $(courseSelect).multiselect('reload');
+                }
+                // hide and disable until intake selected
+                disableCoursesUI();
+                $(courseContainer).hide();
+            }
+
+            function populateCourses(items) {
+                clearCourses();
+                items.forEach(function (item) {
+                    $(courseSelect).append(new Option(item.name, item.id, false, false));
+                });
+                // Reload the jquery.multiselect UI so new options appear
+                if ($.fn.multiselect) {
+                    ensureMultiSelectInitialized();
+                    $(courseSelect).multiselect('reload');
+                }
+                if (items.length > 0) {
+                    enableCoursesUI();
+                    $(courseContainer).show();
+                } else {
+                    disableCoursesUI();
+                    $(courseContainer).show(); // show container but disabled with no options
+                }
+            }
+
+            function loadCourses(intakeId) {
+                if (!intakeId) {
+                    clearCourses();
+                    return;
+                }
+                const url = "{{ url('administration/download-center/get-courses') }}" + '/' + intakeId;
+                disableCoursesUI();
+                console.log('Loading courses for intake', intakeId, 'GET', url);
+                $.get(url)
+                    .done(function (resp) {
+                        console.log('Courses response:', resp);
+                        if (resp && resp.status && Array.isArray(resp.data)) {
+                            populateCourses(resp.data);
+                        } else {
+                            clearCourses();
+                        }
+                    })
+                    .fail(function (xhr) {
+                        console.error('Failed to load courses', xhr.status, xhr.responseText);
+                        clearCourses();
+                    })
+                    .always(function () {
+                        // leave disabled if no items, enabled if items were populated in populateCourses
+                    });
+            }
+
+            // Bind change handler
+            $(document).on('change', intakeSelect, function () {
+                loadCourses($(this).val());
+            });
+
+            // If an intake is preselected (e.g., when editing), load its courses on init
+            const initialIntake = $(intakeSelect).val();
+            if (initialIntake) {
+                loadCourses(initialIntake);
+            } else {
+                ensureMultiSelectInitialized();
+                clearCourses();
+            }
+        })();
     </script>
 @endpush
