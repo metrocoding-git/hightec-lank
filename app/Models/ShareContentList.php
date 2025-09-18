@@ -43,4 +43,10 @@ class ShareContentList extends Model
     {
         return $this->belongsToMany(Content::class, 'share_content_list_content');
     }
+
+    // Many-to-many with courses
+    public function courses()
+    {
+        return $this->belongsToMany(Course::class, 'share_content_list_courses');
+    }
 }

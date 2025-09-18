@@ -109,6 +109,7 @@
                                                 <th>ID</th>
                                                 <th>TITLE</th>
                                                 <th>ROLE</th>
+                                                <th>INTAKE</th>
                                                 <th>SHARE DATE</th>
                                                 <th>VALID UPTO</th>
                                                 <th style="max-width: 150px; ">URL</th>
@@ -145,13 +146,21 @@
                                                     if (empty($sharedByNames)) {
                                                         $sharedByNames = '-';
                                                     }
+                                                    // $intake = $sharedContent->intake
+                                                    //     ->pluck('name')
+                                                    //     ->implode(', ');
+                                                    // if (empty($sharedByNames)) {
+                                                    //     $sharedByNames = '-';
+                                                    // }
                                                     $description = $sharedContent->description ?? 'No Description';
                                                     $url = $sharedContent->url ?? 'No url';
+                                                    $intake = $sharedContent->intake->name ?? '-';
                                                 @endphp
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
                                                     <td>{{ $sharedContent->title }}</td>
                                                     <td>{{ $roleName }}</td>
+                                                    <td>{{ $intake }}</td>
                                                     <td>{{ $shareDate }}</td>
                                                     <td>{{ $validUpto }}</td>
                                                     <td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $url }}</td>
@@ -170,10 +179,17 @@
                                                                     @lang('downloadCenter.copy_url')
                                                                 </a>
                                                             @endif
-                                                            <a class="modalLink dropdown-item" data-modal-size="large-modal"
-                                                                title="@lang('downloadCenter.view_shared_content')" href="#">
-                                                                @lang('common.view')
-                                                            </a>
+                                                                <a href="#" class="dropdown-item viewSharedContentBtn" title="@lang('downloadCenter.view_shared_content')"
+                                                                   data-title="{{ $sharedContent->title }}"
+                                                                   data-role="{{ $roleName }}"
+                                                                   data-send_type="{{ $sendType }}"
+                                                                   data-share_date="{{ $shareDate }}"
+                                                                   data-valid_upto="{{ $validUpto }}"
+                                                                   data-url="{{ $url }}"
+                                                                   data-description="{{ $description }}"
+                                                                   data-shared_by="{{ $sharedByNames }}">
+                                                                    @lang('common.view')
+                                                                </a>
                                                             <a class="dropdown-item" data-toggle="modal"
                                                                 data-target="#deleteModal{{ $sharedContent->id }}"
                                                                 href="#">
@@ -221,6 +237,43 @@
                                         </tbody>
                                     </table>
                                 </x-table>
+                                <!-- View Shared Content Modal -->
+                                <div class="modal fade admin-query single-content-modal" id="viewSharedContent" tabindex="-1" role="dialog" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered large-modal" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h4 class="modal-title" id="view_sc_modal_title">@lang('downloadCenter.view_shared_content')</h4>
+                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="container-fluid">
+                                                    <div class="row content-container">
+                                                        <div class="col-lg-8">
+                                                            <div class="single-content-modal-info">
+                                                                <div class="content-modal-section-title">@lang('downloadCenter.details')</div>
+                                                                <ul class="content-links list-unstyled">
+                                                                    <li class="attached-content-item"><strong>@lang('downloadCenter.title'):</strong> <span id="view_sc_title">-</span></li>
+                                                                    <li class="attached-content-item"><strong>@lang('common.role'):</strong> <span id="view_sc_role">-</span></li>
+                                                                    <li class="attached-content-item"><strong>@lang('downloadCenter.send_to'):</strong> <span id="view_sc_send_type">-</span></li>
+                                                                    <li class="attached-content-item"><strong>@lang('downloadCenter.share_date'):</strong> <span id="view_sc_share_date">-</span></li>
+                                                                    <li class="attached-content-item"><strong>@lang('downloadCenter.valid_upto'):</strong> <span id="view_sc_valid_upto">-</span></li>
+                                                                    <li class="attached-content-item"><strong>@lang('downloadCenter.url'):</strong> <a id="view_sc_url" href="#" target="_blank">-</a></li>
+                                                                    <li class="attached-content-item"><strong>@lang('downloadCenter.description'):</strong> <span id="view_sc_description">-</span></li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-4">
+                                                            <div class="content-modal-section-title sidebar">@lang('downloadCenter.shared_by')</div>
+                                                            <div class="single-content-modal-info">
+                                                                <p id="view_sc_shared_by" class="mb-0">-</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -239,5 +292,35 @@
         $(document).on('click', '.copyToClipboard', function(e) {
             toastr.success("Link Copied", 'Success');
         });
+
+        // Populate and show View modal for Shared Content
+        $(document).on('click', '.viewSharedContentBtn', function(e){
+            e.preventDefault();
+            const title       = $(this).data('title') || '-';
+            const role        = $(this).data('role') || '-';
+            const sendType    = $(this).data('send_type') || '-';
+            const shareDate   = $(this).data('share_date') || '-';
+            const validUpto   = $(this).data('valid_upto') || '-';
+            const url         = $(this).data('url') || '';
+            const description = $(this).data('description') || '-';
+            const sharedBy    = $(this).data('shared_by') || '-';
+
+            $('#view_sc_modal_title').text(title);
+            $('#view_sc_title').text(title);
+            $('#view_sc_role').text(role);
+            $('#view_sc_send_type').text(sendType);
+            $('#view_sc_share_date').text(shareDate);
+            $('#view_sc_valid_upto').text(validUpto);
+            if (url && url !== 'No url') {
+                $('#view_sc_url').attr('href', url).text(url);
+            } else {
+                $('#view_sc_url').attr('href', '#').text('-');
+            }
+            $('#view_sc_description').text(description);
+            $('#view_sc_shared_by').text(sharedBy);
+
+            $('#viewSharedContent').modal('show');
+        });
     </script>
+
 @endpush

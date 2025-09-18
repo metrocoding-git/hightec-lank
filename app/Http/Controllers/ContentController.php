@@ -157,17 +157,27 @@ class ContentController extends Controller
      */
     public function shareListSave(Request $request)
     {
-        $validated = $request->validate([
+        $rules = [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'shareDate' => 'required|string',
             'validUpto' => 'required|string',
             'content_ids' => 'required|array|min:1',
             'content_ids.*' => 'integer|exists:contents,id',
-            'role_id' => 'required|integer|exists:roles,id',
-            'individual_content_user' => 'required|array|min:1',
-            'individual_content_user.*' => 'integer|exists:users,id',
-        ]);
+            'selectTab' => 'required|in:I,C', // 'I' for Individual, 'C' for Course
+        ];
+
+        if ($request->input('selectTab') === 'I') {
+            $rules['role_id'] = 'integer|exists:roles,id';
+            $rules['individual_content_user'] = 'required|array|min:1';
+            $rules['individual_content_user.*'] = 'integer|exists:users,id';
+        } elseif ($request->input('selectTab') === 'C') {
+            $rules['intake_id'] = 'required|integer|exists:intakes,id';
+            $rules['course_ids'] = 'required|array|min:1';
+            $rules['course_ids.*'] = 'integer|exists:courses,id';
+        }
+
+        $validated = $request->validate($rules);
 
         // Parse dates (incoming as m/d/Y)
         $saveDate = Carbon::createFromFormat('m/d/Y', $validated['shareDate'])->format('Y-m-d');
@@ -175,18 +185,35 @@ class ContentController extends Controller
 
         DB::beginTransaction();
         try {
-            $share = ShareContentList::create([
-                'role_id' => $validated['role_id'],
-                'send_to' => 'I', 
+            $shareData = [
+               
                 'title' => $validated['title'],
                 'description' => $validated['description'] ?? null,
                 'save_date' => $saveDate,
                 'valid_date' => $validDate,
-            ]);
+                'send_to' => $validated['selectTab'],
+            ];
 
-            // Attach users and contents via pivot tables
-            $share->users()->sync($validated['individual_content_user']);
+            if ($validated['selectTab'] === 'I') {
+                $shareData['role_id'] = $validated['role_id'];
+                $shareData['intake_id'] = null; // Ensure intake_id is null for individual shares
+            } elseif ($validated['selectTab'] === 'C') {
+                $shareData['intake_id'] = $validated['intake_id'];
+                $shareData['role_id'] = 0; // Set role_id to 0 for course shares as it's not nullable
+            }
+
+            $share = ShareContentList::create($shareData);
+
+            // Attach contents via pivot table
             $share->contents()->sync($validated['content_ids']);
+
+            if ($validated['selectTab'] === 'I') {
+                // Attach users via pivot table
+                $share->users()->sync($validated['individual_content_user']);
+            } elseif ($validated['selectTab'] === 'C') {
+                // Attach courses via pivot table
+                $share->courses()->sync($validated['course_ids']);
+            }
 
             DB::commit();
 
@@ -339,6 +366,37 @@ class ContentController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'Failed to save generated URL data',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * View shared content details.
+     */
+    public function viewSharedContent($id)
+    {
+        try {
+            $sharedContent = ShareContentList::with(['role', 'intake', 'users', 'courses', 'contents'])
+                                            ->findOrFail($id);
+
+            // Format dates for display
+            $sharedContent->save_date = $sharedContent->save_date ? Carbon::parse($sharedContent->save_date)->format('d/m/Y') : '-';
+            $sharedContent->valid_date = $sharedContent->valid_date ? Carbon::parse($sharedContent->valid_date)->format('d/m/Y') : '-';
+
+            return response()->json([
+                'status' => true,
+                'data' => $sharedContent,
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Shared content not found.',
+            ], 404);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to load shared content details.',
                 'error' => $e->getMessage(),
             ], 500);
         }

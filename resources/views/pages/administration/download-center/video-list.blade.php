@@ -183,46 +183,46 @@
                                         <div class="single-video-item"
                                             style="background-image: url(http://img.youtube.com/vi/{{ $ytId }}/hqdefault.jpg); height: 300px" >
                                             <div class="single-video-info ">
-                                                <div class="video-action-btns">
-                                                    <ul>
-                                                        <li>
-                                                            <a href="#" class="viewVideoBtn" title="@lang('downloadCenter.view_video')"
-                                                               data-title="{{ $video->title }}"
-                                                               data-video_link="{{ $video->video_link }}"
-                                                               data-intake="{{ optional($video->intake)->name }}"
-                                                               data-courses='@json($video->courses->pluck("name"))'>
-                                                                <i class="fas fa-bars"></i>
-                                                            </a>
-                                                        </li>
-                                                    
-                                                            <li>
-                                                                <a href="#" role="button" class="editVideoBtn" data-modal-size="large-modal"
-                                                                    title="@lang('downloadCenter.edit_video')"
-                                                                    data-id="{{ $video->id }}"
-                                                                    data-intake_id="{{ $video->intake_id }}"
-                                                                    data-title="{{ $video->title }}"
-                                                                    data-video_link="{{ $video->video_link }}"
-                                                                    data-description="{{ $video->description }}"
-                                                                    data-course-ids='@json($video->courses->pluck("id"))'>
-                                                                    <i class="fas fa-pen"></i>
-                                                                </a>
-                                                            </li>
-                                                        
-                                                    
-                                                            <li>
-                                                                <a data-toggle="modal"
-                                                                    data-target="#deleteModal{{ @$video->id }}"
-                                                                    href="#">
-                                                                    <i class="fas fa-trash"></i>
-                                                                </a>
-                                                            </li>
-                                                        
-                                                    </ul>
-                                                </div>
-                                            <div class="vidoe-title text-center text-white text-xl font-bold">
+                                                <div class="vidoe-title text-center text-white text-xl font-bold">
                                                     {{ $video->title }}
                                                 </div>
                                             </div>
+                                        </div>
+                                        <div class="video-action-btns">
+                                            <ul>
+                                                <li>
+                                                    <a href="#" class="viewVideoBtn" title="@lang('downloadCenter.view_video')"
+                                                       data-title="{{ $video->title }}"
+                                                       data-video_link="{{ $video->video_link }}"
+                                                       data-intake="{{ optional($video->intake)->name }}"
+                                                       data-courses='@json($video->courses->pluck("name"))'>
+                                                        <i class="fas fa-bars"></i>
+                                                    </a>
+                                                </li>
+                                            
+                                                    <li>
+                                                        <a href="#" role="button" class="editVideoBtn" data-modal-size="large-modal"
+                                                            title="@lang('downloadCenter.edit_video')"
+                                                            data-id="{{ $video->id }}"
+                                                            data-intake_id="{{ $video->intake_id }}"
+                                                            data-title="{{ $video->title }}"
+                                                            data-video_link="{{ $video->video_link }}"
+                                                            data-description="{{ $video->description }}"
+                                                            data-course-ids='@json($video->courses->pluck("id"))'>
+                                                            <i class="fas fa-pen"></i>
+                                                        </a>
+                                                    </li>
+                                                
+                                            
+                                                    <li>
+                                                        <a data-toggle="modal"
+                                                            data-target="#deleteModal{{ @$video->id }}"
+                                                            href="#">
+                                                            <i class="fas fa-trash"></i>
+                                                        </a>
+                                                    </li>
+                                                
+                                            </ul>
                                         </div>
                                     </div>
                                     {{-- Start Delete Modal --}}
@@ -779,8 +779,7 @@ $('#viewVideoModal').on('hidden.bs.modal', function(){
         // Set form action for update
         $('#edit-video-form').attr('action', '{{ url('administration/download-center/video-list-update') }}' + '/' + id);
 
-        // Prefill
-        $('#edit_video_intake_id').val(intakeId).trigger('change');
+        // Prefill simple fields
         $('#edit_title').val(title);
         $('#edit_video_link').val(videoLink);
         $('#edit_description').val(description);
@@ -793,8 +792,33 @@ $('#viewVideoModal').on('hidden.bs.modal', function(){
             $('#edit_video_selectSectionsDiv').show();
         });
 
-        // Show modal (loadCourses will be triggered via intake change)
-        $('#editVideo').modal('show');
+        // Show modal first, then set intake and trigger change to load courses
+        $('#editVideo')
+            .off('shown.bs.modal.editIntakeOnce')
+            .on('shown.bs.modal.editIntakeOnce', function(){
+                const $intake = $('#edit_video_intake_id');
+                const valueToSet = String(intakeId ?? '');
+
+                // Explicitly select the correct option
+                $intake.find('option').prop('selected', false);
+                $intake.find('option[value="'+ valueToSet +'"]').prop('selected', true);
+                $intake.val(valueToSet);
+
+                // Refresh common select plugins if present
+                if ($.fn.select2 && $intake.data('select2')) {
+                    $intake.trigger('change.select2'); // updates UI and fires change
+                } else {
+                    if ($.fn.niceSelect) {
+                        try { $intake.niceSelect('update'); } catch (e) {}
+                    }
+                    // Fire change to load courses via our handler
+                    $intake.trigger('change');
+                }
+
+                // Remove this one-time handler
+                $(this).off('shown.bs.modal.editIntakeOnce');
+            })
+            .modal('show');
     });
 
     // Handle edit submit via AJAX PUT

@@ -1003,7 +1003,23 @@
             const method = shareContent.attr('method');
             const formData = new FormData(shareContent[0]);
             let submitButton = $('#save_button_qu');
-            submitButton.prop('disabled', false);
+            submitButton.prop('disabled', true); // Disable button on submit
+
+            // Determine active tab and add relevant data to formData
+            const activeTab = $('ul.nav-tabs li a.active').attr('selectTab');
+            formData.append('selectTab', activeTab);
+
+            if (activeTab === 'I') { // Individual tab
+                formData.append('role_id', $('#userByRoleContent').val());
+                $('#individualContentUser option:selected').each(function() {
+                    formData.append('individual_content_user[]', $(this).val());
+                });
+            } else if (activeTab === 'C') { // Course tab
+                formData.append('intake_id', $('#class_id_email_sms').val());
+                $('#selectMultiSections option:selected').each(function() {
+                    formData.append('course_ids[]', $(this).val());
+                });
+            }
 
             $.ajax({
                 url: submit_url,
@@ -1013,10 +1029,16 @@
                 processData: false,
                 dataType: 'JSON',
                 success: function(response) {
-                    location.reload();
-                    toastr.success("Save Successfully", "Successful", {
-                        timeOut: 5000,
-                    });
+                    if (response.status) {
+                        location.reload();
+                        toastr.success(response.message || "Save Successfully", "Successful", {
+                            timeOut: 5000,
+                        });
+                    } else {
+                        toastr.error(response.message || "Failed to save", "Error", {
+                            timeOut: 5000,
+                        });
+                    }
                 },
                 error: function(xhr) {
                     console.log(xhr.responseJSON.errors.title);
