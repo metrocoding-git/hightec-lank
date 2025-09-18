@@ -257,4 +257,8 @@ Route::controller(ContentController::class)->group(function () {
     Route::post('administration/download-center/content-generate-url-save', 'generateUrlSave')->name('download-center.content-generate-url-save');
     // Dependent dropdown: get courses for a given intake (used in Share/Generate URL modals)
     Route::get('administration/download-center/get-courses/{intakeId}', 'getCoursesByIntake')->name('download-center.get-courses-by-intake');
+    // Save generated URL data
+    Route::post('administration/download-center/save-generated-url-data', 'saveGeneratedUrlData')->name('download-center.save-generated-url-data');
+    // View shared content details
+    Route::get('administration/download-center/shared-content-view/{id}', 'viewSharedContent')->name('download-center.shared-content-view');
 });

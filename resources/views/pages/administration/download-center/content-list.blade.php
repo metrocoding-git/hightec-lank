@@ -825,6 +825,8 @@
                                             data-dismiss="modal">@lang('downloadCenter.cancel')</button>
                                         <button class="primary-btn fix-gr-bg submit" id="save_button_q"
                                             type="submit">@lang('downloadCenter.generate_url')</button>
+                                        <button class="primary-btn fix-gr-bg submit" id="saveGeneratedUrlButton"
+                                            type="button" style="display:none;">@lang('common.save')</button>
                                     </div>
                                 </div>
                             </div>
@@ -844,6 +846,40 @@
 @push('script')
     <script>
         $(document).ready(function() {
+            // Function to clear individual fields
+            function clearIndividualFields() {
+                $('#userByRoleContent').val('').niceSelect('update'); // Clear role select
+                $('#individualContentUser').val([]).multiselect('reload'); // Clear individual user select
+            }
+
+            // Function to clear course fields
+            function clearCourseFields() {
+                $('#class_id_email_sms').val('').niceSelect('update'); // Clear intake select
+                $('#selectMultiSections').val([]).multiselect('reload'); // Clear course select
+                // Also clear and hide the course options if they were loaded
+                (function () {
+                    const courseSelect = '#selectMultiSections';
+                    const courseContainer = '#selectSectionsDiv';
+                    if ($.fn.multiselect) {
+                        $(courseSelect).empty().multiselect('reload');
+                        $(courseSelect).multiselect('disable', true);
+                    }
+                    $(courseSelect).prop('disabled', true);
+                    $(courseContainer).hide();
+                })();
+            }
+
+            // Event listener for tab clicks
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
+                var activeTabId = $(e.target).attr('href'); // #indivitual_video or #class_section_video
+
+                if (activeTabId === '#indivitual_video') {
+                    clearCourseFields();
+                } else if (activeTabId === '#class_section_video') {
+                    clearIndividualFields();
+                }
+            });
+
             $(document).on('click', '.shareContentData', function(e) {
                 e.preventDefault();
                 var selectedData = [];
@@ -967,7 +1003,23 @@
             const method = shareContent.attr('method');
             const formData = new FormData(shareContent[0]);
             let submitButton = $('#save_button_qu');
-            submitButton.prop('disabled', false);
+            submitButton.prop('disabled', true); // Disable button on submit
+
+            // Determine active tab and add relevant data to formData
+            const activeTab = $('ul.nav-tabs li a.active').attr('selectTab');
+            formData.append('selectTab', activeTab);
+
+            if (activeTab === 'I') { // Individual tab
+                formData.append('role_id', $('#userByRoleContent').val());
+                $('#individualContentUser option:selected').each(function() {
+                    formData.append('individual_content_user[]', $(this).val());
+                });
+            } else if (activeTab === 'C') { // Course tab
+                formData.append('intake_id', $('#class_id_email_sms').val());
+                $('#selectMultiSections option:selected').each(function() {
+                    formData.append('course_ids[]', $(this).val());
+                });
+            }
 
             $.ajax({
                 url: submit_url,
@@ -977,10 +1029,16 @@
                 processData: false,
                 dataType: 'JSON',
                 success: function(response) {
-                    location.reload();
-                    toastr.success("Save Successfully", "Successful", {
-                        timeOut: 5000,
-                    });
+                    if (response.status) {
+                        location.reload();
+                        toastr.success(response.message || "Save Successfully", "Successful", {
+                            timeOut: 5000,
+                        });
+                    } else {
+                        toastr.error(response.message || "Failed to save", "Error", {
+                            timeOut: 5000,
+                        });
+                    }
                 },
                 error: function(xhr) {
                     console.log(xhr.responseJSON.errors.title);
@@ -1021,6 +1079,8 @@
                     if (response && response.url) {
                         $('#generatedUrlOutput').val(response.url);
                         $('#generatedUrlContainer').show();
+                        $('#save_button_q').hide(); // Hide generate button
+                        $('#saveGeneratedUrlButton').show(); // Show save button
                         toastr.success("URL generated successfully", "Successful", {
                             timeOut: 5000
                         });
@@ -1048,6 +1108,66 @@
             document.execCommand('copy');
             toastr.success("copied_to_clipboard", "Successful", {
                 timeOut: 3000
+            });
+        });
+
+        $(document).on('click', '#saveGeneratedUrlButton', function(e) {
+            e.preventDefault();
+
+            let saveButton = $(this);
+            saveButton.prop('disabled', true); // Disable button to prevent multiple clicks
+
+            const title = $('#generateUrl #title').val();
+            const shareDate = $('#shareDateUrl').val();
+            const validUpto = $('#validUptoUrl').val();
+            const url = $('#generatedUrlOutput').val();
+            const contentIds = [];
+            $('#generateUrl .contentShowList input[name="content_ids[]"]').each(function() {
+                contentIds.push($(this).val());
+            });
+
+            $.ajax({
+                url: "{{ route('download-center.save-generated-url-data') }}",
+                type: "POST",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    title: title,
+                    shareDate: shareDate,
+                    validUpto: validUpto,
+                    url: url,
+                    content_ids: contentIds
+                },
+                dataType: 'JSON',
+                success: function(response) {
+                    if (response.status) {
+                        toastr.success(response.message, "Successful", {
+                            timeOut: 5000,
+                        });
+                        $('#generateUrl').modal('hide'); // Close the modal
+                        location.reload(); // Reload the page to show updated list
+                    } else {
+                        toastr.error(response.message, "Error", {
+                            timeOut: 5000,
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    let errors = xhr.responseJSON.errors;
+                    if (errors) {
+                        if (errors.title) $('#generateTitleError').html(errors.title[0]);
+                        if (errors.shareDate) $('#generateShareDateError').html(errors.shareDate[0]);
+                        if (errors.validUpto) $('#generateValidUptoError').html(errors.validUpto[0]);
+                        if (errors.url) toastr.error(errors.url[0], "Error");
+                        if (errors.content_ids) toastr.error(errors.content_ids[0], "Error");
+                    } else {
+                        toastr.error("An unexpected error occurred.", {
+                timeOut: 3000
+            });
+                    }
+                },
+                complete: function() {
+                    saveButton.prop('disabled', false); // Re-enable button
+                }
             });
         });
     </script>
