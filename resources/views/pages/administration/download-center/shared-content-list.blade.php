@@ -250,7 +250,7 @@
                                                     <div class="row content-container">
                                                         <div class="col-lg-8">
                                                             <div class="single-content-modal-info">
-                                                                <div class="content-modal-section-title">@lang('downloadCenter.details')</div>
+                                                                <div class="content-modal-section-title"><strong> Details :</strong></div>
                                                                 <ul class="content-links list-unstyled">
                                                                     <li class="attached-content-item"><strong>@lang('downloadCenter.title'):</strong> <span id="view_sc_title">-</span></li>
                                                                     <li class="attached-content-item"><strong>@lang('common.role'):</strong> <span id="view_sc_role">-</span></li>
@@ -263,7 +263,7 @@
                                                             </div>
                                                         </div>
                                                         <div class="col-lg-4">
-                                                            <div class="content-modal-section-title sidebar">@lang('downloadCenter.shared_by')</div>
+                                                            <div class="">@lang('downloadCenter.shared_by')</div>
                                                             <div class="single-content-modal-info">
                                                                 <p id="view_sc_shared_by" class="mb-0">-</p>
                                                             </div>
