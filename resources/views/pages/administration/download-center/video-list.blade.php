@@ -712,45 +712,6 @@ $('#viewVideoModal').on('hidden.bs.modal', function(){
 });
 </script>
 <script>
-// Edit button: open Add Video modal in edit mode with prefilled data
-$(document).on('click', '.editVideoBtn', function (e) {
-    e.preventDefault();
-
-    const id          = $(this).data('id');
-    const intakeId    = $(this).data('intake_id');
-    const title       = $(this).data('title');
-    const videoLink   = $(this).data('video_link');
-    const description = $(this).data('description') || '';
-    let courseIds     = $(this).data('courseIds') || [];
-    if (!Array.isArray(courseIds)) { try { courseIds = JSON.parse(courseIds); } catch (_) { courseIds = []; } }
-
-    // Switch to update route/method
-    $('#addEditVideoModalTitle').text('Edit video');
-    $('#add-video-form').attr('action', '{{ url('administration/download-center/video-list-update') }}' + '/' + id);
-    $('#video_form_method').val('PUT');
-    $('#video_id').val(id);
-
-    // Prefill fields
-    $('#video_intake_id').val(intakeId).trigger('change');
-    $('#title').val(title);
-    $('#video_link').val(videoLink);
-    $('#description').val(description);
-
-    // Disable save while loading courses
-    $('#save_button_query').data('loading-courses', true).prop('disabled', true);
-    // When courses are loaded, select and re-enable save
-    $('#video_course_ids').one('courses:loaded', function(){
-        const $sel = $('#video_course_ids');
-        $sel.val(courseIds.map(String));
-        if ($.fn.multiselect) { $sel.multiselect('reload'); }
-        $('#video_selectSectionsDiv').show();
-        $('#save_button_query').data('loading-courses', false).prop('disabled', false);
-    });
-
-    $('#addVideo').modal('show');
-});
-</script>
-<script>
 // ----- Edit Modal: Intake -> Courses dependent dropdown and form handling -----
 (function(){
     const intakeSelect = '#edit_video_intake_id';

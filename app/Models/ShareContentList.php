@@ -15,13 +15,21 @@ class ShareContentList extends Model
         'title',
         'description',
         'save_date',
-        'valid_date'
+        'valid_date',
+        'url',
+        'intake_id'
     ];
 
     // Belongs to role
     public function role()
     {
         return $this->belongsTo(Role::class);
+    }
+
+    // Belongs to intake
+    public function intake()
+    {
+        return $this->belongsTo(Intake::class);
     }
 
     // Many-to-many with users

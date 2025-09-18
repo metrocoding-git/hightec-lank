@@ -825,6 +825,8 @@
                                             data-dismiss="modal">@lang('downloadCenter.cancel')</button>
                                         <button class="primary-btn fix-gr-bg submit" id="save_button_q"
                                             type="submit">@lang('downloadCenter.generate_url')</button>
+                                        <button class="primary-btn fix-gr-bg submit" id="saveGeneratedUrlButton"
+                                            type="button" style="display:none;">@lang('common.save')</button>
                                     </div>
                                 </div>
                             </div>
@@ -1055,6 +1057,8 @@
                     if (response && response.url) {
                         $('#generatedUrlOutput').val(response.url);
                         $('#generatedUrlContainer').show();
+                        $('#save_button_q').hide(); // Hide generate button
+                        $('#saveGeneratedUrlButton').show(); // Show save button
                         toastr.success("URL generated successfully", "Successful", {
                             timeOut: 5000
                         });
@@ -1082,6 +1086,66 @@
             document.execCommand('copy');
             toastr.success("copied_to_clipboard", "Successful", {
                 timeOut: 3000
+            });
+        });
+
+        $(document).on('click', '#saveGeneratedUrlButton', function(e) {
+            e.preventDefault();
+
+            let saveButton = $(this);
+            saveButton.prop('disabled', true); // Disable button to prevent multiple clicks
+
+            const title = $('#generateUrl #title').val();
+            const shareDate = $('#shareDateUrl').val();
+            const validUpto = $('#validUptoUrl').val();
+            const url = $('#generatedUrlOutput').val();
+            const contentIds = [];
+            $('#generateUrl .contentShowList input[name="content_ids[]"]').each(function() {
+                contentIds.push($(this).val());
+            });
+
+            $.ajax({
+                url: "{{ route('download-center.save-generated-url-data') }}",
+                type: "POST",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    title: title,
+                    shareDate: shareDate,
+                    validUpto: validUpto,
+                    url: url,
+                    content_ids: contentIds
+                },
+                dataType: 'JSON',
+                success: function(response) {
+                    if (response.status) {
+                        toastr.success(response.message, "Successful", {
+                            timeOut: 5000,
+                        });
+                        $('#generateUrl').modal('hide'); // Close the modal
+                        location.reload(); // Reload the page to show updated list
+                    } else {
+                        toastr.error(response.message, "Error", {
+                            timeOut: 5000,
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    let errors = xhr.responseJSON.errors;
+                    if (errors) {
+                        if (errors.title) $('#generateTitleError').html(errors.title[0]);
+                        if (errors.shareDate) $('#generateShareDateError').html(errors.shareDate[0]);
+                        if (errors.validUpto) $('#generateValidUptoError').html(errors.validUpto[0]);
+                        if (errors.url) toastr.error(errors.url[0], "Error");
+                        if (errors.content_ids) toastr.error(errors.content_ids[0], "Error");
+                    } else {
+                        toastr.error("An unexpected error occurred.", {
+                timeOut: 3000
+            });
+                    }
+                },
+                complete: function() {
+                    saveButton.prop('disabled', false); // Re-enable button
+                }
             });
         });
     </script>

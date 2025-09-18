@@ -111,23 +111,42 @@
                                                 <th>ROLE</th>
                                                 <th>SHARE DATE</th>
                                                 <th>VALID UPTO</th>
-                                                <th>SHARED BY</th>
+                                                <th style="max-width: 150px; ">URL</th>
                                                 <th>DESCRIPTION</th>
                                                 <th>ACTION</th>
                                             </tr>
                                         </thead>
-                                       
+
                                         <tbody>
                                             @forelse($sharedContents as $key => $sharedContent)
                                                 @php
-                                                    $sendTypeMap = ['G' => 'Group', 'I' => 'Individual', 'C' => 'Class', 'P' => 'Public'];
-                                                    $sendType = $sendTypeMap[$sharedContent->send_to ?? 'I'] ?? 'Individual';
+                                                    $sendTypeMap = [
+                                                        'G' => 'Group',
+                                                        'I' => 'Individual',
+                                                        'C' => 'Class',
+                                                        'P' => 'Public',
+                                                    ];
+                                                    $sendType =
+                                                        $sendTypeMap[$sharedContent->send_to ?? 'I'] ?? 'Individual';
                                                     $roleName = optional($sharedContent->role)->role_name ?? '-';
-                                                    $shareDate = $sharedContent->save_date ? \Carbon\Carbon::parse($sharedContent->save_date)->format('d/m/Y') : '-';
-                                                    $validUpto = $sharedContent->valid_date ? \Carbon\Carbon::parse($sharedContent->valid_date)->format('d/m/Y') : '-';
-                                                    $sharedByNames = $sharedContent->users->pluck('name')->implode(', ');
-                                                    if(empty($sharedByNames)) { $sharedByNames = '-'; }
+                                                    $shareDate = $sharedContent->save_date
+                                                        ? \Carbon\Carbon::parse($sharedContent->save_date)->format(
+                                                            'd/m/Y',
+                                                        )
+                                                        : '-';
+                                                    $validUpto = $sharedContent->valid_date
+                                                        ? \Carbon\Carbon::parse($sharedContent->valid_date)->format(
+                                                            'd/m/Y',
+                                                        )
+                                                        : '-';
+                                                    $sharedByNames = $sharedContent->users
+                                                        ->pluck('name')
+                                                        ->implode(', ');
+                                                    if (empty($sharedByNames)) {
+                                                        $sharedByNames = '-';
+                                                    }
                                                     $description = $sharedContent->description ?? 'No Description';
+                                                    $url = $sharedContent->url ?? 'No url';
                                                 @endphp
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
@@ -135,7 +154,7 @@
                                                     <td>{{ $roleName }}</td>
                                                     <td>{{ $shareDate }}</td>
                                                     <td>{{ $validUpto }}</td>
-                                                    <td>{{ $sharedByNames }}</td>
+                                                    <td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $url }}</td>
                                                     <td>{{ $description }}</td>
                                                     <td>
                                                         <x-drop-down>
@@ -146,35 +165,45 @@
                                                                     @lang('downloadCenter.link')
                                                                 </a>
                                                             @endif --}}
+                                                            @if ($sharedContent->url && $sharedContent->url != 'No url')
+                                                                <a class="dropdown-item copyToClipboard" data-clipboard-text="{{ $url }}" href="#">
+                                                                    @lang('downloadCenter.copy_url')
+                                                                </a>
+                                                            @endif
                                                             <a class="modalLink dropdown-item" data-modal-size="large-modal"
                                                                 title="@lang('downloadCenter.view_shared_content')" href="#">
                                                                 @lang('common.view')
                                                             </a>
                                                             <a class="dropdown-item" data-toggle="modal"
-                                                                data-target="#deleteModal{{ $sharedContent->id }}" href="#">
+                                                                data-target="#deleteModal{{ $sharedContent->id }}"
+                                                                href="#">
                                                                 @lang('common.delete')
                                                             </a>
                                                         </x-drop-down>
                                                     </td>
                                                 </tr>
                                                 {{-- Start Delete Modal --}}
-                                                <div class="modal fade admin-query" id="deleteModal{{ $sharedContent->id }}">
+                                                <div class="modal fade admin-query"
+                                                    id="deleteModal{{ $sharedContent->id }}">
                                                     <div class="modal-dialog modal-dialog-centered">
                                                         <div class="modal-content">
                                                             <div class="modal-header">
                                                                 <h4 class="modal-title">@lang('downloadCenter.delete_shared_content')</h4>
-                                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                                <button type="button" class="close"
+                                                                    data-dismiss="modal">&times;</button>
                                                             </div>
                                                             <div class="modal-body">
                                                                 <div class="text-center">
                                                                     <h4>@lang('common.are_you_sure_to_delete')</h4>
                                                                 </div>
                                                                 <div class="mt-40 d-flex justify-content-between">
-                                                                    <button type="button" class="primary-btn tr-bg" data-dismiss="modal">
+                                                                    <button type="button" class="primary-btn tr-bg"
+                                                                        data-dismiss="modal">
                                                                         @lang('common.cancel')
                                                                     </button>
                                                                     <a href="#" class="text-light">
-                                                                        <button class="primary-btn fix-gr-bg" type="button">
+                                                                        <button class="primary-btn fix-gr-bg"
+                                                                            type="button">
                                                                             @lang('common.delete')
                                                                         </button>
                                                                     </a>

@@ -284,4 +284,63 @@ class ContentController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Save generated URL data to share_content_lists table.
+     */
+    public function saveGeneratedUrlData(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'shareDate' => 'required|string',
+            'validUpto' => 'required|string',
+            'url' => 'required|url',
+            'content_ids' => 'required|array|min:1',
+            'content_ids.*' => 'integer|exists:contents,id',
+        ]);
+
+        // Parse dates (incoming as m/d/Y)
+        try {
+            $saveDate = Carbon::createFromFormat('m/d/Y', $validated['shareDate'])->format('Y-m-d');
+            $validDate = Carbon::createFromFormat('m/d/Y', $validated['validUpto'])->format('Y-m-d');
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => false,
+                'errors' => [
+                    'validUpto' => __('Invalid date format'),
+                ],
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $share = ShareContentList::create([
+                'title' => $validated['title'],
+                'role_id' => 0,
+                'description' => null, // No description field in generate URL modal
+                'save_date' => $saveDate,
+                'valid_date' => $validDate,
+                'url' => $validated['url'],
+                'intake_id' => null, // No intake selection in generate URL modal
+            ]);
+
+            // Attach contents via pivot table
+            $share->contents()->sync($validated['content_ids']);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Generated URL data saved successfully',
+                'id' => $share->id,
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to save generated URL data',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

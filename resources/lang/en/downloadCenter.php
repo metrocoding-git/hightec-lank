@@ -63,4 +63,5 @@ return  [
     'view_shared_content'=>'View Shared Content',
     'delete_shared_content'=>'Delete Shared Content',
     'delete_content'=>'Delete Content',
+    'copy_url'=>'Copy URL',
 ];
