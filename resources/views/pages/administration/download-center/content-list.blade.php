@@ -844,6 +844,40 @@
 @push('script')
     <script>
         $(document).ready(function() {
+            // Function to clear individual fields
+            function clearIndividualFields() {
+                $('#userByRoleContent').val('').niceSelect('update'); // Clear role select
+                $('#individualContentUser').val([]).multiselect('reload'); // Clear individual user select
+            }
+
+            // Function to clear course fields
+            function clearCourseFields() {
+                $('#class_id_email_sms').val('').niceSelect('update'); // Clear intake select
+                $('#selectMultiSections').val([]).multiselect('reload'); // Clear course select
+                // Also clear and hide the course options if they were loaded
+                (function () {
+                    const courseSelect = '#selectMultiSections';
+                    const courseContainer = '#selectSectionsDiv';
+                    if ($.fn.multiselect) {
+                        $(courseSelect).empty().multiselect('reload');
+                        $(courseSelect).multiselect('disable', true);
+                    }
+                    $(courseSelect).prop('disabled', true);
+                    $(courseContainer).hide();
+                })();
+            }
+
+            // Event listener for tab clicks
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
+                var activeTabId = $(e.target).attr('href'); // #indivitual_video or #class_section_video
+
+                if (activeTabId === '#indivitual_video') {
+                    clearCourseFields();
+                } else if (activeTabId === '#class_section_video') {
+                    clearIndividualFields();
+                }
+            });
+
             $(document).on('click', '.shareContentData', function(e) {
                 e.preventDefault();
                 var selectedData = [];
