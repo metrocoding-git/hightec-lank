@@ -501,45 +501,69 @@ class HomeController extends Controller
 
     public function itemReceivePost(Request $request)
     {
-         $request->validate([
-        'payment_method' => 'required|string',
-        'supplier_id' => 'required|integer',
-        'store_id' => 'required|integer',
-        'receive_date' => 'required|date',
-        'item_id.*' => 'required|integer',
-        'unit_price.*' => 'required|numeric',
-        'quantity.*' => 'required|numeric',
-    ]);
-
-    // Create master record
-    $receive = ItemReceive::create([
-        'payment_method' => $request->payment_method,
-        'supplier_id' => $request->supplier_id,
-        'store_id' => $request->store_id,
-        'reference_no' => $request->reference_no,
-        'receive_date' => $request->receive_date,
-        'description' => $request->description,
-        'total' => $request->subTotal,
-        'paid' => $request->totalPaid,
-        'due' => $request->totalDueValue,
-    ]);
-
-    // Save items
-    foreach ($request->item_id as $index => $itemId) {
-        ItemReceive::create([
-            'item_receive_id' => $receive->id,
-            'item_id' => $itemId,
-            'unit_price' => $request->unit_price[$index],
-            'quantity' => $request->quantity[$index],
-            'total' => $request->total[$index],
+        // Validate incoming data; arrays for item lines
+        $request->validate([
+            'payment_method' => 'required|string',
+            'supplier_id'    => 'required|integer',
+            'store_id'       => 'required|integer',
+            'receive_date'   => 'required|string', // will parse m/d/Y -> Y-m-d
+            'item_id'        => 'required|array|min:1',
+            'item_id.*'      => 'required|integer',
+            'unit_price'     => 'required|array|min:1',
+            'unit_price.*'   => 'required|numeric',
+            'quantity'       => 'required|array|min:1',
+            'quantity.*'     => 'required|numeric',
         ]);
+
+        try {
+            // Parse date from the UI (m/d/Y) to database format (Y-m-d)
+            $receiveDate = \Carbon\Carbon::createFromFormat('m/d/Y', $request->receive_date)->format('Y-m-d');
+        } catch (\Throwable $e) {
+            // Fallback: try to parse a standard Y-m-d or Y/m/d if user typed differently
+            try {
+                $receiveDate = \Carbon\Carbon::parse($request->receive_date)->format('Y-m-d');
+            } catch (\Throwable $e2) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Invalid receive date format.',
+                ], 422);
+            }
+        }
+
+        try {
+            // Create one row per item, duplicating header fields as per existing schema
+            foreach ($request->item_id as $index => $itemId) {
+                ItemReceive::create([
+                    'payment_method' => $request->payment_method,
+                    'supplier_id'    => $request->supplier_id,
+                    'store_id'       => $request->store_id,
+                    'reference_no'   => $request->reference_no,
+                    'receive_date'   => $receiveDate,
+                    'description'    => $request->description,
+                    'item_id'        => $itemId,
+                    'unit_price'     => $request->unit_price[$index],
+                    'quantity'       => $request->quantity[$index],
+                    // Map line total to existing column name 'sub_total'
+                    'sub_total'      => $request->total[$index] ?? ((float)$request->unit_price[$index] * (float)$request->quantity[$index]),
+                    // Store overall paid if provided; schema has 'total_paid'
+                    'total_paid'     => $request->totalPaid ?? 0,
+                    // Optional bank id if payment_method requires it
+                    'bank_id'        => $request->bank_id ?? null,
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Item received successfully!'
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save item receive.',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
     }
-
-    return response()->json(['success' => true, 'message' => 'Item received successfully!']);
-
-    }
-
-
     public function itemReceiveList()
     {
         return view('pages.account.inventory.item-receive-list');

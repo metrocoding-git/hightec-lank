@@ -527,7 +527,7 @@
                 type: 'POST',
                 data: formData,
                 success: function(response) {
-                    alert('Item received successfully!');
+                    toastr.success("Item received successfully!", 'Success');
                     location.reload(); // or reset form if you want
                 },
                 error: function(xhr) {
