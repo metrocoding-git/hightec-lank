@@ -41,6 +41,52 @@
             display: block;
         }
 
+        .video-action-btns {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 3;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 4px;
+            padding: 5px;
+            display: none;
+        }
+
+        .video-action-btns > ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .video-action-btns li {
+            margin: 0;
+            padding: 0;
+            display: inline-block;
+        }
+
+        .video-action-btns a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            background: #f8f9fa;
+            color: #495057;
+            transition: all 0.3s ease;
+        }
+
+        .video-action-btns a:hover {
+            background: #e9ecef;
+            color: #000;
+            text-decoration: none;
+        }
+
         .single-video-info {
             position: absolute;
             bottom: 25px;
@@ -52,17 +98,6 @@
             width: 90%;
             left: 5%;
             right: 5%;
-        }
-
-        .video-action-btns {
-            display: none;
-        }
-
-        .video-action-btns ul {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            margin-bottom: 30px;
         }
 
         .single-video-item .vidoe-title {
@@ -189,7 +224,7 @@
                                             </div>
                                         </div>
                                         <div class="video-action-btns">
-                                            <ul>
+                                            <ul style="display: flex ; padding: 20px;">
                                                 <li>
                                                     <a href="#" class="viewVideoBtn" title="@lang('downloadCenter.view_video')"
                                                        data-title="{{ $video->title }}"
@@ -594,285 +629,285 @@
     })();
 </script>
 <script>
-// Handle Add Video form submit via AJAX
-$(document).on('submit', '#add-video-form', function (e) {
-    e.preventDefault();
-    const form = $(this);
-    const url = form.attr('action');
-    // Prevent submit while courses are loading
-    if ($('#save_button_query').data('loading-courses') === true) {
-        return alert('Please wait, loading courses...');
-    }
-    // Basic guard for edit: require at least one course selected
-    if ($('#video_form_method').val() === 'PUT') {
-        const selected = $('#video_course_ids').val() || [];
-        if (selected.length === 0) {
-            $('#videoCoursesError').text('Please select at least one course');
-            return;
-        }
-    }
-    const data = {
-        _method: $('#video_form_method').val(),
-        intake_id: $('#video_intake_id').val(),
-        title: $('#title').val(),
-        video_link: $('#video_link').val(),
-        description: $('#description').val(),
-        'course_ids': $('#video_course_ids').val() || []
-    };
-
-    // clear previous errors
-    $('#titleError').text('');
-    $('#videoLinkError').text('');
-
-    $('#save_button_query').prop('disabled', true);
-    $.ajax({
-        url: url,
-        type: 'POST',
-        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-        data: data,
-        success: function (resp) {
-            if (resp && resp.status) {
-                // reset form and UI
-                form[0].reset();
-                // reset courses select
-                $('#video_course_ids').val([]);
-                if ($.fn.multiselect) {
-                    $('#video_course_ids').multiselect('reload');
-                }
-                // close modal
-                $('#addVideo').modal('hide');
-                // optional: reload list
-                location.reload();
-            } else {
-                alert(resp.message || 'Failed to save');
-            }
-        },
-        error: function (xhr) {
-            if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
-                const errs = xhr.responseJSON.errors;
-                if (errs.title) $('#titleError').text(errs.title[0]);
-                if (errs.video_link) $('#videoLinkError').text(errs.video_link[0]);
-            } else {
-                alert('Error saving video');
-            }
-        },
-        complete: function () {
-            $('#save_button_query').prop('disabled', false);
-        }
-    });
-});
-</script>
-<script>
-// Improve icon styling slightly
-$(function(){
-    $('.video-action-btns ul li a i').css({fontSize:'16px', margin:'0 4px'});
-});
-
-function extractYouTubeId(url) {
-    try {
-        const u = new URL(url);
-        if (u.hostname.includes('youtu.be')) {
-            return u.pathname.replace('/', '');
-        }
-        if (u.searchParams.has('v')) {
-            return u.searchParams.get('v');
-        }
-        // last fallback: take last path segment
-        const parts = u.pathname.split('/').filter(Boolean);
-        return parts.length ? parts.pop() : '';
-    } catch (e) {
-        return '';
-    }
-}
-
-// Handle View button: open modal with embedded player and details
-$(document).on('click', '.viewVideoBtn', function(e){
-    e.preventDefault();
-    const title   = $(this).data('title') || '';
-    const link    = $(this).data('video_link') || '';
-    const intake  = $(this).data('intake') || '-';
-    let courses   = $(this).data('courses') || [];
-    if (!Array.isArray(courses)) { try { courses = JSON.parse(courses); } catch (_) { courses = []; } }
-
-    const ytId = extractYouTubeId(link);
-    const embed = ytId ? 'https://www.youtube.com/embed/' + ytId : '';
-
-    $('#viewVideoModalTitle').text(title);
-    $('#viewVideoTitle').text(title);
-    $('#viewVideoIntake').text(intake || '-');
-    $('#viewVideoCourses').text(courses.length ? courses.join(', ') : '-');
-    $('#viewVideoIframe').attr('src', embed);
-
-    $('#viewVideoModal').modal('show');
-});
-
-// Stop video when modal closes
-$('#viewVideoModal').on('hidden.bs.modal', function(){
-    $('#viewVideoIframe').attr('src','');
-});
-</script>
-<script>
-// ----- Edit Modal: Intake -> Courses dependent dropdown and form handling -----
-(function(){
-    const intakeSelect = '#edit_video_intake_id';
-    const courseSelect = '#edit_video_course_ids';
-    const courseContainer = '#edit_video_selectSectionsDiv';
-
-    function ensureMultiSelectInitialized() {
-        if ($.fn.multiselect) {
-            const instance = $(courseSelect).data('plugin_multiselect-instance');
-            if (!instance) {
-                $(courseSelect).multiselect({ columns: 1, placeholder: 'Select', search: true, searchOptions: { delay: 250, showOptGroups: false, searchText: true, searchValue: false }, selectAll: true });
-            }
-        }
-    }
-    function disableCoursesUI() {
-        if ($.fn.multiselect) { ensureMultiSelectInitialized(); $(courseSelect).multiselect('disable', true); }
-        $(courseSelect).prop('disabled', true);
-        $(courseContainer).hide();
-    }
-    function enableCoursesUI() {
-        if ($.fn.multiselect) { ensureMultiSelectInitialized(); $(courseSelect).multiselect('disable', false); }
-        $(courseSelect).prop('disabled', false);
-        $(courseContainer).show();
-    }
-    function clearCourses() {
-        $(courseSelect).empty();
-        if ($.fn.multiselect) { ensureMultiSelectInitialized(); $(courseSelect).multiselect('reload'); }
-        disableCoursesUI();
-    }
-    function populateCourses(items) {
-        $(courseContainer).show();
-        $(courseSelect).empty();
-        items.forEach(function (item) { $(courseSelect).append(new Option(item.name, item.id, false, false)); });
-        if ($.fn.multiselect) { ensureMultiSelectInitialized(); $(courseSelect).multiselect('reload'); }
-        if (items.length > 0) enableCoursesUI(); else disableCoursesUI();
-        $(courseSelect).trigger('courses:loaded');
-    }
-    function loadCourses(intakeId) {
-        if (!intakeId) { clearCourses(); return; }
-        const url = "{{ url('administration/download-center/get-courses') }}" + '/' + intakeId;
-        disableCoursesUI();
-        $.get(url)
-         .done(function(resp){
-            if (resp && resp.status && Array.isArray(resp.data)) populateCourses(resp.data);
-            else if (Array.isArray(resp)) populateCourses(resp);
-            else clearCourses();
-         })
-         .fail(function(){ clearCourses(); });
-    }
-
-    // Bind change handler
-    $(document).on('change', intakeSelect, function(){ loadCourses($(this).val()); });
-
-    // Open edit modal and prefill
-    $(document).on('click', '.editVideoBtn', function(e){
-        e.preventDefault();
-        const id          = $(this).data('id');
-        const intakeId    = $(this).data('intake_id');
-        const title       = $(this).data('title');
-        const videoLink   = $(this).data('video_link');
-        const description = $(this).data('description') || '';
-        let courseIds     = $(this).data('courseIds') || [];
-        if (!Array.isArray(courseIds)) { try { courseIds = JSON.parse(courseIds); } catch (_) { courseIds = []; } }
-
-        // Set form action for update
-        $('#edit-video-form').attr('action', '{{ url('administration/download-center/video-list-update') }}' + '/' + id);
-
-        // Prefill simple fields
-        $('#edit_title').val(title);
-        $('#edit_video_link').val(videoLink);
-        $('#edit_description').val(description);
-
-        // When courses are loaded, select existing values
-        $('#edit_video_course_ids').one('courses:loaded', function(){
-            const $sel = $('#edit_video_course_ids');
-            $sel.val(courseIds.map(String));
-            if ($.fn.multiselect) { $sel.multiselect('reload'); }
-            $('#edit_video_selectSectionsDiv').show();
-        });
-
-        // Show modal first, then set intake and trigger change to load courses
-        $('#editVideo')
-            .off('shown.bs.modal.editIntakeOnce')
-            .on('shown.bs.modal.editIntakeOnce', function(){
-                const $intake = $('#edit_video_intake_id');
-                const valueToSet = String(intakeId ?? '');
-
-                // Explicitly select the correct option
-                $intake.find('option').prop('selected', false);
-                $intake.find('option[value="'+ valueToSet +'"]').prop('selected', true);
-                $intake.val(valueToSet);
-
-                // Refresh common select plugins if present
-                if ($.fn.select2 && $intake.data('select2')) {
-                    $intake.trigger('change.select2'); // updates UI and fires change
-                } else {
-                    if ($.fn.niceSelect) {
-                        try { $intake.niceSelect('update'); } catch (e) {}
-                    }
-                    // Fire change to load courses via our handler
-                    $intake.trigger('change');
-                }
-
-                // Remove this one-time handler
-                $(this).off('shown.bs.modal.editIntakeOnce');
-            })
-            .modal('show');
-    });
-
-    // Handle edit submit via AJAX PUT
-    $(document).on('submit', '#edit-video-form', function(e){
+    // Handle Add Video form submit via AJAX
+    $(document).on('submit', '#add-video-form', function (e) {
         e.preventDefault();
         const form = $(this);
-        const url  = form.attr('action');
+        const url = form.attr('action');
+        // Prevent submit while courses are loading
+        if ($('#save_button_query').data('loading-courses') === true) {
+            return alert('Please wait, loading courses...');
+        }
+        // Basic guard for edit: require at least one course selected
+        if ($('#video_form_method').val() === 'PUT') {
+            const selected = $('#video_course_ids').val() || [];
+            if (selected.length === 0) {
+                $('#videoCoursesError').text('Please select at least one course');
+                return;
+            }
+        }
         const data = {
-            _method: 'PUT',
-            intake_id: $('#edit_video_intake_id').val(),
-            title: $('#edit_title').val(),
-            video_link: $('#edit_video_link').val(),
-            description: $('#edit_description').val(),
-            'course_ids': $('#edit_video_course_ids').val() || []
+            _method: $('#video_form_method').val(),
+            intake_id: $('#video_intake_id').val(),
+            title: $('#title').val(),
+            video_link: $('#video_link').val(),
+            description: $('#description').val(),
+            'course_ids': $('#video_course_ids').val() || []
         };
 
-        // Clear errors
-        $('#editTitleError').text('');
-        $('#editVideoLinkError').text('');
-        $('#editVideoIntakeError').text('');
-        $('#editVideoCoursesError').text('');
+        // clear previous errors
+        $('#titleError').text('');
+        $('#videoLinkError').text('');
 
-        $('#edit_save_button').prop('disabled', true);
+        $('#save_button_query').prop('disabled', true);
         $.ajax({
             url: url,
             type: 'POST',
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
             data: data,
-            success: function(resp){
+            success: function (resp) {
                 if (resp && resp.status) {
-                    $('#editVideo').modal('hide');
+                    // reset form and UI
+                    form[0].reset();
+                    // reset courses select
+                    $('#video_course_ids').val([]);
+                    if ($.fn.multiselect) {
+                        $('#video_course_ids').multiselect('reload');
+                    }
+                    // close modal
+                    $('#addVideo').modal('hide');
+                    // optional: reload list
                     location.reload();
                 } else {
-                    alert((resp && resp.message) ? resp.message : 'Failed to update');
+                    alert(resp.message || 'Failed to save');
                 }
             },
-            error: function(xhr){
+            error: function (xhr) {
                 if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
                     const errs = xhr.responseJSON.errors;
-                    if (errs.title) $('#editTitleError').text(errs.title[0]);
-                    if (errs.video_link) $('#editVideoLinkError').text(errs.video_link[0]);
-                    if (errs.intake_id) $('#editVideoIntakeError').text(errs.intake_id[0]);
-                    if (errs['course_ids']) $('#editVideoCoursesError').text(errs['course_ids'][0]);
+                    if (errs.title) $('#titleError').text(errs.title[0]);
+                    if (errs.video_link) $('#videoLinkError').text(errs.video_link[0]);
                 } else {
-                    let msg = 'Error updating video';
-                    if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
-                    alert(msg);
+                    alert('Error saving video');
                 }
             },
-            complete: function(){
-                $('#edit_save_button').prop('disabled', false);
+            complete: function () {
+                $('#save_button_query').prop('disabled', false);
             }
         });
     });
-})();
+</script>
+<script>
+    // Improve icon styling slightly
+    $(function(){
+        $('.video-action-btns ul li a i').css({fontSize:'16px', margin:'0 4px'});
+    });
+
+    function extractYouTubeId(url) {
+        try {
+            const u = new URL(url);
+            if (u.hostname.includes('youtu.be')) {
+                return u.pathname.replace('/', '');
+            }
+            if (u.searchParams.has('v')) {
+                return u.searchParams.get('v');
+            }
+            // last fallback: take last path segment
+            const parts = u.pathname.split('/').filter(Boolean);
+            return parts.length ? parts.pop() : '';
+        } catch (e) {
+            return '';
+        }
+    }
+
+    // Handle View button: open modal with embedded player and details
+    $(document).on('click', '.viewVideoBtn', function(e){
+        e.preventDefault();
+        const title   = $(this).data('title') || '';
+        const link    = $(this).data('video_link') || '';
+        const intake  = $(this).data('intake') || '-';
+        let courses   = $(this).data('courses') || [];
+        if (!Array.isArray(courses)) { try { courses = JSON.parse(courses); } catch (_) { courses = []; } }
+
+        const ytId = extractYouTubeId(link);
+        const embed = ytId ? 'https://www.youtube.com/embed/' + ytId : '';
+
+        $('#viewVideoModalTitle').text(title);
+        $('#viewVideoTitle').text(title);
+        $('#viewVideoIntake').text(intake || '-');
+        $('#viewVideoCourses').text(courses.length ? courses.join(', ') : '-');
+        $('#viewVideoIframe').attr('src', embed);
+
+        $('#viewVideoModal').modal('show');
+    });
+
+    // Stop video when modal closes
+    $('#viewVideoModal').on('hidden.bs.modal', function(){
+        $('#viewVideoIframe').attr('src','');
+    });
+</script>
+<script>
+    // ----- Edit Modal: Intake -> Courses dependent dropdown and form handling -----
+    (function(){
+        const intakeSelect = '#edit_video_intake_id';
+        const courseSelect = '#edit_video_course_ids';
+        const courseContainer = '#edit_video_selectSectionsDiv';
+
+        function ensureMultiSelectInitialized() {
+            if ($.fn.multiselect) {
+                const instance = $(courseSelect).data('plugin_multiselect-instance');
+                if (!instance) {
+                    $(courseSelect).multiselect({ columns: 1, placeholder: 'Select', search: true, searchOptions: { delay: 250, showOptGroups: false, searchText: true, searchValue: false }, selectAll: true });
+                }
+            }
+        }
+        function disableCoursesUI() {
+            if ($.fn.multiselect) { ensureMultiSelectInitialized(); $(courseSelect).multiselect('disable', true); }
+            $(courseSelect).prop('disabled', true);
+            $(courseContainer).hide();
+        }
+        function enableCoursesUI() {
+            if ($.fn.multiselect) { ensureMultiSelectInitialized(); $(courseSelect).multiselect('disable', false); }
+            $(courseSelect).prop('disabled', false);
+            $(courseContainer).show();
+        }
+        function clearCourses() {
+            $(courseSelect).empty();
+            if ($.fn.multiselect) { ensureMultiSelectInitialized(); $(courseSelect).multiselect('reload'); }
+            disableCoursesUI();
+        }
+        function populateCourses(items) {
+            $(courseContainer).show();
+            $(courseSelect).empty();
+            items.forEach(function (item) { $(courseSelect).append(new Option(item.name, item.id, false, false)); });
+            if ($.fn.multiselect) { ensureMultiSelectInitialized(); $(courseSelect).multiselect('reload'); }
+            if (items.length > 0) enableCoursesUI(); else disableCoursesUI();
+            $(courseSelect).trigger('courses:loaded');
+        }
+        function loadCourses(intakeId) {
+            if (!intakeId) { clearCourses(); return; }
+            const url = "{{ url('administration/download-center/get-courses') }}" + '/' + intakeId;
+            disableCoursesUI();
+            $.get(url)
+             .done(function(resp){
+                if (resp && resp.status && Array.isArray(resp.data)) populateCourses(resp.data);
+                else if (Array.isArray(resp)) populateCourses(resp);
+                else clearCourses();
+             })
+             .fail(function(){ clearCourses(); });
+        }
+
+        // Bind change handler
+        $(document).on('change', intakeSelect, function(){ loadCourses($(this).val()); });
+
+        // Open edit modal and prefill
+        $(document).on('click', '.editVideoBtn', function(e){
+            e.preventDefault();
+            const id          = $(this).data('id');
+            const intakeId    = $(this).data('intake_id');
+            const title       = $(this).data('title');
+            const videoLink   = $(this).data('video_link');
+            const description = $(this).data('description') || '';
+            let courseIds     = $(this).data('courseIds') || [];
+            if (!Array.isArray(courseIds)) { try { courseIds = JSON.parse(courseIds); } catch (_) { courseIds = []; } }
+
+            // Set form action for update
+            $('#edit-video-form').attr('action', '{{ url('administration/download-center/video-list-update') }}' + '/' + id);
+
+            // Prefill simple fields
+            $('#edit_title').val(title);
+            $('#edit_video_link').val(videoLink);
+            $('#edit_description').val(description);
+
+            // When courses are loaded, select existing values
+            $('#edit_video_course_ids').one('courses:loaded', function(){
+                const $sel = $('#edit_video_course_ids');
+                $sel.val(courseIds.map(String));
+                if ($.fn.multiselect) { $sel.multiselect('reload'); }
+                $('#edit_video_selectSectionsDiv').show();
+            });
+
+            // Show modal first, then set intake and trigger change to load courses
+            $('#editVideo')
+                .off('shown.bs.modal.editIntakeOnce')
+                .on('shown.bs.modal.editIntakeOnce', function(){
+                    const $intake = $('#edit_video_intake_id');
+                    const valueToSet = String(intakeId ?? '');
+
+                    // Explicitly select the correct option
+                    $intake.find('option').prop('selected', false);
+                    $intake.find('option[value="'+ valueToSet +'"]').prop('selected', true);
+                    $intake.val(valueToSet);
+
+                    // Refresh common select plugins if present
+                    if ($.fn.select2 && $intake.data('select2')) {
+                        $intake.trigger('change.select2'); // updates UI and fires change
+                    } else {
+                        if ($.fn.niceSelect) {
+                            try { $intake.niceSelect('update'); } catch (e) {}
+                        }
+                        // Fire change to load courses via our handler
+                        $intake.trigger('change');
+                    }
+
+                    // Remove this one-time handler
+                    $(this).off('shown.bs.modal.editIntakeOnce');
+                })
+                .modal('show');
+        });
+
+        // Handle edit submit via AJAX PUT
+        $(document).on('submit', '#edit-video-form', function(e){
+            e.preventDefault();
+            const form = $(this);
+            const url  = form.attr('action');
+            const data = {
+                _method: 'PUT',
+                intake_id: $('#edit_video_intake_id').val(),
+                title: $('#edit_title').val(),
+                video_link: $('#edit_video_link').val(),
+                description: $('#edit_description').val(),
+                'course_ids': $('#edit_video_course_ids').val() || []
+            };
+
+            // Clear errors
+            $('#editTitleError').text('');
+            $('#editVideoLinkError').text('');
+            $('#editVideoIntakeError').text('');
+            $('#editVideoCoursesError').text('');
+
+            $('#edit_save_button').prop('disabled', true);
+            $.ajax({
+                url: url,
+                type: 'POST',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                data: data,
+                success: function(resp){
+                    if (resp && resp.status) {
+                        $('#editVideo').modal('hide');
+                        location.reload();
+                    } else {
+                        alert((resp && resp.message) ? resp.message : 'Failed to update');
+                    }
+                },
+                error: function(xhr){
+                    if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                        const errs = xhr.responseJSON.errors;
+                        if (errs.title) $('#editTitleError').text(errs.title[0]);
+                        if (errs.video_link) $('#editVideoLinkError').text(errs.video_link[0]);
+                        if (errs.intake_id) $('#editVideoIntakeError').text(errs.intake_id[0]);
+                        if (errs['course_ids']) $('#editVideoCoursesError').text(errs['course_ids'][0]);
+                    } else {
+                        let msg = 'Error updating video';
+                        if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+                        alert(msg);
+                    }
+                },
+                complete: function(){
+                    $('#edit_save_button').prop('disabled', false);
+                }
+            });
+        });
+    })();
 </script>
 @endpush
