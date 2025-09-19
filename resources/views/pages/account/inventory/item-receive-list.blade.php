@@ -139,121 +139,107 @@
 
     {{-- Edit Modal --}}
     <div class="modal fade admin-query" id="editItemReceiveModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title">@lang('inventory.edit_item_receive')</h4>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <form id="editItemReceiveForm" method="POST" action="">
-                        @csrf
-                        @method('PUT')
-                        <input type="hidden" name="id" id="edit_item_receive_id">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">@lang('inventory.edit_item_receive')</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editItemReceiveForm" method="POST" action="">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="id" id="edit_item_receive_id">
 
-                        <div class="row">
-                            <div class="col-lg-12 mb-20">
-                                <div class="primary_input">
-                                    <label class="primary_input_label" for="edit_reference_no">@lang('inventory.reference_no') <span class="text-danger"> *</span></label>
-                                    <input class="primary_input_field form-control" type="text" name="reference_no" id="edit_reference_no" autocomplete="off" readonly>
-                                </div>
+                    <div class="row">
+                        <!-- Left Column -->
+                        <div class="col-md-6">
+                            <div class="form-group mb-20">
+                                <label for="edit_reference_no">@lang('inventory.reference_no') <span class="text-danger">*</span></label>
+                                <input class="form-control" type="text" name="reference_no" id="edit_reference_no" autocomplete="off" readonly>
+                            </div>
+
+                            <div class="form-group mb-20">
+                                <label for="edit_supplier_id">@lang('inventory.supplier_company_name') <span class="text-danger">*</span></label>
+                                <select class="form-control" name="supplier_id" id="edit_supplier_id">
+                                    <option value="">@lang('inventory.select_supplier')</option>
+                                    {{-- Suppliers will be loaded via AJAX or passed from controller --}}
+                                </select>
+                            </div>
+
+                            <div class="form-group mb-20">
+                                <label for="edit_store_id">@lang('inventory.store_name') <span class="text-danger">*</span></label>
+                                <select class="form-control" name="store_id" id="edit_store_id">
+                                    <option value="">@lang('inventory.select_store')</option>
+                                    {{-- Branches/Stores will be loaded via AJAX or passed from controller --}}
+                                </select>
+                            </div>
+
+                            <div class="form-group mb-20">
+                                <label for="edit_receive_date">@lang('inventory.receive_date') <span class="text-danger">*</span></label>
+                                <input class="form-control" type="text" name="receive_date" id="edit_receive_date" autocomplete="off">
                             </div>
                         </div>
 
-                        <div class="row mb-20">
-                            <div class="col-lg-12">
-                                <div class="primary_input">
-                                    <label class="primary_input_label" for="edit_supplier_id">@lang('inventory.supplier_company_name') <span class="text-danger"> *</span></label>
-                                    <select class="primary_select form-control" name="supplier_id" id="edit_supplier_id">
-                                        <option data-display="@lang('inventory.select_supplier') *" value="">@lang('common.select')</option>
-                                        {{-- Suppliers will be loaded via AJAX or passed from controller --}}
-                                    </select>
+                        <!-- Right Column -->
+                        <div class="col-md-6">
+                            <div class="form-group mb-20">
+                                <label for="edit_item_id">@lang('inventory.item_name') <span class="text-danger">*</span></label>
+                                <select class="form-control" name="item_id" id="edit_item_id">
+                                    <option value="">@lang('inventory.select_item')</option>
+                                    {{-- Items will be loaded via AJAX or passed from controller --}}
+                                </select>
+                            </div>
+
+                            <div class="form-group mb-20">
+                                <label for="edit_unit_price">@lang('inventory.unit_price') <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">$</span>
+                                    </div>
+                                    <input class="form-control" type="number" step="0.01" name="unit_price" id="edit_unit_price" autocomplete="off">
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="row mb-20">
-                            <div class="col-lg-12">
-                                <div class="primary_input">
-                                    <label class="primary_input_label" for="edit_store_id">@lang('inventory.store_name') <span class="text-danger"> *</span></label>
-                                    <select class="primary_select form-control" name="store_id" id="edit_store_id">
-                                        <option data-display="@lang('inventory.select_store') *" value="">@lang('common.select')</option>
-                                        {{-- Branches/Stores will be loaded via AJAX or passed from controller --}}
-                                    </select>
-                                </div>
+                            <div class="form-group mb-20">
+                                <label for="edit_quantity">@lang('inventory.quantity') <span class="text-danger">*</span></label>
+                                <input class="form-control" type="number" name="quantity" id="edit_quantity" autocomplete="off">
+                            </div>
+
+                            <div class="form-group mb-20">
+                                <label for="edit_payment_method">@lang('inventory.payment_method') <span class="text-danger">*</span></label>
+                                <select class="form-control" name="payment_method" id="edit_payment_method">
+                                    <option value="">@lang('inventory.select_payment_method')</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Bank">Cheque</option>
+                                </select>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="row mb-20">
-                            <div class="col-lg-12">
-                                <div class="primary_input">
-                                    <label class="primary_input_label" for="edit_receive_date">@lang('inventory.receive_date') <span class="text-danger"> *</span></label>
-                                    <input class="primary_input_field form-control" type="text" name="receive_date" id="edit_receive_date" autocomplete="off">
-                                </div>
+                    <!-- Full-width textarea -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group mb-20">
+                                <label for="edit_description">@lang('common.description')</label>
+                                <textarea class="form-control" rows="3" name="description" id="edit_description"></textarea>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="row mb-20">
-                            <div class="col-lg-12">
-                                <div class="primary_input">
-                                    <label class="primary_input_label" for="edit_item_id">@lang('inventory.item_name') <span class="text-danger"> *</span></label>
-                                    <select class="primary_select form-control" name="item_id" id="edit_item_id">
-                                        <option data-display="@lang('inventory.select_item') *" value="">@lang('common.select')</option>
-                                        {{-- Items will be loaded via AJAX or passed from controller --}}
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row mb-20">
-                            <div class="col-lg-12">
-                                <div class="primary_input">
-                                    <label class="primary_input_label" for="edit_unit_price">@lang('inventory.unit_price') <span class="text-danger"> *</span></label>
-                                    <input class="primary_input_field form-control" type="number" step="0.01" name="unit_price" id="edit_unit_price" autocomplete="off">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row mb-20">
-                            <div class="col-lg-12">
-                                <div class="primary_input">
-                                    <label class="primary_input_label" for="edit_quantity">@lang('inventory.quantity') <span class="text-danger"> *</span></label>
-                                    <input class="primary_input_field form-control" type="number" name="quantity" id="edit_quantity" autocomplete="off">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row mb-20">
-                            <div class="col-lg-12">
-                                <div class="primary_input">
-                                    <label class="primary_input_label" for="edit_payment_method">@lang('inventory.payment_method') <span class="text-danger"> *</span></label>
-                                    <select class="primary_select form-control" name="payment_method" id="edit_payment_method">
-                                        <option data-display="@lang('inventory.select_payment_method') *" value="">@lang('common.select')</option>
-                                        <option value="Cash">Cash</option>
-                                        <option value="Bank">Cheque</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row mb-20">
-                            <div class="col-lg-12">
-                                <div class="primary_input">
-                                    <label class="primary_input_label" for="edit_description">@lang('common.description')</label>
-                                    <textarea class="primary_input_field form-control" cols="0" rows="4" name="description" id="edit_description"></textarea>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-40 d-flex justify-content-between">
-                            <button type="button" class="primary-btn tr-bg" data-dismiss="modal">@lang('common.cancel')</button>
-                            <button class="primary-btn fix-gr-bg" type="submit">@lang('common.update')</button>
-                        </div>
-                    </form>
-                </div>
+                    <div class="mt-40 d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">@lang('common.cancel')</button>
+                        <button class="btn btn-primary" type="submit">@lang('common.update')</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
+</div>
+
+
 
     {{-- Delete Modal --}}
     <div class="modal fade admin-query" id="deleteItemReceiveModal" tabindex="-1" role="dialog" aria-hidden="true">
