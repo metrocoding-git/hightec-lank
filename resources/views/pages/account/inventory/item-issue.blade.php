@@ -335,7 +335,7 @@
                 <div class="col-lg-9">
 
 
-                    <div class="white-box">
+                    <div class="">
                         <div class="row">
                             <div class="col-lg-4 no-gutters">
                                 <div class="main-title">
