@@ -70,6 +70,7 @@
                                                     <td>{{ $itemReceive->total_paid }}</td>
                                                     <td>{{ $itemReceive->sub_total - $itemReceive->total_paid }}</td>
                                                     <td>
+
                                                         <div class="dropdown">
                                                             <button type="button" class="dropdown-toggle"
                                                                 data-toggle="dropdown">
@@ -274,7 +275,7 @@
         (function($) {
             $(document).ready(function() {
 
-                // 🔹 View Item Receive
+                //  View Item Receive
                 $(document).on('click', '.view-item-receive', function(e) {
                     e.preventDefault();
                     let id = $(this).data('id');
@@ -309,7 +310,7 @@
                     });
                 });
 
-                // 🔹 Edit Item Receive
+                //  Edit Item Receive
                 $(document).on('click', '.edit-item-receive', function(e) {
                     e.preventDefault();
                     let id = $(this).data('id');
@@ -361,7 +362,7 @@
                     });
                 });
 
-                // 🔹 Submit Edit via AJAX
+                //  Submit Edit via AJAX
                 $('#editItemReceiveForm').on('submit', function(e) {
                     e.preventDefault();
                     let url = $(this).attr('action');
@@ -382,7 +383,7 @@
                     });
                 });
 
-                // 🔹 Delete Item Receive
+                //  Delete Item Receive
                 $(document).on('click', '.delete-item-receive', function(e) {
                     e.preventDefault();
                     let id = $(this).data('id');
@@ -390,7 +391,7 @@
                     $('#deleteItemReceiveModal').modal('show');
                 });
 
-                // 🔹 Submit Delete via AJAX
+                //  Submit Delete via AJAX
                 $('#deleteItemReceiveForm').on('submit', function(e) {
                     e.preventDefault();
                     let url = $(this).attr('action');

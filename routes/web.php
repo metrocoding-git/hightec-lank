@@ -170,11 +170,8 @@ Route::controller(ItemIssueController::class)->group(function () {
     Route::put('account/inventory/item-issue-update/{id}', 'update')->name('item-issue-update');
     Route::get('account/inventory/return-item-view/{id}', 'returnItemView')->name('return-item-view');
     Route::post('account/inventory/return-item', 'returnItem')->name('return-item');
-
-    // New AJAX routes for item issue
-    Route::get('item-issue/get-sections-by-class', 'getSectionsByClass')->name('item-issue.get-sections-by-class');
-    Route::get('item-issue/get-students-by-section', 'getStudentsBySection')->name('item-issue.get-students-by-section');
-    Route::get('item-issue/get-items-by-category', 'getItemsByCategory')->name('item-issue.get-items-by-category');
+    Route::post('account/inventory/issue-item', 'IssueItem')->name('issue-item');
+    
 });
 Route::controller(LoginController::class)->group(function () {
     Route::get('login', 'index')->name('login');

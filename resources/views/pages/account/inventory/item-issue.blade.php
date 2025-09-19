@@ -399,10 +399,17 @@
                                                         <td>
                                                             <x-drop-down>
                                                                 @if ($value->issue_status == 'I')
-                                                                    <a class="dropdown-item modalLink"
-                                                                        title="@lang('inventory.return_item')"
-                                                                        data-modal-size="modal-md"
-                                                                        href="{{ route('return-item-view', @$value->id) }}">@lang('inventory.return')</a>
+                                                                    <form action="{{ route('return-item') }}" method="POST">
+                                                                        @csrf
+                                                                        <input type="hidden" name="id" value="{{ @$value->id }}">
+                                                                        <button type="submit" class="dropdown-item">@lang('inventory.return')</button>
+                                                                    </form>
+                                                                    @else($value->issue_status == 'R')
+                                                                    <form action="{{ route('issue-item') }}" method="POST">
+                                                                        @csrf
+                                                                        <input type="hidden" name="id" value="{{ @$value->id }}">
+                                                                        <button type="submit" class="dropdown-item">Issue</button>
+                                                                    </form>
                                                                 @endif
                                                                 <a class="dropdown-item"
                                                                     href="{{ route('item-issue-edit', @$value->id) }}">@lang('common.edit')</a>

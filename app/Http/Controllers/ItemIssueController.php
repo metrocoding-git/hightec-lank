@@ -158,4 +158,59 @@ class ItemIssueController extends Controller
             return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
         }
     }
+
+    public function returnItemView($id)
+    {
+        try {
+            $itemIssue = ItemIssue::findOrFail($id);
+            return view('pages.account.inventory.return-item-modal', compact('itemIssue'));
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function IssueItem(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|exists:item_issues,id',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $itemIssue = ItemIssue::findOrFail($request->id);
+            $itemIssue->issue_status = 'I'; // Returned
+            // $itemIssue->return_date = date('Y-m-d'); // Set return date to today
+            $itemIssue->save();
+
+            DB::commit();
+
+            return redirect()->route('item-issue')->with('success', 'Item issued successfully.');
+        } catch (Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
+        }
+    }
+    public function returnItem(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|exists:item_issues,id',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $itemIssue = ItemIssue::findOrFail($request->id);
+            $itemIssue->issue_status = 'R'; // Returned
+            // $itemIssue->return_date = date('Y-m-d'); // Set return date to today
+            $itemIssue->save();
+
+            DB::commit();
+
+            return redirect()->route('item-issue')->with('success', 'Item returned successfully.');
+        } catch (Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
+        }
+    }
 }
