@@ -21,6 +21,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\ContentTypeController;
+use App\Http\Controllers\ItemIssueController;
 use App\Models\Supplier;
 use App\Http\Controllers\ContentController;
 Route::get('/', function () {
@@ -156,11 +157,22 @@ Route::controller(HomeController::class)->group(callback: function () {
     Route::get('account/inventory/item-receive/{id}/edit', [HomeController::class, 'editItemReceive'])->name('item-receive.edit');
     Route::put('account/inventory/item-receive/{id}', [HomeController::class, 'updateItemReceive'])->name('item-receive.update');
     Route::delete('account/inventory/item-receive/{id}', [HomeController::class, 'deleteItemReceive'])->name('item-receive.destroy');
-    Route::get('account/inventory/item-issue', 'itemIssue')->name('item-issue');
     Route::get('account/inventory/item-sell', 'itemSell')->name('item-sell');
     Route::get('account/inventory/item-sell-list', 'itemSellList')->name('item-sell-list');
     Route::post('/item-receive/save', [HomeController::class, 'itemReceivePost'])
         ->name('save-item-receive-data');
+});
+
+Route::controller(ItemIssueController::class)->group(function () {
+    Route::get('account/inventory/item-issue', 'index')->name('item-issue');
+    Route::post('account/inventory/item-issue-store', 'store')->name('item-issue-store');
+    Route::get('account/inventory/return-item-view/{id}', 'returnItemView')->name('return-item-view');
+    Route::post('account/inventory/return-item', 'returnItem')->name('return-item');
+
+    // New AJAX routes for item issue
+    Route::get('item-issue/get-sections-by-class', 'getSectionsByClass')->name('item-issue.get-sections-by-class');
+    Route::get('item-issue/get-students-by-section', 'getStudentsBySection')->name('item-issue.get-students-by-section');
+    Route::get('item-issue/get-items-by-category', 'getItemsByCategory')->name('item-issue.get-items-by-category');
 });
 Route::controller(LoginController::class)->group(function () {
     Route::get('login', 'index')->name('login');

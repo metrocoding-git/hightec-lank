@@ -649,10 +649,11 @@ class HomeController extends Controller
         }
     }
 
-    public function itemIssue()
-    {
-        return view('pages.account.inventory.item-issue');
-    }
+    // public function itemIssue()
+    // {
+    //     // itemname get using inventerory items table
+    //     return view('pages.account.inventory.item-issue');
+    // }
     public function itemSell()
     {
         return view('pages.account.inventory.item-sell');
