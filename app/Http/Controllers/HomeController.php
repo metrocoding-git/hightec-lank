@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\BankAccount;
 use App\Models\Inventory_item;
 use App\Models\ItemReceive;
-use App\Models\ItemStore;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Models\SmToDo;
@@ -17,7 +16,7 @@ use App\Models\SmSection;
 use App\Models\SmStudent;
 use App\Models\SmUserLog;
 use App\Models\YearCheck;
-use App\Models\Branch;
+use App\Models\Branch; // Keep this single import for Branch
 use App\Models\Intake;
 use Carbon\Carbon;
 use App\Models\SmAddIncome;
@@ -122,7 +121,7 @@ class HomeController extends Controller
 
         return view('pages.administration.download-center.shared-content-list', compact('sharedContents'));
     }
-    
+
     public function videoList(Request $request)
     {
         $intakes = Intake::all();
@@ -134,7 +133,7 @@ class HomeController extends Controller
         }
 
         $videos = $videosQuery->get();
-        return view('pages.administration.download-center.video-list', compact('intakes','videos'));
+        return view('pages.administration.download-center.video-list', compact('intakes', 'videos'));
     }
 
     public function videoListStore(Request $request)
@@ -188,35 +187,35 @@ class HomeController extends Controller
     public function videoListUpdate(Request $request, $id)
     {
         $validated = $request->validate([
-            'intake_id'   => 'required|exists:intakes,id',
-            'title'       => 'required|string|max:255',
-            'video_link'  => 'required|string|max:255',
+            'intake_id' => 'required|exists:intakes,id',
+            'title' => 'required|string|max:255',
+            'video_link' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'course_ids'  => 'required|array|min:1',
-            'course_ids.*'=> 'integer|exists:courses,id',
+            'course_ids' => 'required|array|min:1',
+            'course_ids.*' => 'integer|exists:courses,id',
         ]);
 
         try {
             $video = VideoList::findOrFail($id);
             $video->update([
-                'intake_id'   => $validated['intake_id'],
-                'title'       => $validated['title'],
-                'video_link'  => $validated['video_link'],
+                'intake_id' => $validated['intake_id'],
+                'title' => $validated['title'],
+                'video_link' => $validated['video_link'],
                 'description' => $validated['description'] ?? null,
             ]);
 
             $video->courses()->sync($validated['course_ids']);
 
             return response()->json([
-                'status'  => true,
+                'status' => true,
                 'message' => 'Video updated successfully',
-                'id'      => $video->id,
+                'id' => $video->id,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
-                'status'  => false,
+                'status' => false,
                 'message' => 'Failed to update video',
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -485,34 +484,34 @@ class HomeController extends Controller
     }
 
     public function itemReceive()
-{
-    $items = Inventory_item::all();
-    $suppliers = Supplier::all();
-    $branches = Branch::all();
-    // $account_id = BankAccount::all();
+    {
+        $items = Inventory_item::all();
+        $suppliers = Supplier::all();
+        $branches = Branch::all();
+        // $account_id = BankAccount::all();
 
-    return view('pages.account.inventory.item-receive', compact(
-        'items',
-        'suppliers',
-        'branches',
-        // 'account_id'
-    ));
-}
+        return view('pages.account.inventory.item-receive', compact(
+            'items',
+            'suppliers',
+            'branches',
+            // 'account_id'
+        ));
+    }
 
     public function itemReceivePost(Request $request)
     {
         // Validate incoming data; arrays for item lines
         $request->validate([
             'payment_method' => 'required|string',
-            'supplier_id'    => 'required|integer',
-            'store_id'       => 'required|integer',
-            'receive_date'   => 'required|string', // will parse m/d/Y -> Y-m-d
-            'item_id'        => 'required|array|min:1',
-            'item_id.*'      => 'required|integer',
-            'unit_price'     => 'required|array|min:1',
-            'unit_price.*'   => 'required|numeric',
-            'quantity'       => 'required|array|min:1',
-            'quantity.*'     => 'required|numeric',
+            'supplier_id' => 'required|integer',
+            'store_id' => 'required|integer',
+            'receive_date' => 'required|string', // will parse m/d/Y -> Y-m-d
+            'item_id' => 'required|array|min:1',
+            'item_id.*' => 'required|integer',
+            'unit_price' => 'required|array|min:1',
+            'unit_price.*' => 'required|numeric',
+            'quantity' => 'required|array|min:1',
+            'quantity.*' => 'required|numeric',
         ]);
 
         try {
@@ -524,7 +523,7 @@ class HomeController extends Controller
                 $receiveDate = \Carbon\Carbon::parse($request->receive_date)->format('Y-m-d');
             } catch (\Throwable $e2) {
                 return response()->json([
-                    'status'  => false,
+                    'status' => false,
                     'message' => 'Invalid receive date format.',
                 ], 422);
             }
@@ -535,20 +534,20 @@ class HomeController extends Controller
             foreach ($request->item_id as $index => $itemId) {
                 ItemReceive::create([
                     'payment_method' => $request->payment_method,
-                    'supplier_id'    => $request->supplier_id,
-                    'store_id'       => $request->store_id,
-                    'reference_no'   => $request->reference_no,
-                    'receive_date'   => $receiveDate,
-                    'description'    => $request->description,
-                    'item_id'        => $itemId,
-                    'unit_price'     => $request->unit_price[$index],
-                    'quantity'       => $request->quantity[$index],
+                    'supplier_id' => $request->supplier_id,
+                    'store_id' => $request->store_id,
+                    'reference_no' => $request->reference_no,
+                    'receive_date' => $receiveDate,
+                    'description' => $request->description,
+                    'item_id' => $itemId,
+                    'unit_price' => $request->unit_price[$index],
+                    'quantity' => $request->quantity[$index],
                     // Map line total to existing column name 'sub_total'
-                    'sub_total'      => $request->total[$index] ?? ((float)$request->unit_price[$index] * (float)$request->quantity[$index]),
+                    'sub_total' => $request->total[$index] ?? ((float) $request->unit_price[$index] * (float) $request->quantity[$index]),
                     // Store overall paid if provided; schema has 'total_paid'
-                    'total_paid'     => $request->totalPaid ?? 0,
+                    'total_paid' => $request->totalPaid ?? 0,
                     // Optional bank id if payment_method requires it
-                    'bank_id'        => $request->bank_id ?? null,
+                    'bank_id' => $request->bank_id ?? null,
                 ]);
             }
 
@@ -560,15 +559,94 @@ class HomeController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to save item receive.',
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
 
     public function itemReceiveList()
     {
-        $itemReceives = ItemReceive::all();
-        return view('pages.account.inventory.item-receive-list',compact('itemReceives'));
+        $itemReceives = ItemReceive::with('supplier')->get(); // Eager load supplier for company_name
+        $items = Inventory_item::all();
+        $suppliers = Supplier::all();
+        $branches = Branch::all();
+        return view('pages.account.inventory.item-receive-list', compact('itemReceives', 'items', 'suppliers', 'branches'));
+    }
+
+    public function editItemReceive($id)
+    {
+        $itemReceive = ItemReceive::with('supplier', 'item', 'branch')->findOrFail($id);
+        $items = Inventory_item::all();
+        $suppliers = Supplier::all();
+        $branches = Branch::all();
+        return response()->json([
+            'itemReceive' => $itemReceive,
+            'items' => $items,
+            'suppliers' => $suppliers,
+            'branches' => $branches,
+        ]);
+    }
+
+    public function updateItemReceive(Request $request, $id)
+    {
+        $request->validate([
+            'payment_method' => 'required|string',
+            'supplier_id' => 'required|integer',
+            'store_id' => 'required|integer',
+            'receive_date' => 'required|string',
+            'item_id' => 'required|integer', // Assuming one item per receive record for simplicity based on current schema
+            'unit_price' => 'required|numeric',
+            'quantity' => 'required|numeric',
+        ]);
+
+        try {
+            $receiveDate = \Carbon\Carbon::createFromFormat('m/d/Y', $request->receive_date)->format('Y-m-d');
+        } catch (\Throwable $e) {
+            try {
+                $receiveDate = \Carbon\Carbon::parse($request->receive_date)->format('Y-m-d');
+            } catch (\Throwable $e2) {
+                return redirect()->back()->with('error', 'Invalid receive date format.');
+            }
+        }
+
+        try {
+            $itemReceive = ItemReceive::findOrFail($id);
+            $itemReceive->update([
+                'payment_method' => $request->payment_method,
+                'supplier_id' => $request->supplier_id,
+                'store_id' => $request->store_id,
+                'reference_no' => $request->reference_no,
+                'receive_date' => $receiveDate,
+                'description' => $request->description,
+                'item_id' => $request->item_id,
+                'unit_price' => $request->unit_price,
+                'quantity' => $request->quantity,
+                'sub_total' => (float) $request->unit_price * (float) $request->quantity,
+                'total_paid' => $request->totalPaid ?? 0,
+                'bank_id' => $request->bank_id ?? null,
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Item receive updated successfully!',
+            ]);
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Failed to update item receive: ' . $e->getMessage());
+        }
+    }
+
+    public function deleteItemReceive($id)
+    {
+        try {
+            $itemReceive = ItemReceive::findOrFail($id);
+            $itemReceive->delete();
+            return response()->json([
+                'status' => true,
+                'message' => 'Item receive deleted successfully!',
+            ]);
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Failed to delete item receive: ' . $e->getMessage());
+        }
     }
 
     public function itemIssue()

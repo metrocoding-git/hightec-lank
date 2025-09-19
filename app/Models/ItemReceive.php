@@ -30,4 +30,14 @@ class ItemReceive extends Model
     {
         return $this->belongsTo(Supplier::class, 'supplier_id');
     }
+
+    public function item()
+    {
+        return $this->belongsTo(Inventory_item::class, 'item_id');
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'store_id');
+    }
 }
