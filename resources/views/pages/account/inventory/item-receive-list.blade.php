@@ -142,7 +142,7 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">@lang('inventory.edit_item_receive')</h4>
+                <h4 class="modal-title">Edit Item Receive</h4>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -197,7 +197,7 @@
                                 <label for="edit_unit_price">@lang('inventory.unit_price') <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
-                                        <span class="input-group-text">$</span>
+                                        <span class="input-group-text">Rs</span>
                                     </div>
                                     <input class="form-control" type="number" step="0.01" name="unit_price" id="edit_unit_price" autocomplete="off">
                                 </div>
@@ -211,7 +211,7 @@
                             <div class="form-group mb-20">
                                 <label for="edit_payment_method">@lang('inventory.payment_method') <span class="text-danger">*</span></label>
                                 <select class="form-control" name="payment_method" id="edit_payment_method">
-                                    <option value="">@lang('inventory.select_payment_method')</option>
+                                    <option value="">payment method</option>
                                     <option value="Cash">Cash</option>
                                     <option value="Bank">Cheque</option>
                                 </select>
