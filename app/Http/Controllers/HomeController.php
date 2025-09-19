@@ -564,9 +564,11 @@ class HomeController extends Controller
             ], 500);
         }
     }
+
     public function itemReceiveList()
     {
-        return view('pages.account.inventory.item-receive-list');
+        $itemReceives = ItemReceive::all();
+        return view('pages.account.inventory.item-receive-list',compact('itemReceives'));
     }
 
     public function itemIssue()

@@ -25,4 +25,9 @@ class ItemReceive extends Model
         'bank_id',
         'total_paid',
     ];
+
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class, 'supplier_id');
+    }
 }
