@@ -70,27 +70,20 @@
                                                     <td>{{ $itemReceive->total_paid }}</td>
                                                     <td>{{ $itemReceive->sub_total - $itemReceive->total_paid }}</td>
                                                     <td>
-
-                                                        <div class="dropdown">
-                                                            <button type="button" class="dropdown-toggle"
-                                                                data-toggle="dropdown">
-                                                                @lang('common.select')
-                                                            </button>
-                                                            <div class="dropdown-menu dropdown-menu-right">
-                                                                <a class="dropdown-item view-item-receive" href="#"
-                                                                    data-id="{{ $itemReceive->id }}">
-                                                                    <i class="ti-eye"></i> @lang('common.view')
-                                                                </a>
-                                                                <a class="dropdown-item edit-item-receive" href="#"
-                                                                    data-id="{{ $itemReceive->id }}">
-                                                                    <i class="ti-pencil"></i> @lang('common.edit')
-                                                                </a>
-                                                                <a class="dropdown-item delete-item-receive" href="#"
-                                                                    data-id="{{ $itemReceive->id }}">
-                                                                    <i class="ti-trash"></i> @lang('common.delete')
-                                                                </a>
-                                                            </div>
-                                                        </div>
+                                                        <x-drop-down>
+                                                            <a class="dropdown-item view-item-receive" href="#"
+                                                                data-id="{{ $itemReceive->id }}">
+                                                                <i class="ti-eye"></i> @lang('common.view')
+                                                            </a>
+                                                            <a class="dropdown-item edit-item-receive" href="#"
+                                                                data-id="{{ $itemReceive->id }}">
+                                                                <i class="ti-pencil"></i> @lang('common.edit')
+                                                            </a>
+                                                            <a class="dropdown-item delete-item-receive" href="#"
+                                                                data-id="{{ $itemReceive->id }}">
+                                                                <i class="ti-trash"></i> @lang('common.delete')
+                                                            </a>
+                                                        </x-drop-down>
                                                     </td>
                                                 </tr>
                                             @endforeach
