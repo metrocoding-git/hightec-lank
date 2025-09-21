@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('title')
-@lang('academics.About')
+    @lang('academics.About')
 @endsection
 @section('mainContent')
     <section class="sms-breadcrumb mb-20">
@@ -15,12 +15,12 @@
             </div>
         </div>
     </section>
-    <style type="text/css">
+    {{-- <style type="text/css">
         #selectStaffsDiv,
         .forStudentWrapper {
             display: none;
         }
-    </style>
+    </style> --}}
     <section class="admin-visitor-area up_st_admin_visitor">
         <div class="container-fluid p-0">
             <div class="row">
@@ -28,20 +28,17 @@
                 <div class="col-lg-3">
                     <div class="row">
                         <div class="col-lg-12">
-                            {{-- @if (isset($editData))
-                                {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => ['holiday-update', $editData->id], 'method' => 'PUT', 'enctype' => 'multipart/form-data']) }}
+                            
+                            @if (isset($editData))
+                                <form class="form-horizontal" action="{{ route('item-issue-update', $editData->id) }}"
+                                    method="POST" enctype="multipart/form-data">
+                                    @method('PUT')
+                                    @csrf
                             @else
-                                @if (userPermission('save-item-issue-data'))
-                                    {{ Form::open([
-                                        'class' => 'form-horizontal',
-                                        'files' => true,
-                                        'route' => 'save-item-issue-data',
-                                        'method' => 'POST',
-                                        'enctype' => 'multipart/form-data',
-                                    ]) }}
-                                @endif
-                            @endif --}}
-                            <form class="form-horizontal">
+                                <form class="form-horizontal" action="{{ route('save-item-issue-data') }}"
+                                    method="POST" enctype="multipart/form-data">
+                                    @csrf
+                            @endif
                             <div class="white-box">
                                 <div class="main-title">
                                     <h3 class="mb-15">
@@ -52,23 +49,20 @@
                                     <div class="row">
 
                                         <div class="col-lg-12 mb-15">
-                                            <label class="primary_input_label" for="">@lang('common.role') <span class="text-danger"> *</span> </label>
+                                            <label class="primary_input_label" for="">@lang('common.role') <span
+                                                    class="text-danger"> *</span> </label>
                                             <select
                                                 class="primary_select  form-control{{ $errors->has('role_id') ? ' is-invalid' : '' }}"
                                                 name="role_id" id="member_type">
-                                                <option data-display=" @lang('inventory.user_type') *" value="">@lang('inventory.user_type')
+                                                <option data-display=" @lang('inventory.user_type') *" value="">
+                                                    @lang('inventory.user_type')
                                                     *</option>
-                                                {{-- @foreach ($roles as $value)
-                                                    @if (isset($editData))
-                                                        <option value="{{ $value->id }}"
-                                                            {{ $value->id == $editData->role_id ? 'selected' : '' }}>
-                                                            {{ $value->name }}</option>
-                                                    @else
-                                                        <option value="{{ $value->id }}"
-                                                            {{ old('role_id') != '' ? (old('role_id') == $value->id ? 'selected' : '') : '' }}>
-                                                            {{ $value->name }}</option>
-                                                    @endif
-                                                @endforeach --}}
+                                                @foreach ($roles as $value)
+                                                    <option value="{{ $value->id }}"
+                                                        {{ isset($editData) ? ($editData->role_id == $value->id ? 'selected' : '') : (old('role_id') == $value->id ? 'selected' : '') }}>
+                                                        {{ $value->role_name }}
+                                                    </option>
+                                                @endforeach
                                             </select>
                                             @if ($errors->has('role_id'))
                                                 <span class="text-danger invalid-select" role="alert">
@@ -80,60 +74,75 @@
                                         <div class="forStudentWrapper col-lg-12">
                                             <div class="row">
                                                 <div class="col-lg-12 mb-15">
-                                                    <label class="primary_input_label" for="">@lang('common.class') <span class="text-danger"> *</span> </label>
+                                                    <label class="primary_input_label" for="">@lang('common.class')
+                                                        <span class="text-danger"> *</span> </label>
                                                     <select
-                                                        class="primary_select form-control{{ $errors->has('class') ? ' is-invalid' : '' }}"
-                                                        id="select_class" name="class">
+                                                        class="primary_select form-control{{ $errors->has('class_id') ? ' is-invalid' : '' }}"
+                                                        id="select_class" name="class_id">
                                                         <option data-display="@lang('common.select_class') *" value="">
                                                             @lang('common.select_class') *</option>
-                                                        {{-- @foreach ($classes as $class)
+                                                        @foreach ($classes as $class)
                                                             <option value="{{ $class->id }}"
-                                                                {{ old('class') == $class->id ? 'selected' : '' }}>
-                                                                {{ $class->class_name }}</option>
-                                                        @endforeach --}}
+                                                                {{ isset($editData) ? ($editData->class_id == $class->id ? 'selected' : '') : (old('class_id') == $class->id ? 'selected' : '') }}>
+                                                                {{ $class->name }}</option>
+                                                        @endforeach
                                                     </select>
-                                                    @if ($errors->has('class'))
+                                                    @if ($errors->has('class_id'))
                                                         <span class="text-danger invalid-select" role="alert">
-                                                            {{ $errors->first('class') }}
+                                                            {{ $errors->first('class_id') }}
                                                         </span>
                                                     @endif
                                                 </div>
 
                                                 <div class="col-lg-12 mb-15" id="select_section_div">
-                                                    <label class="primary_input_label" for="">@lang('common.section') <span class="text-danger"> *</span> </label>
+                                                    <label class="primary_input_label" for="">@lang('common.section')
+                                                        <span class="text-danger"> *</span> </label>
                                                     <select
-                                                        class="primary_select form-control{{ $errors->has('section') ? ' is-invalid' : '' }}"
-                                                        id="select_section" name="section">
+                                                        class="primary_select form-control{{ $errors->has('section_id') ? ' is-invalid' : '' }}"
+                                                        id="select_section" name="section_id">
                                                         <option data-display="@lang('common.select_section') *" value="">
                                                             @lang('common.select_section') *</option>
+                                                        @foreach ($intakes as $value)
+                                                            <option value="{{ $value->id }}"
+                                                                {{ isset($editData) ? ($editData->section_id == $value->id ? 'selected' : '') : (old('section_id') == $value->id ? 'selected' : '') }}>
+                                                                {{ $value->name }}</option>
+                                                        @endforeach
                                                     </select>
-                                                    <div class="pull-right loader loader_style" id="select_section_loader">
+                                                    <div class="pull-right loader loader_style"
+                                                        id="select_section_loader">
                                                         <img class="loader_img_style"
                                                             src="{{ asset('public/backEnd/img/demo_wait.gif') }}"
                                                             alt="loader">
                                                     </div>
-                                                    @if ($errors->has('section'))
+                                                    @if ($errors->has('section_id'))
                                                         <span class="text-danger invalid-select" role="alert">
-                                                            {{ $errors->first('section') }}
+                                                            {{ $errors->first('section_id') }}
                                                         </span>
                                                     @endif
                                                 </div>
                                                 <div class="col-lg-12 mb-15" id="select_student_div">
-                                                    <label class="primary_input_label" for="">@lang('common.student') <span class="text-danger"> *</span> </label>
+                                                    <label class="primary_input_label" for="">@lang('common.student')
+                                                        <span class="text-danger"> *</span> </label>
                                                     <select
-                                                        class="primary_select form-control{{ $errors->has('student') ? ' is-invalid' : '' }}"
-                                                        id="select_student" name="student">
+                                                        class="primary_select form-control{{ $errors->has('student_id') ? ' is-invalid' : '' }}"
+                                                        id="select_student" name="student_id">
                                                         <option data-display="@lang('common.select_student')*" value="">
                                                             @lang('inventory.select_student_for_issue') *</option>
+                                                        @foreach ($students as $value)
+                                                            <option value="{{ $value->id }}"
+                                                                {{ isset($editData) ? ($editData->student_id == $value->id ? 'selected' : '') : (old('student_id') == $value->id ? 'selected' : '') }}>
+                                                                {{ $value->student_name }}</option>
+                                                        @endforeach
                                                     </select>
-                                                    <div class="pull-right loader loader_style" id="select_student_loader">
+                                                    <div class="pull-right loader loader_style"
+                                                        id="select_student_loader">
                                                         <img class="loader_img_style"
                                                             src="{{ asset('public/backEnd/img/demo_wait.gif') }}"
                                                             alt="loader">
                                                     </div>
-                                                    @if ($errors->has('student'))
+                                                    @if ($errors->has('student_id'))
                                                         <span class="text-danger invalid-select" role="alert">
-                                                            {{ $errors->first('student') }}
+                                                            {{ $errors->first('student_id') }}
                                                         </span>
                                                     @endif
                                                 </div>
@@ -141,21 +150,22 @@
                                         </div>
 
                                         <div class="col-lg-12 mb-15" id="selectStaffsDiv">
-                                            <label class="primary_input_label" for="">@lang('inventory.issue_to') <span></span> </label>
+                                            <label class="primary_input_label" for="">@lang('inventory.issue_to')
+                                                <span></span> </label>
                                             <select
                                                 class="primary_select  form-control{{ $errors->has('staff_id') ? ' is-invalid' : '' }}"
                                                 name="staff_id" id="selectStaffs">
-                                                <option data-display="@lang('inventory.issue_to')" value="">@lang('inventory.issue_to')
+                                                <option data-display="@lang('inventory.issue_to')" value="">
+                                                    @lang('inventory.issue_to')
                                                 </option>
 
-                                                @if (isset($staffsByRole))
-                                                    @foreach ($staffsByRole as $value)
-                                                        <option value="{{ $value->id }}"
-                                                            {{ $value->id == $editData->staff_id ? 'selected' : '' }}>
-                                                            {{ $value->full_name }}</option>
-                                                    @endforeach
-                                                @else
-                                                @endif
+
+                                                @foreach ($staffs as $value)
+                                                    <option value="{{ $value->id }}"
+                                                        {{ isset($editData) ? ($editData->issue_to == $value->id ? 'selected' : '') : (old('staff_id') == $value->id ? 'selected' : '') }}>
+                                                        {{ $value->name }}</option>
+                                                @endforeach
+
                                             </select>
                                             @if ($errors->has('staff_id'))
                                                 <span class="text-danger invalid-select" role="alert">
@@ -166,26 +176,28 @@
 
                                     </div>
 
-                                    <div class="row mb-15">                                        
+                                    <div class="row mb-15">
                                         <div class="col-lg-12">
                                             <div class="primary_input">
-                                                <label class="primary_input_label" for="">@lang('inventory.issue_date') <span></span> </label>
+                                                <label class="primary_input_label" for="">@lang('inventory.issue_date')
+                                                    <span></span> </label>
                                                 <div class="primary_datepicker_input">
                                                     <div class="no-gutters input-right-icon">
                                                         <div class="col">
                                                             <div class="">
                                                                 <input
-                                                                class="primary_input_field  primary_input_field date form-control form-control{{ $errors->has('issue_date') ? ' is-invalid' : '' }}"
-                                                                id="startDate" type="text" name="issue_date"
-                                                                value="{{ isset($editData) ? date('m/d/Y', strtotime($editData->issue_date)) : date('m/d/Y') }}">
+                                                                    class="primary_input_field  primary_input_field date form-control form-control{{ $errors->has('issue_date') ? ' is-invalid' : '' }}"
+                                                                    id="startDate" type="text" name="issue_date"
+                                                                    value="{{ isset($editData) ? date('m/d/Y', strtotime($editData->issue_date)) : date('m/d/Y') }}">
                                                             </div>
                                                         </div>
-                                                        <button class="btn-date" data-id="#issue_date" type="button">
+                                                        <button class="btn-date" data-id="#issue_date"
+                                                            type="button">
                                                             <i class="ti-calendar" id="start-date-icon"></i>
                                                         </button>
                                                     </div>
                                                 </div>
-                                                <span class="text-danger">{{$errors->first('issue_date')}}</span>
+                                                <span class="text-danger">{{ $errors->first('issue_date') }}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -193,15 +205,16 @@
                                     <div class="row mb-15">
                                         <div class="col-lg-12">
                                             <div class="primary_input">
-                                                <label class="primary_input_label" for="">@lang('inventory.due_date') <span></span> </label>
+                                                <label class="primary_input_label" for="">@lang('inventory.due_date')
+                                                    <span></span> </label>
                                                 <div class="primary_datepicker_input">
                                                     <div class="no-gutters input-right-icon">
                                                         <div class="col">
                                                             <div class="">
                                                                 <input
-                                                    class="primary_input_field  primary_input_field date form-control form-control{{ $errors->has('due_date') ? ' is-invalid' : '' }}"
-                                                    id="endDate" type="text" name="due_date"
-                                                    value="{{ isset($editData) ? date('m/d/Y', strtotime($editData->issue_date)) : date('m/d/Y') }}">
+                                                                    class="primary_input_field  primary_input_field date form-control form-control{{ $errors->has('due_date') ? ' is-invalid' : '' }}"
+                                                                    id="endDate" type="text" name="due_date"
+                                                                    value="{{ isset($editData) ? date('m/d/Y', strtotime($editData->due_date)) : date('m/d/Y') }}">
                                                             </div>
                                                         </div>
                                                         <button class="btn-date" data-id="#due_date" type="button">
@@ -209,24 +222,27 @@
                                                         </button>
                                                     </div>
                                                 </div>
-                                                <span class="text-danger">{{$errors->first('due_date')}}</span>
+                                                <span class="text-danger">{{ $errors->first('due_date') }}</span>
                                             </div>
                                         </div>
                                     </div>
 
                                     <div class="row ">
                                         <div class="col-lg-12 mb-15">
-                                            <label class="primary_input_label" for="">@lang('inventory.category') <span class="text-danger"> *</span> </label>
+                                            <label class="primary_input_label" for="">@lang('inventory.category') <span
+                                                    class="text-danger"> *</span> </label>
                                             <select
                                                 class="primary_select  form-control{{ $errors->has('item_category_id') ? ' is-invalid' : '' }}"
                                                 name="item_category_id" id="item_category_id">
                                                 <option data-display="@lang('inventory.item_category') *" value="">
                                                     @lang('inventory.item_category') *</option>
-                                                    {{-- @foreach ($itemCat as $value)
-                                                        <option value="{{ $value->id }}"
-                                                            {{ old('item_category_id') == $value->id ? 'selected' : '' }}>
-                                                            {{ $value->category_name }}</option>
-                                                    @endforeach --}}
+                                                @foreach ($categories as $value)
+                                                    <option value="{{ $value->id }}"
+                                                        {{ isset($editData) ? ($editData->item_category_id == $value->id ? 'selected' : '') : (old('item_category_id') == $value->id ? 'selected' : '') }}>
+                                                        {{ $value->name }}
+                                                    </option>
+                                                @endforeach
+
                                             </select>
                                             @if ($errors->has('item_category_id'))
                                                 <span class="text-danger invalid-select" role="alert">
@@ -236,12 +252,19 @@
                                         </div>
 
                                         <div class="col-lg-12 mb-15" id="selectItemsDiv">
-                                            <label class="primary_input_label" for="">@lang('common.name') <span class="text-danger"> *</span> </label>
+                                            <label class="primary_input_label" for="">@lang('common.name') <span
+                                                    class="text-danger"> *</span> </label>
                                             <select
                                                 class="primary_select  form-control{{ $errors->has('item_id') ? ' is-invalid' : '' }}"
                                                 name="item_id" id="selectItems">
                                                 <option data-display="@lang('inventory.item_name') *" value="">
                                                     @lang('inventory.item_name') *</option>
+                                                @foreach ($inventoryItems as $value)
+                                                    <option value="{{ $value->id }}"
+                                                        {{ isset($editData) ? ($editData->item_id == $value->id ? 'selected' : '') : (old('item_id') == $value->id ? 'selected' : '') }}>
+                                                        {{ $value->item_name }}
+                                                    </option>
+                                                @endforeach
                                             </select>
                                             @if ($errors->has('item_id'))
                                                 <span class="text-danger invalid-select" role="alert">
@@ -252,43 +275,40 @@
 
                                         <div class="col-lg-12 mb-15">
                                             <div class="primary_input">
-                                                <label class="primary_input_label" for="">@lang('inventory.quantity') <span class="text-danger"> *</span> </label>
+                                                <label class="primary_input_label" for="">@lang('inventory.quantity')
+                                                    <span class="text-danger"> *</span> </label>
                                                 <input
                                                     class="primary_input_field form-control{{ $errors->has('quantity') ? ' is-invalid' : '' }}"
-                                                    type="text" onkeypress="return isNumberKey(event)" name="quantity"
-                                                    autocomplete="off" value="{{ old('quantity') }}">
-                                               
-                                                
+                                                    type="text" onkeypress="return isNumberKey(event)"
+                                                    name="quantity" autocomplete="off"
+                                                    value="{{ isset($editData) ? $editData->quantity : old('quantity') }}">
+
+
                                                 @if ($errors->has('quantity'))
-                                                    <span class="text-danger" >
+                                                    <span class="text-danger">
                                                         {{ $errors->first('quantity') }}</span>
                                                 @endif
                                             </div>
                                         </div>
                                         <div class="col-lg-12 mb-15">
                                             <div class="primary_input">
-                                                <label class="primary_input_label" for="">@lang('inventory.note') <span></span> </label>
-                                                <textarea class="primary_input_field form-control" cols="0" rows="4" name="description" id="description">{{ isset($editData) ? $editData->description : old('description') }}</textarea>
-                                               
-                                                
+                                                <label class="primary_input_label" for="">@lang('inventory.note')
+                                                    <span></span> </label>
+                                                <textarea class="primary_input_field form-control" cols="0" rows="4" name="description"
+                                                    id="description">{{ isset($editData) ? $editData->description : old('description') }}</textarea>
+
+
 
                                             </div>
                                         </div>
                                     </div>
 
-                                    <input type="hidden" name="url" id="url" value="{{ URL::to('/') }}">
-                                    {{-- @php
-                                        $tooltip = '';
-                                        if (userPermission('save-item-issue-data')) {
-                                            $tooltip = '';
-                                        } else {
-                                            $tooltip = 'You have no permission to add';
-                                        }
-                                    @endphp --}}
+                                    <input type="hidden" name="url" id="url"
+                                        value="{{ URL::to('/') }}">
                                     <div class="row mt-40">
                                         <div class="col-lg-12 text-center">
-                                            <button class="primary-btn fix-gr-bg submit issuedSubmit" data-toggle="tooltip">
-
+                                            <button class="primary-btn fix-gr-bg submit issuedSubmit"
+                                                data-toggle="tooltip">
                                                 <span class="ti-check"></span>
                                                 @if (isset($editData))
                                                     @lang('common.update')
@@ -301,6 +321,13 @@
                                 </div>
                             </div>
                             </form>
+                            @if (isset($editData))
+                                {{-- Form::close() is not needed here as it's a plain HTML form --}}
+                            @else
+                                @if (false) {{-- userPermission('save-item-issue-data') is removed --}}
+                                    {{-- Form::close() is not needed here as it's a plain HTML form --}}
+                                @endif
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -308,7 +335,7 @@
                 <div class="col-lg-9">
 
 
-                    <div class="white-box">
+                    <div class="">
                         <div class="row">
                             <div class="col-lg-4 no-gutters">
                                 <div class="main-title">
@@ -317,84 +344,47 @@
                             </div>
                         </div>
 
-                    <div class="row">
+                        <div class="row">
 
-                        <div class="col-lg-12">
-                            <x-table>
-                                <table id="table_id" class="table" cellspacing="0" width="100%">
-                                    <thead>
-                                        <tr>
-                                            <th> @lang('common.sl')</th>
-                                            <th> @lang('inventory.item_name')</th>
-                                            <th> @lang('inventory.item_category')</th>
-                                            <th> @lang('inventory.issue_to')</th>
-                                            <th> @lang('inventory.issue_date')</th>
-                                            <th> @lang('inventory.return_date')</th>
-                                            <th> @lang('inventory.quantity')</th>
-                                            <th> @lang('common.status')</th>
-                                            <th> @lang('common.action')</th>
-                                        </tr>
-                                    </thead>
+                            <div class="col-lg-12">
+                                <x-table>
+                                    <table id="table_id" class="table" cellspacing="0" width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th> @lang('common.sl')</th>
+                                                <th> @lang('inventory.item_name')</th>
+                                                <th> @lang('inventory.item_category')</th>
+                                                <th> @lang('inventory.issue_to')</th>
+                                                <th> @lang('inventory.issue_date')</th>
+                                                <th> @lang('inventory.return_date')</th>
+                                                <th> @lang('inventory.quantity')</th>
+                                                <th> @lang('common.status')</th>
+                                                <th> @lang('common.action')</th>
+                                            </tr>
+                                        </thead>
 
-                                    {{-- <tbody>
-                                        @if (isset($issuedItems))
-                                            @foreach ($issuedItems as $key => $value)
-                                                <tr>
-                                                    <td>{{ $key + 1 }}</td>
-                                                    <td>{{ $value->items != '' ? $value->items->item_name : '' }}</td>
-                                                    <td>{{ $value->categories != '' ? $value->categories->category_name : '' }}</td>
+                                        <tbody>
+                                            @if (isset($issuedItems))
+                                                @foreach ($issuedItems as $key => $value)
+                                                    <tr>
+                                                        <td>{{ $key + 1 }}</td>
+                                                        <td>{{ $value->item ? $value->item->item_name : '' }}</td>
+                                                        <td>{{ $value->category ? $value->category->name : '' }}</td>
 
-                                                    @if ($value->role_id == 2)
-                                                        @php
-                                                            $getMemberDetail = App\SmStudent::find($value->issue_to);
-                                                        @endphp
-                                                    @else
-                                                        @php
-                                                            $getMemberDetail = App\SmBook::getMemberStaffsDetails($value->issue_to);
-                                                        @endphp
-                                                    @endif
-
-                                                    <td>
-                                                        @if (!empty($getMemberDetail))
-                                                            {{ $getMemberDetail->full_name }}
-                                                        @endif
-                                                    </td>
-                                                    <td data-sort="{{ strtotime($value->issue_date) }}">
-                                                        {{ $value->issue_date != '' ? dateConvert($value->issue_date) : '' }}
-
-                                                    </td>
-                                                    <td data-sort="{{ strtotime($value->due_date) }}">
-                                                        {{ $value->due_date != '' ? dateConvert($value->due_date) : '' }}
-
-
-                                                    </td>
-
-                                                    <td>{{ $value->quantity }}</td>
-                                                    <td>
-                                                        @if ($value->issue_status == 'I')
-                                                            <button class="primary-btn small bg-success text-white border-0">
-                                                                @lang('inventory.issued')</button>
-                                                        @else
-                                                            @php
-                                                                $getMemberDetail = App\SmBook::getMemberStaffsDetails($value->issue_to);
-                                                            @endphp
-                                                        @endif
-    
-                                                        <!-- <td>
-                                                            @if (!empty($getMemberDetail))
-                                                                {{ $getMemberDetail->full_name }}
+                                                        <td>
+                                                            @if ($value->role_id == 2 && $value->student)
+                                                                {{ $value->student->student_name }}
+                                                            @elseif ($value->issue_to && $value->staff)
+                                                                {{ $value->staff->name }}
                                                             @endif
                                                         </td>
                                                         <td data-sort="{{ strtotime($value->issue_date) }}">
-                                                            {{ $value->issue_date != '' ? dateConvert($value->issue_date) : '' }}
-    
+                                                            {{ $value->issue_date != '' ? date('m/d/Y', strtotime($value->issue_date)) : '' }}
                                                         </td>
                                                         <td data-sort="{{ strtotime($value->due_date) }}">
-                                                            {{ $value->due_date != '' ? dateConvert($value->due_date) : '' }}
-    
-    
+                                                            {{ $value->due_date != '' ? date('m/d/Y', strtotime($value->due_date)) : '' }}
                                                         </td>
-    
+
                                                         <td>{{ $value->quantity }}</td>
                                                         <td>
                                                             @if ($value->issue_status == 'I')
@@ -404,48 +394,55 @@
                                                                 <button
                                                                     class="primary-btn small bg-primary text-white border-0">@lang('inventory.returned')</button>
                                                             @endif
-                                                        </td> -->
-    
+                                                        </td>
+
                                                         <td>
-                                                            @if ($value->issue_status == 'I')
                                                             <x-drop-down>
-                                                                        @if (userPermission('return-item-view'))
-                                                                            <a class="dropdown-item modalLink"
-                                                                                title="@lang('inventory.return_item')"
-                                                                                data-modal-size="modal-md"
-                                                                                href="{{ route('return-item-view', @$value->id) }}">@lang('inventory.return')</a>
-                                                                        @endif
+                                                                @if ($value->issue_status == 'I')
+                                                                    <form action="{{ route('return-item') }}" method="POST">
+                                                                        @csrf
+                                                                        <input type="hidden" name="id" value="{{ @$value->id }}">
+                                                                        <button type="submit" class="dropdown-item">@lang('inventory.return')</button>
+                                                                    </form>
+                                                                    @else($value->issue_status == 'R')
+                                                                    <form action="{{ route('issue-item') }}" method="POST">
+                                                                        @csrf
+                                                                        <input type="hidden" name="id" value="{{ @$value->id }}">
+                                                                        <button type="submit" class="dropdown-item">Issue</button>
+                                                                    </form>
+                                                                @endif
+                                                                <a class="dropdown-item"
+                                                                    href="{{ route('item-issue-edit', @$value->id) }}">@lang('common.edit')</a>
                                                             </x-drop-down>
-                                                            @endif
                                                         </td>
                                                     </tr>
                                                 @endforeach
                                             @endif
                                         </tbody>
-                                    </table> --}}
+                                    </table>
                                 </x-table>
                             </div>
                         </div>
                     </div>
-                    </div>
                 </div>
             </div>
+        </div>
         </div>
     </section>
 @endsection
 @include('components.partials.data_table_js')
 @include('components.partials.date_picker_css_js')
 @push('scripts')
-  <script>
-      $(document).on('.issuedSubmit', 'click', function (e) {
-          let issue_date = $('#startDate').val();
-          let return_date = $('#endDate').val();
-          alert(return_date);
-          if(issue_date > return_date) {
-            toastr.error("Return Date will be greater Than issue date");
-            return;
-            e.preventdefault();
-          }
-      })
-  </script>
+    <script>
+        $(document).on('.issuedSubmit', 'click', function(e) {
+            let issue_date = $('#startDate').val();
+            let return_date = $('#endDate').val();
+            alert(return_date);
+            if (issue_date > return_date) {
+                toastr.error("Return Date will be greater Than issue date");
+                return;
+                e.preventdefault();
+            }
+        })
+    </script>
 @endpush

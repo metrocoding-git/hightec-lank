@@ -21,6 +21,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\ContentTypeController;
+use App\Http\Controllers\ItemIssueController;
 use App\Models\Supplier;
 use App\Http\Controllers\ContentController;
 Route::get('/', function () {
@@ -153,11 +154,24 @@ Route::controller(HomeController::class)->group(callback: function () {
     // Route::get('account/inventory/supplier', 'supplier')->name('supplier');
     Route::get('account/inventory/item-receive', 'itemReceive')->name('item-receive');
     Route::get('account/inventory/item-receive-list', 'itemReceiveList')->name('item-receive-list');
-    Route::get('account/inventory/item-issue', 'itemIssue')->name('item-issue');
+    Route::get('account/inventory/item-receive/{id}/edit', [HomeController::class, 'editItemReceive'])->name('item-receive.edit');
+    Route::put('account/inventory/item-receive/{id}', [HomeController::class, 'updateItemReceive'])->name('item-receive.update');
+    Route::delete('account/inventory/item-receive/{id}', [HomeController::class, 'deleteItemReceive'])->name('item-receive.destroy');
     Route::get('account/inventory/item-sell', 'itemSell')->name('item-sell');
     Route::get('account/inventory/item-sell-list', 'itemSellList')->name('item-sell-list');
     Route::post('/item-receive/save', [HomeController::class, 'itemReceivePost'])
         ->name('save-item-receive-data');
+});
+
+Route::controller(ItemIssueController::class)->group(function () {
+    Route::get('account/inventory/item-issue', 'index')->name('item-issue');
+    Route::post('account/inventory/save-item-issue-data', 'saveItemIssueData')->name('save-item-issue-data');
+    Route::get('account/inventory/item-issue-edit/{id}', 'edit')->name('item-issue-edit');
+    Route::put('account/inventory/item-issue-update/{id}', 'update')->name('item-issue-update');
+    Route::get('account/inventory/return-item-view/{id}', 'returnItemView')->name('return-item-view');
+    Route::post('account/inventory/return-item', 'returnItem')->name('return-item');
+    Route::post('account/inventory/issue-item', 'IssueItem')->name('issue-item');
+    
 });
 Route::controller(LoginController::class)->group(function () {
     Route::get('login', 'index')->name('login');
@@ -198,7 +212,7 @@ Route::controller(InvoiceController::class)->group(function () {
 
 
 
-    
+
     Route::post('student/fees/fee-store', 'store')->name('fees.invoice.store');
     Route::get('student/fees/fee-edit/{id}', 'edit')->name('fees.fee-edit-invoice');
     Route::put('student/fees/fee-update/{id}', 'update')->name('fees.fee-update-invoice');
