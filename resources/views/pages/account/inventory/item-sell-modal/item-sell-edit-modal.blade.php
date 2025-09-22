@@ -13,6 +13,7 @@
                     <div class="white-box">
                         <form class="form-horizontal" id="item-sell-edit-form" action="{{ route('update-item-sell', $itemSell->id) }}" method="POST">
                             @csrf
+                            @method('PUT')
                             <div class="add-visitor">
                                 <div class="row">
                                     <div class="col-lg-12 mb-30">
