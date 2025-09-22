@@ -158,7 +158,6 @@ Route::controller(HomeController::class)->group(callback: function () {
     Route::get('account/inventory/item-receive/{id}/edit', [HomeController::class, 'editItemReceive'])->name('item-receive.edit');
     Route::put('account/inventory/item-receive/{id}', [HomeController::class, 'updateItemReceive'])->name('item-receive.update');
     Route::delete('account/inventory/item-receive/{id}', [HomeController::class, 'deleteItemReceive'])->name('item-receive.destroy');
-    Route::get('account/inventory/item-sell-list', 'itemSellList')->name('item-sell-list');
     Route::post('/item-receive/save', [HomeController::class, 'itemReceivePost'])
         ->name('save-item-receive-data');
 });
@@ -166,6 +165,17 @@ Route::controller(HomeController::class)->group(callback: function () {
 Route::controller(ItemSellController::class)->group(function () {
     Route::get('account/inventory/item-sell', 'itemSell')->name('item-sell');
     Route::post('account/inventory/item-sell/save', 'saveItemSellData')->name('save-item-sell-data');
+    Route::get('account/inventory/item-sell-list', 'itemSellList')->name('item-sell-list');
+    Route::get('account/inventory/item-sell/{id}', 'viewItemSell')->name('view-item-sell');
+    Route::get('account/inventory/item-sell/{id}/edit', 'editItemSell')->name('edit-item-sell');
+    Route::put('account/inventory/item-sell/{id}', 'updateItemSell')->name('update-item-sell');
+    Route::get('account/inventory/item-sell/{id}/delete-view', 'deleteItemSellView')->name('delete-item-sell-view');
+    Route::get('account/inventory/item-sell/{id}/add-payment', 'addPaymentSell')->name('add-payment-sell');
+    Route::post('account/inventory/item-sell/{id}/payments', 'storeItemSellPayment')->name('item-sell-payments.store');
+    Route::get('account/inventory/item-sell/{id}/view-payments', 'viewSellPayments')->name('view-sell-payments');
+    Route::post('account/inventory/item-sell/{id}', 'deleteItemSell')->name('delete-item-sell');
+    Route::get('account/inventory/item-sell/{id}/cancel-view', 'cancelItemSellView')->name('cancel-item-sell-view');
+    Route::post('account/inventory/item-sell/{id}/cancel', 'cancelItemSell')->name('cancel-item-sell');
 });
 
 Route::controller(ItemIssueController::class)->group(function () {

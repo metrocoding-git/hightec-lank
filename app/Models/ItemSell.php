@@ -26,12 +26,12 @@ class ItemSell extends Model
     // Define relationships if necessary
     public function role()
     {
-        return $this->belongsTo(Role::class);
+        return $this->belongsTo(Role::class , 'role_id');
     }
 
     public function course()
     {
-        return $this->belongsTo(Course::class);
+        return $this->belongsTo(Course::class , 'course_id');
     }
 
     public function intake()

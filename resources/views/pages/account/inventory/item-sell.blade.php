@@ -29,8 +29,7 @@
     <section class="admin-visitor-area">
         <div class="container-fluid p-0">
 
-            <form class="form-horizontal" id="item-sell-form" method="POST" action="{{ route('save-item-sell-data') }}"
-                enctype="multipart/form-data">
+            <form class="form-horizontal" id="item-sell-form" >
                 @csrf
                 <div class="row">
                     <div class="col-lg-3">
@@ -399,7 +398,7 @@
                                                     <div class="primary_input md_mb_20">
                                                         <label class="primary_input_label"
                                                             for="">@lang('inventory.total_due')</label>
-                                                        <input class="primary_input_field" type="text" value="0.00"
+                                                        <input class="primary_input_field" type="text" name="totalDue" value="0.00"
                                                             id="totalDue" readonly>
                                                         <input type="hidden" id="totalDueValue" name="totalDueValue">
 
@@ -553,12 +552,12 @@
             calculateGrandTotal();
         });
 
-        $('#item-receive-form').on('submit', function(e) {
+        $('#item-sell-form').on('submit', function(e) {
             e.preventDefault();
             let formData = $(this).serialize();
 
             $.ajax({
-                url: '{{ route('save-item-receive-data') }}',
+                url: '{{ route('save-item-sell-data') }}',
                 type: 'POST',
                 data: formData,
                 success: function(response) {

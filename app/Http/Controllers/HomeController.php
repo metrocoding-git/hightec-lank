@@ -666,8 +666,5 @@ class HomeController extends Controller
         return view('pages.account.inventory.item-sell', compact('items', 'classes', 'sections', 'roles', 'students', 'users'));
     }
 
-    public function itemSellList()
-    {
-        return view('pages.account.inventory.item-sell-list');
-    }
+   
 }
