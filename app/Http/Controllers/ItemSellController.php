@@ -101,7 +101,7 @@ class ItemSellController extends Controller
 
     public function viewItemSell($id)
     {
-        $itemSell = ItemSell::with(['role', 'student', 'user', 'item'])->findOrFail($id);
+        $itemSell = ItemSell::findOrFail($id);
         return view('pages.account.inventory.item-sell-modal.item-sell-view-modal', compact('itemSell'));
     }
 

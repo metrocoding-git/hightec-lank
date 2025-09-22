@@ -54,6 +54,7 @@
                                                 <th>@lang('inventory.role_name')</th>
                                                 <th>@lang('inventory.buyer_name')</th>
                                                 <th>@lang('common.date')</th>
+                                                <th>Sell Price</th>
                                                 <th>@lang('inventory.grand_total')</th>
                                                 <th>@lang('inventory.total_quantity')</th>
                                                 <th>@lang('inventory.paid')</th>
@@ -84,6 +85,7 @@
                                                         <td data-sort="{{ strtotime($value->sell_date) }}">
                                                             {{ $value->sell_date ? \Carbon\Carbon::parse($value->sell_date)->format('m/d/Y') : '' }}
                                                         </td>
+                                                        <td>{{ number_format((float) $value->sell_price, 2, '.', '') }}</td>
 
                                                         @php
                                                             $grandTotal = $value->total_paid + $value->total_due;
