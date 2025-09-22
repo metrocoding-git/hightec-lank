@@ -2,51 +2,52 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\BankAccount;
-use App\Models\Inventory_item;
-use App\Models\ItemReceive;
-use App\Models\Supplier;
+use Carbon\Carbon;
+use App\Models\Role;
 use App\Models\User;
+use App\CheckSection;
+use App\Models\Course;
+use App\Models\Intake;
 use App\Models\SmToDo;
 use App\Models\SmClass;
 use App\Models\SmEvent;
+use App\Models\Student;
 use App\Models\SmSchool;
+use App\Models\Supplier;
 use App\Models\SmHoliday;
 use App\Models\SmSection;
 use App\Models\SmStudent;
 use App\Models\SmUserLog;
+use App\Models\VideoList;
 use App\Models\YearCheck;
-use App\Models\Branch; // Keep this single import for Branch
-use App\Models\Intake;
-use Carbon\Carbon;
+use App\InfixModuleManager;
+use App\Models\BankAccount;
+use App\Models\ItemReceive;
 use App\Models\SmAddIncome;
-use App\CheckSection;
-use App\Models\GlobalVariable;
+use Illuminate\Support\Str;
 use App\Models\SmAddExpense;
+use Illuminate\Http\Request;
 use App\Models\SmNoticeBoard;
+use App\Models\GlobalVariable;
+use App\Models\Inventory_item;
 use App\Models\SmAcademicYear;
 use App\Models\SmClassSection;
-use App\Models\SmGeneralSettings;
-use App\InfixModuleManager;
-use App\Models\Course;
-use App\Models\DueFeesLoginPrevent;
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
+use App\Models\ShareContentList;
 use App\Models\SmCalendarSetting;
-use App\Models\Student;
-use Flasher\Toastr\Laravel\Facade\Toastr;
+use App\Models\SmGeneralSettings;
 use Illuminate\Support\Facades\DB;
+use App\Models\DueFeesLoginPrevent;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Session;
 use Modules\Saas\Entities\SmPackagePlan;
+use Flasher\Toastr\Laravel\Facade\Toastr;
 use Modules\RolePermission\Entities\InfixRole;
 use Modules\Wallet\Entities\WalletTransaction;
 use Modules\Saas\Entities\SmSubscriptionPayment;
-use App\Models\ShareContentList;
-use App\Models\VideoList;
+use App\Models\Branch; // Keep this single import for Branch
 
 class HomeController extends Controller
 {
@@ -656,11 +657,14 @@ class HomeController extends Controller
     // }
     public function itemSell()
     {
-        return view('pages.account.inventory.item-sell');
+        $items = Inventory_item::all();
+        $classes = Course::all();
+        $sections = Intake::all();
+        $roles = Role::all();
+        $students = Student::all();
+        $users = User::all();
+        return view('pages.account.inventory.item-sell', compact('items', 'classes', 'sections', 'roles', 'students', 'users'));
     }
 
-    public function itemSellList()
-    {
-        return view('pages.account.inventory.item-sell-list');
-    }
+   
 }
