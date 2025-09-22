@@ -11,7 +11,7 @@
                     <div class="col-lg-12">
                         <table class="table table-bordered">
                             <tr>
-                                <th>@lang('inventory.reference_no')</th>
+                                <th>@lang('inventory.reference_no') </th>
                                 <td>{{ $itemSell->reference_no }}</td>
                             </tr>
                             <tr>
@@ -51,6 +51,18 @@
                             <tr>
                                 <th>@lang('common.date')</th>
                                 <td>{{ $itemSell->sell_date ? \Carbon\Carbon::parse($itemSell->sell_date)->format('m/d/Y') : '' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Class</th>
+                                <td>{{ $itemSell->course->name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Section</th>
+                                <td>{{ $itemSell->intake->name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Descriptions</th>
+                                <td>{{ $itemSell->description }}</td>
                             </tr>
                         </table>
                     </div>
