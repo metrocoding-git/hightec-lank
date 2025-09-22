@@ -1,29 +1,30 @@
 <?php
 
-use App\Http\Controllers\AddStudentController;
-use App\Http\Controllers\AssignSubjectController;
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\CourseController;
-use App\Http\Controllers\FeesGroupController;
+use App\Models\Supplier;
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\TopicController;
+use App\Http\Controllers\CourseController;
 use App\Http\Controllers\IntakeController;
 use App\Http\Controllers\LessonController;
-use App\Http\Controllers\StudentCategoryController;
-use App\Http\Controllers\SubjectController;
-use App\Http\Controllers\TopicController;
-use App\Http\Controllers\TopicOverviewController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ContentController;
+use App\Http\Controllers\ItemSellController; // Import the new controller
 use App\Http\Controllers\FeeTypeController;
 use App\Http\Controllers\InvoiceController;
-use App\Http\Controllers\InvoiceItemController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\SupplierController;
-use App\Http\Controllers\ContentTypeController;
+use App\Http\Controllers\FeesGroupController;
 use App\Http\Controllers\ItemIssueController;
-use App\Models\Supplier;
-use App\Http\Controllers\ContentController;
+use App\Http\Controllers\AddStudentController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\ContentTypeController;
+use App\Http\Controllers\InvoiceItemController;
+use App\Http\Controllers\AssignSubjectController;
+use App\Http\Controllers\InventoryItemController;
+use App\Http\Controllers\TopicOverviewController;
+use App\Http\Controllers\StudentCategoryController;
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
@@ -157,10 +158,14 @@ Route::controller(HomeController::class)->group(callback: function () {
     Route::get('account/inventory/item-receive/{id}/edit', [HomeController::class, 'editItemReceive'])->name('item-receive.edit');
     Route::put('account/inventory/item-receive/{id}', [HomeController::class, 'updateItemReceive'])->name('item-receive.update');
     Route::delete('account/inventory/item-receive/{id}', [HomeController::class, 'deleteItemReceive'])->name('item-receive.destroy');
-    Route::get('account/inventory/item-sell', 'itemSell')->name('item-sell');
     Route::get('account/inventory/item-sell-list', 'itemSellList')->name('item-sell-list');
     Route::post('/item-receive/save', [HomeController::class, 'itemReceivePost'])
         ->name('save-item-receive-data');
+});
+
+Route::controller(ItemSellController::class)->group(function () {
+    Route::get('account/inventory/item-sell', 'itemSell')->name('item-sell');
+    Route::post('account/inventory/item-sell/save', 'saveItemSellData')->name('save-item-sell-data');
 });
 
 Route::controller(ItemIssueController::class)->group(function () {
@@ -171,7 +176,7 @@ Route::controller(ItemIssueController::class)->group(function () {
     Route::get('account/inventory/return-item-view/{id}', 'returnItemView')->name('return-item-view');
     Route::post('account/inventory/return-item', 'returnItem')->name('return-item');
     Route::post('account/inventory/issue-item', 'IssueItem')->name('issue-item');
-    
+
 });
 Route::controller(LoginController::class)->group(function () {
     Route::get('login', 'index')->name('login');
