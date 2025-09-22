@@ -102,7 +102,7 @@ class ItemSellController extends Controller
     public function viewItemSell($id)
     {
         $itemSell = ItemSell::with(['role', 'student', 'user', 'item'])->findOrFail($id);
-        return view('pages.account.inventory.item-sell-view-modal', compact('itemSell'));
+        return view('pages.account.inventory.item-sell-modal.item-sell-view-modal', compact('itemSell'));
     }
 
     public function editItemSell($id)
@@ -114,13 +114,13 @@ class ItemSellController extends Controller
         $roles = Role::all();
         $students = Student::all();
         $users = User::all();
-        return view('pages.account.inventory.item-sell-edit-modal', compact('itemSell', 'items', 'classes', 'sections', 'roles', 'students', 'users'));
+        return view('pages.account.inventory.item-sell-modal.item-sell-edit-modal', compact('itemSell', 'items', 'classes', 'sections', 'roles', 'students', 'users'));
     }
 
     public function deleteItemSellView($id)
     {
         $itemSell = ItemSell::findOrFail($id);
-        return view('pages.account.inventory.item-sell-delete-modal', compact('itemSell'));
+        return view('pages.account.inventory.item-sell-modal.item-sell-delete-modal', compact('itemSell'));
     }
 
     public function updateItemSell(Request $request, $id)
@@ -188,13 +188,13 @@ class ItemSellController extends Controller
     public function addPaymentSell($id)
     {
         $itemSell = ItemSell::findOrFail($id);
-        return view('pages.account.inventory.item-sell-add-payment-modal', compact('itemSell'));
+        return view('pages.account.inventory.item-sell-modal.item-sell-add-payment-modal', compact('itemSell'));
     }
 
     public function viewSellPayments($id)
     {
         $itemSell = ItemSell::findOrFail($id);
-        return view('pages.account.inventory.item-sell-view-payments-modal', compact('itemSell'));
+        return view('pages.account.inventory.item-sell-modal.item-sell-view-payments-modal', compact('itemSell'));
     }
 
     public function deleteItemSell($id)
@@ -240,7 +240,7 @@ class ItemSellController extends Controller
     public function cancelItemSellView($id)
     {
         $itemSell = ItemSell::findOrFail($id);
-        return view('pages.account.inventory.item-sell-cancel-modal', compact('itemSell'));
+        return view('pages.account.inventory.item-sell-modal.item-sell-cancel-modal', compact('itemSell'));
     }
 
     public function storeItemSellPayment(Request $request, $id)
