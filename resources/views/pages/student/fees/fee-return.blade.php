@@ -39,9 +39,9 @@
                                         id="select_class" name="class">
                                         <option data-display="@lang('common.select_class') *" value="">@lang('common.select_class') *
                                         </option>
-                                        {{-- @foreach ($classes as $class)
-                                        <option value="{{$class->id}}"  {{isset($class_id)? ($class_id == $class->id? 'selected':''):''}}>{{$class->class_name}}</option>
-                                        @endforeach --}}
+                                        @foreach ($coursess as $class)
+                                        <option value="{{$class->id}}"  {{isset($class_id)? ($class_id == $class->id? 'selected':''):''}}>{{$class->name}}</option>
+                                        @endforeach
                                     </select>
                                     @if ($errors->has('class'))
                                         <span class="text-danger invalid-select" role="alert">
@@ -54,6 +54,10 @@
                                         class="primary_select  form-control{{ $errors->has('section') ? ' is-invalid' : '' }}"
                                         id="select_section" name="section">
                                         <option data-display="@lang('common.select_section') *" value="">@lang('common.select_section') *
+                                        @foreach ($intakes as $section) 
+                                            <option value="{{$section->id}}"  {{isset($section_id)? ($section_id == $section->id? 'selected':''):''}}>{{$section->name}}</option>
+                                            
+                                        @endforeach
                                         </option>
                                     </select>
                                     @if ($errors->has('section'))

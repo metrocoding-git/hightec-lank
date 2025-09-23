@@ -79,6 +79,9 @@
 
                                         <select class="primary_select form-control" id="student_id" name="student_id">
                                             <option value="">@lang('common.select_student')</option>
+                                            @foreach ($students as $student)
+                                                <option value="{{ $student->id }}">{{ $student->student_name }}</option>
+                                            @endforeach
                                         </select>
                                     </div>
                                 </div>
@@ -257,28 +260,59 @@
             let addedFeeTypes = new Set();
 
             // Fee Group / Fee Type selection
+            // ---------------------------
+            // OLD LOGIC (commented out)
+            // ---------------------------
+            // $('#fee_group_id').on('change', function() {
+            //     let selectedOption = $(this).find("option:selected");
+            //     if (!selectedOption.val()) return;
+
+            //     if (selectedOption.data('type') === 'group') {
+            //         selectedOption.nextUntil('option[data-type="group"]').each(function() {
+            //             let feeId = $(this).val();
+            //             if (!addedFeeTypes.has(feeId)) {
+            //                 addFeeTypeRow(feeId, $(this).text().trim(), $(this).data('price'));
+            //                 addedFeeTypes.add(feeId);
+            //             }
+            //         });
+            //     } else {
+            //         let feeId = selectedOption.val();
+            //         if (!addedFeeTypes.has(feeId)) {
+            //             addFeeTypeRow(feeId, selectedOption.text().trim(), selectedOption.data('price'));
+            //             addedFeeTypes.add(feeId);
+            //         }
+            //     }
+
+            //     $(this).val('').niceSelect('update');
+            // });
+
+            // ---------------------------
+            // NEW LOGIC
+            // ---------------------------
             $('#fee_group_id').on('change', function() {
                 let selectedOption = $(this).find("option:selected");
-                if (!selectedOption.val()) return;
+                let type = selectedOption.data('type');
 
-                if (selectedOption.data('type') === 'group') {
-                    selectedOption.nextUntil('option[data-type="group"]').each(function() {
-                        let feeId = $(this).val();
-                        if (!addedFeeTypes.has(feeId)) {
-                            addFeeTypeRow(feeId, $(this).text().trim(), $(this).data('price'));
-                            addedFeeTypes.add(feeId);
-                        }
-                    });
-                } else {
-                    let feeId = selectedOption.val();
-                    if (!addedFeeTypes.has(feeId)) {
-                        addFeeTypeRow(feeId, selectedOption.text().trim(), selectedOption.data('price'));
-                        addedFeeTypes.add(feeId);
-                    }
+                // Skip group selections
+                if (!selectedOption.val() || type === 'group') {
+                    $(this).val('').niceSelect('update');
+                    return;
                 }
+
+                let feeId = selectedOption.val();
+                let feeName = selectedOption.text().trim();
+                let feePrice = selectedOption.data('price');
+
+                // Clear old rows before adding new one
+                $('.allFeesTypes').empty();
+                addedFeeTypes.clear();
+
+                addFeeTypeRow(feeId, feeName, feePrice);
+                addedFeeTypes.add(feeId);
 
                 $(this).val('').niceSelect('update');
             });
+
 
             function addFeeTypeRow(id, name, price) {
                 let paymentStatus = $('#status').find("option:selected").data('status') || 'not';
@@ -590,7 +624,7 @@
                     });
                 } else {
                     $('.payment_input').each(function() {
-                        let inputName = $(this).attr('name'); 
+                        let inputName = $(this).attr('name');
                         let value = $(this).val() || '';
                         formData.append(inputName, value);
                     });

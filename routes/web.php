@@ -202,6 +202,9 @@ Route::controller(FeesGroupController::class)->group(function () {
     Route::get('student/fees/fee-group-edit/{id}', 'edit')->name('fee-group-edit'); // GET edit
     Route::put('student/fees/fee-group-update/{id}', 'update')->name('fee-group-update'); // POST update
     Route::delete('student/fees/fee-group-delete/{id}', 'delete')->name('fee-group-delete'); // POST delete
+        Route::get('student/fees/fee-group-edit/{id}', 'edit')->name('fee-group-edit'); // GET edit
+
+
 });
 
 
@@ -229,7 +232,9 @@ Route::controller(InvoiceController::class)->group(function () {
 
 
     Route::post('student/fees/fee-store', 'store')->name('fees.invoice.store');
-    Route::get('student/fees/fee-edit/{id}', 'edit')->name('fees.fee-edit-invoice');
+    // Route::get('student/fees/fee-edit/{id}', 'edit')->name('fees.fee-edit-invoice');
+    Route::get('student/fees/fee-group-edit/{id}', 'edit')->name('fees.fee-invoice-edit'); // GET edit
+
     Route::put('student/fees/fee-update/{id}', 'update')->name('fees.fee-update-invoice');
     Route::delete('student/fees/fee-delete/{id}', 'destroy')->name('fees.fee-delete');
 });

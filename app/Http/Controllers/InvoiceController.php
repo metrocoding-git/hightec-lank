@@ -36,7 +36,8 @@ class InvoiceController extends Controller
         $branches = Branch::all();
         $feesgroups = FeesGroup::all();
         $feeTypes = FeeType::all();
-        return view('pages.student.fees.add-invoice', compact('branches', 'feesgroups', 'feeTypes'));
+        $students = Student::all();
+        return view('pages.student.fees.add-invoice', compact('branches', 'feesgroups', 'feeTypes', 'students'));
     }
 
     public function store(Request $request)

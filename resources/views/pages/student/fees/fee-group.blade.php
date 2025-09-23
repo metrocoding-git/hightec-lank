@@ -90,7 +90,9 @@
                                             <td>
                                                 <x-drop-down>
                                                     <a class="dropdown-item"
-                                                        href="{{ route('fee-group-edit', $group->id) }}">@lang('common.edit')</a>
+                                                        {{-- href="{{ route('fee-group-edit', $group->id) }}" --}}
+                                                        >
+                                                        @lang('common.edit')</a>
                                                     <form action="{{ route('fee-group-delete', $group->id) }}"
                                                         method="POST" style="display:inline;">
                                                         @method('DELETE')

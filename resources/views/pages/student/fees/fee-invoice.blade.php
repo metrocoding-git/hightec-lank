@@ -35,7 +35,7 @@
                     <div class="col-lg-12 text-left col-md-12">
                         <a href="{{ route('fees.add-invoice') }}" class="primary-btn small fix-gr-bg">
                             <span class="ti-plus pr-2"></span>
-                            @lang('common.add')
+                            @lang('common.add') 
                         </a>
                     </div>
                 </div>
@@ -226,7 +226,7 @@
                                                         <label>@lang('accounts.payment_method')</label>
                                                         <select name="payment_method" class="form-control" required>
                                                             <option value="Cash">Cash</option>
-                                                            <option value="Card">Card</option>
+                                                            <option value="Card">Cardbbb</option>
                                                             <option value="Bank Transfer">Bank Transfer</option>
                                                         </select>
                                                     </div>

@@ -463,7 +463,9 @@ class HomeController extends Controller
 
     public function feeReturn()
     {
-        return view('pages.student.fees.fee-return');
+        $coursess = Course::all();
+        $intakes = Intake::all();
+        return view('pages.student.fees.fee-return', compact('coursess', 'intakes'));
     }
 
 
