@@ -8,7 +8,6 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\IntakeController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\ContentController;
-use App\Http\Controllers\ItemSellController; // Import the new controller
 use App\Http\Controllers\FeeTypeController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\StudentController;
@@ -17,6 +16,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\FeesGroupController;
 use App\Http\Controllers\ItemIssueController;
+use App\Http\Controllers\ReturnFeeController;
 use App\Http\Controllers\AddStudentController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ContentTypeController;
@@ -25,6 +25,7 @@ use App\Http\Controllers\AssignSubjectController;
 use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\TopicOverviewController;
 use App\Http\Controllers\StudentCategoryController;
+use App\Http\Controllers\ItemSellController; // Import the new controller
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
@@ -202,6 +203,9 @@ Route::controller(FeesGroupController::class)->group(function () {
     Route::get('student/fees/fee-group-edit/{id}', 'edit')->name('fee-group-edit'); // GET edit
     Route::put('student/fees/fee-group-update/{id}', 'update')->name('fee-group-update'); // POST update
     Route::delete('student/fees/fee-group-delete/{id}', 'delete')->name('fee-group-delete'); // POST delete
+        Route::get('student/fees/fee-group-edit/{id}', 'edit')->name('fee-group-edit'); // GET edit
+
+
 });
 
 
@@ -220,18 +224,20 @@ Route::controller(InvoiceController::class)->group(function () {
     Route::get('student/fees/invoice/view/{id}', 'edit')->name('fees.fee-invoice-view');
     Route::post('student/fees/invoice/{id}', 'addPayment')->name('fees.fees-invoice-payment');
 
-    Route::get('student/fees/fee-invoice', 'index')->name('fees.fee-invoice');
     Route::get('student/fees/add-invoice', 'create')->name('fees.add-invoice');
     Route::get('student/invoice/get-student/{branchId}', 'show')->name('fees.get-student');
     Route::get('student/invoice/types_get_by_group/{groupId}', 'dropdown_fee_types')->name('fees.get-types-by-group');
 
-
-
-
     Route::post('student/fees/fee-store', 'store')->name('fees.invoice.store');
-    Route::get('student/fees/fee-edit/{id}', 'edit')->name('fees.fee-edit-invoice');
+    // Route::get('student/fees/fee-edit/{id}', 'edit')->name('fees.fee-edit-invoice');
+    Route::get('student/fees/fee-group-edit/{id}', 'edit')->name('fees.fee-invoice-edit'); // GET edit
+
     Route::put('student/fees/fee-update/{id}', 'update')->name('fees.fee-update-invoice');
     Route::delete('student/fees/fee-delete/{id}', 'destroy')->name('fees.fee-delete');
+});
+
+Route::controller(HomeController::class)->group(function () {
+    Route::get('student/fees/fee-invoice', 'feeInvoice')->name('fees.fee-invoice');
 });
 
 
@@ -290,4 +296,12 @@ Route::controller(ContentController::class)->group(function () {
     Route::post('administration/download-center/save-generated-url-data', 'saveGeneratedUrlData')->name('download-center.save-generated-url-data');
     // View shared content details
     Route::get('administration/download-center/shared-content-view/{id}', 'viewSharedContent')->name('download-center.shared-content-view');
+});
+
+// Return Fee Routes
+//return-fees.store
+
+Route::controller(ReturnFeeController::class)->group(function () {
+    Route::post('/student/fees/return-fees',  'store')->name('return-fees.store');
+  
 });

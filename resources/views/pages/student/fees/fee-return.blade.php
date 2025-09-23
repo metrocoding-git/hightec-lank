@@ -39,9 +39,9 @@
                                         id="select_class" name="class">
                                         <option data-display="@lang('common.select_class') *" value="">@lang('common.select_class') *
                                         </option>
-                                        {{-- @foreach ($classes as $class)
-                                        <option value="{{$class->id}}"  {{isset($class_id)? ($class_id == $class->id? 'selected':''):''}}>{{$class->class_name}}</option>
-                                        @endforeach --}}
+                                        @foreach ($coursess as $class)
+                                        <option value="{{$class->id}}"  {{isset($class_id)? ($class_id == $class->id? 'selected':''):''}}>{{$class->name}}</option>
+                                        @endforeach
                                     </select>
                                     @if ($errors->has('class'))
                                         <span class="text-danger invalid-select" role="alert">
@@ -54,6 +54,10 @@
                                         class="primary_select  form-control{{ $errors->has('section') ? ' is-invalid' : '' }}"
                                         id="select_section" name="section">
                                         <option data-display="@lang('common.select_section') *" value="">@lang('common.select_section') *
+                                        @foreach ($intakes as $section) 
+                                            <option value="{{$section->id}}"  {{isset($section_id)? ($section_id == $section->id? 'selected':''):''}}>{{$section->name}}</option>
+                                            
+                                        @endforeach
                                         </option>
                                     </select>
                                     @if ($errors->has('section'))
@@ -105,44 +109,47 @@
                                                 <tr>
                                                     <th width="15%">@lang('student.student_name')</th>
                                                     <th width="15%">@lang('student.admission_no')</th>
-                                                    <th width="15%">@lang('student.roll_no')</th>
+                                                    <th width="15%">Roll Name</th>
                                                     <th width="15%">@lang('student.father_name')</th>
                                                     <th width="15%">@lang('fees.balance')</th>
                                                     <th width="25%">@lang('fees.short_note')</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {{-- @foreach ($students as $student)
+                                                @foreach ($returnDetails as $student)
                                                     <tr>
-                                                        <td>{{$student->studentDetail->full_name}} <input type="hidden" name="id[]" value="{{isset($update)? @$student->studentDetail->forwardBalance->id: $student->student_id}}"></td>
-                                                        <td>{{$student->studentDetail->admission_no}}</td>
-                                                        <td>{{$student->studentDetail->roll_no}}</td>
+                                                        <td>{{$student->student->student_name}} <input type="hidden" name="id[]" value="{{isset($update)? @$student->studentDetail->forwardBalance->id: $student->student_id}}"></td>
+                                                        <td>{{$student->student->admission_number}}</td>
+                                                         <td>{{$student->role->role_name}}</td>
                     
-                                                        <td>{{$student->studentDetail->parents !=""?$student->studentDetail->parents->fathers_name:""}}</td>
-                                                        <td>
+                                                        <td>{{$student->student->guardians_name !=""?$student->student->guardians_name:""}}</td>
+                                                        <td> {{ $student->balance }} </td>
+                                                        <td> {{ $student->short_note }} </td>
+                                                        
+                                                        {{-- <td> 
                                                             <div class="primary_input">
                                                                 <input oninput="numberCheckWithDot(this)" type="text" class="primary_input_field form-control" cols="0" rows="1" name="balance[{{isset($update)? @$student->studentDetail->forwardBalance->id:@$student->student_id}}]" maxlength="8" value="{{isset($update)?
                                                                 @$student->studentDetail->forwardBalance->balance: ''}}">
                                                             </div>
-                                                        </td>
-                                                        <td>
-                                                            <div class="primary_input">
+                                                        </td> 
+                                                        <td> --}}
+                                                            {{-- <div class="primary_input">
                                                                 <input type="text" class="primary_input_field form-control" cols="0" rows="1" name="notes[{{isset($update)? @$student->studentDetail->forwardBalance->id:$student->student_id}}]" value="{{isset($update)?
                                                                 @$student->studentDetail->forwardBalance->notes: 'Fees Carry Forward'}}">
-                                                            </div>
+                                                            </div> --}}
                                                         </td>
                                                     </tr>
-                                                @endforeach --}}
+                                                @endforeach
                                             </tbody>
                                             <tr>
-                                                <td colspan="6">
+                                                {{-- <td colspan="6">
                                                     <div class="text-center">
                                                         <button type="submit" class="primary-btn fix-gr-bg mb-0 submit">
                                                             <span class="ti-save pr"></span>
                                                             @lang('common.save')
                                                         </button>
                                                     </div>
-                                                </td>
+                                                </td> --}}
                                             </tr>
                                         </table>
                                     </x-table>

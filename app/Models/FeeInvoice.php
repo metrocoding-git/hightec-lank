@@ -41,4 +41,9 @@ class FeeInvoice extends Model
     {
         return $this->belongsTo(Student::class);
     }
+
+    public function invoice_item()
+    {
+        return $this->hasMany(Invoice_item::class, 'invoice_id');
+    }
 }
