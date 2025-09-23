@@ -111,17 +111,16 @@
                                                         <x-drop-down>
                                                             <a class="dropdown-item"
                                                                 href="{{ route('fees.fee-invoice-view', ['id' => $invoice->id, 'state' => 'view']) }}">@lang('common.view')</a>
-                                                            @if ($invoice->payment_status != 'full')
-                                                                <a class="dropdown-item" data-toggle="modal"
-                                                                    data-target="#addPaymentModal{{ $invoice->id }}">
-                                                                    @lang('inventory.add_payment')
-                                                                </a>
-                                                            @endif
                                                             <a class="dropdown-item"
                                                                 href="{{ route('fees.fee-invoice-edit', $invoice->id) }}">@lang('common.edit')</a>
                                                             <a class="dropdown-item" data-toggle="modal"
                                                                 data-target="#deletecategoryModal{{ $invoice->id }}"
                                                                 href="#">@lang('common.delete')</a>
+                                                            @if ($balance > 0)
+                                                                <a class="dropdown-item" data-toggle="modal"
+                                                                    data-target="#returnFeeModal{{ $invoice->id }}"
+                                                                    href="#">Return</a>
+                                                            @endif
                                                         </x-drop-down>
                                                     </td>
                                                 </tr>
@@ -169,84 +168,119 @@
                                 </x-table>
                             </div>
 
-                            <!-- Place modals here, outside table -->
+                            {{-- @endforeach --}}
+
+                            <!-- Return Fee Modals -->
                             @foreach ($fee_invoices as $invoice)
-                                <div class="modal fade admin-query" id="addPaymentModal{{ $invoice->id }}">
+                                @php
+                                    $amount = $invoice->total_amount;
+                                    $paid_amount = $invoice->paid_amount;
+                                    $balance = $amount - $paid_amount;
+                                @endphp
+                                @if ($balance > 0)
+                                <div class="modal fade admin-query" id="returnFeeModal{{ $invoice->id }}">
                                     <div class="modal-dialog modal-lg modal-dialog-centered">
                                         <div class="modal-content">
                                             <div class="modal-header">
-                                                <h4 class="modal-title">@lang('fees.add_payment') - Invoice #{{ $invoice->id }}
-                                                </h4>
+                                                <h4 class="modal-title">@lang('fees.return_fee') - Invoice #{{ $invoice->id }}</h4>
                                                 <button type="button" class="close" data-dismiss="modal">&times;</button>
                                             </div>
-                                            <form action="{{ route('fees.fees-invoice-payment', $invoice->id) }}"
-                                                method="POST">
+                                            <form action="{{ route('return-fees.store') }}" method="POST">
                                                 @csrf
                                                 <div class="modal-body">
-                                                    <table class="table table-bordered text-center">
-                                                        <thead>
-                                                            <tr>
-                                                                <th>@lang('fees.fee_type')</th>
-                                                                <th>@lang('accounts.amount')</th>
-                                                                <th>@lang('fees.paid')</th>
-                                                                <th>@lang('accounts.balance')</th>
-                                                                <th>@lang('fees.pay_now')</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            @foreach ($invoice->invoice_item as $item)
-                                                                @php $balance = $item->amount - $item->paid_amount; @endphp
-                                                                <tr>
-                                                                    <td>{{ $item->fee_type->name ?? 'N/A' }}</td>
-                                                                    <td>{{ $item->amount }}</td>
-                                                                    <td>{{ $item->paid_amount }}</td>
-                                                                    <td>{{ $balance }}</td>
-                                                                    
-
-                                                                    <td class="text-center">
-                                                                        <div class="input-group input-group-sm"
-                                                                            style="max-width: 120px;">
-                                                                            <input type="number"
-                                                                                name="pay_amount[{{ $item->id }}]"
-                                                                                class="form-control text-center"
-                                                                                min="0" max="{{ $balance }}"
-                                                                                value="0"
-                                                                               >
-                                                                            <div class="input-group-append">
-                                                                                <span class="input-group-text">.00</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </td>
-                                                                </tr>
-                                                            @endforeach
-                                                        </tbody>
-                                                    </table>
-
-                                                    <div class="form-group mt-3">
-                                                        <label>@lang('accounts.payment_method')</label>
-                                                        <select name="payment_method" class="form-control" required>
-                                                            <option value="Cash">Cash</option>
-                                                            <option value="Card">Cardbbb</option>
-                                                            <option value="Bank Transfer">Bank Transfer</option>
-                                                        </select>
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label>@lang('common.student')</label>
+                                                                <input type="text" class="form-control" value="{{ $invoice->student->student_name }}" readonly>
+                                                                <input type="hidden" name="student_id" value="{{ $invoice->student->id }}">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label>@lang('admin.admission_no')</label>
+                                                                <input type="text" class="form-control" value="{{ $invoice->student->admission_number }}" readonly>
+                                                                <input type="hidden" name="admission_number" value="{{ $invoice->student->admission_number }}">
+                                                            </div>
+                                                        </div>
                                                     </div>
 
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label>Father Name)</label>
+                                                                <input type="text" class="form-control" name="father_name" value="{{ $invoice->student->guardians_name ?? '' }}" required>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label>@lang('accounts.balance')</label>
+                                                                <input type="text" class="form-control" value="{{ number_format($balance, 2) }}" readonly>
+                                                                <input type="hidden" name="balance" value="{{ $balance }}">
+                                                            </div>
+                                                        </div>
+                                                    </div>
 
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label>@lang('fees.return_amount') <span class="text-danger">*</span></label>
+                                                                <div class="input-group">
+                                                                    <input type="number"
+                                                                           name="return_amount"
+                                                                           class="form-control"
+                                                                           min="0.01"
+                                                                           max="{{ $balance }}"
+                                                                           step="0.01"
+                                                                           required
+                                                                           placeholder="Enter return amount">
+                                                                    <div class="input-group-append">
+                                                                        <span class="input-group-text">.00</span>
+                                                                    </div>
+                                                                </div>
+                                                                <small class="text-muted">Maximum return amount: {{ number_format($balance, 2) }}</small>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label>Role</label>
+                                                                <select name="role_id" class="form-control" required>
+                                                                    <option value="">Select Role</option>
+                                                                    @foreach($roles as $role)
+                                                                        <option value="{{ $role->id }}">{{ $role->role_name }}</option>
+                                                                    @endforeach
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
 
+                                                    <div class="form-group">
+                                                        <label>@lang('fees.short_note')</label>
+                                                        <textarea name="short_note" class="form-control" rows="3" placeholder="Enter reason for return..."></textarea>
+                                                    </div>
+
+                                                    <div class="form-group">
+                                                        <div class="form-check">
+                                                            <input type="checkbox" name="status" value="1" class="form-check-input" id="statusCheck{{ $invoice->id }}" checked>
+                                                            <label class="form-check-label" for="statusCheck{{ $invoice->id }}">
+                                                                Active
+                                                            </label>
+                                                        </div>
+                                                    </div>
+
+                                                    <input type="hidden" name="invoice_id" value="{{ $invoice->id }}">
                                                 </div>
 
                                                 <div class="modal-footer">
-
-                                                    <button type="submit"
-                                                        class="primary-btn fix-gr-bg col-12">@lang('common.submit')</button>
+                                                    <button type="button" class="primary-btn tr-bg" data-dismiss="modal">@lang('common.cancel')</button>
+                                                    <button type="submit" class="primary-btn fix-gr-bg">Return</button>
                                                 </div>
                                             </form>
                                         </div>
                                     </div>
                                 </div>
+                                @endif
                             @endforeach
-
-                            {{-- @endforeach --}}
                         </div>
                     </div>
 

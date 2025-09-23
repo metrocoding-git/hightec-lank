@@ -14,6 +14,8 @@ use App\Models\SmEvent;
 use App\Models\Student;
 use App\Models\SmSchool;
 use App\Models\Supplier;
+use App\Models\ReturnFee;
+use App\Models\FeeInvoice;
 use App\Models\SmHoliday;
 use App\Models\SmSection;
 use App\Models\SmStudent;
@@ -465,7 +467,23 @@ class HomeController extends Controller
     {
         $coursess = Course::all();
         $intakes = Intake::all();
-        return view('pages.student.fees.fee-return', compact('coursess', 'intakes'));
+         $returnFees = ReturnFee::with(['student', 'role'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+
+        $returnDetails = ReturnFee::with(['student', 'role'])->get();
+
+        return view('pages.student.fees.fee-return', compact('returnDetails','returnFees','coursess', 'intakes'));
+    }
+
+    public function feeInvoice()
+    {
+        $roles = Role::all();
+        $fee_invoices = FeeInvoice::with(['student', 'branch', 'invoice_item.fee_type'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+
+        return view('pages.student.fees.fee-invoice', compact('fee_invoices', 'roles'));
     }
 
 
