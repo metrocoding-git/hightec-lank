@@ -231,7 +231,7 @@
                                                        data-video_link="{{ $video->video_link }}"
                                                        data-intake="{{ optional($video->intake)->name }}"
                                                        data-courses='@json($video->courses->pluck("name"))'>
-                                                        <i class="fas fa-bars"></i>
+                                                        <i class="fas fa-eye"></i>
                                                     </a>
                                                 </li>
                                             
@@ -504,8 +504,8 @@
                             <div class="col-lg-12">
                                 <h5 id="viewVideoTitle" class="mb-2"></h5>
                                 <ul class="list-unstyled mb-0">
-                                    <li><strong>@lang('common.intake'):</strong> <span id="viewVideoIntake">-</span></li>
-                                    <li><strong>@lang('common.course'):</strong> <span id="viewVideoCourses">-</span></li>
+                                    {{-- <li><strong>@lang('common.intake'):</strong> <span id="viewVideoIntake">-</span></li>
+                                    <li><strong>@lang('common.course'):</strong> <span id="viewVideoCourses">-</span></li> --}}
                                 </ul>
                             </div>
                         </div>
