@@ -149,4 +149,26 @@ class AssignSubjectController extends Controller
 
         return redirect()->route('assign-subject.index')->with('message-success-delete', 'Subject deleted successfully.');
     }
+
+    public function getCoursesByIntake($intakeId)
+    {
+        try {
+            $courses = Course::whereHas('intakes', function ($query) use ($intakeId) {
+                $query->where('intake_id', $intakeId);
+            })->get();
+
+            return response()->json([
+                'success' => true,
+                'courses' => $courses,
+                'intake_id' => $intakeId,
+                'count' => $courses->count()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'intake_id' => $intakeId
+            ], 500);
+        }
+    }
 }

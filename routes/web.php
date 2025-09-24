@@ -60,6 +60,7 @@ Route::controller(AssignSubjectController::class)->prefix('administration/academ
     Route::post('update/{id}', 'update')->name('assign-subject.update');
     Route::get('edit/{id}', 'edit')->name('assign-subject.edit');
     Route::delete('destroy/{id}', 'destroy')->name('assign-subject.destroy');
+    Route::get('get-courses/{intakeId}', 'getCoursesByIntake')->name('assign-subject.get-courses')->withoutMiddleware(['csrf']);
 });
 
 Route::controller(LessonController::class)->prefix('administration/lesson-plan/lesson')->group(callback: function () {
