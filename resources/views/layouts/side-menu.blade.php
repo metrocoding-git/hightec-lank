@@ -20,7 +20,7 @@
         <li class="dashboard_section {{ request()->is('dashboard') ? 'mm-active' : '' }} ">
             <a href="/">
                 <div class="nav_icon_small">
-                    <span class="fas fa-th"></span>
+                    <span class="fas fa-tachometer-alt"></span>
                 </div>
                 <div class="nav_title">
                     <span>Dashboard</span>
@@ -41,7 +41,7 @@
             class="administration_section {{ request()->is('academic') || request()->is('administration/academic/*') ? 'mm-active' : '' }}">
             <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
                 <div class="nav_icon_small">
-                    <span class="fas fa-bars"></span>
+                    <i class="fas fa-book-open"></i>
                 </div>
                 <div class="nav_title">
                     <span>Academic</span>
@@ -117,7 +117,7 @@
             class="administration_section {{ request()->is('lesson-plan') || request()->is('administration/lesson-plan/*') ? 'mm-active' : '' }}">
             <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
                 <div class="nav_icon_small">
-                    <span class="fas fa-bars"></span>
+                    <span class="fas fa-tasks"></span>
                 </div>
                 <div class="nav_title">
                     <span>Lesson Plane</span>
@@ -153,7 +153,7 @@
             class="administration_section {{ request()->is('download-center') || request()->is('administration/download-center/*') ? 'mm-active' : '' }}">
             <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
                 <div class="nav_icon_small">
-                    <span class="fas fa-bars"></span>
+                    <span class="fas fa-download"></span>
                 </div>
                 <div class="nav_title">
                     <span>Download Center</span>
@@ -203,7 +203,7 @@
             class="studentInfo_section {{ request()->is('student-info') || request()->is('student/student-info/*') ? 'mm-active' : '' }}">
             <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
                 <div class="nav_icon_small">
-                    <span class="fas fa-bars"></span>
+                    <span class="fas fa-user"></span>
                 </div>
                 <div class="nav_title">
                     <span>Student Info</span>
@@ -254,7 +254,7 @@
         <li class="fees_section {{ request()->is('fees') || request()->is('student/fees/*') ? 'mm-active' : '' }}">
             <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
                 <div class="nav_icon_small">
-                    <span class="fas fa-bars"></span>
+                    <span class="fas fa-money-bill-wave"></span>
                 </div>
                 <div class="nav_title">
                     <span>Fees</span>
@@ -313,7 +313,7 @@
             class="inventory_section {{ request()->is('inventory') || request()->is('account/inventory/*') ? 'mm-active' : '' }}">
             <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
                 <div class="nav_icon_small">
-                    <span class="fas fa-bars"></span>
+                    <span class="fas fa-chart-bar"></span>
                 </div>
                 <div class="nav_title">
                     <span>Inventory</span>
