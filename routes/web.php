@@ -79,6 +79,9 @@ Route::controller(TopicController::class)->prefix('administration/lesson-plan/to
     Route::put('update/{id}', 'update')->name('topic.update');
     Route::get('edit/{id}', 'edit')->name('topic.edit');
     Route::delete('destroy/{id}', 'destroy')->name('topic.destroy');
+    Route::get('get-intakes/{courseId}', 'getIntakesByCourse')->name('topic.get-intakes')->withoutMiddleware(['csrf']);
+    Route::get('get-subjects/{intakeId}', 'getSubjectsByIntake')->name('topic.get-subjects')->withoutMiddleware(['csrf']);
+    Route::get('get-lessons/{subjectId}', 'getLessonsBySubject')->name('topic.get-lessons')->withoutMiddleware(['csrf']);
 });
 
 Route::controller(TopicOverviewController::class)->prefix('administration/lesson-plan/topic-overview')->group(callback: function () {
