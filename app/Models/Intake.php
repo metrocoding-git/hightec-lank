@@ -31,4 +31,9 @@ class Intake extends Model
         return $this->belongsToMany(Student::class, 'student_courses');
     }
 
+    public function assignSubjects()
+    {
+        return $this->hasMany(AssignSubject::class, 'intake_id');
+    }
+
 }

@@ -159,4 +159,48 @@ class LessonController extends Controller
 
         return redirect()->route('lesson.index')->with('message-success-delete', 'Lessons deleted successfully.');
     }
+
+    public function getIntakesByCourse($courseId)
+    {
+        try {
+            $intakes = Intake::whereHas('courses', function ($query) use ($courseId) {
+                $query->where('course_id', $courseId);
+            })->get();
+
+            return response()->json([
+                'success' => true,
+                'intakes' => $intakes,
+                'course_id' => $courseId,
+                'count' => $intakes->count()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'course_id' => $courseId
+            ], 500);
+        }
+    }
+
+    public function getSubjectsByIntake($intakeId)
+    {
+        try {
+            $subjects = Subject::whereHas('assignSubjects', function ($query) use ($intakeId) {
+                $query->where('intake_id', $intakeId);
+            })->get();
+
+            return response()->json([
+                'success' => true,
+                'subjects' => $subjects,
+                'intake_id' => $intakeId,
+                'count' => $subjects->count()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'intake_id' => $intakeId
+            ], 500);
+        }
+    }
 }

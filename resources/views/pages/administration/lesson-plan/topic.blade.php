@@ -41,7 +41,7 @@
                                             <div class="col-lg-12">
                                                 <label class="primary_input_label">Course <span
                                                         class="text-danger">*</span></label>
-                                                <select
+                                                <select id="course-select"
                                                     class="primary_select form-control @error('course_id') is-invalid @enderror"
                                                     name="course_id">
                                                     <option value="">Select Course *</option>
@@ -64,7 +64,7 @@
                                             <div class="col-lg-12">
                                                 <label class="primary_input_label">Intake <span
                                                         class="text-danger">*</span></label>
-                                                <select
+                                                <select id="intake-select"
                                                     class="primary_select form-control @error('intake_id') is-invalid @enderror"
                                                     name="intake_id">
                                                     <option value="">Select Intake *</option>
@@ -87,7 +87,7 @@
                                             <div class="col-lg-12">
                                                 <label class="primary_input_label">Subject <span
                                                         class="text-danger">*</span></label>
-                                                <select
+                                                <select id="subject-select"
                                                     class="primary_select form-control @error('subject_id') is-invalid @enderror"
                                                     name="subject_id">
                                                     <option value="">Select Subject *</option>
@@ -111,9 +111,9 @@
                                                     Lesson
                                                     <span class="text-danger"> *</span>
                                                 </label>
-                                                <select
+                                                <select id="lesson-select"
                                                     class="primary_select form-control {{ $errors->has('class') ? ' is-invalid' : '' }}"
-                                                    id="select_class_lesson" name="lesson_id">
+                                                    name="lesson_id">
                                                     <option data-display="Select Lesson *" value="">
                                                         Select Lesson *
                                                     </option>
@@ -153,7 +153,7 @@
                                                         <tbody>
                                                             @if (isset($groupTopics) && $groupTopics->count())
                                                                 @foreach ($groupTopics as $index => $l)
-                                                                    <tr id="row{{ $index + 1 }}" class="mt-40">
+                                                                    <tr id="row{{ $index + 1 }}" class="mt-40 flex justify-content-between">
                                                                         <td>
                                                                             <input type="hidden" name="url" id="url" value="{{ URL::to('/') }}">
                                                                             <div class="primary_input">
@@ -180,12 +180,12 @@
                                                                     </tr>
                                                                 @endforeach
                                                             @else
-                                                                <tr id="row1" class="mt-40">
-                                                                    <td>
+                                                                <tr id="row1" class="mt-4 ">
+                                                                    <td class="w-full">
                                                                         <input type="hidden" name="url" id="url" value="{{ URL::to('/') }}">
                                                                         <div class="primary_input">
                                                                             <input
-                                                                                class="primary_input_field form-control{{ $errors->has('topic.0') ? ' is-invalid' : '' }}"
+                                                                                class="primary_input_field form-control w-full gap-2 mx-2 text-base p-3{{ $errors->has('topic.0') ? ' is-invalid' : '' }}"
                                                                                 type="text"
                                                                                 id="topic"
                                                                                 name="topic[]"
@@ -198,7 +198,7 @@
                                                                         </div>
                                                                     </td>
                                                                     <td>
-                                                                        <button class="primary-btn icon-only fix-gr-bg ml-2" type="button" onclick="removeRow(this)">
+                                                                        <button class="primary-btn icon-only fix-gr-bg ml-2 px-2  gap-2" type="button" onclick="removeRow(this)">
                                                                             <span class="ti-trash"></span>
                                                                         </button>
                                                                     </td>
@@ -354,6 +354,7 @@
         </div>
     </section>
 @endsection
+@include('components.partials.data_table_css')
 @include('components.partials.data_table_js')
 @push('script')
     <script>
@@ -404,5 +405,221 @@ function deleteTopic(id) {
     modal.modal('show');
 }
 
+// Handle course change event to load intakes dynamically
+$('#course-select').on('change', function() {
+    var courseId = $(this).val();
+    var intakeSelect = $('#intake-select');
+    var subjectSelect = $('#subject-select');
+    var lessonSelect = $('#lesson-select');
+
+    if (courseId) {
+        // Show loading state
+        intakeSelect.html('<option value="">Loading intakes...</option>');
+        subjectSelect.html('<option value="">Select Subject *</option>');
+        lessonSelect.html('<option data-display="Select Lesson *" value="">Select Lesson *</option>');
+
+        // Make AJAX request to get intakes for selected course
+        $.ajax({
+            url: '{{ route("topic.get-intakes", ":courseId") }}'.replace(':courseId', courseId),
+            type: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            success: function(data) {
+                console.log('Intakes response:', data);
+                var options = '<option value="">Select Intake *</option>';
+
+                if (data.intakes && data.intakes.length > 0) {
+                    data.intakes.forEach(function(intake) {
+                        options += '<option value="' + intake.id + '">' + intake.name + '</option>';
+                    });
+                } else {
+                    options = '<option value="">No intakes available for this course</option>';
+                }
+
+                intakeSelect.html(options);
+
+                // Trigger niceSelect update if using niceSelect
+                if (intakeSelect.hasClass('primary_select')) {
+                    intakeSelect.niceSelect('update');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading intakes:', error);
+                console.error('XHR response:', xhr.responseText);
+                intakeSelect.html('<option value="">Error loading intakes</option>');
+                subjectSelect.html('<option value="">Select Subject *</option>');
+                lessonSelect.html('<option data-display="Select Lesson *" value="">Select Lesson *</option>');
+
+                // Trigger niceSelect update if using niceSelect
+                if (intakeSelect.hasClass('primary_select')) {
+                    intakeSelect.niceSelect('update');
+                }
+                if (subjectSelect.hasClass('primary_select')) {
+                    subjectSelect.niceSelect('update');
+                }
+                if (lessonSelect.hasClass('primary_select')) {
+                    lessonSelect.niceSelect('update');
+                }
+            }
+        });
+    } else {
+        // Reset intake, subject and lesson dropdowns when no course is selected
+        intakeSelect.html('<option value="">Select Intake *</option>');
+        subjectSelect.html('<option value="">Select Subject *</option>');
+        lessonSelect.html('<option data-display="Select Lesson *" value="">Select Lesson *</option>');
+
+        // Trigger niceSelect update if using niceSelect
+        if (intakeSelect.hasClass('primary_select')) {
+            intakeSelect.niceSelect('update');
+        }
+        if (subjectSelect.hasClass('primary_select')) {
+            subjectSelect.niceSelect('update');
+        }
+        if (lessonSelect.hasClass('primary_select')) {
+            lessonSelect.niceSelect('update');
+        }
+    }
+});
+
+// Handle intake change event to load subjects dynamically
+$('#intake-select').on('change', function() {
+    var intakeId = $(this).val();
+    var subjectSelect = $('#subject-select');
+    var lessonSelect = $('#lesson-select');
+
+    if (intakeId) {
+        // Show loading state
+        subjectSelect.html('<option value="">Loading subjects...</option>');
+        lessonSelect.html('<option data-display="Select Lesson *" value="">Select Lesson *</option>');
+
+        // Make AJAX request to get subjects for selected intake
+        $.ajax({
+            url: '{{ route("topic.get-subjects", ":intakeId") }}'.replace(':intakeId', intakeId),
+            type: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            success: function(data) {
+                console.log('Subjects response:', data);
+                var options = '<option value="">Select Subject *</option>';
+
+                if (data.subjects && data.subjects.length > 0) {
+                    data.subjects.forEach(function(subject) {
+                        options += '<option value="' + subject.id + '">' + subject.name + '</option>';
+                    });
+                } else {
+                    options = '<option value="">No subjects available for this intake</option>';
+                }
+
+                subjectSelect.html(options);
+
+                // Trigger niceSelect update if using niceSelect
+                if (subjectSelect.hasClass('primary_select')) {
+                    subjectSelect.niceSelect('update');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading subjects:', error);
+                console.error('XHR response:', xhr.responseText);
+                subjectSelect.html('<option value="">Error loading subjects</option>');
+                lessonSelect.html('<option data-display="Select Lesson *" value="">Select Lesson *</option>');
+
+                // Trigger niceSelect update if using niceSelect
+                if (subjectSelect.hasClass('primary_select')) {
+                    subjectSelect.niceSelect('update');
+                }
+                if (lessonSelect.hasClass('primary_select')) {
+                    lessonSelect.niceSelect('update');
+                }
+            }
+        });
+    } else {
+        // Reset subject and lesson dropdowns when no intake is selected
+        subjectSelect.html('<option value="">Select Subject *</option>');
+        lessonSelect.html('<option data-display="Select Lesson *" value="">Select Lesson *</option>');
+
+        // Trigger niceSelect update if using niceSelect
+        if (subjectSelect.hasClass('primary_select')) {
+            subjectSelect.niceSelect('update');
+        }
+        if (lessonSelect.hasClass('primary_select')) {
+            lessonSelect.niceSelect('update');
+        }
+    }
+});
+
+// Handle subject change event to load lessons dynamically
+$('#subject-select').on('change', function() {
+    var subjectId = $(this).val();
+    var lessonSelect = $('#lesson-select');
+
+    if (subjectId) {
+        // Show loading state
+        lessonSelect.html('<option data-display="Loading lessons..." value="">Loading lessons...</option>');
+
+        // Make AJAX request to get lessons for selected subject
+        $.ajax({
+            url: '{{ route("topic.get-lessons", ":subjectId") }}'.replace(':subjectId', subjectId),
+            type: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            success: function(data) {
+                console.log('Lessons response:', data);
+                var options = '<option data-display="Select Lesson *" value="">Select Lesson *</option>';
+
+                if (data.lessons && data.lessons.length > 0) {
+                    data.lessons.forEach(function(lesson) {
+                        options += '<option value="' + lesson.id + '">' + lesson.name + '</option>';
+                    });
+                } else {
+                    options = '<option data-display="No lessons available for this subject" value="">No lessons available for this subject</option>';
+                }
+
+                lessonSelect.html(options);
+
+                // Trigger niceSelect update if using niceSelect
+                if (lessonSelect.hasClass('primary_select')) {
+                    lessonSelect.niceSelect('update');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading lessons:', error);
+                console.error('XHR response:', xhr.responseText);
+                lessonSelect.html('<option data-display="Error loading lessons" value="">Error loading lessons</option>');
+
+                // Trigger niceSelect update if using niceSelect
+                if (lessonSelect.hasClass('primary_select')) {
+                    lessonSelect.niceSelect('update');
+                }
+            }
+        });
+    } else {
+        // Reset lesson dropdown when no subject is selected
+        lessonSelect.html('<option data-display="Select Lesson *" value="">Select Lesson *</option>');
+
+        // Trigger niceSelect update if using niceSelect
+        if (lessonSelect.hasClass('primary_select')) {
+            lessonSelect.niceSelect('update');
+        }
+    }
+});
+
+    </script>
+     <script>
+        $('#table_id').DataTable({
+            dom: 'Bfrtip',
+            buttons: [
+                'copy', 'csv', 'excel', 'pdf', 'print'
+            ],
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+        });
     </script>
 @endpush

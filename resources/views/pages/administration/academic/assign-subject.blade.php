@@ -78,7 +78,7 @@
                                                 <div class="primary_input">
                                                     <label class="primary_input_label">Intake <span>*</span></label>
                                                     @if (isset($assignSubjectId))
-                                                        <select name="intake_id"
+                                                        <select name="intake_id" id="intake-select"
                                                             class="primary_select form-control {{ $errors->has('intake_id') ? ' is-invalid' : '' }}" readonly>
                                                             <option
                                                                 value="{{ $intakes->firstWhere('id', $selectedIntake)?->id }}"
@@ -88,7 +88,7 @@
 
                                                         </select>
                                                     @else
-                                                        <select name="intake_id"
+                                                        <select name="intake_id" id="intake-select"
                                                             class="primary_select form-control {{ $errors->has('intake_id') ? ' is-invalid' : '' }}">
                                                             <option value="">Select intake</option>
                                                             @foreach ($intakes as $intake)
@@ -113,7 +113,7 @@
 
                                                     @if (isset($assignSubjectId))
 
-                                                         <select name="course_id"
+                                                         <select name="course_id" id="course-select"
                                                             class="primary_select form-control {{ $errors->has('course_id') ? ' is-invalid' : '' }}" readonly>
                                                             <option
                                                                 value="{{ $courses->firstWhere('id', $selectedCourse)?->id }}"
@@ -124,7 +124,7 @@
                                                         </select>
                                                     @else
                                                         {{-- Normal selectable dropdown --}}
-                                                        <select name="course_id"
+                                                        <select name="course_id" id="course-select"
                                                             class="primary_select form-control {{ $errors->has('course_id') ? ' is-invalid' : '' }}">
                                                             <option value="">Select course</option>
                                                             @foreach ($courses as $course)
@@ -292,8 +292,81 @@
         </div>
     </section>
 @endsection
+@include('components.partials.data_table_css')
 @include('components.partials.data_table_js')
 @push('script')
+ <script>
+        $('#table_id').DataTable({
+            dom: 'Bfrtip',
+            buttons: [
+                'copy', 'csv', 'excel', 'pdf', 'print'
+            ],
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+        });
+
+        // Handle intake change event to load courses dynamically
+        $('#intake-select').on('change', function() {
+            var intakeId = $(this).val();
+            var courseSelect = $('#course-select');
+
+            if (intakeId) {
+                // Show loading state
+                courseSelect.html('<option value="">Loading courses...</option>');
+
+                // Make AJAX request to get courses for selected intake
+                $.ajax({
+                    url: '{{ route("assign-subject.get-courses", ":intakeId") }}'.replace(':intakeId', intakeId),
+                    type: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    success: function(data) {
+                        console.log('Success response:', data);
+                        var options = '<option value="">Select course</option>';
+
+                        if (data.courses && data.courses.length > 0) {
+                            data.courses.forEach(function(course) {
+                                options += '<option value="' + course.id + '">' + course.name + '</option>';
+                            });
+                        } else {
+                            options = '<option value="">No courses available for this intake</option>';
+                        }
+
+                        courseSelect.html(options);
+
+                        // Trigger niceSelect update if using niceSelect
+                        if (courseSelect.hasClass('primary_select')) {
+                            courseSelect.niceSelect('update');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error loading courses:', error);
+                        console.error('XHR response:', xhr.responseText);
+                        console.error('Status:', status);
+                        courseSelect.html('<option value="">Error loading courses</option>');
+
+                        // Trigger niceSelect update if using niceSelect
+                        if (courseSelect.hasClass('primary_select')) {
+                            courseSelect.niceSelect('update');
+                        }
+                    }
+                });
+            } else {
+                // Reset course dropdown when no intake is selected
+                courseSelect.html('<option value="">Select course</option>');
+
+                // Trigger niceSelect update if using niceSelect
+                if (courseSelect.hasClass('primary_select')) {
+                    courseSelect.niceSelect('update');
+                }
+            }
+        });
+
+    </script>
     {{-- <script>
     $(document).on("change", ".assignedClassSection", function() {
         var id = $(this).val();

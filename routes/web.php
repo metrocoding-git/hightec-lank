@@ -60,6 +60,7 @@ Route::controller(AssignSubjectController::class)->prefix('administration/academ
     Route::post('update/{id}', 'update')->name('assign-subject.update');
     Route::get('edit/{id}', 'edit')->name('assign-subject.edit');
     Route::delete('destroy/{id}', 'destroy')->name('assign-subject.destroy');
+    Route::get('get-courses/{intakeId}', 'getCoursesByIntake')->name('assign-subject.get-courses')->withoutMiddleware(['csrf']);
 });
 
 Route::controller(LessonController::class)->prefix('administration/lesson-plan/lesson')->group(callback: function () {
@@ -68,6 +69,8 @@ Route::controller(LessonController::class)->prefix('administration/lesson-plan/l
     Route::post('update/{id}', 'update')->name('lesson.update');
     Route::get('edit/{id}', 'edit')->name('lesson.edit');
     Route::delete('destroy/{id}', 'destroy')->name('lesson.destroy');
+    Route::get('get-intakes/{courseId}', 'getIntakesByCourse')->name('lesson.get-intakes')->withoutMiddleware(['csrf']);
+    Route::get('get-subjects/{intakeId}', 'getSubjectsByIntake')->name('lesson.get-subjects')->withoutMiddleware(['csrf']);
 });
 
 Route::controller(TopicController::class)->prefix('administration/lesson-plan/topic')->group(callback: function () {
@@ -76,11 +79,16 @@ Route::controller(TopicController::class)->prefix('administration/lesson-plan/to
     Route::put('update/{id}', 'update')->name('topic.update');
     Route::get('edit/{id}', 'edit')->name('topic.edit');
     Route::delete('destroy/{id}', 'destroy')->name('topic.destroy');
+    Route::get('get-intakes/{courseId}', 'getIntakesByCourse')->name('topic.get-intakes')->withoutMiddleware(['csrf']);
+    Route::get('get-subjects/{intakeId}', 'getSubjectsByIntake')->name('topic.get-subjects')->withoutMiddleware(['csrf']);
+    Route::get('get-lessons/{subjectId}', 'getLessonsBySubject')->name('topic.get-lessons')->withoutMiddleware(['csrf']);
 });
 
 Route::controller(TopicOverviewController::class)->prefix('administration/lesson-plan/topic-overview')->group(callback: function () {
     Route::get('/', 'index')->name('topic-overview.index');
     Route::post('store', 'store')->name('topic-overview.store');
+    Route::get('get-intakes/{courseId}', 'getIntakesByCourse')->name('topic-overview.get-intakes')->withoutMiddleware(['csrf']);
+    Route::get('get-subjects/{intakeId}', 'getSubjectsByIntake')->name('topic-overview.get-subjects')->withoutMiddleware(['csrf']);
 });
 
 Route::controller(StudentCategoryController::class)->prefix('student/student-info/student-category')->group(callback: function () {

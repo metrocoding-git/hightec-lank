@@ -13,6 +13,9 @@ class Subject extends Model
 
     protected $fillable = ['name', 'code', 'type'];
 
-  
+    public function assignSubjects()
+    {
+        return $this->hasMany(AssignSubject::class, 'subject_id');
+    }
 
 }

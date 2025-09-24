@@ -344,8 +344,8 @@
                                                             {{ $key + 1 }}
                                                         </td>
                                                         <td class="text-break">{{ $content->file_name }}</td>
-                                                        <td>{{ $content->content_type->name }}</td>
-                                                        <td>{{ $content->file_size }}</td>
+                                                        <td>{{ $content->content_type->name??"N/A" }}</td>
+                                                        <td>{{ $content->file_size ?? "N/A" }}</td>
 
                                                         <td>{{ $content->created_at }}</td>
                                                         <td>{{ $content->created_at }}</td>

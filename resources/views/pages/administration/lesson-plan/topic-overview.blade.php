@@ -7,7 +7,7 @@
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1>@lang('lesson::lesson.topic_overview')</h1>
+                <h1>Topic Overview</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
                     <a href="#">@lang('lesson::lesson.lesson')</a>
@@ -32,7 +32,7 @@
                                         <span class="text-danger">*</span>
                                     </label>
                                     <select class="primary_select form-control @error('course_id') is-invalid @enderror"
-                                        name="course_id" id="course_id" required>
+                                        name="course_id" id="course-select" required>
                                         <option value="">Select Course *</option>
                                         @foreach ($courses as $course)
                                             <option value="{{ $course->id }}"
@@ -51,7 +51,7 @@
                                         <span class="text-danger">*</span>
                                     </label>
                                     <select class="primary_select form-control @error('intake_id') is-invalid @enderror"
-                                        name="intake_id" id="intake_id" required>
+                                        name="intake_id" id="intake-select" required>
                                         <option value="">Select Intake *</option>
                                         @foreach ($intakes as $intake)
                                             <option value="{{ $intake->id }}"
@@ -70,7 +70,7 @@
                                         <span class="text-danger">*</span>
                                     </label>
                                     <select class="primary_select form-control @error('subject_id') is-invalid @enderror"
-                                        name="subject_id" id="subject_id" required>
+                                        name="subject_id" id="subject-select" required>
                                         <option value="">Select Subject *</option>
                                         @foreach ($subjects as $subject)
                                             <option value="{{ $subject->id }}"
@@ -131,11 +131,150 @@
     </section>
 
 @endsection
-
+@include('components.partials.data_table_css')
+@include('components.partials.data_table_js')
 @push('scripts')
+ {{-- <script>
+        $('#table_id').DataTable({
+            dom: 'Bfrtip',
+            buttons: [
+                'copy', 'csv', 'excel', 'pdf', 'print'
+            ],
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+        });
+    </script> --}}
 
 <script>
 $(document).ready(function() {
+    // Handle course change event to load intakes dynamically
+    $('#course-select').on('change', function() {
+        var courseId = $(this).val();
+        var intakeSelect = $('#intake-select');
+        var subjectSelect = $('#subject-select');
+
+        if (courseId) {
+            // Show loading state
+            intakeSelect.html('<option value="">Loading intakes...</option>');
+            subjectSelect.html('<option value="">Select Subject *</option>');
+
+            // Make AJAX request to get intakes for selected course
+            $.ajax({
+                url: '{{ route("topic-overview.get-intakes", ":courseId") }}'.replace(':courseId', courseId),
+                type: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                success: function(data) {
+                    console.log('Intakes response:', data);
+                    var options = '<option value="">Select Intake *</option>';
+
+                    if (data.intakes && data.intakes.length > 0) {
+                        data.intakes.forEach(function(intake) {
+                            options += '<option value="' + intake.id + '">' + intake.name + '</option>';
+                        });
+                    } else {
+                        options = '<option value="">No intakes available for this course</option>';
+                    }
+
+                    intakeSelect.html(options);
+
+                    // Trigger niceSelect update if using niceSelect
+                    if (intakeSelect.hasClass('primary_select')) {
+                        intakeSelect.niceSelect('update');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading intakes:', error);
+                    console.error('XHR response:', xhr.responseText);
+                    intakeSelect.html('<option value="">Error loading intakes</option>');
+                    subjectSelect.html('<option value="">Select Subject *</option>');
+
+                    // Trigger niceSelect update if using niceSelect
+                    if (intakeSelect.hasClass('primary_select')) {
+                        intakeSelect.niceSelect('update');
+                    }
+                    if (subjectSelect.hasClass('primary_select')) {
+                        subjectSelect.niceSelect('update');
+                    }
+                }
+            });
+        } else {
+            // Reset intake and subject dropdowns when no course is selected
+            intakeSelect.html('<option value="">Select Intake *</option>');
+            subjectSelect.html('<option value="">Select Subject *</option>');
+
+            // Trigger niceSelect update if using niceSelect
+            if (intakeSelect.hasClass('primary_select')) {
+                intakeSelect.niceSelect('update');
+            }
+            if (subjectSelect.hasClass('primary_select')) {
+                subjectSelect.niceSelect('update');
+            }
+        }
+    });
+
+    // Handle intake change event to load subjects dynamically
+    $('#intake-select').on('change', function() {
+        var intakeId = $(this).val();
+        var subjectSelect = $('#subject-select');
+
+        if (intakeId) {
+            // Show loading state
+            subjectSelect.html('<option value="">Loading subjects...</option>');
+
+            // Make AJAX request to get subjects for selected intake
+            $.ajax({
+                url: '{{ route("topic-overview.get-subjects", ":intakeId") }}'.replace(':intakeId', intakeId),
+                type: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                success: function(data) {
+                    console.log('Subjects response:', data);
+                    var options = '<option value="">Select Subject *</option>';
+
+                    if (data.subjects && data.subjects.length > 0) {
+                        data.subjects.forEach(function(subject) {
+                            options += '<option value="' + subject.id + '">' + subject.name + '</option>';
+                        });
+                    } else {
+                        options = '<option value="">No subjects available for this intake</option>';
+                    }
+
+                    subjectSelect.html(options);
+
+                    // Trigger niceSelect update if using niceSelect
+                    if (subjectSelect.hasClass('primary_select')) {
+                        subjectSelect.niceSelect('update');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading subjects:', error);
+                    console.error('XHR response:', xhr.responseText);
+                    subjectSelect.html('<option value="">Error loading subjects</option>');
+
+                    // Trigger niceSelect update if using niceSelect
+                    if (subjectSelect.hasClass('primary_select')) {
+                        subjectSelect.niceSelect('update');
+                    }
+                }
+            });
+        } else {
+            // Reset subject dropdown when no intake is selected
+            subjectSelect.html('<option value="">Select Subject *</option>');
+
+            // Trigger niceSelect update if using niceSelect
+            if (subjectSelect.hasClass('primary_select')) {
+                subjectSelect.niceSelect('update');
+            }
+        }
+    });
+
     $('#searchForm').on('submit', function(e) {
         e.preventDefault();
 

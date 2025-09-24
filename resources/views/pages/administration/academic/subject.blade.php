@@ -247,8 +247,21 @@
         </div>
     </section>
 @endsection
+@include('components.partials.data_table_css')
 @include('components.partials.data_table_js')
 @push('script')
+ <script>
+        $('#table_id').DataTable({
+            dom: 'Bfrtip',
+            buttons: [
+                'copy', 'csv', 'excel', 'pdf', 'print'
+            ],
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+        });
+    </script>
     {{-- <script>
     $(document).on("change", ".assignedClassSection", function() {
         var id = $(this).val();

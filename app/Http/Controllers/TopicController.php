@@ -183,6 +183,70 @@ if (!$exists) {
     return redirect()->route('topic.index')->with('message-success-delete', 'Topics deleted successfully.');
 }
 
+    public function getIntakesByCourse($courseId)
+    {
+        try {
+            $intakes = Intake::whereHas('courses', function ($query) use ($courseId) {
+                $query->where('course_id', $courseId);
+            })->get();
+
+            return response()->json([
+                'success' => true,
+                'intakes' => $intakes,
+                'course_id' => $courseId,
+                'count' => $intakes->count()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'course_id' => $courseId
+            ], 500);
+        }
+    }
+
+    public function getSubjectsByIntake($intakeId)
+    {
+        try {
+            $subjects = Subject::whereHas('assignSubjects', function ($query) use ($intakeId) {
+                $query->where('intake_id', $intakeId);
+            })->get();
+
+            return response()->json([
+                'success' => true,
+                'subjects' => $subjects,
+                'intake_id' => $intakeId,
+                'count' => $subjects->count()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'intake_id' => $intakeId
+            ], 500);
+        }
+    }
+
+    public function getLessonsBySubject($subjectId)
+    {
+        try {
+            $lessons = Lesson::where('subject_id', $subjectId)->get();
+
+            return response()->json([
+                'success' => true,
+                'lessons' => $lessons,
+                'subject_id' => $subjectId,
+                'count' => $lessons->count()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'subject_id' => $subjectId
+            ], 500);
+        }
+    }
+
 
 
 
