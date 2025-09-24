@@ -69,6 +69,8 @@ Route::controller(LessonController::class)->prefix('administration/lesson-plan/l
     Route::post('update/{id}', 'update')->name('lesson.update');
     Route::get('edit/{id}', 'edit')->name('lesson.edit');
     Route::delete('destroy/{id}', 'destroy')->name('lesson.destroy');
+    Route::get('get-intakes/{courseId}', 'getIntakesByCourse')->name('lesson.get-intakes')->withoutMiddleware(['csrf']);
+    Route::get('get-subjects/{intakeId}', 'getSubjectsByIntake')->name('lesson.get-subjects')->withoutMiddleware(['csrf']);
 });
 
 Route::controller(TopicController::class)->prefix('administration/lesson-plan/topic')->group(callback: function () {

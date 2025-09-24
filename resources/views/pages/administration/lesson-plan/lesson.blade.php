@@ -49,7 +49,7 @@
                                 <div class="white-box">
                                     <div class="main-title">
                                         <h3 class="mb-15">
-                                            {{ isset($lesson) ? __('lesson::lesson.edit_lesson') : 'Lesson Adding' }}
+                                            {{ isset($lesson) ? __('Edit Lesson') : 'Lesson Adding' }}
                                         </h3>
                                     </div>
 
@@ -59,7 +59,7 @@
                                             <div class="col-lg-12">
                                                 <label class="primary_input_label">Course <span
                                                         class="text-danger">*</span></label>
-                                                <select
+                                                <select id="course-select"
                                                     class="primary_select form-control @error('course_id') is-invalid @enderror"
                                                     name="course_id">
                                                     <option value="">Select Course *</option>
@@ -82,7 +82,7 @@
                                             <div class="col-lg-12">
                                                 <label class="primary_input_label">Intake <span
                                                         class="text-danger">*</span></label>
-                                                <select
+                                                <select id="intake-select"
                                                     class="primary_select form-control @error('intake_id') is-invalid @enderror"
                                                     name="intake_id">
                                                     <option value="">Select Intake *</option>
@@ -105,7 +105,7 @@
                                             <div class="col-lg-12">
                                                 <label class="primary_input_label">Subject <span
                                                         class="text-danger">*</span></label>
-                                                <select
+                                                <select id="subject-select"
                                                     class="primary_select form-control @error('subject_id') is-invalid @enderror"
                                                     name="subject_id">
                                                     <option value="">Select Subject *</option>
@@ -209,7 +209,7 @@
                                                 <button class="primary-btn fix-gr-bg" data-toggle="tooltip"
                                                     title="{{ $tooltip ?? '' }}">
                                                     <span class="ti-check"></span>
-                                                    {{ isset($lesson) ? __('lesson::lesson.update_lesson') : 'Save Lesson' }}
+                                                    {{ isset($lesson) ? __('update lesson') : 'Save Lesson' }}
                                                 </button>
                                             </div>
                                         </div>
@@ -372,5 +372,133 @@
             modal.find('input[name=id]').val(id)
             modal.modal('show');
         }
+
+        // Handle course change event to load intakes dynamically
+        $('#course-select').on('change', function() {
+            var courseId = $(this).val();
+            var intakeSelect = $('#intake-select');
+            var subjectSelect = $('#subject-select');
+
+            if (courseId) {
+                // Show loading state
+                intakeSelect.html('<option value="">Loading intakes...</option>');
+                subjectSelect.html('<option value="">Select Subject *</option>');
+
+                // Make AJAX request to get intakes for selected course
+                $.ajax({
+                    url: '{{ route("lesson.get-intakes", ":courseId") }}'.replace(':courseId', courseId),
+                    type: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    success: function(data) {
+                        console.log('Intakes response:', data);
+                        var options = '<option value="">Select Intake *</option>';
+
+                        if (data.intakes && data.intakes.length > 0) {
+                            data.intakes.forEach(function(intake) {
+                                options += '<option value="' + intake.id + '">' + intake.name + '</option>';
+                            });
+                        } else {
+                            options = '<option value="">No intakes available for this course</option>';
+                        }
+
+                        intakeSelect.html(options);
+
+                        // Trigger niceSelect update if using niceSelect
+                        if (intakeSelect.hasClass('primary_select')) {
+                            intakeSelect.niceSelect('update');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error loading intakes:', error);
+                        console.error('XHR response:', xhr.responseText);
+                        intakeSelect.html('<option value="">Error loading intakes</option>');
+                        subjectSelect.html('<option value="">Select Subject *</option>');
+
+                        // Trigger niceSelect update if using niceSelect
+                        if (intakeSelect.hasClass('primary_select')) {
+                            intakeSelect.niceSelect('update');
+                        }
+                        if (subjectSelect.hasClass('primary_select')) {
+                            subjectSelect.niceSelect('update');
+                        }
+                    }
+                });
+            } else {
+                // Reset intake and subject dropdowns when no course is selected
+                intakeSelect.html('<option value="">Select Intake *</option>');
+                subjectSelect.html('<option value="">Select Subject *</option>');
+
+                // Trigger niceSelect update if using niceSelect
+                if (intakeSelect.hasClass('primary_select')) {
+                    intakeSelect.niceSelect('update');
+                }
+                if (subjectSelect.hasClass('primary_select')) {
+                    subjectSelect.niceSelect('update');
+                }
+            }
+        });
+
+        // Handle intake change event to load subjects dynamically
+        $('#intake-select').on('change', function() {
+            var intakeId = $(this).val();
+            var subjectSelect = $('#subject-select');
+
+            if (intakeId) {
+                // Show loading state
+                subjectSelect.html('<option value="">Loading subjects...</option>');
+
+                // Make AJAX request to get subjects for selected intake
+                $.ajax({
+                    url: '{{ route("lesson.get-subjects", ":intakeId") }}'.replace(':intakeId', intakeId),
+                    type: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    success: function(data) {
+                        console.log('Subjects response:', data);
+                        var options = '<option value="">Select Subject *</option>';
+
+                        if (data.subjects && data.subjects.length > 0) {
+                            data.subjects.forEach(function(subject) {
+                                options += '<option value="' + subject.id + '">' + subject.name + '</option>';
+                            });
+                        } else {
+                            options = '<option value="">No subjects available for this intake</option>';
+                        }
+
+                        subjectSelect.html(options);
+
+                        // Trigger niceSelect update if using niceSelect
+                        if (subjectSelect.hasClass('primary_select')) {
+                            subjectSelect.niceSelect('update');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error loading subjects:', error);
+                        console.error('XHR response:', xhr.responseText);
+                        console.error('Status:', status);
+                        console.error('URL:', this.url);
+                        subjectSelect.html('<option value="">Error loading subjects</option>');
+
+                        // Trigger niceSelect update if using niceSelect
+                        if (subjectSelect.hasClass('primary_select')) {
+                            subjectSelect.niceSelect('update');
+                        }
+                    }
+                });
+            } else {
+                // Reset subject dropdown when no intake is selected
+                subjectSelect.html('<option value="">Select Subject *</option>');
+
+                // Trigger niceSelect update if using niceSelect
+                if (subjectSelect.hasClass('primary_select')) {
+                    subjectSelect.niceSelect('update');
+                }
+            }
+        });
     </script>
 @endpush
