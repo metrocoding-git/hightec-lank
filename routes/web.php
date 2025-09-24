@@ -87,6 +87,8 @@ Route::controller(TopicController::class)->prefix('administration/lesson-plan/to
 Route::controller(TopicOverviewController::class)->prefix('administration/lesson-plan/topic-overview')->group(callback: function () {
     Route::get('/', 'index')->name('topic-overview.index');
     Route::post('store', 'store')->name('topic-overview.store');
+    Route::get('get-intakes/{courseId}', 'getIntakesByCourse')->name('topic-overview.get-intakes')->withoutMiddleware(['csrf']);
+    Route::get('get-subjects/{intakeId}', 'getSubjectsByIntake')->name('topic-overview.get-subjects')->withoutMiddleware(['csrf']);
 });
 
 Route::controller(StudentCategoryController::class)->prefix('student/student-info/student-category')->group(callback: function () {

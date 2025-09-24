@@ -153,7 +153,7 @@
                                                         <tbody>
                                                             @if (isset($groupTopics) && $groupTopics->count())
                                                                 @foreach ($groupTopics as $index => $l)
-                                                                    <tr id="row{{ $index + 1 }}" class="mt-40">
+                                                                    <tr id="row{{ $index + 1 }}" class="mt-40 flex justify-content-between">
                                                                         <td>
                                                                             <input type="hidden" name="url" id="url" value="{{ URL::to('/') }}">
                                                                             <div class="primary_input">
@@ -180,12 +180,12 @@
                                                                     </tr>
                                                                 @endforeach
                                                             @else
-                                                                <tr id="row1" class="mt-40">
-                                                                    <td>
+                                                                <tr id="row1" class="mt-4 ">
+                                                                    <td class="w-full">
                                                                         <input type="hidden" name="url" id="url" value="{{ URL::to('/') }}">
                                                                         <div class="primary_input">
                                                                             <input
-                                                                                class="primary_input_field form-control{{ $errors->has('topic.0') ? ' is-invalid' : '' }}"
+                                                                                class="primary_input_field form-control w-full gap-2 mx-2 text-base p-3{{ $errors->has('topic.0') ? ' is-invalid' : '' }}"
                                                                                 type="text"
                                                                                 id="topic"
                                                                                 name="topic[]"
@@ -198,7 +198,7 @@
                                                                         </div>
                                                                     </td>
                                                                     <td>
-                                                                        <button class="primary-btn icon-only fix-gr-bg ml-2" type="button" onclick="removeRow(this)">
+                                                                        <button class="primary-btn icon-only fix-gr-bg ml-2 px-2  gap-2" type="button" onclick="removeRow(this)">
                                                                             <span class="ti-trash"></span>
                                                                         </button>
                                                                     </td>
@@ -354,6 +354,7 @@
         </div>
     </section>
 @endsection
+@include('components.partials.data_table_css')
 @include('components.partials.data_table_js')
 @push('script')
     <script>
@@ -608,5 +609,17 @@ $('#subject-select').on('change', function() {
     }
 });
 
+    </script>
+     <script>
+        $('#table_id').DataTable({
+            dom: 'Bfrtip',
+            buttons: [
+                'copy', 'csv', 'excel', 'pdf', 'print'
+            ],
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+        });
     </script>
 @endpush
