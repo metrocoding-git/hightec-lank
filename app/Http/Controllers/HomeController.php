@@ -275,6 +275,56 @@ class HomeController extends Controller
         $courses = $intake->courses()->get(['courses.id', 'courses.name']); // related courses
         return response()->json($courses);
     }
+
+    public function getCoursesByIntake($intakeId)
+    {
+        try {
+            $intake = Intake::find($intakeId);
+
+            if (!$intake) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Intake not found',
+                    'intake_id' => $intakeId
+                ], 404);
+            }
+
+            $courses = $intake->courses()->get(['courses.id', 'courses.name']);
+
+            return response()->json([
+                'success' => true,
+                'courses' => $courses,
+                'intake_id' => $intakeId,
+                'count' => $courses->count()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'intake_id' => $intakeId
+            ], 500);
+        }
+    }
+
+    public function getIntakesByBranch($branchId)
+    {
+        try {
+            $intakes = Intake::where('branch_id', $branchId)->get(['id', 'name']);
+
+            return response()->json([
+                'success' => true,
+                'intakes' => $intakes,
+                'branch_id' => $branchId,
+                'count' => $intakes->count()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'branch_id' => $branchId
+            ], 500);
+        }
+    }
     public function filterStudentList(Request $request)
     {
 

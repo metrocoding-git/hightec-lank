@@ -60,11 +60,11 @@
                                         <label class="primary_input_label" for="intake_id">Intake <span
                                                 class="text-danger">*</span></label>
                                         <select class="primary_select form-control ajax_select" name="intake_id"
-                                            id="intake_id">
+                                            id="intake-select">
                                             <option value="">Select Intake</option>
-                                            @foreach ($intakes as $intake) 
+                                            @foreach ($intakes as $intake)
                                                 <option value="{{ $intake->id }}">{{ $intake->name }}</option>
-                                                
+
                                             @endforeach
 
                                         </select>
@@ -77,11 +77,11 @@
                                         <label class="primary_input_label" for="course_id">Course <span
                                                 class="text-danger">*</span></label>
                                         <select class="primary_select form-control ajax_select" name="course_id"
-                                            id="course_id">
+                                            id="course-select">
                                             <option value="">Select Course</option>
                                             @foreach ($courses as $course)
                                                 <option value="{{ $course->id }}">{{ $course->name }}</option>
-                                                
+
                                             @endforeach
                                         </select>
 
@@ -310,3 +310,67 @@
 @endsection
 
 @include('components.partials.date_picker_css_js')
+
+@push('scripts')
+<script>
+$(document).ready(function() {
+    // Handle intake change event to load courses dynamically
+    $('#intake-select').on('change', function() {
+        var intakeId = $(this).val();
+        var courseSelect = $('#course-select');
+
+        if (intakeId) {
+            // Show loading state
+            courseSelect.html('<option value="">Loading courses...</option>');
+
+            // Make AJAX request to get courses for selected intake
+            $.ajax({
+                url: '{{ route("student-attendance.get-courses", ":intakeId") }}'.replace(':intakeId', intakeId),
+                type: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                success: function(data) {
+                    console.log('Courses response:', data);
+                    var options = '<option value="">Select Course</option>';
+
+                    if (data.courses && data.courses.length > 0) {
+                        data.courses.forEach(function(course) {
+                            options += '<option value="' + course.id + '">' + course.name + '</option>';
+                        });
+                    } else {
+                        options = '<option value="">No courses available for this intake</option>';
+                    }
+
+                    courseSelect.html(options);
+
+                    // Trigger niceSelect update if using niceSelect
+                    if (courseSelect.hasClass('primary_select')) {
+                        courseSelect.niceSelect('update');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading courses:', error);
+                    console.error('XHR response:', xhr.responseText);
+                    courseSelect.html('<option value="">Error loading courses</option>');
+
+                    // Trigger niceSelect update if using niceSelect
+                    if (courseSelect.hasClass('primary_select')) {
+                        courseSelect.niceSelect('update');
+                    }
+                }
+            });
+        } else {
+            // Reset course dropdown when no intake is selected
+            courseSelect.html('<option value="">Select Course</option>');
+
+            // Trigger niceSelect update if using niceSelect
+            if (courseSelect.hasClass('primary_select')) {
+                courseSelect.niceSelect('update');
+            }
+        }
+    });
+});
+</script>
+@endpush

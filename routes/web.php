@@ -130,7 +130,7 @@ Route::controller(HomeController::class)->group(callback: function () {
     // Route::get('administration/download-center/video-list-edit/{id}', 'videoListEdit')->name('download-center.video-list-edit');
     // Route::get('student/student-info/add-student', 'addStudent')->name('add-student');
     Route::get('student/student-info/student-list', 'studentList')->name('student-list');
-    Route::patch('student/update-status', 'updateStudetStatus')->name('student.update-status');
+    Route::put('student/update-status', 'updateStudetStatus')->name('student.update-status');
     Route::get('student/student-info/student-view/{id}', 'studentView')->name('student-details');
 
     Route::get('student/student-info/disabled-student', 'disabledStudents')->name('disabled-students');
@@ -138,10 +138,13 @@ Route::controller(HomeController::class)->group(callback: function () {
     Route::get('student/student-info/student-export', 'studentExport')->name('student-export');
 
 
-    //  New dependent dropdown AJAX routes 
+    //  New dependent dropdown AJAX routes
 
     Route::get('student/student-info/get-intakes/{branchId}', 'getIntakes')->name('student.get-intakes');
     Route::get('student/student-info/get-courses/{intakeId}', 'getCourses')->name('student.get-courses');
+    Route::get('student/student-attendance/get-courses/{intakeId}', 'getCoursesByIntake')->name('student-attendance.get-courses')->withoutMiddleware(['csrf']);
+    Route::get('student/student-list/get-intakes/{branchId}', 'getIntakesByBranch')->name('student-list.get-intakes')->withoutMiddleware(['csrf']);
+    Route::get('student/student-list/get-courses/{intakeId}', 'getCoursesByIntake')->name('student-list.get-courses')->withoutMiddleware(['csrf']);
 
     //filter student list by branch
     Route::post('student/student-info/diabled-filter', 'filter_disabled_StudentList')->name('frontend.disabled-student.search');
