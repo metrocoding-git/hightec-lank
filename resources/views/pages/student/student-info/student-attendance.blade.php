@@ -1,29 +1,29 @@
 @extends('layouts.app')
 @section('title')
-@lang('academics.About')
+    @lang('academics.About')
 @endsection
 @push('css')
-<style>
-    .QA_section .QA_table thead th {
-        padding-left: 30px!important;
-    }
-    .check_box_table .QA_table .table thead th:nth-child(2) {
-        padding-left: 0px!important;
-    }
+    <style>
+        .QA_section .QA_table thead th {
+            padding-left: 30px !important;
+        }
 
-    .QA_section .QA_table tbody tr td{
-        min-width: 150px;
-    }
+        .check_box_table .QA_table .table thead th:nth-child(2) {
+            padding-left: 0px !important;
+        }
 
-    .main-wrapper ::-webkit-scrollbar {
-        height: 5px;
-    }
+        .QA_section .QA_table tbody tr td {
+            min-width: 150px;
+        }
 
-</style>
+        .main-wrapper ::-webkit-scrollbar {
+            height: 5px;
+        }
+    </style>
 @endpush
 
 @section('mainContent')
-<section class="sms-breadcrumb mb-20 up_breadcrumb">
+    <section class="sms-breadcrumb mb-20 up_breadcrumb">
         <div class="container-fluid">
             <div class="row justify-content-between">
                 <h1>@lang('student.student_attendance')</h1>
@@ -45,21 +45,48 @@
                                 <div class="main-title m-0">
                                     <h3 class="mb-15">@lang('common.select_criteria') </h3>
                                 </div>
-                                <a href="/"
-                                    class="primary-btn small fix-gr-bg pull-right mb-15"><span
+                                <a href="/" class="primary-btn small fix-gr-bg pull-right mb-15"><span
                                         class="ti-plus pr-2"></span>@lang('student.import_attendance')</a>
                             </div>
                         </div>
                         {{-- {{ Form::open(['class' => 'form-horizontal', 'route' => 'student-search', 'method' => 'POST', 'id' => 'search_studentA']) }} --}}
                         <form class="form-horizontal">
-                        <div class="row">
-                            <input type="hidden" name="url" id="url" value="{{ URL::to('/') }}">
+                            <div class="row">
+                                <input type="hidden" name="url" id="url" value="{{ URL::to('/') }}">
 
-                                @include('components.common.search_criteria', [
-                                    'div' => 'col-lg-4',
-                                    'visiable' => ['class', 'section'],
-                                    'required' => ['class', 'section'],
-                                ])
+                                <div class="col-lg-4 mb-15">
+                                    {{-- Intake --}}
+                                    <div class="primary_input">
+                                        <label class="primary_input_label" for="intake_id">Intake <span
+                                                class="text-danger">*</span></label>
+                                        <select class="primary_select form-control ajax_select" name="intake_id"
+                                            id="intake_id">
+                                            <option value="">Select Intake</option>
+                                            @foreach ($intakes as $intake) 
+                                                <option value="{{ $intake->id }}">{{ $intake->name }}</option>
+                                                
+                                            @endforeach
+
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {{-- Course --}}
+                                <div class="col-lg-4 mb-15">
+                                    <div class="primary_input">
+                                        <label class="primary_input_label" for="course_id">Course <span
+                                                class="text-danger">*</span></label>
+                                        <select class="primary_select form-control ajax_select" name="course_id"
+                                            id="course_id">
+                                            <option value="">Select Course</option>
+                                            @foreach ($courses as $course)
+                                                <option value="{{ $course->id }}">{{ $course->name }}</option>
+                                                
+                                            @endforeach
+                                        </select>
+
+                                    </div>
+                                </div>
 
                                 <div class="col-lg-4 col-md-4 mt-30-md">
                                     <div class="primary_input">
@@ -86,14 +113,14 @@
                                         <span class="text-danger">{{ $errors->first('attendance_date') }}</span>
                                     </div>
                                 </div>
-                           
-                            <div class="col-lg-12 mt-20 text-right">
-                                <button type="submit" class="primary-btn small fix-gr-bg">
-                                    <span class="ti-search pr-2"></span>
-                                    @lang('common.search')
-                                </button>
+
+                                <div class="col-lg-12 mt-20 text-right">
+                                    <button type="submit" class="primary-btn small fix-gr-bg">
+                                        <span class="ti-search pr-2"></span>
+                                        @lang('common.search')
+                                    </button>
+                                </div>
                             </div>
-                        </div>
                         </form>
                     </div>
                 </div>
@@ -107,11 +134,11 @@
                                     <div class="main-title">
                                         @isset($search_info)
                                             <h3 class="mb-15">@lang('student.student_attendance') | <small>
-                                                   
-                                                        @lang('common.class')
-                                                        : {{ $search_info['class_name'] }}, @lang('common.section')
-                                                        : {{ $search_info['section_name'] }}, @lang('common.date')
-                                                    
+
+                                                    @lang('common.class')
+                                                    : {{ $search_info['class_name'] }}, @lang('common.section')
+                                                    : {{ $search_info['section_name'] }}, @lang('common.date')
+
                                                     : {{ dateConvert($search_info['date']) }}
                                                 </small></h3>
                                         @endisset
@@ -137,7 +164,7 @@
                                             <input type="hidden" name="section_id" value="{{ $section_id }}">
 
                                             <input type="hidden" name="attendance_date" value="{{ $date }}">
-                                          
+
                                             <button type="submit" class="primary-btn fix-gr-bg">
                                                 @lang('student.mark_holiday')
                                             </button>
@@ -149,7 +176,7 @@
                                             <input type="hidden" name="class_id" value="{{ $class_id }}">
                                             <input type="hidden" name="section_id" value="{{ $section_id }}">
                                             <input type="hidden" name="attendance_date" value="{{ $date }}">
-                                       
+
                                             <button type="submit" class="primary-btn fix-gr-bg">
                                                 @lang('student.unmark_holiday')
                                             </button>
@@ -189,7 +216,7 @@
                                                                 <input type="hidden"
                                                                     name="attendance[{{ $student->id }}][section]"
                                                                     value="{{ $student->section_id }}">
-                                            
+
 
                                                             </td>
                                                             <td>{{ $student->studentDetail->first_name . ' ' . $student->studentDetail->last_name }}

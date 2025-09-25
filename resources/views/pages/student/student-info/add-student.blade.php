@@ -605,7 +605,7 @@
                                                                             </option>
 
                                                                             @foreach ($bloodGroups as $group)
-                                                                                <option value="{{ $gender->id }}"
+                                                                                <option value="{{ $group->id }}"
                                                                                     {{ old('blood_group_id') == $group->id ? 'selected' : '' }}>
                                                                                     {{ $group->name }}
                                                                                 </option>
@@ -943,6 +943,7 @@
                                                                             name="relation" id="relation" value="Other"
                                                                             readonly>
 
+                                                                        <input type="hidden" name="relationButton" id="relationButtonHidden" value="O">
 
                                                                         @if ($errors->has('relation'))
                                                                             <span class="text-danger">
@@ -1531,6 +1532,15 @@
                     $('#siblingParent').removeClass('d-none');
                     $('#staffParent').addClass('d-none');
                 }
+            });
+
+            // Handle relation button changes
+            $(document).on('change', '.relationButton', function() {
+                let relationValue = $(this).val();
+                let relationText = $(this).next('label').text();
+
+                $('#relation').val(relationText);
+                $('#relationButtonHidden').val(relationValue);
             });
 
         })

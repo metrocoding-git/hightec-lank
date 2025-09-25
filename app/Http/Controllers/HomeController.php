@@ -427,7 +427,9 @@ class HomeController extends Controller
     }
     public function studentAttendance()
     {
-        return view('pages.student.student-info.student-attendance');
+        $courses = Course::all();
+        $intakes = Intake::all();
+        return view('pages.student.student-info.student-attendance', compact('courses', 'intakes'));
     }
     public function studentExport()
     {

@@ -113,10 +113,10 @@
                                             @forelse ($students as $student)
                                                 <tr>
                                                     <td>{{ $student->admission_number }}</td>
-                                                    <td>{{ $student->student_name }}</td>
-                                                    <td>{{ $student->date_of_birth }}</td>
+                                                    <td>{{ $student->student_name?? 'N/A' }}</td>
+                                                    <td>{{ $student->date_of_birth??'-' }}</td>
                                                     <td>{{ $student->branch?->name }}</td>
-                                                    <td>{{ $student->gender->name }}</td>
+                                                    <td>{{ $student->gender->name??'-' }}</td>
                                                     <td>{{ $student->studentCategory->category_name?? 'N/A' }}</td>
                                                     <td>{{ $student->phone_number }}</td>
                                                     <td valign="top">
@@ -226,8 +226,9 @@
     @endphp
 @endsection
 
-@include("components.partials.data_table_js")
-@include("components.partials.server_side_datatable")
+@include('components.partials.data_table_css')
+@include('components.partials.data_table_js')
+
 
 @push("script")
     <script>
