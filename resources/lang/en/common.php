@@ -6,7 +6,7 @@
     "copy" => "Copy",
     "year" => "Year",
     "id" => "ID",
-    "sl" => "SL",
+    "sl" => "ID",
     "average_mark" => "Average mark",
     "of" => "Of",
     "date_of_publication_of_result" => "Date of publication of result",

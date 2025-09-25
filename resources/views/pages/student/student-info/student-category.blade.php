@@ -38,7 +38,7 @@
                                                     type="text" 
                                                     name="category" 
                                                     autocomplete="off"
-                                                    placeholder="@lang('student.enter_category_name')"
+                                                    placeholder="Category Name"
                                                     value="{{ isset($student_type) ? $student_type->category_name : old('category') }}">
                                                 <input type="hidden" name="id"
                                                     value="{{ isset($student_type) ? $student_type->id : '' }}">
