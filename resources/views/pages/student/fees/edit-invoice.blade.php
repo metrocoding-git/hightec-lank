@@ -336,27 +336,94 @@ $(document).ready(function() {
     // Submit edit invoice
     $('#invoiceForm').on('submit', function(e){
         e.preventDefault();
+
+        // Basic form validation
+        let isValid = true;
+        let errorMessages = [];
+
+        // Check required fields
+        if (!$('#branch_id').val()) {
+            errorMessages.push('Please select a branch');
+            isValid = false;
+        }
+
+        if (!$('#create_date').val()) {
+            errorMessages.push('Please select create date');
+            isValid = false;
+        }
+
+        if (!$('#due_date').val()) {
+            errorMessages.push('Please select due date');
+            isValid = false;
+        }
+
+        if (!$('#status').val()) {
+            errorMessages.push('Please select payment status');
+            isValid = false;
+        }
+
+        if (!$('#paymentMethodName').val()) {
+            errorMessages.push('Please select payment method');
+            isValid = false;
+        }
+
+        // Check if there are any fee items
+        if ($('.allFeesTypes tr').length === 0) {
+            errorMessages.push('Please add at least one fee type');
+            isValid = false;
+        }
+
+        // Show validation errors
+        if (!isValid) {
+            errorMessages.forEach(function(msg) {
+                toastr.error(msg);
+            });
+            return false;
+        }
+
         let invoiceId = $('#invoice_id').val();
         let formData = new FormData(this);
 
+        // Collect fee data from the table
+        $('.allFeesTypes tr').each(function(){
+            let rowId = $(this).data('id');
+            let price = $(this).find('.price_input').val();
+            let paidPrice = $(this).find('.payment_input').val();
+
+            formData.append('price[' + rowId + ']', price);
+            formData.append('paidPrice[' + rowId + ']', paidPrice);
+        });
+
+        // Show loading state
+        $('.fmInvoice').prop('disabled', true).text('Updating...');
+
         $.ajax({
-            url: "{{ url('fees/invoice') }}/" + invoiceId,
-            type: 'post',
+            url: "{{ route('fees.fee-update-invoice', ':id') }}".replace(':id', invoiceId),
+            type: 'POST',
             data: formData,
             contentType: false,
             processData: false,
+            headers: {
+                'X-HTTP-Method-Override': 'PUT'
+            },
             success: function(response){
                 if(response.success){
                     toastr.success('Invoice updated successfully!');
-                    window.location.href = '{{ route('fees.add-invoice') }}';
+                    window.location.href = '{{ route('fees.fee-invoice') }}';
+                } else {
+                    toastr.error(response.message || 'Something went wrong');
+                    $('.fmInvoice').prop('disabled', false).text('Update');
                 }
             },
             error: function(xhr){
-                if(xhr.status === 422 && xhr.responseJSON.errors){
+                $('.fmInvoice').prop('disabled', false).text('Update');
+                if(xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors){
                     $.each(xhr.responseJSON.errors, function(key, val){
                         val.forEach(msg => toastr.error(msg));
                     });
-                } else toastr.error('Something went wrong');
+                } else {
+                    toastr.error('Something went wrong');
+                }
             }
         });
     });
