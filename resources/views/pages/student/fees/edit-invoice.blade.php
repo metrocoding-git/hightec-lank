@@ -11,6 +11,24 @@
             .school-table-style tfoot tr td {
                 padding: 10px 15px !important;
             }
+
+            /* Disable fee group selection */
+            #fee_group_id option[data-type="group"] {
+                color: #999 !important;
+                font-style: italic;
+                pointer-events: none;
+                cursor: not-allowed;
+            }
+
+            #fee_group_id option[data-type="group"]:hover {
+                background-color: transparent !important;
+                cursor: not-allowed;
+            }
+
+            /* Hide disabled options in niceSelect dropdown */
+            .nice-select .list option[data-type="group"] {
+                display: none !important;
+            }
         </style>
     @endpush
 
@@ -141,9 +159,9 @@
                             <div class="row mt-15">
                                 <div class="col-lg-12">
                                     <select class="primary_select form-control" id="fee_group_id" name="fee_group_id">
-                                        <option value="">Select Fee Group</option>
+                                        <option value="">Select Fee Type</option>
                                         @foreach ($feesgroups as $feesGroup)
-                                            <option data-type="group" class=" font-weight-bolder">{{ $feesGroup->name }}</option>
+                                            <option data-type="group" class="font-weight-bolder" disabled>{{ $feesGroup->name }}</option>
                                             @foreach ($feesGroup->feeType as $feeType)
                                                 <option value="{{ $feeType->id }}" data-type="fee" data-price="{{ $feeType->price }}">&nbsp;&nbsp;&nbsp;{{ $feeType->name }}</option>
                                             @endforeach
@@ -224,25 +242,22 @@ $(document).ready(function() {
         updateSerialNumbers();
     });
 
-    // Fee type selection
+    // Fee type selection - disable group selection
     $('#fee_group_id').on('change', function() {
         let selectedOption = $(this).find('option:selected');
         if (!selectedOption.val()) return;
 
-        if (selectedOption.data('type') === 'group') {
-            selectedOption.nextUntil('option[data-type="group"]').each(function(){
-                let feeId = $(this).val();
-                if (!addedFeeTypes.has(feeId)) {
-                    addFeeTypeRow(feeId, $(this).text().trim(), $(this).data('price'));
-                    addedFeeTypes.add(feeId);
-                }
-            });
-        } else {
-            let feeId = selectedOption.val();
-            if (!addedFeeTypes.has(feeId)) {
-                addFeeTypeRow(feeId, selectedOption.text().trim(), selectedOption.data('price'));
-                addedFeeTypes.add(feeId);
-            }
+        // Check if the selected option is disabled
+        if (selectedOption.is(':disabled') || selectedOption.data('type') === 'group') {
+            toastr.warning('Please select individual fee types, not fee groups.');
+            $(this).val('').niceSelect('update');
+            return false;
+        }
+
+        let feeId = selectedOption.val();
+        if (!addedFeeTypes.has(feeId)) {
+            addFeeTypeRow(feeId, selectedOption.text().trim(), selectedOption.data('price'));
+            addedFeeTypes.add(feeId);
         }
         $(this).val('').niceSelect('update');
     });
@@ -272,6 +287,25 @@ $(document).ready(function() {
         $('.allFeesTypes').append(row);
         updateSerialNumbers();
     }
+    // Fee type selection
+    // $('#fee_group_id').on('change', function() {
+    //     let selectedOption = $(this).find('option:selected');
+    //     if (!selectedOption.val()) return;
+
+    //     // Disable group selection - only allow individual fee types
+    //     if (selectedOption.data('type') === 'group') {
+    //         toastr.warning('Please select individual fee types, not fee groups.');
+    //         $(this).val('').niceSelect('update');
+    //         return;
+    //     }
+
+    //     let feeId = selectedOption.val();
+    //     if (!addedFeeTypes.has(feeId)) {
+    //         addFeeTypeRow(feeId, selectedOption.text().trim(), selectedOption.data('price'));
+    //         addedFeeTypes.add(feeId);
+    //     }
+    //     $(this).val('').niceSelect('update');
+    // });
 
     // Payment status change
     $('#status').on('change', function() {
@@ -307,7 +341,7 @@ $(document).ready(function() {
 
         $.ajax({
             url: "{{ url('fees/invoice') }}/" + invoiceId,
-            type: 'POST',
+            type: 'post',
             data: formData,
             contentType: false,
             processData: false,
