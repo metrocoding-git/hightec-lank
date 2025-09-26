@@ -35,11 +35,11 @@
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1>@lang('fees.edit_invoice')</h1>
+                <h1>Edit Invoice</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
                     <a href="#">@lang('fees.fees')</a>
-                    <a href="#">@lang('fees.edit_invoice')</a>
+                    <a href="#">Edit Invoice</a>
                 </div>
             </div>
         </div>
@@ -56,7 +56,7 @@
                     <div class="col-lg-3">
                         <div class="white-box">
                             <div class="main-title">
-                                <h3>@lang('fees.edit_invoice')</h3>
+                                <h3>Edit Invoice</h3>
                             </div>
                             <div class="add-visitor">
                                 <input type="hidden" id="url" value="{{ URL::to('/') }}">
