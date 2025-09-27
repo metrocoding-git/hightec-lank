@@ -44,16 +44,16 @@ class InvoiceController extends Controller
     {
         // Validate request
         $request->validate([
-            'branch_id'      => 'required',
-            'student_id'     => 'required',
-            'create_date'    => 'required|date_format:m/d/Y',
-            'due_date'       => 'required|date_format:m/d/Y',
+            'branch_id' => 'required',
+            'student_id' => 'required',
+            'create_date' => 'required|date_format:m/d/Y',
+            'due_date' => 'required|date_format:m/d/Y',
             'payment_status' => 'required',
-            'fee_type_id'    => 'required|array',
-            'price'          => 'required|array',
-            'paidPrice'      => 'required|array',
+            'fee_type_id' => 'required|array',
+            'price' => 'required|array',
+            'paidPrice' => 'required|array',
             'payment_method' => 'required',
-            'payment_file'   => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
+            'payment_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
         ]);
 
         try {
@@ -62,14 +62,14 @@ class InvoiceController extends Controller
 
             // Create Fee Invoice
             $fee_invoice = Fee_invoices::create([
-                'branch_id'       => $request->branch_id,
-                'student_id'      => $request->student_id,
-                'create_date'     => Carbon::createFromFormat('m/d/Y', $request->create_date)->format('Y-m-d'),
-                'due_date'        => Carbon::createFromFormat('m/d/Y', $request->due_date)->format('Y-m-d'),
-                'payment_status'  => $request->payment_status,
-                'payment_method'  => $request->payment_method,
-                'total_amount'    => $total_amount,
-                'paid_amount'     => $total_paid_amount,
+                'branch_id' => $request->branch_id,
+                'student_id' => $request->student_id,
+                'create_date' => Carbon::createFromFormat('m/d/Y', $request->create_date)->format('Y-m-d'),
+                'due_date' => Carbon::createFromFormat('m/d/Y', $request->due_date)->format('Y-m-d'),
+                'payment_status' => $request->payment_status,
+                'payment_method' => $request->payment_method,
+                'total_amount' => $total_amount,
+                'paid_amount' => $total_paid_amount,
             ]);
 
             // Save Invoice Items
@@ -78,38 +78,38 @@ class InvoiceController extends Controller
                 $paid_price = $request->paidPrice[$feetypeId] ?? 0;
 
                 $invoiceItem = Invoice_item::create([
-                    'invoice_id'  => $fee_invoice->id,
+                    'invoice_id' => $fee_invoice->id,
                     'fee_type_id' => $feetypeId,
-                    'amount'      => $amount,
+                    'amount' => $amount,
                     'paid_amount' => $paid_price,
                 ]);
 
                 // Save initial payment in invoices_payments table if any
                 if ($paid_price > 0) {
                     Invoices_payments::create([
-                        'invoice_id'      => $fee_invoice->id,
-                        'amount'          => $paid_price,
-                        'payment_method'  => $request->payment_method,
-                        'payment_file'    => ($request->payment_method === 'Card' || $request->payment_method === 'Bank Transfer')
+                        'invoice_id' => $fee_invoice->id,
+                        'amount' => $paid_price,
+                        'payment_method' => $request->payment_method,
+                        'payment_file' => ($request->payment_method === 'Card' || $request->payment_method === 'Bank Transfer')
                             && $request->file('payment_file')
                             ? $request->file('payment_file')->store('invoices', 'public')
                             : null,
-                        'created_at'      => now(),
-                        'updated_at'      => now(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
                     ]);
                 }
             }
 
             return response()->json([
-                'success'    => true,
-                'message'    => 'Invoice, items, and initial payments created successfully',
+                'success' => true,
+                'message' => 'Invoice, items, and initial payments created successfully',
                 'invoice_id' => $fee_invoice->id,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred',
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -147,6 +147,17 @@ class InvoiceController extends Controller
         ));
     }
 
+    public function viewFeeInvoice($id)
+    {
+        $invoice = Fee_invoices::with('invoice_item.fee_type', 'student', 'branch')->findOrFail($id);
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return view('pages.student.fees.partials.invoice-view-content', compact('invoice'));
+        }
+
+        return view('pages.student.fees.fee-invoice-view', compact('invoice'));
+    }
+
 
     /**
      * Update the specified resource in storage.
@@ -161,7 +172,7 @@ class InvoiceController extends Controller
             'create_date'    => 'required|date_format:m/d/Y',
             'due_date'       => 'required|date_format:m/d/Y',
             'payment_status' => 'required',
-            'fee_type_id'    => 'required|array',
+            'payment_method' => 'required',
             'price'          => 'required|array',
             'paidPrice'      => 'required|array',
             'payment_file'   => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
@@ -172,23 +183,22 @@ class InvoiceController extends Controller
             $total_paid_amount = array_sum($request->paidPrice);
 
             $invoice->update([
-                'branch_id'      => $request->branch_id,
-                'student_id'     => $request->student_id,
-                'create_date'    => Carbon::createFromFormat('m/d/Y', $request->create_date)->format('Y-m-d'),
-                'due_date'       => Carbon::createFromFormat('m/d/Y', $request->due_date)->format('Y-m-d'),
+                'branch_id' => $request->branch_id,
+                'student_id' => $request->student_id,
+                'create_date' => Carbon::createFromFormat('m/d/Y', $request->create_date)->format('Y-m-d'),
+                'due_date' => Carbon::createFromFormat('m/d/Y', $request->due_date)->format('Y-m-d'),
                 'payment_status' => $request->payment_status,
                 'payment_method' => $request->payment_method,
-                'total_amount'   => $total_amount,
-                'paid_amount'    => $total_paid_amount,
-                'payment_file'   => $request->hasFile('payment_file') ? $request->file('payment_file')->store('invoices', 'public') : $invoice->payment_file,
+                'total_amount' => $total_amount,
+                'paid_amount' => $total_paid_amount,
+                'payment_file' => $request->hasFile('payment_file') ? $request->file('payment_file')->store('invoices', 'public') : $invoice->payment_file,
             ]);
 
             // Delete old items
             Invoice_item::where('invoice_id', $invoice->id)->delete();
 
             // Add updated items
-            foreach ($request->fee_type_id as $feeTypeId) {
-                $amount = $request->price[$feeTypeId] ?? 0;
+            foreach ($request->price as $feeTypeId => $amount) {
                 $paid_amount = $request->paidPrice[$feeTypeId] ?? 0;
 
                 Invoice_item::create([
@@ -199,8 +209,25 @@ class InvoiceController extends Controller
                 ]);
             }
 
+            // Check if it's an AJAX request
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Invoice updated successfully!',
+                    'invoice_id' => $invoice->id,
+                ], 200);
+            }
+
             return redirect()->route('fees.fee-invoice')->with('success', 'Invoice updated successfully!');
         } catch (\Exception $e) {
+            // Check if it's an AJAX request
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'An error occurred: ' . $e->getMessage(),
+                ], 500);
+            }
+
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
@@ -257,10 +284,10 @@ class InvoiceController extends Controller
         $paymentFile = $request->file('payment_file') ? $request->file('payment_file')->store('payments', 'public') : null;
 
         Invoices_payments::create([
-            'invoice_id'     => $invoice->id,
-            'amount'         => $totalPaidNow,
+            'invoice_id' => $invoice->id,
+            'amount' => $totalPaidNow,
             'payment_method' => $request->payment_method,
-            'payment_file'   => $paymentFile,
+            'payment_file' => $paymentFile,
         ]);
 
         // Update invoice summary

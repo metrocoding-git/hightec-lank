@@ -232,7 +232,7 @@ Route::controller(FeeTypeController::class)->group(function () {
 
 Route::controller(InvoiceController::class)->group(function () {
 
-    Route::get('student/fees/invoice/view/{id}', 'edit')->name('fees.fee-invoice-view');
+    Route::get('student/fees/invoice/view/{id}', 'viewFeeInvoice')->name('fees.fee-invoice-view');
     Route::post('student/fees/invoice/{id}', 'addPayment')->name('fees.fees-invoice-payment');
 
     Route::get('student/fees/add-invoice', 'create')->name('fees.add-invoice');

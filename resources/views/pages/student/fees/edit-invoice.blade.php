@@ -11,17 +11,35 @@
             .school-table-style tfoot tr td {
                 padding: 10px 15px !important;
             }
+
+            /* Disable fee group selection */
+            #fee_group_id option[data-type="group"] {
+                color: #999 !important;
+                font-style: italic;
+                pointer-events: none;
+                cursor: not-allowed;
+            }
+
+            #fee_group_id option[data-type="group"]:hover {
+                background-color: transparent !important;
+                cursor: not-allowed;
+            }
+
+            /* Hide disabled options in niceSelect dropdown */
+            .nice-select .list option[data-type="group"] {
+                display: none !important;
+            }
         </style>
     @endpush
 
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1>@lang('fees.edit_invoice')</h1>
+                <h1>Edit Invoice</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
                     <a href="#">@lang('fees.fees')</a>
-                    <a href="#">@lang('fees.edit_invoice')</a>
+                    <a href="#">Edit Invoice</a>
                 </div>
             </div>
         </div>
@@ -38,7 +56,7 @@
                     <div class="col-lg-3">
                         <div class="white-box">
                             <div class="main-title">
-                                <h3>@lang('fees.edit_invoice')</h3>
+                                <h3>Edit Invoice</h3>
                             </div>
                             <div class="add-visitor">
                                 <input type="hidden" id="url" value="{{ URL::to('/') }}">
@@ -141,9 +159,9 @@
                             <div class="row mt-15">
                                 <div class="col-lg-12">
                                     <select class="primary_select form-control" id="fee_group_id" name="fee_group_id">
-                                        <option value="">Select Fee Group</option>
+                                        <option value="">Select Fee Type</option>
                                         @foreach ($feesgroups as $feesGroup)
-                                            <option data-type="group" class=" font-weight-bolder">{{ $feesGroup->name }}</option>
+                                            <option data-type="group" class="font-weight-bolder" disabled>{{ $feesGroup->name }}</option>
                                             @foreach ($feesGroup->feeType as $feeType)
                                                 <option value="{{ $feeType->id }}" data-type="fee" data-price="{{ $feeType->price }}">&nbsp;&nbsp;&nbsp;{{ $feeType->name }}</option>
                                             @endforeach
@@ -224,25 +242,22 @@ $(document).ready(function() {
         updateSerialNumbers();
     });
 
-    // Fee type selection
+    // Fee type selection - disable group selection
     $('#fee_group_id').on('change', function() {
         let selectedOption = $(this).find('option:selected');
         if (!selectedOption.val()) return;
 
-        if (selectedOption.data('type') === 'group') {
-            selectedOption.nextUntil('option[data-type="group"]').each(function(){
-                let feeId = $(this).val();
-                if (!addedFeeTypes.has(feeId)) {
-                    addFeeTypeRow(feeId, $(this).text().trim(), $(this).data('price'));
-                    addedFeeTypes.add(feeId);
-                }
-            });
-        } else {
-            let feeId = selectedOption.val();
-            if (!addedFeeTypes.has(feeId)) {
-                addFeeTypeRow(feeId, selectedOption.text().trim(), selectedOption.data('price'));
-                addedFeeTypes.add(feeId);
-            }
+        // Check if the selected option is disabled
+        if (selectedOption.is(':disabled') || selectedOption.data('type') === 'group') {
+            toastr.warning('Please select individual fee types, not fee groups.');
+            $(this).val('').niceSelect('update');
+            return false;
+        }
+
+        let feeId = selectedOption.val();
+        if (!addedFeeTypes.has(feeId)) {
+            addFeeTypeRow(feeId, selectedOption.text().trim(), selectedOption.data('price'));
+            addedFeeTypes.add(feeId);
         }
         $(this).val('').niceSelect('update');
     });
@@ -272,6 +287,25 @@ $(document).ready(function() {
         $('.allFeesTypes').append(row);
         updateSerialNumbers();
     }
+    // Fee type selection
+    // $('#fee_group_id').on('change', function() {
+    //     let selectedOption = $(this).find('option:selected');
+    //     if (!selectedOption.val()) return;
+
+    //     // Disable group selection - only allow individual fee types
+    //     if (selectedOption.data('type') === 'group') {
+    //         toastr.warning('Please select individual fee types, not fee groups.');
+    //         $(this).val('').niceSelect('update');
+    //         return;
+    //     }
+
+    //     let feeId = selectedOption.val();
+    //     if (!addedFeeTypes.has(feeId)) {
+    //         addFeeTypeRow(feeId, selectedOption.text().trim(), selectedOption.data('price'));
+    //         addedFeeTypes.add(feeId);
+    //     }
+    //     $(this).val('').niceSelect('update');
+    // });
 
     // Payment status change
     $('#status').on('change', function() {
@@ -302,27 +336,94 @@ $(document).ready(function() {
     // Submit edit invoice
     $('#invoiceForm').on('submit', function(e){
         e.preventDefault();
+
+        // Basic form validation
+        let isValid = true;
+        let errorMessages = [];
+
+        // Check required fields
+        if (!$('#branch_id').val()) {
+            errorMessages.push('Please select a branch');
+            isValid = false;
+        }
+
+        if (!$('#create_date').val()) {
+            errorMessages.push('Please select create date');
+            isValid = false;
+        }
+
+        if (!$('#due_date').val()) {
+            errorMessages.push('Please select due date');
+            isValid = false;
+        }
+
+        if (!$('#status').val()) {
+            errorMessages.push('Please select payment status');
+            isValid = false;
+        }
+
+        if (!$('#paymentMethodName').val()) {
+            errorMessages.push('Please select payment method');
+            isValid = false;
+        }
+
+        // Check if there are any fee items
+        if ($('.allFeesTypes tr').length === 0) {
+            errorMessages.push('Please add at least one fee type');
+            isValid = false;
+        }
+
+        // Show validation errors
+        if (!isValid) {
+            errorMessages.forEach(function(msg) {
+                toastr.error(msg);
+            });
+            return false;
+        }
+
         let invoiceId = $('#invoice_id').val();
         let formData = new FormData(this);
 
+        // Collect fee data from the table
+        $('.allFeesTypes tr').each(function(){
+            let rowId = $(this).data('id');
+            let price = $(this).find('.price_input').val();
+            let paidPrice = $(this).find('.payment_input').val();
+
+            formData.append('price[' + rowId + ']', price);
+            formData.append('paidPrice[' + rowId + ']', paidPrice);
+        });
+
+        // Show loading state
+        $('.fmInvoice').prop('disabled', true).text('Updating...');
+
         $.ajax({
-            url: "{{ url('fees/invoice') }}/" + invoiceId,
+            url: "{{ route('fees.fee-update-invoice', ':id') }}".replace(':id', invoiceId),
             type: 'POST',
             data: formData,
             contentType: false,
             processData: false,
+            headers: {
+                'X-HTTP-Method-Override': 'PUT'
+            },
             success: function(response){
                 if(response.success){
                     toastr.success('Invoice updated successfully!');
-                    window.location.href = '{{ route('fees.add-invoice') }}';
+                    window.location.href = '{{ route('fees.fee-invoice') }}';
+                } else {
+                    toastr.error(response.message || 'Something went wrong');
+                    $('.fmInvoice').prop('disabled', false).text('Update');
                 }
             },
             error: function(xhr){
-                if(xhr.status === 422 && xhr.responseJSON.errors){
+                $('.fmInvoice').prop('disabled', false).text('Update');
+                if(xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors){
                     $.each(xhr.responseJSON.errors, function(key, val){
                         val.forEach(msg => toastr.error(msg));
                     });
-                } else toastr.error('Something went wrong');
+                } else {
+                    toastr.error('Something went wrong');
+                }
             }
         });
     });

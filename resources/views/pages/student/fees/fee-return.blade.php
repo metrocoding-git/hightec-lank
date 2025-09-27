@@ -112,6 +112,7 @@
                                                     <th width="15%">Roll Name</th>
                                                     <th width="15%">@lang('student.father_name')</th>
                                                     <th width="15%">@lang('fees.balance')</th>
+                                                    <th width="15%">Return Amount</th>
                                                     <th width="25%">@lang('fees.short_note')</th>
                                                 </tr>
                                             </thead>
@@ -124,6 +125,7 @@
                     
                                                         <td>{{$student->student->guardians_name !=""?$student->student->guardians_name:""}}</td>
                                                         <td> {{ $student->balance }} </td>
+                                                        <td> {{ $student->return_amount?? "N/A" }} </td>
                                                         <td> {{ $student->short_note }} </td>
                                                         
                                                         {{-- <td> 
