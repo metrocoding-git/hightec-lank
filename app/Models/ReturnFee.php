@@ -15,6 +15,7 @@ class ReturnFee extends Model
         'role_id',
         'father_name',
         'balance',
+        'return_amount',
         'short_note',
         'status'
     ];

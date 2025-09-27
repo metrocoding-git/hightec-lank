@@ -147,6 +147,17 @@ class InvoiceController extends Controller
         ));
     }
 
+    public function viewFeeInvoice($id)
+    {
+        $invoice = Fee_invoices::with('invoice_item.fee_type', 'student', 'branch')->findOrFail($id);
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return view('pages.student.fees.partials.invoice-view-content', compact('invoice'));
+        }
+
+        return view('pages.student.fees.fee-invoice-view', compact('invoice'));
+    }
+
 
     /**
      * Update the specified resource in storage.

@@ -109,8 +109,9 @@
                                                     <td>{{ $invoice->due_date }}</td>
                                                     <td>
                                                         <x-drop-down>
-                                                            <a class="dropdown-item"
-                                                                href="{{ route('fees.fee-invoice-view', ['id' => $invoice->id, 'state' => 'view']) }}">@lang('common.view')</a>
+                                                            <a class="dropdown-item" data-toggle="modal"
+                                                                data-target="#viewInvoiceModal{{ $invoice->id }}"
+                                                                href="#">@lang('common.view')</a>
                                                             <a class="dropdown-item"
                                                                 href="{{ route('fees.fee-invoice-edit', $invoice->id) }}">@lang('common.edit')</a>
                                                             <a class="dropdown-item" data-toggle="modal"
@@ -281,6 +282,39 @@
                                 </div>
                                 @endif
                             @endforeach
+
+                            <!-- View Invoice Modals -->
+                            @foreach ($fee_invoices as $invoice)
+                                @php
+                                    $amount = $invoice->total_amount;
+                                    $paid_amount = $invoice->paid_amount;
+                                    $balance = $amount - $paid_amount;
+                                @endphp
+                                <div class="modal fade admin-query" id="viewInvoiceModal{{ $invoice->id }}" tabindex="-1" role="dialog" aria-labelledby="viewInvoiceModalLabel{{ $invoice->id }}" aria-hidden="true">
+                                    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h4 class="modal-title" id="viewInvoiceModalLabel{{ $invoice->id }}">View Invoice - Invoice #{{ $invoice->id }}</h4>
+                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body" id="invoiceContent{{ $invoice->id }}">
+                                                <!-- Content will be loaded via AJAX -->
+                                                <div class="text-center">
+                                                    <div class="spinner-border" role="status">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <p>Loading invoice details...</p>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="primary-btn tr-bg" data-dismiss="modal">@lang('common.close')</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
 
@@ -310,7 +344,57 @@
             searching: true,
             ordering: true,
             info: true,
-            // scrollX: true, 
+            // scrollX: true,
+        });
+
+        // Handle view invoice modal
+        $('[id^="viewInvoiceModal"]').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var modal = $(this);
+            var contentDiv = modal.find('.modal-body');
+
+            // Extract invoice ID from modal ID
+            var modalId = modal.attr('id');
+            var idMatch = modalId.match(/viewInvoiceModal(\d+)/);
+            var invoiceId = null;
+
+            if (idMatch) {
+                invoiceId = idMatch[1];
+            }
+
+            if (!invoiceId) {
+                contentDiv.html('<div class="alert alert-danger">Error: Invoice ID not found.</div>');
+                return;
+            }
+
+            // Load invoice content via AJAX
+            $.ajax({
+                url: "{{ route('fees.fee-invoice-view', ['id' => ':id', 'state' => 'view']) }}".replace(':id', invoiceId),
+                type: 'GET',
+                beforeSend: function() {
+                    contentDiv.html(`
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <p>Loading invoice details...</p>
+                        </div>
+                    `);
+                },
+                success: function(response) {
+                    contentDiv.html(response);
+                },
+                error: function(xhr, status, error) {
+                    console.log('AJAX Error:', xhr, status, error);
+                    contentDiv.html(`
+                        <div class="alert alert-danger">
+                            <h5>Error loading invoice details</h5>
+                            <p>Please try again. If the problem persists, contact support.</p>
+                            <small>Error: ${error}</small>
+                        </div>
+                    `);
+                }
+            });
         });
     </script>
 @endpush

@@ -25,7 +25,9 @@ class ReturnFeeController extends Controller
             'role_id' => 'required|exists:roles,id',
             'father_name' => 'required|string|max:255',
             'balance' => 'required|numeric|min:0',
+            
             'return_amount' => 'required|numeric|min:0.01',
+
             'short_note' => 'nullable|string',
             'status' => 'boolean',
             'invoice_id' => 'required|exists:fee_invoices,id'
