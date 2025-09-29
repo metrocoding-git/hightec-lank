@@ -164,7 +164,7 @@
                                     'visiable' => ['class', 'section'],
                                 ]) -->
 
-                                <div class="col-lg-4">
+                                <div class="col-lg-12">
                                     <div class="primary_input sm_mb_20 ">
                                         <label class="primary_input_label" for="">
                                             @lang('downloadCenter.title') 

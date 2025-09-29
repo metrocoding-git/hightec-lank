@@ -36,17 +36,14 @@ class FeesGroupController extends Controller
     }
 
     // Update fee group
-    public function update(Request $request , $id)
+    public function update(Request $request, $id)
     {
-      
-      
         $request->validate([
-            
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
         ]);
 
-        $feesGroup = FeesGroup::findOrFail($request->id);
+        $feesGroup = FeesGroup::findOrFail($id);
         $feesGroup->update($request->only('name', 'description'));
 
         return redirect()->back()->with('success', 'Fees group updated successfully!');
@@ -54,16 +51,10 @@ class FeesGroupController extends Controller
 
     // Delete fee group
     public function delete($id)
-
-
     {
-
         $feesGroup = FeesGroup::findOrFail($id);
-
-      
         $feesGroup->delete();
 
         return redirect()->back()->with('success', 'Fees group deleted successfully!');
-
     }
 }

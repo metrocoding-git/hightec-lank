@@ -242,6 +242,18 @@
                     </a>
                 </li>
                 {{-- <li>
+                    <a href="/student/student-info/student-add-course"
+                        class="{{ request()->is('student/student-info/student-add-course') ? 'active a' : '' }}">
+                        Student Add Course
+                    </a>
+                </li> --}}
+                <li>
+                    <a href="/student/student-info/student-add-intake"
+                        class="{{ request()->is('student/student-info/student-add-intake') ? 'active a' : '' }}">
+                        Add Intake & Courses
+                    </a>
+                </li>
+                {{-- <li>
                     <a href="/student/student-info/student-export" class="{{ request()->is('student/student-info/student-export') ? 'active a' : '' }}">
                         Student Export
                     </a>

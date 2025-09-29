@@ -3,22 +3,20 @@
     @lang('student.student_category')
 @endsection
 @section('mainContent')
-@if ($errors->any())
-<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;">
-    @foreach ($errors->all() as $error)
-        <div class="toast align-items-center text-bg-danger border-0 mb-2" role="alert">
-            <div class="d-flex">
-                <div class="toast-body">
-                    {{ $error }}
+    @if ($errors->any())
+        <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+            @foreach ($errors->all() as $error)
+                <div class="toast align-items-center text-bg-danger border-0 mb-2" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            {{ $error }}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
                 </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>
+            @endforeach
         </div>
-    @endforeach
-</div>
-
-
-@endif
+    @endif
     <section class="sms-breadcrumb mb-20 up_breadcrumb">
         <div class="container-fluid">
             <div class="row justify-content-between">
@@ -203,7 +201,8 @@
                                                                             class="primary_input_field  form-control{{ $errors->has('admission_number') ? ' is-invalid' : '' }}"
                                                                             type="text" onkeyup="GetAdmin(this.value)"
                                                                             name="admission_number"
-                                                                            value="{{ 10 != '' ? 10 + 1 : 1 }}">
+                                                                            value="{{ $nextAdmissionNumber ?? 'stu-001' }}"
+                                                                            readonly>
 
 
                                                                         @if ($errors->has('admission_number'))
@@ -224,27 +223,28 @@
                                                                             <span class="text-danger"> *</span>
 
                                                                         </label>
-                                                                        <div class="primary_datepicker_input">
+                                                                        <div class="">
                                                                             <div class="no-gutters input-right-icon">
                                                                                 <div class="col">
                                                                                     <div class="">
                                                                                         <input
-                                                                                            class="primary_input_field primary_input_field date form-control"
+                                                                                            class="primary_input_field  form-control"
                                                                                             id="admission_date"
                                                                                             type="date"
                                                                                             name="admission_date"
-                                                                                            value="{{ old('admission_date') != '' ? old('admission_date') : date('m/d/Y') }}"
-                                                                                            autocomplete="off">
+                                                                                            value="{{ old('admission_date') ?: \Carbon\Carbon::today()->format('Y-m-d') }}"
+                                                                                            autocomplete="off"
+                                                                                            disabled>
                                                                                     </div>
                                                                                 </div>
                                                                                 <button class="btn-date"
-                                                                                    style="top: 55% !important;"
+                                                                                    {{-- style="top: 55% !important;" --}}
                                                                                     data-id="#admission_date"
                                                                                     type="button">
                                                                                     <label class="m-0 p-0"
                                                                                         for="admission_date">
-                                                                                        <i class="ti-calendar"
-                                                                                            id="start-date-icon"></i>
+                                                                                        {{-- <i class="ti-calendar"
+                                                                                            id="start-date-icon"></i> --}}
                                                                                     </label>
                                                                                 </button>
                                                                             </div>
@@ -379,7 +379,7 @@
                                                                             {{ __('common.date_of_birth') }}
                                                                             <span class="text-danger">*</span>
                                                                         </label>
-                                                                        <div class="primary_datepicker_input">
+                                                                        <div class="">
                                                                             <div class="no-gutters input-right-icon">
                                                                                 <div class="col">
                                                                                     <div class="">
@@ -393,13 +393,13 @@
                                                                                     </div>
                                                                                 </div>
                                                                                 <button class="btn-date"
-                                                                                    style="top: 55% !important;"
+                                                                                    {{-- style="top: 55% !important;" --}}
                                                                                     data-id="#date_of_birth"
                                                                                     type="button">
                                                                                     <label class="m-0 p-0"
                                                                                         for="date_of_birth">
-                                                                                        <i class="ti-calendar"
-                                                                                            id="start-date-icon"></i>
+                                                                                        {{-- <i class="ti-calendar"
+                                                                                            id="start-date-icon"></i> --}}
                                                                                     </label>
                                                                                 </button>
                                                                             </div>
@@ -943,7 +943,8 @@
                                                                             name="relation" id="relation" value="Other"
                                                                             readonly>
 
-                                                                        <input type="hidden" name="relationButton" id="relationButtonHidden" value="O">
+                                                                        <input type="hidden" name="relationButton"
+                                                                            id="relationButtonHidden" value="O">
 
                                                                         @if ($errors->has('relation'))
                                                                             <span class="text-danger">
@@ -1448,7 +1449,6 @@
     <script src="{{ asset('public/backEnd/js/croppie.js') }}"></script>
     <script src="{{ asset('public/backEnd/js/st_addmision.js') }}"></script>
     <script>
-        
         $(document).ready(function() {
             var currentDate = new Date();
             $('#startDate').datepicker({
