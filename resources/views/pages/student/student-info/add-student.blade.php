@@ -203,7 +203,8 @@
                                                                             class="primary_input_field  form-control{{ $errors->has('admission_number') ? ' is-invalid' : '' }}"
                                                                             type="text" onkeyup="GetAdmin(this.value)"
                                                                             name="admission_number"
-                                                                            value="{{ 10 != '' ? 10 + 1 : 1 }}">
+                                                                            value="{{ $nextAdmissionNumber ?? 'stu-001' }}"
+                                                                            readonly>
 
 
                                                                         @if ($errors->has('admission_number'))
@@ -229,7 +230,7 @@
                                                                                 <div class="col">
                                                                                     <div class="">
                                                                                         <input
-                                                                                            class="primary_input_field primary_input_field date form-control"
+                                                                                            class="primary_input_field  form-control"
                                                                                             id="admission_date"
                                                                                             type="date"
                                                                                             name="admission_date"
@@ -238,7 +239,7 @@
                                                                                     </div>
                                                                                 </div>
                                                                                 <button class="btn-date"
-                                                                                    style="top: 55% !important;"
+                                                                                    {{-- style="top: 55% !important;" --}}
                                                                                     data-id="#admission_date"
                                                                                     type="button">
                                                                                     <label class="m-0 p-0"
@@ -393,7 +394,7 @@
                                                                                     </div>
                                                                                 </div>
                                                                                 <button class="btn-date"
-                                                                                    style="top: 55% !important;"
+                                                                                    {{-- style="top: 55% !important;" --}}
                                                                                     data-id="#date_of_birth"
                                                                                     type="button">
                                                                                     <label class="m-0 p-0"

@@ -26,6 +26,7 @@ use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\TopicOverviewController;
 use App\Http\Controllers\StudentCategoryController;
 use App\Http\Controllers\ItemSellController; // Import the new controller
+
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
@@ -105,6 +106,28 @@ Route::controller(AddStudentController::class)->prefix('student/student-info/add
     Route::put('update/{student}', 'update')->name('add-student.update');
     Route::get('edit/{student}', 'edit')->name('add-student.edit');
     Route::delete('destroy/{id}', 'destroy')->name('add-student.destroy');
+});
+
+// Student Course Management Routes
+Route::controller(AddStudentController::class)->prefix('student/student-info')->group(function () {
+    Route::get('student-add-course', 'studentAddCourse')->name('student.add-course.index');
+    Route::post('student-add-course', 'storeStudentCourse')->name('student.add-course.store');
+    Route::get('student-add-course/{id}/edit', 'editStudentCourse')->name('student.add-course.edit');
+    Route::put('student-add-course/{id}', 'updateStudentCourse')->name('student.add-course.update');
+    Route::delete('student-add-course/{id}', 'destroyStudentCourse')->name('student.add-course.destroy');
+});
+
+// Student Intake Management Routes
+Route::controller(AddStudentController::class)->prefix('student/student-info')->group(function () {
+    Route::get('student-add-intake', 'studentAddIntakeWithCourses')->name('student.add-intake.index');
+    Route::post('student-add-intake', 'storeStudentIntakeWithCourses')->name('student.add-intake-with-courses.store');
+    Route::get('student-add-intake/{id}/edit', 'editStudentIntake')->name('student.add-intake.edit');
+    Route::put('student-add-intake/{id}', 'updateStudentIntake')->name('student.add-intake.update');
+    Route::delete('student-add-intake/{id}', 'destroyStudentIntake')->name('student.add-intake.destroy');
+
+    // AJAX routes for dependent dropdowns
+    Route::get('get-intakes-by-branch/{branchId}', 'getIntakesByBranch')->name('get-intakes-by-branch');
+    Route::get('get-courses-by-intake/{intakeId}', 'getCoursesByIntake')->name('get-courses-by-intake');
 });
 
 Route::controller(HomeController::class)->group(callback: function () {
@@ -212,11 +235,8 @@ Route::controller(FeesGroupController::class)->group(function () {
     Route::get('student/fees/fee-group', 'index')->name('fee-group'); // GET list
     Route::post('student/fees/fee-group-create', 'store')->name('fee-group-create'); // POST create
     Route::get('student/fees/fee-group-edit/{id}', 'edit')->name('fee-group-edit'); // GET edit
-    Route::put('student/fees/fee-group-update/{id}', 'update')->name('fee-group-update'); // POST update
-    Route::delete('student/fees/fee-group-delete/{id}', 'delete')->name('fee-group-delete'); // POST delete
-        Route::get('student/fees/fee-group-edit/{id}', 'edit')->name('fee-group-edit'); // GET edit
-
-
+    Route::put('student/fees/fee-group-update/{id}', 'update')->name('fee-group-update'); // PUT update
+    Route::delete('student/fees/fee-group-delete/{id}', 'delete')->name('fee-group-delete'); // DELETE delete
 });
 
 
@@ -241,7 +261,7 @@ Route::controller(InvoiceController::class)->group(function () {
 
     Route::post('student/fees/fee-store', 'store')->name('fees.invoice.store');
     // Route::get('student/fees/fee-edit/{id}', 'edit')->name('fees.fee-edit-invoice');
-    Route::get('student/fees/fee-group-edit/{id}', 'edit')->name('fees.fee-invoice-edit'); // GET edit
+    Route::get('student/fees/fee-invoice-edit/{id}', 'edit')->name('fees.fee-invoice-edit'); // GET edit
 
     Route::put('student/fees/fee-update/{id}', 'update')->name('fees.fee-update-invoice');
     Route::delete('student/fees/fee-delete/{id}', 'destroy')->name('fees.fee-delete');
@@ -313,6 +333,6 @@ Route::controller(ContentController::class)->group(function () {
 //return-fees.store
 
 Route::controller(ReturnFeeController::class)->group(function () {
-    Route::post('/student/fees/return-fees',  'store')->name('return-fees.store');
-  
+    Route::post('/student/fees/return-fees', 'store')->name('return-fees.store');
+
 });
