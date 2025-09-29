@@ -243,9 +243,9 @@
                                                     </td>
                                                     <td>
                                                         <x-drop-down>
-                                                            <a class="dropdown-item" href="{{ route('student.add-intake.edit', $studentIntake->id) }}">
+                                                            {{-- <a class="dropdown-item" href="{{ route('student.add-intake.edit', $studentIntake->id) }}">
                                                                 Edit
-                                                            </a>
+                                                            </a> --}}
                                                             <a class="dropdown-item" data-toggle="modal"
                                                                data-target="#deleteStudentIntakeModal{{ $studentIntake->id }}" href="#">
                                                                 Delete

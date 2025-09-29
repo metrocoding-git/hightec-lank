@@ -443,7 +443,7 @@ class AddStudentController extends Controller
             'course_ids' => 'required|array',
             'course_ids.*' => 'exists:courses,id',
             'enrolled_at' => 'required|date',
-            'status' => 'required|in:active,completed,dropped',
+            'status' => 'required|in:active,pending,asign,completed,dropped',
             'notes' => 'nullable|string'
         ]);
 
