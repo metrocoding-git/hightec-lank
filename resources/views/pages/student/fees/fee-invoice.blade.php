@@ -183,7 +183,7 @@
                                     $paid_amount = $invoice->paid_amount;
                                     $balance = $amount - $paid_amount;
                                 @endphp
-                                @if ($balance > 0)
+                                @if ($invoice->payment_status == 'full')
                                     <div class="modal fade admin-query" id="returnFeeModal{{ $invoice->id }}">
                                         <div class="modal-dialog modal-lg modal-dialog-centered">
                                             <div class="modal-content">
@@ -248,14 +248,14 @@
                                                                     <div class="input-group">
                                                                         <input type="number" name="return_amount"
                                                                             class="form-control" min="0.01"
-                                                                            max="{{ $balance }}" step="0.01"
+                                                                            max="{{ $amount }}" step="0.01"
                                                                             required placeholder="Enter return amount">
                                                                         <div class="input-group-append">
                                                                             <span class="input-group-text">.00</span>
                                                                         </div>
                                                                     </div>
                                                                     <small class="text-muted">Maximum return amount:
-                                                                        {{ number_format($balance, 2) }}</small>
+                                                                        {{ number_format($amount, 2) }}</small>
                                                                 </div>
                                                             </div>
                                                             <div class="col-md-6">
