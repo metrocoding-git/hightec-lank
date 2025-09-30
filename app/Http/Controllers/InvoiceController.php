@@ -158,6 +158,22 @@ class InvoiceController extends Controller
         return view('pages.student.fees.fee-invoice-view', compact('invoice'));
     }
 
+    public function getStudentDetails($studentId)
+    {
+        $student = Student::with(['branch', 'gender', 'bloodGroup', 'courses'])
+            ->findOrFail($studentId);
+
+        // Use the accessor method for consistent data structure
+        $studentData = $student->student_details;
+
+        // Add courses data separately since the accessor might not include it properly
+        $studentData['courses'] = $student->courses->map(function($course) {
+            return ['name' => $course->name];
+        })->toArray();
+
+        return response()->json($studentData);
+    }
+
 
     /**
      * Update the specified resource in storage.

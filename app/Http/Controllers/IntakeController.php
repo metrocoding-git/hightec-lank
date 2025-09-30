@@ -32,9 +32,27 @@ class IntakeController extends Controller
             'branch_id' => $request->branch_id,
         ]);
 
-        $intake->courses()->sync($request->courses);
+        // Sync courses with their respective dates
+        $courseData = [];
+        if ($request->courses) {
+            foreach ($request->courses as $courseId) {
+                $courseData[$courseId] = [
+                    'start_date' => $request->course_start_dates[$courseId] ?? null,
+                    'end_date' => $request->course_end_dates[$courseId] ?? null,
+                ];
+            }
+        }
 
-        $intake->courses()->sync($request->courses); // assuming many-to-many
+        // Sync courses with dates using CourseIntake model
+        foreach ($courseData as $courseId => $dates) {
+            \App\Models\CourseIntake::updateOrCreate(
+                [
+                    'course_id' => $courseId,
+                    'intake_id' => $intake->id,
+                ],
+                $dates
+            );
+        }
 
         return redirect()->route('intake.index')->with('message-success', 'Intake added successfully!');
     }
@@ -46,12 +64,16 @@ class IntakeController extends Controller
         $branches = Branch::all();
         $courses = Course::all();
 
+        // Get course intake data with dates for editing
+        $courseIntakes = \App\Models\CourseIntake::where('intake_id', $id)->get()->keyBy('course_id');
+
         return view('pages.administration.academic.intake', [
             'intake' => $intake,
             'intakes' => $intakes,
             'branches' => $branches,
             'courses' => $courses,
             'intakeId' => $id,
+            'courseIntakes' => $courseIntakes,
         ]);
     }
 
@@ -71,7 +93,29 @@ class IntakeController extends Controller
             'branch_id' => $request->branch_id,
         ]);
 
-        $intake->courses()->sync($request->courses);
+        // Remove existing course associations
+        \App\Models\CourseIntake::where('intake_id', $id)->delete();
+
+        // Add new course associations with dates
+        $courseData = [];
+        if ($request->courses) {
+            foreach ($request->courses as $courseId) {
+                $courseData[$courseId] = [
+                    'start_date' => $request->course_start_dates[$courseId] ?? null,
+                    'end_date' => $request->course_end_dates[$courseId] ?? null,
+                ];
+            }
+        }
+
+        // Create new course associations with dates using CourseIntake model
+        foreach ($courseData as $courseId => $dates) {
+            \App\Models\CourseIntake::create([
+                'course_id' => $courseId,
+                'intake_id' => $intake->id,
+                'start_date' => $dates['start_date'],
+                'end_date' => $dates['end_date'],
+            ]);
+        }
 
         return redirect()->route('intake.index')->with('message-success', 'Intake updated successfully!');
     }

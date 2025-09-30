@@ -88,6 +88,33 @@ public function courses()
                 ->withTimestamps();
 }
 
+public function getStudentDetailsAttribute()
+{
+    return [
+        'id' => $this->id,
+        'student_name' => $this->student_name,
+        'first_name' => $this->first_name,
+        'last_name' => $this->last_name,
+        'admission_number' => $this->admission_number,
+        'date_of_birth' => $this->date_of_birth,
+        'email_address' => $this->email_address,
+        'phone_number' => $this->phone_number,
+        'current_address' => $this->current_address,
+        'permanent_address' => $this->permanent_address,
+        'national_id_number' => $this->national_id_number,
+        'guardians_name' => $this->guardians_name,
+        'guardians_phone' => $this->guardians_phone,
+        'guardians_address' => $this->guardians_address,
+        'blood_group' => $this->bloodGroup ? $this->bloodGroup->name : null,
+        'gender' => $this->gender ? $this->gender->name : null,
+        'photo' => $this->photo,
+        'branch_name' => $this->branch ? $this->branch->name : null,
+        'courses' => $this->courses ? $this->courses->map(function($course) {
+            return ['name' => $course->name];
+        })->toArray() : []
+    ];
+}
+
 public function intakes()
 {
     return $this->belongsToMany(Intake::class, 'student_intakes', 'student_id', 'intake_id')

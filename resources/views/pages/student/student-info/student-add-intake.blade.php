@@ -29,165 +29,14 @@
                             </div>
                         </div>
 
-                        <form method="POST" action="{{ route('student.add-intake-with-courses.store') }}">
-                            @csrf
-                            <div class="row">
-                                <!-- Student Selection -->
-                                <div class="col-lg-3">
-                                    <div class="primary_input">
-                                        <label class="primary_input_label" for="student_id">
-                                            Select Student <span class="text-danger">*</span>
-                                        </label>
-                                        <select class="primary_select form-control{{ $errors->has('student_id') ? ' is-invalid' : '' }}"
-                                                name="student_id" id="student_id" required>
-                                            <option value="">Select Student</option>
-                                            @foreach($students as $student)
-                                                <option value="{{ $student->id }}" {{ (old('student_id', $studentIntake->student_id ?? null) == $student->id) ? 'selected' : '' }}>
-                                                    {{ $student->student_name }} ({{ $student->admission_number }})
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        @error('student_id')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <!-- Branch Selection -->
-                                <div class="col-lg-3">
-                                    <div class="primary_input">
-                                        <label class="primary_input_label" for="branch_id">
-                                            Branch <span class="text-danger">*</span>
-                                        </label>
-                                        <select class="primary_select form-control{{ $errors->has('branch_id') ? ' is-invalid' : '' }}"
-                                                name="branch_id" id="branch_id" required>
-                                            <option value="">Select Branch</option>
-                                            @foreach($branches as $branch)
-                                                <option value="{{ $branch->id }}" {{ (old('branch_id', $studentIntake->branch_id ?? null) == $branch->id) ? 'selected' : '' }}>
-                                                    {{ $branch->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        @error('branch_id')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <!-- Intake Selection -->
-                                <div class="col-lg-3">
-                                    <div class="primary_input">
-                                        <label class="primary_input_label" for="intake_id">
-                                            Select Intake <span class="text-danger">*</span>
-                                        </label>
-                                        <select class="primary_select form-control{{ $errors->has('intake_id') ? ' is-invalid' : '' }}"
-                                                name="intake_id" id="intake_id" required>
-                                            <option value="">Select Intake</option>
-                                            @if(isset($studentIntake) && $studentIntake->intake)
-                                                <option value="{{ $studentIntake->intake->id }}" selected>
-                                                    {{ $studentIntake->intake->name }} ({{ $studentIntake->intake->branch->name ?? 'No Branch' }})
-                                                </option>
-                                            @endif
-                                        </select>
-                                        @error('intake_id')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <!-- Course Selection -->
-                                <div class="col-lg-3">
-                                    <div class="primary_input">
-                                        <label class="primary_input_label" for="course_ids">
-                                            Select Courses <span class="text-danger">*</span>
-                                        </label>
-                                        <select class="primary_select form-control{{ $errors->has('course_ids') ? ' is-invalid' : '' }}"
-                                                name="course_ids[]" id="course_ids" multiple required>
-                                            <option value="">Select Courses</option>
-                                            @if(isset($studentIntake) && isset($studentIntake->courses))
-                                                @foreach($studentIntake->courses as $course)
-                                                    <option value="{{ $course->id }}" selected>
-                                                        {{ $course->name }} ({{ $course->code }})
-                                                    </option>
-                                                @endforeach
-                                            @endif
-                                        </select>
-                                        @error('course_ids')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <!-- Enrollment Date -->
-                                <div class="col-lg-6 mt-4" hidden>
-                                    <div class="primary_input">
-                                        <label class="primary_input_label" for="enrolled_at">
-                                            Enrollment Date <span class="text-danger">*</span>
-                                        </label>
-                                        <input class="primary_input_field form-control{{ $errors->has('enrolled_at') ? ' is-invalid' : '' }}"
-                                               type="date" name="enrolled_at" id="enrolled_at"
-                                               value="{{ old('enrolled_at', date('Y-m-d')) }}" required>
-                                        @error('enrolled_at')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <!-- Status -->
-                                <div class="col-lg-6 mt-4" >
-                                    <div class="primary_input">
-                                        <label class="primary_input_label" for="status">
-                                            Status <span class="text-danger">*</span>
-                                        </label>
-                                        <select class="primary_select form-control{{ $errors->has('status') ? ' is-invalid' : '' }}"
-                                                name="status" id="status" required >
-                                            <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>
-                                                Pending
-                                            </option>
-                                            <option value="assign" {{ old('status') == 'assign' ? 'selected' : '' }}>
-                                                Assign
-                                            </option>
-                                            <option value="completed" {{ old('status') == 'completed' ? 'selected' : '' }}>
-                                                Completed
-                                            </option>
-                                            <option value="dropped" {{ old('status') == 'dropped' ? 'selected' : '' }}>
-                                                Dropped
-                                            </option>
-                                        </select>
-                                        @error('status')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <!-- Notes -->
-                                <div class="col-lg-12 mt-4">
-                                    <div class="primary_input">
-                                        <label class="primary_input_label" for="notes">
-                                            Notes
-                                        </label>
-                                        <textarea class="primary_input_field form-control{{ $errors->has('notes') ? ' is-invalid' : '' }}"
-                                                  name="notes" id="notes" rows="4"
-                                                  placeholder="Add notes here" value="{{ old('notes') }}"></textarea>
-                                        @error('notes')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <!-- Submit Button -->
-                                <div class="col-lg-12 mt-3 text-center">
-                                    <button type="submit" class="primary-btn fix-gr-bg">
-                                        {{-- <span class="ti-check"></span> --}}
-                                        Assign
-                                    </button>
-                                    <a href="{{ route('student.add-intake.index') }}" class="btn primary-btn fix-gr-bg">
-                                       {{-- span class="ti-check"></span> --}}
-                                        Cancel
-                                    </a>
-                                </div>
+                        <!-- Add Student Course and Intake Button -->
+                        <div class="row">
+                            <div class="col-lg-12 text-right">
+                                <button type="button" class="primary-btn fix-gr-bg" data-toggle="modal" data-target="#addStudentIntakeModal">
+                                    <span class="ti-plus"></span> Add Student Course and Intake
+                                </button>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -297,16 +146,181 @@
             </div>
         </div>
     </section>
+
+    <!-- Add Student Intake Modal -->
+    <div class="modal fade admin-query" id="addStudentIntakeModal" role="dialog">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Assign Intake to Student</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <form method="POST" action="{{ route('student.add-intake-with-courses.store') }}">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="row">
+                            <!-- Student Selection -->
+                            <div class="col-lg-6">
+                                <div class="primary_input">
+                                    <label class="primary_input_label" for="modal_student_id">
+                                        Select Student <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="primary_select form-control{{ $errors->has('student_id') ? ' is-invalid' : '' }}"
+                                            name="student_id" id="modal_student_id" required>
+                                        <option value="">Select Student</option>
+                                        @foreach($students as $student)
+                                            <option value="{{ $student->id }}" {{ (old('student_id', $studentIntake->student_id ?? null) == $student->id) ? 'selected' : '' }}>
+                                                {{ $student->student_name }} ({{ $student->admission_number }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('student_id')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <!-- Branch Selection -->
+                            <div class="col-lg-6">
+                                <div class="primary_input">
+                                    <label class="primary_input_label" for="modal_branch_id">
+                                        Branch <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="primary_select form-control{{ $errors->has('branch_id') ? ' is-invalid' : '' }}"
+                                            name="branch_id" id="modal_branch_id" required>
+                                        <option value="">Select Branch</option>
+                                        @foreach($branches as $branch)
+                                            <option value="{{ $branch->id }}" {{ (old('branch_id', $studentIntake->branch_id ?? null) == $branch->id) ? 'selected' : '' }}>
+                                                {{ $branch->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('branch_id')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <!-- Intake Selection -->
+                            <div class="col-lg-6 mt-4">
+                                <div class="primary_input">
+                                    <label class="primary_input_label" for="modal_intake_id">
+                                        Select Intake <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="primary_select form-control{{ $errors->has('intake_id') ? ' is-invalid' : '' }}"
+                                            name="intake_id" id="modal_intake_id" required>
+                                        <option value="">Select Intake</option>
+                                        @if(isset($studentIntake) && $studentIntake->intake_id)
+                                            <option value="{{ $studentIntake->intake_id }}" selected>
+                                                {{ $studentIntake->intake_name }} ({{ $studentIntake->branch_name ?? 'No Branch' }})
+                                            </option>
+                                        @endif
+                                    </select>
+                                    @error('intake_id')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <!-- Course Selection -->
+                            <div class="col-lg-6 mt-4">
+                                <div class="primary_input">
+                                    <label class="primary_input_label" for="modal_course_ids">
+                                        Select Courses <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="primary_select form-control{{ $errors->has('course_ids') ? ' is-invalid' : '' }}"
+                                            name="course_ids[]" id="modal_course_ids" multiple required>
+                                        <option value="">Select Courses</option>
+                                        @if(isset($studentIntake) && isset($studentIntake->courses))
+                                            @foreach($studentIntake->courses as $course)
+                                                <option value="{{ $course->id }}" selected>
+                                                    {{ $course->name }} ({{ $course->code }})
+                                                </option>
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                    @error('course_ids')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <!-- Enrollment Date -->
+                            <div class="col-lg-6 mt-4" hidden>
+                                <div class="primary_input">
+                                    <label class="primary_input_label" for="modal_enrolled_at">
+                                        Enrollment Date <span class="text-danger">*</span>
+                                    </label>
+                                    <input class="primary_input_field form-control{{ $errors->has('enrolled_at') ? ' is-invalid' : '' }}"
+                                           type="date" name="enrolled_at" id="modal_enrolled_at"
+                                           value="{{ old('enrolled_at', date('Y-m-d')) }}" required>
+                                    @error('enrolled_at')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <!-- Status -->
+                            <div class="col-lg-6 mt-4" >
+                                <div class="primary_input">
+                                    <label class="primary_input_label" for="modal_status">
+                                        Status <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="primary_select form-control{{ $errors->has('status') ? ' is-invalid' : '' }}"
+                                            name="status" id="modal_status" required >
+                                        <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>
+                                            Pending
+                                        </option>
+                                        <option value="assign" {{ old('status') == 'assign' ? 'selected' : '' }}>
+                                            Assign
+                                        </option>
+                                        <option value="completed" {{ old('status') == 'completed' ? 'selected' : '' }}>
+                                            Completed
+                                        </option>
+                                        <option value="dropped" {{ old('status') == 'dropped' ? 'selected' : '' }}>
+                                            Dropped
+                                        </option>
+                                    </select>
+                                    @error('status')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <!-- Notes -->
+                            <div class="col-lg-12 mt-4">
+                                <div class="primary_input">
+                                    <label class="primary_input_label" for="modal_notes">
+                                        Notes
+                                    </label>
+                                    <textarea class="primary_input_field form-control{{ $errors->has('notes') ? ' is-invalid' : '' }}"
+                                              name="notes" id="modal_notes" rows="4"
+                                              placeholder="Add notes here">{{ old('notes') }}</textarea>
+                                    @error('notes')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="primary-btn tr-bg" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="primary-btn fix-gr-bg">Assign</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Handle branch change event to load intakes dynamically
-    $('#branch_id').on('change', function() {
+    // Handle branch change event to load intakes dynamically (Modal)
+    $('#modal_branch_id').on('change', function() {
         var branchId = $(this).val();
-        var intakeSelect = $('#intake_id');
-        var courseSelect = $('#course_ids');
+        var intakeSelect = $('#modal_intake_id');
+        var courseSelect = $('#modal_course_ids');
 
         if (branchId) {
             // Show loading state
@@ -373,10 +387,10 @@ $(document).ready(function() {
         }
     });
 
-    // Handle intake change event to load courses dynamically
-    $('#intake_id').on('change', function() {
+    // Handle intake change event to load courses dynamically (Modal)
+    $('#modal_intake_id').on('change', function() {
         var intakeId = $(this).val();
-        var courseSelect = $('#course_ids');
+        var courseSelect = $('#modal_course_ids');
 
         if (intakeId) {
             // Show loading state
@@ -431,29 +445,50 @@ $(document).ready(function() {
         }
     });
 
+    // Reset modal form when modal is closed
+    $('#addStudentIntakeModal').on('hidden.bs.modal', function() {
+        // Reset all form fields
+        $('#modal_student_id').val('');
+        $('#modal_branch_id').val('');
+        $('#modal_intake_id').html('<option value="">Select Intake</option>');
+        $('#modal_course_ids').html('<option value="">Select Courses</option>');
+        $('#modal_enrolled_at').val('{{ date('Y-m-d') }}');
+        $('#modal_status').val('pending');
+        $('#modal_notes').val('');
+
+        // Trigger niceSelect update if using niceSelect
+        $('.primary_select').each(function() {
+            if ($(this).hasClass('primary_select')) {
+                $(this).niceSelect('update');
+            }
+        });
+
+        // Clear any error messages
+        $('.text-danger').remove();
+        $('.is-invalid').removeClass('is-invalid');
+    });
+
     // Auto-populate form if editing
     @if(isset($studentIntake))
-        $('#student_id').val('{{ $studentIntake->student_id }}');
-        $('#branch_id').val('{{ $studentIntake->branch_id ?? '' }}').trigger('change');
-        $('#enrolled_at').val('{{ $studentIntake->enrolled_at ? date('Y-m-d', strtotime($studentIntake->enrolled_at)) : '' }}');
-        $('#status').val('{{ $studentIntake->status }}');
-        // $('#notes').val('{{ $studentIntake->notes }}');
+        // Use modal IDs for auto-population
+        $('#modal_student_id').val('{{ $studentIntake->student_id }}');
+        $('#modal_branch_id').val('{{ $studentIntake->branch_id ?? '' }}').trigger('change');
+        $('#modal_enrolled_at').val('{{ $studentIntake->enrolled_at ? date('Y-m-d', strtotime($studentIntake->enrolled_at)) : '' }}');
+        $('#modal_status').val('{{ $studentIntake->status }}');
 
         // Set intake and courses after a delay to allow branch change to complete
         setTimeout(function() {
-            $('#intake_id').val('{{ $studentIntake->intake_id }}').trigger('change');
+            $('#modal_intake_id').val('{{ $studentIntake->intake_id }}').trigger('change');
 
             // Set courses after another delay
             setTimeout(function() {
                 @if(isset($studentIntake->courses))
                     var courseIds = [{{ $studentIntake->courses->pluck('id')->implode(',') }}];
-                    $('#course_ids').val(courseIds);
+                    $('#modal_course_ids').val(courseIds);
+                    $('#modal_course_ids').niceSelect('update');
                 @endif
             }, 1500);
         }, 1000);
-    @else
-        // Clear notes field for new entries if there are old values
-        $('#notes').val('');
     @endif
 });
 </script>

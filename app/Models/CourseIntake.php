@@ -14,7 +14,7 @@ class CourseIntake extends Model
     //
     protected $table = 'course_intake';
 
-    protected $fillable = ['course_id', 'intake_id'];
+    protected $fillable = ['course_id', 'intake_id', 'start_date', 'end_date'];
 
 
     public function course() {
