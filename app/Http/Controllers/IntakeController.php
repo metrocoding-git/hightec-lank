@@ -64,12 +64,16 @@ class IntakeController extends Controller
         $branches = Branch::all();
         $courses = Course::all();
 
+        // Get course intake data with dates for editing
+        $courseIntakes = \App\Models\CourseIntake::where('intake_id', $id)->get()->keyBy('course_id');
+
         return view('pages.administration.academic.intake', [
             'intake' => $intake,
             'intakes' => $intakes,
             'branches' => $branches,
             'courses' => $courses,
             'intakeId' => $id,
+            'courseIntakes' => $courseIntakes,
         ]);
     }
 

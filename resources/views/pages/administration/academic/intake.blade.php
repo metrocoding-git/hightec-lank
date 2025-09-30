@@ -117,7 +117,7 @@
                                                                     <label class="primary_input_label">Start Date</label>
                                                                     <input type="date" name="course_start_dates[{{ $course->id }}]"
                                                                         class="primary_input_field form-control"
-                                                                        value="{{ old('course_start_dates.' . $course->id, date('Y-m-d')) }}">
+                                                                        value="{{ old('course_start_dates.' . $course->id, isset($courseIntakes[$course->id]) ? $courseIntakes[$course->id]->start_date : date('Y-m-d')) }}">
                                                                 </div>
                                                             </div>
                                                             <div class="col-md-6">
@@ -125,7 +125,7 @@
                                                                     <label class="primary_input_label">End Date</label>
                                                                     <input type="date" name="course_end_dates[{{ $course->id }}]"
                                                                         class="primary_input_field form-control"
-                                                                        value="{{ old('course_end_dates.' . $course->id, '') }}">
+                                                                        value="{{ old('course_end_dates.' . $course->id, isset($courseIntakes[$course->id]) ? $courseIntakes[$course->id]->end_date : '') }}">
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -276,6 +276,13 @@
                 $('.course-dates input[name*="course_start_dates[' + courseId + ']"]').val('');
                 $('.course-dates input[name*="course_end_dates[' + courseId + ']"]').val('');
             }
+        });
+
+        // On page load, show date fields for already selected courses (for edit mode)
+        $('.course-checkbox:checked').each(function() {
+            var courseId = $(this).val();
+            var dateFields = $('.course-dates input[name*="course_start_dates[' + courseId + ']"], .course-dates input[name*="course_end_dates[' + courseId + ']"]').closest('.course-dates');
+            dateFields.show();
         });
     </script>
 
