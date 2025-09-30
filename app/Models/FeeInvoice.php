@@ -46,4 +46,9 @@ class FeeInvoice extends Model
     {
         return $this->hasMany(Invoice_item::class, 'invoice_id');
     }
+
+    public function return_fees()
+    {
+        return $this->hasMany(ReturnFee::class, 'invoice_id');
+    }
 }

@@ -3,14 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\ReturnFee;
-use App\Models\Student;
-use App\Models\Role;
 use App\Models\Fee_invoices as FeeInvoice;
-use App\Models\Invoice_item as InvoiceItem;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ReturnFeeController extends Controller
 {
@@ -19,83 +16,87 @@ class ReturnFeeController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        // Validate the request
         $validated = $request->validate([
             'student_id' => 'required|exists:students,id',
             'admission_number' => 'required|string|max:255',
-            'role_id' => 'required|exists:roles,id',
             'father_name' => 'required|string|max:255',
             'balance' => 'required|numeric|min:0',
-            
             'return_amount' => 'required|numeric|min:0.01',
-
+            'role_id' => 'required|exists:roles,id',
+            'invoice_id' => 'required|exists:fee_invoices,id',
             'short_note' => 'nullable|string',
-            'status' => 'boolean',
-            'invoice_id' => 'required|exists:fee_invoices,id'
+            'status' => 'nullable|boolean'
         ]);
 
-        // Check if return amount is not greater than balance
-        if ($validated['return_amount'] > $validated['balance']) {
+        // Check if return amount is not greater than the current paid amount
+        $invoice = FeeInvoice::findOrFail($validated['invoice_id']);
+
+        if ($validated['return_amount'] > $invoice->paid_amount) {
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Return amount cannot be greater than the balance amount.');
+                ->with('error', 'Return amount cannot be greater than the paid amount (' . number_format($invoice->paid_amount, 2) . ').');
         }
 
+        // Set default status
         $validated['status'] = $request->has('status') ? 1 : 0;
 
         DB::beginTransaction();
         try {
-            // Create return fee record
-            ReturnFee::create($validated);
+            // Log the return attempt
+            Log::info('Processing return fee', [
+                'invoice_id' => $validated['invoice_id'],
+                'student_id' => $validated['student_id'],
+                'return_amount' => $validated['return_amount'],
+                'current_paid' => $invoice->paid_amount
+            ]);
 
-            // Update invoice balance
-            $invoice = FeeInvoice::findOrFail($validated['invoice_id']);
-            $newPaidAmount = $invoice->paid_amount + $validated['return_amount'];
+            // Create return fee record first
+            $returnFee = ReturnFee::create($validated);
+
+            // Calculate new paid amount
+            $newPaidAmount = $invoice->paid_amount - $validated['return_amount'];
 
             // Ensure paid amount doesn't go below 0
             $newPaidAmount = max(0, $newPaidAmount);
 
+            // Determine payment status
+            if ($newPaidAmount == 0) {
+                $paymentStatus = 'not';
+            } elseif ($newPaidAmount >= $invoice->total_amount) {
+                $paymentStatus = 'full';
+            } else {
+                $paymentStatus = 'partial';
+            }
+
             // Update invoice
             $invoice->update([
                 'paid_amount' => $newPaidAmount,
-                'payment_status' => $newPaidAmount == 0 ? 'not' : ($newPaidAmount == $invoice->total_amount ? 'full' : 'partial')
+                'payment_status' => $paymentStatus
             ]);
-
-            // Update invoice items proportionally
-            $this->updateInvoiceItems($invoice, $validated['return_amount']);
 
             DB::commit();
 
+            Log::info('Return fee processed successfully', [
+                'return_fee_id' => $returnFee->id,
+                'new_paid_amount' => $newPaidAmount,
+                'payment_status' => $paymentStatus
+            ]);
+
             return redirect()->back()
-                ->with('success', 'Return fee processed successfully. Invoice balance updated.');
+                ->with('success', 'Return fee processed successfully. Invoice updated.');
         } catch (\Exception $e) {
             DB::rollback();
+
+            Log::error('Failed to process return fee', [
+                'invoice_id' => $validated['invoice_id'],
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Failed to process return fee: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Update invoice items proportionally based on return amount.
-     */
-    private function updateInvoiceItems(FeeInvoice $invoice, float $returnAmount): void
-    {
-        $invoiceItems = $invoice->invoice_item;
-
-        if ($invoiceItems->isEmpty()) {
-            return;
-        }
-
-        $totalAmount = $invoice->total_amount;
-        $returnRatio = $returnAmount / $totalAmount;
-
-        foreach ($invoiceItems as $item) {
-            $returnFromItem = $item->paid_amount * $returnRatio;
-            $newPaidAmount = max(0, $item->paid_amount - $returnFromItem);
-
-            $item->update([
-                'paid_amount' => $newPaidAmount
-            ]);
         }
     }
 }

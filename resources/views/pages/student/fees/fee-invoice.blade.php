@@ -74,7 +74,8 @@
                                                 @php
                                                     $amount = $invoice->total_amount;
                                                     $paid_amount = $invoice->paid_amount;
-                                                    $balance = $amount - $paid_amount;
+                                                    $balance = $amount - $paid_amount; // This is remaining balance
+                                                    $available_for_return = $paid_amount; // This is what can actually be returned
                                                 @endphp
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
@@ -231,11 +232,11 @@
                                                             </div>
                                                             <div class="col-md-6">
                                                                 <div class="form-group">
-                                                                    <label>@lang('accounts.balance')</label>
+                                                                    <label>Available for Return</label>
                                                                     <input type="text" class="form-control"
-                                                                        value="{{ number_format($balance, 2) }}" readonly>
+                                                                        value="{{ number_format($paid_amount, 2) }}" readonly>
                                                                     <input type="hidden" name="balance"
-                                                                        value="{{ $balance }}">
+                                                                        value="{{ $paid_amount }}">
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -243,19 +244,19 @@
                                                         <div class="row">
                                                             <div class="col-md-6">
                                                                 <div class="form-group">
-                                                                    <label>@lang('fees.return_amount') <span
+                                                                    <label>Return Amount <span
                                                                             class="text-danger">*</span></label>
                                                                     <div class="input-group">
                                                                         <input type="number" name="return_amount"
                                                                             class="form-control" min="0.01"
-                                                                            max="{{ $amount }}" step="0.01"
+                                                                            max="{{ $paid_amount }}" step="0.01"
                                                                             required placeholder="Enter return amount">
                                                                         <div class="input-group-append">
                                                                             <span class="input-group-text">.00</span>
                                                                         </div>
                                                                     </div>
                                                                     <small class="text-muted">Maximum return amount:
-                                                                        {{ number_format($amount, 2) }}</small>
+                                                                        {{ number_format($paid_amount, 2) }}</small>
                                                                 </div>
                                                             </div>
                                                             <div class="col-md-6">

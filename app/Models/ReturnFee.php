@@ -16,12 +16,14 @@ class ReturnFee extends Model
         'father_name',
         'balance',
         'return_amount',
+        'invoice_id',
         'short_note',
         'status'
     ];
 
     protected $casts = [
         'balance' => 'decimal:2',
+        'return_amount' => 'decimal:2',
         'status' => 'integer'
     ];
 
