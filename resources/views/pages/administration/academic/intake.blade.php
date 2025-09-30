@@ -95,18 +95,43 @@
                                             </div>
                                         </div>
 
-                                        {{-- Courses --}}
+                                        {{-- Courses with Date Selection --}}
                                         <div class="col-lg-12 mt-20">
-                                            <label class="primary_input_label">Courses <span>*</span></label>
-                                            @foreach ($courses as $course)
-                                                <div class="form-check">
-                                                    <input type="checkbox" class="common-checkbox form-control"
-                                                        name="courses[]" id="{{ $course->id }}"
-                                                        value="{{ $course->id }}"
-                                                        {{ isset($intakeId) && in_array($course->id, old('courses', $intake->courses->pluck('id')->toArray() ?? [])) ? 'checked' : '' }}>
-                                                    <label for="{{ $course->id }}">{{ $course->name }}</label>
-                                                </div>
-                                            @endforeach
+                                            <label class="primary_input_label">Courses with Dates <span>*</span></label>
+                                            <div class="course-selection-container">
+                                                @foreach ($courses as $course)
+                                                    <div class="course-item border rounded p-3 mb-3">
+                                                        <div class="form-check mb-2">
+                                                            <input type="checkbox" class="common-checkbox form-control course-checkbox"
+                                                                name="courses[]" id="course_{{ $course->id }}"
+                                                                value="{{ $course->id }}"
+                                                                {{ isset($intakeId) && in_array($course->id, old('courses', $intake->courses->pluck('id')->toArray() ?? [])) ? 'checked' : '' }}>
+                                                            <label for="course_{{ $course->id }}" class="font-weight-bold">
+                                                                {{ $course->name }} ({{ $course->code }})
+                                                            </label>
+                                                        </div>
+
+                                                        <div class="course-dates row" style="{{ isset($intakeId) && in_array($course->id, old('courses', $intake->courses->pluck('id')->toArray() ?? [])) ? '' : 'display: none;' }}">
+                                                            <div class="col-md-6">
+                                                                <div class="primary_input">
+                                                                    <label class="primary_input_label">Start Date</label>
+                                                                    <input type="date" name="course_start_dates[{{ $course->id }}]"
+                                                                        class="primary_input_field form-control"
+                                                                        value="{{ old('course_start_dates.' . $course->id, date('Y-m-d')) }}">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <div class="primary_input">
+                                                                    <label class="primary_input_label">End Date</label>
+                                                                    <input type="date" name="course_end_dates[{{ $course->id }}]"
+                                                                        class="primary_input_field form-control"
+                                                                        value="{{ old('course_end_dates.' . $course->id, '') }}">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
                                             @error('courses')
                                                 <span class="text-danger">{{ $message }}</span>
                                             @enderror
@@ -237,7 +262,21 @@
             ordering: true,
             info: true,
         });
-    </script>
-    
-@endpush
 
+        // Show/hide course date fields when checkbox is clicked
+        $('.course-checkbox').on('change', function() {
+            var courseId = $(this).val();
+            var dateFields = $('.course-dates input[name*="course_start_dates[' + courseId + ']"], .course-dates input[name*="course_end_dates[' + courseId + ']"]').closest('.course-dates');
+
+            if ($(this).is(':checked')) {
+                dateFields.show();
+            } else {
+                dateFields.hide();
+                // Clear the date values when unchecked
+                $('.course-dates input[name*="course_start_dates[' + courseId + ']"]').val('');
+                $('.course-dates input[name*="course_end_dates[' + courseId + ']"]').val('');
+            }
+        });
+    </script>
+
+@endpush

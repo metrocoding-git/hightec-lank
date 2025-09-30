@@ -77,7 +77,7 @@ class ContentTypeController extends Controller
         $type = Content_Type::findOrFail($id);
         $type->update($request->only('name', 'description'));
 
-        return redirect()->back()->with('success', 'Content Type updated successfully.');
+        return redirect()->route('content-type')->with('success', 'Content Type updated successfully.');
     }
 
     /**
