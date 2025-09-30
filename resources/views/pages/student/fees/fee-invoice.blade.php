@@ -326,7 +326,7 @@
                                                         style="display: flex; align-items: center; border-bottom: 2px solid #91c4eb; background-color: #a7d0f0; padding: 15px; margin-bottom: 15px;">
                                                         <div class="logo" style="width: 120px;">
                                                             <img src="https://highteclanka.com/static/33163709fc5bc293bd2c78a319b64f22/e27c8/Hoghtec-Logo.webp"
-                                                                alt="Logo" style="max-width: 100%;">
+                                                                alt="Logo" style="height: 200px; width: auto;">
 
                                                             {{-- <img src="{{ asset('images/logo.png') }}" alt="Logo"
                                                                 style="max-width: 100%;"> --}}
@@ -598,18 +598,68 @@
             var balance = currentRow.find('td:eq(6)').text().trim();
             var dueDate = currentRow.find('td:eq(10)').text().trim();
 
-            // Populate modal fields
+            // Set basic data immediately
             $('#studentName').text(studentName || '__________________________');
             $('#studentRegNo').text(admissionNo || '__________________________');
-            $('#studentNic').text('__________________________'); // NIC not available in table
-            $('#studentAddress').text('__________________________'); // Address not available in table
-            $('#studentContact').text('__________________________'); // Contact not available in table
             $('#totalPayment').text(totalAmount || '__________________________');
             $('#advancePaid').text(paidAmount || '__________________________');
             $('#balanceAmount').text(balance || '__________________________');
             $('#dueDate').text(dueDate || '__________________________');
             $('#courseName').text('__________________________'); // Course name not available in table
             $('#receiptNo').text('__________________________'); // Receipt number not available in table
+
+            // Fetch comprehensive student details via AJAX
+            if (studentId) {
+                var ajaxUrl = "{{ route('fees.student-details', ':studentId') }}".replace(':studentId', studentId);
+                console.log('Making AJAX request to:', ajaxUrl);
+                console.log('Student ID:', studentId);
+
+                $.ajax({
+                    url: ajaxUrl,
+                    type: 'GET',
+                    success: function(student) {
+                        console.log('Student data received:', student);
+
+                        // Populate student details from database
+                        $('#studentName').text(student.student_name || studentName || '__________________________');
+                        $('#studentRegNo').text(student.admission_number || admissionNo || '__________________________');
+                        $('#studentNic').text(student.national_id_number || '__________________________');
+                        $('#studentAddress').text(student.current_address || student.permanent_address || '__________________________');
+                        $('#studentContact').text(student.phone_number || '__________________________');
+
+                        // Set course name if available (from student courses relationship)
+                        if (student.courses && student.courses.length > 0) {
+                            $('#courseName').text(student.courses[0].name || '__________________________');
+                        }
+
+                        // Set receipt number (using student ID for now)
+                        $('#receiptNo').text('REC-' + student.id + '-' + new Date().getFullYear() || '__________________________');
+
+                        // Add additional student info if needed
+                        console.log('Student details loaded successfully:', student);
+                    },
+                    error: function(xhr, status, error) {
+                        console.log('AJAX Error Details:', {
+                            status: xhr.status,
+                            statusText: xhr.statusText,
+                            responseText: xhr.responseText,
+                            error: error,
+                            url: ajaxUrl
+                        });
+
+                        // Keep the basic data already set from the table
+                        $('#studentNic').text('__________________________');
+                        $('#studentAddress').text('__________________________');
+                        $('#studentContact').text('__________________________');
+                    }
+                });
+            } else {
+                console.log('No student ID provided');
+                // No student ID, use basic data only
+                $('#studentNic').text('__________________________');
+                $('#studentAddress').text('__________________________');
+                $('#studentContact').text('__________________________');
+            }
         }
 
         // Function to print invoice
