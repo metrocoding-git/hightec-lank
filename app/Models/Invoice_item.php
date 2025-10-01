@@ -14,10 +14,14 @@ class Invoice_item extends Model
 
     public function fee_invoice()
     {
-        return $this->belongsTo(Fee_invoices::class);
+        return $this->belongsTo(FeeInvoice::class, 'invoice_id');
+    }
+    public function feeType()
+    {
+        return $this->belongsTo(FeeType::class, 'fee_type_id');
     }
     public function fee_type()
     {
-        return $this->belongsTo(FeeType::class);
+        return $this->belongsTo(FeeType::class, 'fee_type_id');
     }
 }

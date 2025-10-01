@@ -15,434 +15,523 @@
             </div>
         </div>
     </section>
-    {{-- <style type="text/css">
-        #selectStaffsDiv,
-        .forStudentWrapper {
-            display: none;
-        }
-    </style> --}}
-    <section class="admin-visitor-area up_st_admin_visitor">
-        <div class="container-fluid p-0">
+
+   <section class="admin-visitor-area up_st_admin_visitor">
+    <div class="container-fluid p-0">
+        {{-- Form starts --}}
+        <form class="form-horizontal" action="{{ isset($editData) ? route('item-issue-update', $editData->id) : route('save-item-issue-data') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            @if(isset($editData))
+                @method('PUT')
+            @endif
+
             <div class="row">
-
-                <div class="col-lg-3">
-                    <div class="row">
-                        <div class="col-lg-12">
-                            
-                            @if (isset($editData))
-                                <form class="form-horizontal" action="{{ route('item-issue-update', $editData->id) }}"
-                                    method="POST" enctype="multipart/form-data">
-                                    @method('PUT')
-                                    @csrf
-                            @else
-                                <form class="form-horizontal" action="{{ route('save-item-issue-data') }}"
-                                    method="POST" enctype="multipart/form-data">
-                                    @csrf
-                            @endif
-                            <div class="white-box">
-                                <div class="main-title">
-                                    <h3 class="mb-15">
-                                        @lang('inventory.issue_a_item')
-                                    </h3>
+                {{-- Left Side - Vertical Dropdowns --}}
+                <div class="col-lg-4">
+                    <div class="white-box">
+                        <div class="main-title">
+                            <h3 class="mb-15">@lang('inventory.issue_a_item')</h3>
+                        </div>
+                        <div class="add-visitor">
+                            <div class="row">
+                                {{-- Branch Dropdown --}}
+                                <div class="col-lg-12 mb-15">
+                                    <label class="primary_input_label">Branch <span class="text-danger">*</span></label>
+                                    <select class="primary_select form-control" name="branch_id" id="branch_select">
+                                        <option value="">Select Branch *</option>
+                                        @foreach ($branches as $branch)
+                                            <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
-                                <div class="add-visitor">
-                                    <div class="row">
 
-                                        <div class="col-lg-12 mb-15">
-                                            <label class="primary_input_label" for="">@lang('common.role') <span
-                                                    class="text-danger"> *</span> </label>
-                                            <select
-                                                class="primary_select  form-control{{ $errors->has('role_id') ? ' is-invalid' : '' }}"
-                                                name="role_id" id="member_type">
-                                                <option data-display=" @lang('inventory.user_type') *" value="">
-                                                    @lang('inventory.user_type')
-                                                    *</option>
-                                                @foreach ($roles as $value)
-                                                    <option value="{{ $value->id }}"
-                                                        {{ isset($editData) ? ($editData->role_id == $value->id ? 'selected' : '') : (old('role_id') == $value->id ? 'selected' : '') }}>
-                                                        {{ $value->role_name }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            @if ($errors->has('role_id'))
-                                                <span class="text-danger invalid-select" role="alert">
-                                                    {{ $errors->first('role_id') }}
-                                                </span>
-                                            @endif
-                                        </div>
+                                {{-- Intake Dropdown --}}
+                                <div class="col-lg-12 mb-15">
+                                    <label class="primary_input_label">Intake <span class="text-danger">*</span></label>
+                                    <select class="primary_select form-control" name="intake_id" id="intake_select">
+                                        <option value="">Select Branch First *</option>
+                                    </select>
+                                </div>
 
-                                        <div class="forStudentWrapper col-lg-12">
-                                            <div class="row">
-                                                <div class="col-lg-12 mb-15">
-                                                    <label class="primary_input_label" for="">@lang('common.class')
-                                                        <span class="text-danger"> *</span> </label>
-                                                    <select
-                                                        class="primary_select form-control{{ $errors->has('class_id') ? ' is-invalid' : '' }}"
-                                                        id="select_class" name="class_id">
-                                                        <option data-display="@lang('common.select_class') *" value="">
-                                                            @lang('common.select_class') *</option>
-                                                        @foreach ($classes as $class)
-                                                            <option value="{{ $class->id }}"
-                                                                {{ isset($editData) ? ($editData->class_id == $class->id ? 'selected' : '') : (old('class_id') == $class->id ? 'selected' : '') }}>
-                                                                {{ $class->name }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                    @if ($errors->has('class_id'))
-                                                        <span class="text-danger invalid-select" role="alert">
-                                                            {{ $errors->first('class_id') }}
-                                                        </span>
-                                                    @endif
-                                                </div>
+                                {{-- Course Dropdown --}}
+                                <div class="col-lg-12 mb-15">
+                                    <label class="primary_input_label">Course <span class="text-danger">*</span></label>
+                                    <select class="primary_select form-control" name="course_id" id="course_select">
+                                        <option value="">Select Intake First *</option>
+                                    </select>
+                                </div>
 
-                                                <div class="col-lg-12 mb-15" id="select_section_div">
-                                                    <label class="primary_input_label" for="">@lang('common.section')
-                                                        <span class="text-danger"> *</span> </label>
-                                                    <select
-                                                        class="primary_select form-control{{ $errors->has('section_id') ? ' is-invalid' : '' }}"
-                                                        id="select_section" name="section_id">
-                                                        <option data-display="@lang('common.select_section') *" value="">
-                                                            @lang('common.select_section') *</option>
-                                                        @foreach ($intakes as $value)
-                                                            <option value="{{ $value->id }}"
-                                                                {{ isset($editData) ? ($editData->section_id == $value->id ? 'selected' : '') : (old('section_id') == $value->id ? 'selected' : '') }}>
-                                                                {{ $value->name }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                    <div class="pull-right loader loader_style"
-                                                        id="select_section_loader">
-                                                        <img class="loader_img_style"
-                                                            src="{{ asset('public/backEnd/img/demo_wait.gif') }}"
-                                                            alt="loader">
-                                                    </div>
-                                                    @if ($errors->has('section_id'))
-                                                        <span class="text-danger invalid-select" role="alert">
-                                                            {{ $errors->first('section_id') }}
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                                <div class="col-lg-12 mb-15" id="select_student_div">
-                                                    <label class="primary_input_label" for="">@lang('common.student')
-                                                        <span class="text-danger"> *</span> </label>
-                                                    <select
-                                                        class="primary_select form-control{{ $errors->has('student_id') ? ' is-invalid' : '' }}"
-                                                        id="select_student" name="student_id">
-                                                        <option data-display="@lang('common.select_student')*" value="">
-                                                            @lang('inventory.select_student_for_issue') *</option>
-                                                        @foreach ($students as $value)
-                                                            <option value="{{ $value->id }}"
-                                                                {{ isset($editData) ? ($editData->student_id == $value->id ? 'selected' : '') : (old('student_id') == $value->id ? 'selected' : '') }}>
-                                                                {{ $value->student_name }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                    <div class="pull-right loader loader_style"
-                                                        id="select_student_loader">
-                                                        <img class="loader_img_style"
-                                                            src="{{ asset('public/backEnd/img/demo_wait.gif') }}"
-                                                            alt="loader">
-                                                    </div>
-                                                    @if ($errors->has('student_id'))
-                                                        <span class="text-danger invalid-select" role="alert">
-                                                            {{ $errors->first('student_id') }}
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </div>
+                                {{-- Student Dropdown --}}
+                                <div class="col-lg-12 mb-15">
+                                    <label class="primary_input_label">Student <span class="text-danger">*</span></label>
+                                    <select class="primary_select form-control" name="student_id" id="student_select">
+                                        <option value="">Select Course First *</option>
+                                    </select>
+                                </div>
 
-                                        <div class="col-lg-12 mb-15" id="selectStaffsDiv">
-                                            <label class="primary_input_label" for="">@lang('inventory.issue_to')
-                                                <span></span> </label>
-                                            <select
-                                                class="primary_select  form-control{{ $errors->has('staff_id') ? ' is-invalid' : '' }}"
-                                                name="staff_id" id="selectStaffs">
-                                                <option data-display="@lang('inventory.issue_to')" value="">
-                                                    @lang('inventory.issue_to')
-                                                </option>
+                                {{-- Staff Dropdown --}}
+                                <div class="col-lg-12 mb-15">
+                                    <label class="primary_input_label">Issue To</label>
+                                    <select class="primary_select form-control" name="staff_id" id="staff_select">
+                                        <option value="">Select Staff</option>
+                                        @foreach ($staffs as $staff)
+                                            <option value="{{ $staff->id }}">{{ $staff->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
 
+                                {{-- Issue Date --}}
+                                <div class="col-lg-12 mb-15">
+                                    <label class="primary_input_label">Issue Date</label>
+                                    <input class="primary_input_field form-control date" type="text" name="issue_date" value="{{ isset($editData) ? date('m/d/Y', strtotime($editData->issue_date)) : date('m/d/Y') }}">
+                                </div>
 
-                                                @foreach ($staffs as $value)
-                                                    <option value="{{ $value->id }}"
-                                                        {{ isset($editData) ? ($editData->issue_to == $value->id ? 'selected' : '') : (old('staff_id') == $value->id ? 'selected' : '') }}>
-                                                        {{ $value->name }}</option>
-                                                @endforeach
+                                {{-- Due Date --}}
+                                <div class="col-lg-12 mb-15" hidden>
+                                    <label class="primary_input_label">Due Date</label>
+                                    <input class="primary_input_field form-control date" type="text" name="due_date" value="{{ isset($editData) ? date('m/d/Y', strtotime($editData->due_date)) : date('m/d/Y') }}">
+                                </div>
 
-                                            </select>
-                                            @if ($errors->has('staff_id'))
-                                                <span class="text-danger invalid-select" role="alert">
-                                                    {{ $errors->first('staff_id') }}
-                                                </span>
-                                            @endif
-                                        </div>
-
-                                    </div>
-
-                                    <div class="row mb-15">
-                                        <div class="col-lg-12">
-                                            <div class="primary_input">
-                                                <label class="primary_input_label" for="">@lang('inventory.issue_date')
-                                                    <span></span> </label>
-                                                <div class="primary_datepicker_input">
-                                                    <div class="no-gutters input-right-icon">
-                                                        <div class="col">
-                                                            <div class="">
-                                                                <input
-                                                                    class="primary_input_field  primary_input_field date form-control form-control{{ $errors->has('issue_date') ? ' is-invalid' : '' }}"
-                                                                    id="startDate" type="text" name="issue_date"
-                                                                    value="{{ isset($editData) ? date('m/d/Y', strtotime($editData->issue_date)) : date('m/d/Y') }}">
-                                                            </div>
-                                                        </div>
-                                                        <button class="btn-date" data-id="#issue_date"
-                                                            type="button">
-                                                            <i class="ti-calendar" id="start-date-icon"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <span class="text-danger">{{ $errors->first('issue_date') }}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="row mb-15">
-                                        <div class="col-lg-12">
-                                            <div class="primary_input">
-                                                <label class="primary_input_label" for="">@lang('inventory.due_date')
-                                                    <span></span> </label>
-                                                <div class="primary_datepicker_input">
-                                                    <div class="no-gutters input-right-icon">
-                                                        <div class="col">
-                                                            <div class="">
-                                                                <input
-                                                                    class="primary_input_field  primary_input_field date form-control form-control{{ $errors->has('due_date') ? ' is-invalid' : '' }}"
-                                                                    id="endDate" type="text" name="due_date"
-                                                                    value="{{ isset($editData) ? date('m/d/Y', strtotime($editData->due_date)) : date('m/d/Y') }}">
-                                                            </div>
-                                                        </div>
-                                                        <button class="btn-date" data-id="#due_date" type="button">
-                                                            <i class="ti-calendar" id="start-date-icon"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <span class="text-danger">{{ $errors->first('due_date') }}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="row ">
-                                        <div class="col-lg-12 mb-15">
-                                            <label class="primary_input_label" for="">@lang('inventory.category') <span
-                                                    class="text-danger"> *</span> </label>
-                                            <select
-                                                class="primary_select  form-control{{ $errors->has('item_category_id') ? ' is-invalid' : '' }}"
-                                                name="item_category_id" id="item_category_id">
-                                                <option data-display="@lang('inventory.item_category') *" value="">
-                                                    @lang('inventory.item_category') *</option>
-                                                @foreach ($categories as $value)
-                                                    <option value="{{ $value->id }}"
-                                                        {{ isset($editData) ? ($editData->item_category_id == $value->id ? 'selected' : '') : (old('item_category_id') == $value->id ? 'selected' : '') }}>
-                                                        {{ $value->name }}
-                                                    </option>
-                                                @endforeach
-
-                                            </select>
-                                            @if ($errors->has('item_category_id'))
-                                                <span class="text-danger invalid-select" role="alert">
-                                                    {{ $errors->first('item_category_id') }}
-                                                </span>
-                                            @endif
-                                        </div>
-
-                                        <div class="col-lg-12 mb-15" id="selectItemsDiv">
-                                            <label class="primary_input_label" for="">@lang('common.name') <span
-                                                    class="text-danger"> *</span> </label>
-                                            <select
-                                                class="primary_select  form-control{{ $errors->has('item_id') ? ' is-invalid' : '' }}"
-                                                name="item_id" id="selectItems">
-                                                <option data-display="@lang('inventory.item_name') *" value="">
-                                                    @lang('inventory.item_name') *</option>
-                                                @foreach ($inventoryItems as $value)
-                                                    <option value="{{ $value->id }}"
-                                                        {{ isset($editData) ? ($editData->item_id == $value->id ? 'selected' : '') : (old('item_id') == $value->id ? 'selected' : '') }}>
-                                                        {{ $value->item_name }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            @if ($errors->has('item_id'))
-                                                <span class="text-danger invalid-select" role="alert">
-                                                    {{ $errors->first('item_id') }}
-                                                </span>
-                                            @endif
-                                        </div>
-
-                                        <div class="col-lg-12 mb-15">
-                                            <div class="primary_input">
-                                                <label class="primary_input_label" for="">@lang('inventory.quantity')
-                                                    <span class="text-danger"> *</span> </label>
-                                                <input
-                                                    class="primary_input_field form-control{{ $errors->has('quantity') ? ' is-invalid' : '' }}"
-                                                    type="text" onkeypress="return isNumberKey(event)"
-                                                    name="quantity" autocomplete="off"
-                                                    value="{{ isset($editData) ? $editData->quantity : old('quantity') }}">
-
-
-                                                @if ($errors->has('quantity'))
-                                                    <span class="text-danger">
-                                                        {{ $errors->first('quantity') }}</span>
-                                                @endif
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-12 mb-15">
-                                            <div class="primary_input">
-                                                <label class="primary_input_label" for="">@lang('inventory.note')
-                                                    <span></span> </label>
-                                                <textarea class="primary_input_field form-control" cols="0" rows="4" name="description"
-                                                    id="description">{{ isset($editData) ? $editData->description : old('description') }}</textarea>
-
-
-
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <input type="hidden" name="url" id="url"
-                                        value="{{ URL::to('/') }}">
-                                    <div class="row mt-40">
-                                        <div class="col-lg-12 text-center">
-                                            <button class="primary-btn fix-gr-bg submit issuedSubmit"
-                                                data-toggle="tooltip">
-                                                <span class="ti-check"></span>
-                                                @if (isset($editData))
-                                                    @lang('common.update')
-                                                @else
-                                                    @lang('common.save')
-                                                @endif
-                                            </button>
-                                        </div>
-                                    </div>
+                                {{-- Description --}}
+                                <div class="col-lg-12 mb-15">
+                                    <label class="primary_input_label">Note</label>
+                                    <textarea class="primary_input_field form-control" name="description" rows="4">{{ isset($editData) ? $editData->description : old('description') }}</textarea>
                                 </div>
                             </div>
-                            </form>
-                            @if (isset($editData))
-                                {{-- Form::close() is not needed here as it's a plain HTML form --}}
-                            @else
-                                @if (false) {{-- userPermission('save-item-issue-data') is removed --}}
-                                    {{-- Form::close() is not needed here as it's a plain HTML form --}}
-                                @endif
-                            @endif
                         </div>
                     </div>
                 </div>
 
-                <div class="col-lg-9">
-
-
-                    <div class="">
-                        <div class="row">
-                            <div class="col-lg-4 no-gutters">
-                                <div class="main-title">
-                                    <h3 class="mb-15"> @lang('inventory.issued_item_list')</h3>
-                                </div>
-                            </div>
+                {{-- Right Side - Category & Item horizontally + Save --}}
+                <div class="col-lg-8">
+                    <div class="white-box">
+                        <div class="main-title">
+                            <h3 class="mb-15">Inventory Items Select</h3>
                         </div>
-
                         <div class="row">
+                            {{-- Combined Category / Item Dropdown --}}
+                            <div class="col-lg-12 mb-15">
+                                <label class="primary_input_label">Category / Item *</label>
+                                <select class="primary_select form-control" id="item_category_item_select">
+                                    <option value="">Select Category / Item *</option>
+                                    @foreach ($categories as $category)
+                                        <option data-type="category" class="font-weight-bolder">{{ $category->name }}</option>
+                                        @foreach ($inventoryItems->where('item_category_id', $category->id) as $item)
+                                            <option value="{{ $item->id }}" data-type="item" data-category-id="{{ $category->id }}" data-category-name="{{ $category->name }}" data-item-name="{{ $item->item_name }}">
+                                                &nbsp;&nbsp;&nbsp;{{ $item->item_name }}
+                                            </option>
+                                        @endforeach
+                                    @endforeach
+                                </select>
+                            </div>
 
-                            <div class="col-lg-12">
-                                <x-table>
-                                    <table id="table_id" class="table" cellspacing="0" width="100%">
+                            {{-- Selected Items Table --}}
+                            <div class="col-lg-12 mt-10">
+                                <div class="big-table">
+                                    <table class="table school-table-style selected_items_table" cellspacing="0" width="100%">
                                         <thead>
                                             <tr>
-                                                <th> @lang('common.sl')</th>
-                                                <th> @lang('inventory.item_name')</th>
-                                                <th> @lang('inventory.item_category')</th>
-                                                <th> @lang('inventory.issue_to')</th>
-                                                <th> @lang('inventory.issue_date')</th>
-                                                <th> @lang('inventory.return_date')</th>
-                                                <th> @lang('inventory.quantity')</th>
-                                                <th> @lang('common.status')</th>
-                                                <th> @lang('common.action')</th>
+                                                <th>@lang('common.sl')</th>
+                                                <th>@lang('inventory.category')</th>
+                                                <th>@lang('inventory.item')</th>
+                                                <th>@lang('inventory.quantity')</th>
+                                                <th>@lang('common.action')</th>
                                             </tr>
                                         </thead>
-
-                                        <tbody>
-                                            @if (isset($issuedItems))
-                                                @foreach ($issuedItems as $key => $value)
-                                                    <tr>
-                                                        <td>{{ $key + 1 }}</td>
-                                                        <td>{{ $value->item ? $value->item->item_name : '' }}</td>
-                                                        <td>{{ $value->category ? $value->category->name : '' }}</td>
-
-                                                        <td>
-                                                            @if ($value->role_id == 2 && $value->student)
-                                                                {{ $value->student->student_name }}
-                                                            @elseif ($value->issue_to && $value->staff)
-                                                                {{ $value->staff->name }}
-                                                            @endif
-                                                        </td>
-                                                        <td data-sort="{{ strtotime($value->issue_date) }}">
-                                                            {{ $value->issue_date != '' ? date('m/d/Y', strtotime($value->issue_date)) : '' }}
-                                                        </td>
-                                                        <td data-sort="{{ strtotime($value->due_date) }}">
-                                                            {{ $value->due_date != '' ? date('m/d/Y', strtotime($value->due_date)) : '' }}
-                                                        </td>
-
-                                                        <td>{{ $value->quantity }}</td>
-                                                        <td>
-                                                            @if ($value->issue_status == 'I')
-                                                                <button class="primary-btn small bg-success text-white border-0">
-                                                                    @lang('inventory.issued')</button>
-                                                            @else
-                                                                <button
-                                                                    class="primary-btn small bg-primary text-white border-0">@lang('inventory.returned')</button>
-                                                            @endif
-                                                        </td>
-
-                                                        <td>
-                                                            <x-drop-down>
-                                                                @if ($value->issue_status == 'I')
-                                                                    <form action="{{ route('return-item') }}" method="POST">
-                                                                        @csrf
-                                                                        <input type="hidden" name="id" value="{{ @$value->id }}">
-                                                                        <button type="submit" class="dropdown-item">@lang('inventory.return')</button>
-                                                                    </form>
-                                                                    @else($value->issue_status == 'R')
-                                                                    <form action="{{ route('issue-item') }}" method="POST">
-                                                                        @csrf
-                                                                        <input type="hidden" name="id" value="{{ @$value->id }}">
-                                                                        <button type="submit" class="dropdown-item">Issue</button>
-                                                                    </form>
-                                                                @endif
-                                                                <a class="dropdown-item"
-                                                                    href="{{ route('item-issue-edit', @$value->id) }}">@lang('common.edit')</a>
-                                                            </x-drop-down>
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
+                                        <tbody class="allIssuedItems">
+                                            {{-- Existing items for edit mode --}}
+                                            @if(isset($editData))
+                                                <tr data-id="{{ $editData->item_id }}">
+                                                    <td class="sl">1</td>
+                                                    <td class="category_name">{{ $editData->category->name ?? 'N/A' }}</td>
+                                                    <td class="item_name">{{ $editData->item->item_name ?? 'N/A' }}</td>
+                                                    <td>
+                                                        <input type="number" name="items[{{ $editData->item_id }}][quantity]" class="primary_input_field form-control item_quantity" value="{{ $editData->quantity }}" min="1" required>
+                                                        <input type="hidden" name="items[{{ $editData->item_id }}][item_id]" value="{{ $editData->item_id }}">
+                                                        <input type="hidden" name="items[{{ $editData->item_id }}][item_category_id]" value="{{ $editData->item_category_id }}">
+                                                    </td>
+                                                    <td><button type="button" class="primary-btn small bg-danger text-white border-0 remove_item_btn">Delete</button></td>
+                                                </tr>
                                             @endif
                                         </tbody>
                                     </table>
-                                </x-table>
+                                </div>
+                            </div>
+
+                            {{-- Save Button --}}
+                            <div class="col-lg-12 text-center mt-4">
+                                <button type="submit" class="primary-btn fix-gr-bg">
+                                    <span class="ti-check"></span> @lang('common.save')
+                                </button>
+                            </div>
+                        </div>
+
+                        {{-- Student Fee Data Section --}}
+                        <div class="row mt-4">
+                            <div class="col-lg-12">
+                                <div id="student-fee-data" style="display: none;">
+                                    <div class="white-box">
+                                        <div class="main-title">
+                                            <h4 class="mb-15">Student fee Informations</h4>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-lg-6">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label">Student Name</label>
+                                                    <input type="text" class="form-control" id="fee_student_name" readonly>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label">Total Invoice</label>
+                                                    <input type="text" class="form-control" id="fee_total_invoices" readonly>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-4">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label">Total Fees</label>
+                                                    <input type="text" class="form-control" id="fee_total_fees" readonly>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-4">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label">@lang('inventory.total_paid')</label>
+                                                    <input type="text" class="form-control" id="fee_total_paid" readonly>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-4">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label">@lang('inventory.total_due')</label>
+                                                    <input type="text" class="form-control" id="fee_total_due" readonly>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {{-- Fee Invoices Table --}}
+
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        </div>
-    </section>
+        </form>
+        {{-- Form ends --}}
+    </div>
+</section>
+
 @endsection
+
 @include('components.partials.data_table_js')
 @include('components.partials.date_picker_css_js')
+
 @push('scripts')
     <script>
-        $(document).on('.issuedSubmit', 'click', function(e) {
-            let issue_date = $('#startDate').val();
-            let return_date = $('#endDate').val();
-            alert(return_date);
-            if (issue_date > return_date) {
-                toastr.error("Return Date will be greater Than issue date");
-                return;
-                e.preventdefault();
+        $(document).ready(function() {
+            console.log('🚀 Item Issue Page Loaded - Starting Cascading Dropdown System');
+
+            // Helper function to refresh niceSelect safely
+            function refreshNiceSelect(selector) {
+                if ($.fn.niceSelect) {
+                    $(selector).niceSelect('destroy');
+                    $(selector).niceSelect();
+                }
             }
-        })
+
+            // Track added item types
+            let addedItemTypes = new Set();
+            @if(isset($editData))
+                addedItemTypes.add('{{ $editData->item_id }}');
+            @endif
+
+            function updateSerialNumbers() {
+                $('.allIssuedItems tr').each(function(index) {
+                    $(this).find('.sl').text(index + 1);
+                });
+            }
+
+            // Handle combined category/item change
+            $('#item_category_item_select').on('change', function() {
+                let selectedOption = $(this).find("option:selected");
+                let type = selectedOption.data('type');
+
+                if (!selectedOption.val() || type === 'category') {
+                    $(this).val('').niceSelect('update');
+                    return;
+                }
+
+                let itemId = selectedOption.val();
+                let itemName = selectedOption.data('item-name');
+                let categoryId = selectedOption.data('category-id');
+                let categoryName = selectedOption.data('category-name');
+
+                // Clear previous selections before adding a new one
+                addedItemTypes.clear();
+                $('.allIssuedItems').empty();
+
+                addItemRow(itemId, itemName, categoryId, categoryName);
+                addedItemTypes.add(itemId);
+
+                $(this).val('').niceSelect('update');
+            });
+
+            function addItemRow(itemId, itemName, categoryId, categoryName) {
+                let row = `<tr data-id="${itemId}">
+                    <td class="sl"></td>
+                    <td class="category_name">${categoryName}</td>
+                    <td class="item_name">${itemName}</td>
+                    <td>
+                        <input type="number" name="items[${itemId}][quantity]" class="primary_input_field form-control item_quantity" value="1" min="1" required>
+                        <input type="hidden" name="items[${itemId}][item_id]" value="${itemId}">
+                        <input type="hidden" name="items[${itemId}][item_category_id]" value="${categoryId}">
+                    </td>
+                    <td><button type="button" class="primary-btn small bg-danger text-white border-0 remove_item_btn">Delete</button></td>
+                </tr>`;
+                $('.allIssuedItems').append(row);
+                updateSerialNumbers();
+            }
+
+            // Delete row
+            $(document).on('click', '.remove_item_btn', function() {
+                let itemId = $(this).closest('tr').data('id');
+                addedItemTypes.delete(String(itemId)); // Ensure string type for Set
+                $(this).closest('tr').remove();
+                updateSerialNumbers();
+            });
+
+            // Handle branch change
+            $('#branch_select').on('change', function() {
+                var branch_id = $(this).val();
+                console.log('📍 Branch selected:', branch_id);
+
+                if (branch_id && branch_id !== '') {
+                    $('#intake_select').html('<option value="">Loading intakes...</option>').prop(
+                        'disabled', true);
+                    refreshNiceSelect('#intake_select');
+
+                    var url = '{{ route('item-issue.get-intakes-by-branch', ':branchId') }}'.replace(
+                        ':branchId', branch_id);
+                    console.log('🌐 AJAX URL:', url);
+
+                    $.get(url, function(data) {
+                        console.log('✅ AJAX Success! Data received:', data);
+
+                        var optionsHtml = '<option value="">Select Intake *</option>';
+                        if (data && Array.isArray(data) && data.length > 0) {
+                            data.forEach(function(intake) {
+                                optionsHtml += '<option value="' + intake.id + '">' + intake
+                                    .name + '</option>';
+                            });
+                        } else {
+                            optionsHtml += '<option value="">No intakes found</option>';
+                        }
+
+                        $('#intake_select').html(optionsHtml).prop('disabled', false);
+                        refreshNiceSelect('#intake_select');
+
+                        // Reset dependent dropdowns
+                        $('#course_select').html('<option value="">Select Intake First *</option>')
+                            .prop('disabled', true);
+                        refreshNiceSelect('#course_select');
+
+                        $('#student_select').html('<option value="">Select Course First *</option>')
+                            .prop('disabled', true);
+                        refreshNiceSelect('#student_select');
+
+                    }).fail(function(xhr, status, error) {
+                        console.error('❌ AJAX Error:', error);
+                        $('#intake_select').html('<option value="">Error loading intakes</option>')
+                            .prop('disabled', false);
+                        refreshNiceSelect('#intake_select');
+                    });
+                } else {
+                    $('#intake_select').html('<option value="">Select Branch First *</option>').prop(
+                        'disabled', false);
+                    refreshNiceSelect('#intake_select');
+
+                    $('#course_select').html('<option value="">Select Intake First *</option>').prop(
+                        'disabled', true);
+                    refreshNiceSelect('#course_select');
+
+                    $('#student_select').html('<option value="">Select Course First *</option>').prop(
+                        'disabled', true);
+                    refreshNiceSelect('#student_select');
+                }
+            });
+
+            // Handle intake change
+            $('#intake_select').on('change', function() {
+                var intake_id = $(this).val();
+                console.log('📚 Intake selected:', intake_id);
+
+                if (intake_id && intake_id !== '') {
+                    $('#course_select').html('<option value="">Loading courses...</option>').prop(
+                        'disabled', true);
+                    refreshNiceSelect('#course_select');
+
+                    var url = '{{ route('item-issue.get-courses-by-intake', ':intakeId') }}'.replace(
+                        ':intakeId', intake_id);
+
+                    $.get(url, function(data) {
+                        console.log('✅ Courses received:', data);
+
+                        var optionsHtml = '<option value="">Select Course *</option>';
+                        if (data && Array.isArray(data) && data.length > 0) {
+                            data.forEach(function(course) {
+                                optionsHtml += '<option value="' + course.id + '">' + course
+                                    .name + '</option>';
+                            });
+                        } else {
+                            optionsHtml += '<option value="">No courses found</option>';
+                        }
+
+                        $('#course_select').html(optionsHtml).prop('disabled', false);
+                        refreshNiceSelect('#course_select');
+
+                        $('#student_select').html('<option value="">Select Course First *</option>')
+                            .prop('disabled', true);
+                        refreshNiceSelect('#student_select');
+
+                    }).fail(function(xhr, status, error) {
+                        console.error('❌ Error loading courses:', error);
+                        $('#course_select').html('<option value="">Error loading courses</option>')
+                            .prop('disabled', false);
+                        refreshNiceSelect('#course_select');
+                    });
+                } else {
+                    $('#course_select').html('<option value="">Select Intake First *</option>').prop(
+                        'disabled', true);
+                    refreshNiceSelect('#course_select');
+
+                    $('#student_select').html('<option value="">Select Course First *</option>').prop(
+                        'disabled', true);
+                    refreshNiceSelect('#student_select');
+                }
+            });
+
+            // Handle course change
+            $('#course_select').on('change', function() {
+                var course_id = $(this).val();
+                console.log('🎓 Course selected:', course_id);
+
+                if (course_id && course_id !== '') {
+                    $('#student_select').html('<option value="">Loading students...</option>').prop(
+                        'disabled', true);
+                    refreshNiceSelect('#student_select');
+
+                    var url = '{{ route('item-issue.get-students-by-course', ':courseId') }}'.replace(
+                        ':courseId', course_id);
+
+                    $.get(url, function(data) {
+                        console.log('✅ Students received:', data);
+
+                        var optionsHtml = '<option value="">Select Student *</option>';
+                        if (data && Array.isArray(data) && data.length > 0) {
+                            data.forEach(function(student) {
+                                optionsHtml += '<option value="' + student.id + '">' +
+                                    student.student_name + '</option>';
+                            });
+                        } else {
+                            optionsHtml += '<option value="">No students found</option>';
+                        }
+
+                        $('#student_select').html(optionsHtml).prop('disabled', false);
+                        refreshNiceSelect('#student_select');
+
+                    }).fail(function(xhr, status, error) {
+                        console.error('❌ Error loading students:', error);
+                        $('#student_select').html(
+                            '<option value="">Error loading students</option>').prop('disabled',
+                            false);
+                        refreshNiceSelect('#student_select');
+                    });
+                } else {
+                    $('#student_select').html('<option value="">Select Course First *</option>').prop(
+                        'disabled', true);
+                    refreshNiceSelect('#student_select');
+
+                    // Hide fee data when no course is selected
+                    $('#student-fee-data').hide();
+                }
+            });
+
+            // Handle student change - Load fee data
+            $('#student_select').on('change', function() {
+                var student_id = $(this).val();
+                console.log('👨‍🎓 Student selected:', student_id);
+
+                if (student_id && student_id !== '') {
+                    // Show loading state
+                    $('#student-fee-data').show();
+                    $('#fee_invoices_tbody').html('<tr><td colspan="4" class="text-center">Loading fee data...</td></tr>');
+
+                    // AJAX call to get student fee data
+                    var url = '{{ route('item-issue.get-student-fee-data', ':studentId') }}'.replace(':studentId', student_id);
+                    console.log('🌐 Fee Data AJAX URL:', url);
+
+                    $.ajax({
+                        url: url,
+                        type: 'GET',
+                        dataType: 'json',
+                        success: function(data) {
+                            console.log('✅ Fee data received:', data);
+
+                            if (data) {
+                                // Populate fee summary data
+                                $('#fee_student_name').val(data.student_name || 'N/A');
+                                $('#fee_total_invoices').val(data.total_invoices || 0);
+                                $('#fee_total_fees').val('$' + (data.total_fees || 0).toFixed(2));
+                                $('#fee_total_paid').val('$' + (data.total_paid || 0).toFixed(2));
+                                $('#fee_total_due').val('$' + (data.total_due || 0).toFixed(2));
+
+                                // Populate fee invoices table
+                                var tableHtml = '';
+                                if (data.fee_invoices && data.fee_invoices.length > 0) {
+                                    data.fee_invoices.forEach(function(invoice) {
+                                        var dueAmount = (invoice.amount || 0) - (invoice.paid_amount || 0);
+                                        tableHtml += '<tr>' +
+                                            '<td>' + (invoice.fee_type_name || 'N/A') + '</td>' +
+                                            '<td>$' + (invoice.amount || 0).toFixed(2) + '</td>' +
+                                            '<td>$' + (invoice.paid_amount || 0).toFixed(2) + '</td>' +
+                                            '<td>$' + dueAmount.toFixed(2) + '</td>' +
+                                            '</tr>';
+                                    });
+                                } else {
+                                    tableHtml = '<tr><td colspan="4" class="text-center">No fee invoices found</td></tr>';
+                                }
+
+                                $('#fee_invoices_tbody').html(tableHtml);
+                            } else {
+                                // Show error or no data message
+                                $('#fee_student_name').val('No data received');
+                                $('#fee_total_invoices').val('0');
+                                $('#fee_total_fees').val('$0.00');
+                                $('#fee_total_paid').val('$0.00');
+                                $('#fee_total_due').val('$0.00');
+                                $('#fee_invoices_tbody').html('<tr><td colspan="4" class="text-center text-warning">No data received</td></tr>');
+                            }
+
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('❌ AJAX Error:', error);
+                            console.error('❌ Status:', status);
+                            console.error('❌ Response:', xhr.responseText);
+
+                            $('#fee_student_name').val('Error loading data');
+                            $('#fee_total_invoices').val('0');
+                            $('#fee_total_fees').val('$0.00');
+                            $('#fee_total_paid').val('$0.00');
+                            $('#fee_total_due').val('$0.00');
+                            $('#fee_invoices_tbody').html('<tr><td colspan="4" class="text-center text-danger">Error: ' + error + '</td></tr>');
+                        }
+                    });
+                } else {
+                    // Hide fee data when no student is selected
+                    $('#student-fee-data').hide();
+                }
+            });
+            updateSerialNumbers(); // Initial call to set serial numbers for existing items
+        });
     </script>
 @endpush

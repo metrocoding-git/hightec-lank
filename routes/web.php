@@ -215,12 +215,20 @@ Route::controller(ItemSellController::class)->group(function () {
 
 Route::controller(ItemIssueController::class)->group(function () {
     Route::get('account/inventory/item-issue', 'index')->name('item-issue');
+    Route::get('account/inventory/item-issue-list', 'issueListView')->name('item-issue-list');
     Route::post('account/inventory/save-item-issue-data', 'saveItemIssueData')->name('save-item-issue-data');
     Route::get('account/inventory/item-issue-edit/{id}', 'edit')->name('item-issue-edit');
     Route::put('account/inventory/item-issue-update/{id}', 'update')->name('item-issue-update');
     Route::get('account/inventory/return-item-view/{id}', 'returnItemView')->name('return-item-view');
     Route::post('account/inventory/return-item', 'returnItem')->name('return-item');
     Route::post('account/inventory/issue-item', 'IssueItem')->name('issue-item');
+
+    // AJAX routes for dynamic filtering
+    Route::get('account/inventory/get-intakes-by-branch/{branchId}', 'getIntakesByBranch')->name('item-issue.get-intakes-by-branch')->withoutMiddleware(['csrf']);
+    Route::get('account/inventory/get-courses-by-intake/{intakeId}', 'getCoursesByIntake')->name('item-issue.get-courses-by-intake')->withoutMiddleware(['csrf']);
+    Route::get('account/inventory/get-students-by-course/{courseId}', 'getStudentsByCourse')->name('item-issue.get-students-by-course')->withoutMiddleware(['csrf']);
+    Route::get('account/inventory/get-items-by-category/{categoryId}', 'getItemsByCategory')->name('item-issue.get-items-by-category')->withoutMiddleware(['csrf']);
+    Route::get('account/inventory/get-student-fee-data/{studentId}', 'getStudentFeeData')->name('item-issue.get-student-fee-data')->withoutMiddleware(['csrf']);
 
 });
 Route::controller(LoginController::class)->group(function () {

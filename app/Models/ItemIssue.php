@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ItemIssue extends Model
 {
     protected $fillable = [
-        'role_id',
+        'branch_id',
         'issue_to',
         'item_category_id',
         'item_id',
@@ -17,14 +17,14 @@ class ItemIssue extends Model
         'description',
         'issue_status',
         'student_id',
-        'section_id',
-        'class_id',
+        'intake_id',
+        'course_id',
         'active_status',
     ];
 
-    public function role()
+    public function branch()
     {
-        return $this->belongsTo('App\Models\Role', 'role_id', 'id');
+        return $this->belongsTo('App\Models\Branch', 'branch_id', 'id');
     }
 
     public function category()
@@ -47,13 +47,13 @@ class ItemIssue extends Model
         return $this->belongsTo('App\Models\User', 'issue_to', 'id');
     }
 
-    public function section()
+    public function intake()
     {
-        return $this->belongsTo('App\Models\Intake', 'section_id', 'id');
+        return $this->belongsTo('App\Models\Intake', 'intake_id', 'id');
     }
 
     public function course()
     {
-        return $this->belongsTo('App\Models\Course', 'class_id', 'id');
+        return $this->belongsTo('App\Models\Course', 'course_id', 'id');
     }
 }
