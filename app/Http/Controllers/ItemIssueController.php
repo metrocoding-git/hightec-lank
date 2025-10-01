@@ -37,6 +37,17 @@ class ItemIssueController extends Controller
             return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
         }
     }
+    public function issueListView(){
+        try {
+            $issuedItems = ItemIssue::with(['item', 'category', 'student', 'staff', 'branch'])
+                ->where('active_status', 1)
+                ->get();
+
+            return view('pages.account.inventory.item-issue-list', compact('issuedItems'));
+        } catch (Exception $e) {
+            return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
+        }
+    }
 
     public function saveItemIssueData(Request $request)
     {

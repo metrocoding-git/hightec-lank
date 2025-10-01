@@ -215,6 +215,7 @@ Route::controller(ItemSellController::class)->group(function () {
 
 Route::controller(ItemIssueController::class)->group(function () {
     Route::get('account/inventory/item-issue', 'index')->name('item-issue');
+    Route::get('account/inventory/item-issue-list', 'issueListView')->name('item-issue-list');
     Route::post('account/inventory/save-item-issue-data', 'saveItemIssueData')->name('save-item-issue-data');
     Route::get('account/inventory/item-issue-edit/{id}', 'edit')->name('item-issue-edit');
     Route::put('account/inventory/item-issue-update/{id}', 'update')->name('item-issue-update');

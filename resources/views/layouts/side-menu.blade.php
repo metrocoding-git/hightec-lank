@@ -370,6 +370,12 @@
                     </a>
                 </li>
                 <li>
+                    <a href="/account/inventory/item-issue-list"
+                        class="{{ request()->is('account/inventory/item-issue-list') ? 'active a' : '' }}">
+                        Item Issue List
+                    </a>
+                </li>
+                <li>
                     <a href="/account/inventory/item-sell"
                         class="{{ request()->is('account/inventory/item-sell') ? 'active a' : '' }}">
                         Item Sell
