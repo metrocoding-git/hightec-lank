@@ -112,7 +112,7 @@
                 <div class="col-lg-8">
                     <div class="white-box">
                         <div class="main-title">
-                            <h3 class="mb-15">@lang('inventory.item_selection')</h3>
+                            <h3 class="mb-15">Inventory Items Select</h3>
                         </div>
                         <div class="row">
                             {{-- Category --}}
@@ -142,6 +142,54 @@
                                 <button type="submit" class="primary-btn fix-gr-bg mt-2">
                                     <span class="ti-check"></span> @lang('common.save')
                                 </button>
+                            </div>
+                        </div>
+
+                        {{-- Student Fee Data Section --}}
+                        <div class="row mt-4">
+                            <div class="col-lg-12">
+                                <div id="student-fee-data" style="display: none;">
+                                    <div class="white-box">
+                                        <div class="main-title">
+                                            <h4 class="mb-15">Student fee Informations</h4>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-lg-6">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label">Student Name</label>
+                                                    <input type="text" class="form-control" id="fee_student_name" readonly>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label">Total Invoice</label>
+                                                    <input type="text" class="form-control" id="fee_total_invoices" readonly>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-4">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label">Total Fees</label>
+                                                    <input type="text" class="form-control" id="fee_total_fees" readonly>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-4">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label">@lang('inventory.total_paid')</label>
+                                                    <input type="text" class="form-control" id="fee_total_paid" readonly>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-4">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label">@lang('inventory.total_due')</label>
+                                                    <input type="text" class="form-control" id="fee_total_due" readonly>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {{-- Fee Invoices Table --}}
+                                        
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -320,6 +368,85 @@
                     $('#student_select').html('<option value="">Select Course First *</option>').prop(
                         'disabled', true);
                     refreshNiceSelect('#student_select');
+
+                    // Hide fee data when no course is selected
+                    $('#student-fee-data').hide();
+                }
+            });
+
+            // Handle student change - Load fee data
+            $('#student_select').on('change', function() {
+                var student_id = $(this).val();
+                console.log('👨‍🎓 Student selected:', student_id);
+
+                if (student_id && student_id !== '') {
+                    // Show loading state
+                    $('#student-fee-data').show();
+                    $('#fee_invoices_tbody').html('<tr><td colspan="4" class="text-center">Loading fee data...</td></tr>');
+
+                    // AJAX call to get student fee data
+                    var url = '{{ route('item-issue.get-student-fee-data', ':studentId') }}'.replace(':studentId', student_id);
+                    console.log('🌐 Fee Data AJAX URL:', url);
+
+                    $.ajax({
+                        url: url,
+                        type: 'GET',
+                        dataType: 'json',
+                        success: function(data) {
+                            console.log('✅ Fee data received:', data);
+
+                            if (data) {
+                                // Populate fee summary data
+                                $('#fee_student_name').val(data.student_name || 'N/A');
+                                $('#fee_total_invoices').val(data.total_invoices || 0);
+                                $('#fee_total_fees').val('$' + (data.total_fees || 0).toFixed(2));
+                                $('#fee_total_paid').val('$' + (data.total_paid || 0).toFixed(2));
+                                $('#fee_total_due').val('$' + (data.total_due || 0).toFixed(2));
+
+                                // Populate fee invoices table
+                                var tableHtml = '';
+                                if (data.fee_invoices && data.fee_invoices.length > 0) {
+                                    data.fee_invoices.forEach(function(invoice) {
+                                        var dueAmount = (invoice.amount || 0) - (invoice.paid_amount || 0);
+                                        tableHtml += '<tr>' +
+                                            '<td>' + (invoice.fee_type_name || 'N/A') + '</td>' +
+                                            '<td>$' + (invoice.amount || 0).toFixed(2) + '</td>' +
+                                            '<td>$' + (invoice.paid_amount || 0).toFixed(2) + '</td>' +
+                                            '<td>$' + dueAmount.toFixed(2) + '</td>' +
+                                            '</tr>';
+                                    });
+                                } else {
+                                    tableHtml = '<tr><td colspan="4" class="text-center">No fee invoices found</td></tr>';
+                                }
+
+                                $('#fee_invoices_tbody').html(tableHtml);
+                            } else {
+                                // Show error or no data message
+                                $('#fee_student_name').val('No data received');
+                                $('#fee_total_invoices').val('0');
+                                $('#fee_total_fees').val('$0.00');
+                                $('#fee_total_paid').val('$0.00');
+                                $('#fee_total_due').val('$0.00');
+                                $('#fee_invoices_tbody').html('<tr><td colspan="4" class="text-center text-warning">No data received</td></tr>');
+                            }
+
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('❌ AJAX Error:', error);
+                            console.error('❌ Status:', status);
+                            console.error('❌ Response:', xhr.responseText);
+
+                            $('#fee_student_name').val('Error loading data');
+                            $('#fee_total_invoices').val('0');
+                            $('#fee_total_fees').val('$0.00');
+                            $('#fee_total_paid').val('$0.00');
+                            $('#fee_total_due').val('$0.00');
+                            $('#fee_invoices_tbody').html('<tr><td colspan="4" class="text-center text-danger">Error: ' + error + '</td></tr>');
+                        }
+                    });
+                } else {
+                    // Hide fee data when no student is selected
+                    $('#student-fee-data').hide();
                 }
             });
 

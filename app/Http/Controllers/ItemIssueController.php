@@ -11,6 +11,7 @@ use App\Models\Student;
 use App\Models\User;
 use App\Models\Course; // Assuming Course model for classes
 use App\Models\Intake; // Assuming Intake model for sections
+use App\Models\FeeInvoice; // Fee invoice model
 use Illuminate\Http\Request;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -288,6 +289,79 @@ class ItemIssueController extends Controller
             return response()->json($items);
         } catch (Exception $e) {
             return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function getStudentFeeData(Request $request, $studentId)
+    {
+        try {
+            $student_id = $studentId; // Use the route parameter
+            Log::info('=== getStudentFeeData CALLED ===');
+            Log::info('Student ID: ' . $student_id);
+
+            // First check if student exists
+            $student = Student::find($student_id);
+            if (!$student) {
+                Log::warning('Student not found: ' . $student_id);
+                return response()->json([
+                    'student_name' => 'Student not found',
+                    'total_invoices' => 0,
+                    'total_fees' => 0,
+                    'total_paid' => 0,
+                    'total_due' => 0,
+                    'fee_invoices' => []
+                ]);
+            }
+
+            // Get student fee invoices using Eloquent relationships
+            $feeInvoices = FeeInvoice::where('student_id', $student_id)
+                ->with(['invoice_item.feeType'])
+                ->get();
+
+            Log::info('Found fee invoices count: ' . $feeInvoices->count());
+
+            // Calculate total fees and payments
+            $totalFees = $feeInvoices->sum('total_amount');
+            $totalPaid = $feeInvoices->sum('paid_amount');
+            $totalDue = $totalFees - $totalPaid;
+
+            // Format fee invoices for display
+            $formattedInvoices = [];
+            foreach ($feeInvoices as $invoice) {
+                $invoiceItems = $invoice->invoice_item ?? collect();
+                foreach ($invoiceItems as $item) {
+                    $formattedInvoices[] = [
+                        'fee_type_name' => $item->feeType->name ?? 'N/A',
+                        'amount' => $item->amount ?? 0,
+                        'paid_amount' => $item->paid_amount ?? 0,
+                    ];
+                }
+            }
+
+            $studentData = [
+                'student_name' => $student->student_name ?? 'N/A',
+                'total_invoices' => $feeInvoices->count(),
+                'total_fees' => $totalFees,
+                'total_paid' => $totalPaid,
+                'total_due' => $totalDue,
+                'fee_invoices' => $formattedInvoices
+            ];
+
+            Log::info('Student data prepared: ' . json_encode($studentData));
+
+            return response()->json($studentData);
+        } catch (Exception $e) {
+            Log::error('Error in getStudentFeeData: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'error' => 'Operation Failed: ' . $e->getMessage(),
+                'student_name' => 'Error loading data',
+                'total_invoices' => 0,
+                'total_fees' => 0,
+                'total_paid' => 0,
+                'total_due' => 0,
+                'fee_invoices' => []
+            ], 500);
         }
     }
 }
