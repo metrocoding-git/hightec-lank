@@ -33,6 +33,9 @@ class ItemIssueController extends Controller
             $categories = Category::get();
             $branches = Branch::get();
 
+            // Temporarily dump data to inspect
+            // dd($categories, $inventoryItems);
+
             return view('pages.account.inventory.item-issue', compact('roles',  'issuedItems', 'courses', 'staffs','intakes','students','inventoryItems' ,'categories','branches'));
         } catch (Exception $e) {
             return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
@@ -54,49 +57,53 @@ class ItemIssueController extends Controller
     {
         $request->validate([
             'branch_id' => 'required',
-            'item_category_id' => 'required',
-            'item_id' => 'required',
             'issue_date' => 'required|date',
             'due_date' => 'required|date',
-            'quantity' => 'required|integer|min:1',
             'issue_to' => 'nullable|exists:users,id', // For staff
             'student_id' => 'nullable|exists:students,id', // For students
             'intake_id' => 'nullable|exists:intakes,id',
             'course_id' => 'nullable|exists:courses,id',
+            'items' => 'required|array|min:1', // Ensure at least one item is present
+            'items.*.item_id' => 'required|exists:inventory_items,id',
+            'items.*.item_category_id' => 'required|exists:categories,id',
+            'items.*.quantity' => 'required|integer|min:1',
         ]);
 
         try {
             DB::beginTransaction();
 
-            $itemIssue = new ItemIssue();
-            $itemIssue->branch_id = $request->branch_id;
-            $itemIssue->item_category_id = $request->item_category_id;
-            $itemIssue->item_id = $request->item_id;
-            $itemIssue->issue_date = date('Y-m-d', strtotime($request->issue_date));
-            $itemIssue->due_date = date('Y-m-d', strtotime($request->due_date));
-            $itemIssue->quantity = $request->quantity;
-            $itemIssue->description = $request->description;
-            $itemIssue->issue_status = 'I'; // Issued
-            $itemIssue->active_status = 1;
+            foreach ($request->items as $itemData) {
+                $itemIssue = new ItemIssue();
+                $itemIssue->branch_id = $request->branch_id;
+                $itemIssue->item_category_id = $itemData['item_category_id'];
+                $itemIssue->item_id = $itemData['item_id'];
+                $itemIssue->issue_date = date('Y-m-d', strtotime($request->issue_date));
+                $itemIssue->due_date = date('Y-m-d', strtotime($request->due_date));
+                $itemIssue->quantity = $itemData['quantity'];
+                $itemIssue->description = $request->description; // Overall description
+                $itemIssue->issue_status = 'I'; // Issued
+                $itemIssue->active_status = 1;
 
-            // Check if student is selected or staff
-            if ($request->student_id) {
-                $itemIssue->student_id = $request->student_id;
-                $itemIssue->course_id = $request->course_id;
-                $itemIssue->intake_id = $request->intake_id;
-                $itemIssue->issue_to = null; // Staff ID should be null for students
-            } else {
-                $itemIssue->issue_to = $request->staff_id;
-                $itemIssue->student_id = null;
-                $itemIssue->course_id = null;
-                $itemIssue->intake_id = null;
+                // Check if student is selected or staff
+                if ($request->student_id) {
+                    $itemIssue->student_id = $request->student_id;
+                    $itemIssue->course_id = $request->course_id;
+                    $itemIssue->intake_id = $request->intake_id;
+                    $itemIssue->issue_to = null; // Staff ID should be null for students
+                } else {
+                    $itemIssue->issue_to = $request->staff_id;
+                    $itemIssue->student_id = null;
+                    $itemIssue->course_id = null;
+                    $itemIssue->intake_id = null;
+                }
+
+                $itemIssue->save();
             }
 
-            $itemIssue->save();
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'Item issued successfully.');
+            return redirect()->back()->with('success', 'Items issued successfully.');
         } catch (Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
@@ -127,49 +134,58 @@ class ItemIssueController extends Controller
     {
         $request->validate([
             'branch_id' => 'required',
-            'item_category_id' => 'required',
-            'item_id' => 'required',
             'issue_date' => 'required|date',
             'due_date' => 'required|date',
-            'quantity' => 'required|integer|min:1',
             'issue_to' => 'nullable|exists:users,id', // For staff
             'student_id' => 'nullable|exists:students,id', // For students
             'intake_id' => 'nullable|exists:intakes,id',
             'course_id' => 'nullable|exists:courses,id',
+            'items' => 'required|array|min:1', // Ensure at least one item is present
+            'items.*.item_id' => 'required|exists:inventory_items,id',
+            'items.*.item_category_id' => 'required|exists:categories,id',
+            'items.*.quantity' => 'required|integer|min:1',
         ]);
 
         try {
             DB::beginTransaction();
 
-            $itemIssue = ItemIssue::findOrFail($id);
-            $itemIssue->branch_id = $request->branch_id;
-            $itemIssue->item_category_id = $request->item_category_id;
-            $itemIssue->item_id = $request->item_id;
-            $itemIssue->issue_date = date('Y-m-d', strtotime($request->issue_date));
-            $itemIssue->due_date = date('Y-m-d', strtotime($request->due_date));
-            $itemIssue->quantity = $request->quantity;
-            $itemIssue->description = $request->description;
-            $itemIssue->issue_status = 'I'; // Issued
-            $itemIssue->active_status = 1;
+            // Find and delete the original item issue record
+            // This assumes $id refers to a single ItemIssue record that is being replaced
+            // by potentially multiple new records.
+            $originalItemIssue = ItemIssue::findOrFail($id);
+            $originalItemIssue->delete();
 
-            // Check if student is selected or staff
-            if ($request->student_id) {
-                $itemIssue->student_id = $request->student_id;
-                $itemIssue->course_id = $request->course_id;
-                $itemIssue->intake_id = $request->intake_id;
-                $itemIssue->issue_to = null; // Staff ID should be null for students
-            } else {
-                $itemIssue->issue_to = $request->staff_id;
-                $itemIssue->student_id = null;
-                $itemIssue->course_id = null;
-                $itemIssue->intake_id = null;
+            foreach ($request->items as $itemData) {
+                $itemIssue = new ItemIssue();
+                $itemIssue->branch_id = $request->branch_id;
+                $itemIssue->item_category_id = $itemData['item_category_id'];
+                $itemIssue->item_id = $itemData['item_id'];
+                $itemIssue->issue_date = date('Y-m-d', strtotime($request->issue_date));
+                $itemIssue->due_date = date('Y-m-d', strtotime($request->due_date));
+                $itemIssue->quantity = $itemData['quantity'];
+                $itemIssue->description = $request->description; // Overall description
+                $itemIssue->issue_status = 'I'; // Issued
+                $itemIssue->active_status = 1;
+
+                // Check if student is selected or staff
+                if ($request->student_id) {
+                    $itemIssue->student_id = $request->student_id;
+                    $itemIssue->course_id = $request->course_id;
+                    $itemIssue->intake_id = $request->intake_id;
+                    $itemIssue->issue_to = null; // Staff ID should be null for students
+                } else {
+                    $itemIssue->issue_to = $request->staff_id;
+                    $itemIssue->student_id = null;
+                    $itemIssue->course_id = null;
+                    $itemIssue->intake_id = null;
+                }
+
+                $itemIssue->save();
             }
-
-            $itemIssue->save();
 
             DB::commit();
 
-            return redirect()->route('item-issue')->with('success', 'Item issue updated successfully.');
+            return redirect()->route('item-issue')->with('success', 'Items updated successfully.');
         } catch (Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());

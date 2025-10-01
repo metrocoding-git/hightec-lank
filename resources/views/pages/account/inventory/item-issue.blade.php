@@ -92,12 +92,6 @@
                                     <input class="primary_input_field form-control date" type="text" name="due_date" value="{{ isset($editData) ? date('m/d/Y', strtotime($editData->due_date)) : date('m/d/Y') }}">
                                 </div>
 
-                                {{-- Quantity --}}
-                                <div class="col-lg-12 mb-15">
-                                    <label class="primary_input_label">Quantity <span class="text-danger">*</span></label>
-                                    <input class="primary_input_field form-control" type="text" name="quantity" value="{{ isset($editData) ? $editData->quantity : old('quantity') }}">
-                                </div>
-
                                 {{-- Description --}}
                                 <div class="col-lg-12 mb-15">
                                     <label class="primary_input_label">Note</label>
@@ -115,31 +109,58 @@
                             <h3 class="mb-15">Inventory Items Select</h3>
                         </div>
                         <div class="row">
-                            {{-- Category --}}
-                            <div class="col-lg-6 mb-15">
-                                <label class="primary_input_label">Category *</label>
-                                <select class="primary_select form-control" name="item_category_id" id="item_category_id_sidebar">
-                                    <option value="">Select Category *</option>
+                            {{-- Combined Category / Item Dropdown --}}
+                            <div class="col-lg-12 mb-15">
+                                <label class="primary_input_label">Category / Item *</label>
+                                <select class="primary_select form-control" id="item_category_item_select">
+                                    <option value="">Select Category / Item *</option>
                                     @foreach ($categories as $category)
-                                        <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                        <option data-type="category" class="font-weight-bolder">{{ $category->name }}</option>
+                                        @foreach ($inventoryItems->where('item_category_id', $category->id) as $item)
+                                            <option value="{{ $item->id }}" data-type="item" data-category-id="{{ $category->id }}" data-category-name="{{ $category->name }}" data-item-name="{{ $item->item_name }}">
+                                                &nbsp;&nbsp;&nbsp;{{ $item->item_name }}
+                                            </option>
+                                        @endforeach
                                     @endforeach
                                 </select>
                             </div>
 
-                            {{-- Item --}}
-                            <div class="col-lg-6 mb-15">
-                                <label class="primary_input_label">Item *</label>
-                                <select class="primary_select form-control" name="item_id" id="selectItems_sidebar">
-                                    <option value="">Select Item *</option>
-                                    @foreach ($inventoryItems as $item)
-                                        <option value="{{ $item->id }}">{{ $item->item_name }}</option>
-                                    @endforeach
-                                </select>
+                            {{-- Selected Items Table --}}
+                            <div class="col-lg-12 mt-10">
+                                <div class="big-table">
+                                    <table class="table school-table-style selected_items_table" cellspacing="0" width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th>@lang('common.sl')</th>
+                                                <th>@lang('inventory.category')</th>
+                                                <th>@lang('inventory.item')</th>
+                                                <th>@lang('inventory.quantity')</th>
+                                                <th>@lang('common.action')</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="allIssuedItems">
+                                            {{-- Existing items for edit mode --}}
+                                            @if(isset($editData))
+                                                <tr data-id="{{ $editData->item_id }}">
+                                                    <td class="sl">1</td>
+                                                    <td class="category_name">{{ $editData->category->name ?? 'N/A' }}</td>
+                                                    <td class="item_name">{{ $editData->item->item_name ?? 'N/A' }}</td>
+                                                    <td>
+                                                        <input type="number" name="items[{{ $editData->item_id }}][quantity]" class="primary_input_field form-control item_quantity" value="{{ $editData->quantity }}" min="1" required>
+                                                        <input type="hidden" name="items[{{ $editData->item_id }}][item_id]" value="{{ $editData->item_id }}">
+                                                        <input type="hidden" name="items[{{ $editData->item_id }}][item_category_id]" value="{{ $editData->item_category_id }}">
+                                                    </td>
+                                                    <td><button type="button" class="primary-btn small bg-danger text-white border-0 remove_item_btn">Delete</button></td>
+                                                </tr>
+                                            @endif
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
 
                             {{-- Save Button --}}
-                            <div class="col-lg-12 text-center">
-                                <button type="submit" class="primary-btn fix-gr-bg mt-2">
+                            <div class="col-lg-12 text-center mt-4">
+                                <button type="submit" class="primary-btn fix-gr-bg">
                                     <span class="ti-check"></span> @lang('common.save')
                                 </button>
                             </div>
@@ -187,7 +208,7 @@
                                         </div>
 
                                         {{-- Fee Invoices Table --}}
-                                        
+
                                     </div>
                                 </div>
                             </div>
@@ -217,6 +238,68 @@
                     $(selector).niceSelect();
                 }
             }
+
+            // Track added item types
+            let addedItemTypes = new Set();
+            @if(isset($editData))
+                addedItemTypes.add('{{ $editData->item_id }}');
+            @endif
+
+            function updateSerialNumbers() {
+                $('.allIssuedItems tr').each(function(index) {
+                    $(this).find('.sl').text(index + 1);
+                });
+            }
+
+            // Handle combined category/item change
+            $('#item_category_item_select').on('change', function() {
+                let selectedOption = $(this).find("option:selected");
+                let type = selectedOption.data('type');
+
+                if (!selectedOption.val() || type === 'category') {
+                    $(this).val('').niceSelect('update');
+                    return;
+                }
+
+                let itemId = selectedOption.val();
+                let itemName = selectedOption.data('item-name');
+                let categoryId = selectedOption.data('category-id');
+                let categoryName = selectedOption.data('category-name');
+
+                if (!addedItemTypes.has(itemId)) {
+                    addItemRow(itemId, itemName, categoryId, categoryName);
+                    addedItemTypes.add(itemId);
+                } else {
+                    // Optionally, highlight the existing row or show a toast
+                    console.log('Item already added:', itemName);
+                }
+
+                $(this).val('').niceSelect('update');
+            });
+
+            function addItemRow(itemId, itemName, categoryId, categoryName) {
+                let row = `<tr data-id="${itemId}">
+                    <td class="sl"></td>
+                    <td class="category_name">${categoryName}</td>
+                    <td class="item_name">${itemName}</td>
+                    <td>
+                        <input type="number" name="items[${itemId}][quantity]" class="primary_input_field form-control item_quantity" value="1" min="1" required>
+                        <input type="hidden" name="items[${itemId}][item_id]" value="${itemId}">
+                        <input type="hidden" name="items[${itemId}][item_category_id]" value="${categoryId}">
+                    </td>
+                    <td><button type="button" class="primary-btn small bg-danger text-white border-0 remove_item_btn">Delete</button></td>
+                </tr>`;
+                $('.allIssuedItems').append(row);
+                updateSerialNumbers();
+            }
+
+            // Delete row
+            $(document).on('click', '.remove_item_btn', function() {
+                let itemId = $(this).closest('tr').data('id');
+                addedItemTypes.delete(String(itemId)); // Ensure string type for Set
+                $(this).closest('tr').remove();
+                updateSerialNumbers();
+            });
 
             // Handle branch change
             $('#branch_select').on('change', function() {
@@ -449,113 +532,7 @@
                     $('#student-fee-data').hide();
                 }
             });
-
-            // Handle category change to filter items (main form)
-            $('#item_category_id').on('change', function() {
-                var category_id = $(this).val();
-                console.log('📦 Main Category selected:', category_id);
-
-                // Sync with sidebar dropdown
-                $('#item_category_id_sidebar').val(category_id);
-                refreshNiceSelect('#item_category_id_sidebar');
-
-                if (category_id && category_id !== '') {
-                    $('#selectItems, #selectItems_sidebar').html('<option value="">Loading items...</option>').prop('disabled', true);
-                    refreshNiceSelect('#selectItems');
-                    refreshNiceSelect('#selectItems_sidebar');
-
-                    // AJAX call to get items by category
-                    var url = '{{ route("item-issue.get-items-by-category", ":categoryId") }}'.replace(':categoryId', category_id);
-                    console.log('🌐 Items AJAX URL:', url);
-
-                    $.get(url, function(data) {
-                        console.log('✅ Items received:', data);
-
-                        var optionsHtml = '<option value="">Select Item *</option>';
-                        if (data && Array.isArray(data) && data.length > 0) {
-                            data.forEach(function(item) {
-                                optionsHtml += '<option value="' + item.id + '">' + item.item_name + '</option>';
-                            });
-                        } else {
-                            optionsHtml += '<option value="">No items found in this category</option>';
-                        }
-
-                        $('#selectItems, #selectItems_sidebar').html(optionsHtml).prop('disabled', false);
-                        refreshNiceSelect('#selectItems');
-                        refreshNiceSelect('#selectItems_sidebar');
-
-                    }).fail(function(xhr, status, error) {
-                        console.error('❌ Error loading items:', error);
-                        $('#selectItems, #selectItems_sidebar').html('<option value="">Error loading items</option>').prop('disabled', false);
-                        refreshNiceSelect('#selectItems');
-                        refreshNiceSelect('#selectItems_sidebar');
-                    });
-                } else {
-                    // Show all items when no category is selected
-                    var optionsHtml = '<option value="">Select Item *</option>';
-                    @foreach ($inventoryItems as $item)
-                        var selected = '{{ old("item_id") }}' == '{{ $item->id }}' ? 'selected' : '';
-                        optionsHtml += '<option value="{{ $item->id }}" ' + selected + '>{{ $item->item_name }}</option>';
-                    @endforeach
-
-                    $('#selectItems, #selectItems_sidebar').html(optionsHtml).prop('disabled', false);
-                    refreshNiceSelect('#selectItems');
-                    refreshNiceSelect('#selectItems_sidebar');
-                }
-            });
-
-            // Handle sidebar category change
-            $('#item_category_id_sidebar').on('change', function() {
-                var category_id = $(this).val();
-                console.log('📦 Sidebar Category selected:', category_id);
-
-                // Sync with main form dropdown
-                $('#item_category_id').val(category_id);
-                refreshNiceSelect('#item_category_id');
-
-                if (category_id && category_id !== '') {
-                    $('#selectItems, #selectItems_sidebar').html('<option value="">Loading items...</option>').prop('disabled', true);
-                    refreshNiceSelect('#selectItems');
-                    refreshNiceSelect('#selectItems_sidebar');
-
-                    // AJAX call to get items by category
-                    var url = '{{ route("item-issue.get-items-by-category", ":categoryId") }}'.replace(':categoryId', category_id);
-
-                    $.get(url, function(data) {
-                        console.log('✅ Items received:', data);
-
-                        var optionsHtml = '<option value="">Select Item *</option>';
-                        if (data && Array.isArray(data) && data.length > 0) {
-                            data.forEach(function(item) {
-                                optionsHtml += '<option value="' + item.id + '">' + item.item_name + '</option>';
-                            });
-                        } else {
-                            optionsHtml += '<option value="">No items found in this category</option>';
-                        }
-
-                        $('#selectItems, #selectItems_sidebar').html(optionsHtml).prop('disabled', false);
-                        refreshNiceSelect('#selectItems');
-                        refreshNiceSelect('#selectItems_sidebar');
-
-                    }).fail(function(xhr, status, error) {
-                        console.error('❌ Error loading items:', error);
-                        $('#selectItems, #selectItems_sidebar').html('<option value="">Error loading items</option>').prop('disabled', false);
-                        refreshNiceSelect('#selectItems');
-                        refreshNiceSelect('#selectItems_sidebar');
-                    });
-                } else {
-                    // Show all items when no category is selected
-                    var optionsHtml = '<option value="">Select Item *</option>';
-                    @foreach ($inventoryItems as $item)
-                        var selected = '{{ old("item_id") }}' == '{{ $item->id }}' ? 'selected' : '';
-                        optionsHtml += '<option value="{{ $item->id }}" ' + selected + '>{{ $item->item_name }}</option>';
-                    @endforeach
-
-                    $('#selectItems, #selectItems_sidebar').html(optionsHtml).prop('disabled', false);
-                    refreshNiceSelect('#selectItems');
-                    refreshNiceSelect('#selectItems_sidebar');
-                }
-            });
+            updateSerialNumbers(); // Initial call to set serial numbers for existing items
         });
     </script>
 @endpush
