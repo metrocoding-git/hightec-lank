@@ -266,13 +266,12 @@
                 let categoryId = selectedOption.data('category-id');
                 let categoryName = selectedOption.data('category-name');
 
-                if (!addedItemTypes.has(itemId)) {
-                    addItemRow(itemId, itemName, categoryId, categoryName);
-                    addedItemTypes.add(itemId);
-                } else {
-                    // Optionally, highlight the existing row or show a toast
-                    console.log('Item already added:', itemName);
-                }
+                // Clear previous selections before adding a new one
+                addedItemTypes.clear();
+                $('.allIssuedItems').empty();
+
+                addItemRow(itemId, itemName, categoryId, categoryName);
+                addedItemTypes.add(itemId);
 
                 $(this).val('').niceSelect('update');
             });
