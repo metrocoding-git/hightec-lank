@@ -227,6 +227,7 @@ Route::controller(ItemIssueController::class)->group(function () {
     Route::get('account/inventory/get-intakes-by-branch/{branchId}', 'getIntakesByBranch')->name('item-issue.get-intakes-by-branch')->withoutMiddleware(['csrf']);
     Route::get('account/inventory/get-courses-by-intake/{intakeId}', 'getCoursesByIntake')->name('item-issue.get-courses-by-intake')->withoutMiddleware(['csrf']);
     Route::get('account/inventory/get-students-by-course/{courseId}', 'getStudentsByCourse')->name('item-issue.get-students-by-course')->withoutMiddleware(['csrf']);
+    Route::get('account/inventory/get-items-by-category/{categoryId}', 'getItemsByCategory')->name('item-issue.get-items-by-category')->withoutMiddleware(['csrf']);
 
 });
 Route::controller(LoginController::class)->group(function () {

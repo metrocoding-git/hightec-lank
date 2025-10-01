@@ -278,4 +278,16 @@ class ItemIssueController extends Controller
             return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
         }
     }
+
+    public function getItemsByCategory(Request $request, $categoryId)
+    {
+        try {
+            $category_id = $categoryId; // Use the route parameter
+            $items = Inventory_item::where('item_category_id', $category_id)->get();
+
+            return response()->json($items);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
+        }
+    }
 }
