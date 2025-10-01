@@ -20,4 +20,8 @@ class Invoice_item extends Model
     {
         return $this->belongsTo(FeeType::class, 'fee_type_id');
     }
+    public function fee_type()
+    {
+        return $this->belongsTo(FeeType::class, 'fee_type_id');
+    }
 }

@@ -12,6 +12,6 @@ class Inventory_item extends Model
 
     public function category()
     {
-        return $this->belongsTo(category::class, 'item_category_id');
+        return $this->belongsTo(Category::class, 'item_category_id');
     }
 }
