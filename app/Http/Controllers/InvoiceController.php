@@ -338,6 +338,30 @@ class InvoiceController extends Controller
         return redirect()->back()->with('success', 'Payment added successfully!');
     }
 
+    public function updateInvoiceNumber(Request $request)
+    {
+        $request->validate([
+            'invoice_id' => 'required|exists:fee_invoices,id',
+            'invoice_number' => 'required|string|max:255',
+        ]);
+
+        try {
+            $invoice = Fee_invoices::findOrFail($request->invoice_id);
+            $invoice->invoice_number = $request->invoice_number;
+            $invoice->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Invoice number updated successfully!',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating invoice number: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function indexCoursePayment()
     {
         $branches = Branch::all();
@@ -345,6 +369,44 @@ class InvoiceController extends Controller
         $courses = \App\Models\Course::all(); // Assuming Course model exists
 
         return view('pages.student.fees.course-paid', compact('branches', 'students', 'courses'));
+    }
+
+    public function markAsPaid(Request $request)
+    {
+        $request->validate([
+            'invoice_id' => 'required|exists:fee_invoices,id',
+            'paid_amount' => 'required|numeric|min:0',
+            'paid_date' => 'required|date_format:Y-m-d',
+        ]);
+
+        try {
+            $invoice = Fee_invoices::findOrFail($request->invoice_id);
+
+            // Update invoice details
+            $invoice->paid_amount = $invoice->total_amount; // Set paid_amount to total_amount
+            $invoice->payment_status = 'full'; // Set status to 'full'
+            $invoice->paid_date = Carbon::createFromFormat('Y-m-d', $request->paid_date)->format('Y-m-d');
+            $invoice->save();
+
+            // Create a new payment record
+            Invoices_payments::create([
+                'invoice_id' => $invoice->id,
+                'amount' => $request->paid_amount,
+                'payment_method' => 'Paid', // Assuming 'Paid' is a valid method or adjust as needed
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Invoice marked as paid successfully!',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error marking invoice as paid: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function storeCoursePayment(Request $request)
