@@ -280,6 +280,10 @@ Route::controller(InvoiceController::class)->group(function () {
 
     Route::put('student/fees/fee-update/{id}', 'update')->name('fees.fee-update-invoice');
     Route::delete('student/fees/fee-delete/{id}', 'destroy')->name('fees.fee-delete');
+
+    // New routes for invoice actions
+    Route::post('fees/update-invoice-number', 'updateInvoiceNumber')->name('fees.update-invoice-number');
+    Route::post('fees/mark-as-paid', 'markAsPaid')->name('fees.mark-as-paid');
 });
 
 Route::controller(HomeController::class)->group(function () {

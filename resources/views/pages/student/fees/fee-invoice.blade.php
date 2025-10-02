@@ -53,7 +53,7 @@
 
                                         <thead>
                                             <tr>
-                                                <th>Sl</th>
+                                                <th>ID</th>
                                                 <th>@lang('common.student')</th>
                                                 <th>Branch</th>
                                                 <th>@lang('admin.admission_no')</th>
@@ -120,6 +120,10 @@
                                                                 data-student-id="{{ $invoice->student->id }}"
                                                                 data-invoice-id="{{ $invoice->id }}"
                                                                 onclick="populateInvoiceModal(this)">Make Invoice</a>
+                                                            @if ($invoice->payment_method === 'Invoice')
+                                                                <a class="dropdown-item" data-toggle="modal" data-target="#addInvoiceNumberModal" data-invoice-id="{{ $invoice->id }}" href="#">Add Invoice Number</a>
+                                                                <a class="dropdown-item" data-toggle="modal" data-target="#markAsPaidModal" data-invoice-id="{{ $invoice->id }}" href="#">Paid</a>
+                                                            @endif
                                                             <a class="dropdown-item" data-toggle="modal"
                                                                 data-target="#deletecategoryModal{{ $invoice->id }}"
                                                                 href="#">@lang('common.delete')</a>
@@ -234,7 +238,8 @@
                                                                 <div class="form-group">
                                                                     <label>Available for Return</label>
                                                                     <input type="text" class="form-control"
-                                                                        value="{{ number_format($paid_amount, 2) }}" readonly>
+                                                                        value="{{ number_format($paid_amount, 2) }}"
+                                                                        readonly>
                                                                     <input type="hidden" name="balance"
                                                                         value="{{ $paid_amount }}">
                                                                 </div>
@@ -461,6 +466,103 @@
                                             <button type="button" class="primary-btn fix-gr-bg"
                                                 onclick="printInvoice()">Print Invoice</button>
                                         </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add Invoice Number Modal -->
+                    <div class="modal fade admin-query" id="addInvoiceNumberModal" tabindex="-1" role="dialog"
+                        aria-labelledby="addInvoiceNumberModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h4 class="modal-title" id="addInvoiceNumberModalLabel">Add Invoice Number</h4>
+                                    <button type="button" class="close" data-dismiss="modal"
+                                        aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <form action="#" method="POST" id="addInvoiceNumberForm">
+                                    @csrf
+                                    <div class="modal-body">
+                                        <input type="hidden" name="invoice_id" id="addInvoiceNumberInvoiceId">
+                                        <div class="form-group">
+                                            <label for="invoiceNumberInput">Invoice Number <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="invoiceNumberInput" name="invoice_number" required>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="primary-btn tr-bg"
+                                            data-dismiss="modal">@lang('common.cancel')</button>
+                                        <button type="submit" class="primary-btn fix-gr-bg">Save Invoice Number</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                            <!-- Add Invoice Number Modal -->
+                            <div class="modal fade admin-query" id="addInvoiceNumberModal" tabindex="-1" role="dialog"
+                                aria-labelledby="addInvoiceNumberModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h4 class="modal-title" id="addInvoiceNumberModalLabel">Add Invoice Number</h4>
+                                            <button type="button" class="close" data-dismiss="modal"
+                                                aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <form action="#" method="POST" id="addInvoiceNumberForm">
+                                            @csrf
+                                            <div class="modal-body">
+                                                <input type="hidden" name="invoice_id" id="addInvoiceNumberInvoiceId">
+                                                <div class="form-group">
+                                                    <label for="invoiceNumberInput">Invoice Number <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control" id="invoiceNumberInput" name="invoice_number" required>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="primary-btn tr-bg"
+                                                    data-dismiss="modal">@lang('common.cancel')</button>
+                                                <button type="submit" class="primary-btn fix-gr-bg">Save Invoice Number</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mark as Paid Modal -->
+                            <div class="modal fade admin-query" id="markAsPaidModal" tabindex="-1" role="dialog"
+                                aria-labelledby="markAsPaidModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h4 class="modal-title" id="markAsPaidModalLabel">Mark Invoice as Paid</h4>
+                                            <button type="button" class="close" data-dismiss="modal"
+                                                aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <form action="#" method="POST" id="markAsPaidForm">
+                                            @csrf
+                                            <div class="modal-body">
+                                                <input type="hidden" name="invoice_id" id="markAsPaidInvoiceId">
+                                                <div class="form-group">
+                                                    <label for="paidAmountInput">Paid Amount <span class="text-danger">*</span></label>
+                                                    <input type="number" class="form-control" id="paidAmountInput" name="paid_amount" step="0.01" required>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="paidDateInput">Paid Date <span class="text-danger">*</span></label>
+                                                    <input type="date" class="form-control" id="paidDateInput" name="paid_date" required>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="primary-btn tr-bg"
+                                                    data-dismiss="modal">@lang('common.cancel')</button>
+                                                <button type="submit" class="primary-btn fix-gr-bg">Mark as Paid</button>
+                                            </div>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
@@ -622,10 +724,13 @@
                         console.log('Student data received:', student);
 
                         // Populate student details from database
-                        $('#studentName').text(student.student_name || studentName || '__________________________');
-                        $('#studentRegNo').text(student.admission_number || admissionNo || '__________________________');
+                        $('#studentName').text(student.student_name || studentName ||
+                            '__________________________');
+                        $('#studentRegNo').text(student.admission_number || admissionNo ||
+                            '__________________________');
                         $('#studentNic').text(student.national_id_number || '__________________________');
-                        $('#studentAddress').text(student.current_address || student.permanent_address || '__________________________');
+                        $('#studentAddress').text(student.current_address || student.permanent_address ||
+                            '__________________________');
                         $('#studentContact').text(student.phone_number || '__________________________');
 
                         // Set course name if available (from student courses relationship)
@@ -634,7 +739,8 @@
                         }
 
                         // Set receipt number (using student ID for now)
-                        $('#receiptNo').text('REC-' + student.id + '-' + new Date().getFullYear() || '__________________________');
+                        $('#receiptNo').text('REC-' + student.id + '-' + new Date().getFullYear() ||
+                            '__________________________');
 
                         // Add additional student info if needed
                         console.log('Student details loaded successfully:', student);
@@ -675,5 +781,101 @@
             // Reinitialize any necessary scripts after printing
             location.reload();
         }
+
+        // Handle add invoice number modal
+        $('#addInvoiceNumberModal').on('show.bs.modal', function(event) {
+            var button = $(event.relatedTarget); // Button that triggered the modal
+            var invoiceId = button.data('invoice-id'); // Extract info from data-* attributes
+            var modal = $(this);
+
+            modal.find('#addInvoiceNumberInvoiceId').val(invoiceId);
+            modal.find('#invoiceNumberInput').val(''); // Clear previous input
+        });
+
+        // Handle form submission for adding invoice number
+        $('#addInvoiceNumberForm').on('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            var invoiceId = $('#addInvoiceNumberInvoiceId').val();
+            var invoiceNumber = $('#invoiceNumberInput').val();
+            var token = $('input[name="_token"]').val(); // Get CSRF token
+
+            console.log('Submitting Invoice Number:', {
+                invoiceId: invoiceId,
+                invoiceNumber: invoiceNumber
+            });
+
+            // Here you would typically make an AJAX call to save the invoice number
+            // For now, we'll just log it and close the modal
+            $.ajax({
+                url: '/fees/update-invoice-number', // Replace with your actual route
+                type: 'POST',
+                data: {
+                    _token: token,
+                    invoice_id: invoiceId,
+                    invoice_number: invoiceNumber
+                },
+                success: function(response) {
+                    console.log('Invoice number updated successfully:', response);
+                    $('#addInvoiceNumberModal').modal('hide');
+                    // Optionally, refresh the page or update the table row
+                    location.reload();
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error updating invoice number:', xhr.responseText);
+                    alert('Error saving invoice number. Please try again.');
+                }
+            });
+        });
+
+        // Handle mark as paid modal
+        $('#markAsPaidModal').on('show.bs.modal', function(event) {
+            var button = $(event.relatedTarget); // Button that triggered the modal
+            var invoiceId = button.data('invoice-id'); // Extract info from data-* attributes
+            var modal = $(this);
+
+            modal.find('#markAsPaidInvoiceId').val(invoiceId);
+            modal.find('#paidAmountInput').val(''); // Clear previous input
+            modal.find('#paidDateInput').val(new Date().toISOString().slice(0, 10)); // Set current date
+        });
+
+        // Handle form submission for marking as paid
+        $('#markAsPaidForm').on('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            var invoiceId = $('#markAsPaidInvoiceId').val();
+            var paidAmount = $('#paidAmountInput').val();
+            var paidDate = $('#paidDateInput').val();
+            var token = $('input[name="_token"]').val(); // Get CSRF token
+
+            console.log('Submitting Paid Amount and Date:', {
+                invoiceId: invoiceId,
+                paidAmount: paidAmount,
+                paidDate: paidDate
+            });
+
+            // Here you would typically make an AJAX call to save the paid amount and date
+            // For now, we'll just log it and close the modal
+            $.ajax({
+                url: '/fees/mark-as-paid', // Replace with your actual route
+                type: 'POST',
+                data: {
+                    _token: token,
+                    invoice_id: invoiceId,
+                    paid_amount: paidAmount,
+                    paid_date: paidDate
+                },
+                success: function(response) {
+                    console.log('Invoice marked as paid successfully:', response);
+                    $('#markAsPaidModal').modal('hide');
+                    // Optionally, refresh the page or update the table row
+                    location.reload();
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error marking invoice as paid:', xhr.responseText);
+                    alert('Error marking invoice as paid. Please try again.');
+                }
+            });
+        });
     </script>
 @endpush
