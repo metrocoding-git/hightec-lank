@@ -18,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class InvoiceController extends Controller
 {
@@ -44,6 +45,9 @@ class InvoiceController extends Controller
 
     public function store(Request $request)
     {
+        // Temporarily dump all request data for debugging
+        // dd($request->all());
+
         // Validate request
         $request->validate([
             'branch_id' => 'required',
@@ -56,11 +60,24 @@ class InvoiceController extends Controller
             'paidPrice' => 'required|array',
             'payment_method' => 'required',
             'payment_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
+            'bank_paid_amount' => 'nullable|numeric|min:0',
+            'bank_paid_date' => 'nullable|date_format:Y-m-d',
         ]);
+
+        // Conditionally make bank details required if payment method is Bank Transfer
+        if ($request->payment_method === 'Bank Transfer') {
+            $request->validate([
+                'bank_paid_amount' => 'required|numeric|min:0',
+                'bank_paid_date' => 'required|date_format:Y-m-d',
+            ]);
+        }
 
         try {
             $total_amount = array_sum($request->price);
             $total_paid_amount = array_sum($request->paidPrice);
+
+            Log::info('Payment Method: ' . $request->payment_method);
+            // Removed specific bank_paid_amount and bank_paid_date logs, dd() will show all
 
             // Create Fee Invoice
             $fee_invoice = Fee_invoices::create([
@@ -72,7 +89,10 @@ class InvoiceController extends Controller
                 'payment_method' => $request->payment_method,
                 'total_amount' => $total_amount,
                 'paid_amount' => $total_paid_amount,
-                
+                'bank_paid_amount' => (trim($request->payment_method) === 'Bank Transfer') ? $request->bank_paid_amount : null,
+                'bank_paid_date' => (trim($request->payment_method) === 'Bank Transfer' && !empty($request->bank_paid_date))
+                    ? Carbon::createFromFormat('Y-m-d', $request->bank_paid_date)->format('Y-m-d')
+                    : null,
             ]);
 
             // Save Invoice Items
@@ -353,6 +373,7 @@ class InvoiceController extends Controller
 
             // Create a Fee_invoices record
             $fee_invoice = Fee_invoices::create([
+                'invoice_type' => 'course',
                 'branch_id' => $request->branch_id,
                 'student_id' => $request->student_id,
                 'create_date' => Carbon::createFromFormat('m/d/Y', $request->create_date)->format('Y-m-d'),
