@@ -342,7 +342,7 @@ class InvoiceController extends Controller
             'payment_method' => 'required',
             'payment_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
             'bank_paid_amount' => 'nullable|numeric|min:0', // Conditional validation
-            'bank_paid_date' => 'nullable|date_format:m/d/Y', // Conditional validation
+            'bank_paid_date' => 'nullable|date_format:Y-m-d', // Conditional validation
         ]);
 
         try {
@@ -376,7 +376,7 @@ class InvoiceController extends Controller
                 'payment_method' => $paymentMethod,
                 'bank_paid_amount' => ($paymentMethod === 'Card' || $paymentMethod === 'Bank Transfer') && $request->bank_paid_amount !== null ? $request->bank_paid_amount : null,
                 'bank_paid_date' => ($paymentMethod === 'Card' || $paymentMethod === 'Bank Transfer') && $request->bank_paid_date
-                    ? Carbon::createFromFormat('m/d/Y', $request->bank_paid_date)->format('Y-m-d')
+                    ? Carbon::createFromFormat('Y-m-d', $request->bank_paid_date)->format('Y-m-d')
                     : null,
                 'payment_file' => null, // Will be handled below if file exists
             ]);

@@ -48,7 +48,7 @@
                 <div class="row g-4">
                     <!-- Left Section: Payment Details -->
                     <div class="col-12 col-lg-4">
-                        <div class="white-box h-100">
+                        <div class="white-box ">
                             <div class="main-title">
                                 <h3>Course Payment Details</h3>
                             </div>
@@ -72,8 +72,8 @@
                                 </div>
 
                                 {{-- Student --}}
-                                <div class="mt-15 p-1 m-2">
-                                    <label>@lang('common.select_student') <span class="text-danger">*</span></label>
+                                <div class="mt-15 p-1 m-2" style="">
+                                    <label class="mt-4">@lang('common.select_student') <span class="text-danger">*</span></label>
                                     <select class="primary_select form-control" id="student_id" name="student_id">
                                         <option value="">@lang('common.select_student')</option>
                                         @foreach ($students as $student)
@@ -84,19 +84,19 @@
 
                                 {{-- Dates --}}
                                 <div class="mt-15 p-1 m-2">
-                                    <label>@lang('fees.create_date') <span class="text-danger">*</span></label>
+                                    <label class="mt-4">@lang('fees.create_date') <span class="text-danger">*</span></label>
                                     <input type="text" class="primary_input_field date form-control" id="create_date"
                                         name="create_date" value="{{ date('m/d/Y') }}">
                                 </div>
                                 <div class="mt-15 p-1 m-2">
-                                    <label>@lang('fees.due_date') <span class="text-danger">*</span></label>
+                                    <label class="mt-4">@lang('fees.due_date') <span class="text-danger">*</span></label>
                                     <input type="text" class="primary_input_field date form-control" id="due_date"
                                         name="due_date" value="{{ date('m/d/Y') }}">
                                 </div>
 
                                 {{-- Status --}}
                                 <div class="mt-15 p-1 m-2">
-                                    <label>@lang('fees.payment_status') <span class="text-danger">*</span></label>
+                                    <label class="mt-4">@lang('fees.payment_status') <span class="text-danger">*</span></label>
                                     <select class="primary_select form-control" id="status" name="payment_status">
                                         <option value="">@lang('fees.payment_status')</option>
                                         <option value="not">@lang('fees.not_paid')</option>
@@ -107,7 +107,7 @@
 
                                 {{-- Payment Method --}}
                                 <div class="mt-15 p-1 m-2">
-                                    <label>@lang('fees.payment_method') <span class="text-danger">*</span></label>
+                                    <label class="mt-4">@lang('fees.payment_method') <span class="text-danger">*</span></label>
                                     <select class="primary_select form-control" id="paymentMethodName"
                                         name="payment_method">
                                         <option value="">@lang('fees.payment_method')</option>
@@ -121,14 +121,14 @@
                                 <div class="mt-15 d-none" id="bankPayment">
                                     <div class="row mt-15">
                                         <div class="col-lg-12">
-                                            <label>@lang('fees.bank_paid_amount') <span class="text-danger">*</span></label>
+                                            <label>Bank Paid Amount <span class="text-danger">*</span></label>
                                             <input type="number" class="primary_input_field form-control" id="bank_paid_amount"
                                                 name="bank_paid_amount" value="0" step="0.01">
                                         </div>
                                     </div>
                                     <div class="row mt-15">
                                         <div class="col-lg-12">
-                                            <label>@lang('fees.bank_paid_date') <span class="text-danger">*</span></label>
+                                            <label>bank Paid date <span class="text-danger">*</span></label>
                                             <input type="date" class="primary_input_field date form-control" id="bank_paid_date"
                                                 name="bank_paid_date" value="{{ date('m/d/Y') }}">
                                         </div>
@@ -149,8 +149,8 @@
                                 </div>
 
                                 {{-- Save Button --}}
-                                <div class="mt-40 text-center" style="margin-top: 40px">
-                                    <button id="submit" class="primary-btn fix-gr-bg fmInvoice col-12">
+                                <div class="mt-4 text-center" >
+                                    <button id="submit" class="mt-4 primary-btn fix-gr-bg fmInvoice col-12">
                                         @lang('common.save')
                                     </button>
                                 </div>
@@ -299,16 +299,14 @@
                         </div>
                     </td>
                     <td class="due_amount_cell">
-                        <div class="input-group input-group-sm" style="max-width: 120px;">
+                        <div class="input-group input-group-sm" style="max-width: 100px;">
                             <input type="number"
                                 class="form-control due_amount_display"
                                 value="${price.toFixed(2)}"
                                 step="0.01"
                                 readonly
                             >
-                            <div class="input-group-append">
-                                <span class="input-group-text">.00</span>
-                            </div>
+                            
                         </div>
                     </td>
                     <td><button type="button" class="primary-btn small bg-danger text-white border-0 remove_course_btn">Delete</button></td>
