@@ -42,7 +42,7 @@
     <!-- Main Content -->
     <section class="admin-visitor-area up_st_admin_visitor">
         <div class="container-fluid">
-            <form action="{{ route('fees.invoice.store') }}" method="POST" enctype="multipart/form-data" id="invoiceForm">
+            <form action="{{ route('fees.course-payment.store') }}" method="POST" enctype="multipart/form-data" id="invoiceForm">
                 @csrf
 
                 <div class="row g-4">
@@ -119,14 +119,32 @@
 
                                 {{-- Bank Upload --}}
                                 <div class="mt-15 d-none" id="bankPayment">
-                                    <label>Upload Document</label>
-                                    <div class="d-flex align-items-center">
-                                        <input type="file" name="payment_file" id="payment_file" class="d-none"
-                                            accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
-                                        <button type="button" id="uploadBtn" class="primary-btn fix-gr-bg col-12">
-                                            <span class="ti-upload"></span> Browse
-                                        </button>
-                                        <span id="fileName" class="ml-3 text-muted"></span>
+                                    <div class="row mt-15">
+                                        <div class="col-lg-12">
+                                            <label>@lang('fees.bank_paid_amount') <span class="text-danger">*</span></label>
+                                            <input type="number" class="primary_input_field form-control" id="bank_paid_amount"
+                                                name="bank_paid_amount" value="0" step="0.01">
+                                        </div>
+                                    </div>
+                                    <div class="row mt-15">
+                                        <div class="col-lg-12">
+                                            <label>@lang('fees.bank_paid_date') <span class="text-danger">*</span></label>
+                                            <input type="date" class="primary_input_field date form-control" id="bank_paid_date"
+                                                name="bank_paid_date" value="{{ date('m/d/Y') }}">
+                                        </div>
+                                    </div>
+                                    <div class="row mt-15">
+                                        <div class="col-lg-12">
+                                            <label>Upload Document</label>
+                                            <div class="d-flex align-items-center">
+                                                <input type="file" name="payment_file" id="payment_file" class="d-none"
+                                                    accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                                                <button type="button" id="uploadBtn" class="primary-btn fix-gr-bg col-12">
+                                                    <span class="ti-upload"></span> Browse
+                                                </button>
+                                                <span id="fileName" class="ml-3 text-muted"></span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -383,6 +401,7 @@
                 }
 
                 let courseId = courseRow.data('id');
+                let courseName = courseRow.find('.course_name').text(); // Get course name
                 let coursePrice = parseFloat(courseRow.find('.course_price_input').val());
                 let paidAmount = parseFloat(courseRow.find('.paid_amount_input').val());
 
@@ -431,6 +450,22 @@
                     return;
                 }
 
+                // Validate bank payment fields if visible
+                if (paymentMethod === 'Bank Transfer' || paymentMethod === 'Card') {
+                    let bankPaidAmount = parseFloat($('#bank_paid_amount').val());
+                    let bankPaidDate = $('#bank_paid_date').val();
+
+                    if (isNaN(bankPaidAmount) || bankPaidAmount <= 0) {
+                        toastr.error('Bank Paid Amount is required and must be greater than 0');
+                        return;
+                    }
+                    if (!bankPaidDate) {
+                        toastr.error('Bank Paid Date is required');
+                        return;
+                    }
+                }
+
+
                 let formData = new FormData();
                 formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
                 formData.append('branch_id', $('#branch_id').val());
@@ -442,15 +477,22 @@
 
                 // Append course details from the table
                 formData.append('course_id', courseId);
+                formData.append('course_name', courseName); // Also append course name for potential use
                 formData.append('course_price', coursePrice);
                 formData.append('paid_amount', paidAmount);
+
+                // Append bank payment details if applicable
+                if (paymentMethod === 'Bank Transfer' || paymentMethod === 'Card') {
+                    formData.append('bank_paid_amount', parseFloat($('#bank_paid_amount').val()));
+                    formData.append('bank_paid_date', $('#bank_paid_date').val());
+                }
 
                 if ($('#payment_file')[0].files.length > 0) {
                     formData.append('payment_file', $('#payment_file')[0].files[0]);
                 }
 
                 $.ajax({
-                    url: '{{ route('fees.invoice.store') }}',
+                    url: '{{ route('fees.course-payment.store') }}',
                     type: 'POST',
                     data: formData,
                     contentType: false,
@@ -458,15 +500,17 @@
                     success: function(response) {
                         if (response.success) {
                             const message = encodeURIComponent('successfully!');
-                            window.location.href = '{{ route('fees.add-invoice') }}' +
+                            window.location.href = '{{ route('fees.course-payment') }}' +
                                 '?message-success=' + message;
                         }
                     },
                     error: function(xhr) {
                         let msg = 'An unexpected error occurred';
+                        console.error('AJAX Error:', xhr); // Log the full XHR object
 
                         if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
                             const errors = xhr.responseJSON.errors;
+                            console.error('Validation Errors:', errors); // Log validation errors
                             Object.values(errors).forEach((messages) => {
                                 messages.forEach((message) => {
                                     toastr.error(message);
@@ -477,6 +521,7 @@
 
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             msg = xhr.responseJSON.message;
+                            console.error('Server Error Message:', msg); // Log server error message
                         }
 
                         toastr.error(msg);

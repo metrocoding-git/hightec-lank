@@ -273,6 +273,8 @@ Route::controller(InvoiceController::class)->group(function () {
     Route::get('student/invoice/types_get_by_group/{groupId}', 'dropdown_fee_types')->name('fees.get-types-by-group');
 
     Route::post('student/fees/fee-store', 'store')->name('fees.invoice.store');
+    Route::post('student/fees/course-payment-store', 'storeCoursePayment')->name('fees.course-payment.store'); // New route for course payments
+    Route::get('student/fees/course-payment', 'indexCoursePayment')->name('fees.course-payment'); // Route for course payment index view
     // Route::get('student/fees/fee-edit/{id}', 'edit')->name('fees.fee-edit-invoice');
     Route::get('student/fees/fee-invoice-edit/{id}', 'edit')->name('fees.fee-invoice-edit'); // GET edit
 
