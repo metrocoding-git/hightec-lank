@@ -548,9 +548,17 @@
                                             @csrf
                                             <div class="modal-body">
                                                 <input type="hidden" name="invoice_id" id="markAsPaidInvoiceId">
+                                                 <div class="form-group">
+                                                    <label for="totalAmountInput">Total Amount</label>
+                                                    <input type="number" class="form-control" id="totalAmountInput" name="total_amount" step="0.01" readonly>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="balanceAmountPaidModal">Balance</label>
+                                                    <input type="number" class="form-control" id="balanceAmountPaidModal" name="balance_amount" step="0.01" readonly>
+                                                </div>
                                                 <div class="form-group">
                                                     <label for="paidAmountInput">Paid Amount <span class="text-danger">*</span></label>
-                                                    <input type="number" class="form-control" id="paidAmountInput" name="paid_amount" step="0.01" required>
+                                                    <input type="number" class="form-control" id="paidAmountInput" name="paid_amount" step="0.01" required readonly>
                                                 </div>
                                                 <div class="form-group">
                                                     <label for="paidDateInput">Paid Date <span class="text-danger">*</span></label>
@@ -835,8 +843,19 @@
             var modal = $(this);
 
             modal.find('#markAsPaidInvoiceId').val(invoiceId);
-            modal.find('#paidAmountInput').val(''); // Clear previous input
             modal.find('#paidDateInput').val(new Date().toISOString().slice(0, 10)); // Set current date
+
+            // Find the corresponding table row for the invoiceId
+            var currentRow = $('a[data-invoice-id="' + invoiceId + '"][data-target="#markAsPaidModal"]').closest('tr');
+            if (currentRow.length > 0) {
+                var totalAmount = currentRow.find('td:eq(4)').text().trim();
+                var paidAmount = currentRow.find('td:eq(5)').text().trim();
+                var balance = currentRow.find('td:eq(6)').text().trim();
+
+                modal.find('#totalAmountInput').val(totalAmount);
+                modal.find('#balanceAmountPaidModal').val(balance);
+                modal.find('#paidAmountInput').val(paidAmount); // Set the current paid amount, but keep it readonly
+            }
         });
 
         // Handle form submission for marking as paid
