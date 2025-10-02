@@ -133,7 +133,7 @@
                                     <select class="primary_select form-control" id="paymentMethodName" name="payment_method">
                                         <option value="">@lang('fees.payment_method')</option>
                                         <option value="Cash">Cash</option>
-                                        <option value="Card">Card</option>
+                                        <option value="Invoice">Invoice</option>
                                         <option value="Bank Transfer">Bank Transfer</option>
                                     </select>
                                 </div>
@@ -282,6 +282,10 @@
             });
 
             function addCourseRow(id, name, price) {
+                let paymentMethod = $('#paymentMethodName').val();
+                let paidAmountValue = (paymentMethod === 'Invoice') ? 0 : 0; // Default to 0, will be updated by user for other methods
+                let paidAmountDisabled = (paymentMethod === 'Invoice') ? 'disabled' : '';
+
                 let row = `<tr data-id="${id}">
                     <td class="sl">1</td>
                     <td class="course_name">${name}</td>
@@ -303,8 +307,9 @@
                             <input type="number"
                                 class="form-control paid_amount_input"
                                 name="paid_amount[${id}]"
-                                value="0"
+                                value="${paidAmountValue}"
                                 step="0.01"
+                                ${paidAmountDisabled}
                             >
                             <div class="input-group-append">
                                 <span class="input-group-text">.00</span>
@@ -370,16 +375,24 @@
                     amountRow.removeClass('d-none');
                     dateRow.removeClass('d-none');
                     uploadRow.removeClass('d-none');
-                } else if (method === 'Card') {
+                } else if (method === 'Invoice') {
                     bankSection.removeClass('d-none');
                     amountRow.addClass('d-none');
                     dateRow.addClass('d-none');
                     uploadRow.removeClass('d-none');
+
+                    // Disable paid amount and set to 0 for Invoice
+                    $('.paid_amount_input').val(0).prop('disabled', true);
+                    updatePaymentStatusAndDue(); // Recalculate due amount
                 } else {
                     bankSection.addClass('d-none');
                     amountRow.addClass('d-none');
                     dateRow.addClass('d-none');
                     uploadRow.addClass('d-none');
+
+                    // Enable paid amount for other methods
+                    $('.paid_amount_input').prop('disabled', false);
+                    updatePaymentStatusAndDue(); // Recalculate due amount
                 }
             }
 
