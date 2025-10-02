@@ -18,7 +18,28 @@
                 overflow: initial !important;
             }
 
+            /* Improved spacing styles */
+            .form-section {
+                margin-bottom: 25px;
+            }
             
+            .form-label {
+                margin-bottom: 8px;
+                display: block;
+                font-weight: 500;
+                
+            }
+            
+            .left-section-card {
+                height: 100%;
+            }
+            
+            .bank-payment-section {
+                background: #f8f9fa;
+                padding: 15px;
+                border-radius: 5px;
+                margin-top: 10px;
+            }
         </style>
     @endpush
 
@@ -48,8 +69,8 @@
                 <div class="row g-4">
                     <!-- Left Section: Payment Details -->
                     <div class="col-12 col-lg-4">
-                        <div class="white-box ">
-                            <div class="main-title">
+                        <div class="white-box left-section-card">
+                            <div class="main-title mb-3">
                                 <h3>Course Payment Details</h3>
                             </div>
 
@@ -57,8 +78,8 @@
                                 <input type="hidden" id="url" value="{{ URL::to('/') }}">
 
                                 {{-- Branch --}}
-                                <div class="mt-15 p-1 m-2">
-                                    <label>@lang('common.branch') <span class="text-danger">*</span></label>
+                                <div class="form-section">
+                                    <label class="form-label">@lang('common.branch') <span class="text-danger">*</span></label>
                                     <select class="primary_select form-control" id="branch_id" name="branch_id">
                                         <option value="">@lang('common.select_class')</option>
                                         @foreach ($branches as $branch)
@@ -72,8 +93,8 @@
                                 </div>
 
                                 {{-- Student --}}
-                                <div class="mt-15 p-1 m-2" style="">
-                                    <label class="mt-4">@lang('common.select_student') <span class="text-danger">*</span></label>
+                                <div class="form-section mt-4">
+                                    <label class="form-label">@lang('common.select_student') <span class="text-danger">*</span></label>
                                     <select class="primary_select form-control" id="student_id" name="student_id">
                                         <option value="">@lang('common.select_student')</option>
                                         @foreach ($students as $student)
@@ -83,20 +104,21 @@
                                 </div>
 
                                 {{-- Dates --}}
-                                <div class="mt-15 p-1 m-2">
-                                    <label class="mt-4">@lang('fees.create_date') <span class="text-danger">*</span></label>
+                                <div class="form-section">
+                                    <label class="form-label mt-4">@lang('fees.create_date') <span class="text-danger">*</span></label>
                                     <input type="text" class="primary_input_field date form-control" id="create_date"
                                         name="create_date" value="{{ date('m/d/Y') }}">
                                 </div>
-                                <div class="mt-15 p-1 m-2">
-                                    <label class="mt-4">@lang('fees.due_date') <span class="text-danger">*</span></label>
+                                
+                                <div class="form-section">
+                                    <label class="form-label">@lang('fees.due_date') <span class="text-danger">*</span></label>
                                     <input type="text" class="primary_input_field date form-control" id="due_date"
                                         name="due_date" value="{{ date('m/d/Y') }}">
                                 </div>
 
                                 {{-- Status --}}
-                                <div class="mt-15 p-1 m-2">
-                                    <label class="mt-4">@lang('fees.payment_status') <span class="text-danger">*</span></label>
+                                <div class="form-section">
+                                    <label class="form-label">@lang('fees.payment_status') <span class="text-danger">*</span></label>
                                     <select class="primary_select form-control" id="status" name="payment_status">
                                         <option value="">@lang('fees.payment_status')</option>
                                         <option value="not">@lang('fees.not_paid')</option>
@@ -106,10 +128,9 @@
                                 </div>
 
                                 {{-- Payment Method --}}
-                                <div class="mt-15 p-1 m-2">
-                                    <label class="mt-4">@lang('fees.payment_method') <span class="text-danger">*</span></label>
-                                    <select class="primary_select form-control" id="paymentMethodName"
-                                        name="payment_method">
+                                <div class="form-section">
+                                    <label class="form-label mt-4">@lang('fees.payment_method') <span class="text-danger">*</span></label>
+                                    <select class="primary_select form-control" id="paymentMethodName" name="payment_method">
                                         <option value="">@lang('fees.payment_method')</option>
                                         <option value="Cash">Cash</option>
                                         <option value="Card">Card</option>
@@ -117,40 +138,36 @@
                                     </select>
                                 </div>
 
-                                {{-- Bank Upload --}}
-                                <div class="mt-15 d-none" id="bankPayment">
-                                    <div class="row mt-15">
-                                        <div class="col-lg-12">
-                                            <label>Bank Paid Amount <span class="text-danger">*</span></label>
-                                            <input type="number" class="primary_input_field form-control" id="bank_paid_amount"
-                                                name="bank_paid_amount" value="0" step="0.01">
-                                        </div>
+                                {{-- Bank Upload Section --}}
+                                <div class="bank-payment-section d-none" id="bankPaymentSection">
+                                    <div class="form-section" id="bankPaidAmountRow">
+                                        <label class="form-label mt-4">Bank Paid Amount <span class="text-danger">*</span></label>
+                                        <input type="number" class="primary_input_field form-control" id="bank_paid_amount"
+                                            name="bank_paid_amount" value="0" step="0.01">
                                     </div>
-                                    <div class="row mt-15">
-                                        <div class="col-lg-12">
-                                            <label>bank Paid date <span class="text-danger">*</span></label>
-                                            <input type="date" class="primary_input_field date form-control" id="bank_paid_date"
-                                                name="bank_paid_date" value="{{ date('m/d/Y') }}">
-                                        </div>
+                                    
+                                    <div class="form-section" id="bankPaidDateRow">
+                                        <label class="form-label">Bank Paid Date <span class="text-danger">*</span></label>
+                                        <input type="date" class="primary_input_field date form-control" id="bank_paid_date"
+                                            name="bank_paid_date" value="{{ date('Y-m-d') }}">
                                     </div>
-                                    <div class="row mt-15">
-                                        <div class="col-lg-12">
-                                            <label>Upload Document</label>
-                                            <div class="d-flex align-items-center">
-                                                <input type="file" name="payment_file" id="payment_file" class="d-none"
-                                                    accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
-                                                <button type="button" id="uploadBtn" class="primary-btn fix-gr-bg col-12">
-                                                    <span class="ti-upload"></span> Browse
-                                                </button>
-                                                <span id="fileName" class="ml-3 text-muted"></span>
-                                            </div>
+                                    
+                                    <div class="form-section" id="uploadDocumentRow">
+                                        <label class="form-label">Upload Document</label>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <input type="file" name="payment_file" id="payment_file" class="d-none"
+                                                accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                                            <button type="button" id="uploadBtn" class="primary-btn fix-gr-bg flex-grow-1">
+                                                <span class="ti-upload"></span> Browse
+                                            </button>
+                                            <span id="fileName" class="text-muted small"></span>
                                         </div>
                                     </div>
                                 </div>
 
                                 {{-- Save Button --}}
-                                <div class="mt-4 text-center" >
-                                    <button id="submit" class="mt-4 primary-btn fix-gr-bg fmInvoice col-12">
+                                <div class="form-section text-center mt-4">
+                                    <button id="submit" class="primary-btn fix-gr-bg fmInvoice w-100 py-2">
                                         @lang('common.save')
                                     </button>
                                 </div>
@@ -161,13 +178,13 @@
                     <!-- Right Section: Course Table -->
                     <div class="col-12 col-lg-8">
                         <div class="white-box h-100">
-                            <div class="main-title">
+                            <div class="main-title mb-3">
                                 <h3>Course Details</h3>
                             </div>
 
                             {{-- Select Course --}}
-                            <div class="mt-15">
-                                <label>Select Course <span class="text-danger">*</span></label>
+                            <div class="form-section">
+                                <label class="form-label">Select Course <span class="text-danger">*</span></label>
                                 <select class="primary_select form-control" id="course_id" name="course_id">
                                     <option value="">select course</option>
                                     @foreach ($courses as $course)
@@ -176,26 +193,26 @@
                                         </option>
                                     @endforeach
                                 </select>
+                                {{-- Table --}}
+                                <div class="big-table mt-4 table-responsive">
+                                    <table class="table school-table-style fees_invoice_type_table w-100">
+                                        <thead>
+                                            <tr>
+                                                <th>@lang('common.sl')</th>
+                                                <th>@lang('fees.course_name')</th>
+                                                <th>@lang('fees.course_price')</th>
+                                                <th>@lang('fees.paid_amount')</th>
+                                                <th>@lang('fees.due_amount')</th>
+                                                <th>@lang('common.action')</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="allCourseDetails">
+                                            {{-- Rows added by JS --}}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
 
-                            {{-- Table --}}
-                            <div class="big-table mt-10 table-responsive">
-                                <table class="table school-table-style fees_invoice_type_table w-100">
-                                    <thead>
-                                        <tr>
-                                            <th>@lang('common.sl')</th>
-                                            <th>@lang('fees.course_name')</th>
-                                            <th>@lang('fees.course_price')</th>
-                                            <th>@lang('fees.paid_amount')</th>
-                                            <th>@lang('fees.due_amount')</th>
-                                            <th>@lang('common.action')</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="allCourseDetails">
-                                        {{-- Rows added by JS --}}
-                                    </tbody>
-                                </table>
-                            </div>
                         </div>
                     </div>
                 </div> <!-- /.row -->
@@ -207,25 +224,23 @@
     @include('components.partials.date_picker_css_js')
 @endsection
 
-
 @push('scripts')
     <script>
         $(document).ready(function() {
+            // Initialize the bank payment section as hidden
+            toggleBankPayment('');
 
-            // AJAX: Load students based on branch (simplified as students are passed directly)
+            // AJAX: Load students based on branch
             $('#branch_id').change(function() {
                 let branchId = $(this).val();
                 $('#selectStudentLoader').show();
                 $('#student_id').html('<option value="">Loading...</option>');
 
                 if (branchId) {
-                    // Filter students already available in the view
-                    let filteredStudents = @json($students).filter(student => student
-                        .branch_id == branchId);
+                    let filteredStudents = @json($students).filter(student => student.branch_id == branchId);
                     $('#student_id').empty().append('<option value="">Select Student</option>');
                     $.each(filteredStudents, function(index, student) {
-                        $('#student_id').append('<option value="' + student.id + '">' +
-                            student.student_name + '</option>');
+                        $('#student_id').append('<option value="' + student.id + '">' + student.student_name + '</option>');
                     });
                     $('#student_id').niceSelect('update');
                     $('#selectStudentLoader').hide();
@@ -257,9 +272,7 @@
                 }
 
                 if (addedCourseId === courseId) {
-                    // If the same course is selected again, do nothing or update if needed
-                    // For now, we'll just return to avoid re-adding
-                    return;
+                    return; // Don't re-add the same course
                 }
 
                 addCourseRow(courseId, courseName, coursePrice);
@@ -306,10 +319,13 @@
                                 step="0.01"
                                 readonly
                             >
-                            
                         </div>
                     </td>
-                    <td><button type="button" class="primary-btn small bg-danger text-white border-0 remove_course_btn">Delete</button></td>
+                    <td>
+                        <button type="button" class="primary-btn small bg-danger text-white border-0 remove_course_btn">
+                            Delete
+                        </button>
+                    </td>
                 </tr>`;
                 $('.allCourseDetails').append(row);
                 updatePaymentStatusAndDue();
@@ -332,24 +348,41 @@
                 }
             }
 
-            // Event listeners for price and paid amount changes in the table
+            // Event listeners for price and paid amount changes
             $(document).on('input', '.course_price_input, .paid_amount_input', updatePaymentStatusAndDue);
 
             // Remove course row
             $(document).on('click', '.remove_course_btn', function() {
                 $(this).closest('tr').remove();
                 addedCourseId = null;
-                updatePaymentStatusAndDue(); // Recalculate if needed (e.g., if only one course was there)
+                updatePaymentStatusAndDue();
             });
 
-            // Payment Method toggle
+            // Payment Method toggle function
             function toggleBankPayment(method) {
+                const bankSection = $('#bankPaymentSection');
+                const amountRow = $('#bankPaidAmountRow');
+                const dateRow = $('#bankPaidDateRow');
+                const uploadRow = $('#uploadDocumentRow');
+
                 if (method === 'Bank Transfer') {
-                    $('#bankPayment').removeClass('d-none');
+                    bankSection.removeClass('d-none');
+                    amountRow.removeClass('d-none');
+                    dateRow.removeClass('d-none');
+                    uploadRow.removeClass('d-none');
+                } else if (method === 'Card') {
+                    bankSection.removeClass('d-none');
+                    amountRow.addClass('d-none');
+                    dateRow.addClass('d-none');
+                    uploadRow.removeClass('d-none');
                 } else {
-                    $('#bankPayment').addClass('d-none');
+                    bankSection.addClass('d-none');
+                    amountRow.addClass('d-none');
+                    dateRow.addClass('d-none');
+                    uploadRow.addClass('d-none');
                 }
             }
+
             $('#paymentMethodName').on('change', function() {
                 toggleBankPayment($(this).val());
             });
@@ -358,30 +391,9 @@
             $('#uploadBtn').on('click', function() {
                 $('#payment_file').click();
             });
+            
             $('#payment_file').on('change', function() {
-                $('#fileName').text(this.files[0] ? this.files[0].name : '');
-            });
-
-            // AJAX: Load students based on branch (simplified as students are passed directly)
-            $('#branch_id').change(function() {
-                let branchId = $(this).val();
-                $('#selectStudentLoader').show();
-                $('#student_id').html('<option value="">Loading...</option>');
-
-                if (branchId) {
-                    let filteredStudents = @json($students).filter(student => student
-                        .branch_id == branchId);
-                    $('#student_id').empty().append('<option value="">Select Student</option>');
-                    $.each(filteredStudents, function(index, student) {
-                        $('#student_id').append('<option value="' + student.id + '">' +
-                            student.student_name + '</option>');
-                    });
-                    $('#student_id').niceSelect('update');
-                    $('#selectStudentLoader').hide();
-                } else {
-                    $('#selectStudentLoader').hide();
-                    $('#student_id').html('<option value="">Select Student</option>');
-                }
+                $('#fileName').text(this.files[0] ? this.files[0].name : 'No file chosen');
             });
 
             //form submit ajex
