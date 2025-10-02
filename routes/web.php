@@ -247,6 +247,10 @@ Route::controller(FeesGroupController::class)->group(function () {
     Route::delete('student/fees/fee-group-delete/{id}', 'delete')->name('fee-group-delete'); // DELETE delete
 });
 
+Route::controller(FeesGroupController::class)->group(function () {
+    Route::get('student/fees/course-paid', 'coursePaidView')->name('fees.course-paid'); // GET view
+});
+
 
 
 Route::controller(FeeTypeController::class)->group(function () {
