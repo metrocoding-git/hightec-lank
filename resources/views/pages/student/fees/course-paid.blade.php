@@ -344,8 +344,11 @@
 
             // Payment Method toggle
             function toggleBankPayment(method) {
-                if (method === 'Bank Transfer' || method === 'Card') $('#bankPayment').removeClass('d-none');
-                else $('#bankPayment').addClass('d-none');
+                if (method === 'Bank Transfer') {
+                    $('#bankPayment').removeClass('d-none');
+                } else {
+                    $('#bankPayment').addClass('d-none');
+                }
             }
             $('#paymentMethodName').on('change', function() {
                 toggleBankPayment($(this).val());
@@ -449,7 +452,7 @@
                 }
 
                 // Validate bank payment fields if visible
-                if (paymentMethod === 'Bank Transfer' || paymentMethod === 'Card') {
+                if (paymentMethod === 'Bank Transfer') {
                     let bankPaidAmount = parseFloat($('#bank_paid_amount').val());
                     let bankPaidDate = $('#bank_paid_date').val();
 
@@ -480,7 +483,7 @@
                 formData.append('paid_amount', paidAmount);
 
                 // Append bank payment details if applicable
-                if (paymentMethod === 'Bank Transfer' || paymentMethod === 'Card') {
+                if (paymentMethod === 'Bank Transfer') {
                     formData.append('bank_paid_amount', parseFloat($('#bank_paid_amount').val()));
                     formData.append('bank_paid_date', $('#bank_paid_date').val());
                 }
