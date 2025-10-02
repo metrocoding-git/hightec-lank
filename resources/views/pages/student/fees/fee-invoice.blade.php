@@ -556,6 +556,7 @@
                                                     <label for="balanceAmountPaidModal">Balance</label>
                                                     <input type="number" class="form-control" id="balanceAmountPaidModal" name="balance_amount" step="0.01" readonly>
                                                 </div>
+                                                
                                                 <div class="form-group">
                                                     <label for="paidAmountInput">Paid Amount <span class="text-danger">*</span></label>
                                                     <input type="number" class="form-control" id="paidAmountInput" name="paid_amount" step="0.01" required readonly>
