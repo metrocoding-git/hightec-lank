@@ -282,6 +282,10 @@
         </div>
     </section>
 @endsection
+@include('components.partials.data_table_js')
+@include('components.partials.multi_select_js')
+@include('components.partials.date_picker_css_js')
+@include('components.partials.data_table_css')
 
 @push('script')
     <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js"></script>
@@ -289,6 +293,17 @@
         var Clipboard = new ClipboardJS('.copyToClipboard');
     </script>
     <script>
+         $('#table_id').DataTable({
+            dom: 'Bfrtip',
+            buttons: [
+                'copy', 'csv', 'excel', 'pdf', 'print'
+            ],
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+        });
+
         $(document).on('click', '.copyToClipboard', function(e) {
             toastr.success("Link Copied", 'Success');
         });

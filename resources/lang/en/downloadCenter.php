@@ -3,7 +3,7 @@ return  [
     'kb'=>'KB',
     'mb'=>'MB',
     'or'=>'OR',
-    'sl'=>'SL',
+    'sl'=>'ID',
     'title'=>'Title',
     'name'=>'Name',
     'file'=>'File',
