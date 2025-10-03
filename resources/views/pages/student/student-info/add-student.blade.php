@@ -233,8 +233,7 @@
                                                                                             type="date"
                                                                                             name="admission_date"
                                                                                             value="{{ old('admission_date') ?: \Carbon\Carbon::today()->format('Y-m-d') }}"
-                                                                                            autocomplete="off"
-                                                                                            disabled>
+                                                                                            autocomplete="off">
                                                                                     </div>
                                                                                 </div>
                                                                                 <button class="btn-date"
@@ -415,7 +414,7 @@
                                                                             <input
                                                                                 class="primary_input_field form-control{{ $errors->has('photo') ? ' is-invalid' : '' }}"
                                                                                 type="text" id="placeholderPhoto"
-                                                                                placeholder="@lang('common.student_photo') * "
+                                                                                placeholder="@lang('common.student_photo') "
                                                                                 readonly="">
                                                                             <button class="" type="button">
                                                                                 <label class="primary-btn small fix-gr-bg"
@@ -1110,13 +1109,18 @@
                                                                             <span class="text-danger"> *</span>
 
                                                                         </label>
-                                                                        <input
+                                                                        {{-- <input
                                                                             class="primary_input_field form-control{{ $errors->has('national_id_number') ? ' is-invalid' : '' }}"
                                                                             type="text" name="national_id_number"
                                                                             value="{{ old('national_id_number') }}"
                                                                             maxlength="12" pattern="[0-9]{12}"
                                                                             title="Please enter a valid 12-digit Sri Lankan ID number"
                                                                             oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                                                                             --}}
+                                                                        <input
+                                                                            class="primary_input_field form-control{{ $errors->has('national_id_number') ? ' is-invalid' : '' }}"
+                                                                            type="text" name="national_id_number"
+                                                                            value="{{ old('national_id_number') }}">
 
 
 

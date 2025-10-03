@@ -31,6 +31,7 @@ class AddStudentController extends Controller
 
     public function store(Request $request)
     {
+        // dd($request);
         $validatedData = $request->validate([
             'branch_id' => 'required|exists:branches,id',
             'admission_number' => 'required|string|unique:students,admission_number',
