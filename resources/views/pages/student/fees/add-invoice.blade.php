@@ -19,7 +19,7 @@
     @endpush
 
     <section class="sms-breadcrumb mb-20">
-        {{-- <div id="toastContainer" class="position-fixed top-0 end-0 p-3" ></div> --}}
+        <div id="toastContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 11"></div>
 
         <div class="container-fluid">
             <div class="row justify-content-between">
@@ -123,7 +123,7 @@
                                         <label>@lang('fees.payment_method') <span class="text-danger">*</span></label>
                                         <select class="primary_select form-control" id="paymentMethodName"
                                             name="payment_method">
-                                            <option value="">@lang('fees.payment_method')</option>
+                                            <option value="not">@lang('fees.payment_method')</option>
                                             <option value="Cash">Cash</option>
                                             <option value="Invoice">Invoice</option>
                                             <option value="Bank Transfer">Bank Transfer</option>
@@ -140,16 +140,16 @@
                                     </div>
                                     <div class="col-lg-12 mt-15" id="bankPaidDateRow">
                                         <label>Bank Paid Date <span class="text-danger">*</span></label>
-                                        <input type="date" class="primary_input_field date form-control" id="bank_paid_date"
-                                            name="bank_paid_date" value="{{ date('Y-m-d') }}">
+                                        <input type="date" class="primary_input_field date form-control"
+                                            id="bank_paid_date" name="bank_paid_date" value="{{ date('Y-m-d') }}">
                                     </div>
                                     <div class="col-lg-12 mt-15" id="uploadDocumentRow">
                                         <label>Upload Document</label>
                                         <div class="d-flex align-items-center">
                                             <input type="file" name="payment_file" id="payment_file" class="d-none"
                                                 accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
-                                            <button type="button" id="uploadBtn" class="primary-btn fix-gr-bg col-12"><span
-                                                    class="ti-upload"></span>
+                                            <button type="button" id="uploadBtn"
+                                                class="primary-btn fix-gr-bg col-12"><span class="ti-upload"></span>
                                                 Browse</button>
                                             <span id="fileName" class="ml-3 text-muted"></span>
                                         </div>
@@ -469,6 +469,10 @@
                     amountRow.removeClass('d-none');
                     dateRow.removeClass('d-none');
                     uploadRow.removeClass('d-none');
+
+                    // Set payment status to 'full' when Bank Transfer is selected
+                    $('#status').val('full').niceSelect('update');
+                    $('#status').trigger('change'); // Trigger change to update payment fields
                 } else if (method === 'Invoice') {
                     bankSection.removeClass('d-none');
                     amountRow.addClass('d-none');
@@ -552,10 +556,10 @@
                     return;
                 }
 
-                if (!paymentMethod) {
-                    toastr.error('Payment method is required');
-                    return;
-                }
+                // if (!paymentMethod) {
+                //     toastr.error('Payment method is required');
+                //     return;
+                // }
 
                 // Validate bank payment fields if visible and method is Bank Transfer
                 if (paymentMethod === 'Bank Transfer') {
@@ -566,12 +570,23 @@
                     console.log('Client-side: bank_paid_amount before formData:', bankPaidAmount);
                     console.log('Client-side: bank_paid_date before formData:', bankPaidDate);
 
-                    if (isNaN(bankPaidAmount) || bankPaidAmount < 0) { // Changed from <= 0 to < 0 to allow 0
+                    if (isNaN(bankPaidAmount) || bankPaidAmount <
+                        0) { // Changed from <= 0 to < 0 to allow 0
                         toastr.error('Bank Paid Amount is required and must be a non-negative number');
                         return;
                     }
                     if (!bankPaidDate) {
                         toastr.error('Bank Paid Date is required');
+                        return;
+                    }
+
+                    let totalAmount = 0;
+                    $('.price_input').each(function() {
+                        totalAmount += parseFloat($(this).val()) || 0;
+                    });
+
+                    if (bankPaidAmount < totalAmount) {
+                        toastr.error('Bank Paid Amount must be greater than the Total Amount');
                         return;
                     }
                 }

@@ -121,8 +121,12 @@
                                                                 data-invoice-id="{{ $invoice->id }}"
                                                                 onclick="populateInvoiceModal(this)">Make Invoice</a>
                                                             @if ($invoice->payment_method === 'Invoice')
-                                                                <a class="dropdown-item" data-toggle="modal" data-target="#addInvoiceNumberModal" data-invoice-id="{{ $invoice->id }}" href="#">Add Invoice Number</a>
-                                                                <a class="dropdown-item" data-toggle="modal" data-target="#markAsPaidModal" data-invoice-id="{{ $invoice->id }}" href="#">Paid</a>
+                                                                @if (empty($invoice->invoice_number))
+                                                                    <a class="dropdown-item" data-toggle="modal" data-target="#addInvoiceNumberModal" data-invoice-id="{{ $invoice->id }}" href="#">Add Invoice Number</a>
+                                                                @endif
+                                                                @if ($invoice->payment_status != 'full')
+                                                                    <a class="dropdown-item" data-toggle="modal" data-target="#markAsPaidModal" data-invoice-id="{{ $invoice->id }}" href="#">Paid</a>
+                                                                @endif
                                                             @endif
                                                             <a class="dropdown-item" data-toggle="modal"
                                                                 data-target="#deletecategoryModal{{ $invoice->id }}"
