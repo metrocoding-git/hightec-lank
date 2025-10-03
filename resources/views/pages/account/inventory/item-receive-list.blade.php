@@ -262,8 +262,20 @@
 @include('components.partials.data_table_js')
 @include('components.partials.server_side_datatable')
 @include('components.partials.date_picker_css_js')
-
+@include('components.partials.data_table_css')
 @push('script')
+ <script>
+        $('#table_id').DataTable({
+            dom: 'Bfrtip',
+            buttons: [
+                'copy', 'csv', 'excel', 'pdf', 'print'
+            ],
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+        });
+    </script>
     <script>
         (function($) {
             $(document).ready(function() {

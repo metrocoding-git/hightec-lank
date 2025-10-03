@@ -260,11 +260,25 @@
     @endphp
 @endsection
 
-@include('components.partials.data_table_css')
 @include('components.partials.data_table_js')
-
-
+@include('components.partials.multi_select_js')
+@include('components.partials.date_picker_css_js')
+@include('components.partials.data_table_css')
 @push('script')
+ <script>
+        $('#table_id').DataTable({
+            dom: 'Bfrtip',
+            buttons: [
+                'copy', 'csv', 'excel', 'pdf', 'print'
+            ],
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+        });
+    </script>
+    
+
     <script>
         $('#statusUpdateModal').on('show.bs.modal', function(event) {
             var input = $('#student-id-form');
