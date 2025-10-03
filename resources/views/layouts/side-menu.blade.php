@@ -286,17 +286,23 @@
                     </a>
                 </li>
                 <li>
-                    <a href="/student/fees/fee-invoice"
-                        class="{{ request()->is('student/fees/fee-invoice') ? 'active a' : '' }}">
-                        Fee Invoice
-                    </a>
-                </li>
-                <li>
                     <a href="/student/fees/add-invoice"
-                        class="{{ request()->is('student/fees/add-invoice') ? 'active a' : '' }}">
-                        Add Invoice
-                    </a>
-                </li>
+                    class="{{ request()->is('student/fees/add-invoice') ? 'active a' : '' }}">
+                    Add Invoice
+                </a>
+            </li>
+             <li>
+                <a href="/student/fees/course-paid"
+                    class="{{ request()->is('student/fees/course-paid') ? 'active a' : '' }}">
+                    Course Paid
+                </a>
+            </li>
+            <li>
+                <a href="/student/fees/fee-invoice"
+                    class="{{ request()->is('student/fees/fee-invoice') ? 'active a' : '' }}">
+                    Fee Invoice
+                </a>
+            </li>
                 <li>
                     <a href="/student/fees/fee-invoice-setting"
                         class="{{ request()->is('student/fees/fee-invoice-setting') ? 'active a' : '' }}">

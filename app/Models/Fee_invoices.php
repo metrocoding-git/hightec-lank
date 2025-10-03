@@ -18,6 +18,11 @@ class Fee_invoices extends Model
         'payment_status',
         'payment_method',
         'payment_file',
+        'bank_paid_amount', // Added for mass assignment
+        'bank_paid_date',
+        'invoice_type',   // Added for mass assignment
+        'paid_date',
+        'invoice_number',
     ];
 
     protected $casts = [

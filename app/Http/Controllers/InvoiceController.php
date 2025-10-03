@@ -11,11 +11,14 @@ use App\Models\FeesGroup;
 use App\Models\FeeType;
 use App\Models\Invoice_item;
 use App\Models\Invoices_payments;
+use App\Models\PaidCourse; // Import the new PaidCourse model
 use App\Models\Student;
+use App\Models\Course; // Import the Course model
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class InvoiceController extends Controller
 {
@@ -42,6 +45,9 @@ class InvoiceController extends Controller
 
     public function store(Request $request)
     {
+        // Temporarily dump all request data for debugging
+        // dd($request->all());
+
         // Validate request
         $request->validate([
             'branch_id' => 'required',
@@ -54,11 +60,24 @@ class InvoiceController extends Controller
             'paidPrice' => 'required|array',
             'payment_method' => 'required',
             'payment_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
+            'bank_paid_amount' => 'nullable|numeric|min:0',
+            'bank_paid_date' => 'nullable|date_format:Y-m-d',
         ]);
+
+        // Conditionally make bank details required if payment method is Bank Transfer
+        if ($request->payment_method === 'Bank Transfer') {
+            $request->validate([
+                'bank_paid_amount' => 'required|numeric|min:0',
+                'bank_paid_date' => 'required|date_format:Y-m-d',
+            ]);
+        }
 
         try {
             $total_amount = array_sum($request->price);
             $total_paid_amount = array_sum($request->paidPrice);
+
+            Log::info('Payment Method: ' . $request->payment_method);
+            // Removed specific bank_paid_amount and bank_paid_date logs, dd() will show all
 
             // Create Fee Invoice
             $fee_invoice = Fee_invoices::create([
@@ -70,6 +89,10 @@ class InvoiceController extends Controller
                 'payment_method' => $request->payment_method,
                 'total_amount' => $total_amount,
                 'paid_amount' => $total_paid_amount,
+                'bank_paid_amount' => (trim($request->payment_method) === 'Bank Transfer') ? $request->bank_paid_amount : null,
+                'bank_paid_date' => (trim($request->payment_method) === 'Bank Transfer' && !empty($request->bank_paid_date))
+                    ? Carbon::createFromFormat('Y-m-d', $request->bank_paid_date)->format('Y-m-d')
+                    : null,
             ]);
 
             // Save Invoice Items
@@ -167,7 +190,7 @@ class InvoiceController extends Controller
         $studentData = $student->student_details;
 
         // Add courses data separately since the accessor might not include it properly
-        $studentData['courses'] = $student->courses->map(function($course) {
+        $studentData['courses'] = $student->courses->map(function ($course) {
             return ['name' => $course->name];
         })->toArray();
 
@@ -183,15 +206,15 @@ class InvoiceController extends Controller
         $invoice = Fee_invoices::findOrFail($id);
 
         $request->validate([
-            'branch_id'      => 'required',
-            'student_id'     => 'required',
-            'create_date'    => 'required|date_format:m/d/Y',
-            'due_date'       => 'required|date_format:m/d/Y',
+            'branch_id' => 'required',
+            'student_id' => 'required',
+            'create_date' => 'required|date_format:m/d/Y',
+            'due_date' => 'required|date_format:m/d/Y',
             'payment_status' => 'required',
             'payment_method' => 'required',
-            'price'          => 'required|array',
-            'paidPrice'      => 'required|array',
-            'payment_file'   => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
+            'price' => 'array',
+            'paidPrice' => 'array',
+            'payment_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
         ]);
 
         try {
@@ -218,9 +241,9 @@ class InvoiceController extends Controller
                 $paid_amount = $request->paidPrice[$feeTypeId] ?? 0;
 
                 Invoice_item::create([
-                    'invoice_id'  => $invoice->id,
+                    'invoice_id' => $invoice->id,
                     'fee_type_id' => $feeTypeId,
-                    'amount'      => $amount,
+                    'amount' => $amount,
                     'paid_amount' => $paid_amount,
                 ]);
             }
@@ -313,5 +336,151 @@ class InvoiceController extends Controller
         $invoice->save();
 
         return redirect()->back()->with('success', 'Payment added successfully!');
+    }
+
+    public function updateInvoiceNumber(Request $request)
+    {
+        $request->validate([
+            'invoice_id' => 'required|exists:fee_invoices,id',
+            'invoice_number' => 'required|string|max:255',
+        ]);
+
+        try {
+            $invoice = Fee_invoices::findOrFail($request->invoice_id);
+            $invoice->invoice_number = $request->invoice_number;
+            $invoice->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Invoice number updated successfully!',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating invoice number: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function indexCoursePayment()
+    {
+        $branches = Branch::all();
+        $students = Student::all();
+        $courses = \App\Models\Course::all(); // Assuming Course model exists
+
+        return view('pages.student.fees.course-paid', compact('branches', 'students', 'courses'));
+    }
+
+    public function markAsPaid(Request $request)
+    {
+        $request->validate([
+            'invoice_id' => 'required|exists:fee_invoices,id',
+            'paid_amount' => 'required|numeric|min:0',
+            'paid_date' => 'required|date_format:Y-m-d',
+        ]);
+
+        try {
+            $invoice = Fee_invoices::findOrFail($request->invoice_id);
+
+            // Update invoice details
+            $invoice->paid_amount = $invoice->total_amount; // Set paid_amount to total_amount
+            $invoice->payment_status = 'full'; // Set status to 'full'
+            $invoice->paid_date = Carbon::createFromFormat('Y-m-d', $request->paid_date)->format('Y-m-d');
+            $invoice->save();
+
+            // Create a new payment record
+            Invoices_payments::create([
+                'invoice_id' => $invoice->id,
+                'amount' => $request->paid_amount,
+                'payment_method' => 'Paid', // Assuming 'Paid' is a valid method or adjust as needed
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Invoice marked as paid successfully!',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error marking invoice as paid: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function storeCoursePayment(Request $request)
+    {
+        // Validate request
+        $request->validate([
+            'branch_id' => 'required',
+            'student_id' => 'required',
+            'create_date' => 'required|date_format:m/d/Y',
+            'due_date' => 'required|date_format:m/d/Y',
+            'payment_status' => 'required',
+            'course_id' => 'required|exists:courses,id',
+            'course_price' => 'required|numeric|min:0',
+            'paid_amount' => 'required|numeric|min:0',
+            'payment_method' => 'required',
+            'payment_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
+            'bank_paid_amount' => 'nullable|numeric|min:0', // Conditional validation
+            'bank_paid_date' => 'nullable|date_format:Y-m-d', // Conditional validation
+        ]);
+
+        try {
+            $coursePrice = $request->course_price;
+            $paidAmount = $request->paid_amount;
+            $paymentMethod = $request->payment_method;
+            $dueAmount = $coursePrice - $paidAmount;
+
+            // Create a Fee_invoices record
+            $fee_invoice = Fee_invoices::create([
+                'invoice_type' => 'course',
+                'branch_id' => $request->branch_id,
+                'student_id' => $request->student_id,
+                'create_date' => Carbon::createFromFormat('m/d/Y', $request->create_date)->format('Y-m-d'),
+                'due_date' => Carbon::createFromFormat('m/d/Y', $request->due_date)->format('Y-m-d'),
+                'payment_status' => $request->payment_status,
+                'payment_method' => $paymentMethod,
+                'total_amount' => $coursePrice,
+                'paid_amount' => $paidAmount,
+                'due_amount' => $dueAmount,
+                'payment_file' => null, // Will be handled below if file exists
+            ]);
+
+            // Save data to the new paid_courses table
+            $paidCourse = PaidCourse::create([
+                'invoice_id' => $fee_invoice->id,
+                'course_id' => $request->course_id,
+                'course_price' => $coursePrice,
+                'paid_amount' => $paidAmount,
+                'due_amount' => $dueAmount,
+                'payment_status' => $request->payment_status,
+                'payment_method' => $paymentMethod,
+                'bank_paid_amount' => ($paymentMethod === 'Card' || $paymentMethod === 'Bank Transfer') && $request->bank_paid_amount !== null ? $request->bank_paid_amount : null,
+                'bank_paid_date' => ($paymentMethod === 'Card' || $paymentMethod === 'Bank Transfer') && $request->bank_paid_date
+                    ? Carbon::createFromFormat('Y-m-d', $request->bank_paid_date)->format('Y-m-d')
+                    : null,
+                'payment_file' => null, // Will be handled below if file exists
+            ]);
+
+            // Handle payment file upload for paid_courses
+            if ($request->hasFile('payment_file')) {
+                $paymentFile = $request->file('payment_file')->store('paid_courses', 'public');
+                $paidCourse->update(['payment_file' => $paymentFile]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Course payment saved successfully!',
+                'paid_course_id' => $paidCourse->id,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }
