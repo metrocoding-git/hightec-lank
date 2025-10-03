@@ -29,7 +29,7 @@
     <section class="admin-visitor-area">
         <div class="container-fluid p-0">
 
-            <form class="form-horizontal" id="item-sell-form" >
+            <form class="form-horizontal" id="item-sell-form">
                 @csrf
                 <div class="row">
                     <div class="col-lg-3">
@@ -77,7 +77,9 @@
                                                     <option data-display="@lang('inventory.payment_method')*" value="">
                                                         @lang('inventory.payment_method')*</option>
                                                     <option value="Cash">Cash</option>
-                                                    <option value="Cheque">Cheque</option>
+
+                                                    <option value="Invoice">Invoice</option>
+                                                    <option value="Bank Transfer">Bank Transfer</option>
                                                 </select>
                                                 <div class="text-danger" id="paymentError"></div>
                                             </div>
@@ -136,14 +138,14 @@
                                             </div>
                                             <div class="forStudentWrapper col-lg-12">
                                                 <div class="row">
-                                                    <div class="col-lg-12 mb-30">
+                                                    {{-- <div class="col-lg-12 mb-30">
                                                         <label class="primary_input_label" for="">@lang('common.class')
                                                             <span class="text-danger"> *</span> </label>
                                                         <select
                                                             class="primary_select form-control {{ $errors->has('class') ? ' is-invalid' : '' }}"
                                                             id="select_class" name="class">
-                                                            <option data-display="@lang('common.select_class') *" value="">
-                                                                @lang('common.select_class') *</option>
+                                                            <option data-display="@lang('common.select_class')" value="">
+                                                                @lang('common.select_class')</option>
                                                             @foreach ($classes as $class)
                                                                 <option value="{{ $class->id }}"
                                                                     {{ old('class') == $class->id ? 'selected' : '' }}>
@@ -163,8 +165,8 @@
                                                         <select
                                                             class="primary_select form-control{{ $errors->has('section') ? ' is-invalid' : '' }}"
                                                             id="select_section" name="section">
-                                                            <option data-display="@lang('common.select_section') *" value="">
-                                                                @lang('common.select_section') *</option>
+                                                            <option data-display="@lang('common.select_section')" value="">
+                                                                @lang('common.select_section')</option>
                                                             @foreach ($sections as $value)
                                                                 <option value="{{ $value->id }}"
                                                                     {{ old('section') == $value->id ? 'selected' : '' }}>
@@ -177,7 +179,7 @@
                                                                 {{ $errors->first('section') }}
                                                             </span>
                                                         @endif
-                                                    </div>
+                                                    </div> --}}
 
 
                                                     <div class="col-lg-12 mb-30" id="select_student_div">
@@ -186,8 +188,8 @@
                                                         <select
                                                             class="primary_select form-control{{ $errors->has('student') ? ' is-invalid' : '' }}"
                                                             id="select_student" name="student">
-                                                            <option data-display="@lang('common.select_student') *" value="">
-                                                                @lang('common.select_student') *</option>
+                                                            <option data-display="@lang('common.select_student')" value="">
+                                                                @lang('common.select_student')</option>
                                                             @foreach ($students as $value)
                                                                 <option value="{{ $value->id }}"
                                                                     {{ old('student') == $value->id ? 'selected' : '' }}>
@@ -204,14 +206,14 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-lg-12 mb-30" id="selectStaffsDiv">
+                                            {{-- <div class="col-lg-12 mb-30" id="selectStaffsDiv">
                                                 <label class="primary_input_label" for="">@lang('common.name') <span
                                                         class="text-danger"> *</span> </label>
                                                 <select
                                                     class="primary_select  form-control{{ $errors->has('staff_id') ? ' is-invalid' : '' }}"
                                                     name="staff_id" id="selectStaffs">
-                                                    <option data-display="@lang('common.name') *" value="">
-                                                        @lang('common.name') *</option>
+                                                    <option data-display="@lang('common.name')" value="">
+                                                        @lang('common.name')</option>
 
 
                                                     @foreach ($users as $value)
@@ -227,7 +229,7 @@
                                                         {{ $errors->first('staff_id') }}
                                                     </span>
                                                 @endif
-                                            </div>
+                                            </div> --}}
 
                                             <div class="col-lg-12 mb-30">
                                                 <div class="primary_input">
@@ -398,8 +400,8 @@
                                                     <div class="primary_input md_mb_20">
                                                         <label class="primary_input_label"
                                                             for="">@lang('inventory.total_due')</label>
-                                                        <input class="primary_input_field" type="text" name="totalDue" value="0.00"
-                                                            id="totalDue" readonly>
+                                                        <input class="primary_input_field" type="text" name="totalDue"
+                                                            value="0.00" id="totalDue" readonly>
                                                         <input type="hidden" id="totalDueValue" name="totalDueValue">
 
 
@@ -427,9 +429,9 @@
     </section>
     <script>
         $(document).ready(function() {
-            let rowCount = 1; // initialize as needed
+            let rowCount = 0; // initialize as needed
 
-            $('#addRowBtn').on('click', function() {
+            function addRow() {
                 rowCount++;
 
                 let newRow = `
@@ -474,10 +476,14 @@
     </tr>`;
 
                 $('tbody').append(newRow);
+            }
+
+            $('#addRowBtn').on('click', function() {
+                addRow();
             });
 
-
-
+            // Add one row on initial load
+            addRow();
         });
 
         // Remove row function

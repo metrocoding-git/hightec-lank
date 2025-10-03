@@ -113,7 +113,7 @@
                         <div class="row">
                             <div class="col-lg-8 col-md-6 col-sm-6">
                                 <div class="main-title mt_0_sm mt_0_md">
-                                    <h3 class="mb-15">@lang('common.search')</h3>
+                                    <h3 class="mb-15">@lang('common.search') </h3>
                                 </div>
                             </div>
                         </div>
@@ -317,12 +317,13 @@
                                 {{-- <!-- generate Url btn --> --}}
                                 <div class="mt-3">
                                     <x-table>
+                                        {{-- //Content List Table --}}
                                         <table id="table_id "
-                                            class="table Crm_table_active3 content-table table-responsive" cellspacing="0"
+                                            class="table Crm_table_active3 content-table" cellspacing="0"
                                             width="100%">
                                             <thead>
                                                 <tr>
-                                                    <th>@lang('downloadCenter.sl')</th>
+                                                    <th>ID</th>
                                                     <th>@lang('downloadCenter.document')</th>
                                                     <th>@lang('downloadCenter.content_type')</th>
                                                     <th>@lang('downloadCenter.size')</th>
@@ -843,8 +844,21 @@
 @include('components.partials.data_table_js')
 @include('components.partials.multi_select_js')
 @include('components.partials.date_picker_css_js')
+@include('components.partials.data_table_css')
 @push('script')
+
     <script>
+         $('#table_id').DataTable({
+            dom: 'Bfrtip',
+            buttons: [
+                'copy', 'csv', 'excel', 'pdf', 'print'
+            ],
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+        });
+        
         $(document).ready(function() {
             // Function to clear individual fields
             function clearIndividualFields() {
