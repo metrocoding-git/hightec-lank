@@ -266,12 +266,12 @@
                                     <label class="primary_input_label" for="modal_status">
                                         Status <span class="text-danger">*</span>
                                     </label>
-                                    <select class="primary_select form-control{{ $errors->has('status') ? ' is-invalid' : '' }}"
+                                    <select  class="primary_select form-control{{ $errors->has('status') ? ' is-invalid' : '' }}"
                                             name="status" id="modal_status" required >
                                         <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>
                                             Pending
                                         </option>
-                                        <option value="assign" {{ old('status') == 'assign' ? 'selected' : '' }}>
+                                        {{-- <option value="assign" {{ old('status') == 'assign' ? 'selected' : '' }}>
                                             Assign
                                         </option>
                                         <option value="completed" {{ old('status') == 'completed' ? 'selected' : '' }}>
@@ -279,7 +279,7 @@
                                         </option>
                                         <option value="dropped" {{ old('status') == 'dropped' ? 'selected' : '' }}>
                                             Dropped
-                                        </option>
+                                        </option> --}}
                                     </select>
                                     @error('status')
                                         <span class="text-danger">{{ $message }}</span>
