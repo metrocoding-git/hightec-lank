@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
+use Illuminate\Http\Request;
 use App\Models\Inventory_item;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\category;
+
 
 class InventoryItemController extends Controller
 {
@@ -15,7 +16,7 @@ class InventoryItemController extends Controller
     public function index()
     {
         //
-        $itemCategories=category::all();
+        $itemCategories=Category::all();
          $items=Inventory_item::all();
         return view('pages.account.inventory.item-list' , compact('itemCategories','items'));
     }

@@ -393,9 +393,9 @@
 
     <script>
         $(document).ready(function() {
-            let rowCount = 1; // initialize as needed
+            let rowCount = 0; // initialize as needed
 
-            $('#addRowBtn').on('click', function() {
+            function addRow() {
                 rowCount++;
 
                 let newRow = `
@@ -440,10 +440,14 @@
     </tr>`;
 
                 $('tbody').append(newRow);
+            }
+
+            $('#addRowBtn').on('click', function() {
+                addRow();
             });
 
-
-
+            // Add one row on initial load
+            addRow();
         });
 
         // Remove row function
