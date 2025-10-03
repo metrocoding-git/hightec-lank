@@ -25,6 +25,8 @@ class IntakeController extends Controller
             'branch_id' => 'required|exists:branches,id',
             'courses' => 'required|array',
             'courses.*' => 'exists:courses,id',
+            'start_date' => 'required',
+            'end_date'=>'required'
         ]);
 
         $intake = Intake::create([
@@ -84,6 +86,8 @@ class IntakeController extends Controller
             'branch_id' => 'required|exists:branches,id',
             'courses' => 'required|array',
             'courses.*' => 'exists:courses,id',
+            'start_date' => 'required',
+            'end_date'=>'required'
         ]);
 
         $intake = Intake::findOrFail($id);

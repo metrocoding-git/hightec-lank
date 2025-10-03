@@ -41,6 +41,78 @@
                 </div>
             </div>
 
+            <div class="row mt-40">
+                <div class="col-lg-12">
+                    <div class="white-box filter_card">
+                        <form class="form-horizontal" action="{{ route('student.add-intake.search') }}" method="post">
+                            @csrf
+                            <div class="row">
+                                <div class="col-lg-8 col-md-6 col-sm-6">
+                                    <div class="main-title mt_0_sm mt_0_md">
+                                        <h3 class="mb-15">Select Criteria</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row row-gap-24">
+                                {{-- Branch --}}
+                                <div class="col-lg-4 mb-15">
+                                    <div class="primary_input">
+                                        <label class="primary_input_label" for="search_branch_id">Branch <span
+                                                class="text-danger">*</span></label>
+                                        <select class="primary_select form-control ajax_select" name="branch_id"
+                                            id="search_branch_id">
+                                            <option value="">Select Branch</option>
+                                            @foreach ($branches ?? [] as $branch)
+                                                <option value="{{ $branch->id }}" {{ (isset($search_branch_id) && $search_branch_id == $branch->id) ? 'selected' : '' }}>{{ $branch->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {{-- Intake --}}
+                                <div class="col-lg-4 mb-15">
+                                    <div class="primary_input">
+                                        <label class="primary_input_label" for="search_intake_id">Intake <span
+                                                class="text-danger">*</span></label>
+                                        <select class="primary_select form-control ajax_select" name="intake_id"
+                                            id="search_intake_id">
+                                            <option value="">Select Intake</option>
+                                            @if(isset($search_intakes))
+                                                @foreach($search_intakes as $intake)
+                                                    <option value="{{ $intake->id }}" {{ (isset($search_intake_id) && $search_intake_id == $intake->id) ? 'selected' : '' }}>{{ $intake->name }}</option>
+                                                @endforeach
+                                            @endif
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {{-- Course --}}
+                                <div class="col-lg-4 mb-15">
+                                    <div class="primary_input">
+                                        <label class="primary_input_label" for="search_course_id">Course <span
+                                                class="text-danger">*</span></label>
+                                        <select class="primary_select form-control ajax_select" name="course_id"
+                                            id="search_course_id">
+                                            <option value="">Select Course</option>
+                                            @if(isset($search_courses))
+                                                @foreach($search_courses as $course)
+                                                    <option value="{{ $course->id }}" {{ (isset($search_course_id) && $search_course_id == $course->id) ? 'selected' : '' }}>{{ $course->name }}</option>
+                                                @endforeach
+                                            @endif
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-lg-12 mt-20 text-right">
+                                    <button type="submit" class="primary-btn small fix-gr-bg">
+                                        <span class="ti-search pr-2"></span> Search
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
             <!-- Student Intake List -->
             <div class="row mt-40">
                 <div class="col-lg-12">
@@ -266,12 +338,12 @@
                                     <label class="primary_input_label" for="modal_status">
                                         Status <span class="text-danger">*</span>
                                     </label>
-                                    <select class="primary_select form-control{{ $errors->has('status') ? ' is-invalid' : '' }}"
+                                    <select  class="primary_select form-control{{ $errors->has('status') ? ' is-invalid' : '' }}"
                                             name="status" id="modal_status" required >
                                         <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>
                                             Pending
                                         </option>
-                                        <option value="assign" {{ old('status') == 'assign' ? 'selected' : '' }}>
+                                        {{-- <option value="assign" {{ old('status') == 'assign' ? 'selected' : '' }}>
                                             Assign
                                         </option>
                                         <option value="completed" {{ old('status') == 'completed' ? 'selected' : '' }}>
@@ -279,7 +351,7 @@
                                         </option>
                                         <option value="dropped" {{ old('status') == 'dropped' ? 'selected' : '' }}>
                                             Dropped
-                                        </option>
+                                        </option> --}}
                                     </select>
                                     @error('status')
                                         <span class="text-danger">{{ $message }}</span>
@@ -507,6 +579,161 @@ $(document).ready(function() {
             }, 1500);
         }, 1000);
     @endif
+
+    // Handle branch change event to load intakes dynamically (Search Form)
+    $('#search_branch_id').on('change', function() {
+        var branchId = $(this).val();
+        var intakeSelect = $('#search_intake_id');
+        var courseSelect = $('#search_course_id');
+
+        if (branchId) {
+            // Show loading state
+            intakeSelect.html('<option value="">Loading intakes...</option>');
+            courseSelect.html('<option value="">Select Course</option>');
+
+            // Make AJAX request to get intakes for selected branch
+            $.ajax({
+                url: '{{ route('student.add-intake.get-intakes', ':branchId') }}'.replace(':branchId', branchId),
+                type: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                success: function(data) {
+                    console.log('Search Intakes response:', data);
+                    var options = '<option value="">Select Intake</option>';
+
+                    if (data.intakes && data.intakes.length > 0) {
+                        data.intakes.forEach(function(intake) {
+                            options += '<option value="' + intake.id + '">' + intake.name + '</option>';
+                        });
+                    } else {
+                        options = '<option value="">No intakes available for this branch</option>';
+                    }
+
+                    intakeSelect.html(options);
+
+                    // Trigger niceSelect update if using niceSelect
+                    if (intakeSelect.hasClass('primary_select')) {
+                        intakeSelect.niceSelect('update');
+                    }
+                    if (courseSelect.hasClass('primary_select')) {
+                        courseSelect.niceSelect('update');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading search intakes:', error);
+                    console.error('XHR response:', xhr.responseText);
+                    intakeSelect.html('<option value="">Error loading intakes</option>');
+                    courseSelect.html('<option value="">Select Course</option>');
+
+                    // Trigger niceSelect update if using niceSelect
+                    if (intakeSelect.hasClass('primary_select')) {
+                        intakeSelect.niceSelect('update');
+                    }
+                    if (courseSelect.hasClass('primary_select')) {
+                        courseSelect.niceSelect('update');
+                    }
+                }
+            });
+        } else {
+            // Reset intake and course dropdowns when no branch is selected
+            intakeSelect.html('<option value="">Select Intake</option>');
+            courseSelect.html('<option value="">Select Course</option>');
+
+            // Trigger niceSelect update if using niceSelect
+            if (intakeSelect.hasClass('primary_select')) {
+                intakeSelect.niceSelect('update');
+            }
+            if (courseSelect.hasClass('primary_select')) {
+                courseSelect.niceSelect('update');
+            }
+        }
+    });
+
+    // Handle intake change event to load courses dynamically (Search Form)
+    $('#search_intake_id').on('change', function() {
+        var intakeId = $(this).val();
+        var courseSelect = $('#search_course_id');
+
+        if (intakeId) {
+            // Show loading state
+            courseSelect.html('<option value="">Loading courses...</option>');
+
+            // Make AJAX request to get courses for selected intake
+            $.ajax({
+                url: '{{ route('student.add-intake.get-courses', ':intakeId') }}'.replace(':intakeId', intakeId),
+                type: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                success: function(data) {
+                    console.log('Search Courses response:', data);
+                    var options = '<option value="">Select Course</option>';
+
+                    if (data.courses && data.courses.length > 0) {
+                        data.courses.forEach(function(course) {
+                            options += '<option value="' + course.id + '">' + course.name + '</option>';
+                        });
+                    } else {
+                        options = '<option value="">No courses available for this intake</option>';
+                    }
+
+                    courseSelect.html(options);
+
+                    // Trigger niceSelect update if using niceSelect
+                    if (courseSelect.hasClass('primary_select')) {
+                        courseSelect.niceSelect('update');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading search courses:', error);
+                    console.error('XHR response:', xhr.responseText);
+                    courseSelect.html('<option value="">Error loading courses</option>');
+
+                    // Trigger niceSelect update if using niceSelect
+                    if (courseSelect.hasClass('primary_select')) {
+                        courseSelect.niceSelect('update');
+                    }
+                }
+            });
+        } else {
+            // Reset course dropdown when no intake is selected
+            courseSelect.html('<option value="">Select Course</option>');
+
+            // Trigger niceSelect update if using niceSelect
+            if (courseSelect.hasClass('primary_select')) {
+                courseSelect.niceSelect('update');
+            }
+        }
+    });
+
+    // Initialize search dropdowns if values are already set (e.g., after a form submission with old input)
+    $(window).on('load', function() {
+        var searchBranchId = $('#search_branch_id').val();
+        var searchIntakeId = $('#search_intake_id').val();
+        var searchCourseId = $('#search_course_id').val();
+
+        if (searchBranchId) {
+            // Trigger change to load intakes
+            $('#search_branch_id').trigger('change');
+            // After intakes load, set the selected intake
+            setTimeout(function() {
+                if (searchIntakeId) {
+                    $('#search_intake_id').val(searchIntakeId).niceSelect('update');
+                    // Trigger change to load courses
+                    $('#search_intake_id').trigger('change');
+                    // After courses load, set the selected course
+                    setTimeout(function() {
+                        if (searchCourseId) {
+                            $('#search_course_id').val(searchCourseId).niceSelect('update');
+                        }
+                    }, 500); // Adjust delay as needed
+                }
+            }, 500); // Adjust delay as needed
+        }
+    });
 });
 </script>
 @endpush

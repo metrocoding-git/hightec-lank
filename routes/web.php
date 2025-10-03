@@ -128,6 +128,11 @@ Route::controller(AddStudentController::class)->prefix('student/student-info')->
     // AJAX routes for dependent dropdowns
     Route::get('get-intakes-by-branch/{branchId}', 'getIntakesByBranch')->name('get-intakes-by-branch');
     Route::get('get-courses-by-intake/{intakeId}', 'getCoursesByIntake')->name('get-courses-by-intake');
+
+    // Search functionality for Student Add Intake
+    Route::post('student-add-intake/search', 'searchStudentIntake')->name('student.add-intake.search');
+    Route::get('student-add-intake/get-intakes/{branchId}', 'getSearchIntakesByBranch')->name('student.add-intake.get-intakes')->withoutMiddleware(['csrf']);
+    Route::get('student-add-intake/get-courses/{intakeId}', 'getSearchCoursesByIntake')->name('student.add-intake.get-courses')->withoutMiddleware(['csrf']);
 });
 
 Route::controller(HomeController::class)->group(callback: function () {

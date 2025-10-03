@@ -31,6 +31,7 @@ class AddStudentController extends Controller
 
     public function store(Request $request)
     {
+        // dd($request);
         $validatedData = $request->validate([
             'branch_id' => 'required|exists:branches,id',
             'admission_number' => 'required|string|unique:students,admission_number',
@@ -560,5 +561,92 @@ class AddStudentController extends Controller
         return response()->json([
             'courses' => $courses
         ]);
+    }
+
+    public function searchStudentIntake(Request $request)
+    {
+        $query = DB::table('student_intakes')
+            ->join('students', 'student_intakes.student_id', '=', 'students.id')
+            ->join('intakes', 'student_intakes.intake_id', '=', 'intakes.id')
+            ->leftJoin('branches', 'intakes.branch_id', '=', 'branches.id')
+            ->select('student_intakes.*', 'students.student_name', 'students.admission_number',
+                     'intakes.name as intake_name', 'branches.name as branch_name');
+
+        if ($request->filled('branch_id')) {
+            $query->where('intakes.branch_id', $request->branch_id);
+        }
+        if ($request->filled('intake_id')) {
+            $query->where('student_intakes.intake_id', $request->intake_id);
+        }
+        if ($request->filled('course_id')) {
+            $query->whereExists(function ($subquery) use ($request) {
+                $subquery->select(DB::raw(1))
+                         ->from('student_courses')
+                         ->whereColumn('student_courses.student_id', 'student_intakes.student_id')
+                         ->where('student_courses.course_id', $request->course_id);
+            });
+        }
+
+        $studentIntakes = $query->get();
+
+        // Get related courses for each intake
+        foreach ($studentIntakes as $intake) {
+            $intake->courses = DB::table('student_courses')
+                ->join('courses', 'student_courses.course_id', '=', 'courses.id')
+                ->where('student_courses.student_id', $intake->student_id)
+                ->whereIn('student_courses.course_id', function($subquery) use ($intake) {
+                    $subquery->select('course_id')
+                          ->from('course_intake')
+                          ->where('intake_id', $intake->intake_id);
+                })
+                ->select('courses.id', 'courses.name', 'courses.code')
+                ->get();
+        }
+
+        $students = Student::all();
+        $branches = Branch::all();
+        $intakes = Intake::with('branch')->get(); // All intakes for the modal
+        $courses = Course::all(); // All courses for the modal
+
+        // Pass search parameters back to the view to retain selected values
+        $search_branch_id = $request->branch_id;
+        $search_intake_id = $request->intake_id;
+        $search_course_id = $request->course_id;
+
+        // Load intakes and courses for the search dropdowns if a branch/intake was selected
+        $search_intakes = collect();
+        $search_courses = collect();
+
+        if ($search_branch_id) {
+            $search_intakes = Intake::where('branch_id', $search_branch_id)->get();
+        }
+        if ($search_intake_id) {
+            $search_courses = DB::table('course_intake')
+                ->join('courses', 'course_intake.course_id', '=', 'courses.id')
+                ->where('course_intake.intake_id', $search_intake_id)
+                ->select('courses.id', 'courses.name', 'courses.code')
+                ->get();
+        }
+
+        return view('pages.student.student-info.student-add-intake',
+            compact('students', 'branches', 'intakes', 'courses', 'studentIntakes',
+                    'search_branch_id', 'search_intake_id', 'search_course_id',
+                    'search_intakes', 'search_courses'));
+    }
+
+    public function getSearchIntakesByBranch($branchId)
+    {
+        $intakes = Intake::where('branch_id', $branchId)->get();
+        return response()->json(['intakes' => $intakes]);
+    }
+
+    public function getSearchCoursesByIntake($intakeId)
+    {
+        $courses = DB::table('course_intake')
+            ->join('courses', 'course_intake.course_id', '=', 'courses.id')
+            ->where('course_intake.intake_id', $intakeId)
+            ->select('courses.id', 'courses.name', 'courses.code')
+            ->get();
+        return response()->json(['courses' => $courses]);
     }
 }

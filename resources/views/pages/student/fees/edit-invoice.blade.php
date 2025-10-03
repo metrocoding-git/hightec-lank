@@ -362,10 +362,10 @@ $(document).ready(function() {
             isValid = false;
         }
 
-        if (!$('#paymentMethodName').val()) {
-            errorMessages.push('Please select payment method');
-            isValid = false;
-        }
+        // if (!$('#paymentMethodName').val()) {
+        //     errorMessages.push('Please select payment method');
+        //     isValid = false;
+        // }
 
         // Check if there are any fee items
         if ($('.allFeesTypes tr').length === 0) {

@@ -45,6 +45,7 @@
 
     <!-- Breadcrumb -->
     <section class="sms-breadcrumb mb-20">
+        <div id="toastContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 11"></div>
         <div class="container-fluid">
             <div class="row justify-content-between">
                 <h1>Course Payment Details</h1>
@@ -340,17 +341,33 @@
             function updatePaymentStatusAndDue() {
                 let coursePrice = parseFloat($('.course_price_input').val()) || 0;
                 let paidAmount = parseFloat($('.paid_amount_input').val()) || 0;
-                let dueAmount = coursePrice - paidAmount;
+                let paymentMethod = $('#paymentMethodName').val();
+                let bankPaidAmount = parseFloat($('#bank_paid_amount').val()) || 0;
 
-                $('.due_amount_display').val(dueAmount.toFixed(2));
+                let effectivePaidAmount = paidAmount;
 
-                if (paidAmount >= coursePrice && coursePrice > 0) {
-                    $('#status').val('full').niceSelect('update');
-                } else if (paidAmount > 0 && paidAmount < coursePrice) {
-                    $('#status').val('partial').niceSelect('update');
+                if (paymentMethod === 'Bank Transfer') {
+                    effectivePaidAmount = bankPaidAmount;
+                    // For bank transfer, if bank paid amount is greater than or equal to course price, set status to full
+                    if (bankPaidAmount >= coursePrice && coursePrice > 0) {
+                        $('#status').val('full').niceSelect('update');
+                    } else if (bankPaidAmount > 0 && bankPaidAmount < coursePrice) {
+                        $('#status').val('partial').niceSelect('update');
+                    } else {
+                        $('#status').val('not').niceSelect('update');
+                    }
                 } else {
-                    $('#status').val('not').niceSelect('update');
+                    if (paidAmount >= coursePrice && coursePrice > 0) {
+                        $('#status').val('full').niceSelect('update');
+                    } else if (paidAmount > 0 && paidAmount < coursePrice) {
+                        $('#status').val('partial').niceSelect('update');
+                    } else {
+                        $('#status').val('not').niceSelect('update');
+                    }
                 }
+
+                let dueAmount = coursePrice - effectivePaidAmount;
+                $('.due_amount_display').val(dueAmount.toFixed(2));
             }
 
             // Event listeners for price and paid amount changes
@@ -375,6 +392,7 @@
                     amountRow.removeClass('d-none');
                     dateRow.removeClass('d-none');
                     uploadRow.removeClass('d-none');
+                    $('#status').val('full').niceSelect('update'); // Set status to full for Bank Transfer
                 } else if (method === 'Invoice') {
                     bankSection.removeClass('d-none');
                     amountRow.addClass('d-none');
@@ -483,6 +501,10 @@
 
                     if (isNaN(bankPaidAmount) || bankPaidAmount <= 0) {
                         toastr.error('Bank Paid Amount is required and must be greater than 0');
+                        return;
+                    }
+                    if (bankPaidAmount < coursePrice) {
+                        toastr.error('Bank Paid Amount must be greater than or equal to Course Price for Full Paid status');
                         return;
                     }
                     if (!bankPaidDate) {
