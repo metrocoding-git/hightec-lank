@@ -60,7 +60,7 @@
             flex-direction: row;
             flex-wrap: nowrap;
             align-items: center;
-            gap: 8px;
+            gap: 15px; /* Increased gap for better spacing */
         }
 
         .video-action-btns li {
@@ -73,8 +73,8 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 32px;
-            height: 32px;
+            width: 40px; /* Increased size */
+            height: 40px; /* Increased size */
             border-radius: 4px;
             background: #f8f9fa;
             color: #495057;
@@ -102,7 +102,7 @@
 
         .single-video-item .vidoe-title {
             color: #ffffff;
-            font-size: 16px;
+            font-size: 18px; /* Slightly larger font size for title */
             font-weight: 500;
             font-family: inherit;
             text-align: center;
@@ -111,7 +111,7 @@
         .video-action-btns ul li a i {
             color: #ffffff;
             transition: 0.4s all ease-in-out;
-            font-size: 15px;
+            font-size: 20px; /* Increased icon size */
         }
 
         .video-action-btns ul li a:hover i {

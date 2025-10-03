@@ -5,30 +5,37 @@
 @push('css')
     <style>
         .content-modal-section-title {
-            font-size: 18px;
-            font-weight: 500;
-            line-height: 1.1;
-            color: inherit;
-            margin-bottom: 10px;
+            font-size: 24px;
+            /* Further increased font size */
+            font-weight: 700;
+            /* Even bolder font weight */
+            line-height: 1.3;
             color: var(--base_color);
+            margin-bottom: 20px;
+            /* Further increased margin */
         }
 
         .content-modal-section-title.sidebar {
-            margin-bottom: 10px;
+            margin-bottom: 20px;
+            /* Further increased margin */
         }
 
         .single-content-modal-info .row {
-            row-gap: 10px;
+            row-gap: 20px;
+            /* Further increased row gap */
         }
 
         .single-content-modal-info .content-type {
             color: var(--base_color);
-            font-size: 14px;
+            font-size: 18px;
+            /* Further increased font size */
         }
 
         ul.content-links li {
-            border-top: 1px solid #dad6d6;
-
+            border-top: 1px solid #d0d0d0;
+            /* Slightly darker border for contrast */
+            padding: 10px 0;
+            /* Further increased vertical padding */
         }
 
         ul.content-links li:first-child {
@@ -36,16 +43,21 @@
         }
 
         ul.content-links li a {
-            color: #828bb2;
-            padding: 5px
+            color: #343a40;
+            /* Even darker text color */
+            padding: 0;
+            font-size: 18px;
+            /* Further increased font size */
         }
 
         .single-content-modal.modal .modal-dialog {
-            max-width: 90%;
+            max-width: 98%;
+            /* Even wider modal */
         }
 
         .single-content-modal.modal .modal-dialog .modal-body .row.content-container {
-            row-gap: 20px;
+            row-gap: 30px;
+            /* Further increased row gap */
         }
 
         li.attached-content-item {
@@ -74,6 +86,61 @@
             background: none;
         }
     </style>
+    <style>
+.single-content-modal-info .detail-item {
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+}
+
+.single-content-modal-info .detail-item:hover {
+    border-left-color: #007bff;
+    background-color: #f8f9fa !important;
+}
+
+.content-modal-section-title h5 {
+    font-size: 1.1rem;
+}
+
+.detail-label strong {
+    font-size: 0.9rem;
+}
+
+.detail-value {
+    font-size: 0.95rem;
+}
+
+.shared-by-card {
+    transition: transform 0.3s ease;
+}
+
+.shared-by-card:hover {
+    transform: translateY(-2px);
+}
+
+.line-height-1-8 {
+    line-height: 1.8;
+}
+
+.border-left {
+    border-left: 1px solid #e9ecef !important;
+}
+
+.font-weight-500 {
+    font-weight: 500;
+}
+
+.font-weight-600 {
+    font-weight: 600;
+}
+
+.text-white-50 {
+    color: rgba(0, 0, 0, 0.5) !important;
+}
+
+.text-white-70 {
+    color: rgba(0, 0, 0, 0.7) !important;
+}
+</style>
 @endpush
 @section('mainContent')
     <section class="sms-breadcrumb mb-20">
@@ -106,10 +173,10 @@
                                     <table id="table_id" class="table Crm_table_active3" cellspacing="0" width="100%">
                                         <thead>
                                             <tr>
-                                                <th>ID</th>
+                                                <th>ID </th>
                                                 <th>TITLE</th>
                                                 <th>ROLE</th>
-                                                <th>INTAKE</th>
+                                                {{-- <th>INTAKE</th> --}}
                                                 <th>SHARE DATE</th>
                                                 <th>VALID UPTO</th>
                                                 <th style="max-width: 150px; ">URL</th>
@@ -160,10 +227,12 @@
                                                     <td>{{ $key + 1 }}</td>
                                                     <td>{{ $sharedContent->title }}</td>
                                                     <td>{{ $roleName }}</td>
-                                                    <td>{{ $intake }}</td>
+                                                    {{-- <td>{{ $intake }}</td> --}}
                                                     <td>{{ $shareDate }}</td>
                                                     <td>{{ $validUpto }}</td>
-                                                    <td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $url }}</td>
+                                                    <td
+                                                        style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                        {{ $url }}</td>
                                                     <td>{{ $description }}</td>
                                                     <td>
                                                         <x-drop-down>
@@ -175,21 +244,24 @@
                                                                 </a>
                                                             @endif --}}
                                                             @if ($sharedContent->url && $sharedContent->url != 'No url')
-                                                                <a class="dropdown-item copyToClipboard" data-clipboard-text="{{ $url }}" href="#">
+                                                                <a class="dropdown-item copyToClipboard"
+                                                                    data-clipboard-text="{{ $url }}"
+                                                                    href="#">
                                                                     @lang('downloadCenter.copy_url')
                                                                 </a>
                                                             @endif
-                                                                <a href="#" class="dropdown-item viewSharedContentBtn" title="@lang('downloadCenter.view_shared_content')"
-                                                                   data-title="{{ $sharedContent->title }}"
-                                                                   data-role="{{ $roleName }}"
-                                                                   data-send_type="{{ $sendType }}"
-                                                                   data-share_date="{{ $shareDate }}"
-                                                                   data-valid_upto="{{ $validUpto }}"
-                                                                   data-url="{{ $url }}"
-                                                                   data-description="{{ $description }}"
-                                                                   data-shared_by="{{ $sharedByNames }}">
-                                                                    @lang('common.view')
-                                                                </a>
+                                                            <a href="#" class="dropdown-item viewSharedContentBtn"
+                                                                title="@lang('downloadCenter.view_shared_content')"
+                                                                data-title="{{ $sharedContent->title }}"
+                                                                data-role="{{ $roleName }}"
+                                                                data-send_type="{{ $sendType }}"
+                                                                data-share_date="{{ $shareDate }}"
+                                                                data-valid_upto="{{ $validUpto }}"
+                                                                data-url="{{ $url }}"
+                                                                data-description="{{ $description }}"
+                                                                data-shared_by="{{ $sharedByNames }}">
+                                                                @lang('common.view')
+                                                            </a>
                                                             <a class="dropdown-item" data-toggle="modal"
                                                                 data-target="#deleteModal{{ $sharedContent->id }}"
                                                                 href="#">
@@ -238,38 +310,159 @@
                                     </table>
                                 </x-table>
                                 <!-- View Shared Content Modal -->
-                                <div class="modal fade admin-query single-content-modal" id="viewSharedContent" tabindex="-1" role="dialog" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered large-modal" role="document">
+                                <div class="modal fade admin-query single-content-modal" id="viewSharedContent"
+                                    tabindex="-1" role="dialog" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
                                         <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h4 class="modal-title" id="view_sc_modal_title">@lang('downloadCenter.view_shared_content')</h4>
-                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>
+                                            <div class="modal-header bg-light">
+                                                <h4 class="modal-title font-weight-600 text-primary"
+                                                    id="view_sc_modal_title">
+                                                    <i class="fas fa-eye mr-2"></i>@lang('downloadCenter.view_shared_content')
+                                                </h4>
+                                                <button type="button" class="close" data-dismiss="modal"
+                                                    aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
                                             </div>
-                                            <div class="modal-body">
+                                            <div class="modal-body p-4">
                                                 <div class="container-fluid">
                                                     <div class="row content-container">
-                                                        <div class="col-lg-8">
+                                                        <!-- Main Content Section -->
+                                                        <div class="col-lg-8 pr-lg-4">
                                                             <div class="single-content-modal-info">
-                                                                <div class="content-modal-section-title"><strong> Details :</strong></div>
-                                                                <ul class="content-links list-unstyled">
-                                                                    <li class="attached-content-item"><strong>@lang('downloadCenter.title'):</strong> <span id="view_sc_title">-</span></li>
-                                                                    <li class="attached-content-item"><strong>@lang('common.role'):</strong> <span id="view_sc_role">-</span></li>
-                                                                    <li class="attached-content-item"><strong>@lang('downloadCenter.send_to'):</strong> <span id="view_sc_send_type">-</span></li>
-                                                                    <li class="attached-content-item"><strong>@lang('downloadCenter.share_date'):</strong> <span id="view_sc_share_date">-</span></li>
-                                                                    <li class="attached-content-item"><strong>@lang('downloadCenter.valid_upto'):</strong> <span id="view_sc_valid_upto">-</span></li>
-                                                                    <li class="attached-content-item"><strong>@lang('downloadCenter.url'):</strong> <a id="view_sc_url" href="#" target="_blank">-</a></li>
-                                                                    <li class="attached-content-item"><strong>@lang('downloadCenter.description'):</strong> <span id="view_sc_description">-</span></li>
-                                                                </ul>
+                                                                <div class="content-modal-section-title mb-3">
+                                                                    <h5
+                                                                        class="text-dark font-weight-600 border-bottom pb-2">
+                                                                        <i
+                                                                            class="fas fa-info-circle mr-2 text-primary"></i>@lang('common.details')
+                                                                    </h5>
+                                                                </div>
+                                                                <div class="content-details-list">
+                                                                    <div
+                                                                        class="detail-item d-flex align-items-center mb-3 p-3 bg-light rounded">
+                                                                        <div class="detail-label flex-shrink-0"
+                                                                            style="width: 140px;">
+                                                                            <strong
+                                                                                class="text-muted">@lang('downloadCenter.title'):</strong>
+                                                                        </div>
+                                                                        <div class="detail-value flex-grow-1">
+                                                                            <span id="view_sc_title"
+                                                                                class="text-dark font-weight-500">-</span>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div
+                                                                        class="detail-item d-flex align-items-center mb-3 p-3 bg-light rounded">
+                                                                        <div class="detail-label flex-shrink-0"
+                                                                            style="width: 140px;">
+                                                                            <strong
+                                                                                class="text-muted">@lang('common.role'):</strong>
+                                                                        </div>
+                                                                        <div class="detail-value flex-grow-1">
+                                                                            <span id="view_sc_role"
+                                                                                class="text-dark font-weight-500">-</span>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div
+                                                                        class="detail-item d-flex align-items-center mb-3 p-3 bg-light rounded">
+                                                                        <div class="detail-label flex-shrink-0"
+                                                                            style="width: 140px;">
+                                                                            <strong
+                                                                                class="text-muted">@lang('downloadCenter.send_to'):</strong>
+                                                                        </div>
+                                                                        <div class="detail-value flex-grow-1">
+                                                                            <span id="view_sc_send_type"
+                                                                                class="text-dark font-weight-500">-</span>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div
+                                                                        class="detail-item d-flex align-items-center mb-3 p-3 bg-light rounded">
+                                                                        <div class="detail-label flex-shrink-0"
+                                                                            style="width: 140px;">
+                                                                            <strong
+                                                                                class="text-muted">@lang('downloadCenter.share_date'):</strong>
+                                                                        </div>
+                                                                        <div class="detail-value flex-grow-1">
+                                                                            <span id="view_sc_share_date"
+                                                                                class="text-dark font-weight-500">-</span>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div
+                                                                        class="detail-item d-flex align-items-center mb-3 p-3 bg-light rounded">
+                                                                        <div class="detail-label flex-shrink-0"
+                                                                            style="width: 140px;">
+                                                                            <strong
+                                                                                class="text-muted">@lang('downloadCenter.valid_upto'):</strong>
+                                                                        </div>
+                                                                        <div class="detail-value flex-grow-1">
+                                                                            <span id="view_sc_valid_upto"
+                                                                                class="text-dark font-weight-500">-</span>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div
+                                                                        class="detail-item d-flex align-items-center mb-3 p-3 bg-light rounded">
+                                                                        <div class="detail-label flex-shrink-0"
+                                                                            style="width: 140px;">
+                                                                            <strong
+                                                                                class="text-muted">@lang('downloadCenter.url'):</strong>
+                                                                        </div>
+                                                                        <div class="detail-value flex-grow-1">
+                                                                            <a id="view_sc_url" href="#"
+                                                                                target="_blank"
+                                                                                class="text-primary text-decoration-none font-weight-500">
+                                                                                <i
+                                                                                    class="fas fa-external-link-alt mr-1"></i>View
+                                                                                Link
+                                                                            </a>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div class="detail-item mb-3">
+                                                                        <div class="detail-label mb-2">
+                                                                            <strong
+                                                                                class="text-muted">@lang('downloadCenter.description'):</strong>
+                                                                        </div>
+                                                                        <div class="detail-value p-3 bg-light rounded">
+                                                                            <span id="view_sc_description"
+                                                                                class="text-dark line-height-1-8">-</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                        <div class="col-lg-4">
-                                                            <div class="">@lang('downloadCenter.shared_by')</div>
+
+                                                        <!-- Sidebar Section -->
+                                                        <div class="col-lg-4 border-left pl-lg-4">
+                                                            <div class="content-modal-section-title mb-3">
+                                                                <h5 class="text-dark font-weight-600 border-bottom pb-2">
+                                                                    <i
+                                                                        class="fas fa-user-shield mr-2 text-primary"></i>@lang('downloadCenter.shared_by')
+                                                                </h5>
+                                                            </div>
                                                             <div class="single-content-modal-info">
-                                                                <p id="view_sc_shared_by" class="mb-0">-</p>
+                                                                <div
+                                                                    class="shared-by-card text-center p-4 bg-primary text-white rounded">
+                                                                    <div class="shared-avatar mb-3">
+                                                                        <i
+                                                                            class="fas fa-user-circle fa-3x text-white-50"></i>
+                                                                    </div>
+                                                                    <p id="view_sc_shared_by"
+                                                                        class="mb-0 font-weight-500 font-size-16 " style="color: #ffffff">-</p>
+                                                                    <small class="text-white-70">Shared By</small>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
+                                            </div>
+                                            <div class="modal-footer bg-light">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                                    <i class="fas fa-times mr-2"></i>Close
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -293,7 +486,7 @@
         var Clipboard = new ClipboardJS('.copyToClipboard');
     </script>
     <script>
-         $('#table_id').DataTable({
+        $('#table_id').DataTable({
             dom: 'Bfrtip',
             buttons: [
                 'copy', 'csv', 'excel', 'pdf', 'print'
@@ -309,16 +502,16 @@
         });
 
         // Populate and show View modal for Shared Content
-        $(document).on('click', '.viewSharedContentBtn', function(e){
+        $(document).on('click', '.viewSharedContentBtn', function(e) {
             e.preventDefault();
-            const title       = $(this).data('title') || '-';
-            const role        = $(this).data('role') || '-';
-            const sendType    = $(this).data('send_type') || '-';
-            const shareDate   = $(this).data('share_date') || '-';
-            const validUpto   = $(this).data('valid_upto') || '-';
-            const url         = $(this).data('url') || '';
+            const title = $(this).data('title') || '-';
+            const role = $(this).data('role') || '-';
+            const sendType = $(this).data('send_type') || '-';
+            const shareDate = $(this).data('share_date') || '-';
+            const validUpto = $(this).data('valid_upto') || '-';
+            const url = $(this).data('url') || '';
             const description = $(this).data('description') || '-';
-            const sharedBy    = $(this).data('shared_by') || '-';
+            const sharedBy = $(this).data('shared_by') || '-';
 
             $('#view_sc_modal_title').text(title);
             $('#view_sc_title').text(title);
@@ -337,5 +530,4 @@
             $('#viewSharedContent').modal('show');
         });
     </script>
-
 @endpush

@@ -56,7 +56,7 @@ class AddStudentController extends Controller
             'guardians_phone' => 'nullable|string|max:20',
             'guardians_occupation' => 'nullable|string|max:255',
             'guardians_address' => 'nullable|string',
-            'national_id_number' => 'nullable|string|max:12|regex:/^[0-9]*$/',
+            'national_id_number' => 'required|string|max:12|regex:/^[0-9]*$/',
             'additional_notes' => 'nullable|string',
             'document_title_1' => 'nullable|string|max:255',
             'document_file_1' => 'nullable|file|max:2048',
