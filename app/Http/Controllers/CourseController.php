@@ -20,12 +20,17 @@ class CourseController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'required|string|unique:courses,code',
             'price' => 'required|numeric',
             'description' => 'nullable|string',
+            'duration' => 'nullable|string',
         ]);
 
-        Course::create($request->all());
+        $data = $request->all();
+        if (!isset($data['code']) || empty($data['code'])) {
+            $data['code'] = 'co-' . strtoupper(uniqid()); // Generate a unique code
+        }
+
+        Course::create($data);
 
         return redirect()->back()->with('message-success', 'Course added successfully!');
     }
@@ -34,13 +39,17 @@ class CourseController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'required|string|unique:courses,code,' . $id,
             'price' => 'required|numeric',
             'description' => 'nullable|string',
+            'duration' => 'nullable|string',
         ]);
 
         $course = Course::findOrFail($id);
-        $course->update($request->all());
+        $data = $request->all();
+        if (!isset($data['code']) || empty($data['code'])) {
+            $data['code'] = 'co-' . strtoupper(uniqid()); // Generate a unique code
+        }
+        $course->update($data);
 
         return redirect()->route('course.index')->with('message-success', 'Course updated successfully!');
     }

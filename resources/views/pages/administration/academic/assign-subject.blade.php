@@ -240,6 +240,9 @@
                                                             '">' .
                                                             __('common.delete') .
                                                             '</a>',
+                                                            '<a class="dropdown-item copy-btn" href="#" data-intake-id="' . ($assign[0]->intake->id ?? '') . '" data-course-id="' . ($assign[0]->course->id ?? '') . '" data-subject-ids="' . htmlspecialchars(json_encode($assign->pluck('subject.id')->toArray())) . '">' .
+                                                            __('common.copy') .
+                                                            '</a>',
                                                         ];
                                                     @endphp
                                                     <x-drop-down-action-component :routeList="$routeList" />
@@ -364,6 +367,40 @@
                     courseSelect.niceSelect('update');
                 }
             }
+        });
+
+        // Handle copy button click
+        $(document).on('click', '.copy-btn', function(e) {
+            e.preventDefault();
+
+            var intakeId = $(this).data('intake-id');
+            var courseId = $(this).data('course-id');
+            var subjectIds = $(this).data('subject-ids');
+
+            // Set intake
+            $('#intake-select').val(intakeId);
+            $('#intake-select').niceSelect('update');
+
+            // Trigger change event on intake-select to load courses for the copied intake
+            $('#intake-select').trigger('change');
+
+            // After courses are loaded (asynchronously), set the course and subjects
+            // A small delay might be needed to ensure AJAX completes and options are populated
+            setTimeout(function() {
+                // Set course
+                $('#course-select').val(courseId);
+                $('#course-select').niceSelect('update');
+
+                // Uncheck all subjects first
+                $('input[name="subjects[]"]').prop('checked', false);
+
+                // Check the subjects
+                if (subjectIds && subjectIds.length > 0) {
+                    subjectIds.forEach(function(subjectId) {
+                        $('#sub' + subjectId).prop('checked', true);
+                    });
+                }
+            }, 500); // Adjust delay as needed
         });
 
     </script>

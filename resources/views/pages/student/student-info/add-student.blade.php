@@ -17,6 +17,20 @@
             @endforeach
         </div>
     @endif
+    <style>
+        #video,
+        #canvas {
+            border: 1px solid #ccc;
+            background-color: #eee;
+            margin-top: 10px;
+        }
+
+        #imagePreview {
+            border: 1px solid #ccc;
+            background-color: #eee;
+            margin-top: 10px;
+        }
+    </style>
     <section class="sms-breadcrumb mb-20 up_breadcrumb">
         <div class="container-fluid">
             <div class="row justify-content-between">
@@ -233,7 +247,7 @@
                                                                                             type="date"
                                                                                             name="admission_date"
                                                                                             value="{{ old('admission_date') ?: \Carbon\Carbon::today()->format('Y-m-d') }}"
-                                                                                            autocomplete="off">
+                                                                                            autocomplete="off" readonly>
                                                                                     </div>
                                                                                 </div>
                                                                                 <button class="btn-date"
@@ -408,8 +422,21 @@
                                                                     </div>
                                                                 </div>
 
-                                                                <div class="col-lg-6 mt-4">
+                                                                {{-- Age Display --}}
+                                                                <div class="col-lg-6 mt-2">
                                                                     <div class="primary_input">
+                                                                        <label class="primary_input_label"
+                                                                            for="age_display">Age</label>
+                                                                        <input class="primary_input_field form-control"
+                                                                            type="text" id="age_display" readonly>
+                                                                        <input type="hidden" name="stu_age" id="stu_age_hidden">
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-lg-6 mt-2">
+                                                                    <div class="primary_input">
+                                                                        <label class="primary_input_label"
+                                                                            for="student_photo">Photo</label>
                                                                         <div class="primary_file_uploader">
                                                                             <input
                                                                                 class="primary_input_field form-control{{ $errors->has('photo') ? ' is-invalid' : '' }}"
@@ -419,10 +446,12 @@
                                                                             <button class="" type="button">
                                                                                 <label class="primary-btn small fix-gr-bg"
                                                                                     for="addStudentImage">{{ __('common.browse') }}</label>
+                                                        
                                                                                 <input type="file" class="d-none"
                                                                                     name="photo" id="addStudentImage"
                                                                                     accept="image/*">
                                                                             </button>
+                                                                            
                                                                         </div>
                                                                         <!-- Image preview container -->
                                                                         <div id="imagePreviewContainer" class="mt-2"
@@ -439,7 +468,36 @@
                                                                     @endif
                                                                 </div>
 
-
+                                                                <div class="col-lg-12 mt-4">
+                                                                    <div class="primary_input">
+                                                                        <label class="primary_input_label"
+                                                                            for="">Capture Photo</label>
+                                                                        <div class="d-flex flex-column align-items-center">
+                                                                            <video id="video" width="320"
+                                                                                height="240" autoplay
+                                                                                style="display: none;"></video>
+                                                                            <canvas id="canvas" width="320"
+                                                                                height="240"
+                                                                                style="display: none;"></canvas>
+                                                                            <div class="mt-2">
+                                                                                <button type="button"
+                                                                                    class="primary-btn small fix-gr-bg"
+                                                                                    id="startCameraButton">Start
+                                                                                    Camera</button>
+                                                                                <button type="button"
+                                                                                    class="primary-btn small fix-gr-bg"
+                                                                                    id="captureButton"
+                                                                                    style="display: none;">Capture
+                                                                                    Photo</button>
+                                                                                <button type="button"
+                                                                                    class="primary-btn small fix-gr-bg"
+                                                                                    id="saveCapturedButton"
+                                                                                    style="display: none;">Save
+                                                                                    Photo</button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
 
                                                                 <div class="col-md-12 mt-15">
                                                                     <img class="d-none previewImageSize" src=""
@@ -463,7 +521,7 @@
                                                                         <label class="primary_input_label"
                                                                             for="">@lang('common.email_address')
 
-                                                                            <span class="text-danger"> *</span>
+                                                                            <span class="text-danger"> </span>
 
                                                                         </label>
                                                                         <input oninput="emailCheck(this)"
@@ -484,7 +542,7 @@
                                                                 <div class="col-lg-6 mt-4">
                                                                     <div class="primary_input ">
                                                                         <label class="primary_input_label"
-                                                                            for="">@lang('student.phone_number')
+                                                                            for="">@lang('student.phone_number') 1
 
                                                                             <span class="text-danger"> *</span>
 
@@ -501,6 +559,25 @@
                                                                         @if ($errors->has('phone_number'))
                                                                             <span class="text-danger">
                                                                                 {{ $errors->first('phone_number') }}
+                                                                            </span>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+
+                                                                {{-- Extra Phone Number --}}
+                                                                <div class="col-lg-6 mt-4">
+                                                                    <div class="primary_input ">
+                                                                        <label class="primary_input_label"
+                                                                            for="">Phone Number 2 (optional)
+                                                                        </label>
+                                                                        <input oninput="phoneCheck(this)"
+                                                                            class="primary_input_field phone_number form-control{{ $errors->has('phone_number_2') ? ' is-invalid' : '' }}"
+                                                                            type="tel" name="phone_number_2"
+                                                                            id="phone_number_2"
+                                                                            value="{{ old('phone_number_2', isset($student) ? $student->phone_number_2 : '') }}">
+                                                                        @if ($errors->has('phone_number_2'))
+                                                                            <span class="text-danger">
+                                                                                {{ $errors->first('phone_number_2') }}
                                                                             </span>
                                                                         @endif
                                                                     </div>
@@ -533,7 +610,7 @@
                                                                     <div class="row">
 
 
-                                                                        <div class="col-lg-6 mt-4">
+                                                                        <div class="col-lg-6 mt-4" hidden>
                                                                             <div class="primary_input ">
                                                                                 <label class="primary_input_label"
                                                                                     for="">@lang('student.current_address')
@@ -581,7 +658,7 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div class="col-lg-6">
+                                                    {{-- <div class="col-lg-6" hidden>
                                                         <div class="form-section">
                                                             <div class="row">
                                                                 <div class="col-lg-12">
@@ -663,7 +740,7 @@
 
                                                             </div>
                                                         </div>
-                                                    </div>
+                                                    </div> --}}
                                                 </div>
                                             </div>
                                             <div role="tabpanel" class="tab-pane fade" id="parents_and_guardian_info">
@@ -679,7 +756,7 @@
                                                                                 value="">
 
                                                                         </div>
-                                                                        <div class="col-lg-5">
+                                                                        {{-- <div class="col-lg-5">
                                                                             <button
                                                                                 class="primary-btn-small-input primary-btn small fix-gr-bg"
                                                                                 type="button" data-toggle="modal"
@@ -687,7 +764,7 @@
                                                                                 <span class="ti-plus pr-2"></span>
                                                                                 @lang('student.add_parents')
                                                                             </button>
-                                                                        </div>
+                                                                        </div> --}}
                                                                     </div>
 
                                                                 </div>
@@ -696,165 +773,7 @@
                                                         </div>
                                                     </div>
 
-                                                    <div>
-                                                        <input type="hidden" name="staff_parent" id="staff_parent">
-                                                        <!-- Start Sibling Add Modal -->
-                                                        <div class="modal fade admin-query" id="editStudent">
-                                                            <div class="modal-dialog small-modal modal-dialog-centered">
-                                                                <div class="modal-content">
-                                                                    <div class="modal-header">
-                                                                        <h4 class="modal-title">
-                                                                            @lang('student.select_sibling')
-                                                                        </h4>
-                                                                        <button type="button" class="close"
-                                                                            data-dismiss="modal">&times;</button>
-                                                                    </div>
 
-                                                                    <div class="modal-body">
-                                                                        <div class="container-fluid">
-                                                                            <form action="">
-
-                                                                                <div class="row mt-15" id="siblingParent">
-                                                                                    <div class="col-lg-12">
-
-                                                                                        <div class="row">
-                                                                                            <div class="col-lg-12 sibling_required_error"
-                                                                                                id="sibling_required_error">
-
-                                                                                            </div>
-                                                                                        </div>
-                                                                                        <div class="row mt-15">
-                                                                                            <div class="col-lg-12">
-                                                                                                <label
-                                                                                                    class="primary_input_label">Intake
-                                                                                                    <span
-                                                                                                        class="text-danger">*</span></label>
-                                                                                                <select
-                                                                                                    class="primary_select form-control @error('intake_id') is-invalid @enderror"
-                                                                                                    name="intake_id">
-                                                                                                    <option value="">
-                                                                                                        Select Intake *
-                                                                                                    </option>
-                                                                                                    @foreach ($intakes as $intake)
-                                                                                                        <option
-                                                                                                            value="{{ $intake->id }}"
-                                                                                                            {{ old('intake_id', $topic->intake_id ?? '') == $intake->id ? 'selected' : '' }}>
-                                                                                                            {{ $intake->name }}
-                                                                                                        </option>
-                                                                                                    @endforeach
-                                                                                                </select>
-                                                                                            </div>
-                                                                                        </div>
-
-                                                                                        <div class="row mt-15">
-                                                                                            <div class="col-lg-12"
-                                                                                                id="sibling_section_div">
-                                                                                                <label
-                                                                                                    class="primary_input_label"
-                                                                                                    for="branch">
-                                                                                                    @lang('common.branch')
-                                                                                                    <span
-                                                                                                        class="text-danger">*</span>
-                                                                                                </label>
-                                                                                                <select
-                                                                                                    class="primary_select"
-                                                                                                    name="branch"
-                                                                                                    id="branch">
-                                                                                                    <option value="">
-                                                                                                        Select Branch
-                                                                                                    </option>
-                                                                                                    @foreach ($branches as $branch)
-                                                                                                        <option
-                                                                                                            value="{{ $branch->id }}">
-                                                                                                            {{ $branch->name }}
-                                                                                                        </option>
-                                                                                                    @endforeach
-                                                                                                </select>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                        <div class="row mt-15">
-                                                                                            <div class="col-lg-12"
-                                                                                                id="sibling_name_div">
-                                                                                                <label
-                                                                                                    for="primary_input_label">@lang('student.sibling')
-                                                                                                    <span
-                                                                                                        class="text-danger">
-                                                                                                        *</span></label>
-                                                                                                <select
-                                                                                                    class="primary_select"
-                                                                                                    name="select_sibling_name"
-                                                                                                    id="select_sibling_name">
-                                                                                                    <option
-                                                                                                        data-display="@lang('student.sibling') *"
-                                                                                                        value="">
-                                                                                                        @lang('student.sibling')
-                                                                                                        *
-                                                                                                    </option>
-                                                                                                </select>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
-
-                                                                                <div class="row mt-15 d-none"
-                                                                                    id="staffParent">
-                                                                                    <div class="col-lg-12">
-                                                                                        <div class="row">
-                                                                                            <div class="col-lg-12 sibling_required_error"
-                                                                                                id="sibling_required_error">
-
-                                                                                            </div>
-                                                                                        </div>
-                                                                                        <div class="row">
-                                                                                            <div class="col-lg-12"
-                                                                                                id="staff_class_div">
-                                                                                                <select
-                                                                                                    class="primary_select"
-                                                                                                    id="select_staff_parent">
-                                                                                                    <option
-                                                                                                        data-display="@lang('hr.select_staff') *"
-                                                                                                        value="">
-                                                                                                        @lang('hr.select_staff')
-                                                                                                        *
-                                                                                                    </option>
-                                                                                                    option
-                                                                                                    value="1">
-                                                                                                    1
-                                                                                                    </option>
-                                                                                                    <option value="2">
-                                                                                                        2
-                                                                                                    </option>
-
-                                                                                                </select>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
-                                                                                <div class="row">
-                                                                                    <div
-                                                                                        class="col-lg-12 text-center mt-40">
-                                                                                        <div
-                                                                                            class="mt-40 d-flex justify-content-between">
-                                                                                            <button type="button"
-                                                                                                class="primary-btn tr-bg"
-                                                                                                data-dismiss="modal">@lang('common.cancel')</button>
-
-                                                                                            <button
-                                                                                                class="primary-btn fix-gr-bg"
-                                                                                                id="save_button_parent"
-                                                                                                data-dismiss="modal"
-                                                                                                type="button">@lang('common.save_information')</button>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </form>
-                                                                        </div>
-                                                                    </div>
-
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
 
                                                     <div class="col-lg-12 guardian_section">
                                                         <div class="form-section">
@@ -934,7 +853,7 @@
                                                                             for="">@lang('student.relation_with_guardian')
 
                                                                             <span class="text-danger">
-                                                                                *</span>
+                                                                            </span>
 
                                                                         </label>
                                                                         <input class="primary_input_field read-only-input"
@@ -960,7 +879,7 @@
                                                                             for="">@lang('student.guardian_email')
 
                                                                             <span class="text-danger">
-                                                                                *</span>
+                                                                            </span>
 
                                                                         </label>
                                                                         <input oninput="emailCheck(this)"
@@ -1017,7 +936,7 @@
                                                                             for="">@lang('student.guardian_phone')
 
                                                                             <span class="text-danger">
-                                                                                *</span>
+                                                                            </span>
 
                                                                         </label>
                                                                         <input
@@ -1041,7 +960,7 @@
                                                                             for="">@lang('student.guardian_occupation')
 
                                                                             <span class="text-danger">
-                                                                                *</span>
+                                                                            </span>
 
                                                                         </label>
                                                                         <input
@@ -1065,7 +984,7 @@
                                                                             for="">@lang('student.guardian_address')
 
                                                                             <span class="text-danger">
-                                                                                *</span>
+                                                                            </span>
 
                                                                         </label>
                                                                         <textarea class="primary_input_field form-control{{ $errors->has('guardians_address') ? ' is-invalid' : '' }}"
@@ -1485,8 +1404,9 @@
                     if (filename.indexOf('\\') === 0 || filename.indexOf('/') === 0) {
                         filename = filename.substring(1);
                     }
-                    $(placeholder).attr('placeholder', '');
-                    $(placeholder).attr('placeholder', filename);
+                    $(placeholder).val(filename); // Changed from .attr('placeholder', filename) to .val(filename)
+                } else {
+                    $(placeholder).val(''); // Clear the value if no file is selected
                 }
             }
             $(document).on('change', '.phone_number', function() {
@@ -1550,7 +1470,11 @@
         })
         $(document).on('change', '#addStudentImage', function(event) {
             $('#studentImageShow').removeClass('d-none');
-            getFileName($(this).val(), '#placeholderPhoto');
+            if (this.files && this.files[0]) {
+                placeholderPhotoInput.value = this.files[0].name; // Directly set the filename
+            } else {
+                placeholderPhotoInput.value = ''; // Clear if no file selected
+            }
             imageChangeWithFile($(this)[0], '#studentImageShow');
         });
         $(document).on('change', '#addFatherImage', function(event) {
@@ -1567,6 +1491,127 @@
             $('#guardianImageShow').removeClass('d-none');
             getFileName($(this).val(), '#placeholderGuardiansName');
             imageChangeWithFile($(this)[0], '#guardianImageShow');
+        });
+
+        // Calculate age when date of birth changes
+        $(document).on('change', '#date_of_birth', function() {
+            let dob = $(this).val();
+            if (dob) {
+                let birthDate = new Date(dob);
+                let today = new Date();
+                let years = today.getFullYear() - birthDate.getFullYear();
+                let months = today.getMonth() - birthDate.getMonth();
+
+                if (months < 0 || (months === 0 && today.getDate() < birthDate.getDate())) {
+                    years--;
+                    months += 12;
+                }
+
+                $('#age_display').val(years + ' years, ' + months + ' months');
+                $('#stu_age_hidden').val(years); // Set the hidden input for stu_age
+            } else {
+                $('#age_display').val('');
+                $('#stu_age_hidden').val('');
+            }
+        });
+
+        // Trigger age calculation on page load if date of birth is already set
+        $('#date_of_birth').trigger('change');
+
+        // Camera and photo capture functionality
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const startCameraButton = document.getElementById('startCameraButton');
+        const captureButton = document.getElementById('captureButton');
+        const saveCapturedButton = document.getElementById('saveCapturedButton');
+        const imagePreview = document.getElementById('imagePreview');
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        const addStudentImageInput = document.getElementById('addStudentImage');
+        const placeholderPhotoInput = document.getElementById('placeholderPhoto');
+
+        let stream;
+
+        startCameraButton.addEventListener('click', async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: true
+                });
+                video.srcObject = stream;
+                video.style.display = 'block';
+                canvas.style.display = 'none';
+                startCameraButton.style.display = 'none';
+                captureButton.style.display = 'inline-block';
+                saveCapturedButton.style.display = 'none';
+                imagePreviewContainer.style.display = 'none';
+                addStudentImageInput.value = ''; // Clear any previously selected file
+                placeholderPhotoInput.value = ''; // Clear placeholder
+            } catch (err) {
+                console.error("Error accessing camera: ", err);
+                alert("Could not access camera. Please ensure you have a camera and have granted permission.");
+            }
+        });
+
+        captureButton.addEventListener('click', () => {
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            video.style.display = 'none';
+            canvas.style.display = 'block';
+            captureButton.style.display = 'none';
+            saveCapturedButton.style.display = 'inline-block';
+            startCameraButton.style.display = 'inline-block'; // Allow restarting camera
+        });
+
+        saveCapturedButton.addEventListener('click', () => {
+            const dataURL = canvas.toDataURL('image/png');
+
+            // Display the captured image in studentImageShow
+            $('#studentImageShow').attr('src', dataURL).removeClass('d-none');
+            imagePreviewContainer.style.display = 'none'; // Hide the imagePreviewContainer
+
+            // Update the placeholder input with the filename
+            placeholderPhotoInput.value = 'captured_photo.png';
+
+            // Convert dataURL to a File object and assign to the file input
+            fetch(dataURL)
+                .then(res => res.blob())
+                .then(blob => {
+                    const file = new File([blob], 'captured_photo.png', {
+                        type: 'image/png'
+                    });
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    addStudentImageInput.files = dataTransfer.files;
+                });
+
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            video.style.display = 'none';
+            canvas.style.display = 'none';
+            saveCapturedButton.style.display = 'none';
+            startCameraButton.style.display = 'inline-block';
+        });
+
+        // Handle file input change for browsing photos
+        addStudentImageInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#studentImageShow').attr('src', e.target.result).removeClass('d-none');
+                    imagePreviewContainer.style.display = 'none'; // Hide the imagePreviewContainer
+                    video.style.display = 'none';
+                    canvas.style.display = 'none';
+                    startCameraButton.style.display = 'inline-block';
+                    captureButton.style.display = 'none';
+                    saveCapturedButton.style.display = 'none';
+                    if (stream) {
+                        stream.getTracks().forEach(track => track.stop());
+                    }
+                };
+                reader.readAsDataURL(this.files[0]);
+            } else {
+                $('#studentImageShow').addClass('d-none').attr('src', ''); // Clear image if no file selected
+                imagePreviewContainer.style.display = 'none';
+            }
         });
     </script>
 @endsection
