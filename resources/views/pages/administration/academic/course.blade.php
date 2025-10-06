@@ -91,7 +91,7 @@
                                         </div>
 
                                         {{-- Course Code --}}
-                                        <div class="row mt-20">
+                                        <div class="row mt-20" hidden>
                                             <div class="col-lg-12">
                                                 <div class="primary_input">
                                                     <label class="primary_input_label" for="code">Course Code
@@ -123,6 +123,26 @@
                                                     @if ($errors->has('price'))
                                                         <span class="invalid-feedback" role="alert">
                                                             <strong>{{ $errors->first('price') }}</strong>
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {{-- Course Duration --}}
+                                        <div class="row mt-20">
+                                            <div class="col-lg-12">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label" for="duration">Course Duration</label>
+                                                    <select name="duration" id="duration" class="primary_select form-control{{ $errors->has('duration') ? ' is-invalid' : '' }}">
+                                                        <option value="">Select Duration</option>
+                                                        <option value="2 weeks" {{ old('duration', $course->duration ?? '') == '2 weeks' ? 'selected' : '' }}>2 Weeks</option>
+                                                        <option value="1 month" {{ old('duration', $course->duration ?? '') == '1 month' ? 'selected' : '' }}>1 Month</option>
+                                                        <option value="2 months" {{ old('duration', $course->duration ?? '') == '2 months' ? 'selected' : '' }}>2 Months</option>
+                                                    </select>
+                                                    @if ($errors->has('duration'))
+                                                        <span class="invalid-feedback" role="alert">
+                                                            <strong>{{ $errors->first('duration') }}</strong>
                                                         </span>
                                                     @endif
                                                 </div>
@@ -179,7 +199,7 @@
                                         <tr>
                                             <th> @lang('common.sl')</th>
                                             <th> Courses </th>
-                                            <th>Courses Code</th>
+                                            {{-- <th>Courses Code</th> --}}
                                             <th>Courses Price</th>
                                             <th>Courses description</th>
                                             <th>@lang('common.action')</th>
@@ -190,7 +210,7 @@
                                             <tr>
                                                 <td>{{ $key + 1 }}</td>
                                                 <td>{{ $course->name }}</td>
-                                                <td><a href="#">{{ $course->code }}</a></td>
+                                                {{-- <td><a href="#">{{ $course->code }}</a></td> --}}
                                                 <td>Rs.{{ number_format($course->price, 2) }}</td>
                                                 <td>{{ $course->description ?? '-' }}</td>
                                                 <td valign="top">
