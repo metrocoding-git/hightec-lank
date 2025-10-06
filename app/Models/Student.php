@@ -48,7 +48,9 @@ class Student extends Model
         'previous_institute_details',
         'dormitory_id',
         'sibling_id',
-        'is_active'
+        'is_active',
+        'phone_number_2',
+        'stu_age',
     ];
 
     public function scopeActive(Builder $query)
