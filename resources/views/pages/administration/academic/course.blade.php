@@ -118,7 +118,7 @@
                                                     <input
                                                         class="primary_input_field form-control{{ $errors->has('price') ? ' is-invalid' : '' }}"
                                                         type="number" name="price" id="price"
-                                                        value="{{ old('price', isset($course->price) ? number_format($course->price, 0, '.', '') : '') }}"
+                                                        value="{{ old('price', $course->price ?? '') }}"
                                                         autocomplete="off">
                                                     @if ($errors->has('price'))
                                                         <span class="invalid-feedback" role="alert">

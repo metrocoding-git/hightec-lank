@@ -42,7 +42,7 @@ class AddStudentController extends Controller
             'last_name' => 'required|string|max:255',
             'date_of_birth' => 'nullable|date',
             'photo' => 'nullable|image|max:2048',
-            'email_address' => 'required|email|max:255|unique:students,email_address',
+            'email_address' => 'nullable|email|max:255|unique:students,email_address',
            'phone_number' => 'required|numeric|max_digits:10|unique:students,phone_number',
 
             'current_address' => 'nullable|string',
@@ -129,7 +129,7 @@ class AddStudentController extends Controller
             'last_name' => 'required|string|max:255',
             'date_of_birth' => 'nullable|date',
             'photo' => 'nullable|image|max:2048',
-            'email_address' => 'required|email|max:255', //need to add ignore rule for this. Dont have auth access yet
+            'email_address' => 'nullable|email|max:255', //need to add ignore rule for this. Dont have auth access yet
             'phone_number' => 'nullable|string|max:20', //need to add ignore rule for this. Dont have auth access yet
             'current_address' => 'nullable|string',
             'permanent_address' => 'nullable|string',

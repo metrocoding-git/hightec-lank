@@ -233,7 +233,7 @@
                                                                                             type="date"
                                                                                             name="admission_date"
                                                                                             value="{{ old('admission_date') ?: \Carbon\Carbon::today()->format('Y-m-d') }}"
-                                                                                            autocomplete="off">
+                                                                                            autocomplete="off" readonly>
                                                                                     </div>
                                                                                 </div>
                                                                                 <button class="btn-date"
