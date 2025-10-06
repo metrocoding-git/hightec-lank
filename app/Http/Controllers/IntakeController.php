@@ -26,7 +26,7 @@ class IntakeController extends Controller
             'courses' => 'required|array',
             'courses.*' => 'exists:courses,id',
             'course_start_dates.*' => 'required|date',
-            'course_end_dates.*' => 'required|date|after_or_equal:course_start_dates.*',
+          
         ]);
 
         $intake = Intake::create([
@@ -87,7 +87,7 @@ class IntakeController extends Controller
             'courses' => 'required|array',
             'courses.*' => 'exists:courses,id',
             'course_start_dates.*' => 'required|date',
-            'course_end_dates.*' => 'required|date|after_or_equal:course_start_dates.*',
+           
         ]);
 
         $intake = Intake::findOrFail($id);

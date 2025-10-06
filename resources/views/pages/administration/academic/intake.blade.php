@@ -120,7 +120,7 @@
                                                                         value="{{ old('course_start_dates.' . $course->id, isset($courseIntakes[$course->id]) ? $courseIntakes[$course->id]->start_date : date('Y-m-d')) }}">
                                                                 </div>
                                                             </div>
-                                                            <div class="col-md-6">
+                                                            <div class="col-md-6" hidden>
                                                                 <div class="primary_input">
                                                                     <label class="primary_input_label">End Date</label>
                                                                     <input type="date" name="course_end_dates[{{ $course->id }}]"
