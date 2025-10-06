@@ -240,6 +240,11 @@
                                                             '">' .
                                                             __('common.delete') .
                                                             '</a>',
+                                                            '<a class="dropdown-item" data-toggle="modal" data-target="#copyClassModal' .
+                                                            $assign[0]->id .
+                                                            '">' .
+                                                            __('common.copy') .
+                                                            '</a>',
                                                         ];
                                                     @endphp
                                                     <x-drop-down-action-component :routeList="$routeList" />
