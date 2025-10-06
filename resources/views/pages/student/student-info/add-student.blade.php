@@ -408,8 +408,20 @@
                                                                     </div>
                                                                 </div>
 
-                                                                <div class="col-lg-6 mt-4">
+                                                                {{-- Age Display --}}
+                                                                <div class="col-lg-6 mt-2">
                                                                     <div class="primary_input">
+                                                                        <label class="primary_input_label"
+                                                                            for="age_display">Age</label>
+                                                                        <input class="primary_input_field form-control"
+                                                                            type="text" id="age_display" readonly>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-lg-6 mt-2">
+                                                                    <div class="primary_input">
+                                                                          <label class="primary_input_label"
+                                                                            for="student_photo">Photo</label>
                                                                         <div class="primary_file_uploader">
                                                                             <input
                                                                                 class="primary_input_field form-control{{ $errors->has('photo') ? ' is-invalid' : '' }}"
@@ -463,7 +475,7 @@
                                                                         <label class="primary_input_label"
                                                                             for="">@lang('common.email_address')
 
-                                                                            <span class="text-danger"> *</span>
+                                                                            <span class="text-danger"> </span>
 
                                                                         </label>
                                                                         <input oninput="emailCheck(this)"
@@ -484,7 +496,7 @@
                                                                 <div class="col-lg-6 mt-4">
                                                                     <div class="primary_input ">
                                                                         <label class="primary_input_label"
-                                                                            for="">@lang('student.phone_number')
+                                                                            for="">@lang('student.phone_number') 1
 
                                                                             <span class="text-danger"> *</span>
 
@@ -501,6 +513,25 @@
                                                                         @if ($errors->has('phone_number'))
                                                                             <span class="text-danger">
                                                                                 {{ $errors->first('phone_number') }}
+                                                                            </span>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+
+                                                                {{-- Extra Phone Number --}}
+                                                                <div class="col-lg-6 mt-4">
+                                                                    <div class="primary_input ">
+                                                                        <label class="primary_input_label"
+                                                                            for="">Phone Number 2(optional)
+                                                                        </label>
+                                                                        <input oninput="phoneCheck(this)"
+                                                                            class="primary_input_field phone_number form-control{{ $errors->has('extra_phone_number') ? ' is-invalid' : '' }}"
+                                                                            type="tel" name="extra_phone_number"
+                                                                            id="extra_phone_number"
+                                                                            value="{{ old('extra_phone_number', isset($student) ? $student->extra_phone_number : '') }}">
+                                                                        @if ($errors->has('extra_phone_number'))
+                                                                            <span class="text-danger">
+                                                                                {{ $errors->first('extra_phone_number') }}
                                                                             </span>
                                                                         @endif
                                                                     </div>
@@ -533,7 +564,7 @@
                                                                     <div class="row">
 
 
-                                                                        <div class="col-lg-6 mt-4">
+                                                                        <div class="col-lg-6 mt-4" hidden>
                                                                             <div class="primary_input ">
                                                                                 <label class="primary_input_label"
                                                                                     for="">@lang('student.current_address')
@@ -554,7 +585,7 @@
                                                                             </div>
                                                                         </div>
 
-                                                                        <div class="col-lg-6 mt-4">
+                                                                        <div class="col-lg-6 mt-4" >
                                                                             <div class="primary_input">
                                                                                 <label class="primary_input_label"
                                                                                     for="">@lang('student.permanent_address')
@@ -581,7 +612,7 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div class="col-lg-6">
+                                                    {{-- <div class="col-lg-6" hidden>
                                                         <div class="form-section">
                                                             <div class="row">
                                                                 <div class="col-lg-12">
@@ -663,7 +694,7 @@
 
                                                             </div>
                                                         </div>
-                                                    </div>
+                                                    </div> --}}
                                                 </div>
                                             </div>
                                             <div role="tabpanel" class="tab-pane fade" id="parents_and_guardian_info">
@@ -679,7 +710,7 @@
                                                                                 value="">
 
                                                                         </div>
-                                                                        <div class="col-lg-5">
+                                                                        {{-- <div class="col-lg-5">
                                                                             <button
                                                                                 class="primary-btn-small-input primary-btn small fix-gr-bg"
                                                                                 type="button" data-toggle="modal"
@@ -687,7 +718,7 @@
                                                                                 <span class="ti-plus pr-2"></span>
                                                                                 @lang('student.add_parents')
                                                                             </button>
-                                                                        </div>
+                                                                        </div> --}}
                                                                     </div>
 
                                                                 </div>
@@ -696,165 +727,7 @@
                                                         </div>
                                                     </div>
 
-                                                    <div>
-                                                        <input type="hidden" name="staff_parent" id="staff_parent">
-                                                        <!-- Start Sibling Add Modal -->
-                                                        <div class="modal fade admin-query" id="editStudent">
-                                                            <div class="modal-dialog small-modal modal-dialog-centered">
-                                                                <div class="modal-content">
-                                                                    <div class="modal-header">
-                                                                        <h4 class="modal-title">
-                                                                            @lang('student.select_sibling')
-                                                                        </h4>
-                                                                        <button type="button" class="close"
-                                                                            data-dismiss="modal">&times;</button>
-                                                                    </div>
-
-                                                                    <div class="modal-body">
-                                                                        <div class="container-fluid">
-                                                                            <form action="">
-
-                                                                                <div class="row mt-15" id="siblingParent">
-                                                                                    <div class="col-lg-12">
-
-                                                                                        <div class="row">
-                                                                                            <div class="col-lg-12 sibling_required_error"
-                                                                                                id="sibling_required_error">
-
-                                                                                            </div>
-                                                                                        </div>
-                                                                                        <div class="row mt-15">
-                                                                                            <div class="col-lg-12">
-                                                                                                <label
-                                                                                                    class="primary_input_label">Intake
-                                                                                                    <span
-                                                                                                        class="text-danger">*</span></label>
-                                                                                                <select
-                                                                                                    class="primary_select form-control @error('intake_id') is-invalid @enderror"
-                                                                                                    name="intake_id">
-                                                                                                    <option value="">
-                                                                                                        Select Intake *
-                                                                                                    </option>
-                                                                                                    @foreach ($intakes as $intake)
-                                                                                                        <option
-                                                                                                            value="{{ $intake->id }}"
-                                                                                                            {{ old('intake_id', $topic->intake_id ?? '') == $intake->id ? 'selected' : '' }}>
-                                                                                                            {{ $intake->name }}
-                                                                                                        </option>
-                                                                                                    @endforeach
-                                                                                                </select>
-                                                                                            </div>
-                                                                                        </div>
-
-                                                                                        <div class="row mt-15">
-                                                                                            <div class="col-lg-12"
-                                                                                                id="sibling_section_div">
-                                                                                                <label
-                                                                                                    class="primary_input_label"
-                                                                                                    for="branch">
-                                                                                                    @lang('common.branch')
-                                                                                                    <span
-                                                                                                        class="text-danger">*</span>
-                                                                                                </label>
-                                                                                                <select
-                                                                                                    class="primary_select"
-                                                                                                    name="branch"
-                                                                                                    id="branch">
-                                                                                                    <option value="">
-                                                                                                        Select Branch
-                                                                                                    </option>
-                                                                                                    @foreach ($branches as $branch)
-                                                                                                        <option
-                                                                                                            value="{{ $branch->id }}">
-                                                                                                            {{ $branch->name }}
-                                                                                                        </option>
-                                                                                                    @endforeach
-                                                                                                </select>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                        <div class="row mt-15">
-                                                                                            <div class="col-lg-12"
-                                                                                                id="sibling_name_div">
-                                                                                                <label
-                                                                                                    for="primary_input_label">@lang('student.sibling')
-                                                                                                    <span
-                                                                                                        class="text-danger">
-                                                                                                        *</span></label>
-                                                                                                <select
-                                                                                                    class="primary_select"
-                                                                                                    name="select_sibling_name"
-                                                                                                    id="select_sibling_name">
-                                                                                                    <option
-                                                                                                        data-display="@lang('student.sibling') *"
-                                                                                                        value="">
-                                                                                                        @lang('student.sibling')
-                                                                                                        *
-                                                                                                    </option>
-                                                                                                </select>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
-
-                                                                                <div class="row mt-15 d-none"
-                                                                                    id="staffParent">
-                                                                                    <div class="col-lg-12">
-                                                                                        <div class="row">
-                                                                                            <div class="col-lg-12 sibling_required_error"
-                                                                                                id="sibling_required_error">
-
-                                                                                            </div>
-                                                                                        </div>
-                                                                                        <div class="row">
-                                                                                            <div class="col-lg-12"
-                                                                                                id="staff_class_div">
-                                                                                                <select
-                                                                                                    class="primary_select"
-                                                                                                    id="select_staff_parent">
-                                                                                                    <option
-                                                                                                        data-display="@lang('hr.select_staff') *"
-                                                                                                        value="">
-                                                                                                        @lang('hr.select_staff')
-                                                                                                        *
-                                                                                                    </option>
-                                                                                                    option
-                                                                                                    value="1">
-                                                                                                    1
-                                                                                                    </option>
-                                                                                                    <option value="2">
-                                                                                                        2
-                                                                                                    </option>
-
-                                                                                                </select>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
-                                                                                <div class="row">
-                                                                                    <div
-                                                                                        class="col-lg-12 text-center mt-40">
-                                                                                        <div
-                                                                                            class="mt-40 d-flex justify-content-between">
-                                                                                            <button type="button"
-                                                                                                class="primary-btn tr-bg"
-                                                                                                data-dismiss="modal">@lang('common.cancel')</button>
-
-                                                                                            <button
-                                                                                                class="primary-btn fix-gr-bg"
-                                                                                                id="save_button_parent"
-                                                                                                data-dismiss="modal"
-                                                                                                type="button">@lang('common.save_information')</button>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </form>
-                                                                        </div>
-                                                                    </div>
-
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                 
 
                                                     <div class="col-lg-12 guardian_section">
                                                         <div class="form-section">
@@ -934,7 +807,7 @@
                                                                             for="">@lang('student.relation_with_guardian')
 
                                                                             <span class="text-danger">
-                                                                                *</span>
+                                                                                </span>
 
                                                                         </label>
                                                                         <input class="primary_input_field read-only-input"
@@ -960,7 +833,7 @@
                                                                             for="">@lang('student.guardian_email')
 
                                                                             <span class="text-danger">
-                                                                                *</span>
+                                                                                </span>
 
                                                                         </label>
                                                                         <input oninput="emailCheck(this)"
@@ -1017,7 +890,7 @@
                                                                             for="">@lang('student.guardian_phone')
 
                                                                             <span class="text-danger">
-                                                                                *</span>
+                                                                                </span>
 
                                                                         </label>
                                                                         <input
@@ -1041,7 +914,7 @@
                                                                             for="">@lang('student.guardian_occupation')
 
                                                                             <span class="text-danger">
-                                                                                *</span>
+                                                                                </span>
 
                                                                         </label>
                                                                         <input
@@ -1065,7 +938,7 @@
                                                                             for="">@lang('student.guardian_address')
 
                                                                             <span class="text-danger">
-                                                                                *</span>
+                                                                                </span>
 
                                                                         </label>
                                                                         <textarea class="primary_input_field form-control{{ $errors->has('guardians_address') ? ' is-invalid' : '' }}"
@@ -1568,5 +1441,28 @@
             getFileName($(this).val(), '#placeholderGuardiansName');
             imageChangeWithFile($(this)[0], '#guardianImageShow');
         });
+
+        // Calculate age when date of birth changes
+        $(document).on('change', '#date_of_birth', function() {
+            let dob = $(this).val();
+            if (dob) {
+                let birthDate = new Date(dob);
+                let today = new Date();
+                let years = today.getFullYear() - birthDate.getFullYear();
+                let months = today.getMonth() - birthDate.getMonth();
+
+                if (months < 0 || (months === 0 && today.getDate() < birthDate.getDate())) {
+                    years--;
+                    months += 12;
+                }
+
+                $('#age_display').val(years + ' years, ' + months + ' months');
+            } else {
+                $('#age_display').val('');
+            }
+        });
+
+        // Trigger age calculation on page load if date of birth is already set
+        $('#date_of_birth').trigger('change');
     </script>
 @endsection
