@@ -26,6 +26,7 @@ use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\TopicOverviewController;
 use App\Http\Controllers\StudentCategoryController;
 use App\Http\Controllers\ItemSellController; // Import the new controller
+use App\Http\Controllers\RoleController; // Import the new controller
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
@@ -359,4 +360,13 @@ Route::controller(ContentController::class)->group(function () {
 Route::controller(ReturnFeeController::class)->group(function () {
     Route::post('/student/fees/return-fees', 'store')->name('return-fees.store');
 
+});
+
+// Role Management Routes
+Route::controller(RoleController::class)->prefix('role-management')->group(function () {
+    Route::get('roles', 'index')->name('roles.index');
+    Route::post('roles', 'store')->name('roles.store');
+    Route::put('roles/{id}', 'update')->name('roles.update');
+    Route::delete('roles/{id}', 'destroy')->name('roles.destroy');
+    Route::get('roles/{id}/edit', 'edit')->name('roles.edit');
 });

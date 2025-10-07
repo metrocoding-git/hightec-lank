@@ -385,6 +385,7 @@ h5.notification_time {
 
 #main-content {
   padding-top: 85px;
+  padding-bottom: 50px; /* Added to prevent footer overlap */
 }
 
 #main-content.mini_main_content {
@@ -610,8 +611,12 @@ table tbody td {
 }
 
 .footer-area.new-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
   width: calc(100% - 265px) !important;
   margin-left: 265px !important;
+  z-index: 999; /* Ensure it stays on top of other content */
 }
 
 .primary-btn.icon-only {
@@ -1302,4 +1307,3 @@ ul.nav.nav-tabs::-webkit-scrollbar {
     margin-right: 230px !important;
   }
 }
-
