@@ -398,25 +398,25 @@
         {{-- ----- --}}
         {{-- ================== --}}
 
-        {{-- Setting Section --}}
-        <span class="menu_seperator" id="seperator_setting_section" data-section="setting_section">Setting
+        {{-- Role Management Section --}}
+        <span class="menu_seperator" id="seperator_role_management_section" data-section="role_management_section">Role Management
             Section
         </span>
 
-        <li class="setting_section {{ request()->is('setting') || request()->is('setting/*') ? 'mm-active' : '' }}">
+        <li class="role_management_section {{ request()->is('role-management') || request()->is('role-management/*') ? 'mm-active' : '' }}">
             <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
                 <div class="nav_icon_small">
-                    <span class="fas fa-cog"></span>
+                    <span class="fas fa-user-tag"></span>
                 </div>
                 <div class="nav_title">
-                    <span>Settings</span>
+                    <span>Role Management</span>
                 </div>
             </a>
-            <ul class="mm-collapse {{ request()->is('setting') || request()->is('setting/*') ? 'mm-show' : '' }}">
+            <ul class="mm-collapse {{ request()->is('role-management') || request()->is('role-management/*') ? 'mm-show' : '' }}">
                 <li>
-                    <a href="/setting/route-page"
-                        class="{{ request()->is('setting/route-page') ? 'active a' : '' }}">
-                        Route Page
+                    <a href="/role-management/roles"
+                        class="{{ request()->is('role-management/roles') ? 'active a' : '' }}">
+                        Roles
                     </a>
                 </li>
             </ul>
@@ -480,8 +480,7 @@
 
                                                 </li>
                                             @endif
-                                        @endif
-                                    @endforeach
+                                        @endforeach
                                 @endif
                                 @if ($item->permissionInfo->relate_to_child == 1 && $item->permissionInfo->is_parent == 1 && count($item->subModule) == 0 && sidebarPermission($item->permissionInfo))
                                     @foreach ($childrens as $children)
