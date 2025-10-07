@@ -398,6 +398,31 @@
         {{-- ----- --}}
         {{-- ================== --}}
 
+        {{-- Setting Section --}}
+        <span class="menu_seperator" id="seperator_setting_section" data-section="setting_section">Setting
+            Section
+        </span>
+
+        <li class="setting_section {{ request()->is('setting') || request()->is('setting/*') ? 'mm-active' : '' }}">
+            <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
+                <div class="nav_icon_small">
+                    <span class="fas fa-cog"></span>
+                </div>
+                <div class="nav_title">
+                    <span>Settings</span>
+                </div>
+            </a>
+            <ul class="mm-collapse {{ request()->is('setting') || request()->is('setting/*') ? 'mm-show' : '' }}">
+                <li>
+                    <a href="/setting/route-page"
+                        class="{{ request()->is('setting/route-page') ? 'active a' : '' }}">
+                        Route Page
+                    </a>
+                </li>
+            </ul>
+        </li>
+        {{-- ================== --}}
+
     </ul>
 
     {{-- @isset($sidebar_menus)

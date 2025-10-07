@@ -360,3 +360,10 @@ Route::controller(ReturnFeeController::class)->group(function () {
     Route::post('/student/fees/return-fees', 'store')->name('return-fees.store');
 
 });
+
+// Setting Section Routes
+Route::prefix('setting')->group(function () {
+    Route::get('route-page', function () {
+        return view('pages.setting.route-page');
+    })->name('setting.route-page');
+});
