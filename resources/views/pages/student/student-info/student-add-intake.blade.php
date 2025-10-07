@@ -499,7 +499,7 @@ $(document).ready(function() {
 
                     if (data.courses && data.courses.length > 0) {
                         data.courses.forEach(function(course) {
-                            options += '<option value="' + course.id + '">' + course.name + ' (' + course.code + ')</option>';
+                            options += '<option value="' + course.id + '">' + course.name + '</option>';
                         });
                     } else {
                         options = '<option value="">No courses available for this intake</option>';

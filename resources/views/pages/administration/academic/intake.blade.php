@@ -107,7 +107,7 @@
                                                                 value="{{ $course->id }}"
                                                                 {{ isset($intakeId) && in_array($course->id, old('courses', $intake->courses->pluck('id')->toArray() ?? [])) ? 'checked' : '' }}>
                                                             <label for="course_{{ $course->id }}" class="font-weight-bold">
-                                                                {{ $course->name }} ({{ $course->code }})
+                                                                {{ $course->name }} 
                                                             </label>
                                                         </div>
 
@@ -182,7 +182,7 @@
                                                 <td>{{ $intake->branch->name }}</td>
                                                 <td>
                                                     @foreach ($intake->courses as $index => $course)
-                                                        {{ $course->name }} ({{ $course->code }})
+                                                        {{ $course->name }} 
                                                         @if (!$loop->last)
                                                             /
                                                         @endif
