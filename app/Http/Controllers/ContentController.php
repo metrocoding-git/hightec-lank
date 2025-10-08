@@ -162,6 +162,23 @@ class ContentController extends Controller
     }
 
     /**
+     * Remove the specified shared content from storage.
+     */
+    public function destroySharedContent($id)
+    {
+        $sharedContent = ShareContentList::findOrFail($id);
+
+        // Detach related contents, users, and courses before deleting
+        $sharedContent->contents()->detach();
+        $sharedContent->users()->detach();
+        $sharedContent->courses()->detach();
+
+        $sharedContent->delete();
+
+        return redirect()->back()->with('success', 'Shared content deleted successfully!');
+    }
+
+    /**
      * Save shared content list (Share modal)
      */
     public function shareListSave(Request $request)

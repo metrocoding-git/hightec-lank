@@ -352,6 +352,7 @@ Route::controller(ContentController::class)->group(function () {
     Route::post('administration/download-center/save-generated-url-data', 'saveGeneratedUrlData')->name('download-center.save-generated-url-data');
     // View shared content details
     Route::get('administration/download-center/shared-content-view/{id}', 'viewSharedContent')->name('download-center.shared-content-view');
+    Route::delete('administration/download-center/shared-content-delete/{id}', 'destroySharedContent')->name('download-center.shared-content-delete');
 });
 
 // Return Fee Routes
