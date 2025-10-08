@@ -171,7 +171,7 @@
                                             <th>Intake</th>
                                             <th>Branch</th>
                                             <th>Courses</th>
-                                            <th>Student Count</th>
+                                            {{-- <th>Student Count</th> --}}
                                             <th>@lang('common.action')</th>
                                         </tr>
                                     </thead>
@@ -188,7 +188,7 @@
                                                         @endif
                                                     @endforeach
                                                 </td>
-                                                <td><a href="/count">{{ $intake->student_count }}</a></td>
+                                                {{-- <td><a href="/count">{{ $intake->student_count }}</a></td> --}}
                                                 <td valign="top">
 
                                                     @php

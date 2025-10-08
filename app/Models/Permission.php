@@ -8,14 +8,11 @@ class Permission extends Model
 {
     protected $fillable = [
         'permission_name',
-        'view',
-        'add',
-        'edit',
-        'delete',
     ];
 
     public function roles()
     {
-        return $this->belongsToMany(Role::class, 'role_permissions');
+        return $this->belongsToMany(Role::class, 'role_permissions')
+                    ->withPivot('view', 'add', 'edit', 'delete');
     }
 }

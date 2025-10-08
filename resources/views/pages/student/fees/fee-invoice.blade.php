@@ -110,9 +110,9 @@
                                                     <td>{{ $invoice->due_date }}</td>
                                                     <td>
                                                         <x-drop-down>
-                                                            <a class="dropdown-item" data-toggle="modal"
+                                                            {{-- <a class="dropdown-item" data-toggle="modal"
                                                                 data-target="#viewInvoiceModal{{ $invoice->id }}"
-                                                                href="#">@lang('common.view')</a>
+                                                                href="#">@lang('common.view')</a> --}}
                                                             <a class="dropdown-item"
                                                                 href="{{ route('fees.fee-invoice-edit', $invoice->id) }}">@lang('common.edit')</a>
                                                             <a class="dropdown-item" data-toggle="modal"
