@@ -369,4 +369,6 @@ Route::controller(RoleController::class)->prefix('role-management')->group(funct
     Route::put('roles/{id}', 'update')->name('roles.update');
     Route::delete('roles/{id}', 'destroy')->name('roles.destroy');
     Route::get('roles/{id}/edit', 'edit')->name('roles.edit');
+    Route::get('roles/{id}/grant-permissions', 'grantPermission')->name('roles.grantPermission');
+    Route::post('roles/{id}/save-permissions', 'savePermissions')->name('roles.savePermissions');
 });

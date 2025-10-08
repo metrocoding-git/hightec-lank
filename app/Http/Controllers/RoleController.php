@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Role;
+use App\Models\Permission; // Import the Permission model
 use Illuminate\Http\Request;
 class RoleController extends Controller
 {
@@ -60,6 +61,32 @@ class RoleController extends Controller
             return response()->json(['message' => 'Role deleted successfully'], 200);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Operation Failed', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function grantPermission($id)
+    {
+        $role = Role::findOrFail($id);
+        $permissions = Permission::all();
+        $rolePermissions = $role->permissions->pluck('id')->toArray();
+
+        return view('pages.role_management.grantpermission', compact('role', 'permissions', 'rolePermissions'));
+    }
+
+    public function savePermissions(Request $request, $id)
+    {
+        $request->validate([
+            'permissions' => 'array',
+            'permissions.*' => 'exists:permissions,id',
+        ]);
+
+        try {
+            $role = Role::findOrFail($id);
+            $role->permissions()->sync($request->input('permissions', []));
+
+            return redirect()->route('roles.index')->with('success', 'Permissions updated successfully for ' . $role->role_name);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
         }
     }
 }
