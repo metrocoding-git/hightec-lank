@@ -201,6 +201,7 @@
                                             <th> Courses </th>
                                             {{-- <th>Courses Code</th> --}}
                                             <th>Courses Price</th>
+                                            <th>Courses durations</th>
                                             <th>Courses description</th>
                                             <th>@lang('common.action')</th>
                                         </tr>
@@ -212,6 +213,7 @@
                                                 <td>{{ $course->name }}</td>
                                                 {{-- <td><a href="#">{{ $course->code }}</a></td> --}}
                                                 <td>Rs.{{ number_format($course->price, 2) }}</td>
+                                                <td>{{ $course->duration ?? '-' }}</td>
                                                 <td>{{ $course->description ?? '-' }}</td>
                                                 <td valign="top">
                                                     @php

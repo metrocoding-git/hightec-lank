@@ -289,12 +289,16 @@
                                                                         data-dismiss="modal">
                                                                         @lang('common.cancel')
                                                                     </button>
-                                                                    <a href="#" class="text-light">
+                                                                    <form
+                                                                        action="{{ route('download-center.shared-content-delete', $sharedContent->id) }}"
+                                                                        method="POST">
+                                                                        @csrf
+                                                                        @method('DELETE')
                                                                         <button class="primary-btn fix-gr-bg"
-                                                                            type="button">
+                                                                            type="submit">
                                                                             @lang('common.delete')
                                                                         </button>
-                                                                    </a>
+                                                                    </form>
                                                                 </div>
                                                             </div>
                                                         </div>

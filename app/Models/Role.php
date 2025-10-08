@@ -12,4 +12,10 @@ class Role extends Model
         'role_name',
         'status',
     ];
+
+    public function permissions()
+    {
+        return $this->belongsToMany(Permission::class, 'role_permissions')
+                    ->withPivot('view', 'add', 'edit', 'delete');
+    }
 }

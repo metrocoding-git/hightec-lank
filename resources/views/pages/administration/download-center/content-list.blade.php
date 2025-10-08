@@ -113,12 +113,12 @@
                         <div class="row">
                             <div class="col-lg-8 col-md-6 col-sm-6">
                                 <div class="main-title mt_0_sm mt_0_md">
-                                    <h3 class="mb-15">@lang('common.search') </h3>
+                                    <h3 class="mb-15 ">@lang('common.search') </h3>
                                 </div>
                             </div>
                         </div>
                         {{-- {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'download-center.content-list-search', 'method' => 'GET', 'enctype' => 'multipart/form-data']) }} --}}
-                        <form class="form-horizontal">
+                        <form class="form-horizontal" action="{{ route('content-list') }}" method="GET">
                             <div class="col-lg-12">
                                 <div class="primary_input sm_mb_20 ">
                                     <label class="primary_input_label" for="">
@@ -135,8 +135,8 @@
                                     </span>
                                 @endif
                             </div>
-                            <div class="col-lg-12 text-right mb-30">
-                                <button type="submit" class="primary-btn small fix-gr-bg" id="btnsubmit">
+                            <div class="col-lg-12 text-right mb-30 mt-2">
+                                <button type="submit" class="primary-btn small fix-gr-bg p-1" id="btnsubmit">
                                     <span class="ti-search pr-2"></span>
                                     @lang('common.search')
                                 </button>

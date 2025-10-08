@@ -20,17 +20,26 @@ class ContentController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
-
-     $content_Types = Content_Type::all();
-       $contents=Content::all();
+        $content_Types = Content_Type::all();
         $roles = Role::all();
         $users = User::all();
         $intakes = Intake::all();
+
+        $query = Content::query();
+
+        // Apply search filter if 'name' is present in the request
+        if ($request->has('name') && !empty($request->input('name'))) {
+            $name = $request->input('name');
+            $query->where('file_name', 'like', '%' . $name . '%');
+        } else {
+            $name = null; // Ensure $name is null if not present for the view
+        }
+
+        $contents = $query->get();
       
-        return view('pages.administration.download-center.content-list', compact('content_Types','contents','roles','users','intakes'));
+        return view('pages.administration.download-center.content-list', compact('content_Types','contents','roles','users','intakes', 'name'));
     }
     
 
@@ -150,6 +159,23 @@ class ContentController extends Controller
         $content->delete();
 
         return redirect()->route('content-list')->with('success', 'Content deleted successfully!');
+    }
+
+    /**
+     * Remove the specified shared content from storage.
+     */
+    public function destroySharedContent($id)
+    {
+        $sharedContent = ShareContentList::findOrFail($id);
+
+        // Detach related contents, users, and courses before deleting
+        $sharedContent->contents()->detach();
+        $sharedContent->users()->detach();
+        $sharedContent->courses()->detach();
+
+        $sharedContent->delete();
+
+        return redirect()->back()->with('success', 'Shared content deleted successfully!');
     }
 
     /**
