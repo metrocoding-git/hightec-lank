@@ -38,8 +38,8 @@ class UserController extends Controller
             'password' => 'required|string|min:8|confirmed',
             'first_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
-            'admission_number' => 'nullable|string|max:255|unique:students,admission_number,' . $request->search_student,
-            'national_id_number' => 'nullable|string|max:255|unique:students,national_id_number,' . $request->search_student,
+            'admission_number' => $request->search_student ? 'nullable' : 'nullable|string|max:255|unique:students,admission_number',
+            'national_id_number' => $request->search_student ? 'nullable' : 'nullable|string|max:255|unique:students,national_id_number',
             'search_student' => 'nullable|exists:students,id',
         ]);
 
@@ -57,7 +57,9 @@ class UserController extends Controller
             ]);
 
             $user = User::create([
-                'name' => $student->first_name . ' ' . $student->last_name,
+                'name' => $student->first_name, // Save only first name to 'name' column as requested
+                'first_name' => $student->first_name, // Populate first_name column
+                'last_name' => $student->last_name, // Populate last_name column
                 'email' => $request->email_address, // Map email_address to user's email
                 'password' => Hash::make($request->password),
                 'role_id' => $request->role_id,
@@ -68,7 +70,9 @@ class UserController extends Controller
         } else {
             // Create new user and student
             $user = User::create([
-                'name' => $request->first_name . ' ' . $request->last_name,
+                'name' => $request->first_name, // Save only first name to 'name' column as requested
+                'first_name' => $request->first_name, // Populate first_name column
+                'last_name' => $request->last_name, // Populate last_name column
                 'email' => $request->email_address, // Map email_address to user's email
                 'password' => Hash::make($request->password),
                 'role_id' => $request->role_id,

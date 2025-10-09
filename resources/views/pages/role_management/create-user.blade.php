@@ -1,4 +1,7 @@
 @extends('layouts.app')
+@section('title')
+    Create User
+@endsection
 @section('mainContent')
     <div class="container-fluid">
         <div class="row justify-content-center">
@@ -34,11 +37,19 @@
                                 <div id="new_student_input_fields">
                                     <div class="form-group">
                                         <label for="first_name">First Name:</label>
-                                        <input type="text" name="first_name" id="first_name" class="form-control">
+                                        <input type="text" name="first_name" id="first_name" class="form-control" readonly>
                                     </div>
                                     <div class="form-group">
                                         <label for="last_name">Last Name:</label>
-                                        <input type="text" name="last_name" id="last_name" class="form-control">
+                                        <input type="text" name="last_name" id="last_name" class="form-control" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="admission_number">Admission Number:</label>
+                                        <input readonly type="text" name="admission_number" id="admission_number" class="form-control">
+                                    </div>
+                                    <div  class="form-group">
+                                        <label for="national_id_number">National ID Number:</label>
+                                        <input type="text" name="national_id_number" id="national_id_number" class="form-control" readonly>
                                     </div>
                                 </div>
 
@@ -59,15 +70,6 @@
                                         <label for="existing_national_id_number">National ID Number (Existing):</label>
                                         <input type="text" name="existing_national_id_number" id="existing_national_id_number" class="form-control" readonly>
                                     </div>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="admission_number">Admission Number:</label>
-                                    <input type="text" name="admission_number" id="admission_number" class="form-control">
-                                </div>
-                                <div class="form-group">
-                                    <label for="national_id_number">National ID Number:</label>
-                                    <input type="text" name="national_id_number" id="national_id_number" class="form-control">
                                 </div>
                             </div>
 
@@ -139,12 +141,14 @@
                         document.getElementById('existing_last_name').value = data.last_name;
                         document.getElementById('existing_admission_number').value = data.admission_number;
                         document.getElementById('existing_national_id_number').value = data.national_id_number || ''; // Populate existing national ID
-                        document.getElementById('admission_number').value = data.admission_number; // Also populate the editable admission number
-                        document.getElementById('national_id_number').value = data.national_id_number || ''; // Also populate the editable national ID
                         document.getElementById('email_address').value = data.email_address;
-                        // Make admission_number and national_id_number read-only for existing student
-                        document.getElementById('admission_number').readOnly = true;
-                        document.getElementById('national_id_number').readOnly = true;
+                        // Clear and hide new student input fields
+                        document.getElementById('first_name').value = '';
+                        document.getElementById('last_name').value = '';
+                        document.getElementById('admission_number').value = '';
+                        document.getElementById('national_id_number').value = '';
+                        document.getElementById('admission_number').readOnly = false;
+                        document.getElementById('national_id_number').readOnly = false;
                     });
             } else {
                 newStudentInputFields.style.display = 'block'; // Show new student fields
