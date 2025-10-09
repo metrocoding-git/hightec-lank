@@ -190,10 +190,16 @@
                 var branchId = $(this).val();
                 console.log("Selected Branch ID:", branchId);
                 
+                // Destroy niceSelect instances before modifying the underlying select elements
+                $('#select_intake').niceSelect('destroy');
+                $('#select_course').niceSelect('destroy');
+
                 $('#select_intake').empty().append('<option data-display="Select Intake *" value="">Select Intake *</option>');
                 $('#select_course').empty().append('<option data-display="Select Course *" value="">Select Course *</option>');
-                $('#select_intake').niceSelect('update'); // Update after clearing
-                $('#select_course').niceSelect('update'); // Update after clearing
+                
+                // Re-initialize niceSelect after clearing
+                $('#select_intake').niceSelect();
+                $('#select_course').niceSelect();
 
                 if (branchId) {
                     $.ajax({
@@ -201,15 +207,23 @@
                         type: "GET",
                         success: function(response) {
                             console.log("Intakes response:", response);
+                            // Destroy niceSelect for intake before populating
+                            $('#select_intake').niceSelect('destroy');
+                            $('#select_intake').empty().append('<option data-display="Select Intake *" value="">Select Intake *</option>'); // Re-add default option
                             if (response.success && response.intakes.length > 0) {
                                 $.each(response.intakes, function(key, value) {
                                     $('#select_intake').append('<option value="' + value.id + '">' + value.name + '</option>');
                                 });
                             }
-                            $('#select_intake').niceSelect('update'); // Update after populating
+                            // Re-initialize niceSelect for intake after populating
+                            $('#select_intake').niceSelect();
                         },
                         error: function(xhr) {
                             console.log("Intakes AJAX error:", xhr.responseText);
+                            // Even on error, re-initialize niceSelect to ensure it's not broken
+                            $('#select_intake').niceSelect('destroy');
+                            $('#select_intake').empty().append('<option data-display="Select Intake *" value="">Select Intake *</option>');
+                            $('#select_intake').niceSelect();
                         }
                     });
                 }
@@ -220,8 +234,11 @@
                 var intakeId = $(this).val();
                 console.log("Selected Intake ID:", intakeId);
 
+                // Destroy niceSelect for course before modifying
+                $('#select_course').niceSelect('destroy');
                 $('#select_course').empty().append('<option data-display="Select Course *" value="">Select Course *</option>');
-                $('#select_course').niceSelect('update'); // Update after clearing
+                // Re-initialize niceSelect for course after clearing
+                $('#select_course').niceSelect();
 
                 if (intakeId) {
                     $.ajax({
@@ -229,15 +246,23 @@
                         type: "GET",
                         success: function(response) {
                             console.log("Courses response:", response);
+                            // Destroy niceSelect for course before populating
+                            $('#select_course').niceSelect('destroy');
+                            $('#select_course').empty().append('<option data-display="Select Course *" value="">Select Course *</option>'); // Re-add default option
                             if (response.success && response.courses.length > 0) {
                                 $.each(response.courses, function(key, value) {
                                     $('#select_course').append('<option value="' + value.id + '">' + value.name + '</option>');
                                 });
                             }
-                            $('#select_course').niceSelect('update'); // Update after populating
+                            // Re-initialize niceSelect for course after populating
+                            $('#select_course').niceSelect();
                         },
                         error: function(xhr) {
                             console.log("Courses AJAX error:", xhr.responseText);
+                            // Even on error, re-initialize niceSelect
+                            $('#select_course').niceSelect('destroy');
+                            $('#select_course').empty().append('<option data-display="Select Course *" value="">Select Course *</option>');
+                            $('#select_course').niceSelect();
                         }
                     });
                 }
