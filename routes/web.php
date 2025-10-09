@@ -354,6 +354,9 @@ Route::controller(ReturnFeeController::class)->group(function () {
 });
 
 // Role Management Routes
+use App\Http\Controllers\UserController; // Import the new controller
+
+// Role Management Routes
 Route::controller(RoleController::class)->prefix('role-management')->group(function () {
     Route::get('roles', 'index')->name('roles.index');
     Route::post('roles', 'store')->name('roles.store');
@@ -362,4 +365,11 @@ Route::controller(RoleController::class)->prefix('role-management')->group(funct
     Route::get('roles/{id}/edit', 'edit')->name('roles.edit');
     Route::get('roles/{id}/grant-permissions', 'grantPermission')->name('roles.grantPermission');
     Route::post('roles/{id}/save-permissions', 'savePermissions')->name('roles.savePermissions');
+});
+
+// User Management Routes
+Route::controller(UserController::class)->prefix('role-management')->group(function () {
+    Route::get('create-user', 'createUser')->name('role-management.create-user');
+    Route::post('store-user', 'storeUser')->name('role-management.store-user');
+    Route::get('get-student-details/{id}', 'getStudentDetails')->name('role-management.get-student-details');
 });

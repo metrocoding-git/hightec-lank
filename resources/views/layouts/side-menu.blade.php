@@ -419,6 +419,12 @@
                         Roles
                     </a>
                 </li>
+                <li>
+                    <a href="/role-management/create-user"
+                        class="{{ request()->is('role-management/create-user') ? 'active a' : '' }}">
+                        Create User
+                    </a>
+                </li>
             </ul>
         </li>
         {{-- ================== --}}
