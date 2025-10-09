@@ -294,6 +294,7 @@ Route::controller(InvoiceController::class)->group(function () {
 
 Route::controller(HomeController::class)->group(function () {
     Route::get('student/fees/fee-invoice', 'feeInvoice')->name('fees.fee-invoice');
+    Route::post('student/fees/fee-return/search', 'feeReturn')->name('fees.fee-return.search');
 });
 
 
