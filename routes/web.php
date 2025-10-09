@@ -126,10 +126,6 @@ Route::controller(AddStudentController::class)->prefix('student/student-info')->
     Route::put('student-add-intake/{id}', 'updateStudentIntake')->name('student.add-intake.update');
     Route::delete('student-add-intake/{id}', 'destroyStudentIntake')->name('student.add-intake.destroy');
 
-    // AJAX routes for dependent dropdowns
-    Route::get('get-intakes-by-branch/{branchId}', 'getIntakesByBranch')->name('get-intakes-by-branch');
-    Route::get('get-courses-by-intake/{intakeId}', 'getCoursesByIntake')->name('get-courses-by-intake');
-
     // Search functionality for Student Add Intake
     Route::post('student-add-intake/search', 'searchStudentIntake')->name('student.add-intake.search');
     Route::get('student-add-intake/get-intakes/{branchId}', 'getSearchIntakesByBranch')->name('student.add-intake.get-intakes')->withoutMiddleware(['csrf']);
@@ -143,21 +139,12 @@ Route::controller(HomeController::class)->group(callback: function () {
     Route::get('administration/study-material/study-material-download', 'studyMaterialDownload')->name('study-material-download');
     Route::get('administration/study-material/other-download', 'otherDownload')->name('other-download');
 
-
-
-
-
-
-    // Route::get('administration/download-center/content-type', 'contentType')->name('content-type');
-    // Route::get('administration/download-center/content-list', 'contentList')->name('content-list');
     Route::get('administration/download-center/shared-content-list', 'sharedContentList')->name('shared-content-list');
     Route::get('administration/download-center/video-list', 'videoList')->name('video-list');
     Route::post('administration/download-center/video-list-save', 'videoListStore')->name('download-center.video-list-save');
     Route::put('administration/download-center/video-list-update/{id}', 'videoListUpdate')->name('download-center.video-list-update');
     Route::delete('administration/download-center/video-list-destroy/{id}', 'videoListDestroy')->name('download-center.video-list-destroy');
-    // Optionally, add edit/update later
-    // Route::get('administration/download-center/video-list-edit/{id}', 'videoListEdit')->name('download-center.video-list-edit');
-    // Route::get('student/student-info/add-student', 'addStudent')->name('add-student');
+    
     Route::get('student/student-info/student-list', 'studentList')->name('student-list');
     Route::put('student/update-status', 'updateStudetStatus')->name('student.update-status');
     Route::get('student/student-info/student-view/{id}', 'studentView')->name('student-details');
@@ -166,9 +153,11 @@ Route::controller(HomeController::class)->group(callback: function () {
     Route::get('student/student-info/student-attendance', 'studentAttendance')->name('student-attendance');
     Route::get('student/student-info/student-export', 'studentExport')->name('student-export');
 
+    // Dependent dropdown AJAX routes for student info and fees
+    Route::get('student/student-info/get-intakes-by-branch/{branchId}', 'getIntakesByBranch')->name('get-intakes-by-branch');
+    Route::get('student/student-info/get-courses-by-intake/{intakeId}', 'getCoursesByIntake')->name('get-courses-by-intake');
 
-    //  New dependent dropdown AJAX routes
-
+    // Other existing dependent dropdown AJAX routes
     Route::get('student/student-info/get-intakes/{branchId}', 'getIntakes')->name('student.get-intakes');
     Route::get('student/student-info/get-courses/{intakeId}', 'getCourses')->name('student.get-courses');
     Route::get('student/student-attendance/get-courses/{intakeId}', 'getCoursesByIntake')->name('student-attendance.get-courses')->withoutMiddleware(['csrf']);
@@ -294,6 +283,7 @@ Route::controller(InvoiceController::class)->group(function () {
 
 Route::controller(HomeController::class)->group(function () {
     Route::get('student/fees/fee-invoice', 'feeInvoice')->name('fees.fee-invoice');
+    Route::post('student/fees/fee-return/search', 'feeReturn')->name('fees.fee-return.search');
 });
 
 
@@ -364,6 +354,9 @@ Route::controller(ReturnFeeController::class)->group(function () {
 });
 
 // Role Management Routes
+use App\Http\Controllers\UserController; // Import the new controller
+
+// Role Management Routes
 Route::controller(RoleController::class)->prefix('role-management')->group(function () {
     Route::get('roles', 'index')->name('roles.index');
     Route::post('roles', 'store')->name('roles.store');
@@ -372,4 +365,11 @@ Route::controller(RoleController::class)->prefix('role-management')->group(funct
     Route::get('roles/{id}/edit', 'edit')->name('roles.edit');
     Route::get('roles/{id}/grant-permissions', 'grantPermission')->name('roles.grantPermission');
     Route::post('roles/{id}/save-permissions', 'savePermissions')->name('roles.savePermissions');
+});
+
+// User Management Routes
+Route::controller(UserController::class)->prefix('role-management')->group(function () {
+    Route::get('create-user', 'createUser')->name('role-management.create-user');
+    Route::post('store-user', 'storeUser')->name('role-management.store-user');
+    Route::get('get-student-details/{id}', 'getStudentDetails')->name('role-management.get-student-details');
 });

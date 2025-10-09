@@ -515,17 +515,42 @@ class HomeController extends Controller
         return view('pages.student.fees.fee-invoice-setting');
     }
 
-    public function feeReturn()
+    public function feeReturn(Request $request)
     {
+        $branches = Branch::all();
         $coursess = Course::all();
         $intakes = Intake::all();
-         $returnFees = ReturnFee::with(['student', 'role'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
+        
+        $query = ReturnFee::with(['student', 'role']);
 
-        $returnDetails = ReturnFee::with(['student', 'role'])->get();
+        if ($request->filled('branch')) {
+            $branchId = $request->input('branch');
+            $query->whereHas('student', function ($q) use ($branchId) {
+                $q->where('branch_id', $branchId);
+            });
+        }
 
-        return view('pages.student.fees.fee-return', compact('returnDetails','returnFees','coursess', 'intakes'));
+        if ($request->filled('intake')) {
+            $intakeId = $request->input('intake');
+            $query->whereHas('student.intakes', function ($q) use ($intakeId) {
+                $q->where('intakes.id', $intakeId);
+            });
+        }
+
+        if ($request->filled('course')) {
+            $courseId = $request->input('course');
+            $query->whereHas('student.courses', function ($q) use ($courseId) {
+                $q->where('courses.id', $courseId);
+            });
+        }
+
+        $returnDetails = $query->orderBy('created_at', 'desc')->get();
+
+        $branch_id = $request->input('branch');
+        $intake_id = $request->input('intake');
+        $course_id = $request->input('course');
+
+        return view('pages.student.fees.fee-return', compact('returnDetails', 'coursess', 'intakes', 'branches', 'branch_id', 'intake_id', 'course_id'));
     }
 
     public function feeInvoice()
