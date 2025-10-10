@@ -43,18 +43,6 @@
                                         <div class="row pt-4 row-gap-24">
                                             <div class="col-lg-6">
                                                 <div class="primary_input mb-3">
-                                                    <label class="primary_input_label" for="first_name">First Name:</label>
-                                                    <input type="text" name="first_name" id="first_name" class="primary_input_field form-control">
-                                                </div>
-                                            </div>
-                                            <div class="col-lg-6">
-                                                <div class="primary_input mb-3">
-                                                    <label class="primary_input_label" for="last_name">Last Name:</label>
-                                                    <input type="text" name="last_name" id="last_name" class="primary_input_field form-control">
-                                                </div>
-                                            </div>
-                                            <div class="col-lg-6">
-                                                <div class="primary_input mb-3">
                                                     <label class="primary_input_label" for="admission_number">Admission Number:</label>
                                                     <input type="text" name="admission_number" id="admission_number" class="primary_input_field form-control">
                                                 </div>
@@ -93,6 +81,23 @@
                                                     <label class="primary_input_label" for="existing_national_id_number">National ID Number (Existing):</label>
                                                     <input type="text" name="existing_national_id_number" id="existing_national_id_number" class="primary_input_field form-control" readonly>
                                                 </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="non_student_fields">
+                                    <div class="row pt-4 row-gap-24">
+                                        <div class="col-lg-6">
+                                            <div class="primary_input mb-3">
+                                                <label class="primary_input_label" for="first_name">First Name:</label>
+                                                <input type="text" name="first_name" id="first_name" class="primary_input_field form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-6">
+                                            <div class="primary_input mb-3">
+                                                <label class="primary_input_label" for="last_name">Last Name:</label>
+                                                <input type="text" name="last_name" id="last_name" class="primary_input_field form-control">
                                             </div>
                                         </div>
                                     </div>
@@ -149,10 +154,15 @@
                     $('#national_id_number').prop('readonly', false);
                     $('#first_name').prop('readonly', false);
                     $('#last_name').prop('readonly', false);
+                    $('#non_student_fields').hide(); // Hide non-student fields when 'Student' is selected
                 } else {
                     studentFields.hide();
                     newStudentInputFields.hide();
                     existingStudentDisplayFields.hide();
+                    $('#non_student_fields').show(); // Show non-student fields when role is not 'Student'
+                    // Ensure first_name and last_name are editable when non-student role is selected
+                    $('#first_name').prop('readonly', false);
+                    $('#last_name').prop('readonly', false);
                 }
             });
 
@@ -201,6 +211,15 @@
                     $('#national_id_number').prop('readonly', false);
                 }
             });
+
+            // Initial state on page load
+            if ($('#role_id').find('option:selected').text() === 'Student') {
+                $('#student_fields').show();
+                $('#non_student_fields').hide();
+            } else {
+                $('#student_fields').hide();
+                $('#non_student_fields').show();
+            }
         });
     </script>
 @endsection
