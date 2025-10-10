@@ -227,9 +227,11 @@ Route::controller(ItemIssueController::class)->group(function () {
 
 });
 Route::controller(LoginController::class)->group(function () {
-    Route::get('login', 'index')->name('login');
+    Route::get('login', 'index')->name('login'); // For displaying the login form
+    Route::post('login', 'login')->name('login.post'); // For handling login form submission
     Route::get('recoveryPassword', 'recoveryPassword')->name('recoveryPassword');
     Route::get('register', 'register')->name('register');
+    Route::post('logout', 'logout')->name('logout'); // Add logout route
 });
 
 

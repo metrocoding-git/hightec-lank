@@ -45,7 +45,6 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Session;
 use Modules\Saas\Entities\SmPackagePlan;
-use Flasher\Toastr\Laravel\Facade\Toastr;
 use Modules\RolePermission\Entities\InfixRole;
 use Modules\Wallet\Entities\WalletTransaction;
 use Modules\Saas\Entities\SmSubscriptionPayment;
@@ -62,7 +61,10 @@ class HomeController extends Controller
     // for display dashboard
     public function dashboard()
     {
-        return view('pages.dashboard.dashboard');
+        $user = Auth::user();
+        $roleName = $user->role ? $user->role->role_name : 'N/A'; // Get role name, or 'N/A' if not found
+
+        return view('pages.dashboard.dashboard', compact('user', 'roleName'));
     }
 
 

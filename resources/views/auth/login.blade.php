@@ -27,12 +27,12 @@ $css = 'background: url(' . url('backEnd/img/login-bg.png') . ')  no-repeat cent
 
 
     <link rel="stylesheet" href="{{ asset('theme/edulia/css/style.css') }}">
-        <style>
+    <style>
         .row_gap_24 {
             row-gap: 24px;
         }
 
-        .login{
+        .login {
             height: auto;
             min-height: 100vh;
             padding: 50px 0px;
@@ -51,31 +51,34 @@ $css = 'background: url(' . url('backEnd/img/login-bg.png') . ')  no-repeat cent
         .text-danger.text-left {
             font-size: 14px;
         }
+
         .row.row-gap-10 {
             row-gap: 10px;
             --bs-gutter-x: 10px;
         }
 
-        .row.row-gap-10 .input-control-input{
+        .row.row-gap-10 .input-control-input {
             padding: 10px;
         }
 
-        .row.row-gap-10 [class*=col-]{
+        .row.row-gap-10 [class*=col-] {
             --bs-gutter-x: 10px;
         }
 
         .row-gap-10 input.input-control-input {
             font-size: 11px;
         }
-        @media only screen and (max-width: 767px){
-                section.login {
-                    place-content: center;
-                    align-content: center;
-                    justify-content: center;
+
+        @media only screen and (max-width: 767px) {
+            section.login {
+                place-content: center;
+                align-content: center;
+                justify-content: center;
             }
         }
-        @media (max-width: 480px){
-            .row.row-gap-10 [class*=col-]{
+
+        @media (max-width: 480px) {
+            .row.row-gap-10 [class*=col-] {
                 width: 50%;
                 max-width: 50%;
             }
@@ -88,7 +91,7 @@ $css = 'background: url(' . url('backEnd/img/login-bg.png') . ')  no-repeat cent
     <section class="login" style="{{ $css }}">
         <div class="login_wrapper">
 
-            {{--@if (config('app.app_sync') && isset($schools) && session('domain') == 'school')
+            {{-- @if (config('app.app_sync') && isset($schools) && session('domain') == 'school')
 
                 <div class="row justify-content-center">
                     @foreach ($schools as $school)
@@ -100,15 +103,14 @@ $css = 'background: url(' . url('backEnd/img/login-bg.png') . ')  no-repeat cent
                         </div>
                     @endforeach
                 </div>
-            @endif--}}
+            @endif --}}
 
             <!-- login form start -->
             <div class="login_wrapper_login_content">
-                <div class="login_wrapper_logo text-center"><img src="{{ asset($logo) }}"
-                        alt=""></div>
+                <div class="login_wrapper_logo text-center"><img src="{{ asset($logo) }}" alt=""></div>
                 <div class="login_wrapper_content">
                     <h4>@lang('auth.login_details')</h4>
-                    <form action="{{ route('login') }}" method='POST'>
+                    <form action="{{ route('login.post') }}" method='POST'>
                         @csrf
                         <input type="hidden" name="username" id="username-hidden">
                         <div class="input-control">
@@ -146,17 +148,17 @@ $css = 'background: url(' . url('backEnd/img/login-bg.png') . ')  no-repeat cent
                 </div>
             </div>
 
-           
-              
+
+
             <!-- login form end -->
-              
+
             <!-- Star School Links -->
             <div class="saas_school_top_five_link_show mt-4">
                 <div class="row row-gap-10 justify-content-center">
                     <div class="col-12">
                         <h6 class="text-center title">{{ __('edulia.schools') }}</h6>
                     </div>
-                    
+
                     <div class="col-4 col-sm-4 col-md-3">
                         <a target="_blank" href="/school/home" class="link_to_school">School1</a>
                     </div>
@@ -166,7 +168,7 @@ $css = 'background: url(' . url('backEnd/img/login-bg.png') . ')  no-repeat cent
                     <div class="col-4 col-sm-4 col-md-3">
                         <a target="_blank" href="/school/home" class="link_to_school">School3</a>
                     </div>
-                  
+
                 </div>
             </div>
             <!-- End School Links -->
@@ -195,8 +197,8 @@ $css = 'background: url(' . url('backEnd/img/login-bg.png') . ')  no-repeat cent
             });
         });
     </script>
-     <script>
-        @if(Session::has('toast_message'))
+    <script>
+        @if (Session::has('toast_message'))
             toastr.{{ Session::get('toast_message')['type'] }}('{{ Session::get('toast_message')['message'] }}');
         @endif
     </script>
