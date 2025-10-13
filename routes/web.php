@@ -30,7 +30,7 @@ use App\Http\Controllers\RoleController; // Import the new controller
 
 Route::controller(HomeController::class)->group(callback: function () {
     Route::get('dashboard', 'dashboard')->name('dashboard');
-    Route::get('/', 'dashboard')->name('dashboard');
+    Route::get('/', 'login')->name('login');
 });
 
 Route::controller(CourseController::class)->prefix('administration/academic/courses')->middleware(['permission'])->group(callback: function () {

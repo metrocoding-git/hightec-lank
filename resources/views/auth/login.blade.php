@@ -152,25 +152,7 @@ $css = 'background: url(' . url('backEnd/img/login-bg.png') . ')  no-repeat cent
 
             <!-- login form end -->
 
-            <!-- Star School Links -->
-            <div class="saas_school_top_five_link_show mt-4">
-                <div class="row row-gap-10 justify-content-center">
-                    <div class="col-12">
-                        <h6 class="text-center title">{{ __('edulia.schools') }}</h6>
-                    </div>
-
-                    <div class="col-4 col-sm-4 col-md-3">
-                        <a target="_blank" href="/school/home" class="link_to_school">School1</a>
-                    </div>
-                    <div class="col-4 col-sm-4 col-md-3">
-                        <a target="_blank" href="/school/home" class="link_to_school">School2</a>
-                    </div>
-                    <div class="col-4 col-sm-4 col-md-3">
-                        <a target="_blank" href="/school/home" class="link_to_school">School3</a>
-                    </div>
-
-                </div>
-            </div>
+           
             <!-- End School Links -->
         </div>
 

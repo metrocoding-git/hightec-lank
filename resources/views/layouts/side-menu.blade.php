@@ -51,7 +51,7 @@
             Section</span>
 
         <li class="dashboard_section {{ request()->is('dashboard') ? 'mm-active' : '' }} ">
-            <a href="/">
+            <a href="dashboard">
                 <div class="nav_icon_small">
                     <span class="fas fa-tachometer-alt"></span>
                 </div>
