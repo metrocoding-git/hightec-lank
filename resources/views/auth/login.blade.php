@@ -36,11 +36,11 @@ $css = 'background: url(' . url('backEnd/img/login-bg.png') . ')  no-repeat cent
 
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            /* Your original background will be applied via inline style */
         }
 
         .login-container {
@@ -54,6 +54,7 @@ $css = 'background: url(' . url('backEnd/img/login-bg.png') . ')  no-repeat cent
             border: 1px solid rgba(255, 255, 255, 0.3);
             position: relative;
             overflow: hidden;
+            margin: 20px;
         }
 
         .login-container::before {
@@ -279,7 +280,6 @@ $css = 'background: url(' . url('backEnd/img/login-bg.png') . ')  no-repeat cent
         /* Responsive Design */
         @media (max-width: 768px) {
             .login-container {
-                margin: 20px;
                 padding: 40px 30px;
                 max-width: 90%;
             }
@@ -339,10 +339,24 @@ $css = 'background: url(' . url('backEnd/img/login-bg.png') . ')  no-repeat cent
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* Overlay to ensure readability on any background */
+        .background-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: -1;
+        }
     </style>
 </head>
 
-<body>
+<body style="{{ $css }}">
+    <!-- Background overlay for better contrast -->
+    <div class="background-overlay"></div>
+    
     <div class="login-container">
         <!-- Logo Section -->
         <div class="logo-container">
