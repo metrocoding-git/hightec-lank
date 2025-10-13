@@ -1,4 +1,37 @@
 <nav id="sidebar" class="sidebar">
+    <style>
+        .sidebar_menu {
+            display: flex;
+            flex-direction: column;
+            height: calc(100% - 100px); /* Adjust height as needed, considering header/footer */
+        }
+
+        .sidebar_menu > li:last-of-type {
+            margin-top: auto; /* Pushes the last item (logout) to the bottom */
+        }
+
+        #logout-form button {
+            background: none;
+            border: none;
+            color: #a0a0a0; /* Adjust to match other menu item colors */
+            padding: 10px 15px;
+            width: 100%;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #logout-form button:hover {
+            color: #fff; /* Hover color */
+            background-color: #4682B4; /* Blue primary color for hover */
+        }
+
+        #logout-form .nav_icon_small {
+            margin-right: 10px;
+        }
+    </style>
 
     <div class="sidebar-header update_sidebar">
 
@@ -426,6 +459,22 @@
                     </a>
                 </li>
             </ul>
+        </li>
+        {{-- ================== --}}
+
+        {{-- Logout Button --}}
+        <li>
+            <form action="{{ route('logout') }}" method="POST" id="logout-form" >
+                @csrf
+                <button type="submit" class="dropdown-item ai-icon" style="background-color: rgb(116, 46, 46)">
+                    <div class="nav_icon_small">
+                        <span class="fas fa-sign-out-alt"></span>
+                    </div>
+                    <div class="nav_title">
+                        <span>Logout</span>
+                    </div>
+                </button>
+            </form>
         </li>
         {{-- ================== --}}
 
