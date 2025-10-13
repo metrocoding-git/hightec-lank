@@ -8,11 +8,16 @@
             --purple-light: #f3e6f8;
             --gray-light: #f8f9fa;
             --gray-border: #e3e6f0;
+
+            /* New Blue Colors */
+            --blue-primary: #4682B4; /* SteelBlue */
+            --blue-dark: #36648B; /* Darker SteelBlue */
+            --blue-light: #E0FFFF; /* LightCyan */
         }
 
         /* Breadcrumb */
         .sms-breadcrumb {
-            background-color: var(--purple-primary);
+            background-color: var(--blue-primary);
             color: #fff;
         }
 
@@ -26,17 +31,17 @@
 
         /* Titles & Buttons */
         .main-title h3 {
-            color: var(--purple-primary);
+            color: var(--blue-primary);
         }
 
         .primary-btn.fix-gr-bg {
-            background: var(--purple-primary);
-            border-color: var(--purple-primary);
+            background: var(--blue-primary);
+            border-color: var(--blue-primary);
         }
 
         .primary-btn.fix-gr-bg:hover {
-            background: var(--purple-dark);
-            border-color: var(--purple-dark);
+            background: var(--blue-dark);
+            border-color: var(--blue-dark);
         }
 
         /* Accordion Header */
@@ -55,12 +60,12 @@
         }
 
         .card-header button:hover {
-            background-color: var(--purple-primary);
+            background-color: var(--blue-primary);
             color: #fff;
         }
 
         .card-header button[aria-expanded="true"] {
-            background-color: var(--purple-primary);
+            background-color: var(--blue-primary);
             color: #fff;
         }
 
@@ -72,6 +77,12 @@
 
         .card-header button[aria-expanded="true"] .ti-plus {
             transform: rotate(45deg);
+            color: #fff;
+        }
+
+        /* Main Category Toggle Active State */
+        .main-category-toggle.active {
+            background-color: var(--blue-primary);
             color: #fff;
         }
 
@@ -87,12 +98,12 @@
 
         .list-group-item:hover,
         .list-group-item.active {
-            background-color: var(--purple-light);
-            color: var(--purple-primary);
+            background-color: var(--blue-light);
+            color: var(--blue-primary);
             font-weight: 500;
         }
 
-        /* Custom Checkboxes (Purple) */
+        /* Custom Checkboxes (Blue) */
         .primary_checkbox {
             position: relative;
             display: flex;
@@ -116,12 +127,12 @@
         }
 
         .primary_checkbox:hover .checkmark {
-            background-color: var(--purple-light);
+            background-color: var(--blue-light);
         }
 
         .primary_checkbox input:checked~.checkmark {
-            background-color: var(--purple-primary);
-            border-color: var(--purple-primary);
+            background-color: var(--blue-primary);
+            border-color: var(--blue-primary);
         }
 
         .checkmark::after {
@@ -181,13 +192,33 @@
                                         <div class="card-header">
                                             <h4 class="mb-0">Main Categories</h4>
                                         </div>
-                                        <div class="list-group list-group-flush">
+                                        <div class="accordion main-category-accordion" id="mainCategoryAccordion">
                                             @foreach ($menuStructure as $mainItem)
-                                                <a href="#"
-                                                    class="list-group-item list-group-item-action main-category-item"
-                                                    data-category-name="{{ $mainItem['name'] }}">
-                                                    {{ $mainItem['name'] }}
-                                                </a>
+                                                <div class="card">
+                                                    <div class="card-header" id="heading{{ Str::slug($mainItem['name']) }}">
+                                                        <h5 class="mb-0">
+                                                            <button class="btn btn-link btn-block text-left d-flex justify-content-between align-items-center main-category-toggle {{ $loop->first ? '' : 'collapsed' }}" type="button" data-toggle="collapse" data-target="#collapse{{ Str::slug($mainItem['name']) }}" aria-expanded="{{ $loop->first ? 'true' : 'false' }}" aria-controls="collapse{{ Str::slug($mainItem['name']) }}">
+                                                                {{ $mainItem['name'] }}
+                                                                <i class="ti-plus"></i>
+                                                            </button>
+                                                        </h5>
+                                                    </div>
+
+                                                    <div id="collapse{{ Str::slug($mainItem['name']) }}" class="collapse {{ $loop->first ? 'show' : '' }}" aria-labelledby="heading{{ Str::slug($mainItem['name']) }}" data-parent="#mainCategoryAccordion">
+                                                        <div class="card-body p-0">
+                                                            <div class="list-group list-group-flush">
+                                                                @foreach ($mainItem['sub_items'] as $subItem)
+                                                                    <a href="#"
+                                                                        class="list-group-item list-group-item-action sub-category-item"
+                                                                        data-permission-id="{{ $subItem['permission_id'] }}"
+                                                                        data-category-name="{{ $mainItem['name'] }}">
+                                                                        {{ $subItem['permission_name'] }}
+                                                                    </a>
+                                                                @endforeach
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             @endforeach
                                         </div>
                                     </div>
@@ -272,18 +303,36 @@
                 }
             }
 
-            $(document).on('click', '.main-category-item', function(e) {
+            $(document).on('click', '.sub-category-item', function(e) {
                 e.preventDefault();
-                $('.main-category-item').removeClass('active');
+                $('.sub-category-item').removeClass('active');
                 $(this).addClass('active');
                 const categoryName = $(this).data('category-name');
                 renderPermissionsForCategory(categoryName);
             });
 
-            // Optionally, load permissions for the first category on page load
+            $(document).on('click', '.main-category-toggle', function() {
+                $('.main-category-toggle').removeClass('active');
+                if (!$(this).hasClass('collapsed')) {
+                    $(this).addClass('active');
+                }
+            });
+
+            // Optionally, load permissions for the first sub-category on page load
             if (menuStructure.length > 0) {
-                $('.main-category-item').first().addClass('active');
-                renderPermissionsForCategory(menuStructure[0].name);
+                // Find the first sub-category item and trigger a click
+                const firstSubCategoryItem = $('.sub-category-item').first();
+                if (firstSubCategoryItem.length > 0) {
+                    firstSubCategoryItem.addClass('active');
+                    const categoryName = firstSubCategoryItem.data('category-name');
+                    renderPermissionsForCategory(categoryName);
+
+                    // Also activate the parent main category toggle
+                    const firstMainCategoryToggle = firstSubCategoryItem.closest('.collapse').prev('.card-header').find('.main-category-toggle');
+                    if (firstMainCategoryToggle.length > 0) {
+                        firstMainCategoryToggle.addClass('active');
+                    }
+                }
             }
         });
     </script>
