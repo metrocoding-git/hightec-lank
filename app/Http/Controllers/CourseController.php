@@ -21,6 +21,7 @@ class CourseController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'price' => 'required|numeric',
+            'expiration_date' => 'required|numeric',
             'description' => 'nullable|string',
             'duration' => 'nullable|string',
         ]);
@@ -40,6 +41,7 @@ class CourseController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'price' => 'required|numeric',
+             'expiration_date' => 'required|numeric',
             'description' => 'nullable|string',
             'duration' => 'nullable|string',
         ]);

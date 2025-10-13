@@ -32,7 +32,7 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
-Route::controller(CourseController::class)->prefix('administration/academic/courses')->group(callback: function () {
+Route::controller(CourseController::class)->prefix('administration/academic/courses')->middleware(['permission'])->group(callback: function () {
     Route::get('/', 'index')->name('course.index');
     Route::post('store', 'store')->name('course.store');
     Route::post('update/{id}', 'update')->name('course.update');

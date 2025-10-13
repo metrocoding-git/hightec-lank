@@ -13,7 +13,7 @@ class Intake extends Model
     //
     protected $table = 'intakes';
 
-    protected $fillable = ['name', 'branch_id', 'student_count'];
+    protected $fillable = ['name', 'branch_id', 'student_count', 'start_date'];
 
      // Relationship: Intake belongs to a Branch
      public function branch()

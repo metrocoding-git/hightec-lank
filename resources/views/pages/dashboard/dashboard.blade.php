@@ -5,7 +5,14 @@
             <div class="row">
                 <div class="col-lg-12">
                     <div class="main-title">
-                        <h3 class="mb-30">Welcome   {{Auth::user()->name}} {{Auth::user()->last_name}}</h3>
+                        <h3 class="mb-30">Welcome   
+                            @if (Auth::user())
+                                
+                            {{Auth::user()->name}} {{Auth::user()->last_name}} role->id {{ Auth::user()->role_id}}
+                            @else
+                            Test User
+                            @endif
+                        </h3>
                     </div>
                 </div>
             </div>

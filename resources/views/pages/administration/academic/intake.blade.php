@@ -94,41 +94,32 @@
                                                 @enderror
                                             </div>
                                         </div>
-
-                                        {{-- Courses with Date Selection --}}
+                                        {{-- Intake Date --}}
                                         <div class="col-lg-12 mt-20">
-                                            <label class="primary_input_label">Courses with Dates <span>*</span></label>
+                                            <div class="primary_input">
+                                                <label class="primary_input_label">Intake Date <span>*</span></label>
+                                                <input type="date" name="date"
+                                                    class="primary_input_field form-control @error('date') is-invalid @enderror"
+                                                    value="{{ old('date', $intake->start_date ?? '') }}" autocomplete="off">
+                                                @error('date')
+                                                    <span class="text-danger">{{ $message }}</span>
+                                                @enderror
+                                            </div>
+                                        </div>
+
+                                        {{-- Courses Selection --}}
+                                        <div class="col-lg-12 mt-20">
+                                            <label class="primary_input_label">Courses <span>*</span></label>
                                             <div class="course-selection-container">
                                                 @foreach ($courses as $course)
-                                                    <div class="course-item border rounded p-3 mb-3">
-                                                        <div class="form-check mb-2">
-                                                            <input type="checkbox" class="common-checkbox form-control course-checkbox"
-                                                                name="courses[]" id="course_{{ $course->id }}"
-                                                                value="{{ $course->id }}"
-                                                                {{ isset($intakeId) && in_array($course->id, old('courses', $intake->courses->pluck('id')->toArray() ?? [])) ? 'checked' : '' }}>
-                                                            <label for="course_{{ $course->id }}" class="font-weight-bold">
-                                                                {{ $course->name }} 
-                                                            </label>
-                                                        </div>
-
-                                                        <div class="course-dates row" style="{{ isset($intakeId) && in_array($course->id, old('courses', $intake->courses->pluck('id')->toArray() ?? [])) ? '' : 'display: none;' }}">
-                                                            <div class="col-md-6">
-                                                                <div class="primary_input">
-                                                                    <label class="primary_input_label">Start Date</label>
-                                                                    <input type="date" name="course_start_dates[{{ $course->id }}]"
-                                                                        class="primary_input_field form-control"
-                                                                        value="{{ old('course_start_dates.' . $course->id, isset($courseIntakes[$course->id]) ? $courseIntakes[$course->id]->start_date : date('Y-m-d')) }}">
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-6" hidden>
-                                                                <div class="primary_input">
-                                                                    <label class="primary_input_label">End Date</label>
-                                                                    <input type="date" name="course_end_dates[{{ $course->id }}]"
-                                                                        class="primary_input_field form-control"
-                                                                        value="{{ old('course_end_dates.' . $course->id, isset($courseIntakes[$course->id]) ? $courseIntakes[$course->id]->end_date : date('Y-m-d')) }}">
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                                                    <div class="form-check mb-2">
+                                                        <input type="checkbox" class="common-checkbox form-control course-checkbox"
+                                                            name="courses[]" id="course_{{ $course->id }}"
+                                                            value="{{ $course->id }}"
+                                                            {{ isset($intakeId) && in_array($course->id, old('courses', $intake->courses->pluck('id')->toArray() ?? [])) ? 'checked' : '' }}>
+                                                        <label for="course_{{ $course->id }}" class="font-weight-bold">
+                                                            {{ $course->name }} 
+                                                        </label>
                                                     </div>
                                                 @endforeach
                                             </div>
@@ -263,27 +254,6 @@
             info: true,
         });
 
-        // Show/hide course date fields when checkbox is clicked
-        $('.course-checkbox').on('change', function() {
-            var courseId = $(this).val();
-            var dateFields = $('.course-dates input[name*="course_start_dates[' + courseId + ']"], .course-dates input[name*="course_end_dates[' + courseId + ']"]').closest('.course-dates');
-
-            if ($(this).is(':checked')) {
-                dateFields.show();
-            } else {
-                dateFields.hide();
-                // Clear the date values when unchecked
-                $('.course-dates input[name*="course_start_dates[' + courseId + ']"]').val('');
-                $('.course-dates input[name*="course_end_dates[' + courseId + ']"]').val('');
-            }
-        });
-
-        // On page load, show date fields for already selected courses (for edit mode)
-        $('.course-checkbox:checked').each(function() {
-            var courseId = $(this).val();
-            var dateFields = $('.course-dates input[name*="course_start_dates[' + courseId + ']"], .course-dates input[name*="course_end_dates[' + courseId + ']"]').closest('.course-dates');
-            dateFields.show();
-        });
     </script>
 
 @endpush

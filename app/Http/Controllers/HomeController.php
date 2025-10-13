@@ -62,9 +62,9 @@ class HomeController extends Controller
     public function dashboard()
     {
         $user = Auth::user();
-        $roleName = $user->role ? $user->role->role_name : 'N/A'; // Get role name, or 'N/A' if not found
+        // $roleName = $user->role ? $user->role->role_name : 'N/A'; // Get role name, or 'N/A' if not found
 
-        return view('pages.dashboard.dashboard', compact('user', 'roleName'));
+        return view('pages.dashboard.dashboard', compact('user'));
     }
 
 
