@@ -14,10 +14,6 @@ class RolePermission extends Pivot
     protected $fillable = [
         'role_id',
         'permission_id',
-        'view',
-        'add',
-        'edit',
-        'delete',
     ];
 
     public function role()

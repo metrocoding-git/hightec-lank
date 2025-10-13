@@ -14,14 +14,28 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
+        // Create or get Admin role
         $adminRole = Role::firstOrCreate(['role_name' => 'Admin', 'status' => 1]);
+        // Create or get Student role
+        $studentRole = Role::firstOrCreate(['role_name' => 'Student', 'status' => 1]);
+        // Create or get Teacher role
+        $teacherRole = Role::firstOrCreate(['role_name' => 'Teacher', 'status' => 1]);
 
         $permissions = Permission::all();
 
-        foreach ($permissions as $permission) {
-            $adminRole->permissions()->syncWithoutDetaching([
-                $permission->id => ['view' => 1, 'add' => 1, 'edit' => 1, 'delete' => 1]
-            ]);
-        }
+        // Assign all permissions to Admin role
+        $adminRole->permissions()->sync($permissions->pluck('id')->toArray());
+
+        // Assign only 'view' related permissions to Student role
+        $studentViewPermissions = $permissions->filter(function ($permission) {
+            return str_contains($permission->permission_name, '.index') || str_contains($permission->permission_name, '.edit') || str_contains($permission->permission_name, '.view') || str_contains($permission->permission_name, '.show') || str_contains($permission->permission_name, '.get-');
+        })->pluck('id')->toArray();
+        $studentRole->permissions()->sync($studentViewPermissions);
+
+        // Assign view, add, edit related permissions to Teacher role
+        $teacherPermissions = $permissions->filter(function ($permission) {
+            return str_contains($permission->permission_name, '.index') || str_contains($permission->permission_name, '.store') || str_contains($permission->permission_name, '.update') || str_contains($permission->permission_name, '.edit') || str_contains($permission->permission_name, '.view') || str_contains($permission->permission_name, '.show') || str_contains($permission->permission_name, '.get-');
+        })->pluck('id')->toArray();
+        $teacherRole->permissions()->sync($teacherPermissions);
     }
 }
