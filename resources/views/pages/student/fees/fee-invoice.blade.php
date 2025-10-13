@@ -5,12 +5,53 @@
 @section('mainContent')
     @push('css')
         <link rel="stylesheet" href="{{ url('Modules\Fees\Resources\assets\css\feesStyle.css') }}" />
-    @endpush
-
-    @push('css')
         <style>
             div#table_id_wrapper {
                 margin-top: 40px;
+            }
+            /* Custom styles for return fee modal */
+            #returnFeeModal .modal-body .form-group {
+                margin-bottom: 1.5rem; /* Add more space between form groups */
+            }
+            #returnFeeModal .modal-body label {
+                font-weight: 600; /* Make labels slightly bolder */
+                margin-bottom: 0.5rem;
+                display: block;
+            }
+            #returnFeeModal .modal-body .form-control {
+                border-radius: 0.5rem; /* Slightly rounded corners for inputs */
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
+            #returnFeeModal .modal-footer .primary-btn {
+                padding: 0.75rem 1.5rem;
+                font-size: 1rem;
+                border-radius: 0.5rem;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            #returnFeeModal .modal-footer .tr-bg {
+                background-color: #6c757d; /* Bootstrap secondary color */
+                border-color: #6c757d;
+                color: #fff;
+            }
+            #returnFeeModal .modal-footer .tr-bg:hover {
+                background-color: #5a6268;
+                border-color: #545b62;
+            }
+            #returnFeeModal .modal-footer .fix-gr-bg {
+                background-color: #007bff; /* Bootstrap primary color */
+                border-color: #007bff;
+                color: #fff;
+            }
+            #returnFeeModal .modal-footer .fix-gr-bg:hover {
+                background-color: #0056b3;
+                border-color: #0056b3;
+            }
+            #returnFeeModal .input-group-text {
+                border-radius: 0 0.5rem 0.5rem 0;
+                background-color: #e9ecef;
+                border-color: #ced4da;
             }
         </style>
     @endpush
@@ -186,135 +227,140 @@
                             {{-- @endforeach --}}
 
                             <!-- Return Fee Modals -->
-                            @foreach ($fee_invoices as $invoice)
-                                @php
-                                    $amount = $invoice->total_amount;
-                                    $paid_amount = $invoice->paid_amount;
-                                    $balance = $amount - $paid_amount;
-                                @endphp
-                                @if ($invoice->payment_status == 'full')
-                                    <div class="modal fade admin-query" id="returnFeeModal{{ $invoice->id }}">
-                                        <div class="modal-dialog modal-lg modal-dialog-centered">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h4 class="modal-title">@lang('fees.return_fee') - Invoice
-                                                        #{{ $invoice->id }}</h4>
-                                                    <button type="button" class="close"
-                                                        data-dismiss="modal">&times;</button>
-                                                </div>
-                                                <form action="{{ route('return-fees.store') }}" method="POST">
-                                                    @csrf
-                                                    <div class="modal-body">
-                                                        <div class="row">
-                                                            <div class="col-md-6">
-                                                                <div class="form-group">
-                                                                    <label>@lang('common.student')</label>
-                                                                    <input type="text" class="form-control"
-                                                                        value="{{ $invoice->student->student_name }}"
-                                                                        readonly>
-                                                                    <input type="hidden" name="student_id"
-                                                                        value="{{ $invoice->student->id }}">
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <div class="form-group">
-                                                                    <label>@lang('admin.admission_no')</label>
-                                                                    <input type="text" class="form-control"
-                                                                        value="{{ $invoice->student->admission_number }}"
-                                                                        readonly>
-                                                                    <input type="hidden" name="admission_number"
-                                                                        value="{{ $invoice->student->admission_number }}">
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                       @foreach ($fee_invoices as $invoice)
+    @php
+        $amount = $invoice->total_amount;
+        $paid_amount = $invoice->paid_amount;
+        $balance = $amount - $paid_amount;
+    @endphp
+    @if ($invoice->payment_status == 'full')
+        <div class="modal fade admin-query" id="returnFeeModal{{ $invoice->id }}" style="background-color: rgba(0, 0, 0, 0.5);">
+            <div class="modal-dialog modal-lg modal-dialog-centered" style="margin: 0 auto; max-width: 600px; display: flex; align-items: center; min-height: 100vh;">
+                <div class="modal-content" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); border: none; overflow: hidden;">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px 25px; border-bottom: none;">
+                        <h4 class="modal-title" style="margin: 0; font-weight: 600; font-size: 1.4rem; display: flex; align-items: center;">
+                            <i class="fas fa-undo-alt" style="margin-right: 10px; font-size: 1.2rem;"></i>
+                            Return Fee - Invoice #{{ $invoice->id }}
+                        </h4>
+                        <button type="button" class="close" data-dismiss="modal" style="color: white; opacity: 0.8; font-size: 1.5rem; margin: 0; padding: 0; background: none; border: none;">
+                            &times;
+                        </button>
+                    </div>
+                    
+                    <form action="{{ route('return-fees.store') }}" method="POST">
+                        @csrf
+                        <div class="modal-body" style="padding: 30px 25px; background-color: #f8f9fa;">
+                            <div class="row" style="margin-bottom: 20px;">
+                                <div class="col-md-6" style="margin-bottom: 15px;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 8px; font-size: 0.9rem;">
+                                            <i class="fas fa-user-graduate" style="margin-right: 5px; color: #667eea;"></i>
+                                            @lang('common.student')
+                                        </label>
+                                        <input type="text" class="form-control" 
+                                               value="{{ $invoice->student->student_name }}"
+                                               readonly
+                                               style="background-color: white; border: 1px solid #e1e5eb; border-radius: 8px; padding: 10px 15px; font-size: 0.95rem; color: #495057; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);">
+                                        <input type="hidden" name="student_id" value="{{ $invoice->student->id }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-6" style="margin-bottom: 15px;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 8px; font-size: 0.9rem;">
+                                            <i class="fas fa-id-card" style="margin-right: 5px; color: #667eea;"></i>
+                                            @lang('admin.admission_no')
+                                        </label>
+                                        <input type="text" class="form-control" 
+                                               value="{{ $invoice->student->admission_number }}"
+                                               readonly
+                                               style="background-color: white; border: 1px solid #e1e5eb; border-radius: 8px; padding: 10px 15px; font-size: 0.95rem; color: #495057; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);">
+                                        <input type="hidden" name="admission_number" value="{{ $invoice->student->admission_number }}">
+                                    </div>
+                                </div>
+                            </div>
 
-                                                        <div class="row">
-                                                            <div class="col-md-6">
-                                                                <div class="form-group">
-                                                                    <label>Father Name</label>
-                                                                    <input type="text" class="form-control"
-                                                                        name="father_name"
-                                                                        value="{{ $invoice->student->guardians_name ?? '' }}"
-                                                                        required>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <div class="form-group">
-                                                                    <label>Available for Return</label>
-                                                                    <input type="text" class="form-control"
-                                                                        value="{{ number_format($paid_amount, 2) }}"
-                                                                        readonly>
-                                                                    <input type="hidden" name="balance"
-                                                                        value="{{ $paid_amount }}">
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                            <div class="row" style="margin-bottom: 20px;">
+                                <div class="col-md-12">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 8px; font-size: 0.9rem;">
+                                            <i class="fas fa-coins" style="margin-right: 5px; color: #28a745;"></i>
+                                            Available for Return
+                                        </label>
+                                        <input type="text" class="form-control" 
+                                               value="{{ number_format($paid_amount, 2) }}"
+                                               readonly
+                                               style="background-color: #e8f5e8; border: 1px solid #28a745; border-radius: 8px; padding: 12px 15px; font-size: 1.1rem; font-weight: 600; color: #155724; text-align: center; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);">
+                                        <input type="hidden" name="balance" value="{{ $paid_amount }}">
+                                    </div>
+                                </div>
+                            </div>
 
-                                                        <div class="row">
-                                                            <div class="col-md-6">
-                                                                <div class="form-group">
-                                                                    <label>Return Amount <span
-                                                                            class="text-danger">*</span></label>
-                                                                    <div class="input-group">
-                                                                        <input type="number" name="return_amount"
-                                                                            class="form-control" min="0.01"
-                                                                            max="{{ $paid_amount }}" step="0.01"
-                                                                            required placeholder="Enter return amount">
-                                                                        <div class="input-group-append">
-                                                                            <span class="input-group-text">.00</span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <small class="text-muted">Maximum return amount:
-                                                                        {{ number_format($paid_amount, 2) }}</small>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <div class="form-group">
-                                                                    <label>Role</label>
-                                                                    <select name="role_id" class="form-control" required>
-                                                                        <option value="">Select Role</option>
-                                                                        @foreach ($roles as $role)
-                                                                            <option value="{{ $role->id }}">
-                                                                                {{ $role->role_name }}</option>
-                                                                        @endforeach
-                                                                    </select>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="form-group">
-                                                            <label>@lang('fees.short_note')</label>
-                                                            <textarea name="short_note" class="form-control" rows="3" placeholder="Enter reason for return..."></textarea>
-                                                        </div>
-
-                                                        <div class="form-group">
-                                                            <div class="form-check">
-                                                                <input type="checkbox" name="status" value="1"
-                                                                    class="form-check-input"
-                                                                    id="statusCheck{{ $invoice->id }}" checked>
-                                                                <label class="form-check-label"
-                                                                    for="statusCheck{{ $invoice->id }}">
-                                                                    Active
-                                                                </label>
-                                                            </div>
-                                                        </div>
-
-                                                        <input type="hidden" name="invoice_id"
-                                                            value="{{ $invoice->id }}">
-                                                    </div>
-
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="primary-btn tr-bg"
-                                                            data-dismiss="modal">@lang('common.cancel')</button>
-                                                        <button type="submit"
-                                                            class="primary-btn fix-gr-bg">Return</button>
-                                                    </div>
-                                                </form>
+                            <div class="row" style="margin-bottom: 25px;">
+                                <div class="col-md-12">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 8px; font-size: 0.9rem;">
+                                            <i class="fas fa-money-bill-wave" style="margin-right: 5px; color: #dc3545;"></i>
+                                            Return Amount <span style="color: #dc3545;">*</span>
+                                        </label>
+                                        <div class="input-group" style="box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); border-radius: 8px; overflow: hidden;">
+                                            <input type="number" name="return_amount" 
+                                                   class="form-control" 
+                                                   min="0.01" 
+                                                   max="{{ $paid_amount }}" 
+                                                   step="0.01" 
+                                                   required 
+                                                   placeholder="Enter return amount"
+                                                   style="border: 1px solid #dc3545; border-right: none; border-radius: 8px 0 0 8px; padding: 12px 15px; font-size: 1rem; color: #495057; height: 48px;">
+                                            <div class="input-group-append">
+                                                <span class="input-group-text" style="background-color: #dc3545; color: white; border: 1px solid #dc3545; border-left: none; border-radius: 0 8px 8px 0; padding: 12px 15px; font-weight: 600; height: 48px;">
+                                                    .00
+                                                </span>
                                             </div>
                                         </div>
+                                        <small class="text-muted" style="display: block; margin-top: 8px; font-size: 0.85rem; color: #6c757d;">
+                                            <i class="fas fa-info-circle" style="margin-right: 5px;"></i>
+                                            Maximum return amount: <strong style="color: #28a745;">{{ number_format($paid_amount, 2) }}</strong>
+                                        </small>
                                     </div>
-                                @endif
-                            @endforeach
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 25px;">
+                                <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 8px; font-size: 0.9rem;">
+                                    <i class="fas fa-sticky-note" style="margin-right: 5px; color: #ffc107;"></i>
+                                    @lang('fees.short_note')
+                                </label>
+                                <textarea name="short_note" 
+                                          class="form-control" 
+                                          rows="3" 
+                                          placeholder="Enter reason for return..."
+                                          style="border: 1px solid #e1e5eb; border-radius: 8px; padding: 12px 15px; font-size: 0.95rem; color: #495057; resize: vertical; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); transition: border-color 0.3s ease;"></textarea>
+                            </div>
+                            
+                            <input type="hidden" name="invoice_id" value="{{ $invoice->id }}">
+                        </div>
+
+                        <div class="modal-footer" style="background-color: white; padding: 20px 25px; border-top: 1px solid #e1e5eb; border-radius: 0 0 12px 12px;">
+                            <button type="button" 
+                                    class="primary-btn tr-bg" 
+                                    data-dismiss="modal"
+                                    style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);">
+                                <i class="fas fa-times" style="margin-right: 8px;"></i>
+                                @lang('common.cancel')
+                            </button>
+                            <button type="submit" 
+                                    class="primary-btn fix-gr-bg"
+                                    style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 12px 30px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);">
+                                <i class="fas fa-undo-alt" style="margin-right: 8px;"></i>
+                                Process Return
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+@endforeach
 
                             <!-- Make Invoice Modal -->
                             <div class="modal fade admin-query" id="makeInvoiceModal" tabindex="-1" role="dialog"

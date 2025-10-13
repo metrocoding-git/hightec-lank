@@ -20,10 +20,9 @@ class ReturnFeeController extends Controller
         $validated = $request->validate([
             'student_id' => 'required|exists:students,id',
             'admission_number' => 'required|string|max:255',
-            'father_name' => 'required|string|max:255',
+            'father_name' => 'nullable|string|max:255',
             'balance' => 'required|numeric|min:0',
             'return_amount' => 'required|numeric|min:0.01',
-            'role_id' => 'required|exists:roles,id',
             'invoice_id' => 'required|exists:fee_invoices,id',
             'short_note' => 'nullable|string',
             'status' => 'nullable|boolean'
