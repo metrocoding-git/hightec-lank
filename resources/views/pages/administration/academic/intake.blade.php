@@ -162,6 +162,7 @@
                                             <th>Intake</th>
                                             <th>Branch</th>
                                             <th>Courses</th>
+                                            <th>Start Date</th>
                                             {{-- <th>Student Count</th> --}}
                                             <th>@lang('common.action')</th>
                                         </tr>
@@ -179,6 +180,7 @@
                                                         @endif
                                                     @endforeach
                                                 </td>
+                                                <td>{{ $intake->start_date }}</td>
                                                 {{-- <td><a href="/count">{{ $intake->student_count }}</a></td> --}}
                                                 <td valign="top">
 
