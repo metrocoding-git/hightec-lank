@@ -41,7 +41,15 @@
 </footer>
 
 <!-- ================End Footer Area ================= -->
-
+<style>
+    body {
+        padding-bottom: 50px; /* Adjust this value based on your footer's height */
+    }
+    .new-footer {
+        position: relative;
+        z-index: 1;
+    }
+</style>
 <script>
     window.jsLang = function(key, replace) {
         let translation = true

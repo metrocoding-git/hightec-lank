@@ -12,7 +12,7 @@ class Course extends Model
     //
     protected $table = 'courses';
 
-    protected $fillable = ['name', 'code', 'price', 'description','duration'];
+    protected $fillable = ['name', 'code', 'price', 'description','duration','expiration_date'];
 
 
     public function intakes()

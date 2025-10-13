@@ -28,11 +28,12 @@ use App\Http\Controllers\StudentCategoryController;
 use App\Http\Controllers\ItemSellController; // Import the new controller
 use App\Http\Controllers\RoleController; // Import the new controller
 
-Route::get('/', function () {
-    return redirect()->route('dashboard');
+Route::controller(HomeController::class)->group(callback: function () {
+    Route::get('dashboard', 'dashboard')->name('dashboard');
+    Route::get('/', 'login')->name('login');
 });
 
-Route::controller(CourseController::class)->prefix('administration/academic/courses')->group(callback: function () {
+Route::controller(CourseController::class)->prefix('administration/academic/courses')->middleware(['permission'])->group(callback: function () {
     Route::get('/', 'index')->name('course.index');
     Route::post('store', 'store')->name('course.store');
     Route::post('update/{id}', 'update')->name('course.update');
@@ -40,7 +41,7 @@ Route::controller(CourseController::class)->prefix('administration/academic/cour
     Route::delete('destroy/{id}', 'destroy')->name('course.destroy');
 });
 
-Route::controller(IntakeController::class)->prefix('administration/academic/intake')->group(callback: function () {
+Route::controller(IntakeController::class)->prefix('administration/academic/intake')->middleware(['permission'])->group(callback: function () {
     Route::get('/', 'index')->name('intake.index');
     Route::post('store', 'store')->name('intake.store');
     Route::post('update/{id}', 'update')->name(name: 'intake.update');
@@ -48,7 +49,7 @@ Route::controller(IntakeController::class)->prefix('administration/academic/inta
     Route::delete('destroy/{id}', 'destroy')->name('intake.destroy');
 });
 
-Route::controller(SubjectController::class)->prefix('administration/academic/subjects')->group(callback: function () {
+Route::controller(SubjectController::class)->prefix('administration/academic/subjects')->middleware(['permission'])->group(callback: function () {
     Route::get('/', 'index')->name('subject.index');
     Route::post('store', 'store')->name('subject.store');
     Route::post('update/{id}', 'update')->name('subject.update');
@@ -56,44 +57,44 @@ Route::controller(SubjectController::class)->prefix('administration/academic/sub
     Route::delete('destroy/{id}', 'destroy')->name('subject.destroy');
 });
 
-Route::controller(AssignSubjectController::class)->prefix('administration/academic/assign-subject')->group(callback: function () {
+Route::controller(AssignSubjectController::class)->prefix('administration/academic/assign-subject')->middleware(['permission'])->group(callback: function () {
     Route::get('/', 'index')->name('assign-subject.index');
     Route::post('store', 'store')->name('assign-subject.store');
     Route::post('update/{id}', 'update')->name('assign-subject.update');
     Route::get('edit/{id}', 'edit')->name('assign-subject.edit');
     Route::delete('destroy/{id}', 'destroy')->name('assign-subject.destroy');
-    Route::get('get-courses/{intakeId}', 'getCoursesByIntake')->name('assign-subject.get-courses')->withoutMiddleware(['csrf']);
+    Route::get('get-courses/{intakeId}', 'getCoursesByIntake')->name('assign-subject.get-courses')->withoutMiddleware(['csrf', 'permission']);
 });
 
-Route::controller(LessonController::class)->prefix('administration/lesson-plan/lesson')->group(callback: function () {
+Route::controller(LessonController::class)->prefix('administration/lesson-plan/lesson')->middleware(['permission'])->group(callback: function () {
     Route::get('/', 'index')->name('lesson.index');
     Route::post('store', 'store')->name('lesson.store');
     Route::post('update/{id}', 'update')->name('lesson.update');
     Route::get('edit/{id}', 'edit')->name('lesson.edit');
     Route::delete('destroy/{id}', 'destroy')->name('lesson.destroy');
-    Route::get('get-intakes/{courseId}', 'getIntakesByCourse')->name('lesson.get-intakes')->withoutMiddleware(['csrf']);
-    Route::get('get-subjects/{intakeId}', 'getSubjectsByIntake')->name('lesson.get-subjects')->withoutMiddleware(['csrf']);
+    Route::get('get-intakes/{courseId}', 'getIntakesByCourse')->name('lesson.get-intakes')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('get-subjects/{intakeId}', 'getSubjectsByIntake')->name('lesson.get-subjects')->withoutMiddleware(['csrf', 'permission']);
 });
 
-Route::controller(TopicController::class)->prefix('administration/lesson-plan/topic')->group(callback: function () {
+Route::controller(TopicController::class)->prefix('administration/lesson-plan/topic')->middleware(['permission'])->group(callback: function () {
     Route::get('/', 'index')->name('topic.index');
     Route::post('store', 'store')->name('topic.store');
     Route::put('update/{id}', 'update')->name('topic.update');
     Route::get('edit/{id}', 'edit')->name('topic.edit');
     Route::delete('destroy/{id}', 'destroy')->name('topic.destroy');
-    Route::get('get-intakes/{courseId}', 'getIntakesByCourse')->name('topic.get-intakes')->withoutMiddleware(['csrf']);
-    Route::get('get-subjects/{intakeId}', 'getSubjectsByIntake')->name('topic.get-subjects')->withoutMiddleware(['csrf']);
-    Route::get('get-lessons/{subjectId}', 'getLessonsBySubject')->name('topic.get-lessons')->withoutMiddleware(['csrf']);
+    Route::get('get-intakes/{courseId}', 'getIntakesByCourse')->name('topic.get-intakes')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('get-subjects/{intakeId}', 'getSubjectsByIntake')->name('topic.get-subjects')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('get-lessons/{subjectId}', 'getLessonsBySubject')->name('topic.get-lessons')->withoutMiddleware(['csrf', 'permission']);
 });
 
-Route::controller(TopicOverviewController::class)->prefix('administration/lesson-plan/topic-overview')->group(callback: function () {
+Route::controller(TopicOverviewController::class)->prefix('administration/lesson-plan/topic-overview')->middleware(['permission'])->group(callback: function () {
     Route::get('/', 'index')->name('topic-overview.index');
     Route::post('store', 'store')->name('topic-overview.store');
-    Route::get('get-intakes/{courseId}', 'getIntakesByCourse')->name('topic-overview.get-intakes')->withoutMiddleware(['csrf']);
-    Route::get('get-subjects/{intakeId}', 'getSubjectsByIntake')->name('topic-overview.get-subjects')->withoutMiddleware(['csrf']);
+    Route::get('get-intakes/{courseId}', 'getIntakesByCourse')->name('topic-overview.get-intakes')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('get-subjects/{intakeId}', 'getSubjectsByIntake')->name('topic-overview.get-subjects')->withoutMiddleware(['csrf', 'permission']);
 });
 
-Route::controller(StudentCategoryController::class)->prefix('student/student-info/student-category')->group(callback: function () {
+Route::controller(StudentCategoryController::class)->prefix('student/student-info/student-category')->middleware(['permission'])->group(callback: function () {
     Route::get('/', 'index')->name('student-category.index');
     Route::post('store', 'store')->name('student-category.store');
     Route::put('update/{id}', 'update')->name('student-category.update');
@@ -101,7 +102,7 @@ Route::controller(StudentCategoryController::class)->prefix('student/student-inf
     Route::delete('destroy/{id}', 'destroy')->name('student-category.destroy');
 });
 
-Route::controller(AddStudentController::class)->prefix('student/student-info/add-student')->group(callback: function () {
+Route::controller(AddStudentController::class)->prefix('student/student-info/add-student')->middleware(['permission'])->group(callback: function () {
     Route::get('/', 'index')->name('add-student.index');
     Route::post('store', 'store')->name('add-student.store');
     Route::put('update/{student}', 'update')->name('add-student.update');
@@ -110,7 +111,7 @@ Route::controller(AddStudentController::class)->prefix('student/student-info/add
 });
 
 // Student Course Management Routes
-Route::controller(AddStudentController::class)->prefix('student/student-info')->group(function () {
+Route::controller(AddStudentController::class)->prefix('student/student-info')->middleware(['permission'])->group(function () {
     Route::get('student-add-course', 'studentAddCourse')->name('student.add-course.index');
     Route::post('student-add-course', 'storeStudentCourse')->name('student.add-course.store');
     Route::get('student-add-course/{id}/edit', 'editStudentCourse')->name('student.add-course.edit');
@@ -119,7 +120,7 @@ Route::controller(AddStudentController::class)->prefix('student/student-info')->
 });
 
 // Student Intake Management Routes
-Route::controller(AddStudentController::class)->prefix('student/student-info')->group(function () {
+Route::controller(AddStudentController::class)->prefix('student/student-info')->middleware(['permission'])->group(function () {
     Route::get('student-add-intake', 'studentAddIntakeWithCourses')->name('student.add-intake.index');
     Route::post('student-add-intake', 'storeStudentIntakeWithCourses')->name('student.add-intake-with-courses.store');
     Route::get('student-add-intake/{id}/edit', 'editStudentIntake')->name('student.add-intake.edit');
@@ -128,12 +129,12 @@ Route::controller(AddStudentController::class)->prefix('student/student-info')->
 
     // Search functionality for Student Add Intake
     Route::post('student-add-intake/search', 'searchStudentIntake')->name('student.add-intake.search');
-    Route::get('student-add-intake/get-intakes/{branchId}', 'getSearchIntakesByBranch')->name('student.add-intake.get-intakes')->withoutMiddleware(['csrf']);
-    Route::get('student-add-intake/get-courses/{intakeId}', 'getSearchCoursesByIntake')->name('student.add-intake.get-courses')->withoutMiddleware(['csrf']);
+    Route::get('student-add-intake/get-intakes/{branchId}', 'getSearchIntakesByBranch')->name('student.add-intake.get-intakes')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('student-add-intake/get-courses/{intakeId}', 'getSearchCoursesByIntake')->name('student.add-intake.get-courses')->withoutMiddleware(['csrf', 'permission']);
 });
 
-Route::controller(HomeController::class)->group(callback: function () {
-    Route::get('dashboard', 'dashboard')->name('dashboard');
+Route::controller(HomeController::class)->middleware(['permission'])->group(callback: function () {
+    // Route::get('dashboard', 'dashboard')->name('dashboard');
 
     Route::get('administration/study-material/upload-content', 'uploadContent')->name('upload-content');
     Route::get('administration/study-material/study-material-download', 'studyMaterialDownload')->name('study-material-download');
@@ -160,9 +161,9 @@ Route::controller(HomeController::class)->group(callback: function () {
     // Other existing dependent dropdown AJAX routes
     Route::get('student/student-info/get-intakes/{branchId}', 'getIntakes')->name('student.get-intakes');
     Route::get('student/student-info/get-courses/{intakeId}', 'getCourses')->name('student.get-courses');
-    Route::get('student/student-attendance/get-courses/{intakeId}', 'getCoursesByIntake')->name('student-attendance.get-courses')->withoutMiddleware(['csrf']);
-    Route::get('student/student-list/get-intakes/{branchId}', 'getIntakesByBranch')->name('student-list.get-intakes')->withoutMiddleware(['csrf']);
-    Route::get('student/student-list/get-courses/{intakeId}', 'getCoursesByIntake')->name('student-list.get-courses')->withoutMiddleware(['csrf']);
+    Route::get('student/student-attendance/get-courses/{intakeId}', 'getCoursesByIntake')->name('student-attendance.get-courses')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('student/student-list/get-intakes/{branchId}', 'getIntakesByBranch')->name('student-list.get-intakes')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('student/student-list/get-courses/{intakeId}', 'getCoursesByIntake')->name('student-list.get-courses')->withoutMiddleware(['csrf', 'permission']);
 
     //filter student list by branch
     Route::post('student/student-info/diabled-filter', 'filter_disabled_StudentList')->name('frontend.disabled-student.search');
@@ -192,7 +193,7 @@ Route::controller(HomeController::class)->group(callback: function () {
         ->name('save-item-receive-data');
 });
 
-Route::controller(ItemSellController::class)->group(function () {
+Route::controller(ItemSellController::class)->middleware(['permission'])->group(function () {
     Route::get('account/inventory/item-sell', 'itemSell')->name('item-sell');
     Route::post('account/inventory/item-sell/save', 'saveItemSellData')->name('save-item-sell-data');
     Route::get('account/inventory/item-sell-list', 'itemSellList')->name('item-sell-list');
@@ -208,7 +209,7 @@ Route::controller(ItemSellController::class)->group(function () {
     Route::post('account/inventory/item-sell/{id}/cancel', 'cancelItemSell')->name('cancel-item-sell');
 });
 
-Route::controller(ItemIssueController::class)->group(function () {
+Route::controller(ItemIssueController::class)->middleware(['permission'])->group(function () {
     Route::get('account/inventory/item-issue', 'index')->name('item-issue');
     Route::get('account/inventory/item-issue-list', 'issueListView')->name('item-issue-list');
     Route::post('account/inventory/save-item-issue-data', 'saveItemIssueData')->name('save-item-issue-data');
@@ -219,11 +220,11 @@ Route::controller(ItemIssueController::class)->group(function () {
     Route::post('account/inventory/issue-item', 'IssueItem')->name('issue-item');
 
     // AJAX routes for dynamic filtering
-    Route::get('account/inventory/get-intakes-by-branch/{branchId}', 'getIntakesByBranch')->name('item-issue.get-intakes-by-branch')->withoutMiddleware(['csrf']);
-    Route::get('account/inventory/get-courses-by-intake/{intakeId}', 'getCoursesByIntake')->name('item-issue.get-courses-by-intake')->withoutMiddleware(['csrf']);
-    Route::get('account/inventory/get-students-by-course/{courseId}', 'getStudentsByCourse')->name('item-issue.get-students-by-course')->withoutMiddleware(['csrf']);
-    Route::get('account/inventory/get-items-by-category/{categoryId}', 'getItemsByCategory')->name('item-issue.get-items-by-category')->withoutMiddleware(['csrf']);
-    Route::get('account/inventory/get-student-fee-data/{studentId}', 'getStudentFeeData')->name('item-issue.get-student-fee-data')->withoutMiddleware(['csrf']);
+    Route::get('account/inventory/get-intakes-by-branch/{branchId}', 'getIntakesByBranch')->name('item-issue.get-intakes-by-branch')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('account/inventory/get-courses-by-intake/{intakeId}', 'getCoursesByIntake')->name('item-issue.get-courses-by-intake')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('account/inventory/get-students-by-course/{courseId}', 'getStudentsByCourse')->name('item-issue.get-students-by-course')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('account/inventory/get-items-by-category/{categoryId}', 'getItemsByCategory')->name('item-issue.get-items-by-category')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('account/inventory/get-student-fee-data/{studentId}', 'getStudentFeeData')->name('item-issue.get-student-fee-data')->withoutMiddleware(['csrf', 'permission']);
 
 });
 Route::controller(LoginController::class)->group(function () {
@@ -236,7 +237,7 @@ Route::controller(LoginController::class)->group(function () {
 
 
 
-Route::controller(FeesGroupController::class)->group(function () {
+Route::controller(FeesGroupController::class)->middleware(['permission'])->group(function () {
     Route::get('student/fees/fee-group', 'index')->name('fee-group'); // GET list
     Route::post('student/fees/fee-group-create', 'store')->name('fee-group-create'); // POST create
     Route::get('student/fees/fee-group-edit/{id}', 'edit')->name('fee-group-edit'); // GET edit
@@ -244,13 +245,13 @@ Route::controller(FeesGroupController::class)->group(function () {
     Route::delete('student/fees/fee-group-delete/{id}', 'delete')->name('fee-group-delete'); // DELETE delete
 });
 
-Route::controller(FeesGroupController::class)->group(function () {
+Route::controller(FeesGroupController::class)->middleware(['permission'])->group(function () {
     Route::get('student/fees/course-paid', 'coursePaidView')->name('fees.course-paid'); // GET view
 });
 
 
 
-Route::controller(FeeTypeController::class)->group(function () {
+Route::controller(FeeTypeController::class)->middleware(['permission'])->group(function () {
 
     Route::get('student/fees/fee-type', 'index')->name('fees.fees-type');
     Route::post('student/fees/fee-type-store', 'store')->name('fees.fees-type-store');
@@ -259,7 +260,7 @@ Route::controller(FeeTypeController::class)->group(function () {
     Route::delete('student/fees/fee-type-delete/{id}', 'destroy')->name('fees.fees-type-delete');
 });
 
-Route::controller(InvoiceController::class)->group(function () {
+Route::controller(InvoiceController::class)->middleware(['permission'])->group(function () {
 
     Route::get('student/fees/invoice/view/{id}', 'viewFeeInvoice')->name('fees.fee-invoice-view');
     Route::get('student/fees/student-details/{studentId}', 'getStudentDetails')->name('fees.student-details');
@@ -283,7 +284,7 @@ Route::controller(InvoiceController::class)->group(function () {
     Route::post('fees/mark-as-paid', 'markAsPaid')->name('fees.mark-as-paid');
 });
 
-Route::controller(HomeController::class)->group(function () {
+Route::controller(HomeController::class)->middleware(['permission'])->group(function () {
     Route::get('student/fees/fee-invoice', 'feeInvoice')->name('fees.fee-invoice');
     Route::post('student/fees/fee-return/search', 'feeReturn')->name('fees.fee-return.search');
 });
@@ -291,7 +292,7 @@ Route::controller(HomeController::class)->group(function () {
 
 
 
-Route::controller(CategoryController::class)->group(function () {
+Route::controller(CategoryController::class)->middleware(['permission'])->group(function () {
 
 
 
@@ -304,7 +305,7 @@ Route::controller(CategoryController::class)->group(function () {
 
 
 
-Route::controller(InventoryItemController::class)->group(function () {
+Route::controller(InventoryItemController::class)->middleware(['permission'])->group(function () {
     Route::get('account/inventory/item-list', 'index')->name('item-list');
     Route::post('account/inventory/item-store', 'store')->name('item-store');
     Route::get('account/inventory/item-edit/{id}', 'edit')->name('item-edit');
@@ -312,14 +313,14 @@ Route::controller(InventoryItemController::class)->group(function () {
     Route::delete('account/inventory/item-delete/{id}', 'destroy')->name('item-delete');
 });
 
-Route::controller(SupplierController::class)->group(function () {
+Route::controller(SupplierController::class)->middleware(['permission'])->group(function () {
     Route::get('account/inventory/supplier', 'index')->name('supplier');
     Route::post('account/inventory/supplier-store', 'store')->name('supplier-store');
     Route::get('account/inventory/supplier-edit/{id}', 'edit')->name('supplier-edit');
     Route::put('account/inventory/supplier-update/{id}', 'update')->name('supplier-update');
     Route::delete('account/inventory/supplier-delete/{id}', 'destroy')->name('supplier-delete');
 });
-Route::controller(ContentTypeController::class)->group(function () {
+Route::controller(ContentTypeController::class)->middleware(['permission'])->group(function () {
     Route::get('administration/download-center/content-type', 'index')->name('content-type');
     Route::post('account/content-type-store', 'store')->name('content-type-store');
     Route::get('account/content-type-edit/{id}', 'edit')->name('content-type-edit');
@@ -327,7 +328,7 @@ Route::controller(ContentTypeController::class)->group(function () {
     Route::delete('account/content-type-delete/{id}', 'destroy')->name('content-type-delete');
 });
 
-Route::controller(ContentController::class)->group(function () {
+Route::controller(ContentController::class)->middleware(['permission'])->group(function () {
 
     Route::get('administration/download-center/content-list', 'index')->name('content-list');
     Route::post('account/content-store', 'store')->name('content-store');
@@ -339,7 +340,7 @@ Route::controller(ContentController::class)->group(function () {
     // Generate URL for selected contents (Generate URL modal)
     Route::post('administration/download-center/content-generate-url-save', 'generateUrlSave')->name('download-center.content-generate-url-save');
     // Dependent dropdown: get courses for a given intake (used in Share/Generate URL modals)
-    Route::get('administration/download-center/get-courses/{intakeId}', 'getCoursesByIntake')->name('download-center.get-courses-by-intake');
+    Route::get('administration/download-center/get-courses/{intakeId}', 'getCoursesByIntake')->name('download-center.get-courses-by-intake')->withoutMiddleware(['csrf', 'permission']);
     // Save generated URL data
     Route::post('administration/download-center/save-generated-url-data', 'saveGeneratedUrlData')->name('download-center.save-generated-url-data');
     // View shared content details
@@ -350,7 +351,7 @@ Route::controller(ContentController::class)->group(function () {
 // Return Fee Routes
 //return-fees.store
 
-Route::controller(ReturnFeeController::class)->group(function () {
+Route::controller(ReturnFeeController::class)->middleware(['permission'])->group(function () {
     Route::post('/student/fees/return-fees', 'store')->name('return-fees.store');
 
 });
@@ -370,7 +371,7 @@ Route::controller(RoleController::class)->prefix('role-management')->group(funct
 });
 
 // User Management Routes
-Route::controller(UserController::class)->prefix('role-management')->group(function () {
+Route::controller(UserController::class)->prefix('role-management')->middleware(['permission'])->group(function () {
     Route::get('create-user', 'createUser')->name('role-management.create-user');
     Route::post('store-user', 'storeUser')->name('role-management.store-user');
     Route::get('get-student-details/{id}', 'getStudentDetails')->name('role-management.get-student-details');

@@ -38,6 +38,8 @@
         <div class="container-fluid">
             <div class="row justify-content-between">
                 <h1>Courses</h1>
+                {{-- {{Auth::user()->name}} {{Auth::user()->last_name}} role->id {{ Auth::user()->role_id}} --}}
+
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
                     <a href="#">@lang('academics.academics')</a>
@@ -128,6 +130,24 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        <div class="row mt-20">
+                                            <div class="col-lg-12">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label" for="price">Course Expiration dates
+                                                        <span>*</span></label>
+                                                    <input
+                                                        class="primary_input_field form-control{{ $errors->has('expiration_date') ? ' is-invalid' : '' }}"
+                                                        type="number" name="expiration_date" id="expiration_date"
+                                                        value="{{ old('expiration_date', $course->expiration_date ?? '') }}"
+                                                        autocomplete="off">
+                                                    @if ($errors->has('expiration_date'))
+                                                        <span class="invalid-feedback" role="alert">
+                                                            <strong>{{ $errors->first('expiration_date') }}</strong>
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
 
                                         {{-- Course Duration --}}
                                         <div class="row mt-20">
@@ -202,6 +222,9 @@
                                             {{-- <th>Courses Code</th> --}}
                                             <th>Courses Price</th>
                                             <th>Courses durations</th>
+                                            <th>Start Date</th>
+                                            <th>Expiration Dates</th>
+                                            
                                             <th>Courses description</th>
                                             <th>@lang('common.action')</th>
                                         </tr>
@@ -214,6 +237,9 @@
                                                 {{-- <td><a href="#">{{ $course->code }}</a></td> --}}
                                                 <td>Rs.{{ number_format($course->price, 2) }}</td>
                                                 <td>{{ $course->duration ?? '-' }}</td>
+                                                <td>{{ $course->created_at ? $course->created_at->format('Y-m-d') : '-' }}</td>
+
+                                                <td>{{ $course->expiration_date ?? '-' }}</td>
                                                 <td>{{ $course->description ?? '-' }}</td>
                                                 <td valign="top">
                                                     @php

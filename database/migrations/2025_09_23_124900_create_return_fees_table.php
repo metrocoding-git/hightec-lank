@@ -14,8 +14,8 @@ return new class extends Migration {
             $table->id();
             $table->unsignedBigInteger('student_id');
             $table->string('admission_number');
-            $table->unsignedBigInteger('role_id');
-            $table->string('father_name');
+            $table->unsignedBigInteger('role_id')->nullable();
+            $table->string('father_name')->nullable();
             $table->decimal('balance', 10, 2);
             $table->text('short_note')->nullable();
             $table->tinyInteger('status')->default(1);

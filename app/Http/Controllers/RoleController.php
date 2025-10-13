@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Role;
-use App\Models\Permission; // Import the Permission model
+use App\Models\Permission;
 use Illuminate\Http\Request;
+
 class RoleController extends Controller
 {
     public function index()
@@ -33,7 +34,7 @@ class RoleController extends Controller
     public function edit($id)
     {
         $editRole = Role::findOrFail($id);
-        $roles = Role::all(); // For displaying the list alongside the edit form
+        $roles = Role::all();
         return view('pages.role_management.roles', compact('editRole', 'roles'));
     }
 
@@ -67,159 +68,148 @@ class RoleController extends Controller
     public function grantPermission($id)
     {
         $role = Role::findOrFail($id);
+        $rolePermissions = $role->permissions->pluck('id')->toArray();
+        $allPermissions = Permission::all();
+        $menuStructure = [];
 
-        // Fetch pivot data for the role
-        $rolePermissionsData = $role->permissions()->withPivot('view', 'add', 'edit', 'delete')->get();
+        foreach ($allPermissions as $permission) {
+            $mainCategoryName = 'General';
+            $subItemName = $permission->permission_name;
 
-        // Transform rolePermissionsData into an easily consumable format for the view
-        $rolePermissionsMap = [];
-        foreach ($rolePermissionsData as $permission) {
-            $rolePermissionsMap[$permission->pivot->permission_id] = [
-                'view' => $permission->pivot->view,
-                'add' => $permission->pivot->add,
-                'edit' => $permission->pivot->edit,
-                'delete' => $permission->pivot->delete,
+            if (str_starts_with($permission->permission_name, 'administration/academic/')) {
+                $mainCategoryName = 'Academic Administration';
+                $subItemName = str_replace('administration/academic/', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'administration/lesson-plan/')) {
+                $mainCategoryName = 'Lesson Plan Administration';
+                $subItemName = str_replace('administration/lesson-plan/', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'administration/download-center/')) {
+                $mainCategoryName = 'Download Center Administration';
+                $subItemName = str_replace('administration/download-center/', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'student/student-info/')) {
+                $mainCategoryName = 'Student Information';
+                $subItemName = str_replace('student/student-info/', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'student/fees/')) {
+                $mainCategoryName = 'Student Fees';
+                $subItemName = str_replace('student/fees/', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'account/inventory/')) {
+                $mainCategoryName = 'Inventory Management';
+                $subItemName = str_replace('account/inventory/', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'role-management/')) {
+                $mainCategoryName = 'Role & User Management';
+                $subItemName = str_replace('role-management/', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'fees.')) {
+                $mainCategoryName = 'Fees';
+                $subItemName = str_replace('fees.', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'item-issue.')) {
+                $mainCategoryName = 'Item Issue';
+                $subItemName = str_replace('item-issue.', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'item-sell.')) {
+                $mainCategoryName = 'Item Sell';
+                $subItemName = str_replace('item-sell.', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'course.')) {
+                $mainCategoryName = 'Courses';
+                $subItemName = str_replace('course.', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'intake.')) {
+                $mainCategoryName = 'Intakes';
+                $subItemName = str_replace('intake.', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'subject.')) {
+                $mainCategoryName = 'Subjects';
+                $subItemName = str_replace('subject.', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'assign-subject.')) {
+                $mainCategoryName = 'Assign Subjects';
+                $subItemName = str_replace('assign-subject.', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'lesson.')) {
+                $mainCategoryName = 'Lessons';
+                $subItemName = str_replace('lesson.', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'topic.')) {
+                $mainCategoryName = 'Topics';
+                $subItemName = str_replace('topic.', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'topic-overview.')) {
+                $mainCategoryName = 'Topic Overview';
+                $subItemName = str_replace('topic-overview.', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'student-category.')) {
+                $mainCategoryName = 'Student Categories';
+                $subItemName = str_replace('student-category.', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'add-student.')) {
+                $mainCategoryName = 'Add Student';
+                $subItemName = str_replace('add-student.', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'download-center.')) {
+                $mainCategoryName = 'Download Center';
+                $subItemName = str_replace('download-center.', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'item-category')) {
+                $mainCategoryName = 'Item Category';
+                $subItemName = str_replace('item-category', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'item-list')) {
+                $mainCategoryName = 'Item List';
+                $subItemName = str_replace('item-list', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'supplier')) {
+                $mainCategoryName = 'Supplier';
+                $subItemName = str_replace('supplier', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'content-type')) {
+                $mainCategoryName = 'Content Type';
+                $subItemName = str_replace('content-type', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'content-list')) {
+                $mainCategoryName = 'Content List';
+                $subItemName = str_replace('content-list', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'return-fees.')) {
+                $mainCategoryName = 'Return Fees';
+                $subItemName = str_replace('return-fees.', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'roles.')) {
+                $mainCategoryName = 'Roles';
+                $subItemName = str_replace('roles.', '', $permission->permission_name);
+            } elseif (str_starts_with($permission->permission_name, 'role-management.')) {
+                $mainCategoryName = 'Role Management';
+                $subItemName = str_replace('role-management.', '', $permission->permission_name);
+            }
+            
+            $subItemName = trim(str_replace(['.', '-'], ' ', $subItemName));
+            $subItemName = ucwords($subItemName);
+
+            if (empty($subItemName)) {
+                $subItemName = $permission->permission_name;
+            }
+
+            $mainCategoryKey = array_search($mainCategoryName, array_column($menuStructure, 'name'));
+            if ($mainCategoryKey === false) {
+                $menuStructure[] = [
+                    'name' => $mainCategoryName,
+                    'sub_items' => []
+                ];
+                $mainCategoryKey = count($menuStructure) - 1;
+            }
+
+            $menuStructure[$mainCategoryKey]['sub_items'][] = [
+                'name' => $subItemName,
+                'permission_id' => $permission->id,
+                'permission_name' => $permission->permission_name,
+                'has_permission' => in_array($permission->id, $rolePermissions),
             ];
         }
 
-        // Manually define menu structure based on side-menu.blade.php
-        $menuStructure = [
-            [
-                'name' => 'Academic',
-                'sub_items' => [
-                    ['name' => 'Courses', 'route' => '/administration/academic/courses'],
-                    ['name' => 'Intake', 'route' => '/administration/academic/intake'],
-                    ['name' => 'Subjects', 'route' => '/administration/academic/subjects'],
-                    ['name' => 'Assign Subject', 'route' => '/administration/academic/assign-subject'],
-                ]
-            ],
-            [
-                'name' => 'Lesson Plane',
-                'sub_items' => [
-                    ['name' => 'Lesson', 'route' => '/administration/lesson-plan/lesson'],
-                    ['name' => 'Topic', 'route' => '/administration/lesson-plan/topic'],
-                    ['name' => 'Topic Overview', 'route' => '/administration/lesson-plan/topic-overview'],
-                ]
-            ],
-            [
-                'name' => 'Download Center',
-                'sub_items' => [
-                    ['name' => 'Content-Type', 'route' => '/administration/download-center/content-type'],
-                    ['name' => 'Content List', 'route' => '/administration/download-center/content-list'],
-                    ['name' => 'Shared Content List', 'route' => '/administration/download-center/shared-content-list'],
-                    ['name' => 'Video List', 'route' => '/administration/download-center/video-list'],
-                ]
-            ],
-            [
-                'name' => 'Student Info',
-                'sub_items' => [
-                    ['name' => 'Student Category', 'route' => '/student/student-info/student-category'],
-                    ['name' => 'Add Student', 'route' => '/student/student-info/add-student'],
-                    ['name' => 'Student List', 'route' => '/student/student-info/student-list'],
-                    ['name' => 'Disabled Students', 'route' => '/student/student-info/disabled-student'],
-                    ['name' => 'Student Attendance', 'route' => '/student/student-info/student-attendance'],
-                    ['name' => 'Add Intake & Courses', 'route' => '/student/student-info/student-add-intake'],
-                ]
-            ],
-            [
-                'name' => 'Fees',
-                'sub_items' => [
-                    ['name' => 'Fee Group', 'route' => '/student/fees/fee-group'],
-                    ['name' => 'Fee Type', 'route' => '/student/fees/fee-type'],
-                    ['name' => 'Add Invoice', 'route' => '/student/fees/add-invoice'],
-                    ['name' => 'Course Paid', 'route' => '/student/fees/course-paid'],
-                    ['name' => 'Fee Invoice', 'route' => '/student/fees/fee-invoice'],
-                    ['name' => 'Fee Invoice Setting', 'route' => '/student/fees/fee-invoice-setting'],
-                    ['name' => 'Fee Return', 'route' => '/student/fees/fee-return'],
-                ]
-            ],
-            [
-                'name' => 'Inventory',
-                'sub_items' => [
-                    ['name' => 'Item Category', 'route' => '/account/inventory/item-category'],
-                    ['name' => 'Item List', 'route' => '/account/inventory/item-list'],
-                    ['name' => 'Supplier', 'route' => '/account/inventory/supplier'],
-                    ['name' => 'Item Receive', 'route' => '/account/inventory/item-receive'],
-                    ['name' => 'Item Receive List', 'route' => '/account/inventory/item-receive-list'],
-                    ['name' => 'Item Issue', 'route' => '/account/inventory/item-issue'],
-                    ['name' => 'Item Issue List', 'route' => '/account/inventory/item-issue-list'],
-                    ['name' => 'Item Sell', 'route' => '/account/inventory/item-sell'],
-                    ['name' => 'Item Sell List', 'route' => '/account/inventory/item-sell-list'],
-                ]
-            ],
-            [
-                'name' => 'Role Management',
-                'sub_items' => [
-                    ['name' => 'Roles', 'route' => '/role-management/roles'],
-                ]
-            ],
-        ];
+        usort($menuStructure, function($a, $b) {
+            return strcmp($a['name'], $b['name']);
+        });
 
-        // Ensure permissions exist for each route and add permission_id to menuStructure
-        $allPermissions = collect(); // Initialize as a collection
         foreach ($menuStructure as &$mainItem) {
-            foreach ($mainItem['sub_items'] as &$subItem) {
-                $permission = Permission::firstOrCreate(['permission_name' => $subItem['route']]);
-                $subItem['permission_id'] = $permission->id;
-                $allPermissions->push($permission);
-            }
+            usort($mainItem['sub_items'], function($a, $b) {
+                return strcmp($a['name'], $b['name']);
+            });
         }
-        $allPermissions = $allPermissions->keyBy('id'); // Key by ID for easy lookup in the view
 
-
-        return view('pages.role_management.grantpermission', compact('role', 'allPermissions', 'rolePermissionsMap', 'menuStructure'));
+        return view('pages.role_management.grantpermission', compact('role', 'menuStructure', 'allPermissions', 'rolePermissions'));
     }
 
     public function savePermissions(Request $request, $id)
     {
         $request->validate([
             'permissions' => 'nullable|array',
+            'permissions.*' => 'exists:permissions,id',
         ]);
 
         try {
             $role = Role::findOrFail($id);
-            $permissionsToSync = [];
-
-            $permissionsToSync = [];
-
-            // Get existing permissions for the role
-            $existingRolePermissions = $role->permissions()->withPivot('view', 'add', 'edit', 'delete')->get();
-
-            // Populate permissionsToSync with existing permissions first
-            foreach ($existingRolePermissions as $permission) {
-                $permissionsToSync[$permission->pivot->permission_id] = [
-                    'view' => $permission->pivot->view,
-                    'add' => $permission->pivot->add,
-                    'edit' => $permission->pivot->edit,
-                    'delete' => $permission->pivot->delete,
-                ];
-            }
-
-            // Now, update the permissions for the specific resource submitted in the request
-            if ($request->has('permissions')) {
-                foreach ($request->input('permissions') as $resourcePermissionId => $permissionActions) {
-                    // Ensure the resourcePermissionId exists in our overall permissions list
-                    // If it's a new permission being granted for a resource not previously associated,
-                    // we need to initialize its actions to 0 first before applying the submitted ones.
-                    if (!isset($permissionsToSync[$resourcePermissionId])) {
-                        $permissionsToSync[$resourcePermissionId] = [
-                            'view' => 0,
-                            'add' => 0,
-                            'edit' => 0,
-                            'delete' => 0,
-                        ];
-                    }
-
-                    foreach ($permissionActions as $actionName => $value) {
-                        // $value will be '1' if checked, so we set the flag to 1
-                        $permissionsToSync[$resourcePermissionId][$actionName] = (int) $value;
-                    }
-                }
-            }
-
-          
-            $role->permissions()->sync($permissionsToSync);
-
+            $selectedPermissions = $request->input('permissions', []);
+            $role->permissions()->sync($selectedPermissions);
 
             return redirect()->back()->with('success', 'Permissions updated successfully for ' . $role->role_name);
         } catch (\Exception $e) {

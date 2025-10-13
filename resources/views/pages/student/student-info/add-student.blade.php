@@ -1323,13 +1323,13 @@
                                                                     <div class="primary_input ">
                                                                         <label for="primary_input_label">@lang('dormitory.dormitory')
                                                                             <span>
-                                                                                *
+                                                                                
                                                                             </span>
                                                                         </label>
                                                                         <select
                                                                             class="primary_select form-control{{ $errors->has('dormitory_name') ? ' is-invalid' : '' }}"
                                                                             name="dormitory_name" id="SelectDormitory">
-                                                                            <option data-display="@lang('dormitory.dormitory_name') *"
+                                                                            <option data-display="@lang('dormitory.dormitory_name') "
                                                                                 value="">
                                                                                 @lang('dormitory.dormitory_name')
 
@@ -1369,8 +1369,8 @@
 @endsection
 @include('components.partials.date_picker_css_js')
 @section('script')
-    <script src="{{ asset('public/backEnd/js/croppie.js') }}"></script>
-    <script src="{{ asset('public/backEnd/js/st_addmision.js') }}"></script>
+    {{-- <script src="{{ asset('public/backEnd/js/croppie.js') }}"></script>
+    <script src="{{ asset('public/backEnd/js/st_addmision.js') }}"></script> --}}
     <script>
         $(document).ready(function() {
             var currentDate = new Date();

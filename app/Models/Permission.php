@@ -12,7 +12,6 @@ class Permission extends Model
 
     public function roles()
     {
-        return $this->belongsToMany(Role::class, 'role_permissions')
-                    ->withPivot('view', 'add', 'edit', 'delete');
+        return $this->belongsToMany(Role::class, 'role_permissions');
     }
 }

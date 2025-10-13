@@ -94,6 +94,8 @@
 @section('mainContent')
 
     <section class="sms-breadcrumb mb-20">
+        {{-- {{Auth::user()->name}} {{Auth::user()->last_name}} role->id {{ Auth::user()->role_id}} --}}
+
         <div class="container-fluid">
             <div class="row justify-content-between">
                 <h1>@lang('downloadCenter.content') </h1>
