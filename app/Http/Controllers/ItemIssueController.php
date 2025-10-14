@@ -380,4 +380,39 @@ class ItemIssueController extends Controller
             ], 500);
         }
     }
+
+    public function getStudentDetails(Request $request, $studentId)
+    {
+        try {
+            Log::info('=== getStudentDetails CALLED ===');
+            Log::info('Student ID received: ' . $studentId);
+
+            // Eager load branch (belongsTo), and the first associated intake and course (belongsToMany)
+            $student = Student::with(['branch', 'intakes', 'courses'])->find($studentId);
+
+            if (!$student) {
+                Log::warning('Student not found for ID: ' . $studentId);
+                return response()->json(['error' => 'Student not found'], 404);
+            }
+
+            // Get the first associated intake and course, if they exist
+            $firstIntake = $student->intakes->first();
+            $firstCourse = $student->courses->first();
+
+            Log::info('Student found: ' . $student->student_name);
+            Log::info('Student Branch: ' . ($student->branch ? $student->branch->name : 'N/A'));
+            Log::info('Student Intake: ' . ($firstIntake ? $firstIntake->name : 'N/A'));
+            Log::info('Student Course: ' . ($firstCourse ? $firstCourse->name : 'N/A'));
+
+            return response()->json([
+                'branch' => $student->branch,
+                'intake' => $firstIntake, // Return the first intake
+                'course' => $firstCourse, // Return the first course
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error in getStudentDetails: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
+        }
+    }
 }
