@@ -380,4 +380,60 @@ class ItemIssueController extends Controller
             ], 500);
         }
     }
+
+    public function getStudentDetails(Request $request, $studentId)
+    {
+        try {
+            Log::info('=== getStudentDetails CALLED ===');
+            Log::info('Student ID received: ' . $studentId);
+
+            // Eager load branch (belongsTo), and the first associated intake and course (belongsToMany)
+            $student = Student::with(['branch', 'intakes', 'courses'])->find($studentId);
+
+            if (!$student) {
+                Log::warning('Student not found for ID: ' . $studentId);
+                return response()->json(['error' => 'Student not found'], 404);
+            }
+
+            Log::info('Student found: ' . $student->student_name);
+            Log::info('Student Branch: ' . ($student->branch ? $student->branch->name : 'N/A'));
+            Log::info('Student Intakes: ' . ($student->intakes->isNotEmpty() ? $student->intakes->pluck('name')->implode(', ') : 'N/A'));
+            Log::info('Student Courses: ' . ($student->courses->isNotEmpty() ? $student->courses->pluck('name')->implode(', ') : 'N/A'));
+
+            return response()->json([
+                'branch' => $student->branch,
+                'intakes' => $student->intakes, // Return all intakes
+                'courses' => $student->courses, // Return all courses
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error in getStudentDetails: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function getCoursesByIntakeAndStudent(Request $request, $intakeId, $studentId)
+    {
+        try {
+            Log::info('=== getCoursesByIntakeAndStudent CALLED ===');
+            Log::info('Intake ID: ' . $intakeId . ', Student ID: ' . $studentId);
+
+            $courses = Course::whereHas('intakes', function($query) use ($intakeId) {
+                $query->where('intake_id', $intakeId);
+            })
+            ->whereHas('students', function($query) use ($studentId) {
+                $query->where('student_id', $studentId);
+            })
+            ->get();
+
+            Log::info('Found courses count: ' . $courses->count());
+            Log::info('Courses data: ' . json_encode($courses->toArray()));
+
+            return response()->json($courses);
+        } catch (Exception $e) {
+            Log::error('Error in getCoursesByIntakeAndStudent: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
+        }
+    }
 }

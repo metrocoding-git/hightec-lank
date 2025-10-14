@@ -266,6 +266,7 @@
 @push('script')
  <script>
         $('#table_id').DataTable({
+             responsive: true,
             dom: 'Bfrtip',
             buttons: [
                 'copy', 'csv', 'excel', 'pdf', 'print'

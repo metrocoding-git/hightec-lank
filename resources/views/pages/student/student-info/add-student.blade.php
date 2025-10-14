@@ -3,20 +3,7 @@
     @lang('student.student_category')
 @endsection
 @section('mainContent')
-    @if ($errors->any())
-        <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;">
-            @foreach ($errors->all() as $error)
-                <div class="toast align-items-center text-bg-danger border-0 mb-2" role="alert">
-                    <div class="d-flex">
-                        <div class="toast-body">
-                            {{ $error }}
-                        </div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-    @endif
+  
     <style>
         #video,
         #canvas {
@@ -59,12 +46,12 @@
                                     </div>
                                 </div>
 
-                                <div class="offset-lg-3 col-lg-3 text-right col-sm-6 col-7">
+                                {{-- <div class="offset-lg-3 col-lg-3 text-right col-sm-6 col-7">
                                     <a href="" class="primary-btn small fix-gr-bg">
                                         <span class="ti-plus pr-2"></span>
                                         @lang('student.import_student')
                                     </a>
-                                </div>
+                                </div> --}}
 
                             </div>
                             <div class="row">

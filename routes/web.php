@@ -225,6 +225,8 @@ Route::controller(ItemIssueController::class)->middleware(['permission'])->group
     Route::get('account/inventory/get-students-by-course/{courseId}', 'getStudentsByCourse')->name('item-issue.get-students-by-course')->withoutMiddleware(['csrf', 'permission']);
     Route::get('account/inventory/get-items-by-category/{categoryId}', 'getItemsByCategory')->name('item-issue.get-items-by-category')->withoutMiddleware(['csrf', 'permission']);
     Route::get('account/inventory/get-student-fee-data/{studentId}', 'getStudentFeeData')->name('item-issue.get-student-fee-data')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('item-issue/get-student-details/{studentId}', 'getStudentDetails')->name('item-issue.get-student-details')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('item-issue/get-courses-by-intake-and-student/{intakeId}/{studentId}', 'getCoursesByIntakeAndStudent')->name('item-issue.get-courses-by-intake-and-student')->withoutMiddleware(['csrf', 'permission']);
 
 });
 Route::controller(LoginController::class)->group(function () {
