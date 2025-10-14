@@ -34,7 +34,7 @@
                                 <table id="table_id" class="table" cellspacing="0" width="100%">
                                     <thead>
                                         <tr>
-                                            <th>@lang('common.sl')</th>
+                                            <th>ID</th>
                                             <th>@lang('inventory.item_name')</th>
                                             <th>@lang('inventory.item_category')</th>
                                             <th>@lang('inventory.issue_to')</th>
@@ -182,6 +182,7 @@
 @push('script')
     <script>
         $('#table_id').DataTable({
+            responsive: true,
             dom: 'Bfrtip',
             buttons: [
                 'copy', 'csv', 'excel', 'pdf', 'print'

@@ -176,7 +176,7 @@
                                                                 href="{{ route('item-edit', $item->id) }}">
                                                                 @lang('common.edit')
                                                             </a>
-                                                            
+
                                                             <a class="dropdown-item" data-toggle="modal"
                                                                 data-target="#deletecategoryModal{{ $item->id }}"
                                                                 href="#">@lang('common.delete')</a>
@@ -185,7 +185,7 @@
                                                     </td>
                                                 </tr>
 
-                                                
+
                                                 <div class="modal fade admin-query"
                                                     id="deletecategoryModal{{ $item->id }}">
                                                     <div class="modal-dialog modal-dialog-centered">
@@ -204,8 +204,7 @@
                                                                         data-dismiss="modal">
                                                                         @lang('common.cancel')
                                                                     </button>
-                                                                    <form
-                                                                        action="{{ route('item-delete', $item->id) }}"
+                                                                    <form action="{{ route('item-delete', $item->id) }}"
                                                                         method="POST">
                                                                         @csrf
                                                                         @method('DELETE')
@@ -235,9 +234,12 @@
 @include('components.partials.data_table_js')
 @include('components.partials.server_side_datatable')
 @include('components.partials.data_table_css')
+@include('components.partials.data_table_css')
+@include('components.partials.data_table_js')
 @push('script')
     <script>
         $('#table_id').DataTable({
+            responsive: true,
             dom: 'Bfrtip',
             buttons: [
                 'copy', 'csv', 'excel', 'pdf', 'print'
@@ -248,5 +250,4 @@
             info: true,
         });
     </script>
-    
 @endpush
