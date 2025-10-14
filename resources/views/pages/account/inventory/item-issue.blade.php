@@ -49,7 +49,7 @@
                                 {{-- Branch Dropdown --}}
                                 <div class="col-lg-12 mb-15">
                                     <label class="primary_input_label">Branch <span class="text-danger">*</span></label>
-                                    <select class="primary_select form-control" name="branch_id" id="branch_select" disabled>
+                                    <select class="primary_select form-control" name="branch_id" id="branch_select">
                                         <option value="">Select Student First *</option>
                                     </select>
                                 </div>
@@ -317,6 +317,10 @@
                 refreshNiceSelect('#intake_select');
                 refreshNiceSelect('#course_select');
 
+                // Initially disable branch_select
+                $('#branch_select').prop('disabled', true);
+                refreshNiceSelect('#branch_select');
+
                 if (student_id && student_id !== '') {
                     console.log('DEBUG: Inside student_id check. Preparing AJAX call.'); // Added debug log
                     // AJAX call to get student details (branch, intake, course)
@@ -327,33 +331,40 @@
                         console.log('✅ Student details received:', data);
 
                         // Populate Branch dropdown
-                        var branchOptionsHtml = '<option value="">Select Student First *</option>';
+                        var branchOptionsHtml = '<option value="">Select Branch *</option>';
                         if (data.branch) {
                             branchOptionsHtml += '<option value="' + data.branch.id + '" selected>' + data.branch.name + '</option>';
+                            $('#branch_select').html(branchOptionsHtml).prop('disabled', false); // Enable if branch found
                         } else {
                             branchOptionsHtml += '<option value="">No Branch Found</option>';
+                            $('#branch_select').html(branchOptionsHtml).prop('disabled', true); // Keep disabled if no branch
                         }
-                        $('#branch_select').html(branchOptionsHtml).prop('disabled', true); // Keep disabled after populating
                         refreshNiceSelect('#branch_select');
 
                         // Populate Intake dropdown
                         var intakeOptionsHtml = '<option value="">Select Student First *</option>';
-                        if (data.intake) {
-                            intakeOptionsHtml += '<option value="' + data.intake.id + '" selected>' + data.intake.name + '</option>';
+                        if (data.intakes && data.intakes.length > 0) {
+                            data.intakes.forEach(function(intake) {
+                                intakeOptionsHtml += '<option value="' + intake.id + '">' + intake.name + '</option>';
+                            });
+                            $('#intake_select').html(intakeOptionsHtml).prop('disabled', false); // Enable after populating
                         } else {
-                            intakeOptionsHtml += '<option value="">No Intake Found</option>';
+                            intakeOptionsHtml += '<option value="">No Intakes Found</option>';
+                            $('#intake_select').html(intakeOptionsHtml).prop('disabled', true); // Keep disabled if no options
                         }
-                        $('#intake_select').html(intakeOptionsHtml).prop('disabled', true); // Keep disabled after populating
                         refreshNiceSelect('#intake_select');
 
                         // Populate Course dropdown
                         var courseOptionsHtml = '<option value="">Select Student First *</option>';
-                        if (data.course) {
-                            courseOptionsHtml += '<option value="' + data.course.id + '" selected>' + data.course.name + '</option>';
+                        if (data.courses && data.courses.length > 0) {
+                            data.courses.forEach(function(course) {
+                                courseOptionsHtml += '<option value="' + course.id + '">' + course.name + '</option>';
+                            });
+                            $('#course_select').html(courseOptionsHtml).prop('disabled', false); // Enable after populating
                         } else {
-                            courseOptionsHtml += '<option value="">No Course Found</option>';
+                            courseOptionsHtml += '<option value="">No Courses Found</option>';
+                            $('#course_select').html(courseOptionsHtml).prop('disabled', true); // Keep disabled if no options
                         }
-                        $('#course_select').html(courseOptionsHtml).prop('disabled', true); // Keep disabled after populating
                         refreshNiceSelect('#course_select');
 
                     }).fail(function(xhr, status, error) {
@@ -436,6 +447,48 @@
                     $('#course_select').html('<option value="">Select Student First *</option>').prop('disabled', true);
                     refreshNiceSelect('#branch_select');
                     refreshNiceSelect('#intake_select');
+                    refreshNiceSelect('#course_select');
+                }
+            });
+
+            // Handle intake change - Filter courses by selected intake and student
+            $('#intake_select').on('change', function() {
+                var intake_id = $(this).val();
+                var student_id = $('#student_select').val(); // Get the currently selected student
+                console.log('📚 Intake selected:', intake_id, 'for Student:', student_id);
+
+                // Reset and disable Course dropdown
+                $('#course_select').html('<option value="">Loading courses...</option>').prop('disabled', true);
+                refreshNiceSelect('#course_select');
+
+                if (intake_id && intake_id !== '' && student_id && student_id !== '') {
+                    var url = '{{ route('item-issue.get-courses-by-intake-and-student', [':intakeId', ':studentId']) }}'
+                        .replace(':intakeId', intake_id)
+                        .replace(':studentId', student_id);
+                    console.log('🌐 AJAX URL for courses by intake and student:', url);
+
+                    $.get(url, function(data) {
+                        console.log('✅ Courses received by intake and student:', data);
+
+                        var optionsHtml = '<option value="">Select Course *</option>';
+                        if (data && Array.isArray(data) && data.length > 0) {
+                            data.forEach(function(course) {
+                                optionsHtml += '<option value="' + course.id + '">' + course.name + '</option>';
+                            });
+                            $('#course_select').html(optionsHtml).prop('disabled', false); // Enable after populating
+                        } else {
+                            optionsHtml += '<option value="">No courses found</option>';
+                            $('#course_select').html(optionsHtml).prop('disabled', true); // Keep disabled if no options
+                        }
+                        refreshNiceSelect('#course_select');
+
+                    }).fail(function(xhr, status, error) {
+                        console.error('❌ Error loading courses by intake and student:', error);
+                        $('#course_select').html('<option value="">Error loading courses</option>').prop('disabled', true);
+                        refreshNiceSelect('#course_select');
+                    });
+                } else {
+                    $('#course_select').html('<option value="">Select Intake First *</option>').prop('disabled', true);
                     refreshNiceSelect('#course_select');
                 }
             });
