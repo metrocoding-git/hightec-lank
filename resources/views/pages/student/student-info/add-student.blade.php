@@ -46,12 +46,12 @@
                                     </div>
                                 </div>
 
-                                <div class="offset-lg-3 col-lg-3 text-right col-sm-6 col-7">
+                                {{-- <div class="offset-lg-3 col-lg-3 text-right col-sm-6 col-7">
                                     <a href="" class="primary-btn small fix-gr-bg">
                                         <span class="ti-plus pr-2"></span>
                                         @lang('student.import_student')
                                     </a>
-                                </div>
+                                </div> --}}
 
                             </div>
                             <div class="row">
