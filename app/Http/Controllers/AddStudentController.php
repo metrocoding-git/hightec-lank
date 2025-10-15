@@ -59,7 +59,8 @@ class AddStudentController extends Controller
             'guardians_phone' => 'nullable|string|max:20',
             'guardians_occupation' => 'nullable|string|max:255',
             'guardians_address' => 'nullable|string',
-            'national_id_number' => 'required|string|max:10|regex:/^[0-9]{9}[vV]$/',
+           
+            'national_id_number' => ['required', 'string', 'regex:/^([0-9]{9}[vV]|[0-9]{12})$/'],
             'additional_notes' => 'nullable|string',
             'document_title_1' => 'nullable|string|max:255',
             'document_file_1' => 'nullable|file|max:2048',
@@ -122,8 +123,8 @@ class AddStudentController extends Controller
     public function update(Request $request, Student $student)
     {
         $validatedData = $request->validate([
-            'branch_id' => 'required|exists:branches,id',
-            'admission_number' => 'required|string', //need to add ignore rule for this. Dont have auth access yet
+             'branch_id' => 'required|exists:branches,id',
+            'admission_number' => 'required|string',
             'admission_date' => 'required|date',
             'student_category_id' => 'nullable|exists:student_categories,id',
             'gender_id' => 'nullable|exists:genders,id',
@@ -131,23 +132,25 @@ class AddStudentController extends Controller
             'last_name' => 'required|string|max:255',
             'date_of_birth' => 'nullable|date',
             'photo' => 'nullable|image|max:2048',
-            'email_address' => 'nullable|email|max:255', //need to add ignore rule for this. Dont have auth access yet
-            'phone_number' => 'nullable|string|max:20', //need to add ignore rule for this. Dont have auth access yet
+            'email_address' => 'nullable|email|max:255',
+            'phone_number' => 'required|numeric|max_digits:10',
             'phone_number_2' => 'nullable|numeric|max_digits:10',
             'stu_age' => 'nullable|integer',
+
             'current_address' => 'nullable|string',
             'permanent_address' => 'nullable|string',
             'blood_group_id' => 'nullable|string',
             'height' => 'nullable|string',
             'weight' => 'nullable|string',
-            'guardians_name' => 'nullable|string|max:255',
+            'guardians_name' => 'required|string|max:255',
             'relation_guardian_id' => 'nullable|string|max:50',
             'guardians_email' => 'nullable|email|max:255',
             'guardians_photo' => 'nullable|image|max:2048',
             'guardians_phone' => 'nullable|string|max:20',
             'guardians_occupation' => 'nullable|string|max:255',
             'guardians_address' => 'nullable|string',
-           'national_id_number' => 'required|string|max:10|regex:/^[0-9]{9}[vV]$/',
+           
+            'national_id_number' => ['required', 'string', 'regex:/^([0-9]{9}[vV]|[0-9]{12})$/'],
             'additional_notes' => 'nullable|string',
             'document_title_1' => 'nullable|string|max:255',
             'document_file_1' => 'nullable|file|max:2048',
