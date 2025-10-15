@@ -58,3 +58,51 @@ class PermissionSeeder extends Seeder
         }
     }
 }
+//   // Academic
+//             ['name' => 'Courses', 'route' => 'course.index', 'category' => 'Academic', 'sub_category' => 'Course Settings', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
+//             ['name' => 'Intakes', 'route' => 'intake.index', 'category' => 'Academic', 'sub_category' => 'Course Settings', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
+//             ['name' => 'Subjects', 'route' => 'subject.index', 'category' => 'Academic', 'sub_category' => 'Course Settings', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
+//             ['name' => 'Assign Subjects', 'route' => 'assign-subject.index', 'category' => 'Academic', 'sub_category' => 'Course Settings', 'actions' => ['index', 'store', 'update', 'edit', 'destroy', 'get-courses']],
+
+//             // Lesson Plan
+//             ['name' => 'Lessons', 'route' => 'lesson.index', 'category' => 'Lesson Plan', 'sub_category' => 'Lesson Management', 'actions' => ['index', 'store', 'update', 'edit', 'destroy', 'get-intakes', 'get-subjects']],
+//             ['name' => 'Topics', 'route' => 'topic.index', 'category' => 'Lesson Plan', 'sub_category' => 'Lesson Management', 'actions' => ['index', 'store', 'update', 'edit', 'destroy', 'get-intakes', 'get-subjects', 'get-lessons']],
+//             ['name' => 'Topic Overview', 'route' => 'topic-overview.index', 'category' => 'Lesson Plan', 'sub_category' => 'Lesson Management', 'actions' => ['index', 'store', 'get-intakes', 'get-subjects']],
+
+//             // Download Center
+//             ['name' => 'Upload Content', 'route' => 'upload-content', 'category' => 'Download Center', 'sub_category' => 'Content Management', 'actions' => ['upload']],
+//             ['name' => 'Study Material Download', 'route' => 'study-material-download', 'category' => 'Download Center', 'sub_category' => 'Content Management', 'actions' => ['download']],
+//             ['name' => 'Other Download', 'route' => 'other-download', 'category' => 'Download Center', 'sub_category' => 'Content Management', 'actions' => ['download']],
+//             ['name' => 'Shared Content List', 'route' => 'shared-content-list', 'category' => 'Download Center', 'sub_category' => 'Content Management', 'actions' => ['index', 'save', 'update', 'destroy', 'generate-url', 'view', 'delete-shared']],
+//             ['name' => 'Video List', 'route' => 'video-list', 'category' => 'Download Center', 'sub_category' => 'Content Management', 'actions' => ['index', 'save', 'update', 'destroy']],
+
+//             // Student Management
+//             ['name' => 'Student Categories', 'route' => 'student-category.index', 'category' => 'Student Management', 'sub_category' => 'Student Settings', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
+//             ['name' => 'Add Student', 'route' => 'add-student.index', 'category' => 'Student Management', 'sub_category' => 'Student Enrollment', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
+//             ['name' => 'Student Add Course', 'route' => 'student.add-course.index', 'category' => 'Student Management', 'sub_category' => 'Student Enrollment', 'actions' => ['index', 'store', 'edit', 'update', 'destroy']],
+//             ['name' => 'Student Add Intake', 'route' => 'student.add-intake.index', 'category' => 'Student Management', 'sub_category' => 'Student Enrollment', 'actions' => ['index', 'store', 'edit', 'update', 'destroy', 'search', 'get-intakes', 'get-courses']],
+//             ['name' => 'Student List', 'route' => 'student-list', 'category' => 'Student Management', 'sub_category' => 'Student Information', 'actions' => ['index', 'update-status', 'details', 'export', 'get-intakes', 'get-courses']],
+//             ['name' => 'Disabled Students', 'route' => 'disabled-students', 'category' => 'Student Management', 'sub_category' => 'Student Information', 'actions' => ['index', 'search']],
+//             ['name' => 'Student Attendance', 'route' => 'student-attendance', 'category' => 'Student Management', 'sub_category' => 'Student Information', 'actions' => ['index', 'get-courses']],
+
+//             // Inventory Management
+//             ['name' => 'Item Categories', 'route' => 'item-category', 'category' => 'Inventory Management', 'sub_category' => 'Item Settings', 'actions' => ['index', 'store', 'edit', 'update', 'delete']],
+//             ['name' => 'Item List', 'route' => 'item-list', 'category' => 'Inventory Management', 'sub_category' => 'Item Settings', 'actions' => ['index', 'store', 'edit', 'update', 'delete']],
+//             ['name' => 'Suppliers', 'route' => 'supplier', 'category' => 'Inventory Management', 'sub_category' => 'Item Settings', 'actions' => ['index', 'store', 'edit', 'update', 'delete']],
+//             ['name' => 'Item Receive', 'route' => 'item-receive', 'category' => 'Inventory Management', 'sub_category' => 'Inventory Transactions', 'actions' => ['index', 'store', 'edit', 'update', 'destroy']],
+//             ['name' => 'Item Sell', 'route' => 'item-sell', 'category' => 'Inventory Management', 'sub_category' => 'Inventory Transactions', 'actions' => ['index', 'store', 'view', 'edit', 'update', 'delete', 'cancel', 'add-payment', 'view-payments']],
+//             ['name' => 'Item Issue', 'route' => 'item-issue', 'category' => 'Inventory Management', 'sub_category' => 'Inventory Transactions', 'actions' => ['index', 'store', 'edit', 'update', 'return', 'issue', 'get-intakes', 'get-courses', 'get-students', 'get-items', 'get-student-fee-data']],
+
+//             // FEE
+//             ['name' => 'Fee Group', 'route' => 'fee-group', 'category' => 'FEE', 'sub_category' => 'Fee Settings', 'actions' => ['index', 'create', 'edit', 'update', 'delete']],
+//             ['name' => 'Fee Type', 'route' => 'fees.fees-type', 'category' => 'FEE', 'sub_category' => 'Fee Settings', 'actions' => ['index', 'store', 'edit', 'update', 'delete']],
+//             ['name' => 'Fee Invoice', 'route' => 'fees.fee-invoice', 'category' => 'FEE', 'sub_category' => 'Fee Transactions', 'actions' => ['index', 'view', 'payment', 'add', 'get-student', 'get-types', 'store', 'course-payment', 'edit', 'update', 'delete', 'update-invoice-number', 'mark-as-paid']],
+//             ['name' => 'Fee Return', 'route' => 'fee-return', 'category' => 'FEE', 'sub_category' => 'Fee Transactions', 'actions' => ['index', 'store', 'search']],
+//             ['name' => 'Course Paid', 'route' => 'fees.course-paid', 'category' => 'FEE', 'sub_category' => 'Fee Transactions', 'actions' => ['index']],
+//             ['name' => 'Fee Invoice Setting', 'route' => 'fee-invoice-setting', 'category' => 'FEE', 'sub_category' => 'Fee Settings', 'actions' => ['index']],
+
+//             // Role Management
+//             ['name' => 'Roles', 'route' => 'roles.index', 'category' => 'Role Management', 'sub_category' => 'Role Settings', 'actions' => ['index', 'store', 'update', 'destroy', 'edit', 'grantPermission', 'savePermissions']],
+//             ['name' => 'Create User', 'route' => 'role-management.create-user', 'category' => 'Role Management', 'sub_category' => 'User Management', 'actions' => ['create', 'store', 'get-student-details']],
+
+          

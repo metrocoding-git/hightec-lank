@@ -193,27 +193,46 @@
                                             <h4 class="mb-0">Main Categories</h4>
                                         </div>
                                         <div class="accordion main-category-accordion" id="mainCategoryAccordion">
-                                            @foreach ($menuStructure as $mainItem)
+                                            @foreach ($menuStructure as $category)
                                                 <div class="card">
-                                                    <div class="card-header" id="heading{{ Str::slug($mainItem['name']) }}">
+                                                    <div class="card-header" id="heading{{ Str::slug($category['name']) }}">
                                                         <h5 class="mb-0">
-                                                            <button class="btn btn-link btn-block text-left d-flex justify-content-between align-items-center main-category-toggle {{ $loop->first ? '' : 'collapsed' }}" type="button" data-toggle="collapse" data-target="#collapse{{ Str::slug($mainItem['name']) }}" aria-expanded="{{ $loop->first ? 'true' : 'false' }}" aria-controls="collapse{{ Str::slug($mainItem['name']) }}">
-                                                                {{ $mainItem['name'] }}
+                                                            <button class="btn btn-link btn-block text-left d-flex justify-content-between align-items-center main-category-toggle {{ $loop->first ? '' : 'collapsed' }}" type="button" data-toggle="collapse" data-target="#collapse{{ Str::slug($category['name']) }}" aria-expanded="{{ $loop->first ? 'true' : 'false' }}" aria-controls="collapse{{ Str::slug($category['name']) }}">
+                                                                {{ $category['name'] }}
                                                                 <i class="ti-plus"></i>
                                                             </button>
                                                         </h5>
                                                     </div>
 
-                                                    <div id="collapse{{ Str::slug($mainItem['name']) }}" class="collapse {{ $loop->first ? 'show' : '' }}" aria-labelledby="heading{{ Str::slug($mainItem['name']) }}" data-parent="#mainCategoryAccordion">
+                                                    <div id="collapse{{ Str::slug($category['name']) }}" class="collapse {{ $loop->first ? 'show' : '' }}" aria-labelledby="heading{{ Str::slug($category['name']) }}" data-parent="#mainCategoryAccordion">
                                                         <div class="card-body p-0">
-                                                            <div class="list-group list-group-flush">
-                                                                @foreach ($mainItem['sub_items'] as $subItem)
-                                                                    <a href="#"
-                                                                        class="list-group-item list-group-item-action sub-category-item"
-                                                                        data-permission-id="{{ $subItem['permission_id'] }}"
-                                                                        data-category-name="{{ $mainItem['name'] }}">
-                                                                        {{ $subItem['permission_name'] }}
-                                                                    </a>
+                                                            <div class="accordion sub-category-accordion" id="subCategoryAccordion{{ Str::slug($category['name']) }}">
+                                                                @foreach ($category['sub_categories'] as $subCategory)
+                                                                    <div class="card">
+                                                                        <div class="card-header" id="heading{{ Str::slug($category['name']) }}{{ Str::slug($subCategory['name']) }}">
+                                                                            <h5 class="mb-0">
+                                                                                <button class="btn btn-link btn-block text-left d-flex justify-content-between align-items-center sub-category-toggle {{ $loop->parent->first && $loop->first ? '' : 'collapsed' }}" type="button" data-toggle="collapse" data-target="#collapse{{ Str::slug($category['name']) }}{{ Str::slug($subCategory['name']) }}" aria-expanded="{{ $loop->parent->first && $loop->first ? 'true' : 'false' }}" aria-controls="collapse{{ Str::slug($category['name']) }}{{ Str::slug($subCategory['name']) }}">
+                                                                                    {{ $subCategory['name'] }}
+                                                                                    <i class="ti-plus"></i>
+                                                                                </button>
+                                                                            </h5>
+                                                                        </div>
+                                                                        <div id="collapse{{ Str::slug($category['name']) }}{{ Str::slug($subCategory['name']) }}" class="collapse {{ $loop->parent->first && $loop->first ? 'show' : '' }}" aria-labelledby="heading{{ Str::slug($category['name']) }}{{ Str::slug($subCategory['name']) }}" data-parent="#subCategoryAccordion{{ Str::slug($category['name']) }}">
+                                                                            <div class="card-body p-0">
+                                                                                <div class="list-group list-group-flush">
+                                                                                    @foreach ($subCategory['items'] as $item)
+                                                                                        <a href="#"
+                                                                                            class="list-group-item list-group-item-action item-item"
+                                                                                            data-category-name="{{ $category['name'] }}"
+                                                                                            data-sub-category-name="{{ $subCategory['name'] }}"
+                                                                                            data-item-name="{{ $item['name'] }}">
+                                                                                            {{ $item['name'] }}
+                                                                                        </a>
+                                                                                    @endforeach
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
                                                                 @endforeach
                                                             </div>
                                                         </div>
@@ -263,52 +282,66 @@
             const menuStructure = @json($menuStructure);
             const rolePermissions = @json($rolePermissions); // Array of permission IDs the role currently has
 
-            function renderPermissionsForCategory(categoryName) {
+            function renderPermissionsForCategory(categoryName, subCategoryName, itemName) {
                 const container = $('#permission-checkboxes-container');
                 const title = $('#permission-panel-title');
                 container.empty();
-                title.text('Permissions for ' + categoryName);
+                title.text('Permissions for ' + itemName);
 
                 const category = menuStructure.find(item => item.name === categoryName);
 
-                if (category && category.sub_items.length > 0) {
-                    let html = `<div class="table-responsive">
-                            <table class="table permission-table">
-                                <thead>
-                                    <tr>
-                                        <th>Permission Name</th>
-                                        <th>Access</th>
-                                    </tr>
-                                </thead>
-                                <tbody>`;
-                    category.sub_items.forEach(subItem => {
-                        const isChecked = rolePermissions.includes(subItem.permission_id);
-                        html += `
-                    <tr>
-                        <td>${subItem.permission_name}</td>
-                        <td>
-                            <label class="primary_checkbox">
-                                <input type="checkbox" name="permissions[]" value="${subItem.permission_id}" ${isChecked ? 'checked' : ''}>
-                                <span class="checkmark"></span>
-                            </label>
-                        </td>
-                    </tr>`;
-                    });
-                    html += `       </tbody>
-                        </table>
-                    </div>`;
-                    container.append(html);
+                if (category) {
+                    const subCategory = category.sub_categories.find(item => item.name === subCategoryName);
+
+                    if (subCategory) {
+                        const item = subCategory.items.find(i => i.name === itemName);
+
+                        if (item && item.permissions.length > 0) {
+                            let html = `<div class="table-responsive">
+                                    <table class="table permission-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Permission Name</th>
+                                                <th>Access</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>`;
+                            item.permissions.forEach(permission => {
+                                const isChecked = rolePermissions.includes(permission.id);
+                                html += `
+                            <tr>
+                                <td>${permission.name}</td>
+                                <td>
+                                    <label class="primary_checkbox">
+                                        <input type="checkbox" name="permissions[]" value="${permission.id}" ${isChecked ? 'checked' : ''}>
+                                        <span class="checkmark"></span>
+                                    </label>
+                                </td>
+                            </tr>`;
+                            });
+                            html += `       </tbody>
+                                </table>
+                            </div>`;
+                            container.append(html);
+                        } else {
+                            container.append('<p>No permissions found for this item.</p>');
+                        }
+                    } else {
+                        container.append('<p>Sub-category not found.</p>');
+                    }
                 } else {
-                    container.append('<p>No permissions found for this category.</p>');
+                    container.append('<p>Category not found.</p>');
                 }
             }
 
-            $(document).on('click', '.sub-category-item', function(e) {
+            $(document).on('click', '.item-item', function(e) {
                 e.preventDefault();
-                $('.sub-category-item').removeClass('active');
+                $('.item-item').removeClass('active');
                 $(this).addClass('active');
                 const categoryName = $(this).data('category-name');
-                renderPermissionsForCategory(categoryName);
+                const subCategoryName = $(this).data('sub-category-name');
+                const itemName = $(this).data('item-name');
+                renderPermissionsForCategory(categoryName, subCategoryName, itemName);
             });
 
             $(document).on('click', '.main-category-toggle', function() {
@@ -318,17 +351,30 @@
                 }
             });
 
-            // Optionally, load permissions for the first sub-category on page load
-            if (menuStructure.length > 0) {
-                // Find the first sub-category item and trigger a click
-                const firstSubCategoryItem = $('.sub-category-item').first();
-                if (firstSubCategoryItem.length > 0) {
-                    firstSubCategoryItem.addClass('active');
-                    const categoryName = firstSubCategoryItem.data('category-name');
-                    renderPermissionsForCategory(categoryName);
+            $(document).on('click', '.sub-category-toggle', function() {
+                $('.sub-category-toggle').removeClass('active');
+                if (!$(this).hasClass('collapsed')) {
+                    $(this).addClass('active');
+                }
+            });
 
-                    // Also activate the parent main category toggle
-                    const firstMainCategoryToggle = firstSubCategoryItem.closest('.collapse').prev('.card-header').find('.main-category-toggle');
+            // Optionally, load permissions for the first item on page load
+            if (menuStructure.length > 0) {
+                // Find the first item-item and trigger a click
+                const firstItemItem = $('.item-item').first();
+                if (firstItemItem.length > 0) {
+                    firstItemItem.addClass('active');
+                    const categoryName = firstItemItem.data('category-name');
+                    const subCategoryName = firstItemItem.data('sub-category-name');
+                    const itemName = firstItemItem.data('item-name');
+                    renderPermissionsForCategory(categoryName, subCategoryName, itemName);
+
+                    // Also activate the parent main category and sub-category toggles
+                    const firstSubCategoryToggle = firstItemItem.closest('.collapse').prev('.card-header').find('.sub-category-toggle');
+                    if (firstSubCategoryToggle.length > 0) {
+                        firstSubCategoryToggle.addClass('active');
+                    }
+                    const firstMainCategoryToggle = firstItemItem.closest('.sub-category-accordion').closest('.collapse').prev('.card-header').find('.main-category-toggle');
                     if (firstMainCategoryToggle.length > 0) {
                         firstMainCategoryToggle.addClass('active');
                     }
