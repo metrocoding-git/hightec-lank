@@ -384,7 +384,7 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div class="col-lg-6">
+                                                    <div class="col-lg-6" hidden>
                                                         <div class="form-section">
                                                             <div class="row">
                                                                 <div class="col-lg-12">
