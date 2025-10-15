@@ -72,128 +72,172 @@ class RoleController extends Controller
         $allPermissions = Permission::all();
         $menuStructure = [];
 
-        foreach ($allPermissions as $permission) {
-            $mainCategoryName = 'General';
-            $subItemName = $permission->permission_name;
+        $permissionsData = [
+            // Academic
+            ['name' => 'Courses', 'route' => 'course.index', 'category' => 'Academic', 'sub_category' => 'Course Settings', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
+            ['name' => 'Intakes', 'route' => 'intake.index', 'category' => 'Academic', 'sub_category' => 'Course Settings', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
+            ['name' => 'Subjects', 'route' => 'subject.index', 'category' => 'Academic', 'sub_category' => 'Course Settings', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
+            ['name' => 'Assign Subjects', 'route' => 'assign-subject.index', 'category' => 'Academic', 'sub_category' => 'Course Settings', 'actions' => ['index', 'store', 'update', 'edit', 'destroy', 'get-courses']],
 
-            if (str_starts_with($permission->permission_name, 'administration/academic/')) {
-                $mainCategoryName = 'Academic Administration';
-                $subItemName = str_replace('administration/academic/', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'administration/lesson-plan/')) {
-                $mainCategoryName = 'Lesson Plan Administration';
-                $subItemName = str_replace('administration/lesson-plan/', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'administration/download-center/')) {
-                $mainCategoryName = 'Download Center Administration';
-                $subItemName = str_replace('administration/download-center/', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'student/student-info/')) {
-                $mainCategoryName = 'Student Information';
-                $subItemName = str_replace('student/student-info/', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'student/fees/')) {
-                $mainCategoryName = 'Student Fees';
-                $subItemName = str_replace('student/fees/', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'account/inventory/')) {
-                $mainCategoryName = 'Inventory Management';
-                $subItemName = str_replace('account/inventory/', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'role-management/')) {
-                $mainCategoryName = 'Role & User Management';
-                $subItemName = str_replace('role-management/', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'fees.')) {
-                $mainCategoryName = 'Fees';
-                $subItemName = str_replace('fees.', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'item-issue.')) {
-                $mainCategoryName = 'Item Issue';
-                $subItemName = str_replace('item-issue.', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'item-sell.')) {
-                $mainCategoryName = 'Item Sell';
-                $subItemName = str_replace('item-sell.', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'course.')) {
-                $mainCategoryName = 'Courses';
-                $subItemName = str_replace('course.', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'intake.')) {
-                $mainCategoryName = 'Intakes';
-                $subItemName = str_replace('intake.', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'subject.')) {
-                $mainCategoryName = 'Subjects';
-                $subItemName = str_replace('subject.', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'assign-subject.')) {
-                $mainCategoryName = 'Assign Subjects';
-                $subItemName = str_replace('assign-subject.', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'lesson.')) {
-                $mainCategoryName = 'Lessons';
-                $subItemName = str_replace('lesson.', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'topic.')) {
-                $mainCategoryName = 'Topics';
-                $subItemName = str_replace('topic.', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'topic-overview.')) {
-                $mainCategoryName = 'Topic Overview';
-                $subItemName = str_replace('topic-overview.', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'student-category.')) {
-                $mainCategoryName = 'Student Categories';
-                $subItemName = str_replace('student-category.', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'add-student.')) {
-                $mainCategoryName = 'Add Student';
-                $subItemName = str_replace('add-student.', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'download-center.')) {
-                $mainCategoryName = 'Download Center';
-                $subItemName = str_replace('download-center.', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'item-category')) {
-                $mainCategoryName = 'Item Category';
-                $subItemName = str_replace('item-category', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'item-list')) {
-                $mainCategoryName = 'Item List';
-                $subItemName = str_replace('item-list', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'supplier')) {
-                $mainCategoryName = 'Supplier';
-                $subItemName = str_replace('supplier', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'content-type')) {
-                $mainCategoryName = 'Content Type';
-                $subItemName = str_replace('content-type', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'content-list')) {
-                $mainCategoryName = 'Content List';
-                $subItemName = str_replace('content-list', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'return-fees.')) {
-                $mainCategoryName = 'Return Fees';
-                $subItemName = str_replace('return-fees.', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'roles.')) {
-                $mainCategoryName = 'Roles';
-                $subItemName = str_replace('roles.', '', $permission->permission_name);
-            } elseif (str_starts_with($permission->permission_name, 'role-management.')) {
-                $mainCategoryName = 'Role Management';
-                $subItemName = str_replace('role-management.', '', $permission->permission_name);
-            }
-            
-            $subItemName = trim(str_replace(['.', '-'], ' ', $subItemName));
-            $subItemName = ucwords($subItemName);
+            // Lesson Plan
+            ['name' => 'Lessons', 'route' => 'lesson.index', 'category' => 'Lesson Plan', 'sub_category' => 'Lesson Management', 'actions' => ['index', 'store', 'update', 'edit', 'destroy', 'get-intakes', 'get-subjects']],
+            ['name' => 'Topics', 'route' => 'topic.index', 'category' => 'Lesson Plan', 'sub_category' => 'Lesson Management', 'actions' => ['index', 'store', 'update', 'edit', 'destroy', 'get-intakes', 'get-subjects', 'get-lessons']],
+            ['name' => 'Topic Overview', 'route' => 'topic-overview.index', 'category' => 'Lesson Plan', 'sub_category' => 'Lesson Management', 'actions' => ['index', 'store', 'get-intakes', 'get-subjects']],
 
-            if (empty($subItemName)) {
-                $subItemName = $permission->permission_name;
-            }
+            // Download Center
+            ['name' => 'Upload Content', 'route' => 'upload-content', 'category' => 'Download Center', 'sub_category' => 'Content Management', 'actions' => ['upload']],
+            ['name' => 'Study Material Download', 'route' => 'study-material-download', 'category' => 'Download Center', 'sub_category' => 'Content Management', 'actions' => ['download']],
+            ['name' => 'Other Download', 'route' => 'other-download', 'category' => 'Download Center', 'sub_category' => 'Content Management', 'actions' => ['download']],
+            ['name' => 'Shared Content List', 'route' => 'shared-content-list', 'category' => 'Download Center', 'sub_category' => 'Content Management', 'actions' => ['index', 'save', 'update', 'destroy', 'generate-url', 'view', 'delete-shared']],
+            ['name' => 'Video List', 'route' => 'video-list', 'category' => 'Download Center', 'sub_category' => 'Content Management', 'actions' => ['index', 'save', 'update', 'destroy']],
 
-            $mainCategoryKey = array_search($mainCategoryName, array_column($menuStructure, 'name'));
-            if ($mainCategoryKey === false) {
-                $menuStructure[] = [
-                    'name' => $mainCategoryName,
-                    'sub_items' => []
-                ];
-                $mainCategoryKey = count($menuStructure) - 1;
-            }
+            // Student Management
+            ['name' => 'Student Categories', 'route' => 'student-category.index', 'category' => 'Student Management', 'sub_category' => 'Student Settings', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
+            ['name' => 'Add Student', 'route' => 'add-student.index', 'category' => 'Student Management', 'sub_category' => 'Student Enrollment', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
+            ['name' => 'Student Add Course', 'route' => 'student.add-course.index', 'category' => 'Student Management', 'sub_category' => 'Student Enrollment', 'actions' => ['index', 'store', 'edit', 'update', 'destroy']],
+            ['name' => 'Student Add Intake', 'route' => 'student.add-intake.index', 'category' => 'Student Management', 'sub_category' => 'Student Enrollment', 'actions' => ['index', 'store', 'edit', 'update', 'destroy', 'search', 'get-intakes', 'get-courses']],
+            ['name' => 'Student List', 'route' => 'student-list', 'category' => 'Student Management', 'sub_category' => 'Student Information', 'actions' => ['index', 'update-status', 'details', 'export', 'get-intakes', 'get-courses']],
+            ['name' => 'Disabled Students', 'route' => 'disabled-students', 'category' => 'Student Management', 'sub_category' => 'Student Information', 'actions' => ['index', 'search']],
+            ['name' => 'Student Attendance', 'route' => 'student-attendance', 'category' => 'Student Management', 'sub_category' => 'Student Information', 'actions' => ['index', 'get-courses']],
 
-            $menuStructure[$mainCategoryKey]['sub_items'][] = [
-                'name' => $subItemName,
-                'permission_id' => $permission->id,
-                'permission_name' => $permission->permission_name,
-                'has_permission' => in_array($permission->id, $rolePermissions),
-            ];
+            // Inventory Management
+            ['name' => 'Item Categories', 'route' => 'item-category', 'category' => 'Inventory Management', 'sub_category' => 'Item Settings', 'actions' => ['index', 'store', 'edit', 'update', 'delete']],
+            ['name' => 'Item List', 'route' => 'item-list', 'category' => 'Inventory Management', 'sub_category' => 'Item Settings', 'actions' => ['index', 'store', 'edit', 'update', 'delete']],
+            ['name' => 'Suppliers', 'route' => 'supplier', 'category' => 'Inventory Management', 'sub_category' => 'Item Settings', 'actions' => ['index', 'store', 'edit', 'update', 'delete']],
+            ['name' => 'Item Receive', 'route' => 'item-receive', 'category' => 'Inventory Management', 'sub_category' => 'Inventory Transactions', 'actions' => ['index', 'store', 'edit', 'update', 'destroy']],
+            ['name' => 'Item Sell', 'route' => 'item-sell', 'category' => 'Inventory Management', 'sub_category' => 'Inventory Transactions', 'actions' => ['index', 'store', 'view', 'edit', 'update', 'delete', 'cancel', 'add-payment', 'view-payments']],
+            ['name' => 'Item Issue', 'route' => 'item-issue', 'category' => 'Inventory Management', 'sub_category' => 'Inventory Transactions', 'actions' => ['index', 'store', 'edit', 'update', 'return', 'issue', 'get-intakes', 'get-courses', 'get-students', 'get-items', 'get-student-fee-data']],
+
+            // FEE
+            ['name' => 'Fee Group', 'route' => 'fee-group', 'category' => 'FEE', 'sub_category' => 'Fee Settings', 'actions' => ['index', 'create', 'edit', 'update', 'delete']],
+            ['name' => 'Fee Type', 'route' => 'fees.fees-type', 'category' => 'FEE', 'sub_category' => 'Fee Settings', 'actions' => ['index', 'store', 'edit', 'update', 'delete']],
+            ['name' => 'Fee Invoice', 'route' => 'fees.fee-invoice', 'category' => 'FEE', 'sub_category' => 'Fee Transactions', 'actions' => ['index', 'view', 'payment', 'add', 'get-student', 'get-types', 'store', 'course-payment', 'edit', 'update', 'delete', 'update-invoice-number', 'mark-as-paid']],
+            ['name' => 'Fee Return', 'route' => 'fee-return', 'category' => 'FEE', 'sub_category' => 'Fee Transactions', 'actions' => ['index', 'store', 'search']],
+            ['name' => 'Course Paid', 'route' => 'fees.course-paid', 'category' => 'FEE', 'sub_category' => 'Fee Transactions', 'actions' => ['index']],
+            ['name' => 'Fee Invoice Setting', 'route' => 'fee-invoice-setting', 'category' => 'FEE', 'sub_category' => 'Fee Settings', 'actions' => ['index']],
+
+            // Role Management
+            ['name' => 'Roles', 'route' => 'roles.index', 'category' => 'Role Management', 'sub_category' => 'Role Settings', 'actions' => ['index', 'store', 'update', 'destroy', 'edit', 'grantPermission', 'savePermissions']],
+            ['name' => 'Create User', 'route' => 'role-management.create-user', 'category' => 'Role Management', 'sub_category' => 'User Management', 'actions' => ['create', 'store', 'get-student-details']],
+        ];
+
+        $dbPermissionsMap = [];
+        foreach ($allPermissions as $p) {
+            $dbPermissionsMap[$p->permission_name] = $p;
         }
 
+        $newMenuStructure = [];
+
+        // Helper function to determine the actual permission name
+        $getActualPermissionName = function($baseRoute, $action) {
+            // Routes that are standalone permission names (action is just a descriptor)
+            $standaloneRoutes = [
+                'upload-content', 'study-material-download', 'other-download',
+                'shared-content-list', 'video-list', 'student-list', 'disabled-students',
+                'student-attendance', 'item-category', 'item-list', 'supplier',
+                'item-receive', 'item-sell', 'item-issue', 'fee-group', 'fees.fees-type',
+                'fees.fee-invoice', 'fee-return', 'fees.course-paid', 'fee-invoice-setting',
+                'roles.index', 'role-management.create-user'
+            ];
+
+            if (in_array($baseRoute, $standaloneRoutes)) {
+                return $baseRoute;
+            }
+
+            // For routes like 'course.index', 'intake.index', etc., the action replaces the last part
+            if (str_contains($baseRoute, '.')) {
+                $parts = explode('.', $baseRoute);
+                array_pop($parts); // Remove 'index'
+                $parts[] = $action; // Add 'store', 'update', etc.
+                return implode('.', $parts);
+            }
+
+            // Default case: baseRoute.action (e.g., if baseRoute is 'some-feature' and action is 'view', then 'some-feature.view')
+            return $baseRoute . '.' . $action;
+        };
+
+        foreach ($permissionsData as $item) {
+            $categoryName = $item['category'];
+            $subCategoryName = $item['sub_category'];
+            $baseRoute = $item['route'];
+            $displayPermissionName = $item['name'];
+            $actions = $item['actions'];
+
+            // Ensure category exists
+            if (!isset($newMenuStructure[$categoryName])) {
+                $newMenuStructure[$categoryName] = [
+                    'name' => $categoryName,
+                    'sub_categories' => []
+                ];
+            }
+
+            // Ensure sub-category exists
+            if (!isset($newMenuStructure[$categoryName]['sub_categories'][$subCategoryName])) {
+                $newMenuStructure[$categoryName]['sub_categories'][$subCategoryName] = [
+                    'name' => $subCategoryName,
+                    'items' => [] // New level for items within sub-category
+                ];
+            }
+
+            // Ensure item (sub-sub-category) exists
+            if (!isset($newMenuStructure[$categoryName]['sub_categories'][$subCategoryName]['items'][$displayPermissionName])) {
+                $newMenuStructure[$categoryName]['sub_categories'][$subCategoryName]['items'][$displayPermissionName] = [
+                    'name' => $displayPermissionName,
+                    'permissions' => []
+                ];
+            }
+
+            foreach ($actions as $action) {
+                $actualPermissionName = $getActualPermissionName($baseRoute, $action);
+
+                // Find this permission in $dbPermissionsMap
+                if (isset($dbPermissionsMap[$actualPermissionName])) {
+                    $permission = $dbPermissionsMap[$actualPermissionName];
+                    $newMenuStructure[$categoryName]['sub_categories'][$subCategoryName]['items'][$displayPermissionName]['permissions'][] = [
+                        'id' => $permission->id,
+                        'name' => $displayPermissionName . ' (' . ucfirst($action) . ')', // e.g., "Courses (Index)"
+                        'permission_name' => $permission->permission_name, // The actual permission name from DB
+                        'has_permission' => in_array($permission->id, $rolePermissions),
+                    ];
+                }
+            }
+        }
+
+        // Convert associative arrays to indexed arrays for JSON output and sorting
+        $menuStructure = [];
+        foreach ($newMenuStructure as $category) {
+            $subCategories = [];
+            foreach ($category['sub_categories'] as $subCategory) {
+                $items = [];
+                foreach ($subCategory['items'] as $item) {
+                    $items[] = $item;
+                }
+                $subCategory['items'] = $items; // Convert items to indexed array
+                $subCategories[] = $subCategory;
+            }
+            $category['sub_categories'] = $subCategories;
+            $menuStructure[] = $category;
+        }
+
+        // Sort categories, sub-categories, items, and permissions
         usort($menuStructure, function($a, $b) {
             return strcmp($a['name'], $b['name']);
         });
 
-        foreach ($menuStructure as &$mainItem) {
-            usort($mainItem['sub_items'], function($a, $b) {
+        foreach ($menuStructure as &$category) {
+            usort($category['sub_categories'], function($a, $b) {
                 return strcmp($a['name'], $b['name']);
             });
+            foreach ($category['sub_categories'] as &$subCategory) {
+                usort($subCategory['items'], function($a, $b) {
+                    return strcmp($a['name'], $b['name']);
+                });
+                foreach ($subCategory['items'] as &$item) {
+                    usort($item['permissions'], function($a, $b) {
+                        return strcmp($a['name'], $b['name']);
+                    });
+                }
+            }
         }
 
         return view('pages.role_management.grantpermission', compact('role', 'menuStructure', 'allPermissions', 'rolePermissions'));
