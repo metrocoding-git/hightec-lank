@@ -26,7 +26,7 @@
     </div>
 </div>
 <!--================Footer Area ================= -->
-<footer class="footer-area new-footer">
+<footer class="footer-area new-footer" style="margin-top: 50px absolute">
     <div class="container">
         <div class="row">
             <div class="col-lg-12 text-center">
@@ -46,8 +46,8 @@
         padding-bottom: 50px; /* Adjust this value based on your footer's height */
     }
     .new-footer {
-        position: relative;
-        z-index: 1;
+        position: flex;
+        /* z-index: 1; */
     }
 </style>
 <script>

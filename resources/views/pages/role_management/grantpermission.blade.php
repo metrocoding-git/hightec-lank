@@ -10,9 +10,12 @@
             --gray-border: #e3e6f0;
 
             /* New Blue Colors */
-            --blue-primary: #4682B4; /* SteelBlue */
-            --blue-dark: #36648B; /* Darker SteelBlue */
-            --blue-light: #E0FFFF; /* LightCyan */
+            --blue-primary: #4682B4;
+            /* SteelBlue */
+            --blue-dark: #36648B;
+            /* Darker SteelBlue */
+            --blue-light: #E0FFFF;
+            /* LightCyan */
         }
 
         /* Breadcrumb */
@@ -113,8 +116,11 @@
         }
 
         .primary_checkbox input {
-            opacity: 0;
             position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
         }
 
         .checkmark {
@@ -124,13 +130,16 @@
             border-radius: 50%;
             border: 1px solid #ccc;
             transition: all 0.25s ease;
+            display: inline-block;
+            /* Ensure it's a block/inline-block to have dimensions */
         }
 
         .primary_checkbox:hover .checkmark {
             background-color: var(--blue-light);
         }
 
-        .primary_checkbox input:checked~.checkmark {
+        /* Use adjacent sibling combinator for more specificity */
+        .primary_checkbox input:checked+.checkmark {
             background-color: var(--blue-primary);
             border-color: var(--blue-primary);
         }
@@ -141,7 +150,8 @@
             display: none;
         }
 
-        .primary_checkbox input:checked~.checkmark::after {
+        /* Style the inner dot when checked */
+        .primary_checkbox input:checked+.checkmark::after {
             display: block;
             top: 5px;
             left: 5px;
@@ -197,42 +207,31 @@
                                                 <div class="card">
                                                     <div class="card-header" id="heading{{ Str::slug($category['name']) }}">
                                                         <h5 class="mb-0">
-                                                            <button class="btn btn-link btn-block text-left d-flex justify-content-between align-items-center main-category-toggle {{ $loop->first ? '' : 'collapsed' }}" type="button" data-toggle="collapse" data-target="#collapse{{ Str::slug($category['name']) }}" aria-expanded="{{ $loop->first ? 'true' : 'false' }}" aria-controls="collapse{{ Str::slug($category['name']) }}">
+                                                            <button
+                                                                class="btn btn-link btn-block text-left d-flex justify-content-between align-items-center main-category-toggle {{ $loop->first ? '' : 'collapsed' }}"
+                                                                type="button" data-toggle="collapse"
+                                                                data-target="#collapse{{ Str::slug($category['name']) }}"
+                                                                aria-expanded="{{ $loop->first ? 'true' : 'false' }}"
+                                                                aria-controls="collapse{{ Str::slug($category['name']) }}">
                                                                 {{ $category['name'] }}
                                                                 <i class="ti-plus"></i>
                                                             </button>
                                                         </h5>
                                                     </div>
 
-                                                    <div id="collapse{{ Str::slug($category['name']) }}" class="collapse {{ $loop->first ? 'show' : '' }}" aria-labelledby="heading{{ Str::slug($category['name']) }}" data-parent="#mainCategoryAccordion">
+                                                    <div id="collapse{{ Str::slug($category['name']) }}"
+                                                        class="collapse {{ $loop->first ? 'show' : '' }}"
+                                                        aria-labelledby="heading{{ Str::slug($category['name']) }}"
+                                                        data-parent="#mainCategoryAccordion">
                                                         <div class="card-body p-0">
-                                                            <div class="accordion sub-category-accordion" id="subCategoryAccordion{{ Str::slug($category['name']) }}">
-                                                                @foreach ($category['sub_categories'] as $subCategory)
-                                                                    <div class="card">
-                                                                        <div class="card-header" id="heading{{ Str::slug($category['name']) }}{{ Str::slug($subCategory['name']) }}">
-                                                                            <h5 class="mb-0">
-                                                                                <button class="btn btn-link btn-block text-left d-flex justify-content-between align-items-center sub-category-toggle {{ $loop->parent->first && $loop->first ? '' : 'collapsed' }}" type="button" data-toggle="collapse" data-target="#collapse{{ Str::slug($category['name']) }}{{ Str::slug($subCategory['name']) }}" aria-expanded="{{ $loop->parent->first && $loop->first ? 'true' : 'false' }}" aria-controls="collapse{{ Str::slug($category['name']) }}{{ Str::slug($subCategory['name']) }}">
-                                                                                    {{ $subCategory['name'] }}
-                                                                                    <i class="ti-plus"></i>
-                                                                                </button>
-                                                                            </h5>
-                                                                        </div>
-                                                                        <div id="collapse{{ Str::slug($category['name']) }}{{ Str::slug($subCategory['name']) }}" class="collapse {{ $loop->parent->first && $loop->first ? 'show' : '' }}" aria-labelledby="heading{{ Str::slug($category['name']) }}{{ Str::slug($subCategory['name']) }}" data-parent="#subCategoryAccordion{{ Str::slug($category['name']) }}">
-                                                                            <div class="card-body p-0">
-                                                                                <div class="list-group list-group-flush">
-                                                                                    @foreach ($subCategory['items'] as $item)
-                                                                                        <a href="#"
-                                                                                            class="list-group-item list-group-item-action item-item"
-                                                                                            data-category-name="{{ $category['name'] }}"
-                                                                                            data-sub-category-name="{{ $subCategory['name'] }}"
-                                                                                            data-item-name="{{ $item['name'] }}">
-                                                                                            {{ $item['name'] }}
-                                                                                        </a>
-                                                                                    @endforeach
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
+                                                            <div class="list-group list-group-flush">
+                                                                @foreach ($category['items'] as $item)
+                                                                    <a href="#"
+                                                                        class="list-group-item list-group-item-action item-item"
+                                                                        data-category-name="{{ $category['name'] }}"
+                                                                        data-item-name="{{ $item['name'] }}">
+                                                                        {{ $item['name'] }}
+                                                                    </a>
                                                                 @endforeach
                                                             </div>
                                                         </div>
@@ -254,19 +253,27 @@
                                         <div class="card-body" id="permission-checkboxes-container">
                                             <p>Click on a main category from the left to view and manage its permissions.
                                             </p>
-                                        </div>
-                                    </div>
-                                    <div class="row mt-40">
-                                        <div class="col-lg-12 text-center">
-                                            <button class="primary-btn fix-gr-bg" type="submit">
-                                                <span class="ti-check"></span>
-                                                Save Permissions
-                                            </button>
+                                            {{-- <div class="d-flex justify-content-end mb-3">
+                                                <button type="button" class="primary-btn fix-gr-bg small mr-2" id="selectAllPermissions">
+                                                    <span class="ti-check-box"></span> Select All
+                                                </button>
+                                                <button type="button" class="primary-btn fix-gr-bg small" id="unselectAllPermissions">
+                                                    <span class="ti-close"></span> Unselect All
+                                                </button>
+                                            </div> --}}
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
+                            <div class="row mt-40">
+                                <div class="col-lg-12 text-center">
+                                    <button class="primary-btn fix-gr-bg" type="submit">
+                                        <span class="ti-check"></span>
+                                        Save Permissions
+                                    </button>
+                                </div>
+                            </div>
                         </form>
 
                     </div>
@@ -280,9 +287,10 @@
     <script>
         $(document).ready(function() {
             const menuStructure = @json($menuStructure);
-            const rolePermissions = @json($rolePermissions); // Array of permission IDs the role currently has
+            let selectedPermissionIds = @json($rolePermissions);
+            console.log('Initial selectedPermissionIds:', selectedPermissionIds);
 
-            function renderPermissionsForCategory(categoryName, subCategoryName, itemName) {
+            function renderPermissionsForCategory(categoryName, itemName) {
                 const container = $('#permission-checkboxes-container');
                 const title = $('#permission-panel-title');
                 container.empty();
@@ -291,59 +299,82 @@
                 const category = menuStructure.find(item => item.name === categoryName);
 
                 if (category) {
-                    const subCategory = category.sub_categories.find(item => item.name === subCategoryName);
+                    const item = category.items.find(i => i.name === itemName);
 
-                    if (subCategory) {
-                        const item = subCategory.items.find(i => i.name === itemName);
+                    if (item && item.permissions.length > 0) {
+                        console.log(`Rendering permissions for ${itemName}. Current selectedPermissionIds:`,
+                            selectedPermissionIds);
 
-                        if (item && item.permissions.length > 0) {
-                            let html = `<div class="table-responsive">
-                                    <table class="table permission-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Permission Name</th>
-                                                <th>Access</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>`;
-                            item.permissions.forEach(permission => {
-                                const isChecked = rolePermissions.includes(permission.id);
-                                html += `
-                            <tr>
-                                <td>${permission.name}</td>
-                                <td>
-                                    <label class="primary_checkbox">
-                                        <input type="checkbox" name="permissions[]" value="${permission.id}" ${isChecked ? 'checked' : ''}>
-                                        <span class="checkmark"></span>
-                                    </label>
-                                </td>
-                            </tr>`;
-                            });
-                            html += `       </tbody>
-                                </table>
-                            </div>`;
-                            container.append(html);
-                        } else {
-                            container.append('<p>No permissions found for this item.</p>');
-                        }
+                        let html = `<div class="table-responsive table-responsive-scroll">
+                        <table class="table permission-table">
+                            <thead>
+                                <tr>
+                                    <th>Permission Name</th>
+                                    <th>Access</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                        item.permissions.forEach(permission => {
+                            const isChecked = selectedPermissionIds.includes(parseInt(permission.id));
+                            console.log(
+                                `  - Permission: ${permission.name} (ID: ${permission.id}), Is Checked: ${isChecked}`
+                                );
+                            html += `
+                        <tr>
+                            <td>${permission.name}</td>
+                            <td>
+                                <label class="primary_checkbox">
+                                    <input type="checkbox" class="permission-checkbox" value="${permission.id}" ${isChecked ? 'checked' : ''}>
+                                    <span class="checkmark"></span>
+                                </label>
+                            </td>
+                        </tr>`;
+                        });
+                        html += `   </tbody>
+                    </table>
+                </div>`;
+                        container.append(html);
                     } else {
-                        container.append('<p>Sub-category not found.</p>');
+                        container.append('<p>No permissions found for this item.</p>');
                     }
                 } else {
                     container.append('<p>Category not found.</p>');
                 }
             }
 
+            // Event listener for checkbox changes - FIXED VERSION
+            $(document).on('change', '.permission-checkbox', function() {
+                const permissionId = parseInt($(this).val());
+                const isChecked = $(this).is(':checked');
+
+                console.log(`Checkbox changed - ID: ${permissionId}, Checked: ${isChecked}`);
+
+                if (isChecked) {
+                    // Add to selected permissions if not already present
+                    if (!selectedPermissionIds.includes(permissionId)) {
+                        selectedPermissionIds.push(permissionId);
+                        console.log(`Added permission ${permissionId} to selectedPermissions`);
+                    }
+                } else {
+                    // Remove from selected permissions
+                    selectedPermissionIds = selectedPermissionIds.filter(id => id !== permissionId);
+                    console.log(`Removed permission ${permissionId} from selectedPermissions`);
+                }
+
+                console.log('Updated selectedPermissionIds:', selectedPermissionIds);
+            });
+
+            // Event listener for item clicks (sub-sub-category)
             $(document).on('click', '.item-item', function(e) {
                 e.preventDefault();
                 $('.item-item').removeClass('active');
                 $(this).addClass('active');
                 const categoryName = $(this).data('category-name');
-                const subCategoryName = $(this).data('sub-category-name');
                 const itemName = $(this).data('item-name');
-                renderPermissionsForCategory(categoryName, subCategoryName, itemName);
+                renderPermissionsForCategory(categoryName, itemName);
             });
 
+            // Event listener for main category toggles
             $(document).on('click', '.main-category-toggle', function() {
                 $('.main-category-toggle').removeClass('active');
                 if (!$(this).hasClass('collapsed')) {
@@ -351,30 +382,60 @@
                 }
             });
 
-            $(document).on('click', '.sub-category-toggle', function() {
-                $('.sub-category-toggle').removeClass('active');
-                if (!$(this).hasClass('collapsed')) {
-                    $(this).addClass('active');
-                }
+            // Handle form submission to include all selected permissions
+            $('form').on('submit', function() {
+                // Clear any existing hidden inputs for permissions to avoid duplicates
+                $(this).find('input[name="permissions[]"]').remove();
+
+                console.log('Form submitting with permissions:', selectedPermissionIds);
+
+                // Add hidden inputs for all selected permissions
+                selectedPermissionIds.forEach(id => {
+                    $('<input>').attr({
+                        type: 'hidden',
+                        name: 'permissions[]',
+                        value: id
+                    }).appendTo(this);
+                });
             });
 
-            // Optionally, load permissions for the first item on page load
+            // Select All functionality - UPDATED
+            $(document).on('click', '#selectAllPermissions', function() {
+                console.log('Select All clicked');
+                $('.permission-checkbox').each(function() {
+                    const permissionId = parseInt($(this).val());
+                    if (!$(this).is(':checked')) {
+                        $(this).prop('checked', true);
+                        if (!selectedPermissionIds.includes(permissionId)) {
+                            selectedPermissionIds.push(permissionId);
+                        }
+                    }
+                });
+                console.log('Selected Permissions after Select All:', selectedPermissionIds);
+            });
+
+            // Unselect All functionality - UPDATED
+            $(document).on('click', '#unselectAllPermissions', function() {
+                console.log('Unselect All clicked');
+                $('.permission-checkbox').each(function() {
+                    const permissionId = parseInt($(this).val());
+                    $(this).prop('checked', false);
+                    selectedPermissionIds = selectedPermissionIds.filter(id => id !== permissionId);
+                });
+                console.log('Selected Permissions after Unselect All:', selectedPermissionIds);
+            });
+
+            // Load permissions for the first item on page load
             if (menuStructure.length > 0) {
-                // Find the first item-item and trigger a click
                 const firstItemItem = $('.item-item').first();
                 if (firstItemItem.length > 0) {
                     firstItemItem.addClass('active');
                     const categoryName = firstItemItem.data('category-name');
-                    const subCategoryName = firstItemItem.data('sub-category-name');
                     const itemName = firstItemItem.data('item-name');
-                    renderPermissionsForCategory(categoryName, subCategoryName, itemName);
+                    renderPermissionsForCategory(categoryName, itemName);
 
-                    // Also activate the parent main category and sub-category toggles
-                    const firstSubCategoryToggle = firstItemItem.closest('.collapse').prev('.card-header').find('.sub-category-toggle');
-                    if (firstSubCategoryToggle.length > 0) {
-                        firstSubCategoryToggle.addClass('active');
-                    }
-                    const firstMainCategoryToggle = firstItemItem.closest('.sub-category-accordion').closest('.collapse').prev('.card-header').find('.main-category-toggle');
+                    const firstMainCategoryToggle = firstItemItem.closest('.collapse').prev('.card-header').find(
+                        '.main-category-toggle');
                     if (firstMainCategoryToggle.length > 0) {
                         firstMainCategoryToggle.addClass('active');
                     }
