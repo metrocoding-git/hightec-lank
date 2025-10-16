@@ -291,7 +291,7 @@
             if (item && item.permissions.length > 0) {
                 console.log(`Rendering permissions for ${itemName}. Current selectedPermissionIds:`, selectedPermissionIds);
 
-                let html = `<div class="table-responsive">
+                let html = `<div class="table-responsive table-responsive-scroll">
                         <table class="table permission-table">
                             <thead>
                                 <tr>

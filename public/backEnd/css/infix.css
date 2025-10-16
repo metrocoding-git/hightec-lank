@@ -1288,9 +1288,13 @@ table.dataTable tbody td {
 /* nfixedu_lv7.0_rv_4.5 css */
 
 @media (min-width: 320px) and (max-width: 579.98px) {
-    .mb_sm_75 {
-        margin-bottom: 75px;
-    }
+.mb_sm_75 {
+    margin-bottom: 75px;
+}
+
+.table-responsive-scroll {
+    overflow-x: auto;
+}
 }
 
 @media (min-width: 320px) and (max-width: 767.98px) {

@@ -400,14 +400,7 @@ class RoleController extends Controller
             return $this->permissionNameMap[$combinedRouteAction];
         }
 
-        // Fallback for routes that are themselves the permission name (e.g., 'dashboard')
-        // This handles cases where the 'action' is implicitly part of the baseRoute's permission name
-        // and there's no specific action suffix in the permission table.
-        // This needs careful consideration to avoid reintroducing the "all checked" issue.
-        // For now, we assume if it's not in the map, the default combined name is correct.
-        // If a baseRoute like 'upload-content' is meant to be a single permission for its 'upload' action,
-        // it should be explicitly mapped in $permissionNameMap as 'upload-content.upload' => 'upload-content'.
-
+       
         // Default pattern: baseRoute.action
         return $combinedRouteAction;
     }
