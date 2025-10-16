@@ -189,6 +189,7 @@ class RoleController extends Controller
         'role-management.create-user.create' => 'role-management.create-user', // Mismatch
         'role-management.create-user.store' => 'role-management.store-user', // Mismatch
         'role-management.create-user.get-student-details' => 'role-management.get-student-details', // Mismatch
+        'dashboard.index' => 'dashboard', // Map dashboard.index to dashboard
     ];
 
     public function index()
@@ -312,6 +313,8 @@ class RoleController extends Controller
             // Role Management
             ['name' => 'Roles', 'route' => 'roles', 'category' => 'Role Management', 'sub_category' => 'Role Settings', 'actions' => ['index', 'store', 'update', 'destroy', 'edit', 'grantPermission', 'savePermissions']],
             ['name' => 'Create User', 'route' => 'role-management.create-user', 'category' => 'Role Management', 'sub_category' => 'User Management', 'actions' => ['create', 'store', 'get-student-details']],
+            // System
+            ['name' => 'Dashboard', 'route' => 'dashboard', 'category' => 'System', 'sub_category' => 'General', 'actions' => ['index']],
         ];
 
         // Create a map of permission names to permission objects for quick lookup

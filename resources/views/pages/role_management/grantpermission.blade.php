@@ -10,9 +10,12 @@
             --gray-border: #e3e6f0;
 
             /* New Blue Colors */
-            --blue-primary: #4682B4; /* SteelBlue */
-            --blue-dark: #36648B; /* Darker SteelBlue */
-            --blue-light: #E0FFFF; /* LightCyan */
+            --blue-primary: #4682B4;
+            /* SteelBlue */
+            --blue-dark: #36648B;
+            /* Darker SteelBlue */
+            --blue-light: #E0FFFF;
+            /* LightCyan */
         }
 
         /* Breadcrumb */
@@ -127,7 +130,8 @@
             border-radius: 50%;
             border: 1px solid #ccc;
             transition: all 0.25s ease;
-            display: inline-block; /* Ensure it's a block/inline-block to have dimensions */
+            display: inline-block;
+            /* Ensure it's a block/inline-block to have dimensions */
         }
 
         .primary_checkbox:hover .checkmark {
@@ -135,7 +139,7 @@
         }
 
         /* Use adjacent sibling combinator for more specificity */
-        .primary_checkbox input:checked + .checkmark {
+        .primary_checkbox input:checked+.checkmark {
             background-color: var(--blue-primary);
             border-color: var(--blue-primary);
         }
@@ -147,7 +151,7 @@
         }
 
         /* Style the inner dot when checked */
-        .primary_checkbox input:checked + .checkmark::after {
+        .primary_checkbox input:checked+.checkmark::after {
             display: block;
             top: 5px;
             left: 5px;
@@ -203,14 +207,22 @@
                                                 <div class="card">
                                                     <div class="card-header" id="heading{{ Str::slug($category['name']) }}">
                                                         <h5 class="mb-0">
-                                                            <button class="btn btn-link btn-block text-left d-flex justify-content-between align-items-center main-category-toggle {{ $loop->first ? '' : 'collapsed' }}" type="button" data-toggle="collapse" data-target="#collapse{{ Str::slug($category['name']) }}" aria-expanded="{{ $loop->first ? 'true' : 'false' }}" aria-controls="collapse{{ Str::slug($category['name']) }}">
+                                                            <button
+                                                                class="btn btn-link btn-block text-left d-flex justify-content-between align-items-center main-category-toggle {{ $loop->first ? '' : 'collapsed' }}"
+                                                                type="button" data-toggle="collapse"
+                                                                data-target="#collapse{{ Str::slug($category['name']) }}"
+                                                                aria-expanded="{{ $loop->first ? 'true' : 'false' }}"
+                                                                aria-controls="collapse{{ Str::slug($category['name']) }}">
                                                                 {{ $category['name'] }}
                                                                 <i class="ti-plus"></i>
                                                             </button>
                                                         </h5>
                                                     </div>
 
-                                                    <div id="collapse{{ Str::slug($category['name']) }}" class="collapse {{ $loop->first ? 'show' : '' }}" aria-labelledby="heading{{ Str::slug($category['name']) }}" data-parent="#mainCategoryAccordion">
+                                                    <div id="collapse{{ Str::slug($category['name']) }}"
+                                                        class="collapse {{ $loop->first ? 'show' : '' }}"
+                                                        aria-labelledby="heading{{ Str::slug($category['name']) }}"
+                                                        data-parent="#mainCategoryAccordion">
                                                         <div class="card-body p-0">
                                                             <div class="list-group list-group-flush">
                                                                 @foreach ($category['items'] as $item)
@@ -239,7 +251,8 @@
                                             </h4>
                                         </div>
                                         <div class="card-body" id="permission-checkboxes-container">
-                                            <p>Click on a main category from the left to view and manage its permissions.</p>
+                                            <p>Click on a main category from the left to view and manage its permissions.
+                                            </p>
                                             {{-- <div class="d-flex justify-content-end mb-3">
                                                 <button type="button" class="primary-btn fix-gr-bg small mr-2" id="selectAllPermissions">
                                                     <span class="ti-check-box"></span> Select All
@@ -252,7 +265,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="row mt-40">
                                 <div class="col-lg-12 text-center">
                                     <button class="primary-btn fix-gr-bg" type="submit">
@@ -273,25 +286,26 @@
 @push('script')
     <script>
         $(document).ready(function() {
-    const menuStructure = @json($menuStructure);
-    let selectedPermissionIds = @json($rolePermissions);
-    console.log('Initial selectedPermissionIds:', selectedPermissionIds);
+            const menuStructure = @json($menuStructure);
+            let selectedPermissionIds = @json($rolePermissions);
+            console.log('Initial selectedPermissionIds:', selectedPermissionIds);
 
-    function renderPermissionsForCategory(categoryName, itemName) {
-        const container = $('#permission-checkboxes-container');
-        const title = $('#permission-panel-title');
-        container.empty();
-        title.text('Permissions for ' + itemName);
+            function renderPermissionsForCategory(categoryName, itemName) {
+                const container = $('#permission-checkboxes-container');
+                const title = $('#permission-panel-title');
+                container.empty();
+                title.text('Permissions for ' + itemName);
 
-        const category = menuStructure.find(item => item.name === categoryName);
+                const category = menuStructure.find(item => item.name === categoryName);
 
-        if (category) {
-            const item = category.items.find(i => i.name === itemName);
+                if (category) {
+                    const item = category.items.find(i => i.name === itemName);
 
-            if (item && item.permissions.length > 0) {
-                console.log(`Rendering permissions for ${itemName}. Current selectedPermissionIds:`, selectedPermissionIds);
+                    if (item && item.permissions.length > 0) {
+                        console.log(`Rendering permissions for ${itemName}. Current selectedPermissionIds:`,
+                            selectedPermissionIds);
 
-                let html = `<div class="table-responsive table-responsive-scroll">
+                        let html = `<div class="table-responsive table-responsive-scroll">
                         <table class="table permission-table">
                             <thead>
                                 <tr>
@@ -300,10 +314,12 @@
                                 </tr>
                             </thead>
                             <tbody>`;
-                item.permissions.forEach(permission => {
-                    const isChecked = selectedPermissionIds.includes(parseInt(permission.id));
-                    console.log(`  - Permission: ${permission.name} (ID: ${permission.id}), Is Checked: ${isChecked}`);
-                    html += `
+                        item.permissions.forEach(permission => {
+                            const isChecked = selectedPermissionIds.includes(parseInt(permission.id));
+                            console.log(
+                                `  - Permission: ${permission.name} (ID: ${permission.id}), Is Checked: ${isChecked}`
+                                );
+                            html += `
                         <tr>
                             <td>${permission.name}</td>
                             <td>
@@ -313,117 +329,118 @@
                                 </label>
                             </td>
                         </tr>`;
-                });
-                html += `   </tbody>
+                        });
+                        html += `   </tbody>
                     </table>
                 </div>`;
-                container.append(html);
-            } else {
-                container.append('<p>No permissions found for this item.</p>');
+                        container.append(html);
+                    } else {
+                        container.append('<p>No permissions found for this item.</p>');
+                    }
+                } else {
+                    container.append('<p>Category not found.</p>');
+                }
             }
-        } else {
-            container.append('<p>Category not found.</p>');
-        }
-    }
 
-    // Event listener for checkbox changes - FIXED VERSION
-    $(document).on('change', '.permission-checkbox', function() {
-        const permissionId = parseInt($(this).val());
-        const isChecked = $(this).is(':checked');
-        
-        console.log(`Checkbox changed - ID: ${permissionId}, Checked: ${isChecked}`);
-        
-        if (isChecked) {
-            // Add to selected permissions if not already present
-            if (!selectedPermissionIds.includes(permissionId)) {
-                selectedPermissionIds.push(permissionId);
-                console.log(`Added permission ${permissionId} to selectedPermissions`);
-            }
-        } else {
-            // Remove from selected permissions
-            selectedPermissionIds = selectedPermissionIds.filter(id => id !== permissionId);
-            console.log(`Removed permission ${permissionId} from selectedPermissions`);
-        }
-        
-        console.log('Updated selectedPermissionIds:', selectedPermissionIds);
-    });
+            // Event listener for checkbox changes - FIXED VERSION
+            $(document).on('change', '.permission-checkbox', function() {
+                const permissionId = parseInt($(this).val());
+                const isChecked = $(this).is(':checked');
 
-    // Event listener for item clicks (sub-sub-category)
-    $(document).on('click', '.item-item', function(e) {
-        e.preventDefault();
-        $('.item-item').removeClass('active');
-        $(this).addClass('active');
-        const categoryName = $(this).data('category-name');
-        const itemName = $(this).data('item-name');
-        renderPermissionsForCategory(categoryName, itemName);
-    });
+                console.log(`Checkbox changed - ID: ${permissionId}, Checked: ${isChecked}`);
 
-    // Event listener for main category toggles
-    $(document).on('click', '.main-category-toggle', function() {
-        $('.main-category-toggle').removeClass('active');
-        if (!$(this).hasClass('collapsed')) {
-            $(this).addClass('active');
-        }
-    });
+                if (isChecked) {
+                    // Add to selected permissions if not already present
+                    if (!selectedPermissionIds.includes(permissionId)) {
+                        selectedPermissionIds.push(permissionId);
+                        console.log(`Added permission ${permissionId} to selectedPermissions`);
+                    }
+                } else {
+                    // Remove from selected permissions
+                    selectedPermissionIds = selectedPermissionIds.filter(id => id !== permissionId);
+                    console.log(`Removed permission ${permissionId} from selectedPermissions`);
+                }
 
-    // Handle form submission to include all selected permissions
-    $('form').on('submit', function() {
-        // Clear any existing hidden inputs for permissions to avoid duplicates
-        $(this).find('input[name="permissions[]"]').remove();
+                console.log('Updated selectedPermissionIds:', selectedPermissionIds);
+            });
 
-        console.log('Form submitting with permissions:', selectedPermissionIds);
+            // Event listener for item clicks (sub-sub-category)
+            $(document).on('click', '.item-item', function(e) {
+                e.preventDefault();
+                $('.item-item').removeClass('active');
+                $(this).addClass('active');
+                const categoryName = $(this).data('category-name');
+                const itemName = $(this).data('item-name');
+                renderPermissionsForCategory(categoryName, itemName);
+            });
 
-        // Add hidden inputs for all selected permissions
-        selectedPermissionIds.forEach(id => {
-            $('<input>').attr({
-                type: 'hidden',
-                name: 'permissions[]',
-                value: id
-            }).appendTo(this);
-        });
-    });
+            // Event listener for main category toggles
+            $(document).on('click', '.main-category-toggle', function() {
+                $('.main-category-toggle').removeClass('active');
+                if (!$(this).hasClass('collapsed')) {
+                    $(this).addClass('active');
+                }
+            });
 
-    // Select All functionality - UPDATED
-    $(document).on('click', '#selectAllPermissions', function() {
-        console.log('Select All clicked');
-        $('.permission-checkbox').each(function() {
-            const permissionId = parseInt($(this).val());
-            if (!$(this).is(':checked')) {
-                $(this).prop('checked', true);
-                if (!selectedPermissionIds.includes(permissionId)) {
-                    selectedPermissionIds.push(permissionId);
+            // Handle form submission to include all selected permissions
+            $('form').on('submit', function() {
+                // Clear any existing hidden inputs for permissions to avoid duplicates
+                $(this).find('input[name="permissions[]"]').remove();
+
+                console.log('Form submitting with permissions:', selectedPermissionIds);
+
+                // Add hidden inputs for all selected permissions
+                selectedPermissionIds.forEach(id => {
+                    $('<input>').attr({
+                        type: 'hidden',
+                        name: 'permissions[]',
+                        value: id
+                    }).appendTo(this);
+                });
+            });
+
+            // Select All functionality - UPDATED
+            $(document).on('click', '#selectAllPermissions', function() {
+                console.log('Select All clicked');
+                $('.permission-checkbox').each(function() {
+                    const permissionId = parseInt($(this).val());
+                    if (!$(this).is(':checked')) {
+                        $(this).prop('checked', true);
+                        if (!selectedPermissionIds.includes(permissionId)) {
+                            selectedPermissionIds.push(permissionId);
+                        }
+                    }
+                });
+                console.log('Selected Permissions after Select All:', selectedPermissionIds);
+            });
+
+            // Unselect All functionality - UPDATED
+            $(document).on('click', '#unselectAllPermissions', function() {
+                console.log('Unselect All clicked');
+                $('.permission-checkbox').each(function() {
+                    const permissionId = parseInt($(this).val());
+                    $(this).prop('checked', false);
+                    selectedPermissionIds = selectedPermissionIds.filter(id => id !== permissionId);
+                });
+                console.log('Selected Permissions after Unselect All:', selectedPermissionIds);
+            });
+
+            // Load permissions for the first item on page load
+            if (menuStructure.length > 0) {
+                const firstItemItem = $('.item-item').first();
+                if (firstItemItem.length > 0) {
+                    firstItemItem.addClass('active');
+                    const categoryName = firstItemItem.data('category-name');
+                    const itemName = firstItemItem.data('item-name');
+                    renderPermissionsForCategory(categoryName, itemName);
+
+                    const firstMainCategoryToggle = firstItemItem.closest('.collapse').prev('.card-header').find(
+                        '.main-category-toggle');
+                    if (firstMainCategoryToggle.length > 0) {
+                        firstMainCategoryToggle.addClass('active');
+                    }
                 }
             }
         });
-        console.log('Selected Permissions after Select All:', selectedPermissionIds);
-    });
-
-    // Unselect All functionality - UPDATED
-    $(document).on('click', '#unselectAllPermissions', function() {
-        console.log('Unselect All clicked');
-        $('.permission-checkbox').each(function() {
-            const permissionId = parseInt($(this).val());
-            $(this).prop('checked', false);
-            selectedPermissionIds = selectedPermissionIds.filter(id => id !== permissionId);
-        });
-        console.log('Selected Permissions after Unselect All:', selectedPermissionIds);
-    });
-
-    // Load permissions for the first item on page load
-    if (menuStructure.length > 0) {
-        const firstItemItem = $('.item-item').first();
-        if (firstItemItem.length > 0) {
-            firstItemItem.addClass('active');
-            const categoryName = firstItemItem.data('category-name');
-            const itemName = firstItemItem.data('item-name');
-            renderPermissionsForCategory(categoryName, itemName);
-
-            const firstMainCategoryToggle = firstItemItem.closest('.collapse').prev('.card-header').find('.main-category-toggle');
-            if (firstMainCategoryToggle.length > 0) {
-                firstMainCategoryToggle.addClass('active');
-            }
-        }
-    }
-});
     </script>
 @endpush
