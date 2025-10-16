@@ -5,9 +5,192 @@ namespace App\Http\Controllers;
 use App\Models\Role;
 use App\Models\Permission;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class RoleController extends Controller
 {
+    // Define a mapping for inconsistent permission names
+    private $permissionNameMap = [
+        // Academic (already consistent, but can be explicitly mapped if needed)
+        'course.index' => 'course.index',
+        'course.store' => 'course.store',
+        'course.update' => 'course.update',
+        'course.edit' => 'course.edit',
+        'course.destroy' => 'course.destroy',
+        'intake.index' => 'intake.index',
+        'intake.store' => 'intake.store',
+        'intake.update' => 'intake.update',
+        'intake.edit' => 'intake.edit',
+        'intake.destroy' => 'intake.destroy',
+        'subject.index' => 'subject.index',
+        'subject.store' => 'subject.store',
+        'subject.update' => 'subject.update',
+        'subject.edit' => 'subject.edit',
+        'subject.destroy' => 'subject.destroy',
+        'assign-subject.index' => 'assign-subject.index',
+        'assign-subject.store' => 'assign-subject.store',
+        'assign-subject.update' => 'assign-subject.update',
+        'assign-subject.edit' => 'assign-subject.edit',
+        'assign-subject.destroy' => 'assign-subject.destroy',
+        'assign-subject.get-courses' => 'assign-subject.get-courses',
+
+        // Lesson Plan (already consistent)
+        'lesson.index' => 'lesson.index',
+        'lesson.store' => 'lesson.store',
+        'lesson.update' => 'lesson.update',
+        'lesson.edit' => 'lesson.edit',
+        'lesson.destroy' => 'lesson.destroy',
+        'lesson.get-intakes' => 'lesson.get-intakes',
+        'lesson.get-subjects' => 'lesson.get-subjects',
+        'topic.index' => 'topic.index',
+        'topic.store' => 'topic.store',
+        'topic.update' => 'topic.update',
+        'topic.edit' => 'topic.edit',
+        'topic.destroy' => 'topic.destroy',
+        'topic.get-intakes' => 'topic.get-intakes',
+        'topic.get-subjects' => 'topic.get-subjects',
+        'topic.get-lessons' => 'topic.get-lessons',
+        'topic-overview.index' => 'topic-overview.index',
+        'topic-overview.store' => 'topic-overview.store',
+        'topic-overview.get-intakes' => 'topic-overview.get-intakes',
+        'topic-overview.get-subjects' => 'topic-overview.get-subjects',
+
+        // Download Center
+        'upload-content.upload' => 'upload-content', // Special case, action 'upload' maps to 'upload-content'
+        'study-material-download.download' => 'study-material-download', // Special case
+        'other-download.download' => 'other-download', // Special case
+        'shared-content-list.index' => 'shared-content-list',
+        'shared-content-list.save' => 'content-share-list-save', // Mapped from route to seeder name
+        'shared-content-list.update' => 'download-center.video-list-update', // This is a guess, needs verification against routes/seeder
+        'shared-content-list.destroy' => 'download-center.video-list-destroy', // This is a guess, needs verification against routes/seeder
+        'shared-content-list.generate-url' => 'download-center.content-generate-url-save',
+        'shared-content-list.view' => 'download-center.shared-content-view',
+        'shared-content-list.delete-shared' => 'download-center.shared-content-delete',
+        'video-list.index' => 'video-list',
+        'video-list.save' => 'download-center.video-list-save',
+        'video-list.update' => 'download-center.video-list-update',
+        'video-list.destroy' => 'download-center.video-list-destroy',
+
+        // Student Management
+        'student-category.index' => 'student-category.index',
+        'student-category.store' => 'student-category.store',
+        'student-category.update' => 'student-category.update',
+        'student-category.edit' => 'student-category.edit',
+        'student-category.destroy' => 'student-category.destroy',
+        'add-student.index' => 'add-student.index',
+        'add-student.store' => 'add-student.store',
+        'add-student.update' => 'add-student.update',
+        'add-student.edit' => 'add-student.edit',
+        'add-student.destroy' => 'add-student.destroy',
+        'student.add-course.index' => 'student.add-course.index',
+        'student.add-course.store' => 'student.add-course.store',
+        'student.add-course.edit' => 'student.add-course.edit',
+        'student.add-course.update' => 'student.add-course.update',
+        'student.add-course.destroy' => 'student.add-course.destroy',
+        'student.add-intake.index' => 'student.add-intake.index',
+        'student.add-intake.store' => 'student.add-intake-with-courses.store', // Mismatch in seeder/route
+        'student.add-intake.edit' => 'student.add-intake.edit',
+        'student.add-intake.update' => 'student.add-intake.update',
+        'student.add-intake.destroy' => 'student.add-intake.destroy',
+        'student.add-intake.search' => 'student.add-intake.search',
+        'student.add-intake.get-intakes' => 'student.add-intake.get-intakes',
+        'student.add-intake.get-courses' => 'student.add-intake.get-courses',
+        'student-list.index' => 'student-list', // Special case
+        'student-list.update-status' => 'student.update-status',
+        'student-list.details' => 'student-details',
+        'student-list.export' => 'student-export',
+        'student-list.get-intakes' => 'student-list.get-intakes',
+        'student-list.get-courses' => 'student-list.get-courses',
+        'disabled-students.index' => 'disabled-students', // Special case
+        'disabled-students.search' => 'frontend.disabled-student.search', // Mismatch
+        'student-attendance.index' => 'student-attendance', // Special case
+        'student-attendance.get-courses' => 'student-attendance.get-courses',
+
+        // Inventory Management
+        'item-category.index' => 'item-category',
+        'item-category.store' => 'item-category-store',
+        'item-category.edit' => 'item-category-edit',
+        'item-category.update' => 'item-category-update',
+        'item-category.delete' => 'delete-item-category',
+        'item-list.index' => 'item-list',
+        'item-list.store' => 'item-store',
+        'item-list.edit' => 'item-edit',
+        'item-list.update' => 'item-update',
+        'item-list.delete' => 'item-delete',
+        'supplier.index' => 'supplier',
+        'supplier.store' => 'supplier-store',
+        'supplier.edit' => 'supplier-edit',
+        'supplier.update' => 'supplier-update',
+        'supplier.delete' => 'supplier-delete',
+        'item-receive.index' => 'item-receive',
+        'item-receive.store' => 'save-item-receive-data', // Mismatch
+        'item-receive.edit' => 'item-receive.edit',
+        'item-receive.update' => 'item-receive.update',
+        'item-receive.destroy' => 'item-receive.destroy',
+        'item-sell.index' => 'item-sell',
+        'item-sell.store' => 'save-item-sell-data', // Mismatch
+        'item-sell.view' => 'view-item-sell',
+        'item-sell.edit' => 'edit-item-sell',
+        'item-sell.update' => 'update-item-sell',
+        'item-sell.delete' => 'delete-item-sell', // Mismatch
+        'item-sell.cancel' => 'cancel-item-sell', // Mismatch
+        'item-sell.add-payment' => 'add-payment-sell', // Mismatch
+        'item-sell.view-payments' => 'view-sell-payments', // Mismatch
+        'item-issue.index' => 'item-issue',
+        'item-issue.store' => 'save-item-issue-data', // Mismatch
+        'item-issue.edit' => 'item-issue-edit',
+        'item-issue.update' => 'item-issue-update',
+        'item-issue.return' => 'return-item', // Mismatch
+        'item-issue.issue' => 'issue-item',
+        'item-issue.get-intakes' => 'item-issue.get-intakes-by-branch', // Mismatch
+        'item-issue.get-courses' => 'item-issue.get-courses-by-intake', // Mismatch
+        'item-issue.get-students' => 'item-issue.get-students-by-course', // Mismatch
+        'item-issue.get-items' => 'item-issue.get-items-by-category', // Mismatch
+        'item-issue.get-student-fee-data' => 'item-issue.get-student-fee-data', // Mismatch
+
+        // FEE
+        'fee-group.index' => 'fee-group',
+        'fee-group.create' => 'fee-group-create',
+        'fee-group.edit' => 'fee-group-edit',
+        'fee-group.update' => 'fee-group-update',
+        'fee-group.delete' => 'fee-group-delete',
+        'fees.fees-type.index' => 'fees.fees-type',
+        'fees.fees-type.store' => 'fees.fees-type-store',
+        'fees.fees-type.edit' => 'fees.fees-type-edit',
+        'fees.fees-type.update' => 'fees.fees-type-update',
+        'fees.fees-type.delete' => 'fees.fees-type-delete',
+        'fees.fee-invoice.index' => 'fees.fee-invoice',
+        'fees.fee-invoice.view' => 'fees.fee-invoice-view',
+        'fees.fee-invoice.payment' => 'fees.fees-invoice-payment',
+        'fees.fee-invoice.add' => 'fees.add-invoice',
+        'fees.fee-invoice.get-student' => 'fees.get-student',
+        'fees.fee-invoice.get-types' => 'fees.get-types-by-group',
+        'fees.fee-invoice.store' => 'fees.invoice.store',
+        'fees.fee-invoice.course-payment' => 'fees.course-payment.store',
+        'fees.fee-invoice.edit' => 'fees.fee-invoice-edit',
+        'fees.fee-invoice.update' => 'fees.fee-update-invoice',
+        'fees.fee-invoice.delete' => 'fees.fee-delete',
+        'fees.fee-invoice.update-invoice-number' => 'fees.update-invoice-number',
+        'fees.fee-invoice.mark-as-paid' => 'fees.mark-as-paid',
+        'fee-return.index' => 'fee-return',
+        'fee-return.store' => 'return-fees.store',
+        'fee-return.search' => 'fees.fee-return.search',
+        'fees.course-paid.index' => 'fees.course-paid',
+        'fee-invoice-setting.index' => 'fee-invoice-setting',
+
+        // Role Management (already consistent)
+        'roles.index' => 'roles.index',
+        'roles.store' => 'roles.store',
+        'roles.update' => 'roles.update',
+        'roles.destroy' => 'roles.destroy',
+        'roles.edit' => 'roles.edit',
+        'roles.grantPermission' => 'roles.grantPermission',
+        'roles.savePermissions' => 'roles.savePermissions',
+        'role-management.create-user.create' => 'role-management.create-user', // Mismatch
+        'role-management.create-user.store' => 'role-management.store-user', // Mismatch
+        'role-management.create-user.get-student-details' => 'role-management.get-student-details', // Mismatch
+    ];
+
     public function index()
     {
         $roles = Role::all();
@@ -67,22 +250,32 @@ class RoleController extends Controller
 
     public function grantPermission($id)
     {
-        $role = Role::findOrFail($id);
+        $role = Role::with('permissions')->findOrFail($id);
         $rolePermissions = $role->permissions->pluck('id')->toArray();
         $allPermissions = Permission::all();
-        $menuStructure = [];
 
+        $menuStructure = $this->buildMenuStructure($allPermissions, $rolePermissions);
+
+        return view('pages.role_management.grantpermission', compact(
+            'role',
+            'menuStructure',
+            'rolePermissions'
+        ));
+    }
+
+    private function buildMenuStructure($allPermissions, $rolePermissions)
+    {
         $permissionsData = [
             // Academic
-            ['name' => 'Courses', 'route' => 'course.index', 'category' => 'Academic', 'sub_category' => 'Course Settings', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
-            ['name' => 'Intakes', 'route' => 'intake.index', 'category' => 'Academic', 'sub_category' => 'Course Settings', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
-            ['name' => 'Subjects', 'route' => 'subject.index', 'category' => 'Academic', 'sub_category' => 'Course Settings', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
-            ['name' => 'Assign Subjects', 'route' => 'assign-subject.index', 'category' => 'Academic', 'sub_category' => 'Course Settings', 'actions' => ['index', 'store', 'update', 'edit', 'destroy', 'get-courses']],
+            ['name' => 'Courses', 'route' => 'course', 'category' => 'Academic', 'sub_category' => 'Course Settings', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
+            ['name' => 'Intakes', 'route' => 'intake', 'category' => 'Academic', 'sub_category' => 'Course Settings', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
+            ['name' => 'Subjects', 'route' => 'subject', 'category' => 'Academic', 'sub_category' => 'Course Settings', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
+            ['name' => 'Assign Subjects', 'route' => 'assign-subject', 'category' => 'Academic', 'sub_category' => 'Course Settings', 'actions' => ['index', 'store', 'update', 'edit', 'destroy', 'get-courses']],
 
             // Lesson Plan
-            ['name' => 'Lessons', 'route' => 'lesson.index', 'category' => 'Lesson Plan', 'sub_category' => 'Lesson Management', 'actions' => ['index', 'store', 'update', 'edit', 'destroy', 'get-intakes', 'get-subjects']],
-            ['name' => 'Topics', 'route' => 'topic.index', 'category' => 'Lesson Plan', 'sub_category' => 'Lesson Management', 'actions' => ['index', 'store', 'update', 'edit', 'destroy', 'get-intakes', 'get-subjects', 'get-lessons']],
-            ['name' => 'Topic Overview', 'route' => 'topic-overview.index', 'category' => 'Lesson Plan', 'sub_category' => 'Lesson Management', 'actions' => ['index', 'store', 'get-intakes', 'get-subjects']],
+            ['name' => 'Lessons', 'route' => 'lesson', 'category' => 'Lesson Plan', 'sub_category' => 'Lesson Management', 'actions' => ['index', 'store', 'update', 'edit', 'destroy', 'get-intakes', 'get-subjects']],
+            ['name' => 'Topics', 'route' => 'topic', 'category' => 'Lesson Plan', 'sub_category' => 'Lesson Management', 'actions' => ['index', 'store', 'update', 'edit', 'destroy', 'get-intakes', 'get-subjects', 'get-lessons']],
+            ['name' => 'Topic Overview', 'route' => 'topic-overview', 'category' => 'Lesson Plan', 'sub_category' => 'Lesson Management', 'actions' => ['index', 'store', 'get-intakes', 'get-subjects']],
 
             // Download Center
             ['name' => 'Upload Content', 'route' => 'upload-content', 'category' => 'Download Center', 'sub_category' => 'Content Management', 'actions' => ['upload']],
@@ -92,10 +285,10 @@ class RoleController extends Controller
             ['name' => 'Video List', 'route' => 'video-list', 'category' => 'Download Center', 'sub_category' => 'Content Management', 'actions' => ['index', 'save', 'update', 'destroy']],
 
             // Student Management
-            ['name' => 'Student Categories', 'route' => 'student-category.index', 'category' => 'Student Management', 'sub_category' => 'Student Settings', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
-            ['name' => 'Add Student', 'route' => 'add-student.index', 'category' => 'Student Management', 'sub_category' => 'Student Enrollment', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
-            ['name' => 'Student Add Course', 'route' => 'student.add-course.index', 'category' => 'Student Management', 'sub_category' => 'Student Enrollment', 'actions' => ['index', 'store', 'edit', 'update', 'destroy']],
-            ['name' => 'Student Add Intake', 'route' => 'student.add-intake.index', 'category' => 'Student Management', 'sub_category' => 'Student Enrollment', 'actions' => ['index', 'store', 'edit', 'update', 'destroy', 'search', 'get-intakes', 'get-courses']],
+            ['name' => 'Student Categories', 'route' => 'student-category', 'category' => 'Student Management', 'sub_category' => 'Student Settings', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
+            ['name' => 'Add Student', 'route' => 'add-student', 'category' => 'Student Management', 'sub_category' => 'Student Enrollment', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
+            ['name' => 'Student Add Course', 'route' => 'student.add-course', 'category' => 'Student Management', 'sub_category' => 'Student Enrollment', 'actions' => ['index', 'store', 'edit', 'update', 'destroy']],
+            ['name' => 'Student Add Intake', 'route' => 'student.add-intake', 'category' => 'Student Management', 'sub_category' => 'Student Enrollment', 'actions' => ['index', 'store', 'edit', 'update', 'destroy', 'search', 'get-intakes', 'get-courses']],
             ['name' => 'Student List', 'route' => 'student-list', 'category' => 'Student Management', 'sub_category' => 'Student Information', 'actions' => ['index', 'update-status', 'details', 'export', 'get-intakes', 'get-courses']],
             ['name' => 'Disabled Students', 'route' => 'disabled-students', 'category' => 'Student Management', 'sub_category' => 'Student Information', 'actions' => ['index', 'search']],
             ['name' => 'Student Attendance', 'route' => 'student-attendance', 'category' => 'Student Management', 'sub_category' => 'Student Information', 'actions' => ['index', 'get-courses']],
@@ -117,133 +310,122 @@ class RoleController extends Controller
             ['name' => 'Fee Invoice Setting', 'route' => 'fee-invoice-setting', 'category' => 'FEE', 'sub_category' => 'Fee Settings', 'actions' => ['index']],
 
             // Role Management
-            ['name' => 'Roles', 'route' => 'roles.index', 'category' => 'Role Management', 'sub_category' => 'Role Settings', 'actions' => ['index', 'store', 'update', 'destroy', 'edit', 'grantPermission', 'savePermissions']],
+            ['name' => 'Roles', 'route' => 'roles', 'category' => 'Role Management', 'sub_category' => 'Role Settings', 'actions' => ['index', 'store', 'update', 'destroy', 'edit', 'grantPermission', 'savePermissions']],
             ['name' => 'Create User', 'route' => 'role-management.create-user', 'category' => 'Role Management', 'sub_category' => 'User Management', 'actions' => ['create', 'store', 'get-student-details']],
         ];
 
-        $dbPermissionsMap = [];
-        foreach ($allPermissions as $p) {
-            $dbPermissionsMap[$p->permission_name] = $p;
+        // Create a map of permission names to permission objects for quick lookup
+        $permissionsMap = [];
+        foreach ($allPermissions as $permission) {
+            $permissionsMap[$permission->permission_name] = $permission;
         }
 
-        $newMenuStructure = [];
-
-        // Helper function to determine the actual permission name
-        $getActualPermissionName = function($baseRoute, $action) {
-            // Routes where the permission name is just the base route, regardless of action
-            $simpleRoutes = [
-                // Download Center
-                'upload-content', 'study-material-download', 'other-download',
-                'shared-content-list', 'video-list',
-
-                // Student Management
-                'student-list', 'disabled-students', 'student-attendance',
-                'add-student.index', // Added based on user feedback
-                'student-category.index', // Added based on user feedback
-                'student.add-course.index', // Added based on user feedback
-                'student.add-intake.index', // Added based on user feedback
-
-                // Inventory Management
-                'item-category', 'item-list', 'supplier',
-                'item-receive', 'item-sell', 'item-issue',
-
-                // FEE
-                'fee-group', 'fees.fees-type', 'fees.fee-invoice',
-                'fee-return', 'fees.course-paid', 'fee-invoice-setting',
-
-                // Role Management
-                'roles.index', 'role-management.create-user',
-
-                // Academic
-                'course.index', // Added based on user feedback
-                'intake.index', // Added based on user feedback
-                'subject.index', // Added based on user feedback
-                'assign-subject.index', // Added based on user feedback
-
-                // Lesson Plan
-                'lesson.index', // Added based on user feedback
-                'topic.index', // Added based on user feedback
-                'topic-overview.index', // Added based on user feedback
-            ];
-
-            if (in_array($baseRoute, $simpleRoutes)) {
-                // For these routes, the permission name in the DB is often just the base route itself,
-                // and the 'action' is more of a descriptor for the UI.
-                // However, if the action is 'index', we might still want to append it for consistency
-                // if the DB permission is 'route.index'. Let's assume for now it's just the base route.
-                // If the actual permission in DB is 'fee-group.index', then this logic needs adjustment.
-                // Based on the user's feedback, it seems the DB permission is just 'fee-group'.
-                return $baseRoute;
-            }
-
-            // For routes like 'course.index', 'intake.index', etc., the action replaces the last part
-            if (str_ends_with($baseRoute, '.index')) {
-                return str_replace('.index', '.' . $action, $baseRoute);
-            }
-
-            // Default case: baseRoute.action (e.g., if baseRoute is 'some-feature' and action is 'view', then 'some-feature.view')
-            return $baseRoute . '.' . $action;
-        };
+        $menuStructure = [];
 
         foreach ($permissionsData as $item) {
             $categoryName = $item['category'];
-            $subCategoryName = $item['sub_category'];
+            $itemName = $item['name'];
             $baseRoute = $item['route'];
-            $displayPermissionName = $item['name'];
             $actions = $item['actions'];
 
-            // Ensure category exists
-            if (!isset($newMenuStructure[$categoryName])) {
-                $newMenuStructure[$categoryName] = [
+            // Find or create category
+            $categoryIndex = $this->findCategoryIndex($menuStructure, $categoryName);
+            if ($categoryIndex === -1) {
+                $menuStructure[] = [
                     'name' => $categoryName,
-                    'items' => [] // Items directly under category
+                    'items' => []
                 ];
+                $categoryIndex = count($menuStructure) - 1;
             }
 
-            // Ensure item exists (using displayPermissionName as the key for the item)
-            if (!isset($newMenuStructure[$categoryName]['items'][$displayPermissionName])) {
-                $newMenuStructure[$categoryName]['items'][$displayPermissionName] = [
-                    'name' => $displayPermissionName,
+            // Find or create item within category
+            $itemIndex = $this->findItemIndex($menuStructure[$categoryIndex]['items'], $itemName);
+            if ($itemIndex === -1) {
+                $menuStructure[$categoryIndex]['items'][] = [
+                    'name' => $itemName,
                     'permissions' => []
                 ];
+                $itemIndex = count($menuStructure[$categoryIndex]['items']) - 1;
             }
 
+            // Add permissions for each action
             foreach ($actions as $action) {
-                $actualPermissionName = $getActualPermissionName($baseRoute, $action);
+                // Generate the permission name based on route and action
+                $permissionName = $this->generatePermissionName($baseRoute, $action);
 
-                // Find this permission in $dbPermissionsMap
-                if (isset($dbPermissionsMap[$actualPermissionName])) {
-                    $permission = $dbPermissionsMap[$actualPermissionName];
-                    $newMenuStructure[$categoryName]['items'][$displayPermissionName]['permissions'][] = [
+                // Check if this permission exists in the database
+                if (isset($permissionsMap[$permissionName])) {
+                    $permission = $permissionsMap[$permissionName];
+
+                    $menuStructure[$categoryIndex]['items'][$itemIndex]['permissions'][] = [
                         'id' => $permission->id,
-                        'name' => $displayPermissionName . ' - ' . ucfirst($action), // e.g., "Courses - Index"
-                        'permission_name' => $permission->permission_name, // The actual permission name from DB
+                        'name' => $itemName . ' - ' . ucfirst($action),
+                        'permission_name' => $permission->permission_name,
                         'has_permission' => in_array($permission->id, $rolePermissions),
                     ];
                 }
             }
         }
 
-        // Convert associative arrays to indexed arrays for JSON output and sorting
-        $menuStructure = [];
-        foreach ($newMenuStructure as $category) {
-            $items = [];
-            foreach ($category['items'] as $item) {
-                $items[] = $item;
+        // Sort the structure
+        return $this->sortMenuStructure($menuStructure);
+    }
+
+    private function findCategoryIndex($menuStructure, $categoryName)
+    {
+        foreach ($menuStructure as $index => $category) {
+            if ($category['name'] === $categoryName) {
+                return $index;
             }
-            $category['items'] = $items; // Convert items to indexed array
-            $menuStructure[] = $category;
+        }
+        return -1;
+    }
+
+    private function findItemIndex($items, $itemName)
+    {
+        foreach ($items as $index => $item) {
+            if ($item['name'] === $itemName) {
+                return $index;
+            }
+        }
+        return -1;
+    }
+
+    private function generatePermissionName($baseRoute, $action)
+    {
+        $combinedRouteAction = $baseRoute . '.' . $action;
+
+        // Check if a specific mapping exists for the combined route and action
+        if (isset($this->permissionNameMap[$combinedRouteAction])) {
+            return $this->permissionNameMap[$combinedRouteAction];
         }
 
-        // Sort categories, items, and permissions
+        // Fallback for routes that are themselves the permission name (e.g., 'dashboard')
+        // This handles cases where the 'action' is implicitly part of the baseRoute's permission name
+        // and there's no specific action suffix in the permission table.
+        // This needs careful consideration to avoid reintroducing the "all checked" issue.
+        // For now, we assume if it's not in the map, the default combined name is correct.
+        // If a baseRoute like 'upload-content' is meant to be a single permission for its 'upload' action,
+        // it should be explicitly mapped in $permissionNameMap as 'upload-content.upload' => 'upload-content'.
+
+        // Default pattern: baseRoute.action
+        return $combinedRouteAction;
+    }
+
+    private function sortMenuStructure($menuStructure)
+    {
+        // Sort categories alphabetically
         usort($menuStructure, function ($a, $b) {
             return strcmp($a['name'], $b['name']);
         });
 
+        // Sort items within each category
         foreach ($menuStructure as &$category) {
             usort($category['items'], function ($a, $b) {
                 return strcmp($a['name'], $b['name']);
             });
+
+            // Sort permissions within each item
             foreach ($category['items'] as &$item) {
                 usort($item['permissions'], function ($a, $b) {
                     return strcmp($a['name'], $b['name']);
@@ -251,7 +433,7 @@ class RoleController extends Controller
             }
         }
 
-        return view('pages.role_management.grantpermission', compact('role', 'menuStructure', 'allPermissions', 'rolePermissions'));
+        return $menuStructure;
     }
 
     public function savePermissions(Request $request, $id)
@@ -264,10 +446,18 @@ class RoleController extends Controller
         try {
             $role = Role::findOrFail($id);
             $selectedPermissions = $request->input('permissions', []);
+
+            // Debug: Log what permissions are being sent
+            Log::info('Saving permissions for role: ' . $role->role_name, [
+                'role_id' => $id,
+                'selected_permissions' => $selectedPermissions
+            ]);
+
             $role->permissions()->sync($selectedPermissions);
 
             return redirect()->back()->with('success', 'Permissions updated successfully for ' . $role->role_name);
         } catch (\Exception $e) {
+            Log::error('Failed to save permissions: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
         }
     }

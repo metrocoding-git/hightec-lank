@@ -239,21 +239,28 @@
                                             </h4>
                                         </div>
                                         <div class="card-body" id="permission-checkboxes-container">
-                                            <p>Click on a main category from the left to view and manage its permissions.
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div class="row mt-40">
-                                        <div class="col-lg-12 text-center">
-                                            <button class="primary-btn fix-gr-bg" type="submit">
-                                                <span class="ti-check"></span>
-                                                Save Permissions
-                                            </button>
+                                            <p>Click on a main category from the left to view and manage its permissions.</p>
+                                            {{-- <div class="d-flex justify-content-end mb-3">
+                                                <button type="button" class="primary-btn fix-gr-bg small mr-2" id="selectAllPermissions">
+                                                    <span class="ti-check-box"></span> Select All
+                                                </button>
+                                                <button type="button" class="primary-btn fix-gr-bg small" id="unselectAllPermissions">
+                                                    <span class="ti-close"></span> Unselect All
+                                                </button>
+                                            </div> --}}
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
+                            
+                            <div class="row mt-40">
+                                <div class="col-lg-12 text-center">
+                                    <button class="primary-btn fix-gr-bg" type="submit">
+                                        <span class="ti-check"></span>
+                                        Save Permissions
+                                    </button>
+                                </div>
+                            </div>
                         </form>
 
                     </div>
@@ -266,121 +273,157 @@
 @push('script')
     <script>
         $(document).ready(function() {
-            const menuStructure = @json($menuStructure);
-            let selectedPermissionIds = @json($rolePermissions); // Global array to store all selected permission IDs
-            console.log('Initial selectedPermissionIds:', selectedPermissionIds); // DEBUG LOG
+    const menuStructure = @json($menuStructure);
+    let selectedPermissionIds = @json($rolePermissions);
+    console.log('Initial selectedPermissionIds:', selectedPermissionIds);
 
-            function renderPermissionsForCategory(categoryName, itemName) {
-                const container = $('#permission-checkboxes-container');
-                const title = $('#permission-panel-title');
-                container.empty();
-                title.text('Permissions for ' + itemName);
+    function renderPermissionsForCategory(categoryName, itemName) {
+        const container = $('#permission-checkboxes-container');
+        const title = $('#permission-panel-title');
+        container.empty();
+        title.text('Permissions for ' + itemName);
 
-                const category = menuStructure.find(item => item.name === categoryName);
+        const category = menuStructure.find(item => item.name === categoryName);
 
-                if (category) {
-                    const item = category.items.find(i => i.name === itemName);
+        if (category) {
+            const item = category.items.find(i => i.name === itemName);
 
-                    if (item && item.permissions.length > 0) {
-                        let html = `<div class="table-responsive">
-                                <table class="table permission-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Permission Name</th>
-                                            <th>Access</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>`;
-                            item.permissions.forEach(permission => {
-                                // Check against the global selectedPermissionIds, ensuring type consistency
-                                const isChecked = selectedPermissionIds.includes(parseInt(permission.id));
-                                console.log(`Permission: ${permission.name} (ID: ${permission.id}), Is Checked: ${isChecked}`); // DEBUG LOG
-                                html += `
-                            <tr>
-                                <td>${permission.name}</td>
-                                <td>
-                                    <label class="primary_checkbox">
-                                        <input type="checkbox" class="permission-checkbox" value="${permission.id}" ${isChecked ? 'checked' : ''}>
-                                        <span class="checkmark"></span>
-                                    </label>
-                                </td>
-                            </tr>`;
-                        });
-                        html += `       </tbody>
-                            </table>
-                        </div>`;
-                        container.append(html);
-                    } else {
-                        container.append('<p>No permissions found for this item.</p>');
-                    }
-                } else {
-                    container.append('<p>Category not found.</p>');
-                }
-            }
+            if (item && item.permissions.length > 0) {
+                console.log(`Rendering permissions for ${itemName}. Current selectedPermissionIds:`, selectedPermissionIds);
 
-            // Event listener for checkbox changes
-            $(document).on('change', '.permission-checkbox', function() {
-                const permissionId = parseInt($(this).val());
-                if ($(this).is(':checked')) {
-                    if (!selectedPermissionIds.includes(permissionId)) {
-                        selectedPermissionIds.push(permissionId);
-                    }
-                } else {
-                    selectedPermissionIds = selectedPermissionIds.filter(id => id !== permissionId);
-                }
-                console.log('Selected Permissions:', selectedPermissionIds); // For debugging
-            });
-
-            // Event listener for item clicks (sub-sub-category)
-            $(document).on('click', '.item-item', function(e) {
-                e.preventDefault();
-                $('.item-item').removeClass('active');
-                $(this).addClass('active');
-                const categoryName = $(this).data('category-name');
-                const itemName = $(this).data('item-name');
-                renderPermissionsForCategory(categoryName, itemName);
-            });
-
-            // Event listener for main category toggles
-            $(document).on('click', '.main-category-toggle', function() {
-                $('.main-category-toggle').removeClass('active');
-                if (!$(this).hasClass('collapsed')) {
-                    $(this).addClass('active');
-                }
-            });
-
-            // Handle form submission to include all selected permissions
-            $('form').on('submit', function() {
-                // Clear any existing hidden inputs for permissions to avoid duplicates
-                $(this).find('input[name="permissions[]"]').remove();
-
-                // Add hidden inputs for all selected permissions
-                selectedPermissionIds.forEach(id => {
-                    $('<input>').attr({
-                        type: 'hidden',
-                        name: 'permissions[]',
-                        value: id
-                    }).appendTo(this);
+                let html = `<div class="table-responsive">
+                        <table class="table permission-table">
+                            <thead>
+                                <tr>
+                                    <th>Permission Name</th>
+                                    <th>Access</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                item.permissions.forEach(permission => {
+                    const isChecked = selectedPermissionIds.includes(parseInt(permission.id));
+                    console.log(`  - Permission: ${permission.name} (ID: ${permission.id}), Is Checked: ${isChecked}`);
+                    html += `
+                        <tr>
+                            <td>${permission.name}</td>
+                            <td>
+                                <label class="primary_checkbox">
+                                    <input type="checkbox" class="permission-checkbox" value="${permission.id}" ${isChecked ? 'checked' : ''}>
+                                    <span class="checkmark"></span>
+                                </label>
+                            </td>
+                        </tr>`;
                 });
-            });
+                html += `   </tbody>
+                    </table>
+                </div>`;
+                container.append(html);
+            } else {
+                container.append('<p>No permissions found for this item.</p>');
+            }
+        } else {
+            container.append('<p>Category not found.</p>');
+        }
+    }
 
-            // Optionally, load permissions for the first item on page load
-            if (menuStructure.length > 0) {
-                // Find the first item-item and trigger a click
-                const firstItemItem = $('.item-item').first();
-                if (firstItemItem.length > 0) {
-                    firstItemItem.addClass('active');
-                    const categoryName = firstItemItem.data('category-name');
-                    const itemName = firstItemItem.data('item-name');
-                    renderPermissionsForCategory(categoryName, itemName);
+    // Event listener for checkbox changes - FIXED VERSION
+    $(document).on('change', '.permission-checkbox', function() {
+        const permissionId = parseInt($(this).val());
+        const isChecked = $(this).is(':checked');
+        
+        console.log(`Checkbox changed - ID: ${permissionId}, Checked: ${isChecked}`);
+        
+        if (isChecked) {
+            // Add to selected permissions if not already present
+            if (!selectedPermissionIds.includes(permissionId)) {
+                selectedPermissionIds.push(permissionId);
+                console.log(`Added permission ${permissionId} to selectedPermissions`);
+            }
+        } else {
+            // Remove from selected permissions
+            selectedPermissionIds = selectedPermissionIds.filter(id => id !== permissionId);
+            console.log(`Removed permission ${permissionId} from selectedPermissions`);
+        }
+        
+        console.log('Updated selectedPermissionIds:', selectedPermissionIds);
+    });
 
-                    // Also activate the parent main category toggle
-                    const firstMainCategoryToggle = firstItemItem.closest('.collapse').prev('.card-header').find('.main-category-toggle');
-                    if (firstMainCategoryToggle.length > 0) {
-                        firstMainCategoryToggle.addClass('active');
-                    }
+    // Event listener for item clicks (sub-sub-category)
+    $(document).on('click', '.item-item', function(e) {
+        e.preventDefault();
+        $('.item-item').removeClass('active');
+        $(this).addClass('active');
+        const categoryName = $(this).data('category-name');
+        const itemName = $(this).data('item-name');
+        renderPermissionsForCategory(categoryName, itemName);
+    });
+
+    // Event listener for main category toggles
+    $(document).on('click', '.main-category-toggle', function() {
+        $('.main-category-toggle').removeClass('active');
+        if (!$(this).hasClass('collapsed')) {
+            $(this).addClass('active');
+        }
+    });
+
+    // Handle form submission to include all selected permissions
+    $('form').on('submit', function() {
+        // Clear any existing hidden inputs for permissions to avoid duplicates
+        $(this).find('input[name="permissions[]"]').remove();
+
+        console.log('Form submitting with permissions:', selectedPermissionIds);
+
+        // Add hidden inputs for all selected permissions
+        selectedPermissionIds.forEach(id => {
+            $('<input>').attr({
+                type: 'hidden',
+                name: 'permissions[]',
+                value: id
+            }).appendTo(this);
+        });
+    });
+
+    // Select All functionality - UPDATED
+    $(document).on('click', '#selectAllPermissions', function() {
+        console.log('Select All clicked');
+        $('.permission-checkbox').each(function() {
+            const permissionId = parseInt($(this).val());
+            if (!$(this).is(':checked')) {
+                $(this).prop('checked', true);
+                if (!selectedPermissionIds.includes(permissionId)) {
+                    selectedPermissionIds.push(permissionId);
                 }
             }
         });
+        console.log('Selected Permissions after Select All:', selectedPermissionIds);
+    });
+
+    // Unselect All functionality - UPDATED
+    $(document).on('click', '#unselectAllPermissions', function() {
+        console.log('Unselect All clicked');
+        $('.permission-checkbox').each(function() {
+            const permissionId = parseInt($(this).val());
+            $(this).prop('checked', false);
+            selectedPermissionIds = selectedPermissionIds.filter(id => id !== permissionId);
+        });
+        console.log('Selected Permissions after Unselect All:', selectedPermissionIds);
+    });
+
+    // Load permissions for the first item on page load
+    if (menuStructure.length > 0) {
+        const firstItemItem = $('.item-item').first();
+        if (firstItemItem.length > 0) {
+            firstItemItem.addClass('active');
+            const categoryName = firstItemItem.data('category-name');
+            const itemName = firstItemItem.data('item-name');
+            renderPermissionsForCategory(categoryName, itemName);
+
+            const firstMainCategoryToggle = firstItemItem.closest('.collapse').prev('.card-header').find('.main-category-toggle');
+            if (firstMainCategoryToggle.length > 0) {
+                firstMainCategoryToggle.addClass('active');
+            }
+        }
+    }
+});
     </script>
 @endpush
