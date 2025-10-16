@@ -130,26 +130,55 @@ class RoleController extends Controller
 
         // Helper function to determine the actual permission name
         $getActualPermissionName = function($baseRoute, $action) {
-            // Routes that are standalone permission names (action is just a descriptor)
-            $standaloneRoutes = [
+            // Routes where the permission name is just the base route, regardless of action
+            $simpleRoutes = [
+                // Download Center
                 'upload-content', 'study-material-download', 'other-download',
-                'shared-content-list', 'video-list', 'student-list', 'disabled-students',
-                'student-attendance', 'item-category', 'item-list', 'supplier',
-                'item-receive', 'item-sell', 'item-issue', 'fee-group', 'fees.fees-type',
-                'fees.fee-invoice', 'fee-return', 'fees.course-paid', 'fee-invoice-setting',
-                'roles.index', 'role-management.create-user'
+                'shared-content-list', 'video-list',
+
+                // Student Management
+                'student-list', 'disabled-students', 'student-attendance',
+                'add-student.index', // Added based on user feedback
+                'student-category.index', // Added based on user feedback
+                'student.add-course.index', // Added based on user feedback
+                'student.add-intake.index', // Added based on user feedback
+
+                // Inventory Management
+                'item-category', 'item-list', 'supplier',
+                'item-receive', 'item-sell', 'item-issue',
+
+                // FEE
+                'fee-group', 'fees.fees-type', 'fees.fee-invoice',
+                'fee-return', 'fees.course-paid', 'fee-invoice-setting',
+
+                // Role Management
+                'roles.index', 'role-management.create-user',
+
+                // Academic
+                'course.index', // Added based on user feedback
+                'intake.index', // Added based on user feedback
+                'subject.index', // Added based on user feedback
+                'assign-subject.index', // Added based on user feedback
+
+                // Lesson Plan
+                'lesson.index', // Added based on user feedback
+                'topic.index', // Added based on user feedback
+                'topic-overview.index', // Added based on user feedback
             ];
 
-            if (in_array($baseRoute, $standaloneRoutes)) {
+            if (in_array($baseRoute, $simpleRoutes)) {
+                // For these routes, the permission name in the DB is often just the base route itself,
+                // and the 'action' is more of a descriptor for the UI.
+                // However, if the action is 'index', we might still want to append it for consistency
+                // if the DB permission is 'route.index'. Let's assume for now it's just the base route.
+                // If the actual permission in DB is 'fee-group.index', then this logic needs adjustment.
+                // Based on the user's feedback, it seems the DB permission is just 'fee-group'.
                 return $baseRoute;
             }
 
             // For routes like 'course.index', 'intake.index', etc., the action replaces the last part
-            if (str_contains($baseRoute, '.')) {
-                $parts = explode('.', $baseRoute);
-                array_pop($parts); // Remove 'index'
-                $parts[] = $action; // Add 'store', 'update', etc.
-                return implode('.', $parts);
+            if (str_ends_with($baseRoute, '.index')) {
+                return str_replace('.index', '.' . $action, $baseRoute);
             }
 
             // Default case: baseRoute.action (e.g., if baseRoute is 'some-feature' and action is 'view', then 'some-feature.view')
@@ -167,21 +196,13 @@ class RoleController extends Controller
             if (!isset($newMenuStructure[$categoryName])) {
                 $newMenuStructure[$categoryName] = [
                     'name' => $categoryName,
-                    'sub_categories' => []
+                    'items' => [] // Items directly under category
                 ];
             }
 
-            // Ensure sub-category exists
-            if (!isset($newMenuStructure[$categoryName]['sub_categories'][$subCategoryName])) {
-                $newMenuStructure[$categoryName]['sub_categories'][$subCategoryName] = [
-                    'name' => $subCategoryName,
-                    'items' => [] // New level for items within sub-category
-                ];
-            }
-
-            // Ensure item (sub-sub-category) exists
-            if (!isset($newMenuStructure[$categoryName]['sub_categories'][$subCategoryName]['items'][$displayPermissionName])) {
-                $newMenuStructure[$categoryName]['sub_categories'][$subCategoryName]['items'][$displayPermissionName] = [
+            // Ensure item exists (using displayPermissionName as the key for the item)
+            if (!isset($newMenuStructure[$categoryName]['items'][$displayPermissionName])) {
+                $newMenuStructure[$categoryName]['items'][$displayPermissionName] = [
                     'name' => $displayPermissionName,
                     'permissions' => []
                 ];
@@ -193,9 +214,9 @@ class RoleController extends Controller
                 // Find this permission in $dbPermissionsMap
                 if (isset($dbPermissionsMap[$actualPermissionName])) {
                     $permission = $dbPermissionsMap[$actualPermissionName];
-                    $newMenuStructure[$categoryName]['sub_categories'][$subCategoryName]['items'][$displayPermissionName]['permissions'][] = [
+                    $newMenuStructure[$categoryName]['items'][$displayPermissionName]['permissions'][] = [
                         'id' => $permission->id,
-                        'name' => $displayPermissionName . ' (' . ucfirst($action) . ')', // e.g., "Courses (Index)"
+                        'name' => $displayPermissionName . ' - ' . ucfirst($action), // e.g., "Courses - Index"
                         'permission_name' => $permission->permission_name, // The actual permission name from DB
                         'has_permission' => in_array($permission->id, $rolePermissions),
                     ];
@@ -206,37 +227,27 @@ class RoleController extends Controller
         // Convert associative arrays to indexed arrays for JSON output and sorting
         $menuStructure = [];
         foreach ($newMenuStructure as $category) {
-            $subCategories = [];
-            foreach ($category['sub_categories'] as $subCategory) {
-                $items = [];
-                foreach ($subCategory['items'] as $item) {
-                    $items[] = $item;
-                }
-                $subCategory['items'] = $items; // Convert items to indexed array
-                $subCategories[] = $subCategory;
+            $items = [];
+            foreach ($category['items'] as $item) {
+                $items[] = $item;
             }
-            $category['sub_categories'] = $subCategories;
+            $category['items'] = $items; // Convert items to indexed array
             $menuStructure[] = $category;
         }
 
-        // Sort categories, sub-categories, items, and permissions
-        usort($menuStructure, function($a, $b) {
+        // Sort categories, items, and permissions
+        usort($menuStructure, function ($a, $b) {
             return strcmp($a['name'], $b['name']);
         });
 
         foreach ($menuStructure as &$category) {
-            usort($category['sub_categories'], function($a, $b) {
+            usort($category['items'], function ($a, $b) {
                 return strcmp($a['name'], $b['name']);
             });
-            foreach ($category['sub_categories'] as &$subCategory) {
-                usort($subCategory['items'], function($a, $b) {
+            foreach ($category['items'] as &$item) {
+                usort($item['permissions'], function ($a, $b) {
                     return strcmp($a['name'], $b['name']);
                 });
-                foreach ($subCategory['items'] as &$item) {
-                    usort($item['permissions'], function($a, $b) {
-                        return strcmp($a['name'], $b['name']);
-                    });
-                }
             }
         }
 
