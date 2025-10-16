@@ -29,6 +29,7 @@ class User extends Authenticatable
 
         return $this->role->permissions()
                           ->where('permission_name', $permissionName)
+                          
                           ->exists();
     }
 
