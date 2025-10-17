@@ -142,8 +142,10 @@ class InvoiceController extends Controller
 
                     Invoices_payments::create([
                         'invoice_id' => $fee_invoice->id,
+                        // 'payment_invoice_number' => , add by modal
                         'amount' => $paid_price,
                         'payment_method' => $request->payment_method,
+                        'payment_type' => 'fee',
                         'payment_file' => ($request->payment_method === 'Card' || $request->payment_method === 'Bank Transfer')
                             && $request->file('payment_file')
                             ? $request->file('payment_file')->store('invoices', 'public')
@@ -369,8 +371,10 @@ class InvoiceController extends Controller
 
         Invoices_payments::create([
             'invoice_id' => $invoice->id,
+            // 'payment_invoice_number' => ,this is add by using modal
             'amount' => $totalPaidNow,
             'payment_method' => $request->payment_method,
+            'payment_type' => 'fee',
             'payment_file' => $paymentFile,
             'receipt_number' => $receipt_number,
             'create_user_id' => $payment_create_user_id, // Save the authenticated user's ID
@@ -416,7 +420,7 @@ class InvoiceController extends Controller
     {
         $branches = Branch::all();
         $students = Student::all();
-        $courses = \App\Models\Course::all(); // Assuming Course model exists
+        $courses = Course::all(); // Assuming Course model exists
 
         return view('pages.student.fees.course-paid', compact('branches', 'students', 'courses'));
     }
@@ -441,8 +445,10 @@ class InvoiceController extends Controller
             // Create a new payment record
             Invoices_payments::create([
                 'invoice_id' => $invoice->id,
+                // 'payment_invoice_number' => ,this is add by using modal 
                 'amount' => $request->paid_amount,
                 'payment_method' => 'Paid', // Assuming 'Paid' is a valid method or adjust as needed
+                'payment_type' => 'fee',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -524,10 +530,19 @@ class InvoiceController extends Controller
             ]);
 
             // Handle payment file upload for paid_courses
-            if ($request->hasFile('payment_file')) {
-                $paymentFile = $request->file('payment_file')->store('paid_courses', 'public');
-                $paidCourse->update(['payment_file' => $paymentFile]);
-            }
+            // Create a new payment record in invoices_payments table
+            Invoices_payments::create([
+                'invoice_id' => $fee_invoice->id,
+                // 'payment_invoice_number' => , this is add by using modal
+                'amount' => $paidAmount,
+                'payment_method' => $paymentMethod,
+                'payment_type' => 'course',
+                'payment_file' => $paidCourse->payment_file, // Use the file path from paidCourse
+                'receipt_number' => 'REC-' . time() . '-' . uniqid(), // Generate a unique receipt number
+                'create_user_id' => $create_user_id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
             return response()->json([
                 'success' => true,
