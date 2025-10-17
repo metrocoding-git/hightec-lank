@@ -355,7 +355,17 @@ class InvoiceController extends Controller
                 'payment_method' => 'required|string',
                 'payment_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
                 'create_user_id' => 'nullable|integer', // Validate create_user_id
+                'bank_payment_date' => 'nullable|date',
+                'bank_payment_amount' => 'nullable|numeric|min:0',
             ]);
+
+            // Additional validation for Bank Transfer
+            if ($request->payment_method === 'Bank Transfer') {
+                $request->validate([
+                    'bank_payment_date' => 'required|date',
+                    'bank_payment_amount' => 'required|numeric|min:0',
+                ]);
+            }
 
             $totalPaidNow = $request->input('pay_amount');
             $remainingPayment = $totalPaidNow;
@@ -404,6 +414,8 @@ class InvoiceController extends Controller
                 'payment_file' => $paymentFile,
                 'receipt_number' => $receipt_number,
                 'create_user_id' => $payment_create_user_id, // Save the authenticated user's ID
+                'bank_payment_date' => $request->bank_payment_date,
+                'bank_payment_amount' => $request->bank_payment_amount,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

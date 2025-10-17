@@ -740,12 +740,33 @@
                                                             </div>
                                                         </div>
                                                     </div>
+
+                                                    <!-- Bank Payment Fields -->
+                                                    <div id="bankPaymentFields" style="display: none;">
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <div class="form-group">
+                                                                    <label for="bankPaymentDateInput">Bank Payment Date</label>
+                                                                    <input type="date" class="form-control"
+                                                                        id="bankPaymentDateInput" name="bank_payment_date">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <div class="form-group">
+                                                                    <label for="bankPaymentAmountInput">Bank Payment Amount</label>
+                                                                    <input type="number" class="form-control"
+                                                                        id="bankPaymentAmountInput" name="bank_payment_amount" step="0.01">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
                                                     <div class="form-group" id="paymentFileInputGroup" style="display: none;">
                                                         <label for="paymentFileInput">Payment File (Optional)</label>
                                                         <input type="file" class="form-control-file" id="paymentFileInput"
                                                             name="payment_file">
                                                     </div>
-                                                    <button type="submit" class="primary-btn fix-gr-bg mt-3">Add
+                                                    <button type="submit" class="primary-btn fix-gr-bg mt-3" style="width: 100%; padding: 12px; font-size: 16px; font-weight: 600;">Add
                                                         Payment</button>
                                                 </form>
                                             </div>
@@ -1031,28 +1052,43 @@
                     modal.find('#paymentAmountInput').attr('max', response.due_amount);
 
                     let historyHtml =
-                        '<table class="table table-bordered"><thead><tr><th>Invoice Number</th><th>Amount</th><th>Method</th><th>Type</th><th>Receipt No.</th><th>Date</th><th>Action</th></tr></thead><tbody>';
+                        '<table class="table table-bordered" style="text-align: center; width: 100%;"><thead style="background-color: #f8f9fa;"><tr><th style="text-align: center; padding: 12px;">Invoice Number</th><th style="text-align: center; padding: 12px;">Amount</th><th style="text-align: center; padding: 12px;">Method</th><th style="text-align: center; padding: 12px;">Type</th><th style="text-align: center; padding: 12px;">Receipt No.</th><th style="text-align: center; padding: 12px;">Date</th><th style="text-align: center; padding: 12px;">Action</th></tr></thead><tbody>';
                     if (response.payments.length > 0) {
                         response.payments.forEach(function(payment) {
+                            let actionDropdown = '';
+                            if (payment.payment_method === 'Invoice' && !payment.payment_invoice_number) {
+                                actionDropdown += `<a style="padding:4px;margin: 2px; background-color: #007bff; color: #fff; text-align: center;" class="dropdown-item add-payment-invoice-number-btn" href="#" data-payment-id="${payment.id}">Add Invoice No.</a>`;
+                            }
+                            if (payment.payment_method !== 'Refund' && payment.payment_status !== 'refunded' && payment.amount > 0) {
+                                actionDropdown += `<a style="padding:4px;margin: 2px; background-color: #dc3545; color: #fff; text-align: center;" class="dropdown-item refund-btn" href="#" data-payment-id="${payment.id}" data-amount="${payment.amount}">Refund</a>`;
+                            }
+
                             historyHtml += `
-                                <tr>
-                                    <td>${payment.payment_invoice_number || 'N/A'}</td>
-                                    <td>${payment.amount}</td>
-                                    <td>${payment.payment_method}</td>
-                                    <td>${payment.payment_type}</td>
-                                    <td>${payment.receipt_number}</td>
-                                    <td>${new Date(payment.created_at).toLocaleDateString()}</td>
-                                    <td>
-                                        ${payment.payment_method === 'Invoice' && !payment.payment_invoice_number ?
-                                            `<button class="primary-btn small fix-gr-bg add-payment-invoice-number-btn" data-payment-id="${payment.id}">Add Invoice No.</button>` : ''}
-                                        <button class="primary-btn small fix-gr-bg refund-btn" data-payment-id="${payment.id}" data-amount="${payment.amount}">Refund</button>
+                                <tr style="border-bottom: 1px solid #dee2e6;">
+                                    <td style="padding: 12px; text-align: center;">${payment.payment_invoice_number || 'N/A'}</td>
+                                    <td style="padding: 12px; text-align: center;">${payment.amount}</td>
+                                    <td style="padding: 12px; text-align: center;">${payment.payment_method}</td>
+                                    <td style="padding: 12px; text-align: center;">${payment.payment_type}</td>
+                                    <td style="padding: 12px; text-align: center;">${payment.receipt_number}</td>
+                                    <td style="padding: 12px; text-align: center;">${new Date(payment.created_at).toLocaleDateString()}</td>
+                                    <td style="padding: 12px; text-align: center;">
+                                        ${actionDropdown ? `
+                                            <div class="dropdown">
+                                                <button class="primary-btn small fix-gr-bg dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" style="border-radius: 6px; padding: 6px 12px; font-size: 12px;">
+                                                    Actions
+                                                </button>
+                                                <div class="dropdown-menu" style="min-width: 150px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                                    ${actionDropdown}
+                                                </div>
+                                            </div>
+                                        ` : '<span class="text-muted">No actions</span>'}
                                     </td>
                                 </tr>
                             `;
                         });
                     } else {
                         historyHtml +=
-                            '<tr><td colspan="7" class="text-center">No payment history found.</td></tr>';
+                            '<tr><td colspan="7" style="text-align: center; padding: 20px; color: #6c757d;">No payment history found.</td></tr>';
                     }
                     historyHtml += '</tbody></table>';
                     modal.find('#paymentHistoryContent').html(historyHtml);
@@ -1110,8 +1146,9 @@
             });
         });
 
-        // Handle add invoice number button click (delegated event)
-        $(document).on('click', '.add-payment-invoice-number-btn', function() {
+        // Handle add invoice number button click (delegated event for dropdown items)
+        $(document).on('click', '.add-payment-invoice-number-btn', function(e) {
+            e.preventDefault();
             var paymentId = $(this).data('payment-id');
             $('#addInvoiceNumberPaymentId').val(paymentId);
             $('#addInvoiceNumberModal').modal('show');
@@ -1209,8 +1246,9 @@
             });
         });
 
-        // Handle refund button click (delegated event for dynamically added buttons)
-        $(document).on('click', '.refund-btn', function() {
+        // Handle refund button click (delegated event for dropdown items)
+        $(document).on('click', '.refund-btn', function(e) {
+            e.preventDefault();
             var paymentId = $(this).data('payment-id');
             var amount = $(this).data('amount');
 
@@ -1235,13 +1273,15 @@
             }
         });
 
-        // Show/hide payment file input based on payment method
+        // Show/hide payment file input and bank payment fields based on payment method
         $('#paymentMethodInput').on('change', function() {
             var selectedMethod = $(this).val();
-            if (selectedMethod === 'Invoice' || selectedMethod === 'Bank Transfer') {
+            if (selectedMethod === 'Bank Transfer') {
                 $('#paymentFileInputGroup').show();
+                $('#bankPaymentFields').show();
             } else {
                 $('#paymentFileInputGroup').hide();
+                $('#bankPaymentFields').hide();
             }
         });
     </script>
