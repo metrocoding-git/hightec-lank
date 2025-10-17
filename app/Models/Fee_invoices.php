@@ -23,6 +23,8 @@ class Fee_invoices extends Model
         'invoice_type',   // Added for mass assignment
         'paid_date',
         'invoice_number',
+        'main_invoice_number',
+        'create_user_id'
     ];
 
     protected $casts = [

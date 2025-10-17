@@ -118,7 +118,7 @@
                                 </div>
 
                                 {{-- Status --}}
-                                <div class="form-section">
+                                <div class="form-section" hidden>
                                     <label class="form-label">@lang('fees.payment_status') <span class="text-danger">*</span></label>
                                     <select class="primary_select form-control" id="status" name="payment_status">
                                         <option value="">@lang('fees.payment_status')</option>

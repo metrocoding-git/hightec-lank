@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class InvoiceController extends Controller
 {
@@ -45,7 +46,9 @@ class InvoiceController extends Controller
 
     public function store(Request $request)
     {
+
         // Temporarily dump all request data for debugging
+        // dd($request->all());
         // dd($request->all());
 
         // Validate request
@@ -54,7 +57,6 @@ class InvoiceController extends Controller
             'student_id' => 'required',
             'create_date' => 'required|date_format:m/d/Y',
             'due_date' => 'required|date_format:m/d/Y',
-            'payment_status' => 'required',
             'fee_type_id' => 'required|array',
             'price' => 'required|array',
             'paidPrice' => 'required|array',
@@ -75,9 +77,21 @@ class InvoiceController extends Controller
         try {
             $total_amount = array_sum($request->price);
             $total_paid_amount = array_sum($request->paidPrice);
+            $due_amount = $total_amount - $total_paid_amount;
 
-            Log::info('Payment Method: ' . $request->payment_method);
-            // Removed specific bank_paid_amount and bank_paid_date logs, dd() will show all
+            // Determine payment status
+            if ($total_paid_amount == 0) {
+                $payment_status = 'not';
+            } elseif ($total_paid_amount < $total_amount) {
+                $payment_status = 'partial';
+            } else {
+                $payment_status = 'full';
+            }
+
+            $main_invoice_number = 'INV-' . time() . '-' . uniqid();
+            $create_user_id = Auth::check() ? Auth::id() : null;
+            Log::debug('Generated main_invoice_number (store): ' . $main_invoice_number);
+            Log::debug('Auth::id() (store): ' . $create_user_id);
 
             // Create Fee Invoice
             $fee_invoice = Fee_invoices::create([
@@ -85,15 +99,20 @@ class InvoiceController extends Controller
                 'student_id' => $request->student_id,
                 'create_date' => Carbon::createFromFormat('m/d/Y', $request->create_date)->format('Y-m-d'),
                 'due_date' => Carbon::createFromFormat('m/d/Y', $request->due_date)->format('Y-m-d'),
-                'payment_status' => $request->payment_status,
+                'payment_status' => $payment_status,
                 'payment_method' => $request->payment_method,
                 'total_amount' => $total_amount,
                 'paid_amount' => $total_paid_amount,
+                'due_amount' => $due_amount,
+                'main_invoice_number' => $main_invoice_number,
+                'create_user_id' => $create_user_id, // Save the authenticated user's ID
                 'bank_paid_amount' => (trim($request->payment_method) === 'Bank Transfer') ? $request->bank_paid_amount : null,
                 'bank_paid_date' => (trim($request->payment_method) === 'Bank Transfer' && !empty($request->bank_paid_date))
                     ? Carbon::createFromFormat('Y-m-d', $request->bank_paid_date)->format('Y-m-d')
                     : null,
             ]);
+            Log::debug('Fee_invoice created with main_invoice_number: ' . $fee_invoice->main_invoice_number . ' and create_user_id: ' . $fee_invoice->create_user_id);
+
 
             // Save Invoice Items
             foreach ($request->fee_type_id as $feetypeId) {
@@ -109,6 +128,18 @@ class InvoiceController extends Controller
 
                 // Save initial payment in invoices_payments table if any
                 if ($paid_price > 0) {
+                    // Generate a unique receipt number
+                    $receipt_number = 'REC-' . time() . '-' . uniqid();
+                    Log::debug('Generated receipt_number (store): ' . $receipt_number);
+
+                    $payment_create_user_id = null;
+                    if (Auth::check()) {
+                        $payment_create_user_id = Auth::id();
+                        Log::debug('Auth::id() for payment (store): ' . $payment_create_user_id);
+                    } else {
+                        Log::warning('No authenticated user found when creating Invoices_payments in store method.');
+                    }
+
                     Invoices_payments::create([
                         'invoice_id' => $fee_invoice->id,
                         'amount' => $paid_price,
@@ -117,6 +148,8 @@ class InvoiceController extends Controller
                             && $request->file('payment_file')
                             ? $request->file('payment_file')->store('invoices', 'public')
                             : null,
+                        'receipt_number' => $receipt_number,
+                        'create_user_id' => $payment_create_user_id, // Save the authenticated user's ID
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
@@ -322,18 +355,35 @@ class InvoiceController extends Controller
         }
         $paymentFile = $request->file('payment_file') ? $request->file('payment_file')->store('payments', 'public') : null;
 
+        // Generate a unique receipt number for the payment
+        $receipt_number = 'REC-' . time() . '-' . uniqid();
+        Log::debug('Generated receipt_number (addPayment): ' . $receipt_number);
+
+        $payment_create_user_id = null;
+        if (Auth::check()) {
+            $payment_create_user_id = Auth::id();
+            Log::debug('Auth::id() for payment (addPayment): ' . $payment_create_user_id);
+        } else {
+            Log::warning('No authenticated user found when creating Invoices_payments in addPayment method.');
+        }
+
         Invoices_payments::create([
             'invoice_id' => $invoice->id,
             'amount' => $totalPaidNow,
             'payment_method' => $request->payment_method,
             'payment_file' => $paymentFile,
+            'receipt_number' => $receipt_number,
+            'create_user_id' => $payment_create_user_id, // Save the authenticated user's ID
         ]);
 
         // Update invoice summary
         $invoice->paid_amount += $totalPaidNow;
         $invoice->payment_status = $invoice->paid_amount >= $invoice->total_amount ? 'full' : 'partial';
         $invoice->payment_method = $request->payment_method;
+        $invoice->main_invoice_number = 'INV-' . time() . '-' . uniqid(); // Generate new main_invoice_number
+        $invoice->create_user_id = Auth::check() ? Auth::id() : null;
         $invoice->save();
+        Log::debug('Fee_invoice updated with main_invoice_number: ' . $invoice->main_invoice_number . ' and create_user_id: ' . $invoice->create_user_id . ' AFTER SAVE');
 
         return redirect()->back()->with('success', 'Payment added successfully!');
     }
@@ -433,6 +483,11 @@ class InvoiceController extends Controller
             $paymentMethod = $request->payment_method;
             $dueAmount = $coursePrice - $paidAmount;
 
+            $main_invoice_number = 'INV-' . time() . '-' . uniqid();
+            $create_user_id = Auth::check() ? Auth::id() : null;
+            Log::debug('Generated main_invoice_number (storeCoursePayment): ' . $main_invoice_number);
+            Log::debug('Auth::id() (storeCoursePayment): ' . $create_user_id);
+
             // Create a Fee_invoices record
             $fee_invoice = Fee_invoices::create([
                 'invoice_type' => 'course',
@@ -445,8 +500,12 @@ class InvoiceController extends Controller
                 'total_amount' => $coursePrice,
                 'paid_amount' => $paidAmount,
                 'due_amount' => $dueAmount,
+                'main_invoice_number' => $main_invoice_number,
+                'create_user_id' => $create_user_id,
                 'payment_file' => null, // Will be handled below if file exists
             ]);
+            Log::debug('Course Fee_invoice created with main_invoice_number: ' . $fee_invoice->main_invoice_number . ' and create_user_id: ' . $fee_invoice->create_user_id);
+
 
             // Save data to the new paid_courses table
             $paidCourse = PaidCourse::create([
@@ -483,4 +542,5 @@ class InvoiceController extends Controller
             ], 500);
         }
     }
+
 }

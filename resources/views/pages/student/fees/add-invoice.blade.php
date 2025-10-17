@@ -103,18 +103,6 @@
                                     </div>
                                 </div>
 
-                                {{-- Payment Status --}}
-                                <div class="row mt-15">
-                                    <div class="col-lg-12">
-                                        <label>@lang('fees.payment_status') <span class="text-danger">*</span></label>
-                                        <select class="primary_select form-control" id="status" name="payment_status">
-                                            <option value="">@lang('fees.payment_status')</option>
-                                            <option value="not" data-status="not">@lang('fees.not_paid')</option>
-                                            <option value="partial" data-status="partial">@lang('fees.partial_paid')</option>
-                                            <option value="full" data-status="full">@lang('fees.full_paid')</option>
-                                        </select>
-                                    </div>
-                                </div>
 
 
                                 {{-- Payment Method --}}
@@ -330,18 +318,14 @@
                 let paidPriceValue = 0;
                 let paidPriceDisabled = '';
 
+                // If payment method is 'Invoice', the paid amount should be editable.
+                // Otherwise, default to 0 and allow user input, or set to price if full payment is implied.
                 if (paymentMethod === 'Invoice') {
-                    paidPriceValue = 0;
-                    paidPriceDisabled = 'readonly'; // Use readonly for consistency with other disabled inputs
-                } else if (paymentStatus === 'full') {
-                    paidPriceValue = price;
-                    paidPriceDisabled = 'readonly';
-                } else if (paymentStatus === 'partial') {
-                    paidPriceValue = 0; // Default for partial, user can change
-                    paidPriceDisabled = '';
-                } else { // 'not'
-                    paidPriceValue = 0;
-                    paidPriceDisabled = 'readonly';
+                    paidPriceValue = 0; // Default to 0, but allow user to input
+                    paidPriceDisabled = ''; // Enable input
+                } else {
+                    paidPriceValue = 0; // Default to 0, user can input
+                    paidPriceDisabled = ''; // Enable input
                 }
 
                 let paymentCell = `
@@ -385,7 +369,6 @@
             }
 
             function updatePaymentFields() {
-                let selectedStatus = $('#status').find("option:selected").data('status');
                 let paymentMethod = $('#paymentMethodName').val();
 
                 $('.allFeesTypes tr').each(function() {
@@ -394,18 +377,14 @@
                     let paidPriceValue = 0;
                     let paidPriceDisabled = '';
 
+                    // If payment method is 'Invoice', the paid amount should be editable.
+                    // Otherwise, default to 0 and allow user input.
                     if (paymentMethod === 'Invoice') {
-                        paidPriceValue = 0;
-                        paidPriceDisabled = 'readonly';
-                    } else if (selectedStatus === 'full') {
-                        paidPriceValue = price;
-                        paidPriceDisabled = 'readonly';
-                    } else if (selectedStatus === 'partial') {
-                        paidPriceValue = 0; // Default for partial, user can change
-                        paidPriceDisabled = '';
-                    } else { // 'not'
-                        paidPriceValue = 0;
-                        paidPriceDisabled = 'readonly';
+                        paidPriceValue = 0; // Default to 0, but allow user to input
+                        paidPriceDisabled = ''; // Enable input
+                    } else {
+                        paidPriceValue = 0; // Default to 0, user can input
+                        paidPriceDisabled = ''; // Enable input
                     }
 
                     $(this).find('.payment_cell').html(`
@@ -424,15 +403,12 @@
                 });
             }
 
-            // When status changes
-            $('#status').on('change', updatePaymentFields);
+            // When payment method changes, update payment fields
+            $('#paymentMethodName').on('change', updatePaymentFields);
 
-            // When price input value changes
+            // When price input value changes, no special handling for 'full' status anymore
             $(document).on('input', '.price_input', function() {
-                let selectedStatus = $('#status').find("option:selected").data('status');
-                if (selectedStatus === 'full') {
-                    updatePaymentFields();
-                }
+                // No specific action needed here for payment status, as it's dynamic on backend
             });
 
 
@@ -452,10 +428,6 @@
 
             // Payment Status toggle
 
-            // $('#status').on('change', function() {
-            //     let selectedStatus = $(this).find("option:selected").data('status');
-            //     togglePriceSection(selectedStatus);
-            // });
 
             // Payment Method toggle
             function toggleBankPayment(method) {
@@ -470,9 +442,7 @@
                     dateRow.removeClass('d-none');
                     uploadRow.removeClass('d-none');
 
-                    // Set payment status to 'full' when Bank Transfer is selected
-                    $('#status').val('full').niceSelect('update');
-                    $('#status').trigger('change'); // Trigger change to update payment fields
+                    // No longer setting payment status here, it's dynamic on backend
                 } else if (method === 'Invoice') {
                     bankSection.removeClass('d-none');
                     amountRow.addClass('d-none');
@@ -527,7 +497,7 @@
                 let student = $('#student_id').val();
                 let createDate = $('#create_date').val();
                 let dueDate = $('#due_date').val();
-                let status = $('#status').val();
+                // let status = $('#status').val(); // Removed as payment status is dynamic
                 let paymentMethod = $('#paymentMethodName').val();
 
                 // Validate
@@ -551,10 +521,6 @@
                     return;
                 }
 
-                if (!status) {
-                    toastr.error('Payment status is required');
-                    return;
-                }
 
                 // if (!paymentMethod) {
                 //     toastr.error('Payment method is required');
@@ -618,7 +584,8 @@
                 formData.append('student_id', $('#student_id').val() || '');
                 formData.append('create_date', $('#create_date').val());
                 formData.append('due_date', $('#due_date').val());
-                formData.append('payment_status', $('#status').val());
+                // Payment status will be determined by the backend based on amounts
+                // formData.append('payment_status', $('#status').val());
 
 
                 $('.price_input').each(function() {
@@ -633,38 +600,12 @@
                     if (feeId) formData.append('fee_type_id[]', feeId);
                 });
 
-                if (paymentMethod === 'Invoice') {
-                    $('.allFeesTypes tr').each(function() {
-                        let feeId = $(this).data('id');
-                        if (feeId) {
-                            formData.append(`paidPrice[${feeId}]`, '0');
-                        }
-                    });
-                } else if (status === 'full') {
-                    $('.price_input').each(function() {
-                        let inputName = $(this).attr('name'); // e.g. "price[8]"
-                        let feeIdMatch = inputName.match(/\[(\d+)\]/);
-                        if (feeIdMatch) {
-                            let feeId = feeIdMatch[1]; // "8"
-                            let value = $(this).val() || '';
-                            formData.append(`paidPrice[${feeId}]`, value);
-                        }
-                    });
-                } else if (status === 'not') {
-                    console.log('Status is NOT full - sending zero paidPrice');
-                    $('.allFeesTypes tr').each(function() {
-                        let feeId = $(this).data('id');
-                        if (feeId) {
-                            formData.append(`paidPrice[${feeId}]`, '0');
-                        }
-                    });
-                } else { // partial
-                    $('.payment_input').each(function() {
-                        let inputName = $(this).attr('name');
-                        let value = $(this).val() || '';
-                        formData.append(inputName, value);
-                    });
-                }
+                // Always send the actual paid amount from the input fields
+                $('.payment_input').each(function() {
+                    let inputName = $(this).attr('name');
+                    let value = $(this).val() || '';
+                    formData.append(inputName, value);
+                });
 
                 formData.append('payment_method', $('#paymentMethodName').val());
 
