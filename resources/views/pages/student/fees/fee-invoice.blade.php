@@ -9,9 +9,6 @@
             div#table_id_wrapper {
                 margin-top: 40px;
             }
-
-           
-            
         </style>
     @endpush
 
@@ -54,6 +51,7 @@
                                         <thead>
                                             <tr>
                                                 <th>ID</th>
+                                                <th>Main Invoice No.</th>
                                                 <th>@lang('common.student')</th>
                                                 <th>Branch</th>
                                                 <th>@lang('admin.admission_no')</th>
@@ -79,6 +77,12 @@
                                                 @endphp
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
+                                                    <td>
+                                                        <a href="{{ route('fees.fee-invoice-view', ['id' => $invoice->id, 'state' => 'view']) }}"
+                                                            target="_blank">
+                                                            {{ $invoice->main_invoice_number }}
+                                                        </a>
+                                                    </td>
                                                     <td>
                                                         <a href="{{ route('fees.fee-invoice-view', ['id' => $invoice->id, 'state' => 'view']) }}"
                                                             target="_blank">
@@ -120,13 +124,11 @@
                                                                 data-student-id="{{ $invoice->student->id }}"
                                                                 data-invoice-id="{{ $invoice->id }}"
                                                                 onclick="populateInvoiceModal(this)">Make Invoice</a>
+                                                            <a class="dropdown-item" data-toggle="modal"
+                                                                data-target="#viewPaymentHistoryModal"
+                                                                data-invoice-id="{{ $invoice->id }}" href="#">View
+                                                                Payment</a>
                                                             @if ($invoice->payment_method === 'Invoice')
-                                                                @if (empty($invoice->invoice_number))
-                                                                    <a class="dropdown-item" data-toggle="modal"
-                                                                        data-target="#addInvoiceNumberModal"
-                                                                        data-invoice-id="{{ $invoice->id }}"
-                                                                        href="#">Add Invoice Number</a>
-                                                                @endif
                                                                 @if ($invoice->payment_status != 'full')
                                                                     <a class="dropdown-item" data-toggle="modal"
                                                                         data-target="#markAsPaidModal"
@@ -134,6 +136,7 @@
                                                                         href="#">Paid</a>
                                                                 @endif
                                                             @endif
+                                                            {{-- Removed the direct "Add Invoice Number" action from here as it will be handled within the payment history modal --}}
                                                             <a class="dropdown-item" data-toggle="modal"
                                                                 data-target="#deletecategoryModal{{ $invoice->id }}"
                                                                 href="#">@lang('common.delete')</a>
@@ -519,10 +522,11 @@
                                                 <span aria-hidden="true">&times;</span>
                                             </button>
                                         </div>
-                                        <form action="#" method="POST" id="addInvoiceNumberForm">
+                                        <form action="{{ route('fees.add-payment-invoice-number') }}" method="POST"
+                                            id="addInvoiceNumberForm">
                                             @csrf
                                             <div class="modal-body">
-                                                <input type="hidden" name="invoice_id" id="addInvoiceNumberInvoiceId">
+                                                <input type="hidden" name="payment_id" id="addInvoiceNumberPaymentId">
                                                 <div class="form-group">
                                                     <label for="invoiceNumberInput">Invoice Number <span
                                                             class="text-danger">*</span></label>
@@ -664,6 +668,95 @@
                                     </div>
                                 </div>
                             @endforeach
+
+                            <!-- View Payment History Modal -->
+                            <div class="modal fade admin-query" id="viewPaymentHistoryModal" tabindex="-1"
+                                role="dialog" aria-labelledby="viewPaymentHistoryModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h4 class="modal-title" id="viewPaymentHistoryModalLabel">Payment History for
+                                                Invoice #<span id="paymentHistoryInvoiceId"></span></h4>
+                                            <button type="button" class="close" data-dismiss="modal"
+                                                aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+
+
+                                            <h5>Payment History</h5>  <span id="mainInvoiceNumber"></span>
+                                            <div id="paymentHistoryContent">
+                                                <!-- Payment history will be loaded here via AJAX -->
+                                                <div class="text-center">
+                                                    <div class="spinner-border" role="status">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <p>Loading payment history...</p>
+                                                </div>
+                                            </div>
+
+                                            <hr class="mt-4 mb-4">
+                                            <div class="row mb-4">
+                                                <div class="col-md-4">
+                                                    <h5>Total Amount: <span id="totalAmountDisplay"></span></h5>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <h5>Paid Amount: <span id="paidAmountDisplay"></span></h5>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <h5>Due Amount: <span id="dueAmountDisplay"></span></h5>
+                                                </div>
+                                            </div>
+
+                                            <div id="addPaymentSection">
+                                                <h5>Add New Payment</h5>
+                                                <form action="#" method="POST" id="addPaymentForm"
+                                                    enctype="multipart/form-data">
+                                                    @csrf
+                                                    <input type="hidden" name="invoice_id" id="addPaymentInvoiceId">
+                                                    <input type="hidden" name="create_user_id" value="{{ Auth::id() }}">
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label for="paymentAmountInput">Amount <span
+                                                                        class="text-danger">*</span></label>
+                                                                <input type="number" class="form-control"
+                                                                    id="paymentAmountInput" name="pay_amount" step="0.01"
+                                                                    required min="0.01">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label for="paymentMethodInput">Payment Method <span
+                                                                        class="text-danger">*</span></label>
+                                                                <select class="form-control" id="paymentMethodInput"
+                                                                    name="payment_method" required>
+                                                                    <option value="">Select Method</option>
+                                                                    <option value="Cash">Cash</option>
+                                                                    <option value="Invoice">Invoice</option>
+                                                                    <option value="Bank Transfer">Bank Transfer</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group" id="paymentFileInputGroup" style="display: none;">
+                                                        <label for="paymentFileInput">Payment File (Optional)</label>
+                                                        <input type="file" class="form-control-file" id="paymentFileInput"
+                                                            name="payment_file">
+                                                    </div>
+                                                    <button type="submit" class="primary-btn fix-gr-bg mt-3">Add
+                                                        Payment</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="primary-btn tr-bg"
+                                                data-dismiss="modal">@lang('common.close')</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -842,52 +935,6 @@
             location.reload();
         }
 
-        // Handle add invoice number modal
-        $('#addInvoiceNumberModal').on('show.bs.modal', function(event) {
-            var button = $(event.relatedTarget); // Button that triggered the modal
-            var invoiceId = button.data('invoice-id'); // Extract info from data-* attributes
-            var modal = $(this);
-
-            modal.find('#addInvoiceNumberInvoiceId').val(invoiceId);
-            modal.find('#invoiceNumberInput').val(''); // Clear previous input
-        });
-
-        // Handle form submission for adding invoice number
-        $('#addInvoiceNumberForm').on('submit', function(event) {
-            event.preventDefault(); // Prevent default form submission
-
-            var invoiceId = $('#addInvoiceNumberInvoiceId').val();
-            var invoiceNumber = $('#invoiceNumberInput').val();
-            var token = $('input[name="_token"]').val(); // Get CSRF token
-
-            console.log('Submitting Invoice Number:', {
-                invoiceId: invoiceId,
-                invoiceNumber: invoiceNumber
-            });
-
-            // Here you would typically make an AJAX call to save the invoice number
-            // For now, we'll just log it and close the modal
-            $.ajax({
-                url: '/fees/update-invoice-number', // Replace with your actual route
-                type: 'POST',
-                data: {
-                    _token: token,
-                    invoice_id: invoiceId,
-                    invoice_number: invoiceNumber
-                },
-                success: function(response) {
-                    console.log('Invoice number updated successfully:', response);
-                    $('#addInvoiceNumberModal').modal('hide');
-                    // Optionally, refresh the page or update the table row
-                    location.reload();
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error updating invoice number:', xhr.responseText);
-                    alert('Error saving invoice number. Please try again.');
-                }
-            });
-        });
-
         // Handle mark as paid modal
         $('#markAsPaidModal').on('show.bs.modal', function(event) {
             var button = $(event.relatedTarget); // Button that triggered the modal
@@ -948,6 +995,254 @@
                     alert('Error marking invoice as paid. Please try again.');
                 }
             });
+        });
+
+        // Handle view payment history modal
+        $('#viewPaymentHistoryModal').on('show.bs.modal', function(event) {
+            var button = $(event.relatedTarget);
+            var invoiceId = button.data('invoice-id');
+            var modal = $(this);
+
+            modal.find('#paymentHistoryInvoiceId').text(invoiceId);
+            modal.find('#addPaymentInvoiceId').val(invoiceId); // Set invoice ID for add payment form
+
+            // Fetch payment history and invoice details via AJAX
+            $.ajax({
+                url: `/fees/payment-history/${invoiceId}`, // New route for fetching payment history
+                type: 'GET',
+                beforeSend: function() {
+                    modal.find('#paymentHistoryContent').html(`
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <p>Loading payment history...</p>
+                        </div>
+                    `);
+                },
+                success: function(response) {
+                    console.log('Payment history response:', response);
+                    modal.find('#totalAmountDisplay').text(response.total_amount);
+                    modal.find('#mainInvoiceNumber').text(response.main_invoice_number);
+                    modal.find('#paidAmountDisplay').text(response.paid_amount_sum); // Display sum of paid amounts
+                    modal.find('#dueAmountDisplay').text(response.due_amount);
+
+                    // Set the max attribute for the payment amount input
+                    modal.find('#paymentAmountInput').attr('max', response.due_amount);
+
+                    let historyHtml =
+                        '<table class="table table-bordered"><thead><tr><th>Invoice Number</th><th>Amount</th><th>Method</th><th>Type</th><th>Receipt No.</th><th>Date</th><th>Action</th></tr></thead><tbody>';
+                    if (response.payments.length > 0) {
+                        response.payments.forEach(function(payment) {
+                            historyHtml += `
+                                <tr>
+                                    <td>${payment.payment_invoice_number || 'N/A'}</td>
+                                    <td>${payment.amount}</td>
+                                    <td>${payment.payment_method}</td>
+                                    <td>${payment.payment_type}</td>
+                                    <td>${payment.receipt_number}</td>
+                                    <td>${new Date(payment.created_at).toLocaleDateString()}</td>
+                                    <td>
+                                        ${payment.payment_method === 'Invoice' && !payment.payment_invoice_number ?
+                                            `<button class="primary-btn small fix-gr-bg add-payment-invoice-number-btn" data-payment-id="${payment.id}">Add Invoice No.</button>` : ''}
+                                        <button class="primary-btn small fix-gr-bg refund-btn" data-payment-id="${payment.id}" data-amount="${payment.amount}">Refund</button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                    } else {
+                        historyHtml +=
+                            '<tr><td colspan="7" class="text-center">No payment history found.</td></tr>';
+                    }
+                    historyHtml += '</tbody></table>';
+                    modal.find('#paymentHistoryContent').html(historyHtml);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching payment history:', xhr.responseText);
+                    modal.find('#paymentHistoryContent').html(`
+                        <div class="alert alert-danger">Error loading payment history. Please try again.</div>
+                    `);
+                }
+            });
+        });
+
+        // Handle add payment form submission
+        $('#addPaymentForm').on('submit', function(event) {
+            event.preventDefault();
+
+            var formData = new FormData(this);
+            var invoiceId = $('#addPaymentInvoiceId').val();
+            var createUserId = $('input[name="create_user_id"]').val(); // Get the create_user_id
+
+            // Append create_user_id to formData
+            formData.append('create_user_id', createUserId);
+
+            // Clear previous error messages
+            $('#addPaymentForm').find('.alert-danger').remove();
+
+            $.ajax({
+                url: `/fees/add-payment/${invoiceId}`, // Existing route for adding payments
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    console.log('Payment added successfully:', response);
+                    $('#addPaymentForm').find('.alert-danger').remove(); // Clear any error messages
+                    $('#viewPaymentHistoryModal').modal('hide');
+                    location.reload(); // Reload page to reflect changes
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error adding payment:', xhr.responseText);
+                    let errorMessage = 'Error adding payment. Please try again.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        // Handle validation errors
+                        errorMessage = '<ul>';
+                        $.each(xhr.responseJSON.errors, function(key, value) {
+                            errorMessage += '<li>' + value + '</li>';
+                        });
+                        errorMessage += '</ul>';
+                    }
+                    $('#addPaymentForm').prepend(`<div class="alert alert-danger">${errorMessage}</div>`);
+                }
+            });
+        });
+
+        // Handle add invoice number button click (delegated event)
+        $(document).on('click', '.add-payment-invoice-number-btn', function() {
+            var paymentId = $(this).data('payment-id');
+            $('#addInvoiceNumberPaymentId').val(paymentId);
+            $('#addInvoiceNumberModal').modal('show');
+            // Clear any previous error messages
+            $('#addInvoiceNumberForm').find('.alert-danger').remove();
+            // Hide the view payment history modal
+            $('#viewPaymentHistoryModal').modal('hide');
+        });
+
+        // Handle form submission for adding invoice number
+        $('#addInvoiceNumberForm').on('submit', function(event) {
+            event.preventDefault();
+
+            var formData = $(this).serialize(); // Serialize form data
+            var paymentId = $('#addInvoiceNumberPaymentId').val();
+            var invoiceId = $('#addPaymentInvoiceId').val(); // Get the invoice ID from the parent modal
+
+            $.ajax({
+                url: $(this).attr('action'), // Use the form's action URL
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    console.log('Invoice number added successfully:', response);
+                    $('#addInvoiceNumberModal').modal('hide');
+                    // Re-show the view payment history modal and refresh its content
+                    $('#viewPaymentHistoryModal').modal('show');
+                    // Manually trigger the AJAX call for payment history to update the content
+                    $.ajax({
+                        url: `/fees/payment-history/${invoiceId}`,
+                        type: 'GET',
+                        beforeSend: function() {
+                            $('#paymentHistoryContent').html(`
+                                <div class="text-center">
+                                    <div class="spinner-border" role="status">
+                                        <span class="sr-only">Loading...</span>
+                                    </div>
+                                    <p>Loading payment history...</p>
+                                </div>
+                            `);
+                        },
+                        success: function(historyResponse) {
+                            $('#totalAmountDisplay').text(historyResponse.total_amount);
+                            $('#mainInvoiceNumber').text(historyResponse
+                                .main_invoice_number);
+                            $('#paidAmountDisplay').text(historyResponse.paid_amount_sum);
+                            $('#dueAmountDisplay').text(historyResponse.due_amount);
+
+                            let historyHtml =
+                                '<table class="table table-bordered"><thead><tr><th>Invoice Number</th><th>Amount</th><th>Method</th><th>Type</th><th>Receipt No.</th><th>Date</th><th>Action</th></tr></thead><tbody>';
+                            if (historyResponse.payments.length > 0) {
+                                historyResponse.payments.forEach(function(payment) {
+                                    historyHtml += `
+                                        <tr>
+                                            <td>${payment.payment_invoice_number || 'N/A'}</td>
+                                            <td>${payment.amount}</td>
+                                            <td>${payment.payment_method}</td>
+                                            <td>${payment.payment_type}</td>
+                                            <td>${payment.receipt_number}</td>
+                                            <td>${new Date(payment.created_at).toLocaleDateString()}</td>
+                                            <td>
+                                                ${payment.payment_method === 'Invoice' && !payment.payment_invoice_number ?
+                                                    `<button class="primary-btn small fix-gr-bg add-payment-invoice-number-btn" data-payment-id="${payment.id}">Add Invoice No.</button>` : ''}
+                                                <button class="primary-btn small bg-danger text-white border-0 refund-btn" data-payment-id="${payment.id}" data-amount="${payment.amount}">Refund</button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                });
+                            } else {
+                                historyHtml +=
+                                    '<tr><td colspan="7" class="text-center">No payment history found.</td></tr>';
+                            }
+                            historyHtml += '</tbody></table>';
+                            $('#paymentHistoryContent').html(historyHtml);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error(
+                                'Error fetching payment history after invoice number update:',
+                                xhr.responseText);
+                            $('#paymentHistoryContent').html(`
+                                <div class="alert alert-danger">Error loading payment history after update.</div>
+                            `);
+                        }
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error adding invoice number:', xhr.responseText);
+                    let errorMessage = 'Error adding invoice number. Please try again.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
+                    // Display error message within the modal
+                    $('#addInvoiceNumberForm').prepend(
+                        `<div class="alert alert-danger">${errorMessage}</div>`);
+                }
+            });
+        });
+
+        // Handle refund button click (delegated event for dynamically added buttons)
+        $(document).on('click', '.refund-btn', function() {
+            var paymentId = $(this).data('payment-id');
+            var amount = $(this).data('amount');
+
+            if (confirm(`Are you sure you want to refund ${amount}?`)) {
+                $.ajax({
+                    url: `/fees/refund-payment/${paymentId}`, // New route for refunding payments
+                    type: 'POST',
+                    data: {
+                        _token: $('input[name="_token"]').val(),
+                        amount: amount // Pass the amount to be refunded
+                    },
+                    success: function(response) {
+                        console.log('Payment refunded successfully:', response);
+                        $('#viewPaymentHistoryModal').modal('hide');
+                        location.reload(); // Reload page to reflect changes
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error refunding payment:', xhr.responseText);
+                        alert('Error refunding payment. Please try again.');
+                    }
+                });
+            }
+        });
+
+        // Show/hide payment file input based on payment method
+        $('#paymentMethodInput').on('change', function() {
+            var selectedMethod = $(this).val();
+            if (selectedMethod === 'Invoice' || selectedMethod === 'Bank Transfer') {
+                $('#paymentFileInputGroup').show();
+            } else {
+                $('#paymentFileInputGroup').hide();
+            }
         });
     </script>
 @endpush
