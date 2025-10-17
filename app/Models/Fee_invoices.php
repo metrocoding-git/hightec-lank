@@ -24,7 +24,8 @@ class Fee_invoices extends Model
         'paid_date',
         'invoice_number',
         'main_invoice_number',
-        'create_user_id'
+        'create_user_id',
+      
     ];
 
     protected $casts = [

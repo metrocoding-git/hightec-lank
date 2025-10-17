@@ -104,6 +104,9 @@
                                                         @elseif ($invoice->payment_status == 'full')
                                                             <button
                                                                 class="primary-btn small bg-success text-white border-0">@lang('fees.paid')</button>
+                                                        @elseif ($invoice->payment_status == 'returned')
+                                                            <button
+                                                                class="primary-btn small bg-info text-white border-0">Returned</button>
                                                         @elseif ($invoice->payment_status == 'not')
                                                             <button
                                                                 class="primary-btn small bg-danger text-white border-0">@lang('fees.unpaid')</button>
@@ -117,34 +120,46 @@
                                                             {{-- <a class="dropdown-item" data-toggle="modal"
                                                                 data-target="#viewInvoiceModal{{ $invoice->id }}"
                                                                 href="#">@lang('common.view')</a> --}}
-                                                            <a class="dropdown-item"
-                                                                href="{{ route('fees.fee-invoice-edit', $invoice->id) }}">@lang('common.edit')</a>
-                                                            <a class="dropdown-item" data-toggle="modal"
-                                                                data-target="#makeInvoiceModal"
-                                                                data-student-id="{{ $invoice->student->id }}"
-                                                                data-invoice-id="{{ $invoice->id }}"
-                                                                onclick="populateInvoiceModal(this)">Make Invoice</a>
-                                                            <a class="dropdown-item" data-toggle="modal"
-                                                                data-target="#viewPaymentHistoryModal"
-                                                                data-invoice-id="{{ $invoice->id }}" href="#">View
-                                                                Payment</a>
-                                                            @if ($invoice->payment_method === 'Invoice')
-                                                                @if ($invoice->payment_status != 'full')
+                                                            @if ($invoice->payment_status != 'returned')
+                                                                <a class="dropdown-item"
+                                                                    href="{{ route('fees.fee-invoice-edit', $invoice->id) }}">@lang('common.edit')</a>
+                                                                <a class="dropdown-item" data-toggle="modal"
+                                                                    data-target="#makeInvoiceModal"
+                                                                    data-student-id="{{ $invoice->student->id }}"
+                                                                    data-invoice-id="{{ $invoice->id }}"
+                                                                    onclick="populateInvoiceModal(this)">Make Invoice</a>
+                                                            @endif
+
+                                                            @if ($invoice->payment_status == 'returned')
+                                                                <a class="dropdown-item" data-toggle="modal"
+                                                                    data-target="#viewPaymentDetailsModal"
+                                                                    data-invoice-id="{{ $invoice->id }}" href="#">Payment Details</a>
+                                                            @else
+                                                                <a class="dropdown-item" data-toggle="modal"
+                                                                    data-target="#viewPaymentHistoryModal"
+                                                                    data-invoice-id="{{ $invoice->id }}" href="#">View Payment</a>
+                                                            @endif
+
+                                                            @if ($invoice->payment_status != 'returned')
+                                                                @if ($invoice->payment_method === 'Invoice')
+                                                                    @if ($invoice->payment_status != 'full')
+                                                                        <a class="dropdown-item" data-toggle="modal"
+                                                                            data-target="#markAsPaidModal"
+                                                                            data-invoice-id="{{ $invoice->id }}"
+                                                                            href="#">Paid</a>
+                                                                    @endif
+                                                                @endif
+                                                                {{-- Removed the direct "Add Invoice Number" action from here as it will be handled within the payment history modal --}}
+                                                                @if ($invoice->paid_amount > 0)
                                                                     <a class="dropdown-item" data-toggle="modal"
-                                                                        data-target="#markAsPaidModal"
-                                                                        data-invoice-id="{{ $invoice->id }}"
-                                                                        href="#">Paid</a>
+                                                                        data-target="#returnFeeModal{{ $invoice->id }}"
+                                                                        href="#">Return</a>
                                                                 @endif
                                                             @endif
-                                                            {{-- Removed the direct "Add Invoice Number" action from here as it will be handled within the payment history modal --}}
+
                                                             <a class="dropdown-item" data-toggle="modal"
                                                                 data-target="#deletecategoryModal{{ $invoice->id }}"
                                                                 href="#">@lang('common.delete')</a>
-                                                            @if ($invoice->payment_status == 'full')
-                                                                <a class="dropdown-item" data-toggle="modal"
-                                                                    data-target="#returnFeeModal{{ $invoice->id }}"
-                                                                    href="#">Return</a>
-                                                            @endif
                                                         </x-drop-down>
                                                     </td>
                                                 </tr>
@@ -201,7 +216,7 @@
                                     $paid_amount = $invoice->paid_amount;
                                     $balance = $amount - $paid_amount;
                                 @endphp
-                                @if ($invoice->payment_status == 'full')
+                                @if ($invoice->paid_amount > 0)
                                     <div class="modal fade admin-query" id="returnFeeModal{{ $invoice->id }}"
                                         style="background-color: rgba(0, 0, 0, 0.5);">
                                         <div class="modal-dialog modal-lg modal-dialog-centered"
@@ -669,7 +684,7 @@
                                 </div>
                             @endforeach
 
-                            <!-- View Payment History Modal -->
+                            <!-- View Payment History Modal (Full Featured) -->
                             <div class="modal fade admin-query" id="viewPaymentHistoryModal" tabindex="-1"
                                 role="dialog" aria-labelledby="viewPaymentHistoryModalLabel" aria-hidden="true">
                                 <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
@@ -683,8 +698,6 @@
                                             </button>
                                         </div>
                                         <div class="modal-body">
-
-
                                             <h5>Payment History</h5>  <span id="mainInvoiceNumber"></span>
                                             <div id="paymentHistoryContent">
                                                 <!-- Payment history will be loaded here via AJAX -->
@@ -770,6 +783,59 @@
                                                         Payment</button>
                                                 </form>
                                             </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="primary-btn tr-bg"
+                                                data-dismiss="modal">@lang('common.close')</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- View Payment Details Modal (Read Only for Returned Invoices) -->
+                            <div class="modal fade admin-query" id="viewPaymentDetailsModal" tabindex="-1"
+                                role="dialog" aria-labelledby="viewPaymentDetailsModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h4 class="modal-title" id="viewPaymentDetailsModalLabel">Payment Details for
+                                                Invoice #<span id="paymentDetailsInvoiceId"></span></h4>
+                                            <button type="button" class="close" data-dismiss="modal"
+                                                aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="alert alert-info">
+                                                <i class="fas fa-info-circle"></i>
+                                                This invoice has been marked as returned. Only payment history is shown below.
+                                            </div>
+
+                                            <h5>Payment History</h5> <span id="detailsMainInvoiceNumber"></span>
+                                            <div id="paymentDetailsContent">
+                                                <!-- Payment details will be loaded here via AJAX -->
+                                                <div class="text-center">
+                                                    <div class="spinner-border" role="status">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <p>Loading payment details...</p>
+                                                </div>
+                                            </div>
+
+                                            <hr class="mt-4 mb-4">
+                                            <div class="row mb-4">
+                                                <div class="col-md-4">
+                                                    <h5>Total Amount: <span id="detailsTotalAmountDisplay"></span></h5>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <h5>Paid Amount: <span id="detailsPaidAmountDisplay"></span></h5>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <h5>Due Amount: <span id="detailsDueAmountDisplay"></span></h5>
+                                                </div>
+                                            </div>
+
+                                            <!-- No action buttons or add payment section for returned invoices -->
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="primary-btn tr-bg"
@@ -1018,7 +1084,7 @@
             });
         });
 
-        // Handle view payment history modal
+        // Handle view payment history modal (full featured) - for non-returned invoices
         $('#viewPaymentHistoryModal').on('show.bs.modal', function(event) {
             var button = $(event.relatedTarget);
             var invoiceId = button.data('invoice-id');
@@ -1102,6 +1168,67 @@
             });
         });
 
+        // Handle view payment details modal (read-only for returned invoices)
+        $('#viewPaymentDetailsModal').on('show.bs.modal', function(event) {
+            var button = $(event.relatedTarget);
+            var invoiceId = button.data('invoice-id');
+            var modal = $(this);
+
+            modal.find('#paymentDetailsInvoiceId').text(invoiceId);
+
+            // Fetch payment details and invoice details via AJAX (read-only)
+            $.ajax({
+                url: `/fees/payment-history/${invoiceId}`, // Same route for fetching payment history
+                type: 'GET',
+                beforeSend: function() {
+                    modal.find('#paymentDetailsContent').html(`
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <p>Loading payment details...</p>
+                        </div>
+                    `);
+                },
+                success: function(response) {
+                    console.log('Payment details response:', response);
+                    modal.find('#detailsTotalAmountDisplay').text(response.total_amount);
+                    modal.find('#detailsMainInvoiceNumber').text(response.main_invoice_number);
+                    modal.find('#detailsPaidAmountDisplay').text(response.paid_amount_sum);
+                    modal.find('#detailsDueAmountDisplay').text(response.due_amount);
+
+                    // Create read-only payment history table (no action buttons)
+                    let detailsHtml =
+                        '<table class="table table-bordered" style="text-align: center; width: 100%;"><thead style="background-color: #f8f9fa;"><tr><th style="text-align: center; padding: 12px;">Invoice Number</th><th style="text-align: center; padding: 12px;">Amount</th><th style="text-align: center; padding: 12px;">Method</th><th style="text-align: center; padding: 12px;">Type</th><th style="text-align: center; padding: 12px;">Receipt No.</th><th style="text-align: center; padding: 12px;">Date</th></tr></thead><tbody>';
+                    if (response.payments.length > 0) {
+                        response.payments.forEach(function(payment) {
+                            detailsHtml += `
+                                <tr style="border-bottom: 1px solid #dee2e6;">
+                                    <td style="padding: 12px; text-align: center;">${payment.payment_invoice_number || 'N/A'}</td>
+                                    <td style="padding: 12px; text-align: center;">${payment.amount}</td>
+                                    <td style="padding: 12px; text-align: center;">${payment.payment_method}</td>
+                                    <td style="padding: 12px; text-align: center;">${payment.payment_type}</td>
+                                    <td style="padding: 12px; text-align: center;">${payment.receipt_number}</td>
+                                    <td style="padding: 12px; text-align: center;">${new Date(payment.created_at).toLocaleDateString()}</td>
+                                </tr>
+                            `;
+                        });
+                    } else {
+                        detailsHtml +=
+                            '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #6c757d;">No payment history found.</td></tr>';
+                    }
+                    detailsHtml += '</tbody></table>';
+                    modal.find('#paymentDetailsContent').html(detailsHtml);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching payment details:', xhr.responseText);
+                    modal.find('#paymentDetailsContent').html(`
+                        <div class="alert alert-danger">Error loading payment details. Please try again.</div>
+                    `);
+                }
+            });
+        });
+
         // Handle add payment form submission
         $('#addPaymentForm').on('submit', function(event) {
             event.preventDefault();
@@ -1115,6 +1242,11 @@
 
             // Clear previous error messages
             $('#addPaymentForm').find('.alert-danger').remove();
+
+            // Disable submit button and show loading state
+            var submitBtn = $('#addPaymentForm button[type="submit"]');
+            var originalText = submitBtn.html();
+            submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Adding Payment...');
 
             $.ajax({
                 url: `/fees/add-payment/${invoiceId}`, // Existing route for adding payments
@@ -1141,7 +1273,16 @@
                         });
                         errorMessage += '</ul>';
                     }
+
+                    // Show error message
                     $('#addPaymentForm').prepend(`<div class="alert alert-danger">${errorMessage}</div>`);
+
+                    // Scroll to error message
+                    $('.alert-danger').get(0).scrollIntoView({ behavior: 'smooth', block: 'center' });
+                },
+                complete: function() {
+                    // Re-enable submit button and restore original text
+                    submitBtn.prop('disabled', false).html(originalText);
                 }
             });
         });
