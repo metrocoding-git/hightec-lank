@@ -443,10 +443,13 @@ class InvoiceController extends Controller
     public function getPaymentHistory($invoiceId)
     {
         $invoice = Fee_invoices::with('payments')->findOrFail($invoiceId);
+        $invoice->refresh(); // Ensure the invoice and its relationships are reloaded from the database
         $payments = $invoice->payments;
 
         $totalPaidAmount = $payments->sum('amount');
         $dueAmount = $invoice->total_amount - $totalPaidAmount;
+
+        Log::debug('getPaymentHistory: Payments array before returning:', ['payments' => $payments->toArray()]); // Debug log
 
         return response()->json([
             'total_amount' => $invoice->total_amount,
@@ -464,34 +467,114 @@ class InvoiceController extends Controller
         ]);
 
         try {
-            $payment = Invoices_payments::findOrFail($paymentId);
-            $invoice = Fee_invoices::findOrFail($payment->invoice_id);
+            $originalPayment = Invoices_payments::findOrFail($paymentId);
+            $invoice = Fee_invoices::findOrFail($originalPayment->invoice_id);
 
-            // Ensure the refund amount does not exceed the paid amount for this specific payment
-            $refundAmount = min($request->amount, $payment->amount);
+            Log::debug('refundPayment: Initial invoice state:', [
+                'invoice_id' => $invoice->id,
+                'total_amount' => $invoice->total_amount,
+                'paid_amount' => $invoice->paid_amount,
+                'due_amount' => $invoice->due_amount,
+                'original_payment_id' => $originalPayment->id,
+                'original_payment_amount' => $originalPayment->amount,
+            ]);
 
-            // Update the payment record (e.g., mark as refunded, adjust amount)
-            // For simplicity, we'll just reduce the amount and mark it as refunded.
-            // In a real application, you might create a new 'refund' transaction.
-            $payment->amount -= $refundAmount;
-            $payment->payment_status = ($payment->amount <= 0) ? 'refunded' : 'partial_refund';
-            $payment->save();
+            // Calculate the maximum possible refund amount based on various constraints
+            $requestedRefundAmount = $request->amount;
+            $maxRefundFromOriginalPayment = $originalPayment->amount;
+            $maxRefundFromInvoicePaid = $invoice->paid_amount;
+            $maxRefundToReachTotalDue = $invoice->total_amount - $invoice->due_amount; // Amount that can be added to due without exceeding total
 
-            // Update the main invoice's paid amount and status
-            $invoice->paid_amount -= $refundAmount;
-            $invoice->due_amount += $refundAmount;
-            $invoice->payment_status = ($invoice->paid_amount <= 0) ? 'not' : 'partial';
+            // The actual refund amount should be the minimum of all these constraints
+            $refundAmount = min(
+                $requestedRefundAmount,
+                $maxRefundFromOriginalPayment,
+                $maxRefundFromInvoicePaid,
+                $maxRefundToReachTotalDue
+            );
+
+            Log::debug('refundPayment: Calculated refundAmount:', [
+                'requestedRefundAmount' => $requestedRefundAmount,
+                'maxRefundFromOriginalPayment' => $maxRefundFromOriginalPayment,
+                'maxRefundFromInvoicePaid' => $maxRefundFromInvoicePaid,
+                'maxRefundToReachTotalDue' => $maxRefundToReachTotalDue,
+                'final_refundAmount' => $refundAmount,
+            ]);
+
+            // Ensure refundAmount is not negative or zero after min calculation
+            if ($refundAmount <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid refund amount. Cannot refund zero or negative amount, or refund exceeds available balance.',
+                ], 400);
+            }
+
+            // Create a new payment record for the refund with a negative amount
+            $receipt_number = 'REF-' . time() . '-' . uniqid();
+            $create_user_id = Auth::check() ? Auth::id() : null;
+
+            Invoices_payments::create([
+                'invoice_id' => $invoice->id,
+                'amount' => -$refundAmount, // Store as a negative amount
+                'payment_method' => 'Refund', // Or a specific refund method
+                'payment_type' => 'refund', // Mark as a refund
+                'receipt_number' => $receipt_number,
+                'create_user_id' => $create_user_id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            // Update the original payment record's status to 'refunded' when a refund is processed
+            $originalPayment->payment_status = 'refunded';
+            $originalPayment->save();
+
+            // Recalculate invoice's paid_amount and due_amount based on all payments
+            $allPayments = Invoices_payments::where('invoice_id', $invoice->id)->get();
+            $newNetPaidAmount = $allPayments->sum('amount'); // Sum of all payments (positive and negative)
+
+            // The invoice's total_amount should NOT be changed. Use its original value.
+            $originalInvoiceTotalAmount = $invoice->total_amount;
+
+            $invoice->paid_amount = $newNetPaidAmount;
+            $invoice->due_amount = $originalInvoiceTotalAmount - $newNetPaidAmount;
+
+            // Ensure paid_amount does not go below zero
+            $invoice->paid_amount = max(0, $invoice->paid_amount);
+            // Ensure due_amount does not go below zero or exceed original total
+            $invoice->due_amount = max(0, $invoice->due_amount);
+            $invoice->due_amount = min($originalInvoiceTotalAmount, $invoice->due_amount);
+
+            // Update payment status based on new paid_amount relative to original total_amount
+            if ($invoice->paid_amount <= 0) {
+                $invoice->payment_status = 'not';
+            } elseif ($invoice->paid_amount < $originalInvoiceTotalAmount) {
+                $invoice->payment_status = 'partial';
+            } else {
+                $invoice->payment_status = 'full';
+            }
+            // IMPORTANT: Do NOT update $invoice->total_amount here. It should remain the original value.
             $invoice->save();
+
+            Log::debug('refundPayment: Final invoice state after refund:', [
+                'invoice_id' => $invoice->id,
+                'total_amount' => $invoice->total_amount, // This is the original total
+                'paid_amount' => $invoice->paid_amount,
+                'due_amount' => $invoice->due_amount,
+                'original_payment_id' => $originalPayment->id,
+                'original_payment_amount' => $originalPayment->amount, // This remains unchanged in the record
+            ]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Payment refunded successfully!',
-                'new_payment_amount' => $payment->amount,
+                'refund_amount' => $refundAmount,
+                'original_payment_amount_in_record' => $originalPayment->amount, // This will be the original amount
                 'new_invoice_paid_amount' => $invoice->paid_amount,
                 'new_invoice_due_amount' => $invoice->due_amount,
             ], 200);
 
         } catch (\Exception $e) {
+            Log::error('Error processing refund: ' . $e->getMessage() . ' Stack: ' . $e->getTraceAsString());
             return response()->json([
                 'success' => false,
                 'message' => 'Error processing refund: ' . $e->getMessage(),
@@ -666,7 +749,7 @@ class InvoiceController extends Controller
             // Create a new payment record in invoices_payments table
             Invoices_payments::create([
                 'invoice_id' => $fee_invoice->id,
-                // 'payment_invoice_number' => , this is add by using modal
+                // 'payment_invoice_number' => add by modal
                 'amount' => $paidAmount,
                 'payment_method' => $paymentMethod,
                 'payment_type' => 'course',
