@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class InvoiceController extends Controller
 {
@@ -45,7 +46,9 @@ class InvoiceController extends Controller
 
     public function store(Request $request)
     {
+
         // Temporarily dump all request data for debugging
+        // dd($request->all());
         // dd($request->all());
 
         // Validate request
@@ -54,7 +57,6 @@ class InvoiceController extends Controller
             'student_id' => 'required',
             'create_date' => 'required|date_format:m/d/Y',
             'due_date' => 'required|date_format:m/d/Y',
-            'payment_status' => 'required',
             'fee_type_id' => 'required|array',
             'price' => 'required|array',
             'paidPrice' => 'required|array',
@@ -75,9 +77,21 @@ class InvoiceController extends Controller
         try {
             $total_amount = array_sum($request->price);
             $total_paid_amount = array_sum($request->paidPrice);
+            $due_amount = $total_amount - $total_paid_amount;
 
-            Log::info('Payment Method: ' . $request->payment_method);
-            // Removed specific bank_paid_amount and bank_paid_date logs, dd() will show all
+            // Determine payment status
+            if ($total_paid_amount == 0) {
+                $payment_status = 'not';
+            } elseif ($total_paid_amount < $total_amount) {
+                $payment_status = 'partial';
+            } else {
+                $payment_status = 'full';
+            }
+
+            $main_invoice_number = 'INV-' . time() . '-' . uniqid();
+            $create_user_id = Auth::check() ? Auth::id() : null;
+            Log::debug('Generated main_invoice_number (store): ' . $main_invoice_number);
+            Log::debug('Auth::id() (store): ' . $create_user_id);
 
             // Create Fee Invoice
             $fee_invoice = Fee_invoices::create([
@@ -85,15 +99,20 @@ class InvoiceController extends Controller
                 'student_id' => $request->student_id,
                 'create_date' => Carbon::createFromFormat('m/d/Y', $request->create_date)->format('Y-m-d'),
                 'due_date' => Carbon::createFromFormat('m/d/Y', $request->due_date)->format('Y-m-d'),
-                'payment_status' => $request->payment_status,
+                'payment_status' => $payment_status,
                 'payment_method' => $request->payment_method,
                 'total_amount' => $total_amount,
                 'paid_amount' => $total_paid_amount,
+                'due_amount' => $due_amount,
+                'main_invoice_number' => $main_invoice_number,
+                'create_user_id' => $create_user_id, // Save the authenticated user's ID
                 'bank_paid_amount' => (trim($request->payment_method) === 'Bank Transfer') ? $request->bank_paid_amount : null,
                 'bank_paid_date' => (trim($request->payment_method) === 'Bank Transfer' && !empty($request->bank_paid_date))
                     ? Carbon::createFromFormat('Y-m-d', $request->bank_paid_date)->format('Y-m-d')
                     : null,
             ]);
+            Log::debug('Fee_invoice created with main_invoice_number: ' . $fee_invoice->main_invoice_number . ' and create_user_id: ' . $fee_invoice->create_user_id);
+
 
             // Save Invoice Items
             foreach ($request->fee_type_id as $feetypeId) {
@@ -109,14 +128,30 @@ class InvoiceController extends Controller
 
                 // Save initial payment in invoices_payments table if any
                 if ($paid_price > 0) {
+                    // Generate a unique receipt number
+                    $receipt_number = 'REC-' . time() . '-' . uniqid();
+                    Log::debug('Generated receipt_number (store): ' . $receipt_number);
+
+                    $payment_create_user_id = null;
+                    if (Auth::check()) {
+                        $payment_create_user_id = Auth::id();
+                        Log::debug('Auth::id() for payment (store): ' . $payment_create_user_id);
+                    } else {
+                        Log::warning('No authenticated user found when creating Invoices_payments in store method.');
+                    }
+
                     Invoices_payments::create([
                         'invoice_id' => $fee_invoice->id,
+                        // 'payment_invoice_number' => , add by modal
                         'amount' => $paid_price,
                         'payment_method' => $request->payment_method,
+                        'payment_type' => 'fee',
                         'payment_file' => ($request->payment_method === 'Card' || $request->payment_method === 'Bank Transfer')
                             && $request->file('payment_file')
                             ? $request->file('payment_file')->store('invoices', 'public')
                             : null,
+                        'receipt_number' => $receipt_number,
+                        'create_user_id' => $payment_create_user_id, // Save the authenticated user's ID
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
@@ -304,38 +339,259 @@ class InvoiceController extends Controller
 
     public function addPayment(Request $request, $invoiceId)
     {
-        $invoice = Fee_invoices::with('invoice_item')->findOrFail($invoiceId);
+        try {
+            $invoice = Fee_invoices::with('invoice_item', 'payments')->findOrFail($invoiceId); // Eager load payments
 
-        $payAmounts = $request->input('pay_amount', []); // array: [item_id => amount]
+            // Calculate the current due amount based on actual payments
+            $totalPaidAmountFromPayments = $invoice->payments->sum('amount');
+            $currentDueAmount = $invoice->total_amount - $totalPaidAmountFromPayments;
 
-        $totalPaidNow = 0;
+            // Log the calculated due amount for debugging
+            Log::debug('addPayment: Calculated currentDueAmount: ' . $currentDueAmount);
 
-        foreach ($invoice->invoice_item as $item) {
-            if (isset($payAmounts[$item->id]) && $payAmounts[$item->id] > 0) {
-                $payNow = min($payAmounts[$item->id], $item->amount - $item->paid_amount);
+            // Validate the request, including the payment amount
+            $request->validate([
+                'pay_amount' => 'required|numeric|min:0.01|max:' . max(0.01, $currentDueAmount), // Ensure max is at least 0.01
+                'payment_method' => 'required|string',
+                'payment_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
+                'create_user_id' => 'nullable|integer', // Validate create_user_id
+                'bank_payment_date' => 'nullable|date',
+                'bank_payment_amount' => 'nullable|numeric|min:0',
+            ]);
 
-                $item->paid_amount += $payNow;
-                $item->save();
-
-                $totalPaidNow += $payNow;
+            // Additional validation for Bank Transfer
+            if ($request->payment_method === 'Bank Transfer') {
+                $request->validate([
+                    'bank_payment_date' => 'required|date',
+                    'bank_payment_amount' => 'required|numeric|min:0',
+                ]);
             }
-        }
-        $paymentFile = $request->file('payment_file') ? $request->file('payment_file')->store('payments', 'public') : null;
 
-        Invoices_payments::create([
-            'invoice_id' => $invoice->id,
-            'amount' => $totalPaidNow,
-            'payment_method' => $request->payment_method,
-            'payment_file' => $paymentFile,
+            $totalPaidNow = $request->input('pay_amount');
+            $remainingPayment = $totalPaidNow;
+
+            Log::debug('addPayment: Incoming pay_amount: ' . $totalPaidNow);
+
+            // Distribute the payment across invoice items
+            foreach ($invoice->invoice_item as $item) {
+                if ($remainingPayment <= 0) {
+                    break;
+                }
+
+                $itemDue = $item->amount - $item->paid_amount;
+                $payForItem = min($remainingPayment, $itemDue);
+
+                if ($payForItem > 0) {
+                    $item->paid_amount += $payForItem;
+                    $item->save();
+                    $remainingPayment -= $payForItem;
+                    Log::debug("addPayment: Item {$item->id} paid {$payForItem}. Remaining payment: {$remainingPayment}");
+                }
+            }
+
+            $paymentFile = null;
+            if ($request->hasFile('payment_file')) {
+                $paymentFile = $request->file('payment_file')->store('payments', 'public');
+                Log::debug('addPayment: Payment file uploaded: ' . $paymentFile);
+            }
+
+            // Generate a unique receipt number for the payment
+            $receipt_number = 'REC-' . time() . '-' . uniqid();
+            Log::debug('Generated receipt_number (addPayment): ' . $receipt_number);
+
+            $payment_create_user_id = $request->input('create_user_id');
+            if (!$payment_create_user_id && Auth::check()) {
+                $payment_create_user_id = Auth::id();
+            }
+            Log::debug('Auth::id() for payment (addPayment): ' . $payment_create_user_id);
+
+
+            Invoices_payments::create([
+                'invoice_id' => $invoice->id,
+                'amount' => $totalPaidNow,
+                'payment_method' => $request->payment_method,
+                'payment_type' => 'fee',
+                'payment_file' => $paymentFile,
+                'receipt_number' => $receipt_number,
+                'create_user_id' => $payment_create_user_id, // Save the authenticated user's ID
+                'bank_payment_date' => $request->bank_payment_date,
+                'bank_payment_amount' => $request->bank_payment_amount,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            Log::debug('Invoices_payments record created for invoice_id: ' . $invoice->id . ' amount: ' . $totalPaidNow);
+
+            // Update invoice summary
+            $invoice->paid_amount += $totalPaidNow;
+            $invoice->due_amount -= $totalPaidNow; // Update due_amount
+            $invoice->payment_status = $invoice->paid_amount >= $invoice->total_amount ? 'full' : 'partial';
+            $invoice->payment_method = $request->payment_method;
+            $invoice->create_user_id = $payment_create_user_id; // Ensure this is updated if needed
+            $invoice->save();
+            Log::debug('Fee_invoice updated with paid_amount: ' . $invoice->paid_amount . ', due_amount: ' . $invoice->due_amount . ', payment_status: ' . $invoice->payment_status . ' and create_user_id: ' . $invoice->create_user_id . ' AFTER SAVE');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment added successfully!',
+                'invoice_id' => $invoice->id,
+            ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validation Error in addPayment: ' . $e->getMessage() . ' Errors: ' . json_encode($e->errors()));
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed.',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error in addPayment: ' . $e->getMessage() . ' Stack: ' . $e->getTraceAsString());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while adding payment.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getPaymentHistory($invoiceId)
+    {
+        $invoice = Fee_invoices::with('payments')->findOrFail($invoiceId);
+        $invoice->refresh(); // Ensure the invoice and its relationships are reloaded from the database
+        $payments = $invoice->payments;
+
+        $totalPaidAmount = $payments->sum('amount');
+        $dueAmount = $invoice->total_amount - $totalPaidAmount;
+
+        Log::debug('getPaymentHistory: Payments array before returning:', ['payments' => $payments->toArray()]); // Debug log
+
+        return response()->json([
+            'total_amount' => $invoice->total_amount,
+            'paid_amount_sum' => $totalPaidAmount, // Sum of all payments
+            'due_amount' => $dueAmount,
+            'main_invoice_number' => $invoice->main_invoice_number, // Add main_invoice_number
+            'payments' => $payments,
+        ]);
+    }
+
+    public function refundPayment(Request $request, $paymentId)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:0.01',
         ]);
 
-        // Update invoice summary
-        $invoice->paid_amount += $totalPaidNow;
-        $invoice->payment_status = $invoice->paid_amount >= $invoice->total_amount ? 'full' : 'partial';
-        $invoice->payment_method = $request->payment_method;
-        $invoice->save();
+        try {
+            $originalPayment = Invoices_payments::findOrFail($paymentId);
+            $invoice = Fee_invoices::findOrFail($originalPayment->invoice_id);
 
-        return redirect()->back()->with('success', 'Payment added successfully!');
+            Log::debug('refundPayment: Initial invoice state:', [
+                'invoice_id' => $invoice->id,
+                'total_amount' => $invoice->total_amount,
+                'paid_amount' => $invoice->paid_amount,
+                'due_amount' => $invoice->due_amount,
+                'original_payment_id' => $originalPayment->id,
+                'original_payment_amount' => $originalPayment->amount,
+            ]);
+
+            // Calculate the maximum possible refund amount based on various constraints
+            $requestedRefundAmount = $request->amount;
+            $maxRefundFromOriginalPayment = $originalPayment->amount;
+            $maxRefundFromInvoicePaid = $invoice->paid_amount;
+            $maxRefundToReachTotalDue = $invoice->total_amount - $invoice->due_amount; // Amount that can be added to due without exceeding total
+
+            // The actual refund amount should be the minimum of all these constraints
+            $refundAmount = min(
+                $requestedRefundAmount,
+                $maxRefundFromOriginalPayment,
+                $maxRefundFromInvoicePaid,
+                $maxRefundToReachTotalDue
+            );
+
+            Log::debug('refundPayment: Calculated refundAmount:', [
+                'requestedRefundAmount' => $requestedRefundAmount,
+                'maxRefundFromOriginalPayment' => $maxRefundFromOriginalPayment,
+                'maxRefundFromInvoicePaid' => $maxRefundFromInvoicePaid,
+                'maxRefundToReachTotalDue' => $maxRefundToReachTotalDue,
+                'final_refundAmount' => $refundAmount,
+            ]);
+
+            // Ensure refundAmount is not negative or zero after min calculation
+            if ($refundAmount <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid refund amount. Cannot refund zero or negative amount, or refund exceeds available balance.',
+                ], 400);
+            }
+
+            // Create a new payment record for the refund with a negative amount
+            $receipt_number = 'REF-' . time() . '-' . uniqid();
+            $create_user_id = Auth::check() ? Auth::id() : null;
+
+            Invoices_payments::create([
+                'invoice_id' => $invoice->id,
+                'amount' => -$refundAmount, // Store as a negative amount
+                'payment_method' => 'Refund', // Or a specific refund method
+                'payment_type' => 'refund', // Mark as a refund
+                'receipt_number' => $receipt_number,
+                'create_user_id' => $create_user_id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            // Update the original payment record's status to 'refunded' when a refund is processed
+            $originalPayment->payment_status = 'refunded';
+            $originalPayment->save();
+
+            // Recalculate invoice's paid_amount and due_amount based on all payments
+            $allPayments = Invoices_payments::where('invoice_id', $invoice->id)->get();
+            $newNetPaidAmount = $allPayments->sum('amount'); // Sum of all payments (positive and negative)
+
+            // The invoice's total_amount should NOT be changed. Use its original value.
+            $originalInvoiceTotalAmount = $invoice->total_amount;
+
+            $invoice->paid_amount = $newNetPaidAmount;
+            $invoice->due_amount = $originalInvoiceTotalAmount - $newNetPaidAmount;
+
+            // Ensure paid_amount does not go below zero
+            $invoice->paid_amount = max(0, $invoice->paid_amount);
+            // Ensure due_amount does not go below zero or exceed original total
+            $invoice->due_amount = max(0, $invoice->due_amount);
+            $invoice->due_amount = min($originalInvoiceTotalAmount, $invoice->due_amount);
+
+            // Update payment status based on new paid_amount relative to original total_amount
+            if ($invoice->paid_amount <= 0) {
+                $invoice->payment_status = 'not';
+            } elseif ($invoice->paid_amount < $originalInvoiceTotalAmount) {
+                $invoice->payment_status = 'partial';
+            } else {
+                $invoice->payment_status = 'full';
+            }
+            // IMPORTANT: Do NOT update $invoice->total_amount here. It should remain the original value.
+            $invoice->save();
+
+            Log::debug('refundPayment: Final invoice state after refund:', [
+                'invoice_id' => $invoice->id,
+                'total_amount' => $invoice->total_amount, // This is the original total
+                'paid_amount' => $invoice->paid_amount,
+                'due_amount' => $invoice->due_amount,
+                'original_payment_id' => $originalPayment->id,
+                'original_payment_amount' => $originalPayment->amount, // This remains unchanged in the record
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment refunded successfully!',
+                'refund_amount' => $refundAmount,
+                'original_payment_amount_in_record' => $originalPayment->amount, // This will be the original amount
+                'new_invoice_paid_amount' => $invoice->paid_amount,
+                'new_invoice_due_amount' => $invoice->due_amount,
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error('Error processing refund: ' . $e->getMessage() . ' Stack: ' . $e->getTraceAsString());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error processing refund: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function updateInvoiceNumber(Request $request)
@@ -362,11 +618,35 @@ class InvoiceController extends Controller
         }
     }
 
+    public function addPaymentInvoiceNumber(Request $request)
+    {
+        $request->validate([
+            'payment_id' => 'required|exists:invoices_payments,id',
+            'invoice_number' => 'required|string|max:255',
+        ]);
+
+        try {
+            $payment = Invoices_payments::findOrFail($request->payment_id);
+            $payment->payment_invoice_number = $request->invoice_number;
+            $payment->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment invoice number updated successfully!',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating payment invoice number: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function indexCoursePayment()
     {
         $branches = Branch::all();
         $students = Student::all();
-        $courses = \App\Models\Course::all(); // Assuming Course model exists
+        $courses = Course::all(); // Assuming Course model exists
 
         return view('pages.student.fees.course-paid', compact('branches', 'students', 'courses'));
     }
@@ -389,10 +669,14 @@ class InvoiceController extends Controller
             $invoice->save();
 
             // Create a new payment record
+            $payment_create_user_id = Auth::check() ? Auth::id() : null; // Get authenticated user ID
             Invoices_payments::create([
                 'invoice_id' => $invoice->id,
+                // 'payment_invoice_number' => ,this is add by using modal
                 'amount' => $request->paid_amount,
                 'payment_method' => 'Paid', // Assuming 'Paid' is a valid method or adjust as needed
+                'payment_type' => 'fee',
+                'create_user_id' => $payment_create_user_id, // Save the authenticated user's ID
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -433,6 +717,11 @@ class InvoiceController extends Controller
             $paymentMethod = $request->payment_method;
             $dueAmount = $coursePrice - $paidAmount;
 
+            $main_invoice_number = 'INV-' . time() . '-' . uniqid();
+            $create_user_id = Auth::check() ? Auth::id() : null;
+            Log::debug('Generated main_invoice_number (storeCoursePayment): ' . $main_invoice_number);
+            Log::debug('Auth::id() (storeCoursePayment): ' . $create_user_id);
+
             // Create a Fee_invoices record
             $fee_invoice = Fee_invoices::create([
                 'invoice_type' => 'course',
@@ -445,8 +734,12 @@ class InvoiceController extends Controller
                 'total_amount' => $coursePrice,
                 'paid_amount' => $paidAmount,
                 'due_amount' => $dueAmount,
+                'main_invoice_number' => $main_invoice_number,
+                'create_user_id' => $create_user_id,
                 'payment_file' => null, // Will be handled below if file exists
             ]);
+            Log::debug('Course Fee_invoice created with main_invoice_number: ' . $fee_invoice->main_invoice_number . ' and create_user_id: ' . $fee_invoice->create_user_id);
+
 
             // Save data to the new paid_courses table
             $paidCourse = PaidCourse::create([
@@ -465,10 +758,19 @@ class InvoiceController extends Controller
             ]);
 
             // Handle payment file upload for paid_courses
-            if ($request->hasFile('payment_file')) {
-                $paymentFile = $request->file('payment_file')->store('paid_courses', 'public');
-                $paidCourse->update(['payment_file' => $paymentFile]);
-            }
+            // Create a new payment record in invoices_payments table
+            Invoices_payments::create([
+                'invoice_id' => $fee_invoice->id,
+                // 'payment_invoice_number' => add by modal
+                'amount' => $paidAmount,
+                'payment_method' => $paymentMethod,
+                'payment_type' => 'course',
+                'payment_file' => $paidCourse->payment_file, // Use the file path from paidCourse
+                'receipt_number' => 'REC-' . time() . '-' . uniqid(), // Generate a unique receipt number
+                'create_user_id' => $create_user_id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -483,4 +785,5 @@ class InvoiceController extends Controller
             ], 500);
         }
     }
+
 }

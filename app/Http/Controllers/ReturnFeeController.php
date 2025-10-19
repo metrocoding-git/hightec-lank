@@ -6,6 +6,7 @@ use App\Models\ReturnFee;
 use App\Models\Fee_invoices as FeeInvoice;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -20,7 +21,7 @@ class ReturnFeeController extends Controller
         $validated = $request->validate([
             'student_id' => 'required|exists:students,id',
             'admission_number' => 'required|string|max:255',
-            'father_name' => 'nullable|string|max:255',
+            'return_user_id' => 'nullable|exists:users,id',
             'balance' => 'required|numeric|min:0',
             'return_amount' => 'required|numeric|min:0.01',
             'invoice_id' => 'required|exists:fee_invoices,id',
@@ -37,8 +38,9 @@ class ReturnFeeController extends Controller
                 ->with('error', 'Return amount cannot be greater than the paid amount (' . number_format($invoice->paid_amount, 2) . ').');
         }
 
-        // Set default status
+        // Set default status and return_user_id
         $validated['status'] = $request->has('status') ? 1 : 0;
+        $validated['return_user_id'] = Auth::id();
 
         DB::beginTransaction();
         try {
@@ -59,13 +61,13 @@ class ReturnFeeController extends Controller
             // Ensure paid amount doesn't go below 0
             $newPaidAmount = max(0, $newPaidAmount);
 
-            // Determine payment status
+            // Determine payment status - set to 'returned' if return was processed
             if ($newPaidAmount == 0) {
                 $paymentStatus = 'not';
             } elseif ($newPaidAmount >= $invoice->total_amount) {
                 $paymentStatus = 'full';
             } else {
-                $paymentStatus = 'partial';
+                $paymentStatus = 'returned'; // Set to returned when partial payment remains after return
             }
 
             // Update invoice

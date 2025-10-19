@@ -145,7 +145,7 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
     Route::post('administration/download-center/video-list-save', 'videoListStore')->name('download-center.video-list-save');
     Route::put('administration/download-center/video-list-update/{id}', 'videoListUpdate')->name('download-center.video-list-update');
     Route::delete('administration/download-center/video-list-destroy/{id}', 'videoListDestroy')->name('download-center.video-list-destroy');
-    
+
     Route::get('student/student-info/student-list', 'studentList')->name('student-list');
     Route::put('student/update-status', 'updateStudetStatus')->name('student.update-status');
     Route::get('student/student-info/student-view/{id}', 'studentView')->name('student-details');
@@ -262,17 +262,20 @@ Route::controller(FeeTypeController::class)->middleware(['permission'])->group(f
     Route::delete('student/fees/fee-type-delete/{id}', 'destroy')->name('fees.fees-type-delete');
 });
 
-Route::controller(InvoiceController::class)->middleware(['permission'])->group(function () {
+Route::controller(InvoiceController::class)
+// ->middleware(['permission'])
+->group(function () {
 
     Route::get('student/fees/invoice/view/{id}', 'viewFeeInvoice')->name('fees.fee-invoice-view');
     Route::get('student/fees/student-details/{studentId}', 'getStudentDetails')->name('fees.student-details');
-    Route::post('student/fees/invoice/{id}', 'addPayment')->name('fees.fees-invoice-payment');
+    Route::post('fees/add-payment/{invoiceId}', 'addPayment')->name('fees.add-payment');
 
     Route::get('student/fees/add-invoice', 'create')->name('fees.add-invoice');
     Route::get('student/invoice/get-student/{branchId}', 'show')->name('fees.get-student');
     Route::get('student/invoice/types_get_by_group/{groupId}', 'dropdown_fee_types')->name('fees.get-types-by-group');
 
     Route::post('student/fees/fee-store', 'store')->name('fees.invoice.store');
+    Route::get('fees/payment-history/{invoiceId}', 'getPaymentHistory')->name('fees.payment-history')->withoutMiddleware(['csrf', 'permission']);
     Route::post('student/fees/course-payment-store', 'storeCoursePayment')->name('fees.course-payment.store'); // New route for course payments
     Route::get('student/fees/course-payment', 'indexCoursePayment')->name('fees.course-payment'); // Route for course payment index view
     // Route::get('student/fees/fee-edit/{id}', 'edit')->name('fees.fee-edit-invoice');
@@ -284,6 +287,8 @@ Route::controller(InvoiceController::class)->middleware(['permission'])->group(f
     // New routes for invoice actions
     Route::post('fees/update-invoice-number', 'updateInvoiceNumber')->name('fees.update-invoice-number');
     Route::post('fees/mark-as-paid', 'markAsPaid')->name('fees.mark-as-paid');
+    Route::post('fees/refund-payment/{paymentId}', 'refundPayment')->name('fees.refund-payment')->withoutMiddleware(['csrf', 'permission']);
+    Route::post('fees/add-payment-invoice-number', 'addPaymentInvoiceNumber')->name('fees.add-payment-invoice-number');
 });
 
 Route::controller(HomeController::class)->middleware(['permission'])->group(function () {

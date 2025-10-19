@@ -23,6 +23,9 @@ class Fee_invoices extends Model
         'invoice_type',   // Added for mass assignment
         'paid_date',
         'invoice_number',
+        'main_invoice_number',
+        'create_user_id',
+      
     ];
 
     protected $casts = [
@@ -48,5 +51,10 @@ class Fee_invoices extends Model
     public function invoice_item()
     {
         return $this->hasMany(Invoice_item::class, 'invoice_id', 'id');
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Invoices_payments::class, 'invoice_id', 'id');
     }
 }

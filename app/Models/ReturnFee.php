@@ -13,7 +13,7 @@ class ReturnFee extends Model
         'student_id',
         'admission_number',
         'role_id',
-        'father_name',
+        'return_user_id',
         'balance',
         'return_amount',
         'invoice_id',
@@ -41,6 +41,14 @@ class ReturnFee extends Model
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
+    }
+
+    /**
+     * Get the user who processed the return fee.
+     */
+    public function returnUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'return_user_id');
     }
 
     /**

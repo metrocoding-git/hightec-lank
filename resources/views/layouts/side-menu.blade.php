@@ -370,7 +370,7 @@
                     </a>
                 </li>
                 @endif
-                @if(Auth::check() && Auth::user()->hasPermission('fees.fee-invoice.add'))
+                @if(Auth::check() && Auth::user()->hasPermission('fees.add-invoice'))
                 <li>
                     <a href="/student/fees/add-invoice"
                     class="{{ request()->is('student/fees/add-invoice') ? 'active a' : '' }}">
@@ -378,7 +378,7 @@
                 </a>
             </li>
             @endif
-            @if(Auth::check() && Auth::user()->hasPermission('fees.course-paid.index'))
+            @if(Auth::check() && Auth::user()->hasPermission('fees.course-paid'))
              <li>
                 <a href="/student/fees/course-paid"
                     class="{{ request()->is('student/fees/course-paid') ? 'active a' : '' }}">
@@ -386,7 +386,7 @@
                 </a>
             </li>
             @endif
-            @if(Auth::check() && Auth::user()->hasPermission('fees.fee-invoice.index'))
+            @if(Auth::check() && Auth::user()->hasPermission('fees.fee-invoice'))
             <li>
                 <a href="/student/fees/fee-invoice"
                     class="{{ request()->is('student/fees/fee-invoice') ? 'active a' : '' }}">
