@@ -301,7 +301,7 @@
                                         Select Courses <span class="text-danger">*</span>
                                     </label>
                                     <select class="primary_select form-control{{ $errors->has('course_ids') ? ' is-invalid' : '' }}"
-                                            name="course_ids[]" id="modal_course_ids" multiple required>
+                                            name="course_ids[]" id="modal_course_ids"  required>
                                         <option value="">Select Courses</option>
                                         @if(isset($studentIntake) && isset($studentIntake->courses))
                                             @foreach($studentIntake->courses as $course)
@@ -343,15 +343,15 @@
                                         <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>
                                             Pending
                                         </option>
-                                        {{-- <option value="assign" {{ old('status') == 'assign' ? 'selected' : '' }}>
-                                            Assign
+                                        <option value="assign" {{ old('status') == 'start' ? 'selected' : '' }}>
+                                            Start
                                         </option>
-                                        <option value="completed" {{ old('status') == 'completed' ? 'selected' : '' }}>
-                                            Completed
+                                        <option value="completed" {{ old('status') == 'return' ? 'selected' : '' }}>
+                                            Return
                                         </option>
-                                        <option value="dropped" {{ old('status') == 'dropped' ? 'selected' : '' }}>
-                                            Dropped
-                                        </option> --}}
+                                        <option value="dropped" {{ old('complete') == 'dropped' ? 'selected' : '' }}>
+                                            Complete
+                                        </option>
                                     </select>
                                     @error('status')
                                         <span class="text-danger">{{ $message }}</span>
