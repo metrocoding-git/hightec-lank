@@ -211,7 +211,7 @@ class AddStudentController extends Controller
             'student_id' => 'required|exists:students,id',
             'course_id' => 'required|exists:courses,id',
             'enrolled_at' => 'required|date',
-            'status' => 'required|in:active,completed,dropped',
+            'status' => 'required',
             'notes' => 'nullable|string'
         ]);
 
@@ -262,7 +262,7 @@ class AddStudentController extends Controller
             'student_id' => 'required|exists:students,id',
             'course_id' => 'required|exists:courses,id',
             'enrolled_at' => 'required|date',
-            'status' => 'required|in:active,completed,dropped',
+            'status' => 'required',
             'notes' => 'nullable|string'
         ]);
 
@@ -320,7 +320,7 @@ class AddStudentController extends Controller
             'student_id' => 'required|exists:students,id',
             'intake_id' => 'required|exists:intakes,id',
             'enrolled_at' => 'required|date',
-            'status' => 'required|in:active,completed,dropped',
+            'status' => 'required',
             'notes' => 'nullable|string'
         ]);
 
@@ -373,7 +373,7 @@ class AddStudentController extends Controller
             'student_id' => 'required|exists:students,id',
             'intake_id' => 'required|exists:intakes,id',
             'enrolled_at' => 'required|date',
-            'status' => 'required|in:active,completed,dropped',
+            'status' => 'required',
             'notes' => 'nullable|string'
         ]);
 
@@ -451,7 +451,7 @@ class AddStudentController extends Controller
             'course_ids' => 'required|array',
             'course_ids.*' => 'exists:courses,id',
             'enrolled_at' => 'required|date',
-            'status' => 'required|in:active,pending,asign,completed,dropped',
+            'status' => 'required',
             'notes' => 'nullable|string'
         ]);
 

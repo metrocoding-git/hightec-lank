@@ -158,7 +158,7 @@
                                                     </td>
                                                     <td>{{ $studentIntake->enrolled_at ? date('Y-m-d', strtotime($studentIntake->enrolled_at)) : '-' }}</td>
                                                     <td>
-                                                        <span class="badge {{ $studentIntake->status == 'pending' ? 'badge-success' : ($studentIntake->status == 'completed' ? 'badge-primary' : 'badge-warning') }}">
+                                                        <span class="badge {{ $studentIntake->status == 'pending' ? 'badge-success' : ($studentIntake->status == 'start' ? 'badge-info' : ($studentIntake->status == 'return' ? 'badge-warning' : 'badge-primary')) }}">
                                                             {{ ucfirst($studentIntake->status) }}
                                                         </span>
                                                     </td>
@@ -340,16 +340,16 @@
                                     </label>
                                     <select  class="primary_select form-control{{ $errors->has('status') ? ' is-invalid' : '' }}"
                                             name="status" id="modal_status" required >
-                                        <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>
+                                        <option value="pending" {{ old('status', 'pending') == 'pending' ? 'selected' : '' }}>
                                             Pending
                                         </option>
-                                        <option value="assign" {{ old('status') == 'start' ? 'selected' : '' }}>
+                                        <option value="start" {{ old('status') == 'start' ? 'selected' : '' }}>
                                             Start
                                         </option>
-                                        <option value="completed" {{ old('status') == 'return' ? 'selected' : '' }}>
+                                        <option value="return" {{ old('status') == 'return' ? 'selected' : '' }}>
                                             Return
                                         </option>
-                                        <option value="dropped" {{ old('complete') == 'dropped' ? 'selected' : '' }}>
+                                        <option value="complete" {{ old('status') == 'complete' ? 'selected' : '' }}>
                                             Complete
                                         </option>
                                     </select>
