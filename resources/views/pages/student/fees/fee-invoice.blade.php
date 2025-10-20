@@ -120,49 +120,40 @@
                                                             {{-- <a class="dropdown-item" data-toggle="modal"
                                                                 data-target="#viewInvoiceModal{{ $invoice->id }}"
                                                                 href="#">@lang('common.view')</a> --}}
-                                                                {{-- <a class="dropdown-item"
-                                                                href="{{ route('fees.fee-invoice-edit', $invoice->id) }}">@lang('common.edit')</a> --}}
-                                                                @if ($invoice->payment_status != 'returned')
-                                                                <a class="dropdown-item" data-toggle="modal"
-                                                                    data-target="#makeInvoiceModal"
-                                                                    data-student-id="{{ $invoice->student->id }}"
-                                                                    data-invoice-id="{{ $invoice->id }}"
-                                                                    onclick="populateInvoiceModal(this)">Make Invoice</a>
-                                                            @endif
 
+                                                            {{-- Only show Payment Details and Delete for returned invoices --}}
                                                             @if ($invoice->payment_status == 'returned')
                                                                 <a class="dropdown-item" data-toggle="modal"
                                                                     data-target="#viewPaymentDetailsModal"
                                                                     data-invoice-id="{{ $invoice->id }}"
                                                                     href="#">Payment Details</a>
                                                             @else
+                                                                {{-- Show View Payment for non-returned invoices --}}
                                                                 <a class="dropdown-item" data-toggle="modal"
                                                                     data-target="#viewPaymentHistoryModal"
                                                                     data-invoice-id="{{ $invoice->id }}"
                                                                     href="#">View Payment</a>
-                                                            @endif
 
-                                                            {{-- @if ($invoice->payment_status != 'returned')
-                                                                @if ($invoice->payment_method === 'Invoice')
-                                                                    @if ($invoice->payment_status != 'full')
-                                                                        <a class="dropdown-item" data-toggle="modal"
-                                                                            data-target="#markAsPaidModal"
-                                                                            data-invoice-id="{{ $invoice->id }}"
-                                                                            href="#">Paid</a>
-                                                                    @endif
-                                                                @endif
-                                                                {{-- Removed the direct "Add Invoice Number" action from here as it will be handled within the payment history modal --}}
-                                                            @if ($invoice->paid_amount > 0)
+                                                                {{-- Show Make Invoice option for non-returned invoices --}}
                                                                 <a class="dropdown-item" data-toggle="modal"
-                                                                    data-target="#returnFeeModal{{ $invoice->id }}"
-                                                                    href="#">Return</a>
-                                                            @endif
-                                            {{-- @endif  --}}
+                                                                    data-target="#makeInvoiceModal"
+                                                                    data-student-id="{{ $invoice->student->id }}"
+                                                                    data-invoice-id="{{ $invoice->id }}"
+                                                                    onclick="populateInvoiceModal(this)">Make Invoice</a>
 
-                                            <a class="dropdown-item" data-toggle="modal"
-                                                data-target="#deletecategoryModal{{ $invoice->id }}"
-                                                href="#">@lang('common.delete')</a>
-                                            </x-drop-down>
+                                                                {{-- Show Return option only if there's paid amount and not returned --}}
+                                                                @if ($invoice->paid_amount > 0)
+                                                                    <a class="dropdown-item" data-toggle="modal"
+                                                                        data-target="#returnFeeModal{{ $invoice->id }}"
+                                                                        href="#">Return</a>
+                                                                @endif
+                                                            @endif
+
+                                                            {{-- Always show Delete option --}}
+                                                            <a class="dropdown-item" data-toggle="modal"
+                                                                data-target="#deletecategoryModal{{ $invoice->id }}"
+                                                                href="#">@lang('common.delete')</a>
+                                                        </x-drop-down>
                                             </td>
                                             </tr>
 
@@ -815,8 +806,35 @@
                                         <div class="modal-body">
                                             <div class="alert alert-info">
                                                 <i class="fas fa-info-circle"></i>
-                                                This invoice has been marked as returned. Only payment history is shown
-                                                below.
+                                                This invoice has been marked as returned. Payment history and return details are shown below.
+                                            </div>
+
+                                            <!-- Return Information Section -->
+                                            <div id="returnInfoSection" style="display: none;">
+                                                <div class="alert alert-warning" style="border-left: 4px solid #ffc107;">
+                                                    <h5><i class="fas fa-undo-alt"></i> Return Information</h5>
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <p><strong>Return Amount:</strong> <span id="returnAmountDisplay" class="text-danger"></span></p>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <p><strong>Return Date:</strong> <span id="returnDateDisplay"></span></p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-md-12">
+                                                            <p><strong>Return Reason:</strong> <span id="returnReasonDisplay"></span></p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <p><strong>Returned By:</strong> <span id="returnedByDisplay"></span></p>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <p><strong>Original Paid Amount:</strong> <span id="originalPaidAmountDisplay"></span></p>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
 
                                             <h5>Payment History</h5> <span id="detailsMainInvoiceNumber"></span>
@@ -832,14 +850,17 @@
 
                                             <hr class="mt-4 mb-4">
                                             <div class="row mb-4">
-                                                <div class="col-md-4">
+                                                <div class="col-md-3">
                                                     <h5>Total Amount: <span id="detailsTotalAmountDisplay"></span></h5>
                                                 </div>
-                                                <div class="col-md-4">
+                                                <div class="col-md-3">
                                                     <h5>Paid Amount: <span id="detailsPaidAmountDisplay"></span></h5>
                                                 </div>
-                                                <div class="col-md-4">
-                                                    <h5>Due Amount: <span id="detailsDueAmountDisplay"></span></h5>
+                                                <div class="col-md-3">
+                                                    <h5>Returned Amount: <span id="detailsReturnedAmountDisplay" class="text-danger">0.00</span></h5>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <h5>Net Amount: <span id="detailsNetAmountDisplay" class="text-success"></span></h5>
                                                 </div>
                                             </div>
 
@@ -1189,9 +1210,9 @@
 
             modal.find('#paymentDetailsInvoiceId').text(invoiceId);
 
-            // Fetch payment details and invoice details via AJAX (read-only)
+            // Fetch both payment history and return fee data
             $.ajax({
-                url: `/fees/payment-history/${invoiceId}`, // Same route for fetching payment history
+                url: `/fees/payment-history/${invoiceId}`,
                 type: 'GET',
                 beforeSend: function() {
                     modal.find('#paymentDetailsContent').html(`
@@ -1210,28 +1231,123 @@
                     modal.find('#detailsPaidAmountDisplay').text(response.paid_amount_sum);
                     modal.find('#detailsDueAmountDisplay').text(response.due_amount);
 
-                    // Create read-only payment history table (no action buttons)
-                    let detailsHtml =
-                        '<table class="table table-bordered" style="text-align: center; width: 100%;"><thead style="background-color: #f8f9fa;"><tr><th style="text-align: center; padding: 12px;">Invoice Number</th><th style="text-align: center; padding: 12px;">Amount</th><th style="text-align: center; padding: 12px;">Method</th><th style="text-align: center; padding: 12px;">Type</th><th style="text-align: center; padding: 12px;">Receipt No.</th><th style="text-align: center; padding: 12px;">Date</th></tr></thead><tbody>';
-                    if (response.payments.length > 0) {
-                        response.payments.forEach(function(payment) {
-                            detailsHtml += `
-                                <tr style="border-bottom: 1px solid #dee2e6;">
-                                    <td style="padding: 12px; text-align: center;">${payment.payment_invoice_number || 'N/A'}</td>
-                                    <td style="padding: 12px; text-align: center;">${payment.amount}</td>
-                                    <td style="padding: 12px; text-align: center;">${payment.payment_method}</td>
-                                    <td style="padding: 12px; text-align: center;">${payment.payment_type}</td>
-                                    <td style="padding: 12px; text-align: center;">${payment.receipt_number}</td>
-                                    <td style="padding: 12px; text-align: center;">${new Date(payment.created_at).toLocaleDateString()}</td>
-                                </tr>
-                            `;
-                        });
-                    } else {
-                        detailsHtml +=
-                            '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #6c757d;">No payment history found.</td></tr>';
-                    }
-                    detailsHtml += '</tbody></table>';
-                    modal.find('#paymentDetailsContent').html(detailsHtml);
+                    // Fetch return fee data from return_fees table
+                    $.ajax({
+                        url: `/fees/return-fee-data/${invoiceId}`,
+                        type: 'GET',
+                        success: function(returnResponse) {
+                            console.log('Return fee data:', returnResponse);
+
+                            var returnAmount = 0;
+                            var returnDate = '';
+                            var returnReason = '';
+                            var returnedBy = '';
+                            var originalPaidAmount = response.paid_amount_sum;
+
+                            if (returnResponse.return_fees && returnResponse.return_fees.length > 0) {
+                                // Sum all return amounts for this invoice
+                                returnResponse.return_fees.forEach(function(returnFee) {
+                                    returnAmount += parseFloat(returnFee.return_amount) || 0;
+                                    if (!returnDate && returnFee.created_at) {
+                                        returnDate = new Date(returnFee.created_at).toLocaleDateString();
+                                    }
+                                    if (returnFee.short_note) {
+                                        returnReason = returnFee.short_note;
+                                    }
+                                    if (returnFee.return_user && returnFee.return_user.first_name) {
+                                        returnedBy = returnFee.return_user.first_name + ' ' + (returnFee.return_user.last_name || '');
+                                    }
+                                });
+                            }
+
+                            // Show return information section if there are returns
+                            if (returnAmount > 0) {
+                                modal.find('#returnInfoSection').show();
+                                modal.find('#returnAmountDisplay').text(returnAmount.toFixed(2));
+                                modal.find('#returnDateDisplay').text(returnDate || 'N/A');
+                                modal.find('#returnReasonDisplay').text(returnReason || 'N/A');
+                                modal.find('#returnedByDisplay').text(returnedBy || 'N/A');
+                                modal.find('#originalPaidAmountDisplay').text(originalPaidAmount.toFixed(2));
+
+                                // Calculate and display net amount
+                                var netAmount = originalPaidAmount - returnAmount;
+                                modal.find('#detailsReturnedAmountDisplay').text(returnAmount.toFixed(2));
+                                modal.find('#detailsNetAmountDisplay').text(netAmount.toFixed(2));
+
+                                // Add color coding for net amount
+                                if (netAmount < 0) {
+                                    modal.find('#detailsNetAmountDisplay').addClass('text-danger').removeClass('text-success');
+                                } else {
+                                    modal.find('#detailsNetAmountDisplay').addClass('text-success').removeClass('text-danger');
+                                }
+                            } else {
+                                modal.find('#returnInfoSection').hide();
+                                modal.find('#detailsReturnedAmountDisplay').text('0.00');
+                                modal.find('#detailsNetAmountDisplay').text(originalPaidAmount.toFixed(2));
+                            }
+
+                            // Create read-only payment history table (no action buttons)
+                            let detailsHtml =
+                                '<table class="table table-bordered" style="text-align: center; width: 100%;"><thead style="background-color: #f8f9fa;"><tr><th style="text-align: center; padding: 12px;">Invoice Number</th><th style="text-align: center; padding: 12px;">Amount</th><th style="text-align: center; padding: 12px;">Method</th><th style="text-align: center; padding: 12px;">Type</th><th style="text-align: center; padding: 12px;">Receipt No.</th><th style="text-align: center; padding: 12px;">Date</th></tr></thead><tbody>';
+                            if (response.payments.length > 0) {
+                                response.payments.forEach(function(payment) {
+                                    // Highlight return/refund payments
+                                    var rowStyle = '';
+                                    var amountStyle = '';
+                                    if (payment.payment_method === 'Refund' || payment.payment_type === 'return') {
+                                        rowStyle = 'style="background-color: #fff3cd; border-left: 4px solid #ffc107;"';
+                                        amountStyle = 'style="color: #856404; font-weight: bold;"';
+                                    }
+
+                                    detailsHtml += `
+                                        <tr ${rowStyle}>
+                                            <td style="padding: 12px; text-align: center;">${payment.payment_invoice_number || 'N/A'}</td>
+                                            <td style="padding: 12px; text-align: center;" ${amountStyle}>${payment.amount}</td>
+                                            <td style="padding: 12px; text-align: center;">${payment.payment_method}</td>
+                                            <td style="padding: 12px; text-align: center;">${payment.payment_type}</td>
+                                            <td style="padding: 12px; text-align: center;">${payment.receipt_number}</td>
+                                            <td style="padding: 12px; text-align: center;">${new Date(payment.created_at).toLocaleDateString()}</td>
+                                        </tr>
+                                    `;
+                                });
+                            } else {
+                                detailsHtml +=
+                                    '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #6c757d;">No payment history found.</td></tr>';
+                            }
+                            detailsHtml += '</tbody></table>';
+                            modal.find('#paymentDetailsContent').html(detailsHtml);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error fetching return fee data:', xhr.responseText);
+                            // Continue with payment details even if return fee fetch fails
+                            modal.find('#returnInfoSection').hide();
+                            modal.find('#detailsReturnedAmountDisplay').text('0.00');
+                            modal.find('#detailsNetAmountDisplay').text(response.paid_amount_sum);
+
+                            // Still show payment history
+                            let detailsHtml =
+                                '<table class="table table-bordered" style="text-align: center; width: 100%;"><thead style="background-color: #f8f9fa;"><tr><th style="text-align: center; padding: 12px;">Invoice Number</th><th style="text-align: center; padding: 12px;">Amount</th><th style="text-align: center; padding: 12px;">Method</th><th style="text-align: center; padding: 12px;">Type</th><th style="text-align: center; padding: 12px;">Receipt No.</th><th style="text-align: center; padding: 12px;">Date</th></tr></thead><tbody>';
+                            if (response.payments.length > 0) {
+                                response.payments.forEach(function(payment) {
+                                    detailsHtml += `
+                                        <tr>
+                                            <td style="padding: 12px; text-align: center;">${payment.payment_invoice_number || 'N/A'}</td>
+                                            <td style="padding: 12px; text-align: center;">${payment.amount}</td>
+                                            <td style="padding: 12px; text-align: center;">${payment.payment_method}</td>
+                                            <td style="padding: 12px; text-align: center;">${payment.payment_type}</td>
+                                            <td style="padding: 12px; text-align: center;">${payment.receipt_number}</td>
+                                            <td style="padding: 12px; text-align: center;">${new Date(payment.created_at).toLocaleDateString()}</td>
+                                        </tr>
+                                    `;
+                                });
+                            } else {
+                                detailsHtml +=
+                                    '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #6c757d;">No payment history found.</td></tr>';
+                            }
+                            detailsHtml += '</tbody></table>';
+                            modal.find('#paymentDetailsContent').html(detailsHtml);
+                        }
+                    });
                 },
                 error: function(xhr, status, error) {
                     console.error('Error fetching payment details:', xhr.responseText);
