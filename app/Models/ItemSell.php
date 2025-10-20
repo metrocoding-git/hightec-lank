@@ -13,6 +13,7 @@ class ItemSell extends Model
         'intake_id',
         'student_id',
         'user_id',
+        'others_name',
         'reference_no',
         'sell_date',
         'description',
