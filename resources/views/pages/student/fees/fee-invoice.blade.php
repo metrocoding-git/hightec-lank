@@ -1236,12 +1236,42 @@
             var formData = new FormData(this);
             var invoiceId = $('#addPaymentInvoiceId').val();
             var createUserId = $('input[name="create_user_id"]').val(); // Get the create_user_id
+            var paymentMethod = $('#paymentMethodInput').val();
 
             // Append create_user_id to formData
             formData.append('create_user_id', createUserId);
 
             // Clear previous error messages
             $('#addPaymentForm').find('.alert-danger').remove();
+
+            // Validate bank transfer fields if Bank Transfer is selected
+            if (paymentMethod === 'Bank Transfer') {
+                var bankDate = $('#bankPaymentDateInput').val();
+                var bankAmount = $('#bankPaymentAmountInput').val();
+                var paymentAmount = $('#paymentAmountInput').val();
+
+                // Validate bank payment date
+                if (!bankDate) {
+                    $('#addPaymentForm').prepend('<div class="alert alert-danger">Bank payment date is required for Bank Transfer</div>');
+                    $('#bankPaymentDateInput').focus();
+                    return;
+                }
+
+                // Validate bank payment amount
+                if (!bankAmount || parseFloat(bankAmount) <= 0) {
+                    $('#addPaymentForm').prepend('<div class="alert alert-danger">Bank payment amount must be greater than 0</div>');
+                    $('#bankPaymentAmountInput').focus();
+                    return;
+                }
+
+                // Validate bank amount is at least the due amount
+                var dueAmount = parseFloat($('#dueAmountDisplay').text()) || 0;
+                if (parseFloat(bankAmount) < dueAmount) {
+                    $('#addPaymentForm').prepend('<div class="alert alert-danger">Bank payment amount must be at least the due amount (' + dueAmount + ')</div>');
+                    $('#bankPaymentAmountInput').focus();
+                    return;
+                }
+            }
 
             // Disable submit button and show loading state
             var submitBtn = $('#addPaymentForm button[type="submit"]');
@@ -1420,10 +1450,70 @@
             if (selectedMethod === 'Bank Transfer') {
                 $('#paymentFileInputGroup').show();
                 $('#bankPaymentFields').show();
+
+                // Add required validation for bank transfer fields
+                $('#bankPaymentDateInput').attr('required', true);
+                $('#bankPaymentAmountInput').attr('required', true);
+
+                // Add real-time validation
+                $('#bankPaymentDateInput, #bankPaymentAmountInput').on('input change', function() {
+                    validateBankTransferFields();
+                });
+
             } else {
                 $('#paymentFileInputGroup').hide();
                 $('#bankPaymentFields').hide();
+
+                // Remove required validation for bank transfer fields
+                $('#bankPaymentDateInput').removeAttr('required');
+                $('#bankPaymentAmountInput').removeAttr('required');
+
+                // Clear any bank transfer validation errors
+                $('#bankPaymentDateInput').removeClass('is-invalid');
+                $('#bankPaymentAmountInput').removeClass('is-invalid');
+                $('.bank-field-error').remove();
             }
         });
+
+        // Function to validate bank transfer fields
+        function validateBankTransferFields() {
+            var isValid = true;
+            var paymentMethod = $('#paymentMethodInput').val();
+
+            if (paymentMethod === 'Bank Transfer') {
+                var bankDate = $('#bankPaymentDateInput').val();
+                var bankAmount = $('#bankPaymentAmountInput').val();
+
+                // Clear previous errors
+                $('#bankPaymentDateInput').removeClass('is-invalid');
+                $('#bankPaymentAmountInput').removeClass('is-invalid');
+                $('.bank-field-error').remove();
+
+                // Validate bank payment date
+                if (!bankDate) {
+                    $('#bankPaymentDateInput').addClass('is-invalid');
+                    $('#bankPaymentDateInput').after('<div class="invalid-feedback bank-field-error">Bank payment date is required for Bank Transfer</div>');
+                    isValid = false;
+                }
+
+                // Validate bank payment amount
+                if (!bankAmount || parseFloat(bankAmount) <= 0) {
+                    $('#bankPaymentAmountInput').addClass('is-invalid');
+                    $('#bankPaymentAmountInput').after('<div class="invalid-feedback bank-field-error">Bank payment amount must be greater than 0</div>');
+                    isValid = false;
+                }
+
+                // Additional validation: bank amount should be larger than due amount
+                var paymentAmount = parseFloat($('#paymentAmountInput').val()) || 0;
+                var dueAmount = parseFloat($('#dueAmountDisplay').text()) || 0;
+                if (bankAmount && dueAmount && parseFloat(bankAmount) < dueAmount) {
+                    $('#bankPaymentAmountInput').addClass('is-invalid');
+                    $('#bankPaymentAmountInput').after('<div class="invalid-feedback bank-field-error">Bank payment amount must be at least the due amount (' + dueAmount + ')</div>');
+                    isValid = false;
+                }
+            }
+
+            return isValid;
+        }
     </script>
 @endpush
