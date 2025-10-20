@@ -427,9 +427,20 @@ class ItemIssueController extends Controller
             ->get();
 
             Log::info('Found courses count: ' . $courses->count());
-            Log::info('Courses data: ' . json_encode($courses->toArray()));
 
-            return response()->json($courses);
+            // Add course dates for expiration validation
+            $coursesWithDates = $courses->map(function($course) {
+                return [
+                    'id' => $course->id,
+                    'name' => $course->name,
+                    'created_at' => $course->created_at ? $course->created_at->toISOString() : null,
+                    'expiration_date' => $course->expiration_date,
+                ];
+            });
+
+            Log::info('Courses with dates data: ' . json_encode($coursesWithDates->toArray()));
+
+            return response()->json($coursesWithDates);
         } catch (Exception $e) {
             Log::error('Error in getCoursesByIntakeAndStudent: ' . $e->getMessage());
             Log::error('Stack trace: ' . $e->getTraceAsString());
