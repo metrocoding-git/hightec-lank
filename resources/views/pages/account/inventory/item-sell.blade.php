@@ -9,7 +9,6 @@
                 border-bottom: 1px solid #FFFFFF !important;
             }
 
-            .forStudentWrapper,
             #selectStaffsDiv {
                 display: none;
             }
@@ -118,16 +117,8 @@
                                                     name="role_id" id="buyer_type">
                                                     <option data-display="@lang('inventory.sell_to') *" value="">
                                                         @lang('inventory.sell_to') *</option>
-                                                    @foreach ($roles as $value)
-                                                        @if (isset($editData))
-                                                            <option value="{{ $value->id }}"
-                                                                {{ $value->id == $editData->role_id ? 'selected' : '' }}>
-                                                                {{ $value->name }}</option>
-                                                        @else
-                                                            <option value="{{ $value->id }}">{{ $value->role_name }}
-                                                            </option>
-                                                        @endif
-                                                    @endforeach
+                                                    <option value="2">Student</option>
+                                                    <option value="0">Other</option>
                                                 </select>
                                                 <div class="text-danger" id="buyerError"></div>
                                                 @if ($errors->has('role_id'))
@@ -136,53 +127,10 @@
                                                     </span>
                                                 @endif
                                             </div>
-                                            <div class="forStudentWrapper col-lg-12">
+
+                                            <div class="col-lg-12" id="student_section" style="display: none;">
                                                 <div class="row">
-                                                    {{-- <div class="col-lg-12 mb-30">
-                                                        <label class="primary_input_label" for="">@lang('common.class')
-                                                            <span class="text-danger"> *</span> </label>
-                                                        <select
-                                                            class="primary_select form-control {{ $errors->has('class') ? ' is-invalid' : '' }}"
-                                                            id="select_class" name="class">
-                                                            <option data-display="@lang('common.select_class')" value="">
-                                                                @lang('common.select_class')</option>
-                                                            @foreach ($classes as $class)
-                                                                <option value="{{ $class->id }}"
-                                                                    {{ old('class') == $class->id ? 'selected' : '' }}>
-                                                                    {{ $class->name }}</option>
-                                                            @endforeach
-                                                        </select>
-                                                        <div class="text-danger" id="classError"></div>
-                                                        @if ($errors->has('class'))
-                                                            <span class="text-danger invalid-select" role="alert">
-                                                                {{ $errors->first('class') }}
-                                                            </span>
-                                                        @endif
-                                                    </div>
-                                                    <div class="col-lg-12 mb-30" id="select_section_div">
-                                                        <label class="primary_input_label" for="">@lang('common.section')
-                                                            <span class="text-danger"> *</span> </label>
-                                                        <select
-                                                            class="primary_select form-control{{ $errors->has('section') ? ' is-invalid' : '' }}"
-                                                            id="select_section" name="section">
-                                                            <option data-display="@lang('common.select_section')" value="">
-                                                                @lang('common.select_section')</option>
-                                                            @foreach ($sections as $value)
-                                                                <option value="{{ $value->id }}"
-                                                                    {{ old('section') == $value->id ? 'selected' : '' }}>
-                                                                    {{ $value->name }}</option>
-                                                            @endforeach
-                                                        </select>
-                                                        <div class="text-danger" id="sectionError"></div>
-                                                        @if ($errors->has('section'))
-                                                            <span class="text-danger invalid-select" role="alert">
-                                                                {{ $errors->first('section') }}
-                                                            </span>
-                                                        @endif
-                                                    </div> --}}
-
-
-                                                    <div class="col-lg-12 mb-30" id="select_student_div">
+                                                    <div class="col-lg-12 mb-30">
                                                         <label class="primary_input_label" for="">@lang('common.student')
                                                             <span class="text-danger"> *</span> </label>
                                                         <select
@@ -200,6 +148,24 @@
                                                         @if ($errors->has('student'))
                                                             <span class="text-danger invalid-select" role="alert">
                                                                 {{ $errors->first('student') }}
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-lg-12" id="other_section" style="display: none;">
+                                                <div class="row">
+                                                    <div class="col-lg-12 mb-30">
+                                                        <label class="primary_input_label" for="">@lang('common.name')
+                                                            <span class="text-danger"> *</span> </label>
+                                                        <input class="primary_input_field form-control{{ $errors->has('customer_name') ? ' is-invalid' : '' }}"
+                                                            type="text" name="customer_name" id="customer_name" autocomplete="off"
+                                                            value="{{ old('customer_name') }}" placeholder="Enter customer name">
+                                                        <div class="text-danger" id="customerNameError"></div>
+                                                        @if ($errors->has('customer_name'))
+                                                            <span class="text-danger invalid-select" role="alert">
+                                                                {{ $errors->first('customer_name') }}
                                                             </span>
                                                         @endif
                                                     </div>
@@ -373,15 +339,15 @@
                                         <div class="row">
                                             <div class="col-lg-4">
                                                 <div class="col-lg-12 mt-30">
-                                                    <div class="primary_input">
+                                                    <div class="primary_input" style="display: none;">
                                                         <input type="checkbox" id="full_paid"
                                                             class="common-checkbox form-control{{ $errors->has('full_paid') ? ' is-invalid' : '' }}"
-                                                            name="full_paid" value="1">
+                                                            name="full_paid" value="1" checked>
                                                         <label for="full_paid">@lang('inventory.full_paid')</label>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-lg-4 mt-30-md">
+                                            <div class="col-lg-4 mt-30-md" style="display: none;">
                                                 <div class="col-lg-12">
                                                     <div class="primary_input md_mb_20">
                                                         <label class="primary_input_label"
@@ -395,7 +361,7 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-lg-4 mt-30-md">
+                                            <div class="col-lg-4 mt-30-md" style="display: none;">
                                                 <div class="col-lg-12">
                                                     <div class="primary_input md_mb_20">
                                                         <label class="primary_input_label"
@@ -551,6 +517,35 @@
                 $("#totalPaid").val(0);
             }
             updateDue();
+        });
+
+        // Handle buyer type selection
+        $(document).ready(function() {
+            $('#buyer_type').on('change', function() {
+                var selectedValue = $(this).val();
+                var selectedText = $(this).find('option:selected').text();
+                console.log('Buyer type changed - Value:', selectedValue, 'Text:', selectedText);
+
+                // Hide all sections first
+                $('#student_section').hide();
+                $('#other_section').hide();
+
+                // Show appropriate section based on selection
+                if (selectedValue == '2') {
+                    $('#student_section').show();
+                    console.log('Student section shown');
+                } else if (selectedValue == '0') {
+                    $('#other_section').show();
+                    console.log('Other section shown');
+                } else {
+                    console.log('No valid selection');
+                }
+            });
+
+            // Test initial state
+            console.log('Initial buyer_type value:', $('#buyer_type').val());
+            console.log('Student section display:', $('#student_section').css('display'));
+            console.log('Other section display:', $('#other_section').css('display'));
         });
 
         // Initial row total calculation

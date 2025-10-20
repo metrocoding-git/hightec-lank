@@ -120,36 +120,28 @@
                                                             {{-- <a class="dropdown-item" data-toggle="modal"
                                                                 data-target="#viewInvoiceModal{{ $invoice->id }}"
                                                                 href="#">@lang('common.view')</a> --}}
-                                                            @if ($invoice->payment_status != 'returned')
-                                                                <a class="dropdown-item"
-                                                                    href="{{ route('fees.fee-invoice-edit', $invoice->id) }}">@lang('common.edit')</a>
+
+                                                            {{-- Only show Payment Details and Delete for returned invoices --}}
+                                                            @if ($invoice->payment_status == 'returned')
+                                                                <a class="dropdown-item" data-toggle="modal"
+                                                                    data-target="#viewPaymentDetailsModal"
+                                                                    data-invoice-id="{{ $invoice->id }}"
+                                                                    href="#">Payment Details</a>
+                                                            @else
+                                                                {{-- Show View Payment for non-returned invoices --}}
+                                                                <a class="dropdown-item" data-toggle="modal"
+                                                                    data-target="#viewPaymentHistoryModal"
+                                                                    data-invoice-id="{{ $invoice->id }}"
+                                                                    href="#">View Payment</a>
+
+                                                                {{-- Show Make Invoice option for non-returned invoices --}}
                                                                 <a class="dropdown-item" data-toggle="modal"
                                                                     data-target="#makeInvoiceModal"
                                                                     data-student-id="{{ $invoice->student->id }}"
                                                                     data-invoice-id="{{ $invoice->id }}"
                                                                     onclick="populateInvoiceModal(this)">Make Invoice</a>
-                                                            @endif
 
-                                                            @if ($invoice->payment_status == 'returned')
-                                                                <a class="dropdown-item" data-toggle="modal"
-                                                                    data-target="#viewPaymentDetailsModal"
-                                                                    data-invoice-id="{{ $invoice->id }}" href="#">Payment Details</a>
-                                                            @else
-                                                                <a class="dropdown-item" data-toggle="modal"
-                                                                    data-target="#viewPaymentHistoryModal"
-                                                                    data-invoice-id="{{ $invoice->id }}" href="#">View Payment</a>
-                                                            @endif
-
-                                                            @if ($invoice->payment_status != 'returned')
-                                                                @if ($invoice->payment_method === 'Invoice')
-                                                                    @if ($invoice->payment_status != 'full')
-                                                                        <a class="dropdown-item" data-toggle="modal"
-                                                                            data-target="#markAsPaidModal"
-                                                                            data-invoice-id="{{ $invoice->id }}"
-                                                                            href="#">Paid</a>
-                                                                    @endif
-                                                                @endif
-                                                                {{-- Removed the direct "Add Invoice Number" action from here as it will be handled within the payment history modal --}}
+                                                                {{-- Show Return option only if there's paid amount and not returned --}}
                                                                 @if ($invoice->paid_amount > 0)
                                                                     <a class="dropdown-item" data-toggle="modal"
                                                                         data-target="#returnFeeModal{{ $invoice->id }}"
@@ -157,50 +149,49 @@
                                                                 @endif
                                                             @endif
 
+                                                            {{-- Always show Delete option --}}
                                                             <a class="dropdown-item" data-toggle="modal"
                                                                 data-target="#deletecategoryModal{{ $invoice->id }}"
                                                                 href="#">@lang('common.delete')</a>
                                                         </x-drop-down>
-                                                    </td>
-                                                </tr>
+                                            </td>
+                                            </tr>
 
-                                                <div class="modal fade admin-query"
-                                                    id="deletecategoryModal{{ $invoice->id }}">
-                                                    <div class="modal-dialog modal-dialog-centered">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h4 class="modal-title">@lang('fees.delete_fees_type')</h4>
-                                                                <button type="button" class="close"
-                                                                    data-dismiss="modal">&times;</button>
-                                                            </div>
-                                                            <div class="modal-body">
-                                                                <div class="text-center">
-                                                                    <h4>@lang('common.are_you_sure_to_delete')</h4>
-                                                                </div>
-                                                                <div class="mt-40 d-flex justify-content-between">
-                                                                    <button type="button" class="primary-btn tr-bg"
-                                                                        data-dismiss="modal">
-                                                                        @lang('common.cancel')
-                                                                    </button>
-                                                                    <form
-                                                                        action="{{ route('fees.fee-delete', $invoice->id) }}"
-                                                                        method="POST">
-                                                                        @csrf
-                                                                        @method('DELETE')
-                                                                        <button class="primary-btn fix-gr-bg"
-                                                                            type="submit">
-                                                                            @lang('common.delete')
-                                                                        </button>
-                                                                    </form>
-                                                                </div>
-                                                            </div>
-
+                                            <div class="modal fade admin-query"
+                                                id="deletecategoryModal{{ $invoice->id }}">
+                                                <div class="modal-dialog modal-dialog-centered">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h4 class="modal-title">@lang('fees.delete_fees_type')</h4>
+                                                            <button type="button" class="close"
+                                                                data-dismiss="modal">&times;</button>
                                                         </div>
+                                                        <div class="modal-body">
+                                                            <div class="text-center">
+                                                                <h4>@lang('common.are_you_sure_to_delete')</h4>
+                                                            </div>
+                                                            <div class="mt-40 d-flex justify-content-between">
+                                                                <button type="button" class="primary-btn tr-bg"
+                                                                    data-dismiss="modal">
+                                                                    @lang('common.cancel')
+                                                                </button>
+                                                                <form action="{{ route('fees.fee-delete', $invoice->id) }}"
+                                                                    method="POST">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <button class="primary-btn fix-gr-bg" type="submit">
+                                                                        @lang('common.delete')
+                                                                    </button>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+
                                                     </div>
                                                 </div>
+                                            </div>
 
 
-                                                <!-- Add Payment Modal -->
+                                            <!-- Add Payment Modal -->
                                             @endforeach
                                         </tbody>
                                     </table>
@@ -698,7 +689,7 @@
                                             </button>
                                         </div>
                                         <div class="modal-body">
-                                            <h5>Payment History</h5>  <span id="mainInvoiceNumber"></span>
+                                            <h5>Payment History</h5> <span id="mainInvoiceNumber"></span>
                                             <div id="paymentHistoryContent">
                                                 <!-- Payment history will be loaded here via AJAX -->
                                                 <div class="text-center">
@@ -728,15 +719,16 @@
                                                     enctype="multipart/form-data">
                                                     @csrf
                                                     <input type="hidden" name="invoice_id" id="addPaymentInvoiceId">
-                                                    <input type="hidden" name="create_user_id" value="{{ Auth::id() }}">
+                                                    <input type="hidden" name="create_user_id"
+                                                        value="{{ Auth::id() }}">
                                                     <div class="row">
                                                         <div class="col-md-6">
                                                             <div class="form-group">
                                                                 <label for="paymentAmountInput">Amount <span
                                                                         class="text-danger">*</span></label>
                                                                 <input type="number" class="form-control"
-                                                                    id="paymentAmountInput" name="pay_amount" step="0.01"
-                                                                    required min="0.01">
+                                                                    id="paymentAmountInput" name="pay_amount"
+                                                                    step="0.01" required min="0.01">
                                                             </div>
                                                         </div>
                                                         <div class="col-md-6">
@@ -759,27 +751,33 @@
                                                         <div class="row">
                                                             <div class="col-md-6">
                                                                 <div class="form-group">
-                                                                    <label for="bankPaymentDateInput">Bank Payment Date</label>
+                                                                    <label for="bankPaymentDateInput">Bank Payment
+                                                                        Date</label>
                                                                     <input type="date" class="form-control"
-                                                                        id="bankPaymentDateInput" name="bank_payment_date">
+                                                                        id="bankPaymentDateInput"
+                                                                        name="bank_payment_date">
                                                                 </div>
                                                             </div>
                                                             <div class="col-md-6">
                                                                 <div class="form-group">
-                                                                    <label for="bankPaymentAmountInput">Bank Payment Amount</label>
+                                                                    <label for="bankPaymentAmountInput">Bank Payment
+                                                                        Amount</label>
                                                                     <input type="number" class="form-control"
-                                                                        id="bankPaymentAmountInput" name="bank_payment_amount" step="0.01">
+                                                                        id="bankPaymentAmountInput"
+                                                                        name="bank_payment_amount" step="0.01">
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    <div class="form-group" id="paymentFileInputGroup" style="display: none;">
+                                                    <div class="form-group" id="paymentFileInputGroup"
+                                                        style="display: none;">
                                                         <label for="paymentFileInput">Payment File (Optional)</label>
-                                                        <input type="file" class="form-control-file" id="paymentFileInput"
-                                                            name="payment_file">
+                                                        <input type="file" class="form-control-file"
+                                                            id="paymentFileInput" name="payment_file">
                                                     </div>
-                                                    <button type="submit" class="primary-btn fix-gr-bg mt-3" style="width: 100%; padding: 12px; font-size: 16px; font-weight: 600;">Add
+                                                    <button type="submit" class="primary-btn fix-gr-bg mt-3"
+                                                        style="width: 100%; padding: 12px; font-size: 16px; font-weight: 600;">Add
                                                         Payment</button>
                                                 </form>
                                             </div>
@@ -808,7 +806,35 @@
                                         <div class="modal-body">
                                             <div class="alert alert-info">
                                                 <i class="fas fa-info-circle"></i>
-                                                This invoice has been marked as returned. Only payment history is shown below.
+                                                This invoice has been marked as returned. Payment history and return details are shown below.
+                                            </div>
+
+                                            <!-- Return Information Section -->
+                                            <div id="returnInfoSection" style="display: none;">
+                                                <div class="alert alert-warning" style="border-left: 4px solid #ffc107;">
+                                                    <h5><i class="fas fa-undo-alt"></i> Return Information</h5>
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <p><strong>Return Amount:</strong> <span id="returnAmountDisplay" class="text-danger"></span></p>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <p><strong>Return Date:</strong> <span id="returnDateDisplay"></span></p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-md-12">
+                                                            <p><strong>Return Reason:</strong> <span id="returnReasonDisplay"></span></p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <p><strong>Returned By:</strong> <span id="returnedByDisplay"></span></p>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <p><strong>Original Paid Amount:</strong> <span id="originalPaidAmountDisplay"></span></p>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
 
                                             <h5>Payment History</h5> <span id="detailsMainInvoiceNumber"></span>
@@ -824,14 +850,17 @@
 
                                             <hr class="mt-4 mb-4">
                                             <div class="row mb-4">
-                                                <div class="col-md-4">
+                                                <div class="col-md-3">
                                                     <h5>Total Amount: <span id="detailsTotalAmountDisplay"></span></h5>
                                                 </div>
-                                                <div class="col-md-4">
+                                                <div class="col-md-3">
                                                     <h5>Paid Amount: <span id="detailsPaidAmountDisplay"></span></h5>
                                                 </div>
-                                                <div class="col-md-4">
-                                                    <h5>Due Amount: <span id="detailsDueAmountDisplay"></span></h5>
+                                                <div class="col-md-3">
+                                                    <h5>Returned Amount: <span id="detailsReturnedAmountDisplay" class="text-danger">0.00</span></h5>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <h5>Net Amount: <span id="detailsNetAmountDisplay" class="text-success"></span></h5>
                                                 </div>
                                             </div>
 
@@ -1111,7 +1140,8 @@
                     console.log('Payment history response:', response);
                     modal.find('#totalAmountDisplay').text(response.total_amount);
                     modal.find('#mainInvoiceNumber').text(response.main_invoice_number);
-                    modal.find('#paidAmountDisplay').text(response.paid_amount_sum); // Display sum of paid amounts
+                    modal.find('#paidAmountDisplay').text(response
+                    .paid_amount_sum); // Display sum of paid amounts
                     modal.find('#dueAmountDisplay').text(response.due_amount);
 
                     // Set the max attribute for the payment amount input
@@ -1122,11 +1152,15 @@
                     if (response.payments.length > 0) {
                         response.payments.forEach(function(payment) {
                             let actionDropdown = '';
-                            if (payment.payment_method === 'Invoice' && !payment.payment_invoice_number) {
-                                actionDropdown += `<a style="padding:4px;margin: 2px; background-color: #007bff; color: #fff; text-align: center;" class="dropdown-item add-payment-invoice-number-btn" href="#" data-payment-id="${payment.id}">Add Invoice No.</a>`;
+                            if (payment.payment_method === 'Invoice' && !payment
+                                .payment_invoice_number) {
+                                actionDropdown +=
+                                    `<a style="padding:4px;margin: 2px; background-color: #007bff; color: #fff; text-align: center;" class="dropdown-item add-payment-invoice-number-btn" href="#" data-payment-id="${payment.id}">Add Invoice No.</a>`;
                             }
-                            if (payment.payment_method !== 'Refund' && payment.payment_status !== 'refunded' && payment.amount > 0) {
-                                actionDropdown += `<a style="padding:4px;margin: 2px; background-color: #dc3545; color: #fff; text-align: center;" class="dropdown-item refund-btn" href="#" data-payment-id="${payment.id}" data-amount="${payment.amount}">Refund</a>`;
+                            if (payment.payment_method !== 'Refund' && payment
+                                .payment_status !== 'refunded' && payment.amount > 0) {
+                                actionDropdown +=
+                                    `<a style="padding:4px;margin: 2px; background-color: #dc3545; color: #fff; text-align: center;" class="dropdown-item refund-btn" href="#" data-payment-id="${payment.id}" data-amount="${payment.amount}">Refund</a>`;
                             }
 
                             historyHtml += `
@@ -1139,15 +1173,15 @@
                                     <td style="padding: 12px; text-align: center;">${new Date(payment.created_at).toLocaleDateString()}</td>
                                     <td style="padding: 12px; text-align: center;">
                                         ${actionDropdown ? `
-                                            <div class="dropdown">
-                                                <button class="primary-btn small fix-gr-bg dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" style="border-radius: 6px; padding: 6px 12px; font-size: 12px;">
-                                                    Actions
-                                                </button>
-                                                <div class="dropdown-menu" style="min-width: 150px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                                                    ${actionDropdown}
+                                                <div class="dropdown">
+                                                    <button class="primary-btn small fix-gr-bg dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" style="border-radius: 6px; padding: 6px 12px; font-size: 12px;">
+                                                        Actions
+                                                    </button>
+                                                    <div class="dropdown-menu" style="min-width: 150px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                                        ${actionDropdown}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ` : '<span class="text-muted">No actions</span>'}
+                                            ` : '<span class="text-muted">No actions</span>'}
                                     </td>
                                 </tr>
                             `;
@@ -1176,9 +1210,9 @@
 
             modal.find('#paymentDetailsInvoiceId').text(invoiceId);
 
-            // Fetch payment details and invoice details via AJAX (read-only)
+            // Fetch both payment history and return fee data
             $.ajax({
-                url: `/fees/payment-history/${invoiceId}`, // Same route for fetching payment history
+                url: `/fees/payment-history/${invoiceId}`,
                 type: 'GET',
                 beforeSend: function() {
                     modal.find('#paymentDetailsContent').html(`
@@ -1197,28 +1231,123 @@
                     modal.find('#detailsPaidAmountDisplay').text(response.paid_amount_sum);
                     modal.find('#detailsDueAmountDisplay').text(response.due_amount);
 
-                    // Create read-only payment history table (no action buttons)
-                    let detailsHtml =
-                        '<table class="table table-bordered" style="text-align: center; width: 100%;"><thead style="background-color: #f8f9fa;"><tr><th style="text-align: center; padding: 12px;">Invoice Number</th><th style="text-align: center; padding: 12px;">Amount</th><th style="text-align: center; padding: 12px;">Method</th><th style="text-align: center; padding: 12px;">Type</th><th style="text-align: center; padding: 12px;">Receipt No.</th><th style="text-align: center; padding: 12px;">Date</th></tr></thead><tbody>';
-                    if (response.payments.length > 0) {
-                        response.payments.forEach(function(payment) {
-                            detailsHtml += `
-                                <tr style="border-bottom: 1px solid #dee2e6;">
-                                    <td style="padding: 12px; text-align: center;">${payment.payment_invoice_number || 'N/A'}</td>
-                                    <td style="padding: 12px; text-align: center;">${payment.amount}</td>
-                                    <td style="padding: 12px; text-align: center;">${payment.payment_method}</td>
-                                    <td style="padding: 12px; text-align: center;">${payment.payment_type}</td>
-                                    <td style="padding: 12px; text-align: center;">${payment.receipt_number}</td>
-                                    <td style="padding: 12px; text-align: center;">${new Date(payment.created_at).toLocaleDateString()}</td>
-                                </tr>
-                            `;
-                        });
-                    } else {
-                        detailsHtml +=
-                            '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #6c757d;">No payment history found.</td></tr>';
-                    }
-                    detailsHtml += '</tbody></table>';
-                    modal.find('#paymentDetailsContent').html(detailsHtml);
+                    // Fetch return fee data from return_fees table
+                    $.ajax({
+                        url: `/fees/return-fee-data/${invoiceId}`,
+                        type: 'GET',
+                        success: function(returnResponse) {
+                            console.log('Return fee data:', returnResponse);
+
+                            var returnAmount = 0;
+                            var returnDate = '';
+                            var returnReason = '';
+                            var returnedBy = '';
+                            var originalPaidAmount = response.paid_amount_sum;
+
+                            if (returnResponse.return_fees && returnResponse.return_fees.length > 0) {
+                                // Sum all return amounts for this invoice
+                                returnResponse.return_fees.forEach(function(returnFee) {
+                                    returnAmount += parseFloat(returnFee.return_amount) || 0;
+                                    if (!returnDate && returnFee.created_at) {
+                                        returnDate = new Date(returnFee.created_at).toLocaleDateString();
+                                    }
+                                    if (returnFee.short_note) {
+                                        returnReason = returnFee.short_note;
+                                    }
+                                    if (returnFee.return_user && returnFee.return_user.first_name) {
+                                        returnedBy = returnFee.return_user.first_name + ' ' + (returnFee.return_user.last_name || '');
+                                    }
+                                });
+                            }
+
+                            // Show return information section if there are returns
+                            if (returnAmount > 0) {
+                                modal.find('#returnInfoSection').show();
+                                modal.find('#returnAmountDisplay').text(returnAmount.toFixed(2));
+                                modal.find('#returnDateDisplay').text(returnDate || 'N/A');
+                                modal.find('#returnReasonDisplay').text(returnReason || 'N/A');
+                                modal.find('#returnedByDisplay').text(returnedBy || 'N/A');
+                                modal.find('#originalPaidAmountDisplay').text(originalPaidAmount.toFixed(2));
+
+                                // Calculate and display net amount
+                                var netAmount = originalPaidAmount - returnAmount;
+                                modal.find('#detailsReturnedAmountDisplay').text(returnAmount.toFixed(2));
+                                modal.find('#detailsNetAmountDisplay').text(netAmount.toFixed(2));
+
+                                // Add color coding for net amount
+                                if (netAmount < 0) {
+                                    modal.find('#detailsNetAmountDisplay').addClass('text-danger').removeClass('text-success');
+                                } else {
+                                    modal.find('#detailsNetAmountDisplay').addClass('text-success').removeClass('text-danger');
+                                }
+                            } else {
+                                modal.find('#returnInfoSection').hide();
+                                modal.find('#detailsReturnedAmountDisplay').text('0.00');
+                                modal.find('#detailsNetAmountDisplay').text(originalPaidAmount.toFixed(2));
+                            }
+
+                            // Create read-only payment history table (no action buttons)
+                            let detailsHtml =
+                                '<table class="table table-bordered" style="text-align: center; width: 100%;"><thead style="background-color: #f8f9fa;"><tr><th style="text-align: center; padding: 12px;">Invoice Number</th><th style="text-align: center; padding: 12px;">Amount</th><th style="text-align: center; padding: 12px;">Method</th><th style="text-align: center; padding: 12px;">Type</th><th style="text-align: center; padding: 12px;">Receipt No.</th><th style="text-align: center; padding: 12px;">Date</th></tr></thead><tbody>';
+                            if (response.payments.length > 0) {
+                                response.payments.forEach(function(payment) {
+                                    // Highlight return/refund payments
+                                    var rowStyle = '';
+                                    var amountStyle = '';
+                                    if (payment.payment_method === 'Refund' || payment.payment_type === 'return') {
+                                        rowStyle = 'style="background-color: #fff3cd; border-left: 4px solid #ffc107;"';
+                                        amountStyle = 'style="color: #856404; font-weight: bold;"';
+                                    }
+
+                                    detailsHtml += `
+                                        <tr ${rowStyle}>
+                                            <td style="padding: 12px; text-align: center;">${payment.payment_invoice_number || 'N/A'}</td>
+                                            <td style="padding: 12px; text-align: center;" ${amountStyle}>${payment.amount}</td>
+                                            <td style="padding: 12px; text-align: center;">${payment.payment_method}</td>
+                                            <td style="padding: 12px; text-align: center;">${payment.payment_type}</td>
+                                            <td style="padding: 12px; text-align: center;">${payment.receipt_number}</td>
+                                            <td style="padding: 12px; text-align: center;">${new Date(payment.created_at).toLocaleDateString()}</td>
+                                        </tr>
+                                    `;
+                                });
+                            } else {
+                                detailsHtml +=
+                                    '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #6c757d;">No payment history found.</td></tr>';
+                            }
+                            detailsHtml += '</tbody></table>';
+                            modal.find('#paymentDetailsContent').html(detailsHtml);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error fetching return fee data:', xhr.responseText);
+                            // Continue with payment details even if return fee fetch fails
+                            modal.find('#returnInfoSection').hide();
+                            modal.find('#detailsReturnedAmountDisplay').text('0.00');
+                            modal.find('#detailsNetAmountDisplay').text(response.paid_amount_sum);
+
+                            // Still show payment history
+                            let detailsHtml =
+                                '<table class="table table-bordered" style="text-align: center; width: 100%;"><thead style="background-color: #f8f9fa;"><tr><th style="text-align: center; padding: 12px;">Invoice Number</th><th style="text-align: center; padding: 12px;">Amount</th><th style="text-align: center; padding: 12px;">Method</th><th style="text-align: center; padding: 12px;">Type</th><th style="text-align: center; padding: 12px;">Receipt No.</th><th style="text-align: center; padding: 12px;">Date</th></tr></thead><tbody>';
+                            if (response.payments.length > 0) {
+                                response.payments.forEach(function(payment) {
+                                    detailsHtml += `
+                                        <tr>
+                                            <td style="padding: 12px; text-align: center;">${payment.payment_invoice_number || 'N/A'}</td>
+                                            <td style="padding: 12px; text-align: center;">${payment.amount}</td>
+                                            <td style="padding: 12px; text-align: center;">${payment.payment_method}</td>
+                                            <td style="padding: 12px; text-align: center;">${payment.payment_type}</td>
+                                            <td style="padding: 12px; text-align: center;">${payment.receipt_number}</td>
+                                            <td style="padding: 12px; text-align: center;">${new Date(payment.created_at).toLocaleDateString()}</td>
+                                        </tr>
+                                    `;
+                                });
+                            } else {
+                                detailsHtml +=
+                                    '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #6c757d;">No payment history found.</td></tr>';
+                            }
+                            detailsHtml += '</tbody></table>';
+                            modal.find('#paymentDetailsContent').html(detailsHtml);
+                        }
+                    });
                 },
                 error: function(xhr, status, error) {
                     console.error('Error fetching payment details:', xhr.responseText);
@@ -1236,12 +1365,46 @@
             var formData = new FormData(this);
             var invoiceId = $('#addPaymentInvoiceId').val();
             var createUserId = $('input[name="create_user_id"]').val(); // Get the create_user_id
+            var paymentMethod = $('#paymentMethodInput').val();
 
             // Append create_user_id to formData
             formData.append('create_user_id', createUserId);
 
             // Clear previous error messages
             $('#addPaymentForm').find('.alert-danger').remove();
+
+            // Validate bank transfer fields if Bank Transfer is selected
+            if (paymentMethod === 'Bank Transfer') {
+                var bankDate = $('#bankPaymentDateInput').val();
+                var bankAmount = $('#bankPaymentAmountInput').val();
+                var paymentAmount = $('#paymentAmountInput').val();
+
+                // Validate bank payment date
+                if (!bankDate) {
+                    $('#addPaymentForm').prepend(
+                        '<div class="alert alert-danger">Bank payment date is required for Bank Transfer</div>');
+                    $('#bankPaymentDateInput').focus();
+                    return;
+                }
+
+                // Validate bank payment amount
+                if (!bankAmount || parseFloat(bankAmount) <= 0) {
+                    $('#addPaymentForm').prepend(
+                        '<div class="alert alert-danger">Bank payment amount must be greater than 0</div>');
+                    $('#bankPaymentAmountInput').focus();
+                    return;
+                }
+
+                // Validate bank amount is at least the due amount
+                var dueAmount = parseFloat($('#dueAmountDisplay').text()) || 0;
+                if (parseFloat(bankAmount) < dueAmount) {
+                    $('#addPaymentForm').prepend(
+                        '<div class="alert alert-danger">Bank payment amount must be at least the due amount (' +
+                        dueAmount + ')</div>');
+                    $('#bankPaymentAmountInput').focus();
+                    return;
+                }
+            }
 
             // Disable submit button and show loading state
             var submitBtn = $('#addPaymentForm button[type="submit"]');
@@ -1275,10 +1438,14 @@
                     }
 
                     // Show error message
-                    $('#addPaymentForm').prepend(`<div class="alert alert-danger">${errorMessage}</div>`);
+                    $('#addPaymentForm').prepend(
+                        `<div class="alert alert-danger">${errorMessage}</div>`);
 
                     // Scroll to error message
-                    $('.alert-danger').get(0).scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    $('.alert-danger').get(0).scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
                 },
                 complete: function() {
                     // Re-enable submit button and restore original text
@@ -1420,10 +1587,76 @@
             if (selectedMethod === 'Bank Transfer') {
                 $('#paymentFileInputGroup').show();
                 $('#bankPaymentFields').show();
+
+                // Add required validation for bank transfer fields
+                $('#bankPaymentDateInput').attr('required', true);
+                $('#bankPaymentAmountInput').attr('required', true);
+
+                // Add real-time validation
+                $('#bankPaymentDateInput, #bankPaymentAmountInput').on('input change', function() {
+                    validateBankTransferFields();
+                });
+
             } else {
                 $('#paymentFileInputGroup').hide();
                 $('#bankPaymentFields').hide();
+
+                // Remove required validation for bank transfer fields
+                $('#bankPaymentDateInput').removeAttr('required');
+                $('#bankPaymentAmountInput').removeAttr('required');
+
+                // Clear any bank transfer validation errors
+                $('#bankPaymentDateInput').removeClass('is-invalid');
+                $('#bankPaymentAmountInput').removeClass('is-invalid');
+                $('.bank-field-error').remove();
             }
         });
+
+        // Function to validate bank transfer fields
+        function validateBankTransferFields() {
+            var isValid = true;
+            var paymentMethod = $('#paymentMethodInput').val();
+
+            if (paymentMethod === 'Bank Transfer') {
+                var bankDate = $('#bankPaymentDateInput').val();
+                var bankAmount = $('#bankPaymentAmountInput').val();
+
+                // Clear previous errors
+                $('#bankPaymentDateInput').removeClass('is-invalid');
+                $('#bankPaymentAmountInput').removeClass('is-invalid');
+                $('.bank-field-error').remove();
+
+                // Validate bank payment date
+                if (!bankDate) {
+                    $('#bankPaymentDateInput').addClass('is-invalid');
+                    $('#bankPaymentDateInput').after(
+                        '<div class="invalid-feedback bank-field-error">Bank payment date is required for Bank Transfer</div>'
+                        );
+                    isValid = false;
+                }
+
+                // Validate bank payment amount
+                if (!bankAmount || parseFloat(bankAmount) <= 0) {
+                    $('#bankPaymentAmountInput').addClass('is-invalid');
+                    $('#bankPaymentAmountInput').after(
+                        '<div class="invalid-feedback bank-field-error">Bank payment amount must be greater than 0</div>'
+                        );
+                    isValid = false;
+                }
+
+                // Additional validation: bank amount should be larger than due amount
+                var paymentAmount = parseFloat($('#paymentAmountInput').val()) || 0;
+                var dueAmount = parseFloat($('#dueAmountDisplay').text()) || 0;
+                if (bankAmount && dueAmount && parseFloat(bankAmount) < dueAmount) {
+                    $('#bankPaymentAmountInput').addClass('is-invalid');
+                    $('#bankPaymentAmountInput').after(
+                        '<div class="invalid-feedback bank-field-error">Bank payment amount must be at least the due amount (' +
+                        dueAmount + ')</div>');
+                    isValid = false;
+                }
+            }
+
+            return isValid;
+        }
     </script>
 @endpush

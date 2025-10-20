@@ -98,7 +98,8 @@
                                                             disabled>
                                                             @lang('inventory.payment_method')*</option>
                                                         <option value="Cash">Cash</option>
-                                                        <option value="Cheque">Cheque</option>
+                                                        <option value="Invoice">Invoice</option>
+                                                        <option value="Bank Transfer">Bank Transfer</option>
                                                     </select>
                                                     <div class="text-danger" id="paymentError"></div>
 
@@ -336,15 +337,15 @@
                                         <div class="row">
                                             <div class="col-lg-4">
                                                 <div class="col-lg-12 mt-30">
-                                                    <div class="primary_input">
+                                                    <div class="primary_input" style="display: none;">
                                                         <input type="checkbox" id="full_paid"
                                                             class="common-checkbox form-control{{ $errors->has('full_paid') ? ' is-invalid' : '' }}"
-                                                            name="full_paid" value="1">
+                                                            name="full_paid" value="1" checked>
                                                         <label for="full_paid">@lang('inventory.full_paid')</label>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-lg-4 mt-30-md">
+                                            <div class="col-lg-4 mt-30-md" style="display: none;">
                                                 <div class="col-lg-12">
                                                     <div class="primary_input md_mb_20">
                                                         <label class="primary_input_label"
@@ -358,7 +359,7 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-lg-4 mt-30-md">
+                                            <div class="col-lg-4 mt-30-md" style="display: none;">
                                                 <div class="col-lg-12">
                                                     <div class="primary_input md_mb_20">
                                                         <label class="primary_input_label"

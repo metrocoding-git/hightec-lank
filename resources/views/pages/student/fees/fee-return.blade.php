@@ -124,10 +124,11 @@
                                                 <tr>
                                                     <th width="15%">Student Name</th>
                                                     <th width="15%">Admission No</th>
-                                                    <th width="15%">Roll Name</th>
+                                                    {{-- <th width="15%">Roll Name</th> --}}
                                                     <th width="15%">Father Name</th>
                                                     <th width="15%">Balance</th>
                                                     <th width="15%">Return Amount</th>
+                                                    <th width="15%">Return date</th>
                                                     <th width="25%">Short Note</th>
                                                 </tr>
                                             </thead>
@@ -136,11 +137,13 @@
                                                     <tr>
                                                         <td>{{$student->student->student_name}} <input type="hidden" name="id[]" value="{{isset($update)? @$student->studentDetail->forwardBalance->id: $student->student_id}}"></td>
                                                         <td>{{$student->student->admission_number}}</td>
-                                                         <td>{{$student->role->role_name}}</td>
+                                                         {{-- <td>{{$student->role->role_name}}</td> --}}
                     
                                                         <td>{{$student->student->guardians_name !=""?$student->student->guardians_name:""}}</td>
                                                         <td> {{ $student->balance }} </td>
                                                         <td> {{ $student->return_amount?? "N/A" }} </td>
+                                                        <td>{{ $student->created_at ? $student->created_at->format('Y-m-d') : 'N/A' }}</td>
+
                                                         <td> {{ $student->short_note }} </td>
                                                         
                                                         {{-- <td> 

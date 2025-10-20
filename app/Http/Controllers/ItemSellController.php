@@ -30,7 +30,7 @@ class ItemSellController extends Controller
         // Validate incoming data
         $request->validate([
             'payment_method' => 'required|string',
-            'role_id' => 'required|integer|exists:roles,id',
+            // 'role_id' => 'required|integer|exists:roles,id',
             'sell_date' => 'required|string', // will parse m/d/Y -> Y-m-d
             'item_id' => 'required|array|min:1',
             'item_id.*' => 'required|integer|exists:inventory_items,id',
@@ -70,6 +70,7 @@ class ItemSellController extends Controller
                     'user_id' => $request->staff_id ?? null, // Map 'staff_id' to 'user_id'
                     'reference_no' => $request->reference_no,
                     'sell_date' => $sellDate,
+                    'others_name' => $request->customer_name ?? null,
                     'description' => $request->description,
                     'item_id' => $itemId,
                     'total_quantity' => $request->quantity[$index],

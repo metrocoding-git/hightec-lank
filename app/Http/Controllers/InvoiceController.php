@@ -786,4 +786,28 @@ class InvoiceController extends Controller
         }
     }
 
+    /**
+     * Get return fee data for a specific invoice
+     */
+    public function getReturnFeeData($invoiceId)
+    {
+        try {
+            $returnFees = \App\Models\ReturnFee::with('returnUser')
+                ->where('invoice_id', $invoiceId)
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'return_fees' => $returnFees,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching return fee data: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching return fee data',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
 }

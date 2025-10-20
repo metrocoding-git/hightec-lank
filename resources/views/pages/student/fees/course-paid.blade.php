@@ -200,10 +200,10 @@
                                         <thead>
                                             <tr>
                                                 <th>@lang('common.sl')</th>
-                                                <th>@lang('fees.course_name')</th>
-                                                <th>@lang('fees.course_price')</th>
+                                                <th>Course Name</th>
+                                                <th>Course Paid</th>
                                                 <th>@lang('fees.paid_amount')</th>
-                                                <th>@lang('fees.due_amount')</th>
+                                                <th>Due Amount</th>
                                                 <th>@lang('common.action')</th>
                                             </tr>
                                         </thead>
@@ -284,8 +284,8 @@
 
             function addCourseRow(id, name, price) {
                 let paymentMethod = $('#paymentMethodName').val();
-                let paidAmountValue = (paymentMethod === 'Invoice') ? 0 : 0; // Default to 0, will be updated by user for other methods
-                let paidAmountDisabled = (paymentMethod === 'Invoice') ? 'disabled' : '';
+                let paidAmountValue = 0; // Default to 0 for all payment methods
+                let paidAmountDisabled = ''; // Enable paid amount input for all methods
 
                 let row = `<tr data-id="${id}">
                     <td class="sl">1</td>
@@ -311,6 +311,8 @@
                                 value="${paidAmountValue}"
                                 step="0.01"
                                 ${paidAmountDisabled}
+                                max="${price}"
+                                data-original-price="${price}"
                             >
                             <div class="input-group-append">
                                 <span class="input-group-text">.00</span>
@@ -371,7 +373,33 @@
             }
 
             // Event listeners for price and paid amount changes
-            $(document).on('input', '.course_price_input, .paid_amount_input', updatePaymentStatusAndDue);
+            $(document).on('input', '.course_price_input, .paid_amount_input', function() {
+                updatePaymentStatusAndDue();
+                validatePaidAmount();
+            });
+
+            // Validate paid amount doesn't exceed due amount
+            function validatePaidAmount() {
+                $('.paid_amount_input').each(function() {
+                    let paidAmountInput = $(this);
+                    let coursePriceInput = paidAmountInput.closest('tr').find('.course_price_input');
+                    let dueAmountDisplay = paidAmountInput.closest('tr').find('.due_amount_display');
+
+                    let coursePrice = parseFloat(coursePriceInput.val()) || 0;
+                    let paidAmount = parseFloat(paidAmountInput.val()) || 0;
+                    let dueAmount = parseFloat(dueAmountDisplay.val()) || 0;
+
+                    // Update max attribute to current course price
+                    paidAmountInput.attr('max', coursePrice);
+
+                    // Check if paid amount exceeds course price
+                    if (paidAmount > coursePrice) {
+                        paidAmountInput.val(coursePrice.toFixed(2));
+                        toastr.warning('Paid amount cannot exceed the course price');
+                        updatePaymentStatusAndDue();
+                    }
+                });
+            }
 
             // Remove course row
             $(document).on('click', '.remove_course_btn', function() {
@@ -399,8 +427,8 @@
                     dateRow.addClass('d-none');
                     uploadRow.removeClass('d-none');
 
-                    // Disable paid amount and set to 0 for Invoice
-                    $('.paid_amount_input').val(0).prop('disabled', true);
+                    // Enable paid amount for Invoice method (no longer disabled)
+                    $('.paid_amount_input').prop('disabled', false);
                     updatePaymentStatusAndDue(); // Recalculate due amount
                 } else {
                     bankSection.addClass('d-none');
@@ -460,6 +488,12 @@
                 }
                 if (isNaN(paidAmount) || paidAmount < 0) {
                     toastr.error('Paid amount must be a valid number (0 or greater)');
+                    return;
+                }
+
+                // Validate that paid amount doesn't exceed course price for non-Bank Transfer methods
+                if (paymentMethod !== 'Bank Transfer' && paidAmount > coursePrice) {
+                    toastr.error('Paid amount cannot exceed the course price');
                     return;
                 }
 

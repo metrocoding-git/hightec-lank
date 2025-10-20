@@ -113,7 +113,7 @@
                                             name="payment_method">
                                             <option value="not">@lang('fees.payment_method')</option>
                                             <option value="Cash">Cash</option>
-                                            <option value="Invoice">Invoice</option>
+                                            <option value="Invoice" selected>Invoice</option>
                                             <option value="Bank Transfer">Bank Transfer</option>
                                         </select>
                                     </div>
@@ -411,6 +411,24 @@
                 // No specific action needed here for payment status, as it's dynamic on backend
             });
 
+            // Validate payment price cannot be larger than amount (only for Cash and Invoice methods)
+            $(document).on('input', '.payment_input', function() {
+                let paymentMethod = $('#paymentMethodName').val();
+                let $row = $(this).closest('tr');
+                let amount = parseFloat($row.find('.price_input').val()) || 0;
+                let paymentPrice = parseFloat($(this).val()) || 0;
+
+                // Remove previous error styling
+                $(this).removeClass('is-invalid');
+                $row.find('.invalid-feedback').remove();
+
+                // Only validate for Cash and Invoice payment methods
+                if ((paymentMethod === 'Cash' || paymentMethod === 'Invoice') && paymentPrice > amount) {
+                    $(this).addClass('is-invalid');
+                    $(this).after('<div class="invalid-feedback">Payment price cannot be larger than amount</div>');
+                }
+            });
+
 
             function updateSerialNumbers() {
                 $('.allFeesTypes tr').each(function(index) {
@@ -576,6 +594,25 @@
                 if (invalidPrice) {
                     toastr.error('All added fee types must have a valid price greater than 0');
                     return;
+                }
+
+                // Validate payment price cannot be larger than amount (only for Cash and Invoice methods)
+                if (paymentMethod === 'Cash' || paymentMethod === 'Invoice') {
+                    let paymentPriceError = false;
+                    feeRows.each(function() {
+                        const amount = parseFloat($(this).find('.price_input').val()) || 0;
+                        const paymentPrice = parseFloat($(this).find('.payment_input').val()) || 0;
+
+                        if (paymentPrice > amount) {
+                            paymentPriceError = true;
+                            return false; // Exit .each early
+                        }
+                    });
+
+                    if (paymentPriceError) {
+                        toastr.error('Payment price cannot be larger than amount for any fee type');
+                        return;
+                    }
                 }
 
                 let formData = new FormData();

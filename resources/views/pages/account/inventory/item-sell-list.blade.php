@@ -57,8 +57,8 @@
                                                 <th>Sell Price</th>
                                                 <th>@lang('inventory.grand_total')</th>
                                                 <th>@lang('inventory.total_quantity')</th>
-                                                <th>@lang('inventory.paid')</th>
-                                                <th>@lang('inventory.balance') (Rs)</th>
+                                                {{-- <th>@lang('inventory.paid')</th>
+                                                <th>@lang('inventory.balance') (Rs)</th> --}}
                                                 <th>@lang('common.status')</th>
                                                 <th>@lang('common.action')</th>
                                             </tr>
@@ -70,14 +70,16 @@
                                                     <tr>
                                                         <td>{{ $key + 1 }}</td>
                                                         <td>{{ $value->reference_no }}</td>
-                                                        <td>{{ $value->role ? $value->role->role_name : 'N/A' }}</td>
+                                                        <td>{{ $value->role ? $value->role->role_name : 'Others' }}</td>
                                                         <td>
                                                             @if ($value->role_id == 2 && $value->student) {{-- Student Role --}}
                                                                 {{ $value->student->student_name }}
-                                                            @elseif ($value->role_id == 3 && $value->student) {{-- Parent Role (assuming guardian is the parent) --}}
-                                                                {{ $value->student->guardians_name ?? 'N/A' }}
-                                                            @elseif ($value->user) {{-- Staff/Other User Role --}}
+                                                            @elseif ($value->role_id == 0 && $value->others_name) {{-- Other/Customer Role --}}
+                                                                {{ $value->others_name }}
+                                                            @elseif ($value->role_id == 3 && $value->user) {{-- Staff Role --}}
                                                                 {{ $value->user->name }}
+                                                            @elseif ($value->role_id == 0 && !$value->others_name) {{-- Other but no name provided --}}
+                                                                Other Customer
                                                             @else
                                                                 N/A
                                                             @endif
@@ -103,8 +105,8 @@
 
                                                         <td>{{ number_format((float) $grandTotal, 2, '.', '') }}</td>
                                                         <td>{{ $value->total_quantity }}</td>
-                                                        <td>{{ number_format((float) $value->total_paid, 2, '.', '') }}</td>
-                                                        <td>{{ number_format((float) $value->total_due, 2, '.', '') }}</td>
+                                                        {{-- <td>{{ number_format((float) $value->total_paid, 2, '.', '') }}</td>
+                                                        <td>{{ number_format((float) $value->total_due, 2, '.', '') }}</td> --}}
                                                         <td>
                                                             @if ($paidStatus == 'P')
                                                                 <button class="primary-btn small bg-success text-white border-0">@lang('inventory.paid')</button>

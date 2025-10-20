@@ -158,7 +158,7 @@
                                                     </td>
                                                     <td>{{ $studentIntake->enrolled_at ? date('Y-m-d', strtotime($studentIntake->enrolled_at)) : '-' }}</td>
                                                     <td>
-                                                        <span class="badge {{ $studentIntake->status == 'pending' ? 'badge-success' : ($studentIntake->status == 'completed' ? 'badge-primary' : 'badge-warning') }}">
+                                                        <span class="badge {{ $studentIntake->status == 'pending' ? 'badge-success' : ($studentIntake->status == 'start' ? 'badge-info' : ($studentIntake->status == 'return' ? 'badge-warning' : 'badge-primary')) }}">
                                                             {{ ucfirst($studentIntake->status) }}
                                                         </span>
                                                     </td>
@@ -301,7 +301,7 @@
                                         Select Courses <span class="text-danger">*</span>
                                     </label>
                                     <select class="primary_select form-control{{ $errors->has('course_ids') ? ' is-invalid' : '' }}"
-                                            name="course_ids[]" id="modal_course_ids" multiple required>
+                                            name="course_ids[]" id="modal_course_ids"  required>
                                         <option value="">Select Courses</option>
                                         @if(isset($studentIntake) && isset($studentIntake->courses))
                                             @foreach($studentIntake->courses as $course)
@@ -340,18 +340,18 @@
                                     </label>
                                     <select  class="primary_select form-control{{ $errors->has('status') ? ' is-invalid' : '' }}"
                                             name="status" id="modal_status" required >
-                                        <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>
+                                        <option value="pending" {{ old('status', 'pending') == 'pending' ? 'selected' : '' }}>
                                             Pending
                                         </option>
-                                        {{-- <option value="assign" {{ old('status') == 'assign' ? 'selected' : '' }}>
-                                            Assign
+                                        <option value="start" {{ old('status') == 'start' ? 'selected' : '' }}>
+                                            Start
                                         </option>
-                                        <option value="completed" {{ old('status') == 'completed' ? 'selected' : '' }}>
-                                            Completed
+                                        <option value="return" {{ old('status') == 'return' ? 'selected' : '' }}>
+                                            Return
                                         </option>
-                                        <option value="dropped" {{ old('status') == 'dropped' ? 'selected' : '' }}>
-                                            Dropped
-                                        </option> --}}
+                                        <option value="complete" {{ old('status') == 'complete' ? 'selected' : '' }}>
+                                            Complete
+                                        </option>
                                     </select>
                                     @error('status')
                                         <span class="text-danger">{{ $message }}</span>

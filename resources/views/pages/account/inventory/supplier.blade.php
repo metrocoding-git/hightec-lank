@@ -139,7 +139,7 @@
                                             <div class="col-lg-12 mt-15">
                                                 <div class="primary_input">
                                                     <label class="primary_input_label" for="">@lang('inventory.contact_person_email')
-                                                        <span class="text-danger"> *</span></label>
+                                                        <span class="text-danger"></span></label>
                                                     <input oninput="emailCheck(this)"
                                                         class="primary_input_field form-control{{ $errors->has('contact_person_email') ? ' is-invalid' : '' }}"
                                                         type="email" name="contact_person_email" autocomplete="off"

@@ -14,8 +14,8 @@ class SupplierController extends Controller
     public function index()
     {
         //
-        $suppliers=Supplier::all();
-         return view('pages.account.inventory.supplier', compact('suppliers'));
+        $suppliers = Supplier::all();
+        return view('pages.account.inventory.supplier', compact('suppliers'));
 
     }
 
@@ -34,12 +34,11 @@ class SupplierController extends Controller
     {
         //
 
-          $request->validate([
+        $request->validate([
             'company_name' => 'required|string|max:255',
             'company_address' => 'required|string',
             'contact_person_name' => 'required|string|max:255',
             'contact_person_mobile' => 'required|string|max:20',
-            'contact_person_email' => 'required|email|unique:suppliers,contact_person_email',
         ]);
 
         Supplier::create($request->all());
@@ -61,7 +60,7 @@ class SupplierController extends Controller
     public function edit(Supplier $supplier, $id)
     {
         //
-         $suppliers=Supplier::all();
+        $suppliers = Supplier::all();
         $editData = Supplier::findOrFail($id);
         return view('pages.account.inventory.supplier', compact('editData', 'suppliers'));
     }
@@ -73,19 +72,18 @@ class SupplierController extends Controller
     {
         //
         {
-        $request->validate([
-            'company_name' => 'required|string|max:255',
-            'company_address' => 'required|string',
-            'contact_person_name' => 'required|string|max:255',
-            'contact_person_mobile' => 'required|string|max:20',
-            'contact_person_email' => 'required|email|unique:suppliers,contact_person_email,'.$id,
-        ]);
+            $request->validate([
+                'company_name' => 'required|string|max:255',
+                'company_address' => 'required|string',
+                'contact_person_name' => 'required|string|max:255',
+                'contact_person_mobile' => 'required|string|max:20',
+            ]);
 
-        $supplier = Supplier::findOrFail($id);
-        $supplier->update($request->all());
+            $supplier = Supplier::findOrFail($id);
+            $supplier->update($request->all());
 
-        return redirect()->back()->with('success', 'Supplier updated successfully!');
-    }
+            return redirect()->back()->with('success', 'Supplier updated successfully!');
+        }
     }
     /**
      * Remove the specified resource from storage.
@@ -93,7 +91,7 @@ class SupplierController extends Controller
     public function destroy(Supplier $supplier, $id)
     {
         //
-         $supplier = Supplier::findOrFail($id);
+        $supplier = Supplier::findOrFail($id);
         $supplier->delete();
 
         return redirect()->back()->with('success', 'Supplier deleted successfully!');
