@@ -74,10 +74,12 @@
                                                         <td>
                                                             @if ($value->role_id == 2 && $value->student) {{-- Student Role --}}
                                                                 {{ $value->student->student_name }}
-                                                            @elseif ($value->role_id == 0) {{-- Parent Role (assuming guardian is the parent) --}}
-                                                                {{ $value->student->guardians_name ?? 'N/A' }}
-                                                            @elseif ($value->user) {{-- Staff/Other User Role --}}
+                                                            @elseif ($value->role_id == 0 && $value->others_name) {{-- Other/Customer Role --}}
+                                                                {{ $value->others_name }}
+                                                            @elseif ($value->role_id == 3 && $value->user) {{-- Staff Role --}}
                                                                 {{ $value->user->name }}
+                                                            @elseif ($value->role_id == 0 && !$value->others_name) {{-- Other but no name provided --}}
+                                                                Other Customer
                                                             @else
                                                                 N/A
                                                             @endif
