@@ -517,12 +517,18 @@
                     // Check if course has expired
                     if (daysDifference > parseInt(expirationDate)) {
                         console.log('❌ Course has expired');
-                        toastr.error('This course has expired and cannot be issued to students. Course expired ' + (daysDifference - parseInt(expirationDate)) + ' days ago.');
+                        toastr.error('This course has expired and cannot be issued to students. Course expired ' + (daysDifference - parseInt(expirationDate)) + ' days ago.', '', {
+                            timeOut: 5000,
+                            extendedTimeOut: 1000
+                        });
                         $('#course_select').val('').niceSelect('update');
                         return;
                     } else {
                         console.log('✅ Course is valid');
-                        toastr.success('Course is valid and can be issued');
+                        toastr.success('Course is valid and can be issued', '', {
+                            timeOut: 5000,
+                            extendedTimeOut: 1000
+                        });
                     }
                 }
             });
