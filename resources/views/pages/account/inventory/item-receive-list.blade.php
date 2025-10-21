@@ -49,10 +49,12 @@
                                             <tr>
                                                 <th>@lang('common.sl')</th>
                                                 <th>@lang('inventory.reference_no')</th>
+                                                <th>@lang('inventory.item_name')</th>
                                                 <th>@lang('inventory.supplier_company_name')</th>
                                                 <th>@lang('common.date')</th>
+                                                <th>@lang('inventory.quantity')</th>
+                                                <th>@lang('inventory.unit_price')</th>
                                                 <th>@lang('inventory.grand_total')</th>
-                                                <th>@lang('inventory.total_quantity')</th>
                                                 <th>@lang('inventory.paid')</th>
                                                 <th>@lang('inventory.balance') (Rs)</th>
                                                 <th>@lang('common.action')</th>
@@ -63,12 +65,14 @@
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
                                                     <td>{{ $itemReceive->reference_no }}</td>
+                                                    <td>{{ optional($itemReceive->item)->item_name ?? 'N/A' }}</td>
                                                     <td>{{ optional($itemReceive->supplier)->company_name }}</td>
                                                     <td>{{ $itemReceive->receive_date }}</td>
-                                                    <td>{{ $itemReceive->sub_total }}</td>
                                                     <td>{{ $itemReceive->quantity }}</td>
-                                                    <td>{{ $itemReceive->total_paid }}</td>
-                                                    <td>{{ $itemReceive->sub_total - $itemReceive->total_paid }}</td>
+                                                    <td>{{ number_format($itemReceive->unit_price, 2) }}</td>
+                                                    <td>{{ number_format($itemReceive->sub_total, 2) }}</td>
+                                                    <td>{{ number_format($itemReceive->total_paid, 2) }}</td>
+                                                    <td>{{ number_format($itemReceive->sub_total - $itemReceive->total_paid, 2) }}</td>
                                                     <td>
                                                         <x-drop-down>
                                                             <a class="dropdown-item view-item-receive" href="#"
@@ -100,30 +104,137 @@
 
     {{-- View Modal --}}
     <div class="modal fade admin-query" id="viewItemReceiveModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">@lang('inventory.view_item_receive')</h4>
+                    <h4 class="modal-title">@lang('inventory.view_item_receive_details')</h4>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <div class="row">
+                    <!-- Item Information Section -->
+                    <div class="row mb-4">
                         <div class="col-lg-12">
-                            <p><strong>@lang('inventory.reference_no'):</strong> <span id="view_reference_no"></span></p>
-                            <p><strong>@lang('inventory.supplier_company_name'):</strong> <span id="view_supplier_name"></span></p>
-                            <p><strong>@lang('inventory.store_name'):</strong> <span id="view_store_name"></span></p>
-                            <p><strong>@lang('inventory.receive_date'):</strong> <span id="view_receive_date"></span></p>
-                            <p><strong>@lang('inventory.item_name'):</strong> <span id="view_item_name"></span></p>
-                            <p><strong>@lang('inventory.unit_price'):</strong> <span id="view_unit_price"></span></p>
-                            <p><strong>@lang('inventory.quantity'):</strong> <span id="view_quantity"></span></p>
-                            <p><strong>@lang('inventory.sub_total'):</strong> <span id="view_sub_total"></span></p>
-                            <p><strong>@lang('inventory.paid'):</strong> <span id="view_total_paid"></span></p>
-                            <p><strong>@lang('inventory.balance'):</strong> <span id="view_total_due"></span></p>
-                            <p><strong>@lang('inventory.payment_method'):</strong> <span id="view_payment_method"></span></p>
-                            <p><strong>@lang('common.description'):</strong> <span id="view_description"></span></p>
+                            <h5 class="text-primary mb-3">
+                                <i class="ti-package"></i> @lang('inventory.item_information')
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="info-card p-3 mb-3" style="background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff;">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1 text-muted">@lang('inventory.item_name')</h6>
+                                                <p class="mb-0 font-weight-bold" id="view_item_name" style="font-size: 16px;">-</p>
+                                            </div>
+                                            <i class="ti-package text-primary" style="font-size: 24px;"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-card p-3 mb-3" style="background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #28a745;">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1 text-muted">@lang('inventory.quantity')</h6>
+                                                <p class="mb-0 font-weight-bold text-success" id="view_quantity" style="font-size: 16px;">-</p>
+                                            </div>
+                                            <i class="ti-layers text-success" style="font-size: 24px;"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="mt-40 d-flex justify-content-end">
+
+                    <!-- Transaction Details Section -->
+                    <div class="row mb-4">
+                        <div class="col-lg-12">
+                            <h5 class="text-primary mb-3">
+                                <i class="ti-receipt"></i> @lang('inventory.transaction_details')
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <table class="table table-sm">
+                                        <tr>
+                                            <td><strong>@lang('inventory.reference_no'):</strong></td>
+                                            <td><span id="view_reference_no" class="badge badge-info"></span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>@lang('inventory.receive_date'):</strong></td>
+                                            <td><span id="view_receive_date"></span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>@lang('inventory.unit_price'):</strong></td>
+                                            <td><span id="view_unit_price" class="text-primary font-weight-bold"></span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>@lang('inventory.sub_total'):</strong></td>
+                                            <td><span id="view_sub_total" class="text-info font-weight-bold"></span></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <table class="table table-sm">
+                                        <tr>
+                                            <td><strong>@lang('inventory.payment_method'):</strong></td>
+                                            <td><span id="view_payment_method" class="badge badge-warning"></span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>@lang('inventory.paid'):</strong></td>
+                                            <td><span id="view_total_paid" class="text-success font-weight-bold"></span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>@lang('inventory.balance'):</strong></td>
+                                            <td><span id="view_total_due" class="text-danger font-weight-bold"></span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>@lang('common.status'):</strong></td>
+                                            <td><span id="view_status_badge" class="badge"></span></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Supplier & Store Information Section -->
+                    <div class="row mb-4">
+                        <div class="col-lg-12">
+                            <h5 class="text-primary mb-3">
+                                <i class="ti-info-circle"></i> @lang('inventory.supplier_store_info')
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="info-section p-3" style="background-color: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+                                        <h6 class="mb-2 text-warning">
+                                            <i class="ti-truck"></i> @lang('inventory.supplier_information')
+                                        </h6>
+                                        <p class="mb-1"><strong>@lang('inventory.supplier_company_name'):</strong> <span id="view_supplier_name"></span></p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-section p-3" style="background-color: #d4edda; border-radius: 8px; border-left: 4px solid #28a745;">
+                                        <h6 class="mb-2 text-success">
+                                            <i class="ti-home"></i> @lang('inventory.store_information')
+                                        </h6>
+                                        <p class="mb-1"><strong>@lang('inventory.store_name'):</strong> <span id="view_store_name"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description Section -->
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <h5 class="text-primary mb-3">
+                                <i class="ti-clipboard"></i> @lang('common.description')
+                            </h5>
+                            <div class="description-box p-3" style="background-color: #f8f9fa; border-radius: 8px; min-height: 60px;">
+                                <p id="view_description" class="mb-0 text-muted">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 d-flex justify-content-end">
                         <button type="button" class="primary-btn tr-bg" data-dismiss="modal">@lang('common.close')</button>
                     </div>
                 </div>
@@ -292,25 +403,47 @@
                         success: function(response) {
                             let itemReceive = response.itemReceive;
 
-                            $('#view_reference_no').text(itemReceive.reference_no);
-                            $('#view_supplier_name').text(itemReceive.supplier
-                                ?.company_name ?? 'N/A');
-                            $('#view_store_name').text(itemReceive.branch?.name ?? 'N/A');
-                            $('#view_receive_date').text(moment(itemReceive.receive_date)
-                                .format('MM/DD/YYYY'));
-                            $('#view_payment_method').text(itemReceive.payment_method);
+                            // Format currency values
+                            let unitPrice = parseFloat(itemReceive.unit_price || 0);
+                            let subTotal = parseFloat(itemReceive.sub_total || 0);
+                            let totalPaid = parseFloat(itemReceive.total_paid || 0);
+                            let balance = subTotal - totalPaid;
+
+                            // Determine payment status
+                            let statusBadge = '';
+                            if (balance === 0) {
+                                statusBadge = '<span class="badge badge-success">Paid</span>';
+                            } else if (totalPaid > 0) {
+                                statusBadge = '<span class="badge badge-warning">Partially Paid</span>';
+                            } else {
+                                statusBadge = '<span class="badge badge-danger">Unpaid</span>';
+                            }
+
+                            // Item Information Section
                             $('#view_item_name').text(itemReceive.item?.item_name ?? 'N/A');
-                            $('#view_unit_price').text(itemReceive.unit_price);
-                            $('#view_quantity').text(itemReceive.quantity);
-                            $('#view_sub_total').text(itemReceive.sub_total);
-                            $('#view_total_paid').text(itemReceive.total_paid);
-                            $('#view_total_due').text(itemReceive.sub_total - itemReceive
-                                .total_paid);
-                            $('#view_description').text(itemReceive.description);
+                            $('#view_quantity').text(itemReceive.quantity || '0');
+
+                            // Transaction Details Section
+                            $('#view_reference_no').text(itemReceive.reference_no || 'N/A');
+                            $('#view_receive_date').text(moment(itemReceive.receive_date).format('MM/DD/YYYY'));
+                            $('#view_unit_price').text('Rs ' + unitPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                            $('#view_sub_total').text('Rs ' + subTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                            $('#view_payment_method').text(itemReceive.payment_method || 'N/A');
+                            $('#view_total_paid').text('Rs ' + totalPaid.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                            $('#view_total_due').text('Rs ' + balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                            $('#view_status_badge').html(statusBadge);
+
+                            // Supplier & Store Information
+                            $('#view_supplier_name').text(itemReceive.supplier?.company_name ?? 'N/A');
+                            $('#view_store_name').text(itemReceive.branch?.name ?? 'N/A');
+
+                            // Description
+                            $('#view_description').text(itemReceive.description || 'No description available');
 
                             $('#viewItemReceiveModal').modal('show');
                         },
-                        error: function() {
+                        error: function(xhr) {
+                            console.error('Error response:', xhr.responseText);
                             toastr.error("Failed to fetch item receive details.");
                         }
                     });
