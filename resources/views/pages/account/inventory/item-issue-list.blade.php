@@ -36,7 +36,7 @@
                                         <tr>
                                             <th>ID</th>
                                             <th>@lang('inventory.item_name')</th>
-                                            <th>@lang('inventory.item_category')</th>
+                                            {{-- <th>@lang('inventory.item_category')</th> --}}
                                             <th>@lang('inventory.issue_to')</th>
                                             <th>@lang('inventory.issue_date')</th>
                                             <th>@lang('inventory.return_date')</th>
@@ -47,31 +47,49 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @if (isset($issuedItems))
-                                            @foreach ($issuedItems as $key => $value)
+                                        @if (isset($issuedBatches))
+                                            @foreach ($issuedBatches as $key => $batch)
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
-                                                    <td>{{ $value->item ? $value->item->item_name : '' }}</td>
-                                                    <td>{{ $value->category ? $value->category->name : '' }}</td>
                                                     <td>
-                                                        @if ($value->student_id && $value->student)
-                                                            {{ $value->student->student_name }}
-                                                        @elseif ($value->issue_to && $value->staff)
-                                                            {{ $value->staff->name }}
+                                                        @if ($batch->items->count() > 0)
+                                                            @foreach ($batch->items as $index => $item)
+                                                                {{ $item->item->item_name ?? 'N/A' }}
+                                                                @if (!$loop->last), @endif
+                                                            @endforeach
                                                         @else
-                                                            {{ $value->branch ? $value->branch->name : '' }}
+                                                            No Items
                                                         @endif
                                                     </td>
-                                                    <td data-sort="{{ strtotime($value->issue_date) }}">
-                                                        {{ $value->issue_date != '' ? date('m/d/Y', strtotime($value->issue_date)) : '' }}
-                                                    </td>
-                                                    <td data-sort="{{ strtotime($value->due_date) }}">
-                                                        {{ $value->due_date != '' ? date('m/d/Y', strtotime($value->due_date)) : '' }}
-                                                    </td>
-                                                    <td>{{ $value->quantity }}</td>
-                                                    <td hidden>{{ $value->description }}</td>
+                                                    {{-- <td>
+                                                        @if ($batch->items->count() > 0)
+                                                            @foreach ($batch->items as $index => $item)
+                                                                {{ $item->category->name ?? 'N/A' }}
+                                                                @if (!$loop->last), @endif
+                                                            @endforeach
+                                                        @else
+                                                            No Categories
+                                                        @endif
+                                                    </td> --}}
                                                     <td>
-                                                        @if ($value->issue_status == 'I')
+                                                        @if ($batch->student_id && $batch->student)
+                                                            {{ $batch->student->student_name }}
+                                                        @elseif ($batch->issue_to && $batch->staff)
+                                                            {{ $batch->staff->name }}
+                                                        @else
+                                                            {{ $batch->branch ? $batch->branch->name : '' }}
+                                                        @endif
+                                                    </td>
+                                                    <td data-sort="{{ strtotime($batch->issue_date) }}">
+                                                        {{ $batch->issue_date != '' ? date('m/d/Y', strtotime($batch->issue_date)) : '' }}
+                                                    </td>
+                                                    <td data-sort="{{ strtotime($batch->due_date) }}">
+                                                        {{ $batch->due_date != '' ? date('m/d/Y', strtotime($batch->due_date)) : '' }}
+                                                    </td>
+                                                    <td>{{ $batch->total_items ?? $batch->items->sum('quantity') }}</td>
+                                                    <td hidden>{{ $batch->description }}</td>
+                                                    <td>
+                                                        @if ($batch->issue_status == 'I')
                                                             <button
                                                                 class="primary-btn small bg-success text-white border-0">@lang('inventory.issued')</button>
                                                         @else
@@ -81,11 +99,11 @@
                                                     </td>
                                                     <td>
                                                         <x-drop-down>
-                                                            @if ($value->issue_status == 'I')
+                                                            @if ($batch->issue_status == 'I')
                                                                 <form action="{{ route('return-item') }}" method="POST">
                                                                     @csrf
                                                                     <input type="hidden" name="id"
-                                                                        value="{{ @$value->id }}">
+                                                                        value="{{ @$batch->id }}">
                                                                     <button type="submit"
                                                                         class="dropdown-item">@lang('inventory.return')</button>
                                                                 </form>
@@ -93,15 +111,15 @@
                                                                 <form action="{{ route('issue-item') }}" method="POST">
                                                                     @csrf
                                                                     <input type="hidden" name="id"
-                                                                        value="{{ @$value->id }}">
+                                                                        value="{{ @$batch->id }}">
                                                                     <button type="submit"
                                                                         class="dropdown-item">Issue</button>
                                                                 </form>
                                                             @endif
                                                             <a class="dropdown-item view-item-issue" href="#"
-                                                                data-id="{{ @$value->id }}">@lang('common.view')</a>
+                                                                data-id="{{ @$batch->id }}">@lang('common.view')</a>
                                                             <a class="dropdown-item"
-                                                                href="{{ route('item-issue-edit', @$value->id) }}">@lang('common.edit')</a>
+                                                                href="{{ route('item-issue-edit', @$batch->id) }}">@lang('common.edit')</a>
                                                         </x-drop-down>
                                                     </td>
                                                 </tr>
@@ -119,24 +137,22 @@
 
     <!-- Item Issue Details Modal -->
     <div class="modal fade admin-query" id="itemIssueDetailsModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">Item Issue Details</h4>
+                    <h4 class="modal-title">Item Issue Batch Details</h4>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body modal-info">
                     <div class="row">
                         <div class="col-lg-12">
-                            <table class="table table-bordered  table-hover">
+                            <!-- Batch Information -->
+                            <h5>Batch Information</h5>
+                            <table class="table table-bordered table-hover">
                                 <tbody>
                                     <tr>
-                                        <td><strong>@lang('inventory.item_name'):</strong></td>
-                                        <td id="modalItemName"></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>@lang('inventory.item_category'):</strong></td>
-                                        <td id="modalItemCategory"></td>
+                                        <td><strong>Batch ID:</strong></td>
+                                        <td id="modalBatchId"></td>
                                     </tr>
                                     <tr>
                                         <td><strong>@lang('inventory.issue_to'):</strong></td>
@@ -151,10 +167,6 @@
                                         <td id="modalReturnDate"></td>
                                     </tr>
                                     <tr>
-                                        <td><strong>@lang('inventory.quantity'):</strong></td>
-                                        <td id="modalQuantity"></td>
-                                    </tr>
-                                    <tr>
                                         <td><strong>@lang('common.description'):</strong></td>
                                         <td id="modalDescription"></td>
                                     </tr>
@@ -164,6 +176,24 @@
                                     </tr>
                                 </tbody>
                             </table>
+
+                            <!-- Items in Batch -->
+                            <h5>Items in this Batch</h5>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Item Name</th>
+                                            <th>Category</th>
+                                            <th>Quantity</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="modalBatchItems">
+                                        <!-- Items will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -198,14 +228,51 @@
             var id = $(this).data('id');
             var row = $(this).closest('tr');
 
-            $('#modalItemName').text(row.find('td:eq(1)').text());
-            $('#modalItemCategory').text(row.find('td:eq(2)').text());
+            // Set basic batch information from the row
+            $('#modalBatchId').text(id);
             $('#modalIssueTo').text(row.find('td:eq(3)').text());
             $('#modalIssueDate').text(row.find('td:eq(4)').text());
             $('#modalReturnDate').text(row.find('td:eq(5)').text());
-            $('#modalQuantity').text(row.find('td:eq(6)').text());
             $('#modalDescription').text(row.find('td:eq(7)').text());
             $('#modalStatus').text(row.find('td:eq(8)').text());
+
+            // Clear previous items
+            $('#modalBatchItems').empty();
+
+            // Show loading
+            $('#modalBatchItems').html('<tr><td colspan="4" class="text-center">Loading items...</td></tr>');
+
+            // Fetch batch details with items via AJAX
+            $.ajax({
+                url: '{{ route("item-issue.get-batch-details", ":id") }}'.replace(':id', id),
+                type: 'GET',
+                success: function(data) {
+                    console.log('Batch details received:', data);
+
+                    if (data && data.items) {
+                        var itemsHtml = '';
+                        if (data.items.length > 0) {
+                            data.items.forEach(function(item, index) {
+                                itemsHtml += '<tr>' +
+                                    '<td>' + (index + 1) + '</td>' +
+                                    '<td>' + (item.item_name || 'N/A') + '</td>' +
+                                    '<td>' + (item.category_name || 'N/A') + '</td>' +
+                                    '<td>' + (item.quantity || 0) + '</td>' +
+                                    '</tr>';
+                            });
+                        } else {
+                            itemsHtml = '<tr><td colspan="4" class="text-center">No items found in this batch</td></tr>';
+                        }
+                        $('#modalBatchItems').html(itemsHtml);
+                    } else {
+                        $('#modalBatchItems').html('<tr><td colspan="4" class="text-center text-danger">Error loading batch items</td></tr>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching batch details:', error);
+                    $('#modalBatchItems').html('<tr><td colspan="4" class="text-center text-danger">Error: ' + error + '</td></tr>');
+                }
+            });
 
             $('#itemIssueDetailsModal').modal('show');
         });
