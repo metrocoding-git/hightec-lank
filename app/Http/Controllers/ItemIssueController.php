@@ -2,20 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Models\Role;
+use App\Models\User;
 use App\Models\Branch;
 use App\Models\ItemIssue;
-use App\Models\Role;
+use App\Models\ItemIssueBatch;
+use App\Models\ItemIssueItem;
 use App\Models\Category;
 use App\Models\Inventory_item;
 use App\Models\Student;
-use App\Models\User;
-use App\Models\Course; // Assuming Course model for classes
-use App\Models\Intake; // Assuming Intake model for sections
-use App\Models\FeeInvoice; // Fee invoice model
-use Illuminate\Http\Request;
-use Exception;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use App\Models\Course;
+use App\Models\Intake;
+use App\Models\FeeInvoice;
 
 class ItemIssueController extends Controller
 {
@@ -43,11 +45,11 @@ class ItemIssueController extends Controller
     }
     public function issueListView(){
         try {
-            $issuedItems = ItemIssue::with(['item', 'category', 'student', 'staff', 'branch'])
+            $issuedBatches = ItemIssueBatch::with(['items.item', 'items.category', 'student', 'staff', 'branch'])
                 ->where('active_status', 1)
                 ->get();
 
-            return view('pages.account.inventory.item-issue-list', compact('issuedItems'));
+            return view('pages.account.inventory.item-issue-list', compact('issuedBatches'));
         } catch (Exception $e) {
             return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
         }
@@ -55,57 +57,109 @@ class ItemIssueController extends Controller
 
     public function saveItemIssueData(Request $request)
     {
+        // Debug: Log the request data
+        Log::info('=== saveItemIssueData CALLED ===');
+        Log::info('Request data: ' . json_encode($request->all()));
+
+        // Debug: Check what categories exist
+        $existingCategories = Category::pluck('id', 'name')->toArray();
+        Log::info('Existing categories: ' . json_encode($existingCategories));
+
+        // Debug: Check what items exist
+        $existingItems = Inventory_item::pluck('id', 'item_name')->toArray();
+        Log::info('Existing items: ' . json_encode($existingItems));
+
         $request->validate([
             'branch_id' => 'required',
             'issue_date' => 'required|date',
             'due_date' => 'required|date',
-            'issue_to' => 'nullable|exists:users,id', // For staff
             'student_id' => 'nullable|exists:students,id', // For students
             'intake_id' => 'nullable|exists:intakes,id',
             'course_id' => 'nullable|exists:courses,id',
+            'staff_id' => 'nullable|exists:users,id', // For staff
             'items' => 'required|array|min:1', // Ensure at least one item is present
             'items.*.item_id' => 'required|exists:inventory_items,id',
             'items.*.item_category_id' => 'required|exists:categories,id',
             'items.*.quantity' => 'required|integer|min:1',
+        ], [
+            'items.*.item_category_id.exists' => 'The selected category ID is invalid. Available categories: ' . implode(', ', array_keys($existingCategories)),
+            'items.*.item_id.exists' => 'The selected item ID is invalid. Available items: ' . implode(', ', array_keys($existingItems)),
         ]);
 
         try {
             DB::beginTransaction();
 
-            foreach ($request->items as $itemData) {
-                $itemIssue = new ItemIssue();
-                $itemIssue->branch_id = $request->branch_id;
-                $itemIssue->item_category_id = $itemData['item_category_id'];
-                $itemIssue->item_id = $itemData['item_id'];
-                $itemIssue->issue_date = date('Y-m-d', strtotime($request->issue_date));
-                $itemIssue->due_date = date('Y-m-d', strtotime($request->due_date));
-                $itemIssue->quantity = $itemData['quantity'];
-                $itemIssue->description = $request->description; // Overall description
-                $itemIssue->issue_status = 'I'; // Issued
-                $itemIssue->active_status = 1;
+            Log::info('Processing ' . count($request->items) . ' items');
 
-                // Check if student is selected or staff
-                if ($request->student_id) {
-                    $itemIssue->student_id = $request->student_id;
-                    $itemIssue->course_id = $request->course_id;
-                    $itemIssue->intake_id = $request->intake_id;
-                    $itemIssue->issue_to = null; // Staff ID should be null for students
-                } else {
-                    $itemIssue->issue_to = $request->staff_id;
-                    $itemIssue->student_id = null;
-                    $itemIssue->course_id = null;
-                    $itemIssue->intake_id = null;
-                }
+            // Create the main batch record
+            $batch = new ItemIssueBatch();
+            $batch->branch_id = $request->branch_id;
+            $batch->issue_date = date('Y-m-d', strtotime($request->issue_date));
+            $batch->due_date = date('Y-m-d', strtotime($request->due_date));
+            $batch->description = $request->description;
+            $batch->issue_status = 'I'; // Issued
+            $batch->active_status = 1;
 
-                $itemIssue->save();
+            // Check if student is selected or staff
+            if ($request->student_id) {
+                $batch->student_id = $request->student_id;
+                $batch->course_id = $request->course_id;
+                $batch->intake_id = $request->intake_id;
+                $batch->issue_to = null; // Staff ID should be null for students
+            } else {
+                $batch->issue_to = $request->staff_id;
+                $batch->student_id = null;
+                $batch->course_id = null;
+                $batch->intake_id = null;
             }
 
+            $batch->save();
+            Log::info('Batch created with ID: ' . $batch->id);
+
+            $savedItems = [];
+            foreach ($request->items as $index => $itemData) {
+                Log::info('Processing item ' . ($index + 1) . ': ' . json_encode($itemData));
+
+                // Validate that category_id and item_id exist and match
+                $category = Category::find($itemData['item_category_id']);
+                $item = Inventory_item::find($itemData['item_id']);
+
+                if (!$category) {
+                    Log::error('Category not found: ' . $itemData['item_category_id']);
+                    throw new Exception('Category not found: ' . $itemData['item_category_id']);
+                }
+
+                if (!$item) {
+                    Log::error('Item not found: ' . $itemData['item_id']);
+                    throw new Exception('Item not found: ' . $itemData['item_id']);
+                }
+
+                // Verify item belongs to the selected category
+                if ($item->item_category_id != $itemData['item_category_id']) {
+                    Log::error('Item does not belong to selected category. Item: ' . $item->id . ', Category: ' . $item->item_category_id . ', Selected Category: ' . $itemData['item_category_id']);
+                    throw new Exception('Item does not belong to the selected category');
+                }
+
+                // Create item record within the batch
+                $batchItem = new ItemIssueItem();
+                $batchItem->batch_id = $batch->id;
+                $batchItem->item_category_id = $itemData['item_category_id'];
+                $batchItem->item_id = $itemData['item_id'];
+                $batchItem->quantity = $itemData['quantity'];
+                $batchItem->save();
+
+                $savedItems[] = $batchItem->id;
+                Log::info('Batch item saved with ID: ' . $batchItem->id);
+            }
 
             DB::commit();
+            Log::info('All items saved successfully. Batch ID: ' . $batch->id . ', Item IDs: ' . implode(', ', $savedItems));
 
-            return redirect()->back()->with('success', 'Items issued successfully.');
+            return redirect()->back()->with('success', 'Items issued successfully. Total items: ' . count($savedItems) . ', Batch ID: ' . $batch->id);
         } catch (Exception $e) {
             DB::rollBack();
+            Log::error('Error saving item issue: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
         }
     }
@@ -205,20 +259,20 @@ class ItemIssueController extends Controller
     public function IssueItem(Request $request)
     {
         $request->validate([
-            'id' => 'required|exists:item_issues,id',
+            'id' => 'required|exists:item_issue_batches,id',
         ]);
 
         try {
             DB::beginTransaction();
 
-            $itemIssue = ItemIssue::findOrFail($request->id);
-            $itemIssue->issue_status = 'I'; // Returned
-            // $itemIssue->return_date = date('Y-m-d'); // Set return date to today
-            $itemIssue->save();
+            $batch = ItemIssueBatch::findOrFail($request->id);
+            $batch->issue_status = 'I'; // Issued
+            // $batch->return_date = date('Y-m-d'); // Set return date to today
+            $batch->save();
 
             DB::commit();
 
-            return redirect()->route('item-issue')->with('success', 'Item issued successfully.');
+            return redirect()->route('item-issue-list')->with('success', 'Batch issued successfully.');
         } catch (Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
@@ -227,20 +281,20 @@ class ItemIssueController extends Controller
     public function returnItem(Request $request)
     {
         $request->validate([
-            'id' => 'required|exists:item_issues,id',
+            'id' => 'required|exists:item_issue_batches,id',
         ]);
 
         try {
             DB::beginTransaction();
 
-            $itemIssue = ItemIssue::findOrFail($request->id);
-            $itemIssue->issue_status = 'R'; // Returned
-            // $itemIssue->return_date = date('Y-m-d'); // Set return date to today
-            $itemIssue->save();
+            $batch = ItemIssueBatch::findOrFail($request->id);
+            $batch->issue_status = 'R'; // Returned
+            // $batch->return_date = date('Y-m-d'); // Set return date to today
+            $batch->save();
 
             DB::commit();
 
-            return redirect()->route('item-issue')->with('success', 'Item returned successfully.');
+            return redirect()->route('item-issue-list')->with('success', 'Batch returned successfully.');
         } catch (Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
@@ -443,6 +497,65 @@ class ItemIssueController extends Controller
             return response()->json($coursesWithDates);
         } catch (Exception $e) {
             Log::error('Error in getCoursesByIntakeAndStudent: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function getBatchDetails(Request $request, $batchId)
+    {
+        try {
+            Log::info('=== getBatchDetails CALLED ===');
+            Log::info('Batch ID: ' . $batchId);
+
+            // Get batch with all related items and their relationships
+            $batch = ItemIssueBatch::with([
+                'items' => function($query) {
+                    $query->with(['item', 'category']);
+                },
+                'student',
+                'staff',
+                'branch'
+            ])->find($batchId);
+
+            if (!$batch) {
+                Log::warning('Batch not found: ' . $batchId);
+                return response()->json(['error' => 'Batch not found'], 404);
+            }
+
+            Log::info('Batch found with ' . $batch->items->count() . ' items');
+
+            // Format items for display
+            $formattedItems = [];
+            foreach ($batch->items as $item) {
+                $formattedItems[] = [
+                    'item_name' => $item->item ? $item->item->item_name : 'N/A',
+                    'category_name' => $item->category ? $item->category->name : 'N/A',
+                    'quantity' => $item->quantity,
+                    'item_id' => $item->item_id,
+                    'category_id' => $item->item_category_id,
+                ];
+            }
+
+            $batchData = [
+                'id' => $batch->id,
+                'issue_date' => $batch->issue_date,
+                'due_date' => $batch->due_date,
+                'description' => $batch->description,
+                'issue_status' => $batch->issue_status,
+                'status_text' => $batch->issue_status === 'I' ? 'Issued' : 'Returned',
+                'student_name' => $batch->student ? $batch->student->student_name : 'N/A',
+                'staff_name' => $batch->staff ? $batch->staff->name : 'N/A',
+                'branch_name' => $batch->branch ? $batch->branch->name : 'N/A',
+                'total_items' => $batch->items->sum('quantity'),
+                'items' => $formattedItems
+            ];
+
+            Log::info('Batch data prepared: ' . json_encode($batchData));
+
+            return response()->json($batchData);
+        } catch (Exception $e) {
+            Log::error('Error in getBatchDetails: ' . $e->getMessage());
             Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
         }

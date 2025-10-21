@@ -120,7 +120,9 @@ Route::controller(AddStudentController::class)->prefix('student/student-info')->
 });
 
 // Student Intake Management Routes
-Route::controller(AddStudentController::class)->prefix('student/student-info')->middleware(['permission'])->group(function () {
+Route::controller(AddStudentController::class)->prefix('student/student-info')
+// ->middleware(['permission'])
+->group(function () {
     Route::get('student-add-intake', 'studentAddIntakeWithCourses')->name('student.add-intake.index');
     Route::post('student-add-intake', 'storeStudentIntakeWithCourses')->name('student.add-intake-with-courses.store');
     Route::get('student-add-intake/{id}/edit', 'editStudentIntake')->name('student.add-intake.edit');
@@ -131,6 +133,8 @@ Route::controller(AddStudentController::class)->prefix('student/student-info')->
     Route::post('student-add-intake/search', 'searchStudentIntake')->name('student.add-intake.search');
     Route::get('student-add-intake/get-intakes/{branchId}', 'getSearchIntakesByBranch')->name('student.add-intake.get-intakes')->withoutMiddleware(['csrf', 'permission']);
     Route::get('student-add-intake/get-courses/{intakeId}', 'getSearchCoursesByIntake')->name('student.add-intake.get-courses')->withoutMiddleware(['csrf', 'permission']);
+    // Status update for Student Intake
+    Route::post('student-add-intake/{id}/update-status', 'updateStatus')->name('student.add-intake.update-status');
 });
 
 Route::controller(HomeController::class)->middleware(['permission'])->group(callback: function () {
@@ -227,6 +231,7 @@ Route::controller(ItemIssueController::class)->middleware(['permission'])->group
     Route::get('account/inventory/get-student-fee-data/{studentId}', 'getStudentFeeData')->name('item-issue.get-student-fee-data')->withoutMiddleware(['csrf', 'permission']);
     Route::get('item-issue/get-student-details/{studentId}', 'getStudentDetails')->name('item-issue.get-student-details')->withoutMiddleware(['csrf', 'permission']);
     Route::get('item-issue/get-courses-by-intake-and-student/{intakeId}/{studentId}', 'getCoursesByIntakeAndStudent')->name('item-issue.get-courses-by-intake-and-student')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('item-issue/get-batch-details/{batchId}', 'getBatchDetails')->name('item-issue.get-batch-details')->withoutMiddleware(['csrf', 'permission']);
 
 });
 Route::controller(LoginController::class)->group(function () {

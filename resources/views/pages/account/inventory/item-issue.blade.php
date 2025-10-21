@@ -73,7 +73,7 @@
                                
 
                                 {{-- Staff Dropdown --}}
-                                <div class="col-lg-12 mb-15">
+                                {{-- <div class="col-lg-12 mb-15">
                                     <label class="primary_input_label">Issue To</label>
                                     <select class="primary_select form-control" name="staff_id" id="staff_select">
                                         <option value="">Select Staff</option>
@@ -81,7 +81,7 @@
                                             <option value="{{ $staff->id }}">{{ $staff->name }}</option>
                                         @endforeach
                                     </select>
-                                </div>
+                                </div> --}}
 
                                 {{-- Issue Date --}}
                                 <div class="col-lg-12 mb-15">
@@ -118,9 +118,9 @@
                                 <select class="primary_select form-control" id="item_category_item_select">
                                     <option value="">Select Category / Item *</option>
                                     @foreach ($categories as $category)
-                                        <option data-type="category" class="font-weight-bolder">{{ $category->name }}</option>
+                                        <option value="cat_{{ $category->id }}" data-type="category" data-category-id="{{ $category->id }}" data-category-name="{{ $category->name }}" class="font-weight-bolder">{{ $category->name }}</option>
                                         @foreach ($inventoryItems->where('item_category_id', $category->id) as $item)
-                                            <option value="{{ $item->id }}" data-type="item" data-category-id="{{ $category->id }}" data-category-name="{{ $category->name }}" data-item-name="{{ $item->item_name }}">
+                                            <option value="{{ $item->id }}" data-type="item" data-category-id="{{ $category->id }}" data-category-name="{{ $category->name }}" data-item-name="{{ $item->item_name }}" data-item-price="{{ $item->item_price ?? '0' }}">
                                                 &nbsp;&nbsp;&nbsp;{{ $item->item_name }}
                                             </option>
                                         @endforeach
@@ -137,6 +137,7 @@
                                                 <th>@lang('common.sl')</th>
                                                 <th>@lang('inventory.category')</th>
                                                 <th>@lang('inventory.item')</th>
+                                                <th>@lang('inventory.item_price')</th>
                                                 <th>@lang('inventory.quantity')</th>
                                                 <th>@lang('common.action')</th>
                                             </tr>
@@ -149,9 +150,9 @@
                                                     <td class="category_name">{{ $editData->category->name ?? 'N/A' }}</td>
                                                     <td class="item_name">{{ $editData->item->item_name ?? 'N/A' }}</td>
                                                     <td>
-                                                        <input type="number" name="items[{{ $editData->item_id }}][quantity]" class="primary_input_field form-control item_quantity" value="{{ $editData->quantity }}" min="1" required>
-                                                        <input type="hidden" name="items[{{ $editData->item_id }}][item_id]" value="{{ $editData->item_id }}">
-                                                        <input type="hidden" name="items[{{ $editData->item_id }}][item_category_id]" value="{{ $editData->item_category_id }}">
+                                                        <input type="number" name="items[0][quantity]" class="primary_input_field form-control item_quantity" value="{{ $editData->quantity }}" min="1" required>
+                                                        <input type="hidden" name="items[0][item_id]" value="{{ $editData->item_id }}">
+                                                        <input type="hidden" name="items[0][item_category_id]" value="{{ $editData->item_category_id }}">
                                                     </td>
                                                     <td><button type="button" class="primary-btn small bg-danger text-white border-0 remove_item_btn">Delete</button></td>
                                                 </tr>
@@ -163,7 +164,7 @@
 
                             {{-- Save Button --}}
                             <div class="col-lg-12 text-center mt-4">
-                                <button type="submit" class="primary-btn fix-gr-bg">
+                                <button type="submit" class="primary-btn fix-gr-bg" onclick="debugFormData()">
                                     <span class="ti-check"></span> @lang('common.save')
                                 </button>
                             </div>
@@ -259,40 +260,115 @@
                 let selectedOption = $(this).find("option:selected");
                 let type = selectedOption.data('type');
 
-                if (!selectedOption.val() || type === 'category') {
+                if (!selectedOption.val()) {
                     $(this).val('').niceSelect('update');
                     return;
                 }
 
-                let itemId = selectedOption.val();
-                let itemName = selectedOption.data('item-name');
-                let categoryId = selectedOption.data('category-id');
-                let categoryName = selectedOption.data('category-name');
+                if (type === 'category') {
+                    // Handle category selection - select all items in category
+                    let categoryValue = selectedOption.val();
+                    let categoryId = selectedOption.data('category-id'); // Get actual category ID from data attribute
+                    let categoryName = selectedOption.data('category-name') || selectedOption.text();
 
-                // Clear previous selections before adding a new one
-                addedItemTypes.clear();
-                $('.allIssuedItems').empty();
+                    console.log('🔍 Category selected:', categoryName, 'Value:', categoryValue, 'ID:', categoryId);
+                    console.log('🔍 Available options in dropdown:');
+                    $('#item_category_item_select option').each(function() {
+                        console.log('  -', $(this).val(), $(this).data('type'), $(this).data('category-id'), $(this).text());
+                    });
 
-                addItemRow(itemId, itemName, categoryId, categoryName);
-                addedItemTypes.add(itemId);
+                    // Find all items in this category by data attribute
+                    let itemsFound = 0;
+                    $(`#item_category_item_select option[data-category-id="${categoryId}"][data-type="item"]`).each(function() {
+                        let itemId = $(this).val();
+                        let itemName = $(this).data('item-name');
+
+                        console.log('📦 Found item in category:', itemName, 'ID:', itemId, 'Category ID:', $(this).data('category-id'));
+
+                        // Only add if not already added
+                        if (!addedItemTypes.has(itemId)) {
+                            let itemPrice = $(this).data('item-price') || '0';
+                            addItemRow(itemId, itemName, categoryId, categoryName, itemPrice);
+                            addedItemTypes.add(itemId);
+                            itemsFound++;
+                        }
+                    });
+
+                    console.log('✅ Total items found in category:', itemsFound);
+
+                    if (itemsFound > 0) {
+                        toastr.success(`All ${itemsFound} items from category "${categoryName}" have been selected`, '', {
+                            timeOut: 3000,
+                            extendedTimeOut: 1000
+                        });
+                    } else {
+                        toastr.warning(`No items found in category "${categoryName}"`, '', {
+                            timeOut: 3000,
+                            extendedTimeOut: 1000
+                        });
+                    }
+                } else {
+                    // Handle individual item selection
+                    let itemId = selectedOption.val();
+                    let itemName = selectedOption.data('item-name');
+                    let categoryId = selectedOption.data('category-id');
+                    let categoryName = selectedOption.data('category-name');
+
+                    console.log('📦 Individual item selected:', itemName, 'ID:', itemId, 'Category:', categoryName);
+
+                    // Only add if not already added
+                    if (!addedItemTypes.has(itemId)) {
+                        let itemPrice = selectedOption.data('item-price') || '0';
+                        addItemRow(itemId, itemName, categoryId, categoryName, itemPrice);
+                        addedItemTypes.add(itemId);
+
+                        toastr.success(`Item "${itemName}" has been added to the selection`, '', {
+                            timeOut: 2000,
+                            extendedTimeOut: 500
+                        });
+                    } else {
+                        toastr.warning(`Item "${itemName}" is already selected`, '', {
+                            timeOut: 2000,
+                            extendedTimeOut: 500
+                        });
+                    }
+                }
 
                 $(this).val('').niceSelect('update');
             });
 
-            function addItemRow(itemId, itemName, categoryId, categoryName) {
+            function addItemRow(itemId, itemName, categoryId, categoryName, itemPrice = '0') {
+                // Use a simple index for array keys to avoid conflicts
+                let itemIndex = $('.allIssuedItems tr').length;
+
+                // Format price for display
+                let displayPrice = itemPrice ? 'Rs.' + parseFloat(itemPrice).toFixed(2) : 'N/A';
+
                 let row = `<tr data-id="${itemId}">
                     <td class="sl"></td>
                     <td class="category_name">${categoryName}</td>
                     <td class="item_name">${itemName}</td>
+                    <td class="item_price">${displayPrice}</td>
                     <td>
-                        <input type="number" name="items[${itemId}][quantity]" class="primary_input_field form-control item_quantity" value="1" min="1" required>
-                        <input type="hidden" name="items[${itemId}][item_id]" value="${itemId}">
-                        <input type="hidden" name="items[${itemId}][item_category_id]" value="${categoryId}">
+                        <input type="number" name="items[${itemIndex}][quantity]" class="primary_input_field form-control item_quantity" value="1" min="1" required>
+                        <input type="hidden" name="items[${itemIndex}][item_id]" value="${itemId}">
+                        <input type="hidden" name="items[${itemIndex}][item_category_id]" value="${categoryId}">
+                        <input type="hidden" name="items[${itemIndex}][item_price]" value="${itemPrice}">
                     </td>
                     <td><button type="button" class="primary-btn small bg-danger text-white border-0 remove_item_btn">Delete</button></td>
                 </tr>`;
                 $('.allIssuedItems').append(row);
                 updateSerialNumbers();
+
+                console.log('✅ Added item row:', {
+                    index: itemIndex,
+                    itemId: itemId,
+                    itemName: itemName,
+                    categoryId: categoryId,
+                    categoryName: categoryName,
+                    itemPrice: itemPrice,
+                    displayPrice: displayPrice
+                });
             }
 
             // Delete row
@@ -302,6 +378,73 @@
                 $(this).closest('tr').remove();
                 updateSerialNumbers();
             });
+
+            // Debug function to log form data before submission
+            function debugFormData() {
+                console.log('🔍 === FORM DEBUG DATA ===');
+
+                // Collect all form data
+                let formData = new FormData(document.querySelector('form'));
+                let formObject = {};
+
+                for (let [key, value] of formData.entries()) {
+                    if (key.startsWith('items[')) {
+                        // Handle array fields
+                        if (!formObject[key]) {
+                            formObject[key] = value;
+                        }
+                    } else {
+                        formObject[key] = value;
+                    }
+                }
+
+                console.log('📋 Form Data Object:', formObject);
+
+                // Specifically check items array
+                let items = [];
+                $('input[name*="[item_id]"]').each(function(index) {
+                    let itemId = $(this).val();
+                    let row = $(this).closest('tr');
+                    let categoryId = row.find('input[name*="[item_category_id]"]').val();
+                    let quantity = row.find('input[name*="[quantity]"]').val();
+
+                    items.push({
+                        index: index,
+                        item_id: itemId,
+                        item_category_id: categoryId,
+                        quantity: quantity,
+                        category_name: row.find('.category_name').text(),
+                        item_name: row.find('.item_name').text()
+                    });
+
+                    console.log(`Item ${index}:`, {
+                        item_id: itemId,
+                        item_category_id: categoryId,
+                        quantity: quantity
+                    });
+                });
+
+                console.log('📦 Items Array:', items);
+                console.log('🔍 === END FORM DEBUG ===');
+
+                // Show alert with item details for user to see
+                if (items.length > 0) {
+                    let debugInfo = 'Form Debug Info:\n\n';
+                    debugInfo += `Total Items: ${items.length}\n\n`;
+                    items.forEach((item, index) => {
+                        debugInfo += `Item ${index + 1}:\n`;
+                        debugInfo += `  - Item ID: ${item.item_id}\n`;
+                        debugInfo += `  - Category ID: ${item.item_category_id}\n`;
+                        debugInfo += `  - Quantity: ${item.quantity}\n`;
+                        debugInfo += `  - Item Name: ${item.item_name}\n`;
+                        debugInfo += `  - Category Name: ${item.category_name}\n\n`;
+                    });
+
+                    alert(debugInfo);
+                } else {
+                    alert('No items selected! Please select at least one item.');
+                }
+            }
 
             // Handle student change - Populate Branch, Intake, Course, and Load fee data
             $('#student_select').on('change', function() {

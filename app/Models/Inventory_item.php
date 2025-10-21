@@ -8,7 +8,7 @@ class Inventory_item extends Model
 {
     //
     protected $table = 'inventory_items';
-     protected $fillable = ['item_name', 'item_category_id', 'description'];
+     protected $fillable = ['item_name', 'item_category_id', 'item_price', 'description'];
 
     public function category()
     {

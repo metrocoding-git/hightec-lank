@@ -656,4 +656,64 @@ class AddStudentController extends Controller
             ->get();
         return response()->json(['courses' => $courses]);
     }
+
+    /**
+     * Update the status of a student intake enrollment
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        try {
+            // Validate the request
+            $validatedData = $request->validate([
+                'status' => 'required|in:pending,start,return,complete'
+            ]);
+
+            // Find the student intake record
+            $studentIntake = DB::table('student_intakes')->where('id', $id)->first();
+
+            if (!$studentIntake) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Student intake enrollment not found.'
+                ], 404);
+            }
+
+            // Update the status in student_intakes table
+            DB::table('student_intakes')
+                ->where('id', $id)
+                ->update([
+                    'status' => $validatedData['status'],
+                    'updated_at' => now()
+                ]);
+
+            // Also update the status in related student_courses records
+            DB::table('student_courses')
+                ->where('student_id', $studentIntake->student_id)
+                ->whereIn('course_id', function($query) use ($studentIntake) {
+                    $query->select('course_id')
+                          ->from('course_intake')
+                          ->where('intake_id', $studentIntake->intake_id);
+                })
+                ->update([
+                    'status' => $validatedData['status'],
+                    'updated_at' => now()
+                ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status updated successfully.'
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid status value provided.'
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update status. Please try again.'
+            ], 500);
+        }
+    }
 }

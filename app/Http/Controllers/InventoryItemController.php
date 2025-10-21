@@ -39,12 +39,14 @@ class InventoryItemController extends Controller
         $request->validate([
             'item_name' => 'required|string|max:255',
             'category_name' => 'required|exists:categories,id',
+            'item_price' => 'nullable|numeric|min:0',
             'description' => 'nullable|string',
         ]);
 
         Inventory_item::create([
             'item_name' => $request->item_name,
             'item_category_id' => $request->category_name,
+            'item_price' => $request->item_price,
             'description' => $request->description,
         ]);
 
@@ -80,6 +82,7 @@ class InventoryItemController extends Controller
         $request->validate([
             'item_name' => 'required|string|max:255',
             'category_name' => 'required|exists:categories,id',
+            'item_price' => 'nullable|numeric|min:0',
             'description' => 'nullable|string',
         ]);
 
@@ -87,10 +90,11 @@ class InventoryItemController extends Controller
         $item->update([
             'item_name' => $request->item_name,
             'item_category_id' => $request->category_name,
+            'item_price' => $request->item_price,
             'description' => $request->description,
         ]);
 
-        return redirect()->back()->with('success', 'Item updated successfully!');
+        return redirect()->route('item-list')->with('success', 'Item updated successfully!');
     }
 
     /**

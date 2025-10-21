@@ -56,4 +56,16 @@ class ItemIssue extends Model
     {
         return $this->belongsTo('App\Models\Course', 'course_id', 'id');
     }
+
+    // Helper method to get category name
+    public function getCategoryNameAttribute()
+    {
+        return $this->category ? $this->category->name : 'N/A';
+    }
+
+    // Helper method to get item name
+    public function getItemNameAttribute()
+    {
+        return $this->item ? $this->item->item_name : 'N/A';
+    }
 }
