@@ -259,20 +259,20 @@ class ItemIssueController extends Controller
     public function IssueItem(Request $request)
     {
         $request->validate([
-            'id' => 'required|exists:item_issues,id',
+            'id' => 'required|exists:item_issue_batches,id',
         ]);
 
         try {
             DB::beginTransaction();
 
-            $itemIssue = ItemIssue::findOrFail($request->id);
-            $itemIssue->issue_status = 'I'; // Returned
-            // $itemIssue->return_date = date('Y-m-d'); // Set return date to today
-            $itemIssue->save();
+            $batch = ItemIssueBatch::findOrFail($request->id);
+            $batch->issue_status = 'I'; // Issued
+            // $batch->return_date = date('Y-m-d'); // Set return date to today
+            $batch->save();
 
             DB::commit();
 
-            return redirect()->route('item-issue')->with('success', 'Item issued successfully.');
+            return redirect()->route('item-issue-list')->with('success', 'Batch issued successfully.');
         } catch (Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
@@ -281,20 +281,20 @@ class ItemIssueController extends Controller
     public function returnItem(Request $request)
     {
         $request->validate([
-            'id' => 'required|exists:item_issues,id',
+            'id' => 'required|exists:item_issue_batches,id',
         ]);
 
         try {
             DB::beginTransaction();
 
-            $itemIssue = ItemIssue::findOrFail($request->id);
-            $itemIssue->issue_status = 'R'; // Returned
-            // $itemIssue->return_date = date('Y-m-d'); // Set return date to today
-            $itemIssue->save();
+            $batch = ItemIssueBatch::findOrFail($request->id);
+            $batch->issue_status = 'R'; // Returned
+            // $batch->return_date = date('Y-m-d'); // Set return date to today
+            $batch->save();
 
             DB::commit();
 
-            return redirect()->route('item-issue')->with('success', 'Item returned successfully.');
+            return redirect()->route('item-issue-list')->with('success', 'Batch returned successfully.');
         } catch (Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
