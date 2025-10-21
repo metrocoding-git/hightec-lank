@@ -164,12 +164,31 @@
                                                     </td>
                                                     <td>
                                                         <x-drop-down>
-                                                            {{-- <a class="dropdown-item" href="{{ route('student.add-intake.edit', $studentIntake->id) }}">
-                                                                Edit
-                                                            </a> --}}
+                                                            @if($studentIntake->status == 'pending')
+                                                                <a class="dropdown-item" href="#" onclick="changeStatus({{ $studentIntake->id }}, 'start')">
+                                                                    <span class="text-info">▶ Start</span>
+                                                                </a>
+                                                            @endif
+                                                            @if($studentIntake->status == 'start')
+                                                                <a class="dropdown-item" href="#" onclick="changeStatus({{ $studentIntake->id }}, 'return')">
+                                                                    <span class="text-warning">↩ Return</span>
+                                                                </a>
+                                                                <a class="dropdown-item" href="#" onclick="changeStatus({{ $studentIntake->id }}, 'complete')">
+                                                                    <span class="text-success">✓ Complete</span>
+                                                                </a>
+                                                            @endif
+                                                            @if($studentIntake->status == 'return')
+                                                                <a class="dropdown-item" href="#" onclick="changeStatus({{ $studentIntake->id }}, 'start')">
+                                                                    <span class="text-info">▶ Restart</span>
+                                                                </a>
+                                                                <a class="dropdown-item" href="#" onclick="changeStatus({{ $studentIntake->id }}, 'complete')">
+                                                                    <span class="text-success">✓ Complete</span>
+                                                                </a>
+                                                            @endif
+                                                            <div class="dropdown-divider"></div>
                                                             <a class="dropdown-item" data-toggle="modal"
                                                                data-target="#deleteStudentIntakeModal{{ $studentIntake->id }}" href="#">
-                                                                Delete
+                                                                <span class="text-danger">🗑 Delete</span>
                                                             </a>
                                                         </x-drop-down>
                                                     </td>
@@ -343,7 +362,7 @@
                                         <option value="pending" {{ old('status', 'pending') == 'pending' ? 'selected' : '' }}>
                                             Pending
                                         </option>
-                                        <option value="start" {{ old('status') == 'start' ? 'selected' : '' }}>
+                                        {{-- <option value="start" {{ old('status') == 'start' ? 'selected' : '' }}>
                                             Start
                                         </option>
                                         <option value="return" {{ old('status') == 'return' ? 'selected' : '' }}>
@@ -351,7 +370,7 @@
                                         </option>
                                         <option value="complete" {{ old('status') == 'complete' ? 'selected' : '' }}>
                                             Complete
-                                        </option>
+                                        </option> --}}
                                     </select>
                                     @error('status')
                                         <span class="text-danger">{{ $message }}</span>
@@ -736,5 +755,45 @@ $(document).ready(function() {
         }
     });
 });
+
+// Function to handle status changes
+function changeStatus(studentIntakeId, newStatus) {
+    // Show loading state
+    $.ajax({
+        url: '{{ route("student.add-intake.update-status", ":id") }}'.replace(':id', studentIntakeId),
+        type: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            status: newStatus
+        },
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        success: function(response) {
+            if (response.success) {
+                // Show success message
+                toastr.success('Status updated successfully!');
+                // Reload the page to reflect changes
+                setTimeout(function() {
+                    location.reload();
+                }, 1000);
+            } else {
+                toastr.error('Failed to update status: ' + (response.message || 'Unknown error'));
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error updating status:', error);
+            console.error('XHR response:', xhr.responseText);
+
+            var errorMessage = 'Failed to update status';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            }
+
+            toastr.error(errorMessage);
+        }
+    });
+}
 </script>
 @endpush

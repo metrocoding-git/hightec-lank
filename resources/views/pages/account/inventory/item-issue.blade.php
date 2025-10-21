@@ -120,7 +120,7 @@
                                     @foreach ($categories as $category)
                                         <option value="cat_{{ $category->id }}" data-type="category" data-category-id="{{ $category->id }}" data-category-name="{{ $category->name }}" class="font-weight-bolder">{{ $category->name }}</option>
                                         @foreach ($inventoryItems->where('item_category_id', $category->id) as $item)
-                                            <option value="{{ $item->id }}" data-type="item" data-category-id="{{ $category->id }}" data-category-name="{{ $category->name }}" data-item-name="{{ $item->item_name }}">
+                                            <option value="{{ $item->id }}" data-type="item" data-category-id="{{ $category->id }}" data-category-name="{{ $category->name }}" data-item-name="{{ $item->item_name }}" data-item-price="{{ $item->item_price ?? '0' }}">
                                                 &nbsp;&nbsp;&nbsp;{{ $item->item_name }}
                                             </option>
                                         @endforeach
@@ -137,6 +137,7 @@
                                                 <th>@lang('common.sl')</th>
                                                 <th>@lang('inventory.category')</th>
                                                 <th>@lang('inventory.item')</th>
+                                                <th>@lang('inventory.item_price')</th>
                                                 <th>@lang('inventory.quantity')</th>
                                                 <th>@lang('common.action')</th>
                                             </tr>
@@ -286,7 +287,8 @@
 
                         // Only add if not already added
                         if (!addedItemTypes.has(itemId)) {
-                            addItemRow(itemId, itemName, categoryId, categoryName);
+                            let itemPrice = $(this).data('item-price') || '0';
+                            addItemRow(itemId, itemName, categoryId, categoryName, itemPrice);
                             addedItemTypes.add(itemId);
                             itemsFound++;
                         }
@@ -316,7 +318,8 @@
 
                     // Only add if not already added
                     if (!addedItemTypes.has(itemId)) {
-                        addItemRow(itemId, itemName, categoryId, categoryName);
+                        let itemPrice = selectedOption.data('item-price') || '0';
+                        addItemRow(itemId, itemName, categoryId, categoryName, itemPrice);
                         addedItemTypes.add(itemId);
 
                         toastr.success(`Item "${itemName}" has been added to the selection`, '', {
@@ -334,18 +337,23 @@
                 $(this).val('').niceSelect('update');
             });
 
-            function addItemRow(itemId, itemName, categoryId, categoryName) {
+            function addItemRow(itemId, itemName, categoryId, categoryName, itemPrice = '0') {
                 // Use a simple index for array keys to avoid conflicts
                 let itemIndex = $('.allIssuedItems tr').length;
+
+                // Format price for display
+                let displayPrice = itemPrice ? 'Rs.' + parseFloat(itemPrice).toFixed(2) : 'N/A';
 
                 let row = `<tr data-id="${itemId}">
                     <td class="sl"></td>
                     <td class="category_name">${categoryName}</td>
                     <td class="item_name">${itemName}</td>
+                    <td class="item_price">${displayPrice}</td>
                     <td>
                         <input type="number" name="items[${itemIndex}][quantity]" class="primary_input_field form-control item_quantity" value="1" min="1" required>
                         <input type="hidden" name="items[${itemIndex}][item_id]" value="${itemId}">
                         <input type="hidden" name="items[${itemIndex}][item_category_id]" value="${categoryId}">
+                        <input type="hidden" name="items[${itemIndex}][item_price]" value="${itemPrice}">
                     </td>
                     <td><button type="button" class="primary-btn small bg-danger text-white border-0 remove_item_btn">Delete</button></td>
                 </tr>`;
@@ -357,7 +365,9 @@
                     itemId: itemId,
                     itemName: itemName,
                     categoryId: categoryId,
-                    categoryName: categoryName
+                    categoryName: categoryName,
+                    itemPrice: itemPrice,
+                    displayPrice: displayPrice
                 });
             }
 

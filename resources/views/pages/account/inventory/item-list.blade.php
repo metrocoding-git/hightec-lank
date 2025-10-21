@@ -107,6 +107,23 @@
                                                     @endif
                                                 </div>
                                             </div>
+                                            <div class="col-lg-12 mb-15">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label" for="">Item Price
+                                                        <span class="text-danger"> *</span> </label>
+                                                    <input
+                                                        class="primary_input_field form-control{{ $errors->has('item_price') ? ' is-invalid' : '' }}"
+                                                        type="text" name="item_price" autocomplete="off"
+                                                        value="{{ isset($editData) ? $editData->item_price : '' }}">
+
+
+                                                    @if ($errors->has('item_price'))
+                                                        <span class="text-danger">
+                                                            {{ $errors->first('item_price') }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            </div>
 
                                             <div class="col-lg-12 mb-15">
                                                 <div class="primary_input">
@@ -157,6 +174,7 @@
                                                 <th>@lang('common.sl')</th>
                                                 <th>@lang('inventory.item_name')</th>
                                                 <th>@lang('student.category') </th>
+                                                <th>Item Price</th>
                                                 <th>@lang('common.description') </th>
                                                 <th>@lang('inventory.total_in_stock') </th>
                                                 <th>@lang('common.action')</th>
@@ -168,6 +186,7 @@
                                                     <td>{{ $loop->iteration }}</td>
                                                     <td>{{ $item->item_name }}</td>
                                                     <td>{{ $item->category->name ?? '' }}</td>
+                                                    <td>{{ $item->item_price ?? 'N/A' }}</td>
                                                     <td>{{ $item->description }}</td>
                                                     <td>{{ $item->stock ?? 0 }}</td>
                                                     <td>
