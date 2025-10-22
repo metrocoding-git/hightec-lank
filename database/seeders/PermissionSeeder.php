@@ -156,6 +156,7 @@ class PermissionSeeder extends Seeder
             'fees.fees-type-delete',
             'fees.fee-invoice-view',
             'fees.student-details',
+            'fees.add-payment',
             'fees.fees-invoice-payment',
             'fees.add-invoice',
             'fees.get-student',

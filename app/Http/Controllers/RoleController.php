@@ -165,7 +165,8 @@ class RoleController extends Controller
         'fees.fee-invoice.index' => 'fees.fee-invoice',
         'fees.fee-invoice.view' => 'fees.fee-invoice-view',
         'fees.fee-invoice.payment' => 'fees.fees-invoice-payment',
-        'fees.fee-invoice.add' => 'fees.add-invoice',
+        'fees.fee-invoice.add-payment' => 'fees.add-payment',
+        'fees.fee-invoice.add-invoice' => 'fees.add-invoice',
         'fees.fee-invoice.get-student' => 'fees.get-student',
         'fees.fee-invoice.get-types' => 'fees.get-types-by-group',
         'fees.fee-invoice.store' => 'fees.invoice.store',
@@ -308,7 +309,7 @@ class RoleController extends Controller
             // FEE
             ['name' => 'Fee Group', 'route' => 'fee-group', 'category' => 'FEE', 'sub_category' => 'Fee Settings', 'actions' => ['index', 'create', 'edit', 'update', 'delete']],
             ['name' => 'Fee Type', 'route' => 'fees.fees-type', 'category' => 'FEE', 'sub_category' => 'Fee Settings', 'actions' => ['index', 'store', 'edit', 'update', 'delete']],
-            ['name' => 'Fee Invoice', 'route' => 'fees.fee-invoice', 'category' => 'FEE', 'sub_category' => 'Fee Transactions', 'actions' => ['index', 'view', 'payment', 'add', 'get-student', 'get-types', 'store', 'course-payment', 'edit', 'update', 'delete', 'update-invoice-number', 'mark-as-paid']],
+            ['name' => 'Fee Invoice', 'route' => 'fees.fee-invoice', 'category' => 'FEE', 'sub_category' => 'Fee Transactions', 'actions' => ['index', 'view', 'add-payment', 'add-invoice', 'get-student', 'get-types', 'store', 'course-payment', 'edit', 'update', 'delete', 'update-invoice-number', 'mark-as-paid']],
             ['name' => 'Fee Return', 'route' => 'fee-return', 'category' => 'FEE', 'sub_category' => 'Fee Transactions', 'actions' => ['index', 'store', 'search']],
             ['name' => 'Course Paid', 'route' => 'fees.course-paid', 'category' => 'FEE', 'sub_category' => 'Fee Transactions', 'actions' => ['index']],
             ['name' => 'Fee Invoice Setting', 'route' => 'fee-invoice-setting', 'category' => 'FEE', 'sub_category' => 'Fee Settings', 'actions' => ['index']],
@@ -406,7 +407,7 @@ class RoleController extends Controller
             return $this->permissionNameMap[$combinedRouteAction];
         }
 
-       
+
         // Default pattern: baseRoute.action
         return $combinedRouteAction;
     }
