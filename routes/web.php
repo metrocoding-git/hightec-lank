@@ -197,7 +197,9 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
         ->name('save-item-receive-data');
 });
 
-Route::controller(ItemSellController::class)->middleware(['permission'])->group(function () {
+Route::controller(ItemSellController::class)
+// ->middleware(['permission'])
+->group(function () {
     Route::get('account/inventory/item-sell', 'itemSell')->name('item-sell');
     Route::post('account/inventory/item-sell/save', 'saveItemSellData')->name('save-item-sell-data');
     Route::get('account/inventory/item-sell-list', 'itemSellList')->name('item-sell-list');
@@ -211,6 +213,10 @@ Route::controller(ItemSellController::class)->middleware(['permission'])->group(
     Route::post('account/inventory/item-sell/{id}', 'deleteItemSell')->name('delete-item-sell');
     Route::get('account/inventory/item-sell/{id}/cancel-view', 'cancelItemSellView')->name('cancel-item-sell-view');
     Route::post('account/inventory/item-sell/{id}/cancel', 'cancelItemSell')->name('cancel-item-sell');
+    Route::post('account/inventory/item-sell/{id}/update-status', 'updateItemSellStatus')->name('update-item-sell-status');
+    Route::post('account/inventory/item-sell/{id}/direct-return', 'directReturnItemSell')->name('direct-return-item-sell');
+    Route::get('account/inventory/item-sell/{id}/return-view', 'returnItemSellView')->name('return-item-sell-view');
+    Route::post('account/inventory/item-sell/{id}/return', 'returnItemSell')->name('return-item-sell');
 });
 
 Route::controller(ItemIssueController::class)->middleware(['permission'])->group(function () {

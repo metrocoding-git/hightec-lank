@@ -110,4 +110,6 @@ class ItemInventory extends Model
 
         return $query->get();
     }
+
+
 }

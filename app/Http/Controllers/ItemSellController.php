@@ -377,4 +377,71 @@ class ItemSellController extends Controller
             ], 500);
         }
     }
+
+    public function updateItemSellStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|string|in:P,PP,U,R',
+        ]);
+
+        try {
+            $itemSell = ItemSell::findOrFail($id);
+
+            $itemSell->update([
+                'status' => $request->status,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status updated successfully!'
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update status.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function directReturnItemSell(Request $request, $id)
+    {
+        try {
+            $itemSell = ItemSell::findOrFail($id);
+
+            // Update inventory for full return
+            $currentBalance = ItemInventory::getCurrentBalance($itemSell->item_id);
+            $newBalance = $currentBalance + $itemSell->total_quantity;
+
+            ItemInventory::create([
+                'item_id' => $itemSell->item_id,
+                'transaction_type' => 'sell_return',
+                'transaction_id' => $itemSell->id,
+                'quantity' => $itemSell->total_quantity,
+                'current_balance' => $newBalance,
+                'reference_no' => $itemSell->reference_no,
+                'transaction_date' => now(),
+                'description' => 'Full item return from sell',
+            ]);
+
+            // Update sell record to reflect return
+            $itemSell->update([
+                'total_quantity' => 0,
+                'total_paid' => 0,
+                'total_due' => 0,
+                'status' => 'R',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Item returned successfully!'
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to return item.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }
