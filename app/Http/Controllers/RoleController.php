@@ -95,6 +95,7 @@ class RoleController extends Controller
         'student.add-intake.search' => 'student.add-intake.search',
         'student.add-intake.get-intakes' => 'student.add-intake.get-intakes',
         'student.add-intake.get-courses' => 'student.add-intake.get-courses',
+        'student.add-intake.update-status' => 'student.add-intake.update-status',
         'student-list.index' => 'student-list', // Special case
         'student-list.update-status' => 'student.update-status',
         'student-list.details' => 'student-details',
@@ -136,6 +137,8 @@ class RoleController extends Controller
         'item-sell.cancel' => 'cancel-item-sell', // Mismatch
         'item-sell.add-payment' => 'add-payment-sell', // Mismatch
         'item-sell.view-payments' => 'view-sell-payments', // Mismatch
+        'item-sell.update-status' => 'update-item-sell-status',
+        'item-sell.direct-return' => 'direct-return-item-sell',
         'item-issue.index' => 'item-issue',
         'item-issue.store' => 'save-item-issue-data', // Mismatch
         'item-issue.edit' => 'item-issue-edit',
@@ -162,7 +165,8 @@ class RoleController extends Controller
         'fees.fee-invoice.index' => 'fees.fee-invoice',
         'fees.fee-invoice.view' => 'fees.fee-invoice-view',
         'fees.fee-invoice.payment' => 'fees.fees-invoice-payment',
-        'fees.fee-invoice.add' => 'fees.add-invoice',
+        'fees.fee-invoice.add-payment' => 'fees.add-payment',
+        'fees.fee-invoice.add-invoice' => 'fees.add-invoice',
         'fees.fee-invoice.get-student' => 'fees.get-student',
         'fees.fee-invoice.get-types' => 'fees.get-types-by-group',
         'fees.fee-invoice.store' => 'fees.invoice.store',
@@ -289,7 +293,7 @@ class RoleController extends Controller
             ['name' => 'Student Categories', 'route' => 'student-category', 'category' => 'Student Management', 'sub_category' => 'Student Settings', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
             ['name' => 'Add Student', 'route' => 'add-student', 'category' => 'Student Management', 'sub_category' => 'Student Enrollment', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
             ['name' => 'Student Add Course', 'route' => 'student.add-course', 'category' => 'Student Management', 'sub_category' => 'Student Enrollment', 'actions' => ['index', 'store', 'edit', 'update', 'destroy']],
-            ['name' => 'Student Add Intake', 'route' => 'student.add-intake', 'category' => 'Student Management', 'sub_category' => 'Student Enrollment', 'actions' => ['index', 'store', 'edit', 'update', 'destroy', 'search', 'get-intakes', 'get-courses']],
+            ['name' => 'Student Add Intake', 'route' => 'student.add-intake', 'category' => 'Student Management', 'sub_category' => 'Student Enrollment', 'actions' => ['index', 'store', 'edit', 'update', 'destroy', 'search', 'get-intakes', 'get-courses', 'update-status']],
             ['name' => 'Student List', 'route' => 'student-list', 'category' => 'Student Management', 'sub_category' => 'Student Information', 'actions' => ['index', 'update-status', 'details', 'export', 'get-intakes', 'get-courses']],
             ['name' => 'Disabled Students', 'route' => 'disabled-students', 'category' => 'Student Management', 'sub_category' => 'Student Information', 'actions' => ['index', 'search']],
             ['name' => 'Student Attendance', 'route' => 'student-attendance', 'category' => 'Student Management', 'sub_category' => 'Student Information', 'actions' => ['index', 'get-courses']],
@@ -299,13 +303,13 @@ class RoleController extends Controller
             ['name' => 'Item List', 'route' => 'item-list', 'category' => 'Inventory Management', 'sub_category' => 'Item Settings', 'actions' => ['index', 'store', 'edit', 'update', 'delete']],
             ['name' => 'Suppliers', 'route' => 'supplier', 'category' => 'Inventory Management', 'sub_category' => 'Item Settings', 'actions' => ['index', 'store', 'edit', 'update', 'delete']],
             ['name' => 'Item Receive', 'route' => 'item-receive', 'category' => 'Inventory Management', 'sub_category' => 'Inventory Transactions', 'actions' => ['index', 'store', 'edit', 'update', 'destroy']],
-            ['name' => 'Item Sell', 'route' => 'item-sell', 'category' => 'Inventory Management', 'sub_category' => 'Inventory Transactions', 'actions' => ['index', 'store', 'view', 'edit', 'update', 'delete', 'cancel', 'add-payment', 'view-payments']],
+            ['name' => 'Item Sell', 'route' => 'item-sell', 'category' => 'Inventory Management', 'sub_category' => 'Inventory Transactions', 'actions' => ['index', 'store', 'view', 'edit', 'update', 'delete', 'cancel', 'add-payment', 'view-payments', 'update-status', 'direct-return']],
             ['name' => 'Item Issue', 'route' => 'item-issue', 'category' => 'Inventory Management', 'sub_category' => 'Inventory Transactions', 'actions' => ['index', 'store', 'edit', 'update', 'return', 'issue', 'get-intakes', 'get-courses', 'get-students', 'get-items', 'get-student-fee-data']],
 
             // FEE
             ['name' => 'Fee Group', 'route' => 'fee-group', 'category' => 'FEE', 'sub_category' => 'Fee Settings', 'actions' => ['index', 'create', 'edit', 'update', 'delete']],
             ['name' => 'Fee Type', 'route' => 'fees.fees-type', 'category' => 'FEE', 'sub_category' => 'Fee Settings', 'actions' => ['index', 'store', 'edit', 'update', 'delete']],
-            ['name' => 'Fee Invoice', 'route' => 'fees.fee-invoice', 'category' => 'FEE', 'sub_category' => 'Fee Transactions', 'actions' => ['index', 'view', 'payment', 'add', 'get-student', 'get-types', 'store', 'course-payment', 'edit', 'update', 'delete', 'update-invoice-number', 'mark-as-paid']],
+            ['name' => 'Fee Invoice', 'route' => 'fees.fee-invoice', 'category' => 'FEE', 'sub_category' => 'Fee Transactions', 'actions' => ['index', 'view', 'add-payment', 'add-invoice', 'get-student', 'get-types', 'store', 'course-payment', 'edit', 'update', 'delete', 'update-invoice-number', 'mark-as-paid']],
             ['name' => 'Fee Return', 'route' => 'fee-return', 'category' => 'FEE', 'sub_category' => 'Fee Transactions', 'actions' => ['index', 'store', 'search']],
             ['name' => 'Course Paid', 'route' => 'fees.course-paid', 'category' => 'FEE', 'sub_category' => 'Fee Transactions', 'actions' => ['index']],
             ['name' => 'Fee Invoice Setting', 'route' => 'fee-invoice-setting', 'category' => 'FEE', 'sub_category' => 'Fee Settings', 'actions' => ['index']],
@@ -403,7 +407,7 @@ class RoleController extends Controller
             return $this->permissionNameMap[$combinedRouteAction];
         }
 
-       
+
         // Default pattern: baseRoute.action
         return $combinedRouteAction;
     }

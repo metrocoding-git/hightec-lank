@@ -89,55 +89,30 @@
                                                         </td>
                                                         <td>{{ number_format((float) $value->sell_price, 2, '.', '') }}</td>
 
-                                                        @php
-                                                            $grandTotal = $value->total_paid + $value->total_due;
-                                                            $paidStatus = '';
-                                                            if ($value->total_due == 0 && $value->total_paid > 0) {
-                                                                $paidStatus = 'P'; // Paid
-                                                            } elseif ($value->total_paid > 0 && $value->total_due > 0) {
-                                                                $paidStatus = 'PP'; // Partial Paid
-                                                            } elseif ($value->total_paid == 0 && $value->total_due > 0) {
-                                                                $paidStatus = 'U'; // Unpaid
-                                                            } else {
-                                                                $paidStatus = 'N/A'; // Default or other status
-                                                            }
-                                                        @endphp
-
-                                                        <td>{{ number_format((float) $grandTotal, 2, '.', '') }}</td>
+                                                        <td>{{ number_format((float) $value->total_paid + $value->total_due, 2, '.', '') }}</td>
                                                         <td>{{ $value->total_quantity }}</td>
                                                         {{-- <td>{{ number_format((float) $value->total_paid, 2, '.', '') }}</td>
                                                         <td>{{ number_format((float) $value->total_due, 2, '.', '') }}</td> --}}
                                                         <td>
-                                                            @if ($paidStatus == 'P')
+                                                            @if ($value->status == 'P')
                                                                 <button class="primary-btn small bg-success text-white border-0">@lang('inventory.paid')</button>
-                                                            @elseif($paidStatus == 'PP')
+                                                            @elseif($value->status == 'PP')
                                                                 <button class="primary-btn small bg-warning text-white border-0">@lang('inventory.partial')</button>
-                                                            @elseif($paidStatus == 'U')
+                                                            @elseif($value->status == 'U')
                                                                 <button class="primary-btn small bg-danger text-white border-0">@lang('inventory.unpaid')</button>
+                                                            @elseif($value->status == 'R')
+                                                                <button class="primary-btn small bg-secondary text-white border-0">@lang('inventory.returned')</button>
                                                             @else
                                                                 <button class="primary-btn small bg-info text-white border-0">@lang('inventory.N/A')</button>
                                                             @endif
                                                         </td>
                                                         <td>
-                                                              @php
-                                                            $grandTotal = $value->total_paid + $value->total_due;
-                                                            $paidStatus = '';
-                                                            if ($value->total_due == 0 && $value->total_paid > 0) {
-                                                                $paidStatus = 'P'; // Paid
-                                                            } elseif ($value->total_paid > 0 && $value->total_due > 0) {
-                                                                $paidStatus = 'PP'; // Partial Paid
-                                                            } elseif ($value->total_paid == 0 && $value->total_due > 0) {
-                                                                $paidStatus = 'U'; // Unpaid
-                                                            } else {
-                                                                $paidStatus = 'N/A'; // Default or other status
-                                                            }
-                                                        @endphp
                                                             <x-drop-down>
                                                                 <a class="dropdown-item modalLink"
                                                                     title="@lang('common.view') @lang('inventory.item_sell')"
                                                                     data-modal-size="modal-lg"
                                                                     href="{{ route('view-item-sell', $value->id) }}">@lang('common.view')</a>
-                                                                @if ($paidStatus != 'R') {{-- Assuming 'R' is for Refunded/Cancelled --}}
+                                                                @if ($value->status != 'R') {{-- Assuming 'R' is for Returned --}}
                                                                     @if ($value->total_paid == 0) {{-- Only allow edit if no payment has been made --}}
                                                                         {{-- @if (userPermission('edit-item-sell')) --}}
                                                                         <a class="dropdown-item modalLink"
@@ -148,7 +123,7 @@
                                                                     @endif
                                                                 @endif
 
-                                                                @if ($paidStatus != 'R')
+                                                                @if ($value->status != 'R')
                                                                     @if ($value->total_due > 0)
                                                                         {{-- @if (userPermission('add-payment-sell')) --}}
                                                                             <a class="dropdown-item modalLink"
@@ -159,7 +134,7 @@
                                                                     @endif
                                                                 @endif
 
-                                                                {{-- @if ($paidStatus != 'P') --}}
+                                                                {{-- @if ($value->status != 'P') --}}
                                                                     {{-- @if (userPermission('view-sell-payments')) --}}
                                                                         <a class="dropdown-item modalLink"
                                                                             data-modal-size="modal-lg"
@@ -168,7 +143,7 @@
                                                                     {{-- @endif --}}
                                                                 {{-- @endif --}}
 
-                                                                @if ($paidStatus != 'R')
+                                                                @if ($value->status != 'R')
                                                                     @if ($value->total_paid == 0) {{-- Only allow delete if no payment has been made --}}
                                                                         {{-- @if (userPermission('delete-item-sale-view')) --}}
                                                                             <a class="dropdown-item deleteUrl"
@@ -179,13 +154,19 @@
                                                                     @endif
                                                                 @endif
 
-                                                                @if ($paidStatus != 'R')
+                                                                @if ($value->status != 'R')
                                                                     @if ($value->total_paid > 0) {{-- Only allow cancel if some payment has been made --}}
                                                                         <a class="dropdown-item deleteUrl"
                                                                             data-modal-size="modal-md"
                                                                             title="Cancel Item Sell"
                                                                             href="{{ route('cancel-item-sell-view', $value->id) }}">@lang('common.cancel')</a>
                                                                     @endif
+                                                                @endif
+
+                                                                @if ($value->status != 'R')
+                                                                    <a class="dropdown-item return-button"
+                                                                        data-id="{{ $value->id }}"
+                                                                        title="Return Item Sell">@lang('inventory.return')</a>
                                                                 @endif
                                                             </x-drop-down>
                                                         </td>
@@ -220,6 +201,33 @@
             ordering: true,
             info: true,
         });
+
+
+
+        // Handle return button click
+        $('.return-button').click(function(e) {
+            e.preventDefault();
+            var sellId = $(this).data('id');
+
+            $.ajax({
+                url: '{{ url("account/inventory/item-sell") }}' + '/' + sellId + '/direct-return',
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success('Item returned successfully!');
+                        location.reload();
+                    } else {
+                        toastr.error('Failed to return item.');
+                    }
+                },
+                error: function() {
+                    toastr.error('Error returning item.');
+                }
+            });
+        });
     </script>
-    
+
 @endpush

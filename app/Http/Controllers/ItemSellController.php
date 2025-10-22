@@ -6,6 +6,7 @@ use App\Models\Course;
 use App\Models\Intake;
 use App\Models\Inventory_item;
 use App\Models\ItemSell;
+use App\Models\ItemInventory;
 use App\Models\Role;
 use App\Models\Student;
 use App\Models\User;
@@ -60,8 +61,9 @@ class ItemSellController extends Controller
 
         try {
             // Create one row per item, duplicating header fields as per existing schema
+            $createdSells = [];
             foreach ($request->item_id as $index => $itemId) {
-                ItemSell::create([
+                $itemSell = ItemSell::create([
                     'payment_method' => $request->payment_method,
                     'role_id' => $request->role_id,
                     'course_id' => $request->class ?? null, // Map 'class' to 'course_id'
@@ -77,6 +79,23 @@ class ItemSellController extends Controller
                     'sell_price' => $request->unit_price[$index],
                     'total_paid' => $request->totalPaid ?? 0,
                     'total_due' => $request->totalDue ?? 0,
+                ]);
+
+                $createdSells[] = $itemSell;
+
+                // Track inventory changes for this item sell (decrease inventory)
+                $currentBalance = ItemInventory::getCurrentBalance($itemId);
+                $newBalance = $currentBalance - $request->quantity[$index];
+
+                ItemInventory::create([
+                    'item_id' => $itemId,
+                    'transaction_type' => 'sell',
+                    'transaction_id' => $itemSell->id,
+                    'quantity' => $request->quantity[$index],
+                    'current_balance' => $newBalance,
+                    'reference_no' => $request->reference_no,
+                    'transaction_date' => $sellDate,
+                    'description' => $request->description ?? 'Item sold to customer',
                 ]);
             }
 
@@ -244,6 +263,70 @@ class ItemSellController extends Controller
         return view('pages.account.inventory.item-sell-modal.item-sell-cancel-modal', compact('itemSell'));
     }
 
+    public function returnItemSellView($id)
+    {
+        $itemSell = ItemSell::findOrFail($id);
+        return view('pages.account.inventory.item-sell-modal.item-sell-return-modal', compact('itemSell'));
+    }
+
+    public function returnItemSell(Request $request, $id)
+    {
+        $request->validate([
+            'return_quantity' => 'required|integer|min:1',
+            'return_date' => 'required|string',
+            'return_reason' => 'nullable|string',
+        ]);
+
+        try {
+            $itemSell = ItemSell::findOrFail($id);
+
+            // Validate return quantity doesn't exceed sold quantity
+            if ($request->return_quantity > $itemSell->total_quantity) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Return quantity cannot exceed sold quantity (' . $itemSell->total_quantity . ')',
+                ], 422);
+            }
+
+            $returnDate = Carbon::createFromFormat('m/d/Y', $request->return_date)->format('Y-m-d');
+
+            // Track inventory changes for this item return (increase inventory)
+            $currentBalance = ItemInventory::getCurrentBalance($itemSell->item_id);
+            $newBalance = $currentBalance + $request->return_quantity;
+
+            ItemInventory::create([
+                'item_id' => $itemSell->item_id,
+                'transaction_type' => 'sell_return',
+                'transaction_id' => $itemSell->id,
+                'quantity' => $request->return_quantity,
+                'current_balance' => $newBalance,
+                'reference_no' => $itemSell->reference_no,
+                'transaction_date' => $returnDate,
+                'description' => $request->return_reason ?? 'Item returned from sell',
+            ]);
+
+            // Update the sold item record to reflect the return
+            $newQuantity = $itemSell->total_quantity - $request->return_quantity;
+            $newTotalDue = $itemSell->total_due + ($itemSell->sell_price * $request->return_quantity);
+
+            $itemSell->update([
+                'total_quantity' => $newQuantity,
+                'total_due' => $newTotalDue,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Item return processed successfully!'
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to process item return.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function storeItemSellPayment(Request $request, $id)
     {
         $request->validate([
@@ -290,6 +373,73 @@ class ItemSellController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to add payment.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function updateItemSellStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|string|in:P,PP,U,R',
+        ]);
+
+        try {
+            $itemSell = ItemSell::findOrFail($id);
+
+            $itemSell->update([
+                'status' => $request->status,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status updated successfully!'
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update status.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function directReturnItemSell(Request $request, $id)
+    {
+        try {
+            $itemSell = ItemSell::findOrFail($id);
+
+            // Update inventory for full return
+            $currentBalance = ItemInventory::getCurrentBalance($itemSell->item_id);
+            $newBalance = $currentBalance + $itemSell->total_quantity;
+
+            ItemInventory::create([
+                'item_id' => $itemSell->item_id,
+                'transaction_type' => 'sell_return',
+                'transaction_id' => $itemSell->id,
+                'quantity' => $itemSell->total_quantity,
+                'current_balance' => $newBalance,
+                'reference_no' => $itemSell->reference_no,
+                'transaction_date' => now(),
+                'description' => 'Full item return from sell',
+            ]);
+
+            // Update sell record to reflect return
+            $itemSell->update([
+                'total_quantity' => 0,
+                'total_paid' => 0,
+                'total_due' => 0,
+                'status' => 'R',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Item returned successfully!'
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to return item.',
                 'error' => $e->getMessage(),
             ], 500);
         }

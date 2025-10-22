@@ -121,7 +121,7 @@ Route::controller(AddStudentController::class)->prefix('student/student-info')->
 
 // Student Intake Management Routes
 Route::controller(AddStudentController::class)->prefix('student/student-info')
-// ->middleware(['permission'])
+->middleware(['permission'])
 ->group(function () {
     Route::get('student-add-intake', 'studentAddIntakeWithCourses')->name('student.add-intake.index');
     Route::post('student-add-intake', 'storeStudentIntakeWithCourses')->name('student.add-intake-with-courses.store');
@@ -197,7 +197,9 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
         ->name('save-item-receive-data');
 });
 
-Route::controller(ItemSellController::class)->middleware(['permission'])->group(function () {
+Route::controller(ItemSellController::class)
+->middleware(['permission'])
+->group(function () {
     Route::get('account/inventory/item-sell', 'itemSell')->name('item-sell');
     Route::post('account/inventory/item-sell/save', 'saveItemSellData')->name('save-item-sell-data');
     Route::get('account/inventory/item-sell-list', 'itemSellList')->name('item-sell-list');
@@ -211,6 +213,10 @@ Route::controller(ItemSellController::class)->middleware(['permission'])->group(
     Route::post('account/inventory/item-sell/{id}', 'deleteItemSell')->name('delete-item-sell');
     Route::get('account/inventory/item-sell/{id}/cancel-view', 'cancelItemSellView')->name('cancel-item-sell-view');
     Route::post('account/inventory/item-sell/{id}/cancel', 'cancelItemSell')->name('cancel-item-sell');
+    Route::post('account/inventory/item-sell/{id}/update-status', 'updateItemSellStatus')->name('update-item-sell-status');
+    Route::post('account/inventory/item-sell/{id}/direct-return', 'directReturnItemSell')->name('direct-return-item-sell');
+    Route::get('account/inventory/item-sell/{id}/return-view', 'returnItemSellView')->name('return-item-sell-view');
+    Route::post('account/inventory/item-sell/{id}/return', 'returnItemSell')->name('return-item-sell');
 });
 
 Route::controller(ItemIssueController::class)->middleware(['permission'])->group(function () {
@@ -267,9 +273,7 @@ Route::controller(FeeTypeController::class)->middleware(['permission'])->group(f
     Route::delete('student/fees/fee-type-delete/{id}', 'destroy')->name('fees.fees-type-delete');
 });
 
-Route::controller(InvoiceController::class)
-// ->middleware(['permission'])
-->group(function () {
+Route::controller(InvoiceController::class)->middleware(['permission'])->group(function () {
 
     Route::get('student/fees/invoice/view/{id}', 'viewFeeInvoice')->name('fees.fee-invoice-view');
     Route::get('student/fees/student-details/{studentId}', 'getStudentDetails')->name('fees.student-details');
@@ -373,7 +377,7 @@ Route::controller(ReturnFeeController::class)->middleware(['permission'])->group
 use App\Http\Controllers\UserController; // Import the new controller
 
 // Role Management Routes
-Route::controller(RoleController::class)->prefix('role-management')->group(function () {
+Route::controller(RoleController::class)->prefix('role-management')->middleware(['permission'])->group(function () {
     Route::get('roles', 'index')->name('roles.index');
     Route::post('roles', 'store')->name('roles.store');
     Route::put('roles/{id}', 'update')->name('roles.update');

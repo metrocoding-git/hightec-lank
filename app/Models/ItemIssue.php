@@ -6,21 +6,24 @@ use Illuminate\Database\Eloquent\Model;
 
 class ItemIssue extends Model
 {
-    protected $fillable = [
-        'branch_id',
-        'issue_to',
-        'item_category_id',
-        'item_id',
-        'issue_date',
-        'due_date',
-        'quantity',
-        'description',
-        'issue_status',
-        'student_id',
-        'intake_id',
-        'course_id',
-        'active_status',
-    ];
+
+    // this table not in use  -> find itemissue batch
+
+    // protected $fillable = [
+    //     'branch_id',
+    //     'issue_to',
+    //     'item_category_id',
+    //     'item_id',
+    //     'issue_date',
+    //     'due_date',
+    //     'quantity',
+    //     'description',
+    //     'issue_status',
+    //     'student_id',
+    //     'intake_id',
+    //     'course_id',
+    //     'active_status',
+    // ];
 
     public function branch()
     {

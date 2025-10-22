@@ -22,6 +22,7 @@ class ItemSell extends Model
         'sell_price',
         'total_paid',
         'total_due',
+        'status',
     ];
 
     // Define relationships if necessary
