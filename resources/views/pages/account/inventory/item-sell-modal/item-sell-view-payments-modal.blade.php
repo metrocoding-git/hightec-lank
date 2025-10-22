@@ -4,7 +4,7 @@
             <div class="card">
                 <div class="card-header bg-success text-white">
                     <h4 class="card-title mb-0">
-                        <i class="ti-credit-card mr-2"></i>@lang('inventory.payment_details')
+                        <i class="ti-credit-card mr-2"></i>Payment Details
                     </h4>
                 </div>
                 <div class="card-body">
