@@ -41,21 +41,26 @@
                                             <th>@lang('inventory.issue_date')</th>
                                             <th>@lang('inventory.return_date')</th>
                                             <th>@lang('inventory.quantity')</th>
+                                            <th>Course Name</th>
+                                            <th>Course Expiration</th>
                                             <th hidden>@lang('common.description')</th>
                                             <th>@lang('common.status')</th>
                                             <th>@lang('common.action')</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @if (isset($issuedBatches))
-                                            @foreach ($issuedBatches as $key => $batch)
+                                        @if (isset($batchesWithCourseStatus))
+                                            @foreach ($batchesWithCourseStatus as $key => $batchData)
+                                                @php $batch = $batchData['batch']; @endphp
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
                                                     <td>
                                                         @if ($batch->items->count() > 0)
                                                             @foreach ($batch->items as $index => $item)
                                                                 {{ $item->item->item_name ?? 'N/A' }}
-                                                                @if (!$loop->last), @endif
+                                                                @if (!$loop->last)
+                                                                    ,
+                                                                @endif
                                                             @endforeach
                                                         @else
                                                             No Items
@@ -87,6 +92,10 @@
                                                         {{ $batch->due_date != '' ? date('m/d/Y', strtotime($batch->due_date)) : '' }}
                                                     </td>
                                                     <td>{{ $batch->total_items ?? $batch->items->sum('quantity') }}</td>
+                                                    <td>{{ $batchData['course_name'] }}</td>
+                                                    <td>
+                                                        <button class="primary-btn small {{ $batchData['expire_class'] }} text-white border-0">{{ $batchData['expire_status'] }}</button>
+                                                    </td>
                                                     <td hidden>{{ $batch->description }}</td>
                                                     <td>
                                                         @if ($batch->issue_status == 'I')
@@ -244,7 +253,7 @@
 
             // Fetch batch details with items via AJAX
             $.ajax({
-                url: '{{ route("item-issue.get-batch-details", ":id") }}'.replace(':id', id),
+                url: '{{ route('item-issue.get-batch-details', ':id') }}'.replace(':id', id),
                 type: 'GET',
                 success: function(data) {
                     console.log('Batch details received:', data);
@@ -261,16 +270,21 @@
                                     '</tr>';
                             });
                         } else {
-                            itemsHtml = '<tr><td colspan="4" class="text-center">No items found in this batch</td></tr>';
+                            itemsHtml =
+                                '<tr><td colspan="4" class="text-center">No items found in this batch</td></tr>';
                         }
                         $('#modalBatchItems').html(itemsHtml);
                     } else {
-                        $('#modalBatchItems').html('<tr><td colspan="4" class="text-center text-danger">Error loading batch items</td></tr>');
+                        $('#modalBatchItems').html(
+                            '<tr><td colspan="4" class="text-center text-danger">Error loading batch items</td></tr>'
+                            );
                     }
                 },
                 error: function(xhr, status, error) {
                     console.error('Error fetching batch details:', error);
-                    $('#modalBatchItems').html('<tr><td colspan="4" class="text-center text-danger">Error: ' + error + '</td></tr>');
+                    $('#modalBatchItems').html(
+                        '<tr><td colspan="4" class="text-center text-danger">Error: ' + error +
+                        '</td></tr>');
                 }
             });
 

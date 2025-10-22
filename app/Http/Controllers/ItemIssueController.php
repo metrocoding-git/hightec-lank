@@ -46,11 +46,41 @@ class ItemIssueController extends Controller
     }
     public function issueListView(){
         try {
-            $issuedBatches = ItemIssueBatch::with(['items.item', 'items.category', 'student', 'staff', 'branch'])
+            $issuedBatches = ItemIssueBatch::with(['items.item', 'items.category', 'student', 'staff', 'branch', 'course'])
                 ->where('active_status', 1)
                 ->get();
 
-            return view('pages.account.inventory.item-issue-list', compact('issuedBatches'));
+            // Add expiration status to each batch
+            $batchesWithCourseStatus = $issuedBatches->map(function($batch) {
+                $course = $batch->course;
+                if ($course) {
+                    $startDate = $course->created_at;
+                    $expirationDate = $course->expiration_date;
+                    $today = now();
+
+                    if ($expirationDate && is_numeric($expirationDate)) {
+                        $expireDate = $startDate->copy()->addDays((int)$expirationDate);
+                        $isExpired = $expireDate->lessThan($today);
+                        $expireStatus = $isExpired ? 'Expired' : 'Not Expired';
+                        $expireClass = $isExpired ? 'bg-danger' : 'bg-success';
+                    } else {
+                        $expireStatus = 'No Expiration';
+                        $expireClass = 'bg-info';
+                    }
+                } else {
+                    $expireStatus = 'No Course';
+                    $expireClass = 'bg-secondary';
+                }
+
+                return [
+                    'batch' => $batch,
+                    'course_name' => $course ? $course->name : 'N/A',
+                    'expire_status' => $expireStatus,
+                    'expire_class' => $expireClass,
+                ];
+            });
+
+            return view('pages.account.inventory.item-issue-list', compact('batchesWithCourseStatus'));
         } catch (Exception $e) {
             return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
         }
