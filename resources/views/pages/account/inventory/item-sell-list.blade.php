@@ -94,12 +94,17 @@
                                                         {{-- <td>{{ number_format((float) $value->total_paid, 2, '.', '') }}</td>
                                                         <td>{{ number_format((float) $value->total_due, 2, '.', '') }}</td> --}}
                                                         <td>
-                                                            <select class="form-control status-select" data-id="{{ $value->id }}">
-                                                                <option value="P" {{ $value->status == 'P' ? 'selected' : '' }}>@lang('inventory.paid')</option>
-                                                                <option value="PP" {{ $value->status == 'PP' ? 'selected' : '' }}>@lang('inventory.partial')</option>
-                                                                <option value="U" {{ $value->status == 'U' ? 'selected' : '' }}>@lang('inventory.unpaid')</option>
-                                                                <option value="R" {{ $value->status == 'R' ? 'selected' : '' }}>@lang('inventory.returned')</option>
-                                                            </select>
+                                                            @if ($value->status == 'P')
+                                                                <button class="primary-btn small bg-success text-white border-0">@lang('inventory.paid')</button>
+                                                            @elseif($value->status == 'PP')
+                                                                <button class="primary-btn small bg-warning text-white border-0">@lang('inventory.partial')</button>
+                                                            @elseif($value->status == 'U')
+                                                                <button class="primary-btn small bg-danger text-white border-0">@lang('inventory.unpaid')</button>
+                                                            @elseif($value->status == 'R')
+                                                                <button class="primary-btn small bg-secondary text-white border-0">@lang('inventory.returned')</button>
+                                                            @else
+                                                                <button class="primary-btn small bg-info text-white border-0">@lang('inventory.N/A')</button>
+                                                            @endif
                                                         </td>
                                                         <td>
                                                             <x-drop-down>
@@ -197,57 +202,31 @@
             info: true,
         });
 
-        // Handle status change
-        $('.status-select').change(function() {
-            var sellId = $(this).data('id');
-            var newStatus = $(this).val();
 
-            $.ajax({
-                url: '{{ url("account/inventory/item-sell") }}' + '/' + sellId + '/update-status',
-                method: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    status: newStatus
-                },
-                success: function(response) {
-                    if (response.success) {
-                        toastr.success('Status updated successfully!');
-                        location.reload(); // Or update the row without reload
-                    } else {
-                        toastr.error('Failed to update status.');
-                    }
-                },
-                error: function() {
-                    toastr.error('Error updating status.');
-                }
-            });
-        });
 
         // Handle return button click
         $('.return-button').click(function(e) {
             e.preventDefault();
             var sellId = $(this).data('id');
 
-            if (confirm('Are you sure you want to return this item?')) {
-                $.ajax({
-                    url: '{{ url("account/inventory/item-sell") }}' + '/' + sellId + '/direct-return',
-                    method: 'POST',
-                    data: {
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            toastr.success('Item returned successfully!');
-                            location.reload();
-                        } else {
-                            toastr.error('Failed to return item.');
-                        }
-                    },
-                    error: function() {
-                        toastr.error('Error returning item.');
+            $.ajax({
+                url: '{{ url("account/inventory/item-sell") }}' + '/' + sellId + '/direct-return',
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success('Item returned successfully!');
+                        location.reload();
+                    } else {
+                        toastr.error('Failed to return item.');
                     }
-                });
-            }
+                },
+                error: function() {
+                    toastr.error('Error returning item.');
+                }
+            });
         });
     </script>
 

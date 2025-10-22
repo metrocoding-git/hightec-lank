@@ -1,100 +1,159 @@
-{{-- <div class="modal-header">
-    <h4 class="modal-title">@lang('inventory.view_payment')</h4>
-    <button type="button" class="close" data-dismiss="modal">&times;</button>
-</div> --}}
-
 <div class="modal-body">
     <div class="row">
         <div class="col-lg-12">
-            <div class="white-box">
-                <div class="row">
-                    <div class="col-lg-12">
-                        <table class="table table-bordered">
-                            <tr>
-                                <th>@lang('inventory.reference_no') </th>
-                                <td>{{ $itemSell->reference_no }}</td>
-                            </tr>
-                            <tr>
-                                <th>@lang('inventory.buyer_name')</th>
-                                <td>
-                                    @if ($itemSell->role_id == 2 && $itemSell->student)
-                                        {{ $itemSell->student->student_name }}
-                                    @elseif ($itemSell->role_id == 3 && $itemSell->student)
-                                        {{ $itemSell->student->guardians_name ?? 'N/A' }}
-                                    @elseif ($itemSell->user)
-                                        {{ $itemSell->user->name }}
-                                    @else
-                                        N/A
-                                    @endif
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>@lang('inventory.item')</th>
-                                <td>{{ $itemSell->item ? $itemSell->item->item_name : 'N/A' }}</td>
-                            </tr>
-                            <tr>
-                                <th>@lang('inventory.total_quantity')</th>
-                                <td>{{ $itemSell->total_quantity }}</td>
-                            </tr>
-                            <tr>
-                                <th>@lang('inventory.sell_price')</th>
-                                <td>{{ number_format($itemSell->sell_price, 2, '.', '') }}</td>
-                            </tr>
-                            <tr>
-                                <th>@lang('inventory.total_paid')</th>
-                                <td>{{ number_format($itemSell->total_paid, 2, '.', '') }}</td>
-                            </tr>
-                            <tr>
-                                <th>@lang('inventory.total_due')</th>
-                                <td>{{ number_format($itemSell->total_due, 2, '.', '') }}</td>
-                            </tr>
-                            <tr>
-                                <th>@lang('common.date')</th>
-                                <td>{{ $itemSell->sell_date ? \Carbon\Carbon::parse($itemSell->sell_date)->format('m/d/Y') : '' }}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>Class</th>
-                                <td>{{ optional($itemSell->course)->name ?? '-' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Section</th>
-                                <td>{{ optional($itemSell->intake)->name ?? '-' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Descriptions</th>
-                                <td>{{ $itemSell->description ?? '-' }}</td>
-                            </tr>
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="card-title mb-0">
+                        <i class="ti-eye mr-2"></i>@lang('inventory.item_sell_details')
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-card bg-light p-3 rounded mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="ti-receipt text-primary mr-3" style="font-size: 24px;"></i>
+                                    <div>
+                                        <h6 class="mb-1">@lang('inventory.reference_no')</h6>
+                                        <span class="text-muted">{{ $itemSell->reference_no }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-card bg-light p-3 rounded mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="ti-user text-success mr-3" style="font-size: 24px;"></i>
+                                    <div>
+                                        <h6 class="mb-1">@lang('inventory.buyer_name')</h6>
+                                        <span class="text-muted">
+                                            @if ($itemSell->role_id == 2 && $itemSell->student)
+                                                {{ $itemSell->student->student_name }}
+                                            @elseif ($itemSell->role_id == 3 && $itemSell->student)
+                                                {{ $itemSell->student->guardians_name ?? 'N/A' }}
+                                            @elseif ($itemSell->user)
+                                                {{ $itemSell->user->name }}
+                                            @else
+                                                N/A
+                                            @endif
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                        </table>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-card bg-light p-3 rounded mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="ti-package text-warning mr-3" style="font-size: 24px;"></i>
+                                    <div>
+                                        <h6 class="mb-1">@lang('inventory.item')</h6>
+                                        <span class="text-muted">{{ $itemSell->item ? $itemSell->item->item_name : 'N/A' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-card bg-light p-3 rounded mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="ti-calendar text-info mr-3" style="font-size: 24px;"></i>
+                                    <div>
+                                        <h6 class="mb-1">@lang('common.date')</h6>
+                                        <span class="text-muted">{{ $itemSell->sell_date ? \Carbon\Carbon::parse($itemSell->sell_date)->format('m/d/Y') : '' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="info-card bg-light p-3 rounded mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="ti-shopping-cart text-danger mr-3" style="font-size: 24px;"></i>
+                                    <div>
+                                        <h6 class="mb-1">@lang('inventory.total_quantity')</h6>
+                                        <span class="text-muted">{{ $itemSell->total_quantity }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-card bg-light p-3 rounded mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="ti-money text-success mr-3" style="font-size: 24px;"></i>
+                                    <div>
+                                        <h6 class="mb-1">@lang('inventory.sell_price')</h6>
+                                        <span class="text-muted">{{ number_format($itemSell->sell_price, 2, '.', '') }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-card bg-light p-3 rounded mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="ti-credit-card text-warning mr-3" style="font-size: 24px;"></i>
+                                    <div>
+                                        <h6 class="mb-1">@lang('inventory.total_paid')</h6>
+                                        <span class="text-muted">{{ number_format($itemSell->total_paid, 2, '.', '') }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-card bg-light p-3 rounded mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="ti-alert text-danger mr-3" style="font-size: 24px;"></i>
+                                    <div>
+                                        <h6 class="mb-1">@lang('inventory.total_due')</h6>
+                                        <span class="text-muted">{{ number_format($itemSell->total_due, 2, '.', '') }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-card bg-light p-3 rounded mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="ti-book text-info mr-3" style="font-size: 24px;"></i>
+                                    <div>
+                                        <h6 class="mb-1">Class</h6>
+                                        <span class="text-muted">{{ optional($itemSell->course)->name ?? '-' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-card bg-light p-3 rounded mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="ti-layers text-primary mr-3" style="font-size: 24px;"></i>
+                                    <div>
+                                        <h6 class="mb-1">Section</h6>
+                                        <span class="text-muted">{{ optional($itemSell->intake)->name ?? '-' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-card bg-light p-3 rounded mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="ti-clipboard text-secondary mr-3" style="font-size: 24px;"></i>
+                                    <div>
+                                        <h6 class="mb-1">Descriptions</h6>
+                                        <span class="text-muted">{{ $itemSell->description ?? '-' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                {{-- Assuming there's a payments relationship on ItemSell model --}}
-                {{-- @if ($itemSell->payments->count() > 0)
-                    <h4 class="mt-30 mb-20">Payment History</h4>
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Amount</th>
-                                <th>Payment Method</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($itemSell->payments as $key => $payment)
-                                <tr>
-                                    <td>{{ $key + 1 }}</td>
-                                    <td>{{ number_format($payment->amount, 2, '.', '') }}</td>
-                                    <td>{{ $payment->payment_method }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($payment->payment_date)->format('m/d/Y') }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                @else
-                    <p class="mt-30">No payment history found for this item sell.</p>
-                @endif --}}
             </div>
         </div>
     </div>
