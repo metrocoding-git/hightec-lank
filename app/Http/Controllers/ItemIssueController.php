@@ -12,6 +12,7 @@ use App\Models\Branch;
 use App\Models\ItemIssue;
 use App\Models\ItemIssueBatch;
 use App\Models\ItemIssueItem;
+use App\Models\ItemInventory;
 use App\Models\Category;
 use App\Models\Inventory_item;
 use App\Models\Student;
@@ -150,6 +151,21 @@ class ItemIssueController extends Controller
 
                 $savedItems[] = $batchItem->id;
                 Log::info('Batch item saved with ID: ' . $batchItem->id);
+
+                // Track inventory changes for this item issue (decrease inventory)
+                $currentBalance = ItemInventory::getCurrentBalance($itemData['item_id']);
+                $newBalance = $currentBalance - $itemData['quantity'];
+
+                ItemInventory::create([
+                    'item_id' => $itemData['item_id'],
+                    'transaction_type' => 'issue',
+                    'transaction_id' => $batch->id,
+                    'quantity' => $itemData['quantity'],
+                    'current_balance' => $newBalance,
+                    'reference_no' => 'BATCH-' . $batch->id,
+                    'transaction_date' => $batch->issue_date,
+                    'description' => $request->description ?? 'Item issued from batch',
+                ]);
             }
 
             DB::commit();
@@ -266,13 +282,58 @@ class ItemIssueController extends Controller
             DB::beginTransaction();
 
             $batch = ItemIssueBatch::findOrFail($request->id);
-            $batch->issue_status = 'I'; // Issued
-            // $batch->return_date = date('Y-m-d'); // Set return date to today
+
+            if ($batch->issue_status === 'I') {
+                // If already issued, reverse the transaction (return items to inventory)
+                $batchItems = ItemIssueItem::where('batch_id', $batch->id)->get();
+
+                foreach ($batchItems as $batchItem) {
+                    $currentBalance = ItemInventory::getCurrentBalance($batchItem->item_id);
+                    $newBalance = $currentBalance + $batchItem->quantity;
+
+                    ItemInventory::create([
+                        'item_id' => $batchItem->item_id,
+                        'transaction_type' => 'issue_return',
+                        'transaction_id' => $batch->id,
+                        'quantity' => $batchItem->quantity,
+                        'current_balance' => $newBalance,
+                        'reference_no' => 'BATCH-' . $batch->id,
+                        'transaction_date' => now()->toDateString(),
+                        'description' => 'Items returned to inventory (reversed issue)',
+                    ]);
+                }
+
+                $batch->issue_status = 'P'; // Pending (reversed)
+                $message = 'Batch issue reversed successfully. Items returned to inventory.';
+            } else {
+                // Issue items (normal issue process)
+                $batchItems = ItemIssueItem::where('batch_id', $batch->id)->get();
+
+                foreach ($batchItems as $batchItem) {
+                    $currentBalance = ItemInventory::getCurrentBalance($batchItem->item_id);
+                    $newBalance = $currentBalance - $batchItem->quantity;
+
+                    ItemInventory::create([
+                        'item_id' => $batchItem->item_id,
+                        'transaction_type' => 'issue',
+                        'transaction_id' => $batch->id,
+                        'quantity' => $batchItem->quantity,
+                        'current_balance' => $newBalance,
+                        'reference_no' => 'BATCH-' . $batch->id,
+                        'transaction_date' => now()->toDateString(),
+                        'description' => 'Items issued from inventory',
+                    ]);
+                }
+
+                $batch->issue_status = 'I'; // Issued
+                $message = 'Batch issued successfully.';
+            }
+
             $batch->save();
 
             DB::commit();
 
-            return redirect()->route('item-issue-list')->with('success', 'Batch issued successfully.');
+            return redirect()->route('item-issue-list')->with('success', $message);
         } catch (Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
@@ -288,6 +349,27 @@ class ItemIssueController extends Controller
             DB::beginTransaction();
 
             $batch = ItemIssueBatch::findOrFail($request->id);
+
+            // Get all items in this batch before updating status
+            $batchItems = ItemIssueItem::where('batch_id', $batch->id)->get();
+
+            // Track inventory changes for each item return (increase inventory)
+            foreach ($batchItems as $batchItem) {
+                $currentBalance = ItemInventory::getCurrentBalance($batchItem->item_id);
+                $newBalance = $currentBalance + $batchItem->quantity;
+
+                ItemInventory::create([
+                    'item_id' => $batchItem->item_id,
+                    'transaction_type' => 'issue_return',
+                    'transaction_id' => $batch->id,
+                    'quantity' => $batchItem->quantity,
+                    'current_balance' => $newBalance,
+                    'reference_no' => 'BATCH-' . $batch->id,
+                    'transaction_date' => now()->toDateString(),
+                    'description' => 'Items returned from batch',
+                ]);
+            }
+
             $batch->issue_status = 'R'; // Returned
             // $batch->return_date = date('Y-m-d'); // Set return date to today
             $batch->save();

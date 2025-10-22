@@ -118,8 +118,8 @@
                                                             @endif
                                                             <a class="dropdown-item view-item-issue" href="#"
                                                                 data-id="{{ @$batch->id }}">@lang('common.view')</a>
-                                                            <a class="dropdown-item"
-                                                                href="{{ route('item-issue-edit', @$batch->id) }}">@lang('common.edit')</a>
+                                                            {{-- <a class="dropdown-item"
+                                                                href="{{ route('item-issue-edit', @$batch->id) }}">@lang('common.edit')</a> --}}
                                                         </x-drop-down>
                                                     </td>
                                                 </tr>
@@ -170,10 +170,10 @@
                                         <td><strong>@lang('common.description'):</strong></td>
                                         <td id="modalDescription"></td>
                                     </tr>
-                                    <tr>
+                                    {{-- <tr>
                                         <td><strong>@lang('common.status'):</strong></td>
                                         <td id="modalStatus"></td>
-                                    </tr>
+                                    </tr> --}}
                                 </tbody>
                             </table>
 

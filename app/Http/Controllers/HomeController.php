@@ -25,6 +25,7 @@ use App\Models\YearCheck;
 use App\InfixModuleManager;
 use App\Models\BankAccount;
 use App\Models\ItemReceive;
+use App\Models\ItemInventory;
 use App\Models\SmAddIncome;
 use Illuminate\Support\Str;
 use App\Models\SmAddExpense;
@@ -634,8 +635,9 @@ class HomeController extends Controller
 
         try {
             // Create one row per item, duplicating header fields as per existing schema
+            $createdReceives = [];
             foreach ($request->item_id as $index => $itemId) {
-                ItemReceive::create([
+                $itemReceive = ItemReceive::create([
                     'payment_method' => $request->payment_method,
                     'supplier_id' => $request->supplier_id,
                     'store_id' => $request->store_id,
@@ -651,6 +653,23 @@ class HomeController extends Controller
                     'total_paid' => $request->totalPaid ?? 0,
                     // Optional bank id if payment_method requires it
                     'bank_id' => $request->bank_id ?? null,
+                ]);
+
+                $createdReceives[] = $itemReceive;
+
+                // Track inventory changes for this item receive
+                $currentBalance = ItemInventory::getCurrentBalance($itemId);
+                $newBalance = $currentBalance + $request->quantity[$index];
+
+                ItemInventory::create([
+                    'item_id' => $itemId,
+                    'transaction_type' => 'receive',
+                    'transaction_id' => $itemReceive->id,
+                    'quantity' => $request->quantity[$index],
+                    'current_balance' => $newBalance,
+                    'reference_no' => $request->reference_no,
+                    'transaction_date' => $receiveDate,
+                    'description' => $request->description ?? 'Item received from supplier',
                 ]);
             }
 
