@@ -95,6 +95,7 @@ class RoleController extends Controller
         'student.add-intake.search' => 'student.add-intake.search',
         'student.add-intake.get-intakes' => 'student.add-intake.get-intakes',
         'student.add-intake.get-courses' => 'student.add-intake.get-courses',
+        'student.add-intake.update-status' => 'student.add-intake.update-status',
         'student-list.index' => 'student-list', // Special case
         'student-list.update-status' => 'student.update-status',
         'student-list.details' => 'student-details',
@@ -136,6 +137,7 @@ class RoleController extends Controller
         'item-sell.cancel' => 'cancel-item-sell', // Mismatch
         'item-sell.add-payment' => 'add-payment-sell', // Mismatch
         'item-sell.view-payments' => 'view-sell-payments', // Mismatch
+        'item-sell.update-status' => 'update-item-sell-status',
         'item-issue.index' => 'item-issue',
         'item-issue.store' => 'save-item-issue-data', // Mismatch
         'item-issue.edit' => 'item-issue-edit',
@@ -289,7 +291,7 @@ class RoleController extends Controller
             ['name' => 'Student Categories', 'route' => 'student-category', 'category' => 'Student Management', 'sub_category' => 'Student Settings', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
             ['name' => 'Add Student', 'route' => 'add-student', 'category' => 'Student Management', 'sub_category' => 'Student Enrollment', 'actions' => ['index', 'store', 'update', 'edit', 'destroy']],
             ['name' => 'Student Add Course', 'route' => 'student.add-course', 'category' => 'Student Management', 'sub_category' => 'Student Enrollment', 'actions' => ['index', 'store', 'edit', 'update', 'destroy']],
-            ['name' => 'Student Add Intake', 'route' => 'student.add-intake', 'category' => 'Student Management', 'sub_category' => 'Student Enrollment', 'actions' => ['index', 'store', 'edit', 'update', 'destroy', 'search', 'get-intakes', 'get-courses']],
+            ['name' => 'Student Add Intake', 'route' => 'student.add-intake', 'category' => 'Student Management', 'sub_category' => 'Student Enrollment', 'actions' => ['index', 'store', 'edit', 'update', 'destroy', 'search', 'get-intakes', 'get-courses', 'update-status']],
             ['name' => 'Student List', 'route' => 'student-list', 'category' => 'Student Management', 'sub_category' => 'Student Information', 'actions' => ['index', 'update-status', 'details', 'export', 'get-intakes', 'get-courses']],
             ['name' => 'Disabled Students', 'route' => 'disabled-students', 'category' => 'Student Management', 'sub_category' => 'Student Information', 'actions' => ['index', 'search']],
             ['name' => 'Student Attendance', 'route' => 'student-attendance', 'category' => 'Student Management', 'sub_category' => 'Student Information', 'actions' => ['index', 'get-courses']],
@@ -299,7 +301,7 @@ class RoleController extends Controller
             ['name' => 'Item List', 'route' => 'item-list', 'category' => 'Inventory Management', 'sub_category' => 'Item Settings', 'actions' => ['index', 'store', 'edit', 'update', 'delete']],
             ['name' => 'Suppliers', 'route' => 'supplier', 'category' => 'Inventory Management', 'sub_category' => 'Item Settings', 'actions' => ['index', 'store', 'edit', 'update', 'delete']],
             ['name' => 'Item Receive', 'route' => 'item-receive', 'category' => 'Inventory Management', 'sub_category' => 'Inventory Transactions', 'actions' => ['index', 'store', 'edit', 'update', 'destroy']],
-            ['name' => 'Item Sell', 'route' => 'item-sell', 'category' => 'Inventory Management', 'sub_category' => 'Inventory Transactions', 'actions' => ['index', 'store', 'view', 'edit', 'update', 'delete', 'cancel', 'add-payment', 'view-payments']],
+            ['name' => 'Item Sell', 'route' => 'item-sell', 'category' => 'Inventory Management', 'sub_category' => 'Inventory Transactions', 'actions' => ['index', 'store', 'view', 'edit', 'update', 'delete', 'cancel', 'add-payment', 'view-payments', 'update-status']],
             ['name' => 'Item Issue', 'route' => 'item-issue', 'category' => 'Inventory Management', 'sub_category' => 'Inventory Transactions', 'actions' => ['index', 'store', 'edit', 'update', 'return', 'issue', 'get-intakes', 'get-courses', 'get-students', 'get-items', 'get-student-fee-data']],
 
             // FEE
