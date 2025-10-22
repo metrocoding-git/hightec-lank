@@ -121,6 +121,7 @@ class PermissionSeeder extends Seeder
             'item-sell-payments.store',
             'view-sell-payments',
             'update-item-sell-status',
+            'direct-return-item-sell',
             'delete-item-sell',
             'cancel-item-sell-view',
             'cancel-item-sell',

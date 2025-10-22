@@ -138,6 +138,7 @@ class RoleController extends Controller
         'item-sell.add-payment' => 'add-payment-sell', // Mismatch
         'item-sell.view-payments' => 'view-sell-payments', // Mismatch
         'item-sell.update-status' => 'update-item-sell-status',
+        'item-sell.direct-return' => 'direct-return-item-sell',
         'item-issue.index' => 'item-issue',
         'item-issue.store' => 'save-item-issue-data', // Mismatch
         'item-issue.edit' => 'item-issue-edit',
@@ -301,7 +302,7 @@ class RoleController extends Controller
             ['name' => 'Item List', 'route' => 'item-list', 'category' => 'Inventory Management', 'sub_category' => 'Item Settings', 'actions' => ['index', 'store', 'edit', 'update', 'delete']],
             ['name' => 'Suppliers', 'route' => 'supplier', 'category' => 'Inventory Management', 'sub_category' => 'Item Settings', 'actions' => ['index', 'store', 'edit', 'update', 'delete']],
             ['name' => 'Item Receive', 'route' => 'item-receive', 'category' => 'Inventory Management', 'sub_category' => 'Inventory Transactions', 'actions' => ['index', 'store', 'edit', 'update', 'destroy']],
-            ['name' => 'Item Sell', 'route' => 'item-sell', 'category' => 'Inventory Management', 'sub_category' => 'Inventory Transactions', 'actions' => ['index', 'store', 'view', 'edit', 'update', 'delete', 'cancel', 'add-payment', 'view-payments', 'update-status']],
+            ['name' => 'Item Sell', 'route' => 'item-sell', 'category' => 'Inventory Management', 'sub_category' => 'Inventory Transactions', 'actions' => ['index', 'store', 'view', 'edit', 'update', 'delete', 'cancel', 'add-payment', 'view-payments', 'update-status', 'direct-return']],
             ['name' => 'Item Issue', 'route' => 'item-issue', 'category' => 'Inventory Management', 'sub_category' => 'Inventory Transactions', 'actions' => ['index', 'store', 'edit', 'update', 'return', 'issue', 'get-intakes', 'get-courses', 'get-students', 'get-items', 'get-student-fee-data']],
 
             // FEE
