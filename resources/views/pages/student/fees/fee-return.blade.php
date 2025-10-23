@@ -189,18 +189,52 @@
 @include('components.partials.data_table_css')
 @push('script')
  <script>
-        $('#table_id').DataTable({
-             responsive: true,
+       $('#table_id').DataTable({
+            responsive: true,
             dom: 'Bfrtip',
-            buttons: [
-                'copy', 'csv', 'excel', 'pdf', 'print'
+
+            buttons: [{
+                    extend: 'copyHtml5',
+                    text: '<i class="fa-regular fa-copy"></i>',
+                    titleAttr: 'Copy'
+                },
+                {
+                    extend: 'csvHtml5',
+                    text: '<i class="fa-solid fa-file-csv"></i>',
+                    titleAttr: 'CSV'
+                },
+                {
+                    extend: 'excelHtml5',
+                    text: '<i class="fa-solid fa-file-excel"></i>',
+                    titleAttr: 'Excel'
+                },
+                {
+                    extend: 'pdfHtml5',
+                    text: '<i class="fa-solid fa-file-pdf"></i>',
+                    titleAttr: 'PDF'
+                },
+                {
+                    extend: 'print',
+                    text: '<i class="fa-solid fa-print"></i>',
+                    titleAttr: 'Print'
+                }
             ],
+
             paging: true,
             searching: true,
             ordering: true,
             info: true,
-        });
-    </script>
+
+            // 👇 This part adds the search and pagination icons
+            language: {
+                search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
+                searchPlaceholder: 'Search...',
+                paginate: {
+                    previous: '<i class="fa-solid fa-angle-left"></i>',
+                    next: '<i class="fa-solid fa-angle-right"></i>'
+                }
+            }
+        });    </script>
     <script>
         $(document).ready(function() {
             // Function to load intakes based on selected branch

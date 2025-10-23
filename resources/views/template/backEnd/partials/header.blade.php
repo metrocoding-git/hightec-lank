@@ -41,6 +41,11 @@
 <link rel="stylesheet" href="{{ asset('public/backEnd/vendors/select2/css/select2.min.css')}}" />
 @endif 
 @include('backEnd.partials.css')
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+/>
+
 @if(userRtlLtl() ==1)
     <style>
         .demo_addons{

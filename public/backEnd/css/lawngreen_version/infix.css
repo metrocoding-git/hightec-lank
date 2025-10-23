@@ -937,8 +937,28 @@ table.dataTable.dtr-inline.collapsed > tbody > tr[role="row"] > td:first-child, 
 table.dataTable.dtr-inline.collapsed > tbody > tr[role="row"] > td:first-child:before, table.dataTable.dtr-inline.collapsed > tbody > tr[role="row"] > th:first-child:before {
     background: #03e396 !important;
 }
-table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td:first-child:before, table.dataTable.dtr-inline.collapsed > tbody > tr.parent > th:first-child:before {
-    background: red !important;
+table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td:first-child:before,
+table.dataTable.dtr-inline.collapsed > tbody > tr.parent > th:first-child:before {
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  content: "\f068"; /* fa-minus icon */
+  background: #d33333; /* red color for expanded */
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 18px;
+  height: 18px;
+  font-size: 12px;
+  line-height: 1;
+  margin: auto;
+  top: 50%;
+  transform: translateY(-50%);
+  position: absolute;
+  left: 8px;
+  transition: all 0.4s ease;
 }
 
 

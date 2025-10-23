@@ -14,8 +14,11 @@ table.dataTable.dtr-inline.collapsed > tbody > tr[role="row"] > th:first-child {
 	padding-left: 30px;
 	cursor: pointer;
 }
+
+
 table.dataTable.dtr-inline.collapsed > tbody > tr[role="row"] > td:first-child:before,
 table.dataTable.dtr-inline.collapsed > tbody > tr[role="row"] > th:first-child:before {
+	
 	top: 22px;
 	left: 0px;
 	height: 18px;
