@@ -5,63 +5,17 @@
 @section('mainContent')
   
     <style>
-        .white-box {
-            background: #fff;
-            border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            padding: 15px;
-        }
-
-        .nav-tabs .nav-link {
-            border: none;
-            color: #666;
-            padding: 8px 12px;
-        }
-
-        .nav-tabs .nav-link.active {
-            background: #007bff;
-            color: #fff;
-        }
-
-        .primary_input_field {
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            padding: 6px 10px;
-        }
-
-        .primary_input_field:focus {
-            border-color: #007bff;
-        }
-
-        .primary-btn {
-            background: #007bff;
-            border: none;
-            color: #fff;
-            padding: 6px 12px;
-            border-radius: 3px;
-        }
-
-        .primary-btn:hover {
-            background: #0056b3;
-        }
-
-        .text-danger {
-            color: #dc3545;
-        }
-
         #video,
         #canvas {
             border: 1px solid #ccc;
-            background: #f5f5f5;
-            border-radius: 3px;
-            margin-top: 8px;
+            background-color: #eee;
+            margin-top: 10px;
         }
 
         #imagePreview {
             border: 1px solid #ccc;
-            background: #f5f5f5;
-            border-radius: 3px;
-            margin-top: 8px;
+            background-color: #eee;
+            margin-top: 10px;
         }
     </style>
     <section class="sms-breadcrumb mb-20 up_breadcrumb">
@@ -778,7 +732,7 @@
                                             </div>
                                             <div role="tabpanel" class="tab-pane fade" id="parents_and_guardian_info">
                                                 <div class="row pt-4 row-gap-24">
-                                                    {{-- <div class="col-lg-12">
+                                                    <div class="col-lg-12">
                                                         <div class="form-section">
                                                             <div class="row">
 
@@ -789,7 +743,7 @@
                                                                                 value="">
 
                                                                         </div>
-                                                                        <div class="col-lg-5">
+                                                                        {{-- <div class="col-lg-5">
                                                                             <button
                                                                                 class="primary-btn-small-input primary-btn small fix-gr-bg"
                                                                                 type="button" data-toggle="modal"
@@ -797,14 +751,14 @@
                                                                                 <span class="ti-plus pr-2"></span>
                                                                                 @lang('student.add_parents')
                                                                             </button>
-                                                                        </div>
+                                                                        </div> --}}
                                                                     </div>
 
                                                                 </div>
 
                                                             </div>
                                                         </div>
-                                                    </div> --}}
+                                                    </div>
 
 
 
