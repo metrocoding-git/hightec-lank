@@ -288,6 +288,7 @@
                                                     <tr>
                                                         <th> @lang('inventory.product_name')* </th>
                                                         <th> @lang('inventory.sell_price')* </th>
+                                                        <th> Available Qty. </th>
                                                         <th> @lang('inventory.quantity')* </th>
                                                         <th>@lang('inventory.sub_total')</th>
                                                         <th>@lang('common.action')</th>
@@ -298,7 +299,7 @@
                                                 </tbody>
                                                 <tfoot>
                                                     <tr>
-                                                        <th class="border-top-0" colspan="2">@lang('inventory.total')</th>
+                                                        <th class="border-top-0" colspan="3">@lang('inventory.total')</th>
                                                         <th class="border-top-0">
                                                             <input type="text" class="primary_input_field form-control"
                                                                 readonly="" id="subTotalQuantity"
@@ -395,6 +396,11 @@
     </section>
     <script>
         $(document).ready(function() {
+            // Configure toastr options
+            toastr.options = {
+                "timeOut": "5000",
+                "extendedTimeOut": "1000"
+            };
             let rowCount = 0; // initialize as needed
 
             function addRow() {
@@ -422,9 +428,15 @@
         </td>
         <td class="border-top-0">
             <div class="primary_input">
+                <input class="primary_input_field form-control" type="text" id="available_quantity${rowCount}"
+                       name="available_quantity[]" autocomplete="off" value="" readonly="readonly">
+            </div>
+        </td>
+        <td class="border-top-0">
+            <div class="primary_input">
                 <input oninput="numberCheckWithDot(this)" class="primary_input_field form-control"
                        type="text" id="quantity${rowCount}" name="quantity[]" autocomplete="off"
-                       onkeyup="getTotal(${rowCount});" value="">
+                       onkeyup="validateAndGetTotal(${rowCount});" value="">
             </div>
         </td>
         <td class="border-top-0">
@@ -467,19 +479,23 @@
                     success: function(response) {
                         if (response.success) {
                             $('#unit_price' + rowNum).val(response.price);
+                            $('#available_quantity' + rowNum).val(response.available_quantity);
                             getTotalByPrice(rowNum); // Update total after setting price
                         } else {
-                            alert('Error: ' + response.message);
+                            toastr.error(response.message, 'Error');
                             $('#unit_price' + rowNum).val('');
+                            $('#available_quantity' + rowNum).val('');
                         }
                     },
                     error: function(xhr) {
-                        alert('Failed to fetch item price.');
+                        toastr.error('Failed to fetch item price.', 'Error');
                         $('#unit_price' + rowNum).val('');
+                        $('#available_quantity' + rowNum).val('');
                     }
                 });
             } else {
                 $('#unit_price' + rowNum).val('');
+                $('#available_quantity' + rowNum).val('');
                 getTotalByPrice(rowNum);
             }
         }
@@ -500,6 +516,17 @@
 
         function getTotal(row) {
             getTotalByPrice(row); // Same calculation works for quantity change
+        }
+
+        function validateAndGetTotal(row) {
+            const qty = parseFloat($("#quantity" + row).val()) || 0;
+            const available = parseFloat($("#available_quantity" + row).val()) || 0;
+            if (qty > available) {
+                toastr.error('Quantity cannot exceed available quantity (' + available + ')', 'Validation Error');
+                $("#quantity" + row).val('');
+                return;
+            }
+            getTotalByPrice(row);
         }
 
         // Calculate subtotal & grand total
