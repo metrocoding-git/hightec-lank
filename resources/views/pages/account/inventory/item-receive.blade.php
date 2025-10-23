@@ -94,8 +94,7 @@
                                                     <select
                                                         class="primary_select  form-control{{ $errors->has('payment_method') ? ' is-invalid' : '' }}"
                                                         name="payment_method" id="item_receive_payment_method">
-                                                        <option data-display="@lang('inventory.payment_method')*" value="" selected
-                                                            disabled>
+                                                        <option data-display="@lang('inventory.payment_method')*" value="">
                                                             @lang('inventory.payment_method')*</option>
                                                         <option value="Cash">Cash</option>
                                                         <option value="Invoice">Invoice</option>
@@ -275,11 +274,11 @@
                             <div class="row">
                                 <div class="col-lg-12">
                                     <div class="white-box">
-                                        <div class="alert alert-danger" id="errorMessage2">
+                                        {{-- <div class="alert alert-danger" id="errorMessage2">
                                             <div id="itemError"></div>
                                             <div id="priceError"></div>
                                             <div id="quantityError"></div>
-                                        </div>
+                                        </div> --}}
                                         <div class="table-responsive">
                                             <table class="table" id="productTable">
                                                 <thead>
