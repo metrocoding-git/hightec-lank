@@ -63,6 +63,15 @@ class ItemSellController extends Controller
             // Create one row per item, duplicating header fields as per existing schema
             $createdSells = [];
             foreach ($request->item_id as $index => $itemId) {
+                // Check available quantity
+                $availableQuantity = ItemInventory::getCurrentBalance($itemId);
+                if ($request->quantity[$index] > $availableQuantity) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Quantity for item cannot exceed available quantity (' . $availableQuantity . ')',
+                    ], 422);
+                }
+
                 $itemSell = ItemSell::create([
                     'payment_method' => $request->payment_method,
                     'role_id' => $request->role_id,
@@ -442,6 +451,24 @@ class ItemSellController extends Controller
                 'message' => 'Failed to return item.',
                 'error' => $e->getMessage(),
             ], 500);
+        }
+    }
+
+    public function getItemPrice($id)
+    {
+        try {
+            $item = Inventory_item::findOrFail($id);
+            $currentBalance = ItemInventory::getCurrentBalance($id);
+            return response()->json([
+                'success' => true,
+                'price' => $item->item_price,
+                'available_quantity' => $currentBalance
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Item not found.'
+            ], 404);
         }
     }
 }

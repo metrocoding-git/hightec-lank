@@ -277,17 +277,18 @@
                             <div class="row">
                                 <div class="col-lg-12">
                                     <div class="white-box">
-                                        <div class="alert alert-danger" id="errorMessage2">
+                                        {{-- <div class="alert alert-danger" id="errorMessage2">
                                             <div id="itemError"></div>
                                             <div id="priceError"></div>
                                             <div id="quantityError"></div>
-                                        </div>
+                                        </div> --}}
                                         <div class="table-responsive">
                                             <table class="table" id="productTable">
                                                 <thead>
                                                     <tr>
                                                         <th> @lang('inventory.product_name')* </th>
                                                         <th> @lang('inventory.sell_price')* </th>
+                                                        <th> Available Qty. </th>
                                                         <th> @lang('inventory.quantity')* </th>
                                                         <th>@lang('inventory.sub_total')</th>
                                                         <th>@lang('common.action')</th>
@@ -298,7 +299,7 @@
                                                 </tbody>
                                                 <tfoot>
                                                     <tr>
-                                                        <th class="border-top-0" colspan="2">@lang('inventory.total')</th>
+                                                        <th class="border-top-0" colspan="3">@lang('inventory.total')</th>
                                                         <th class="border-top-0">
                                                             <input type="text" class="primary_input_field form-control"
                                                                 readonly="" id="subTotalQuantity"
@@ -395,6 +396,11 @@
     </section>
     <script>
         $(document).ready(function() {
+            // Configure toastr options
+            toastr.options = {
+                "timeOut": "5000",
+                "extendedTimeOut": "1000"
+            };
             let rowCount = 0; // initialize as needed
 
             function addRow() {
@@ -405,7 +411,7 @@
         <td class="border-top-0">
             <input type="hidden" name="url" id="url" value="{{ URL::to('/') }}">
             <div class="primary_input">
-                <select class="primary_select form-control" name="item_id[]" id="productName${rowCount}">
+                <select class="primary_select form-control" name="item_id[]" id="productName${rowCount}" onchange="fetchPrice(this, ${rowCount})">
                     <option value="">@lang('common.select')*</option>
                     @foreach ($items as $key => $value)
                         <option value="{{ $value->id }}">{{ $value->item_name }}</option>
@@ -417,14 +423,20 @@
             <div class="primary_input">
                 <input oninput="numberCheckWithDot(this)" class="primary_input_field form-control"
                        type="text" step="0.1" id="unit_price${rowCount}" name="unit_price[]"
-                       autocomplete="off" value="" onkeyup="getTotalByPrice(${rowCount})">
+                       autocomplete="off" value="" readonly="readonly" onkeyup="getTotalByPrice(${rowCount})">
+            </div>
+        </td>
+        <td class="border-top-0">
+            <div class="primary_input">
+                <input class="primary_input_field form-control" type="text" id="available_quantity${rowCount}"
+                       name="available_quantity[]" autocomplete="off" value="" readonly="readonly">
             </div>
         </td>
         <td class="border-top-0">
             <div class="primary_input">
                 <input oninput="numberCheckWithDot(this)" class="primary_input_field form-control"
                        type="text" id="quantity${rowCount}" name="quantity[]" autocomplete="off"
-                       onkeyup="getTotal(${rowCount});" value="">
+                       onkeyup="validateAndGetTotal(${rowCount});" value="">
             </div>
         </td>
         <td class="border-top-0">
@@ -457,6 +469,37 @@
             $('#row' + rowNum).remove();
         }
 
+        // Fetch price for selected item
+        function fetchPrice(selectElement, rowNum) {
+            const itemId = selectElement.value;
+            if (itemId) {
+                $.ajax({
+                    url: '{{ url("/") }}/account/inventory/get-item-price/' + itemId,
+                    type: 'GET',
+                    success: function(response) {
+                        if (response.success) {
+                            $('#unit_price' + rowNum).val(response.price);
+                            $('#available_quantity' + rowNum).val(response.available_quantity);
+                            getTotalByPrice(rowNum); // Update total after setting price
+                        } else {
+                            toastr.error(response.message, 'Error');
+                            $('#unit_price' + rowNum).val('');
+                            $('#available_quantity' + rowNum).val('');
+                        }
+                    },
+                    error: function(xhr) {
+                        toastr.error('Failed to fetch item price.', 'Error');
+                        $('#unit_price' + rowNum).val('');
+                        $('#available_quantity' + rowNum).val('');
+                    }
+                });
+            } else {
+                $('#unit_price' + rowNum).val('');
+                $('#available_quantity' + rowNum).val('');
+                getTotalByPrice(rowNum);
+            }
+        }
+
 
 
         // Update total for a row
@@ -473,6 +516,17 @@
 
         function getTotal(row) {
             getTotalByPrice(row); // Same calculation works for quantity change
+        }
+
+        function validateAndGetTotal(row) {
+            const qty = parseFloat($("#quantity" + row).val()) || 0;
+            const available = parseFloat($("#available_quantity" + row).val()) || 0;
+            if (qty > available) {
+                toastr.error('Quantity cannot exceed available quantity (' + available + ')', 'Validation Error');
+                $("#quantity" + row).val('');
+                return;
+            }
+            getTotalByPrice(row);
         }
 
         // Calculate subtotal & grand total

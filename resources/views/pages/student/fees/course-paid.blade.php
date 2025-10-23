@@ -18,27 +18,8 @@
                 overflow: initial !important;
             }
 
-            /* Improved spacing styles */
-            .form-section {
-                margin-bottom: 25px;
-            }
-            
-            .form-label {
-                margin-bottom: 8px;
-                display: block;
-                font-weight: 500;
-                
-            }
-            
             .left-section-card {
                 height: 100%;
-            }
-            
-            .bank-payment-section {
-                background: #f8f9fa;
-                padding: 15px;
-                border-radius: 5px;
-                margin-top: 10px;
             }
         </style>
     @endpush
@@ -79,82 +60,94 @@
                                 <input type="hidden" id="url" value="{{ URL::to('/') }}">
 
                                 {{-- Branch --}}
-                                <div class="form-section">
-                                    <label class="form-label">@lang('common.branch') <span class="text-danger">*</span></label>
-                                    <select class="primary_select form-control" id="branch_id" name="branch_id">
-                                        <option value="">@lang('common.select_class')</option>
-                                        @foreach ($branches as $branch)
-                                            <option value="{{ $branch->id }}">{{ $branch->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    <div class="pull-right loader" id="selectStudentLoader" style="display:none;">
-                                        <img src="{{ asset('Modules/Fees/Resources/assets/img/pre-loader.gif') }}"
-                                            style="width:28px;height:28px;">
+                                <div class="row mt-15">
+                                    <div class="col-lg-12">
+                                        <label>@lang('common.branch') <span class="text-danger">*</span></label>
+                                        <select class="primary_select form-control" id="branch_id" name="branch_id">
+                                            <option value="">@lang('common.select_class')</option>
+                                            @foreach ($branches as $branch)
+                                                <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <div class="pull-right loader" id="selectStudentLoader" style="display:none;">
+                                            <img src="{{ asset('Modules/Fees/Resources/assets/img/pre-loader.gif') }}"
+                                                style="width:28px;height:28px;">
+                                        </div>
                                     </div>
                                 </div>
 
                                 {{-- Student --}}
-                                <div class="form-section mt-4">
-                                    <label class="form-label">@lang('common.select_student') <span class="text-danger">*</span></label>
-                                    <select class="primary_select form-control" id="student_id" name="student_id">
-                                        <option value="">@lang('common.select_student')</option>
-                                        @foreach ($students as $student)
-                                            <option value="{{ $student->id }}">{{ $student->student_name }}</option>
-                                        @endforeach
-                                    </select>
+                                <div class="row mt-15">
+                                    <div class="col-lg-12">
+                                        <label>@lang('common.select_student') <span class="text-danger">*</span></label>
+                                        <select class="primary_select form-control" id="student_id" name="student_id">
+                                            <option value="">@lang('common.select_student')</option>
+                                            @foreach ($students as $student)
+                                                <option value="{{ $student->id }}">{{ $student->student_name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
                                 </div>
 
                                 {{-- Dates --}}
-                                <div class="form-section">
-                                    <label class="form-label mt-4">@lang('fees.create_date') <span class="text-danger">*</span></label>
-                                    <input type="text" class="primary_input_field date form-control" id="create_date"
-                                        name="create_date" value="{{ date('m/d/Y') }}">
+                                <div class="row mt-15">
+                                    <div class="col-lg-12">
+                                        <label>@lang('fees.create_date') <span class="text-danger">*</span></label>
+                                        <input type="text" class="primary_input_field date form-control" id="create_date"
+                                            name="create_date" value="{{ date('m/d/Y') }}">
+                                    </div>
                                 </div>
-                                
-                                <div class="form-section">
-                                    <label class="form-label">@lang('fees.due_date') <span class="text-danger">*</span></label>
-                                    <input type="text" class="primary_input_field date form-control" id="due_date"
-                                        name="due_date" value="{{ date('m/d/Y') }}">
+
+                                <div class="row mt-15">
+                                    <div class="col-lg-12">
+                                        <label>@lang('fees.due_date') <span class="text-danger">*</span></label>
+                                        <input type="text" class="primary_input_field date form-control" id="due_date"
+                                            name="due_date" value="{{ date('m/d/Y') }}">
+                                    </div>
                                 </div>
 
                                 {{-- Status --}}
-                                <div class="form-section" hidden>
-                                    <label class="form-label">@lang('fees.payment_status') <span class="text-danger">*</span></label>
-                                    <select class="primary_select form-control" id="status" name="payment_status">
-                                        <option value="">@lang('fees.payment_status')</option>
-                                        <option value="not">@lang('fees.not_paid')</option>
-                                        <option value="partial">@lang('fees.partial_paid')</option>
-                                        <option value="full">@lang('fees.full_paid')</option>
-                                    </select>
+                                <div class="row mt-15" hidden>
+                                    <div class="col-lg-12">
+                                        <label>@lang('fees.payment_status') <span class="text-danger">*</span></label>
+                                        <select class="primary_select form-control" id="status" name="payment_status">
+                                            <option value="">@lang('fees.payment_status')</option>
+                                            <option value="not">@lang('fees.not_paid')</option>
+                                            <option value="partial">@lang('fees.partial_paid')</option>
+                                            <option value="full">@lang('fees.full_paid')</option>
+                                        </select>
+                                    </div>
                                 </div>
 
                                 {{-- Payment Method --}}
-                                <div class="form-section">
-                                    <label class="form-label mt-4">@lang('fees.payment_method') <span class="text-danger">*</span></label>
-                                    <select class="primary_select form-control" id="paymentMethodName" name="payment_method">
-                                        <option value="">@lang('fees.payment_method')</option>
-                                        <option value="Cash">Cash</option>
-                                        <option value="Invoice">Invoice</option>
-                                        <option value="Bank Transfer">Bank Transfer</option>
-                                    </select>
+                                <div class="row mt-15">
+                                    <div class="col-lg-12">
+                                        <label>@lang('fees.payment_method') <span class="text-danger">*</span></label>
+                                        <select class="primary_select form-control" id="paymentMethodName" name="payment_method">
+                                            <option value="">@lang('fees.payment_method')</option>
+                                            <option value="Cash">Cash</option>
+                                            <option value="Invoice">Invoice</option>
+                                            <option value="Bank Transfer">Bank Transfer</option>
+                                        </select>
+                                    </div>
                                 </div>
 
                                 {{-- Bank Upload Section --}}
-                                <div class="bank-payment-section d-none" id="bankPaymentSection">
-                                    <div class="form-section" id="bankPaidAmountRow">
-                                        <label class="form-label mt-4">Bank Paid Amount <span class="text-danger">*</span></label>
+                                <div class="row mt-15 d-none" id="bankPaymentSection">
+                                    <div class="col-lg-12" id="bankPaidAmountRow">
+                                        <label>Bank Paid Amount <span class="text-danger">*</span></label>
                                         <input type="number" class="primary_input_field form-control" id="bank_paid_amount"
                                             name="bank_paid_amount" value="0" step="0.01">
                                     </div>
-                                    
-                                    <div class="form-section" id="bankPaidDateRow">
-                                        <label class="form-label">Bank Paid Date <span class="text-danger">*</span></label>
+
+                                    <div class="col-lg-12 mt-15" id="bankPaidDateRow">
+                                        <label>Bank Paid Date <span class="text-danger">*</span></label>
                                         <input type="date" class="primary_input_field date form-control" id="bank_paid_date"
                                             name="bank_paid_date" value="{{ date('Y-m-d') }}">
                                     </div>
-                                    
-                                    <div class="form-section" id="uploadDocumentRow">
-                                        <label class="form-label">Upload Document</label>
+
+                                    <div class="col-lg-12 mt-15" id="uploadDocumentRow">
+                                        <label>Upload Document</label>
                                         <div class="d-flex align-items-center gap-2">
                                             <input type="file" name="payment_file" id="payment_file" class="d-none"
                                                 accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
@@ -167,10 +160,12 @@
                                 </div>
 
                                 {{-- Save Button --}}
-                                <div class="form-section text-center mt-4">
-                                    <button id="submit" class="primary-btn fix-gr-bg fmInvoice w-100 py-2">
-                                        @lang('common.save')
-                                    </button>
+                                <div class="row mt-15">
+                                    <div class="col-lg-12 text-center">
+                                        <button id="submit" class="primary-btn fix-gr-bg fmInvoice w-100 py-1">
+                                            @lang('common.save')
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -184,33 +179,35 @@
                             </div>
 
                             {{-- Select Course --}}
-                            <div class="form-section">
-                                <label class="form-label">Select Course <span class="text-danger">*</span></label>
-                                <select class="primary_select form-control" id="course_id" name="course_id">
-                                    <option value="">select course</option>
-                                    @foreach ($courses as $course)
-                                        <option value="{{ $course->id }}" data-price="{{ $course->price }}">
-                                            {{ $course->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                {{-- Table --}}
-                                <div class="big-table mt-4 table-responsive">
-                                    <table class="table school-table-style fees_invoice_type_table w-100">
-                                        <thead>
-                                            <tr>
-                                                <th>@lang('common.sl')</th>
-                                                <th>Course Name</th>
-                                                <th>Course Paid</th>
-                                                <th>@lang('fees.paid_amount')</th>
-                                                <th>Due Amount</th>
-                                                <th>@lang('common.action')</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="allCourseDetails">
-                                            {{-- Rows added by JS --}}
-                                        </tbody>
-                                    </table>
+                            <div class="row mt-15">
+                                <div class="col-lg-12">
+                                    <label>Select Course <span class="text-danger">*</span></label>
+                                    <select class="primary_select form-control mb-2" id="course_id" name="course_id">
+                                        <option value="">select course</option>
+                                        @foreach ($courses as $course)
+                                            <option value="{{ $course->id }}" data-price="{{ $course->price }}">
+                                                {{ $course->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    {{-- Table --}}
+                                    <div class="big-table table-responsive mt-4">
+                                        <table class="table school-table-style fees_invoice_type_table w-100">
+                                            <thead>
+                                                <tr>
+                                                    <th>@lang('common.sl')</th>
+                                                    <th>Course Name</th>
+                                                    <th>Course Paid</th>
+                                                    <th>@lang('fees.paid_amount')</th>
+                                                    <th>Due Amount</th>
+                                                    <th>@lang('common.action')</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="allCourseDetails">
+                                                {{-- Rows added by JS --}}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
 

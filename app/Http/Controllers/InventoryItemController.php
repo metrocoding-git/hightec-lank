@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Models\Inventory_item;
+use App\Models\ItemInventory;
 use App\Http\Controllers\Controller;
 
 
@@ -17,8 +18,26 @@ class InventoryItemController extends Controller
     {
         //
         $itemCategories=Category::all();
-         $items=Inventory_item::all();
+         $items=Inventory_item::with('category')->get();
+         foreach ($items as $item) {
+             $item->current_balance = ItemInventory::getCurrentBalance($item->id);
+         }
         return view('pages.account.inventory.item-list' , compact('itemCategories','items'));
+    }
+
+    public function view($id)
+    {
+        $item = Inventory_item::with('category')->findOrFail($id);
+        $inventoryHistory = ItemInventory::getInventoryHistory($id);
+        return view('pages.account.inventory.item-view', compact('item', 'inventoryHistory'));
+    }
+
+    public function getItemHistory($id)
+    {
+        $inventoryHistory = ItemInventory::getInventoryHistory($id);
+        // Ensure item relationships are loaded
+        $inventoryHistory->load('item.category');
+        return response()->json($inventoryHistory);
     }
 
     /**
@@ -69,7 +88,10 @@ class InventoryItemController extends Controller
         //
         $editData = Inventory_item::findOrFail($id);
         $items = Inventory_item::with('category')->get();
-        $itemCategories = category::all();
+        foreach ($items as $item) {
+            $item->current_balance = ItemInventory::getCurrentBalance($item->id);
+        }
+        $itemCategories = Category::all();
         return view('pages.account.inventory.item-list', compact('editData', 'items', 'itemCategories'));
     }
 
