@@ -405,7 +405,7 @@
         <td class="border-top-0">
             <input type="hidden" name="url" id="url" value="{{ URL::to('/') }}">
             <div class="primary_input">
-                <select class="primary_select form-control" name="item_id[]" id="productName${rowCount}">
+                <select class="primary_select form-control" name="item_id[]" id="productName${rowCount}" onchange="fetchPrice(this, ${rowCount})">
                     <option value="">@lang('common.select')*</option>
                     @foreach ($items as $key => $value)
                         <option value="{{ $value->id }}">{{ $value->item_name }}</option>
@@ -417,7 +417,7 @@
             <div class="primary_input">
                 <input oninput="numberCheckWithDot(this)" class="primary_input_field form-control"
                        type="text" step="0.1" id="unit_price${rowCount}" name="unit_price[]"
-                       autocomplete="off" value="" onkeyup="getTotalByPrice(${rowCount})">
+                       autocomplete="off" value="" readonly="readonly" onkeyup="getTotalByPrice(${rowCount})">
             </div>
         </td>
         <td class="border-top-0">
@@ -455,6 +455,33 @@
         // Remove row function
         function removeRow(rowNum) {
             $('#row' + rowNum).remove();
+        }
+
+        // Fetch price for selected item
+        function fetchPrice(selectElement, rowNum) {
+            const itemId = selectElement.value;
+            if (itemId) {
+                $.ajax({
+                    url: '{{ url("/") }}/account/inventory/get-item-price/' + itemId,
+                    type: 'GET',
+                    success: function(response) {
+                        if (response.success) {
+                            $('#unit_price' + rowNum).val(response.price);
+                            getTotalByPrice(rowNum); // Update total after setting price
+                        } else {
+                            alert('Error: ' + response.message);
+                            $('#unit_price' + rowNum).val('');
+                        }
+                    },
+                    error: function(xhr) {
+                        alert('Failed to fetch item price.');
+                        $('#unit_price' + rowNum).val('');
+                    }
+                });
+            } else {
+                $('#unit_price' + rowNum).val('');
+                getTotalByPrice(rowNum);
+            }
         }
 
 

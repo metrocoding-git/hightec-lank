@@ -217,6 +217,7 @@ Route::controller(ItemSellController::class)
     Route::post('account/inventory/item-sell/{id}/direct-return', 'directReturnItemSell')->name('direct-return-item-sell');
     Route::get('account/inventory/item-sell/{id}/return-view', 'returnItemSellView')->name('return-item-sell-view');
     Route::post('account/inventory/item-sell/{id}/return', 'returnItemSell')->name('return-item-sell');
+    Route::get('account/inventory/get-item-price/{id}', 'getItemPrice')->name('get-item-price')->withoutMiddleware(['csrf', 'permission']);
 });
 
 Route::controller(ItemIssueController::class)->middleware(['permission'])->group(function () {
@@ -324,6 +325,8 @@ Route::controller(CategoryController::class)->middleware(['permission'])->group(
 
 Route::controller(InventoryItemController::class)->middleware(['permission'])->group(function () {
     Route::get('account/inventory/item-list', 'index')->name('item-list');
+    Route::get('account/inventory/item-view/{id}', 'view')->name('item-view');
+    Route::get('account/inventory/item-history/{id}', 'getItemHistory')->name('item-history')->withoutMiddleware(['csrf', 'permission']);
     Route::post('account/inventory/item-store', 'store')->name('item-store');
     Route::get('account/inventory/item-edit/{id}', 'edit')->name('item-edit');
     Route::put('account/inventory/item-update/{id}', 'update')->name('item-update');

@@ -444,4 +444,20 @@ class ItemSellController extends Controller
             ], 500);
         }
     }
+
+    public function getItemPrice($id)
+    {
+        try {
+            $item = Inventory_item::findOrFail($id);
+            return response()->json([
+                'success' => true,
+                'price' => $item->item_price
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Item not found.'
+            ], 404);
+        }
+    }
 }
