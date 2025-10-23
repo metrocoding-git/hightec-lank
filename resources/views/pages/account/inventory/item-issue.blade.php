@@ -2,6 +2,12 @@
 @section('title')
     @lang('academics.About')
 @endsection
+<style>
+    .available_quantity input {
+        width: 100px !important;
+        text-align: center;
+    }
+</style>
 @section('mainContent')
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
@@ -135,9 +141,10 @@
                                         <thead>
                                             <tr>
                                                 <th>@lang('common.sl')</th>
-                                                <th>@lang('inventory.category')</th>
-                                                <th>@lang('inventory.item')</th>
-                                                <th>@lang('inventory.item_price')</th>
+                                                <th>Category</th>
+                                                <th>Item</th>
+                                                <th>Item Price</th>
+                                                <th>Available Qty</th>
                                                 <th>@lang('inventory.quantity')</th>
                                                 <th>@lang('common.action')</th>
                                             </tr>
@@ -149,10 +156,15 @@
                                                     <td class="sl">1</td>
                                                     <td class="category_name">{{ $editData->category->name ?? 'N/A' }}</td>
                                                     <td class="item_name">{{ $editData->item->item_name ?? 'N/A' }}</td>
+                                                    <td class="item_price">Rs.{{ number_format($editData->item->item_price ?? 0, 2) }}</td>
+                                                    <td class="available_quantity">
+                                                        <input type="text" class="primary_input_field form-control" id="available_quantity_0" value="" readonly>
+                                                    </td>
                                                     <td>
-                                                        <input type="number" name="items[0][quantity]" class="primary_input_field form-control item_quantity" value="{{ $editData->quantity }}" min="1" required>
+                                                        <input type="number" name="items[0][quantity]" class="primary_input_field form-control item_quantity" value="{{ $editData->quantity }}" min="1" required oninput="validateQuantity(0)" onchange="validateQuantity(0)">
                                                         <input type="hidden" name="items[0][item_id]" value="{{ $editData->item_id }}">
                                                         <input type="hidden" name="items[0][item_category_id]" value="{{ $editData->item_category_id }}">
+                                                        <input type="hidden" name="items[0][item_price]" value="{{ $editData->item->item_price ?? 0 }}">
                                                     </td>
                                                     <td><button type="button" class="primary-btn small bg-danger text-white border-0 remove_item_btn">Delete</button></td>
                                                 </tr>
@@ -233,6 +245,12 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
+            // Configure toastr options
+            toastr.options = {
+                "timeOut": "5000",
+                "extendedTimeOut": "1000"
+            };
+
             console.log('🚀 Item Issue Page Loaded - Starting Cascading Dropdown System');
 
             // Helper function to refresh niceSelect safely
@@ -344,30 +362,38 @@
                 // Format price for display
                 let displayPrice = itemPrice ? 'Rs.' + parseFloat(itemPrice).toFixed(2) : 'N/A';
 
-                let row = `<tr data-id="${itemId}">
-                    <td class="sl"></td>
-                    <td class="category_name">${categoryName}</td>
-                    <td class="item_name">${itemName}</td>
-                    <td class="item_price">${displayPrice}</td>
-                    <td>
-                        <input type="number" name="items[${itemIndex}][quantity]" class="primary_input_field form-control item_quantity" value="1" min="1" required>
-                        <input type="hidden" name="items[${itemIndex}][item_id]" value="${itemId}">
-                        <input type="hidden" name="items[${itemIndex}][item_category_id]" value="${categoryId}">
-                        <input type="hidden" name="items[${itemIndex}][item_price]" value="${itemPrice}">
-                    </td>
-                    <td><button type="button" class="primary-btn small bg-danger text-white border-0 remove_item_btn">Delete</button></td>
-                </tr>`;
-                $('.allIssuedItems').append(row);
-                updateSerialNumbers();
-
-                console.log('✅ Added item row:', {
-                    index: itemIndex,
-                    itemId: itemId,
-                    itemName: itemName,
-                    categoryId: categoryId,
-                    categoryName: categoryName,
-                    itemPrice: itemPrice,
-                    displayPrice: displayPrice
+                // Fetch available quantity
+                $.ajax({
+                    url: '{{ url("/") }}/account/inventory/get-item-price/' + itemId,
+                    type: 'GET',
+                    success: function(response) {
+                        if (response.success) {
+                            let availableQuantity = response.available_quantity;
+                            let row = `<tr data-id="${itemId}">
+                                <td class="sl"></td>
+                                <td class="category_name">${categoryName}</td>
+                                <td class="item_name">${itemName}</td>
+                                <td class="item_price">${displayPrice}</td>
+                                <td class="available_quantity">
+                                    <input type="text" class="primary_input_field form-control" id="available_quantity_${itemIndex}" value="${availableQuantity}" readonly>
+                                </td>
+                                <td>
+                                    <input type="number" name="items[${itemIndex}][quantity]" class="primary_input_field form-control item_quantity" value="1" min="1" max="${availableQuantity}" required oninput="validateQuantity(${itemIndex})" onchange="validateQuantity(${itemIndex})">
+                                    <input type="hidden" name="items[${itemIndex}][item_id]" value="${itemId}">
+                                    <input type="hidden" name="items[${itemIndex}][item_category_id]" value="${categoryId}">
+                                    <input type="hidden" name="items[${itemIndex}][item_price]" value="${itemPrice}">
+                                </td>
+                                <td><button type="button" class="primary-btn small bg-danger text-white border-0 remove_item_btn">Delete</button></td>
+                            </tr>`;
+                            $('.allIssuedItems').append(row);
+                            updateSerialNumbers();
+                        } else {
+                            toastr.error(response.message, 'Error');
+                        }
+                    },
+                    error: function(xhr) {
+                        toastr.error('Failed to fetch item details.', 'Error');
+                    }
                 });
             }
 
@@ -378,6 +404,19 @@
                 $(this).closest('tr').remove();
                 updateSerialNumbers();
             });
+
+            // Validate quantity input
+            function validateQuantity(rowIndex) {
+                const qtyInput = $(`#available_quantity_${rowIndex}`).closest('tr').find('.item_quantity');
+                const availableInput = $(`#available_quantity_${rowIndex}`);
+                const qty = parseFloat(qtyInput.val()) || 0;
+                const available = parseFloat(availableInput.val()) || 0;
+                if (qty > available) {
+                    toastr.error(`Quantity cannot exceed available quantity (${available})`, 'Validation Error');
+                    qtyInput.val('');
+                    return;
+                }
+            }
 
             // Debug function to log form data before submission
             function debugFormData() {
@@ -427,7 +466,7 @@
                 console.log('📦 Items Array:', items);
                 console.log('🔍 === END FORM DEBUG ===');
 
-                // Show alert with item details for user to see
+                // Show toastr with item details for user to see
                 if (items.length > 0) {
                     let debugInfo = 'Form Debug Info:\n\n';
                     debugInfo += `Total Items: ${items.length}\n\n`;
@@ -440,9 +479,9 @@
                         debugInfo += `  - Category Name: ${item.category_name}\n\n`;
                     });
 
-                    alert(debugInfo);
+                    toastr.info(debugInfo, 'Form Debug Info', { timeOut: 10000 });
                 } else {
-                    alert('No items selected! Please select at least one item.');
+                    toastr.warning('No items selected! Please select at least one item.', 'Warning');
                 }
             }
 
@@ -675,6 +714,25 @@
                     }
                 }
             });
+
+            // Fetch available quantity for edit mode
+            @if(isset($editData))
+                $.ajax({
+                    url: '{{ url("/") }}/account/inventory/get-item-price/{{ $editData->item_id }}',
+                    type: 'GET',
+                    success: function(response) {
+                        if (response.success) {
+                            $('#available_quantity_0').val(response.available_quantity);
+                            $('.item_quantity').attr('max', response.available_quantity);
+                        } else {
+                            toastr.error(response.message, 'Error');
+                        }
+                    },
+                    error: function(xhr) {
+                        toastr.error('Failed to fetch available quantity.', 'Error');
+                    }
+                });
+            @endif
         });
     </script>
 @endpush

@@ -277,11 +277,11 @@
                             <div class="row">
                                 <div class="col-lg-12">
                                     <div class="white-box">
-                                        <div class="alert alert-danger" id="errorMessage2">
+                                        {{-- <div class="alert alert-danger" id="errorMessage2">
                                             <div id="itemError"></div>
                                             <div id="priceError"></div>
                                             <div id="quantityError"></div>
-                                        </div>
+                                        </div> --}}
                                         <div class="table-responsive">
                                             <table class="table" id="productTable">
                                                 <thead>
