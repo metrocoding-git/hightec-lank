@@ -182,7 +182,7 @@
                             <div class="row mt-15">
                                 <div class="col-lg-12">
                                     <label>Select Course <span class="text-danger">*</span></label>
-                                    <select class="primary_select form-control" id="course_id" name="course_id">
+                                    <select class="primary_select form-control mb-2" id="course_id" name="course_id">
                                         <option value="">select course</option>
                                         @foreach ($courses as $course)
                                             <option value="{{ $course->id }}" data-price="{{ $course->price }}">
@@ -191,7 +191,7 @@
                                         @endforeach
                                     </select>
                                     {{-- Table --}}
-                                    <div class="big-table mt-4 table-responsive">
+                                    <div class="big-table table-responsive mt-4">
                                         <table class="table school-table-style fees_invoice_type_table w-100">
                                             <thead>
                                                 <tr>

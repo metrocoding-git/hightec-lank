@@ -137,11 +137,15 @@
                                     </span>
                                 @endif
                             </div>
-                            <div class="col-lg-12 text-right mb-30 mt-2">
-                                <button type="submit" class="primary-btn small fix-gr-bg p-1" id="btnsubmit">
+                            <div class="col-lg-12 mt-4 text-right mb-30 mt-2">
+                                {{-- <button type="submit" class="primary-btn small fix-gr-bg p-1" id="btnsubmit">
                                     <span class="ti-search pr-2"></span>
                                     @lang('common.search')
-                                </button>
+                                </button> --}}
+                                 <button type="submit" class="primary-btn small fix-gr-bg">
+                                        <span class="ti-search pr-2"></span>
+                                        @lang('common.search')
+                                    </button>
                             </div>
                         </form>
                     </div>
@@ -320,9 +324,8 @@
                                 <div class="mt-3">
                                     <x-table>
                                         {{-- //Content List Table --}}
-                                        <table id="table_id "
-                                            class="table Crm_table_active3 content-table" cellspacing="0"
-                                            width="100%">
+                                        <table id="table_id " class="table Crm_table_active3 content-table"
+                                            cellspacing="0" width="100%">
                                             <thead>
                                                 <tr>
                                                     <th>ID</th>
@@ -347,8 +350,8 @@
                                                             {{ $key + 1 }}
                                                         </td>
                                                         <td class="text-break">{{ $content->file_name }}</td>
-                                                        <td>{{ $content->content_type->name??"N/A" }}</td>
-                                                        <td>{{ $content->file_size ?? "N/A" }}</td>
+                                                        <td>{{ $content->content_type->name ?? 'N/A' }}</td>
+                                                        <td>{{ $content->file_size ?? 'N/A' }}</td>
 
                                                         <td>{{ $content->created_at }}</td>
                                                         <td>{{ $content->created_at }}</td>
@@ -848,9 +851,8 @@
 @include('components.partials.date_picker_css_js')
 @include('components.partials.data_table_css')
 @push('script')
-
     <script>
-         $('#table_id').DataTable({
+        $('#table_id').DataTable({
             responsive: true,
             dom: 'Bfrtip',
             buttons: [
@@ -861,7 +863,7 @@
             ordering: true,
             info: true,
         });
-        
+
         $(document).ready(function() {
             // Function to clear individual fields
             function clearIndividualFields() {
@@ -874,7 +876,7 @@
                 $('#class_id_email_sms').val('').niceSelect('update'); // Clear intake select
                 $('#selectMultiSections').val([]).multiselect('reload'); // Clear course select
                 // Also clear and hide the course options if they were loaded
-                (function () {
+                (function() {
                     const courseSelect = '#selectMultiSections';
                     const courseContainer = '#selectSectionsDiv';
                     if ($.fn.multiselect) {
@@ -1178,8 +1180,8 @@
                         if (errors.content_ids) toastr.error(errors.content_ids[0], "Error");
                     } else {
                         toastr.error("An unexpected error occurred.", {
-                timeOut: 3000
-            });
+                            timeOut: 3000
+                        });
                     }
                 },
                 complete: function() {
@@ -1190,7 +1192,7 @@
     </script>
     <script>
         // Dependent dropdown: Load courses when intake changes (in Share/Generate URL modals)
-        (function () {
+        (function() {
             const intakeSelect = '#class_id_email_sms';
             const courseSelect = '#selectMultiSections';
             const courseContainer = '#selectSectionsDiv';
@@ -1204,7 +1206,12 @@
                             columns: 1,
                             placeholder: 'Select',
                             search: true,
-                            searchOptions: { delay: 250, showOptGroups: false, searchText: true, searchValue: false },
+                            searchOptions: {
+                                delay: 250,
+                                showOptGroups: false,
+                                searchText: true,
+                                searchValue: false
+                            },
                             selectAll: true
                         });
                     }
@@ -1241,7 +1248,7 @@
 
             function populateCourses(items) {
                 clearCourses();
-                items.forEach(function (item) {
+                items.forEach(function(item) {
                     $(courseSelect).append(new Option(item.name, item.id, false, false));
                 });
                 // Reload the jquery.multiselect UI so new options appear
@@ -1267,7 +1274,7 @@
                 disableCoursesUI();
                 console.log('Loading courses for intake', intakeId, 'GET', url);
                 $.get(url)
-                    .done(function (resp) {
+                    .done(function(resp) {
                         console.log('Courses response:', resp);
                         if (resp && resp.status && Array.isArray(resp.data)) {
                             populateCourses(resp.data);
@@ -1275,17 +1282,17 @@
                             clearCourses();
                         }
                     })
-                    .fail(function (xhr) {
+                    .fail(function(xhr) {
                         console.error('Failed to load courses', xhr.status, xhr.responseText);
                         clearCourses();
                     })
-                    .always(function () {
+                    .always(function() {
                         // leave disabled if no items, enabled if items were populated in populateCourses
                     });
             }
 
             // Bind change handler
-            $(document).on('change', intakeSelect, function () {
+            $(document).on('change', intakeSelect, function() {
                 loadCourses($(this).val());
             });
 
