@@ -187,9 +187,9 @@
 <div class="modal fade admin-query" id="itemSellDetailsModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header" style="background-color: #6f42c1; color: white;">
                 <h4 class="modal-title">Item Sell Details</h4>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body modal-info">
                 <div class="row">
@@ -345,19 +345,19 @@
 <div class="modal fade admin-query" id="itemSellPaymentsModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title">@lang('inventory.payment_details')</h4>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <div class="modal-header" style="background-color: #6f42c1; color: white;">
+                <h4 class="modal-title">Payment Details</h4>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body modal-info">
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="card">
-                            <div class="card-header bg-success text-white">
+                            {{-- <div class="card-header bg-success text-white">
                                 <h4 class="card-title mb-0">
                                     <i class="ti-credit-card mr-2"></i>Payment Details
                                 </h4>
-                            </div>
+                            </div> --}}
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-6">
@@ -433,13 +433,13 @@
                         </div>
                         <div class="row">
                             <div class="col-md-12">
-                                <h5 class="mt-4 mb-3">@lang('inventory.items_sold')</h5>
+                                <h5 class="mt-4 mb-3">Item Sold</h5>
                                 <div class="table-responsive">
                                     <table class="table table-striped">
                                         <thead class="thead-dark">
                                             <tr>
                                                 <th>#</th>
-                                                <th>@lang('inventory.item')</th>
+                                                <th>Item</th>
                                                 <th>@lang('inventory.quantity')</th>
                                                 <th>@lang('inventory.unit_price')</th>
                                                 <th>@lang('inventory.sub_total')</th>

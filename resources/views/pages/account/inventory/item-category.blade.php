@@ -28,7 +28,7 @@
                 </div>
             @endif
             <div class="row">
-                <div class="col-lg-3">
+                <div class="col-lg-4">
                     <div class="row">
                         <div class="col-lg-12">
                             {{-- @if (isset($editData))
@@ -100,7 +100,7 @@
                     </div>
                 </div>
 
-                <div class="col-lg-9">
+                <div class="col-lg-8">
 
                     <div class="white-box">
                         <div class="row">
@@ -122,7 +122,7 @@
                                             <tr>
                                                 <th> @lang('common.sl')</th>
                                                 <th> @lang('student.category_title')</th>
-                                                <th> @lang('common.action')</th>
+                                                <th > @lang('common.action')</th>
                                             </tr>
                                         </thead>
 
@@ -200,9 +200,24 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 @include('components.partials.data_table_js')
-
-
-@push('scripts')
+@include('components.partials.server_side_datatable')
+@include('components.partials.data_table_css')
+@include('components.partials.data_table_css')
+@include('components.partials.data_table_js')
+@push('script')
+    <script>
+        $('#table_id').DataTable({
+            responsive: true,
+            dom: 'Bfrtip',
+            buttons: [
+                'copy', 'csv', 'excel', 'pdf', 'print'
+            ],
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+        });
+    </script>
     {{-- <script>
         $(document).ready(function() {
             $('#categoryForm').on('submit', function(e) {

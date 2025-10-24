@@ -148,9 +148,9 @@
     <div class="modal fade admin-query" id="itemIssueDetailsModal" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header" style="background-color: #6f42c1; color: white;">
                     <h4 class="modal-title">Item Issue Batch Details</h4>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body modal-info">
                     <div class="row">
@@ -187,7 +187,7 @@
                             </table>
 
                             <!-- Items in Batch -->
-                            <h5>Items in this Batch</h5>
+                            <h5 class="my-4">Items in this Batch</h5>
                             <div class="table-responsive">
                                 <table class="table table-bordered table-hover">
                                     <thead>
@@ -230,6 +230,7 @@
             searching: true,
             ordering: true,
             info: true,
+            order: [[0, 'desc']], // Sort by first column (ID) in descending order
         });
 
         $(document).on('click', '.view-item-issue', function(e) {

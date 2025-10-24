@@ -193,8 +193,7 @@
                                                         <x-drop-down>
                                                             <a class="dropdown-item view-item-btn" data-toggle="modal"
                                                                 data-target="#viewItemModal"
-                                                                data-item-id="{{ $item->id }}"
-                                                                href="#">
+                                                                data-item-id="{{ $item->id }}" href="#">
                                                                 @lang('common.view')
                                                             </a>
                                                             <a class="dropdown-item"
@@ -258,13 +257,13 @@
             <div class="modal fade admin-query" id="viewItemModal">
                 <div class="modal-dialog modal-xl modal-dialog-centered">
                     <div class="modal-content">
-                        <div class="modal-header bg-primary text-white">
+                        <div class="modal-header bg-purple text-white">
                             <h4 class="modal-title">
                                 <i class="ti-eye mr-2"></i>Item Details & History
                             </h4>
                             <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
                         </div>
-                        <div class="modal-body p-4">
+                        <div class="modal-body p-5">
                             <!-- Item Information Section -->
                             <div class="row mb-4">
                                 <div class="col-lg-12">
@@ -282,12 +281,12 @@
                                                         <p class="h5 text-dark" id="modal-item-name">-</p>
                                                     </div>
                                                 </div>
-                                            <div class="col-lg-6">
-                                                <div class="form-group">
-                                                    <label class="font-weight-bold text-muted">Category:</label>
-                                                    <p class="h5" id="modal-item-category">-</p>
+                                                <div class="col-lg-6">
+                                                    <div class="form-group">
+                                                        <label class="font-weight-bold text-muted">Category:</label>
+                                                        <p class="h5" id="modal-item-category">-</p>
+                                                    </div>
                                                 </div>
-                                            </div>
                                                 <div class="col-lg-6">
                                                     <div class="form-group">
                                                         <label class="font-weight-bold text-muted">Item Price:</label>
@@ -373,7 +372,7 @@
         });
 
         // Load item details and inventory history when modal is shown
-        $('#viewItemModal').on('show.bs.modal', function (event) {
+        $('#viewItemModal').on('show.bs.modal', function(event) {
             var button = $(event.relatedTarget);
             var itemId = button.data('item-id');
             var modal = $(this);
@@ -383,11 +382,13 @@
             modal.find('#modal-item-category').text('Loading...');
             modal.find('#modal-item-price').text('Loading...');
             modal.find('#modal-item-description').text('Loading...');
-            modal.find('#inventory-history-body').html('<tr><td colspan="6" class="text-center text-muted"><i class="ti-reload mr-2"></i>Loading inventory history...</td></tr>');
+            modal.find('#inventory-history-body').html(
+                '<tr><td colspan="6" class="text-center text-muted"><i class="ti-reload mr-2"></i>Loading inventory history...</td></tr>'
+                );
 
             // Fetch item details and history
             $.ajax({
-                url: '{{ url("/") }}/account/inventory/item-history/' + itemId,
+                url: '{{ url('/') }}/account/inventory/item-history/' + itemId,
                 type: 'GET',
                 success: function(response) {
                     // Get the first history record to find the item details
@@ -396,10 +397,14 @@
                         var item = firstHistory.item;
 
                         // Populate item information with stylish formatting
-                        modal.find('#modal-item-name').html('<strong>' + (item.item_name || 'N/A') + '</strong>');
-                        modal.find('#modal-item-category').html('<strong">' + (item.category ? item.category.name : 'N/A') + '</strong>');
-                        modal.find('#modal-item-price').html('<strong class="text-success">Rs ' + (item.item_price || '0.00') + '</strong>');
-                        modal.find('#modal-item-description').text(item.description || 'No description available');
+                        modal.find('#modal-item-name').html('<strong>' + (item.item_name || 'N/A') +
+                            '</strong>');
+                        modal.find('#modal-item-category').html('<strong">' + (item.category ? item
+                            .category.name : 'N/A') + '</strong>');
+                        modal.find('#modal-item-price').html('<strong class="text-success">Rs ' + (item
+                            .item_price || '0.00') + '</strong>');
+                        modal.find('#modal-item-description').text(item.description ||
+                            'No description available');
 
                         // Populate history table with stylish rows
                         var html = '';
@@ -419,27 +424,40 @@
                                 type = 'Item Returned';
                                 typeClass = 'badge-info';
                             } else {
-                                type = history.transaction_type.charAt(0).toUpperCase() + history.transaction_type.slice(1);
+                                type = history.transaction_type.charAt(0).toUpperCase() +
+                                    history.transaction_type.slice(1);
                                 typeClass = 'badge-secondary';
                             }
 
                             var rowClass = index % 2 === 0 ? 'table-light' : '';
                             html += '<tr class="' + rowClass + '">' +
-                                '<td><span class="badge ' + typeClass + '">' + type + '</span></td>' +
+                                '<td><span class="badge ' + typeClass + '">' + type +
+                                '</span></td>' +
                                 '<td><strong>' + history.quantity + '</strong></td>' +
-                                '<td><strong class="text-primary">' + history.current_balance + '</strong></td>' +
-                                '<td>' + new Date(history.transaction_date).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'}) + '</td>' +
+                                '<td><strong class="text-primary">' + history.current_balance +
+                                '</strong></td>' +
+                                '<td>' + new Date(history.transaction_date).toLocaleDateString(
+                                    'en-US', {
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric'
+                                    }) + '</td>' +
                                 '<td>' + (history.description || 'No description') + '</td>' +
-                                '<td><small class="text-muted">' + (history.reference_no || 'N/A') + '</small></td>' +
+                                '<td><small class="text-muted">' + (history.reference_no ||
+                                    'N/A') + '</small></td>' +
                                 '</tr>';
                         });
                         modal.find('#inventory-history-body').html(html);
                     } else {
-                        modal.find('#inventory-history-body').html('<tr><td colspan="6" class="text-center text-muted"><i class="ti-info-alt mr-2"></i>No inventory history available</td></tr>');
+                        modal.find('#inventory-history-body').html(
+                            '<tr><td colspan="6" class="text-center text-muted"><i class="ti-info-alt mr-2"></i>No inventory history available</td></tr>'
+                            );
                     }
                 },
                 error: function() {
-                    modal.find('#inventory-history-body').html('<tr><td colspan="6" class="text-center text-danger"><i class="ti-alert mr-2"></i>Error loading inventory data</td></tr>');
+                    modal.find('#inventory-history-body').html(
+                        '<tr><td colspan="6" class="text-center text-danger"><i class="ti-alert mr-2"></i>Error loading inventory data</td></tr>'
+                        );
                 }
             });
         });

@@ -137,6 +137,7 @@
                                     <table id="table_id" class="table" cellspacing="0" width="100%">
                                         <thead>
                                             <tr>
+                                                <th>No.</th>
                                                 <th>Student Name</th>
                                                 <th>Admission No</th>
                                                 <th>Intake Name</th>
@@ -148,8 +149,9 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @forelse($studentIntakes as $studentIntake)
+                                            @forelse($studentIntakes as $key => $studentIntake)
                                                 <tr>
+                                                    <td>{{ $key + 1 }}</td>
                                                     <td>{{ $studentIntake->student_name }}</td>
                                                     <td>{{ $studentIntake->admission_number }}</td>
                                                     <td>{{ $studentIntake->intake_name }}</td>
@@ -245,7 +247,7 @@
                                                 </div>
                                             @empty
                                                 <tr>
-                                                    <td colspan="8" class="text-center">No intake assignments found
+                                                    <td colspan="9" class="text-center">No intake assignments found
                                                     </td>
                                                 </tr>
                                             @endforelse
@@ -467,12 +469,16 @@
             searching: true,
             ordering: true,
             info: true,
+            // order: [[0, 'desc']], // Sort by first column (No.) in descending order to show latest data first
+          
 
             // 👇 This part adds the search and pagination icons
             language: {
                 search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
                 searchPlaceholder: 'Search...',
                 paginate: {
+                    first: '<i class="fa-solid fa-angle-double-left"></i>',
+                    last: '<i class="fa-solid fa-angle-double-right"></i>',
                     previous: '<i class="fa-solid fa-angle-left"></i>',
                     next: '<i class="fa-solid fa-angle-right"></i>'
                 }

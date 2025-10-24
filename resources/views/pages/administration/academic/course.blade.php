@@ -223,7 +223,7 @@
                                             <th>Courses Price</th>
                                             <th>Courses durations</th>
                                             <th>Start Date</th>
-                                            <th>Expiration Dates</th>
+                                            <th>Valid Dates</th>
                                             
                                             <th>Courses description</th>
                                             <th>@lang('common.action')</th>

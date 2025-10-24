@@ -55,9 +55,9 @@
                                                 <th>@lang('common.student')</th>
                                                 <th>Branch</th>
                                                 <th>@lang('admin.admission_no')</th>
-                                                <th>@lang('accounts.amount')</th>
-                                                <th>@lang('fees.paid')</th>
-                                                <th>@lang('accounts.balance')</th>
+                                                <th>@lang('accounts.amount')(Rs)</th>
+                                                <th>@lang('fees.paid')(Rs)</th>
+                                                <th>@lang('accounts.balance')(Rs)</th>
                                                 <th>Payment Method</th>
                                                 <th>Payment Status</th>
                                                 <th>Payment Date</th>
@@ -94,7 +94,7 @@
 
                                                     <td>{{ $amount }}</td>
                                                     <td>{{ $paid_amount }}</td>
-                                                    <td>{{ $balance }}</td>
+                                                    <td>{{ $balance }}.00</td>
                                                     <td>{{ $invoice->payment_method }}</td>
 
                                                     <td>

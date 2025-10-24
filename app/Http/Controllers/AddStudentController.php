@@ -309,6 +309,7 @@ class AddStudentController extends Controller
             ->leftJoin('branches', 'intakes.branch_id', '=', 'branches.id')
             ->select('student_intakes.*', 'students.student_name', 'students.admission_number',
                      'intakes.name as intake_name', 'branches.name as branch_name')
+            ->orderBy('student_intakes.id', 'desc')
             ->get();
 
         return view('pages.student.student-info.student-add-intake', compact('students', 'branches', 'intakes', 'studentIntakes'));
@@ -358,6 +359,7 @@ class AddStudentController extends Controller
             ->leftJoin('branches', 'intakes.branch_id', '=', 'branches.id')
             ->select('student_intakes.*', 'students.student_name', 'students.admission_number',
                      'intakes.name as intake_name', 'branches.name as branch_name')
+            ->orderBy('student_intakes.id', 'desc')
             ->get();
 
         if (!$studentIntake) {
@@ -423,6 +425,7 @@ class AddStudentController extends Controller
             ->leftJoin('branches', 'intakes.branch_id', '=', 'branches.id')
             ->select('student_intakes.*', 'students.student_name', 'students.admission_number',
                      'intakes.name as intake_name', 'branches.name as branch_name')
+            ->orderBy('student_intakes.id', 'desc')
             ->get();
 
         // Get related courses for each intake
@@ -594,7 +597,7 @@ class AddStudentController extends Controller
             });
         }
 
-        $studentIntakes = $query->get();
+        $studentIntakes = $query->orderBy('student_intakes.id', 'desc')->get();
 
         // Get related courses for each intake
         foreach ($studentIntakes as $intake) {
