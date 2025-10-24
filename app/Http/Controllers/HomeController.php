@@ -331,6 +331,58 @@ class HomeController extends Controller
             ], 500);
         }
     }
+
+    public function getCoursesByBranch($branchId)
+    {
+        try {
+            $intakes = Intake::where('branch_id', $branchId)->pluck('id');
+            $courses = Course::whereHas('intakes', function($q) use ($intakes) {
+                $q->whereIn('intake_id', $intakes);
+            })->get(['id', 'name', 'price']);
+
+            return response()->json([
+                'success' => true,
+                'courses' => $courses,
+                'branch_id' => $branchId,
+                'count' => $courses->count()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'branch_id' => $branchId
+            ], 500);
+        }
+    }
+
+    public function getCoursesByStudent($studentId)
+    {
+        try {
+            $student = Student::find($studentId);
+            if (!$student) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Student not found',
+                    'student_id' => $studentId
+                ], 404);
+            }
+
+            $courses = $student->courses()->get(['courses.id', 'courses.name', 'courses.price']);
+
+            return response()->json([
+                'success' => true,
+                'courses' => $courses,
+                'student_id' => $studentId,
+                'count' => $courses->count()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'student_id' => $studentId
+            ], 500);
+        }
+    }
     public function filterStudentList(Request $request)
     {
 

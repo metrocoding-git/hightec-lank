@@ -58,15 +58,11 @@ class FeesGroupController extends Controller
         return redirect()->back()->with('success', 'Fees group deleted successfully!');
     }
 
-
-
-
-
     public function coursePaidView()
     {
         $branches = \App\Models\Branch::all();
         $students = \App\Models\Student::all();
-        $courses = \App\Models\Course::all(); // Fetch all courses
+        $courses = []; // Empty for dynamic loading
         return view('pages.student.fees.course-paid', compact('branches', 'students', 'courses'));
     }
 }
