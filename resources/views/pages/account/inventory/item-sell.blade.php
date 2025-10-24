@@ -472,6 +472,7 @@
         // Remove row function
         function removeRow(rowNum) {
             $('#row' + rowNum).remove();
+            calculateGrandTotal(); // Recalculate totals after removing a row
         }
 
         // Fetch price for selected item
@@ -624,6 +625,9 @@
                     if (response.success) {
                         toastr.success(response.message, 'Success');
                         $('#item-sell-form')[0].reset();
+                        $('tbody').empty(); // Clear table body
+                        addRow(); // Add a fresh row
+                        calculateGrandTotal(); // Reset totals
                     } else {
                         toastr.error(response.message || "Something went wrong", 'Error');
                     }

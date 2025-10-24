@@ -211,7 +211,7 @@ Route::controller(ItemSellController::class)
     Route::get('account/inventory/item-sell/{id}/add-payment', 'addPaymentSell')->name('add-payment-sell');
     Route::post('account/inventory/item-sell/{id}/payments', 'storeItemSellPayment')->name('item-sell-payments.store');
     Route::get('account/inventory/item-sell/{id}/view-payments', 'viewSellPayments')->name('view-sell-payments');
-    Route::post('account/inventory/item-sell/{id}', 'deleteItemSell')->name('delete-item-sell');
+    Route::delete('account/inventory/item-sell/{id}', 'deleteItemSell')->name('delete-item-sell');
     Route::get('account/inventory/item-sell/{id}/cancel-view', 'cancelItemSellView')->name('cancel-item-sell-view');
     Route::post('account/inventory/item-sell/{id}/cancel', 'cancelItemSell')->name('cancel-item-sell');
     Route::post('account/inventory/item-sell/{id}/update-status', 'updateItemSellStatus')->name('update-item-sell-status');

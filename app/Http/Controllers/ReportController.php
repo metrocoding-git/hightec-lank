@@ -7,6 +7,7 @@ use App\Models\PaidCourse;
 use App\Models\ItemSell;
 use App\Models\ItemIssueBatch;
 use App\Models\Fee_invoices;
+use App\Models\ItemSellBatch;
 use Illuminate\Http\Request;
 
 class ReportController extends Controller
@@ -15,7 +16,7 @@ class ReportController extends Controller
 
     public function sellItems()
     {
-        $itemSells = ItemSell::with(['item', 'student', 'user'])->get();
+        $itemSells = ItemSellBatch::with(['item', 'student', 'user'])->get();
         return view('pages.reports.sell-items', compact('itemSells'));
     }
 
