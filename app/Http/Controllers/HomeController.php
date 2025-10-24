@@ -693,7 +693,7 @@ class HomeController extends Controller
     public function itemReceiveList()
     {
         // Group by transaction_id and get the first record for each transaction
-        $transactions = ItemReceive::with(['supplier', 'branch'])
+        $transactions = ItemReceive::with(['supplier', 'branch', 'item'])
             ->select('transaction_id', 'supplier_id', 'store_id', 'reference_no', 'receive_date', 'payment_method', 'total_paid', 'description')
             ->distinct()
             ->get()
@@ -703,7 +703,7 @@ class HomeController extends Controller
         $itemReceives = [];
         foreach ($transactions as $transactionId => $records) {
             $record = $records->first();
-            $items = ItemReceive::where('transaction_id', $transactionId)->with('item')->get();
+            $items = ItemReceive::where('transaction_id', $transactionId)->with(['item', 'supplier', 'branch'])->get();
             $record->items = $items;
             $record->total_quantity = $items->sum('quantity');
             $record->total_sub_total = $items->sum('sub_total');
@@ -720,12 +720,12 @@ class HomeController extends Controller
     public function viewItemReceive($transactionId)
     {
         try {
-            $transaction = ItemReceive::where('transaction_id', $transactionId)->first();
+            $transaction = ItemReceive::where('transaction_id', $transactionId)->with(['supplier', 'branch', 'item'])->first();
             if (!$transaction) {
                 return response()->json(['error' => 'Transaction not found'], 404);
             }
 
-            $items = ItemReceive::where('transaction_id', $transactionId)->with('item')->get();
+            $items = ItemReceive::where('transaction_id', $transactionId)->with(['item', 'supplier', 'branch'])->get();
 
             // Calculate totals
             $totalQuantity = $items->sum('quantity');
