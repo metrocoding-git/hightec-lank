@@ -75,15 +75,15 @@
                                                         <x-drop-down>
                                                             <a class="dropdown-item view-item-receive" href="#"
                                                                 data-id="{{ $itemReceive->transaction_id }}">
-                                                                <i class="ti-eye"></i> @lang('common.view')
+                                                                 @lang('common.view')
                                                             </a>
                                                             <a class="dropdown-item edit-item-receive" href="#"
                                                                 data-id="{{ $itemReceive->transaction_id }}">
-                                                                <i class="ti-pencil"></i> @lang('common.edit')
+                                                                 @lang('common.edit')
                                                             </a>
                                                             <a class="dropdown-item delete-item-receive" href="#"
                                                                 data-id="{{ $itemReceive->transaction_id }}">
-                                                                <i class="ti-trash"></i> @lang('common.delete')
+                                                                 @lang('common.delete')
                                                             </a>
                                                         </x-drop-down>
                                                     </td>

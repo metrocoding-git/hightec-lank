@@ -204,89 +204,91 @@
                         <div class="row">
 
                             <div class="col-lg-12">
-                                <x-table>
-                                    <table id="table_id" class="table table-responsive" cellspacing="0" width="100%">
-                                        <thead>
+                                <div class="table-responsive">
+                                    <x-table>
+                                        <table id="table_id" class="table" cellspacing="0" width="100%">
+                                            <thead>
 
-                                            <tr>
-                                                <th> @lang('inventory.supplier_name')</th>
-                                                <th> @lang('inventory.company_name')</th>
-                                                <th> @lang('inventory.company_address')</th>
-                                                <th> @lang('common.email')</th>
-                                                <th> @lang('common.mobile')</th>
-                                                <th> @lang('common.action')</th>
-                                            </tr>
-                                        </thead>
+                                                <tr>
+                                                    <th> @lang('inventory.supplier_name')</th>
+                                                    <th> @lang('inventory.company_name')</th>
+                                                    <th> @lang('inventory.company_address')</th>
+                                                    <th> @lang('common.email')</th>
+                                                    <th> @lang('common.mobile')</th>
+                                                    <th> @lang('common.action')</th>
+                                                </tr>
+                                            </thead>
 
-                                        <tbody>
-                                            @if (isset($suppliers))
-                                                @foreach ($suppliers as $value)
-                                                    <tr>
+                                            <tbody>
+                                                @if (isset($suppliers))
+                                                    @foreach ($suppliers as $value)
+                                                        <tr>
 
-                                                        <td>{{ $value->contact_person_name }}</td>
-                                                        <td>{{ $value->company_name }}</td>
-                                                        <td>{{ $value->company_address }}</td>
-                                                        <td>{{ $value->contact_person_email }}</td>
-                                                        <td>{{ $value->contact_person_mobile }}</td>
-                                                        <td>
-                                                            <x-drop-down>
+                                                            <td>{{ $value->contact_person_name }}</td>
+                                                            <td>{{ $value->company_name }}</td>
+                                                            <td>{{ $value->company_address }}</td>
+                                                            <td>{{ $value->contact_person_email }}</td>
+                                                            <td>{{ $value->contact_person_mobile }}</td>
+                                                            <td>
+                                                                <x-drop-down>
 
-                                                                <a class="dropdown-item"
-                                                                    href="{{ route('supplier-edit', $value->id) }}">
-                                                                    @lang('common.edit')</a>
+                                                                    <a class="dropdown-item"
+                                                                        href="{{ route('supplier-edit', $value->id) }}">
+                                                                        @lang('common.edit')</a>
 
 
-                                                                    <a class="dropdown-item" data-toggle="modal"
-                                                                data-target="#deletemodal{{ $value->id }}"
-                                                                href="#">@lang('common.delete')</a>
+                                                                        <a class="dropdown-item" data-toggle="modal"
+                                                                    data-target="#deletemodal{{ $value->id }}"
+                                                                    href="#">@lang('common.delete')</a>
 
 
                                                                 
 
 
 
-                                                            </x-drop-down>
-                                                        </td>
-                                                    </tr>
-                                                    <div class="modal fade admin-query"
-                                                    id="deletemodal{{ $value->id }}">
-                                                    <div class="modal-dialog modal-dialog-centered">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h4 class="modal-title">@lang('common.delete')</h4>
-                                                                <button type="button" class="close"
-                                                                    data-dismiss="modal">&times;</button>
-                                                            </div>
-                                                            <div class="modal-body">
-                                                                <div class="text-center">
-                                                                    <h4>@lang('common.are_you_sure_to_delete')</h4>
+                                                                </x-drop-down>
+                                                            </td>
+                                                        </tr>
+                                                        <div class="modal fade admin-query"
+                                                        id="deletemodal{{ $value->id }}">
+                                                        <div class="modal-dialog modal-dialog-centered">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <h4 class="modal-title">@lang('common.delete')</h4>
+                                                                    <button type="button" class="close"
+                                                                        data-dismiss="modal">&times;</button>
                                                                 </div>
-                                                                <div class="mt-40 d-flex justify-content-between">
-                                                                    <button type="button" class="primary-btn tr-bg"
-                                                                        data-dismiss="modal">
-                                                                        @lang('common.cancel')
-                                                                    </button>
-                                                                    <form
-                                                                        action="{{ route('supplier-delete', $value->id) }}"
-                                                                        method="POST">
-                                                                        @csrf
-                                                                        @method('DELETE')
-                                                                        <button class="primary-btn fix-gr-bg"
-                                                                            type="submit">
-                                                                            @lang('common.delete')
+                                                                <div class="modal-body">
+                                                                    <div class="text-center">
+                                                                        <h4>@lang('common.are_you_sure_to_delete')</h4>
+                                                                    </div>
+                                                                    <div class="mt-40 d-flex justify-content-between">
+                                                                        <button type="button" class="primary-btn tr-bg"
+                                                                            data-dismiss="modal">
+                                                                            @lang('common.cancel')
                                                                         </button>
-                                                                    </form>
+                                                                        <form
+                                                                            action="{{ route('supplier-delete', $value->id) }}"
+                                                                            method="POST">
+                                                                            @csrf
+                                                                            @method('DELETE')
+                                                                            <button class="primary-btn fix-gr-bg"
+                                                                                type="submit">
+                                                                                @lang('common.delete')
+                                                                            </button>
+                                                                        </form>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
 
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                                @endforeach
-                                            @endif
-                                        </tbody>
-                                    </table>
-                                </x-table>
+                                                    @endforeach
+                                                @endif
+                                            </tbody>
+                                        </table>
+                                    </x-table>
+                                </div>
                             </div>
                         </div>
                     </div>
