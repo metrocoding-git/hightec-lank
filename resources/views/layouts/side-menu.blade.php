@@ -514,6 +514,53 @@
         </li>
         @endif
         {{-- ----- --}}
+        {{-- Reports Section --}}
+        @if(Auth::check() && (Auth::user()->hasPermission('fees.course-paid') || Auth::user()->hasPermission('item-sell') || Auth::user()->hasPermission('item-issue') || Auth::user()->hasPermission('fees.fee-invoice')))
+        <span class="menu_seperator" id="seperator_reports_section" data-section="reports_section">Reports
+            Section
+        </span>
+        @endif
+
+        @if(Auth::check() && (Auth::user()->hasPermission('fees.course-paid') || Auth::user()->hasPermission('item-sell') || Auth::user()->hasPermission('item-issue') || Auth::user()->hasPermission('fees.fee-invoice')))
+        <li class="reports_section {{ request()->is('reports') || request()->is('reports/*') ? 'mm-active' : '' }}">
+            <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
+                <div class="nav_icon_small">
+                    <span class="fas fa-chart-line"></span>
+                </div>
+                <div class="nav_title">
+                    <span>Reports</span>
+                </div>
+            </a>
+            <ul class="mm-collapse {{ request()->is('reports') || request()->is('reports/*') ? 'mm-show' : '' }}">
+               
+                @if(Auth::check() && Auth::user()->hasPermission('item-sell'))
+                <li>
+                    <a href="/reports/sell-items"
+                        class="{{ request()->is('reports/sell-items') ? 'active a' : '' }}">
+                        Sell Items
+                    </a>
+                </li>
+                @endif
+                @if(Auth::check() && Auth::user()->hasPermission('item-issue'))
+                <li>
+                    <a href="/reports/issue-items"
+                        class="{{ request()->is('reports/issue-items') ? 'active a' : '' }}">
+                        Issue Items
+                    </a>
+                </li>
+                @endif
+                @if(Auth::check() && Auth::user()->hasPermission('fees.fee-invoice'))
+                <li>
+                    <a href="/reports/students-paid"
+                        class="{{ request()->is('reports/students-paid') ? 'active a' : '' }}">
+                        Students Paid
+                    </a>
+                </li>
+                @endif
+            </ul>
+        </li>
+        @endif
+        {{-- ----- --}}
         {{-- ================== --}}
 
         {{-- Role Management Section --}}

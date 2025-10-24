@@ -26,6 +26,7 @@ use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\TopicOverviewController;
 use App\Http\Controllers\StudentCategoryController;
 use App\Http\Controllers\ItemSellController; // Import the new controller
+use App\Http\Controllers\ReportController; // Import the new controller
 use App\Http\Controllers\RoleController; // Import the new controller
 
 Route::controller(HomeController::class)->middleware(['permission'])->group(callback: function () {
@@ -395,4 +396,14 @@ Route::controller(UserController::class)->prefix('role-management')->middleware(
     Route::get('create-user', 'createUser')->name('role-management.create-user');
     Route::post('store-user', 'storeUser')->name('role-management.store-user');
     Route::get('get-student-details/{id}', 'getStudentDetails')->name('role-management.get-student-details');
+});
+
+// Reports Routes
+Route::controller(ReportController::class)->prefix('reports')
+// ->middleware(['permission'])
+->group(function () {
+    Route::get('course-paid', 'coursePaid')->name('reports.course-paid');
+    Route::get('sell-items', 'sellItems')->name('reports.sell-items');
+    Route::get('issue-items', 'issueItems')->name('reports.issue-items');
+    Route::get('students-paid', 'studentsPaid')->name('reports.students-paid');
 });
