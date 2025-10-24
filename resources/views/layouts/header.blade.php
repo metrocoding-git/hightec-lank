@@ -60,9 +60,6 @@
     <link rel="stylesheet" href="{{ asset('backEnd/multiselect/css/jquery.multiselect.css') }}" />
     <link rel="stylesheet" href="{{ asset('backEnd/multiselect/css/custom_style.css') }}" />
     <link rel="stylesheet" href="{{ asset('backEnd/assets/css/radio_checkbox.css') }}" />
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link rel="stylesheet" href="{{ asset('backEnd/vendors/js/jquery-3.2.1.min.js') }}" />
-    <link rel="stylesheet" href="{{ asset('backEnd/assets/vendors/js/jquery-3.6.0.min.js') }}" />
 
     <link rel="stylesheet" href="{{ asset('css/backend_design_v2.css') }}">
 

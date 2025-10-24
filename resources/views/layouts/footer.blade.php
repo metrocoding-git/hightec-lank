@@ -82,6 +82,8 @@
     }
 </script>
 
+<script src="{{ asset('backEnd/vendors/js/jquery-3.6.0.min.js') }}"></script>
+
 <script src="{{ asset('backEnd/') }}/vendors/js/jquery-ui.js"></script>
 <script src="{{ asset('backEnd/') }}/vendors/js/popper.js"></script>
 
