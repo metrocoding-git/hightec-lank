@@ -267,7 +267,7 @@
                             <div class="row xm_3 aling-tiems-center">
                                 <div class="col-lg-6 no-gutters col-6 xs_mt_0">
                                     <div class="main-title">
-                                        <h3 class="mb-15">@lang('inventory.item_receive')</h3>
+                                        <h3 class="mb-15">Item Sell</h3>
                                     </div>
                                 </div>
 
@@ -367,9 +367,9 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-lg-4 mt-30-md" style="display: none;">
+                                            <div class="col-lg-4 mt-10-md" style="display: none;">
                                                 <div class="col-lg-12">
-                                                    <div class="primary_input md_mb_20">
+                                                    <div class="primary_input md_mb_10">
                                                         <label class="primary_input_label"
                                                             for="">@lang('inventory.total_due')</label>
                                                         <input class="primary_input_field" type="text" name="totalDue"
@@ -381,10 +381,10 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-lg-12 mt-20 text-center">
-                                                <button class="primary-btn fix-gr-bg" data-toggle="tooltip">
+                                            <div class="col-12  text-center">
+                                                <button class="primary-btn fix-gr-bg w-100" data-toggle="tooltip">
                                                     <span class="ti-check"></span>
-                                                    @lang('inventory.receive')
+                                                    @lang('inventory.sell')
                                                 </button>
                                             </div>
                                         </div>

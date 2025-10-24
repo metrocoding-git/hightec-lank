@@ -372,8 +372,8 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-lg-12 mt-20 text-center">
-                                                <button class="primary-btn fix-gr-bg" data-toggle="tooltip">
+                                            <div class="col-12 ">
+                                                <button class="primary-btn fix-gr-bg w-100" data-toggle="tooltip">
                                                     <span class="ti-check"></span>
                                                     @lang('inventory.receive')
                                                 </button>
