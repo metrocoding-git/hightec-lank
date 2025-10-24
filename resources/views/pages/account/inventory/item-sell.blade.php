@@ -36,7 +36,7 @@
             <form class="form-horizontal" id="item-sell-form">
                 @csrf
                 <div class="row">
-                    <div class="col-lg-4">
+                    <div class="col-lg-3">
                         <div class="row">
                             <div class="col-lg-12">
                                 {{-- <div class="main-title">
@@ -164,9 +164,11 @@
                                                     <div class="col-lg-12 mb-15">
                                                         <label class="primary_input_label" for="">@lang('common.name')
                                                             <span class="text-danger"> *</span> </label>
-                                                        <input class="primary_input_field form-control{{ $errors->has('customer_name') ? ' is-invalid' : '' }}"
-                                                            type="text" name="customer_name" id="customer_name" autocomplete="off"
-                                                            value="{{ old('customer_name') }}" placeholder="Enter customer name">
+                                                        <input
+                                                            class="primary_input_field form-control{{ $errors->has('customer_name') ? ' is-invalid' : '' }}"
+                                                            type="text" name="customer_name" id="customer_name"
+                                                            autocomplete="off" value="{{ old('customer_name') }}"
+                                                            placeholder="Enter customer name">
                                                         <div class="text-danger" id="customerNameError"></div>
                                                         @if ($errors->has('customer_name'))
                                                             <span class="text-danger invalid-select" role="alert">
@@ -262,7 +264,7 @@
                         </div>
                     </div>
 
-                    <div class="col-lg-8">
+                    <div class="col-lg-9">
                         <div class="white-box">
                             <div class="row xm_3 aling-tiems-center">
                                 <div class="col-lg-6 no-gutters col-6 xs_mt_0">
@@ -288,23 +290,27 @@
                                             <div id="quantityError"></div>
                                         </div> --}}
                                         <div class="table-responsive">
-                                            <table class="table table school-table-style" id="productTable">
+                                            <table class="table table-bordered school-table-style" id="productTable"
+                                                style="width:100%; table-layout:fixed;">
                                                 <thead>
                                                     <tr>
-                                                        <th> @lang('inventory.product_name')* </th>
-                                                        <th> @lang('inventory.sell_price')* </th>
-                                                        <th> Available Qty. </th>
-                                                        <th> @lang('inventory.quantity')* </th>
-                                                        <th>@lang('inventory.sub_total')</th>
-                                                        <th>@lang('common.action')</th>
+                                                        <th style="width:35%;">@lang('inventory.product_name')*</th>
+                                                        <th style="width:15%;">@lang('inventory.sell_price')*</th>
+                                                        <th style="width:10%;">Available Qty.</th>
+                                                        <th style="width:10%;">@lang('inventory.quantity')*</th>
+                                                        <th style="width:15%;">@lang('inventory.sub_total')</th>
+                                                        <th style="width:8%;" class="text-center">@lang('common.action')</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
 
                                                 </tbody>
                                                 <tfoot>
-                                                    <tr>
-                                                        <th class="border-top-0" colspan="3">@lang('inventory.total')</th>
+                                                    <tr class="align-middle text-center">
+                                                        <th class="border-top-0 text-center align-middle" colspan="3"
+                                                            style="vertical-align: middle; text-align: center;">
+                                                            @lang('inventory.total')
+                                                        </th>
                                                         <th class="border-top-0">
                                                             <input type="text" class="primary_input_field form-control"
                                                                 readonly="" id="subTotalQuantity"
@@ -338,12 +344,43 @@
                                 </div>
                             </div>
 
-                            <div class="row mt-30">
+                            <div class="row mt-2">
                                 <div class="col-lg-12">
+
                                     <div class="white-box">
+                                        <div class="d-none">
+                                            <input type="checkbox" id="full_paid"
+                                                class="common-checkbox form-control{{ $errors->has('full_paid') ? ' is-invalid' : '' }}"
+                                                name="full_paid" value="1" checked>
+                                            <label for="full_paid">@lang('inventory.full_paid')</label>
+
+
+                                            <div class="primary_input md_mb_20">
+                                                <label class="primary_input_label"
+                                                    for="">@lang('inventory.total_paid')</label>
+                                                <input class="primary_input_field" type="number" step="0.1"
+                                                    value="0" name="totalPaid" id="totalPaid"
+                                                    onkeyup="paidAmount();">
+                                                <input type="hidden" id="totalPaidValue" name="totalPaidValue">
+
+
+                                            </div>
+
+
+                                            <div class="primary_input md_mb_10">
+                                                <label class="primary_input_label"
+                                                    for="">@lang('inventory.total_due')</label>
+                                                <input class="primary_input_field" type="text" name="totalDue"
+                                                    value="0.00" id="totalDue" readonly>
+                                                <input type="hidden" id="totalDueValue" name="totalDueValue">
+
+
+                                            </div>
+                                        </div>
+
 
                                         <div class="row">
-                                            <div class="col-lg-4">
+                                            {{-- <div class="col-lg-4">
                                                 <div class="col-lg-12 mt-30">
                                                     <div class="primary_input" style="display: none;">
                                                         <input type="checkbox" id="full_paid"
@@ -379,7 +416,7 @@
 
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </div> --}}
 
                                             <div class="col-12  text-center">
                                                 <button class="primary-btn fix-gr-bg w-100" data-toggle="tooltip">
@@ -399,64 +436,68 @@
             </form>
         </div>
     </section>
+
     <script>
         $(document).ready(function() {
+
             // Configure toastr options
             toastr.options = {
                 "timeOut": "5000",
                 "extendedTimeOut": "1000"
             };
-            let rowCount = 0; // initialize as needed
+            let rowCount = 0;
 
             function addRow() {
                 rowCount++;
 
                 let newRow = `
-    <tr id="row${rowCount}" class="0">
-        <td class="border-top-0">
-            <input type="hidden" name="url" id="url" value="{{ URL::to('/') }}">
-            <div class="primary_input">
-                <select class="primary_select form-control" name="item_id[]" id="productName${rowCount}" onchange="fetchPrice(this, ${rowCount})">
-                    <option value="">@lang('common.select')*</option>
-                    @foreach ($items as $key => $value)
-                        <option value="{{ $value->id }}">{{ $value->item_name }}</option>
-                    @endforeach
-                </select>
-            </div>
-        </td>
-        <td class="border-top-0">
-            <div class="primary_input">
-                <input oninput="numberCheckWithDot(this)" class="primary_input_field form-control"
-                       type="text" step="0.1" id="unit_price${rowCount}" name="unit_price[]"
-                       autocomplete="off" value="" readonly="readonly" onkeyup="getTotalByPrice(${rowCount})">
-            </div>
-        </td>
-        <td class="border-top-0 available_quantity">
-            <div class="primary_input">
-                <input class="primary_input_field form-control" type="text" id="available_quantity${rowCount}"
-                       name="available_quantity[]" autocomplete="off" value="" readonly="readonly">
-            </div>
-        </td>
-        <td class="border-top-0">
-            <div class="primary_input">
-                <input oninput="numberCheckWithDot(this)" class="primary_input_field form-control"
-                       type="text" id="quantity${rowCount}" name="quantity[]" autocomplete="off"
-                       onkeyup="validateAndGetTotal(${rowCount});" value="">
-            </div>
-        </td>
-        <td class="border-top-0">
-            <div class="primary_input">
-                <input oninput="numberCheckWithDot(this)" class="primary_input_field form-control"
-                       type="text" name="total[]" id="total${rowCount}" autocomplete="off" value="0.00">
-            </div>
-            <input type="hidden" name="totalValue[]" id="totalValue${rowCount}" autocomplete="off" class="form-control" />
-        </td>
-        <td>
-            <button type="button" class="primary-btn icon-only fix-gr-bg" onclick="removeRow(${rowCount})">
-                <span class="ti-trash"></span>
-            </button>
-        </td>
-    </tr>`;
+                    <tr id="row${rowCount}" class="0">
+                        <td class="border-top-0">
+                            <input type="hidden" name="url" id="url" value="{{ URL::to('/') }}">
+                            <div class="primary_input">
+                                <select class="primary_select form-control" name="item_id[]" id="productName${rowCount}" onchange="fetchPrice(this, ${rowCount})">
+                                    <option value="">@lang('common.select')*</option>
+                                    @foreach ($items as $key => $value)
+                                        <option value="{{ $value->id }}">{{ $value->item_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </td>
+                        <td class="border-top-0">
+                            <div class="primary_input">
+                                <input oninput="numberCheckWithDot(this)" class="primary_input_field form-control"
+                                    type="text" step="0.1" id="unit_price${rowCount}" name="unit_price[]"
+                                    autocomplete="off" value="" readonly="readonly" onkeyup="getTotalByPrice(${rowCount})">
+                            </div>
+                        </td>
+                        <td class="border-top-0 available_quantity">
+                            <div class="primary_input">
+                                <input class="primary_input_field form-control" type="text" id="available_quantity${rowCount}"
+                                    name="available_quantity[]" autocomplete="off" value="" readonly="readonly">
+                            </div>
+                        </td>
+                        <td class="border-top-0">
+                            <div class="primary_input">
+                                <input oninput="numberCheckWithDot(this)" class="primary_input_field form-control"
+                                    type="text" id="quantity${rowCount}" name="quantity[]" autocomplete="off"
+                                    onkeyup="validateAndGetTotal(${rowCount});" value="">
+                            </div>
+                        </td>
+                        <td class="border-top-0">
+                            <div class="primary_input">
+                                <input oninput="numberCheckWithDot(this)" class="primary_input_field form-control"
+                                    type="text" name="total[]" id="total${rowCount}" autocomplete="off" value="0.00">
+                            </div>
+                            <input type="hidden" name="totalValue[]" id="totalValue${rowCount}" autocomplete="off" class="form-control" />
+                        </td>
+                
+                        <td class="text-center align-middle p-1">
+                            <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(${rowCount})">
+                                <i class="ti-trash"></i>
+                            </button>
+                        </td>
+
+                    </tr>`;
 
                 $('tbody').append(newRow);
             }
@@ -465,7 +506,6 @@
                 addRow();
             });
 
-            // Add one row on initial load
             addRow();
         });
 
@@ -480,7 +520,7 @@
             const itemId = selectElement.value;
             if (itemId) {
                 $.ajax({
-                    url: '{{ url("/") }}/account/inventory/get-item-price/' + itemId,
+                    url: '{{ url('/') }}/account/inventory/get-item-price/' + itemId,
                     type: 'GET',
                     success: function(response) {
                         if (response.success) {

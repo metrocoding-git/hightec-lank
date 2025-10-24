@@ -43,6 +43,7 @@
     <link rel="stylesheet" href="{{ asset('backEnd/multiselect/css/jquery.multiselect.css') }}" />
     <link rel="stylesheet" href="{{ asset('backEnd/multiselect/css/custom_style.css') }}" />
     <link rel="stylesheet" href="{{ asset('backEnd/assets/css/radio_checkbox.css') }}" />
+    <script src="{{ asset('backEnd/vendors/js/jquery-3.6.0.min.js') }}"></script>
 
     <link rel="stylesheet" href="{{ asset('css/backend_design_v2.css') }}">
     <link rel="stylesheet" href="{{ asset('backEnd/assets/css/metisMenu.css') }}" />
