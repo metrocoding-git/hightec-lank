@@ -48,14 +48,14 @@
                                         <thead>
                                             <tr>
                                                 <th>@lang('common.sl')</th>
-                                                <th>@lang('inventory.transaction_id')</th>
+                                                {{-- <th>@lang('inventory.transaction_id')</th> --}}
                                                 <th>@lang('inventory.reference_no')</th>
                                                 <th>@lang('inventory.supplier_company_name')</th>
                                                 <th>@lang('common.date')</th>
                                                 <th>@lang('inventory.total_quantity')</th>
                                                 <th>@lang('inventory.grand_total')</th>
-                                                <th>@lang('inventory.paid')</th>
-                                                <th>@lang('inventory.balance') (Rs)</th>
+                                                {{-- <th>@lang('inventory.paid')</th> --}}
+                                                {{-- <th>@lang('inventory.balance') (Rs)</th> --}}
                                                 <th>@lang('common.action')</th>
                                             </tr>
                                         </thead>
@@ -63,14 +63,14 @@
                                             @foreach ($itemReceives as $key => $itemReceive)
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
-                                                    <td>{{ $itemReceive->transaction_id }}</td>
+                                                    {{-- <td>{{ $itemReceive->transaction_id }}</td> --}}
                                                     <td>{{ $itemReceive->reference_no }}</td>
                                                     <td>{{ optional($itemReceive->supplier)->company_name }}</td>
                                                     <td>{{ $itemReceive->receive_date }}</td>
                                                     <td>{{ $itemReceive->total_quantity }}</td>
                                                     <td>{{ number_format($itemReceive->total_sub_total, 2) }}</td>
-                                                    <td>{{ number_format($itemReceive->total_paid, 2) }}</td>
-                                                    <td>{{ number_format($itemReceive->total_balance, 2) }}</td>
+                                                    {{-- <td>{{ number_format($itemReceive->total_paid, 2) }}</td> --}}
+                                                    {{-- <td>{{ number_format($itemReceive->total_balance, 2) }}</td> --}}
                                                     <td>
                                                         <x-drop-down>
                                                             <a class="dropdown-item view-item-receive" href="#"
@@ -116,13 +116,13 @@
                                 <i class="ti-package"></i> Items Details
                             </h5>
                             <div class="table-responsive">
-                                <table class="table table-bordered table-striped">
+                                <table class="table table-bordered table-striped text-center">
                                     <thead class="thead-dark">
                                         <tr>
-                                            <th>@lang('inventory.item_name')</th>
-                                            <th>@lang('inventory.quantity')</th>
-                                            <th>@lang('inventory.unit_price')</th>
-                                            <th>@lang('inventory.sub_total')</th>
+                                            <th class="text-center">Item Name</th>
+                                            <th class="text-center">Quantity</th>
+                                            <th class="text-center">Unit Price</th>
+                                            <th class="text-center">Sub Total</th>
                                         </tr>
                                     </thead>
                                     <tbody id="view_items_table_body">
@@ -130,8 +130,8 @@
                                     </tbody>
                                     <tfoot>
                                         <tr class="font-weight-bold">
-                                            <td colspan="3">@lang('inventory.total')</td>
-                                            <td id="view_total_quantity">0</td>
+                                            <td colspan="3" class="text-center">Total</td>
+                                            <td id="view_total_quantity" class="text-center">0</td>
                                         </tr>
                                     </tfoot>
                                 </table>
