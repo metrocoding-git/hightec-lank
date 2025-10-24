@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\Content;
 use App\CheckSection;
 use App\Models\Course;
 use App\Models\Intake;
@@ -66,9 +67,42 @@ class HomeController extends Controller
     public function dashboard()
     {
         $user = Auth::user();
-        // $roleName = $user->role ? $user->role->role_name : 'N/A'; // Get role name, or 'N/A' if not found
 
-        return view('pages.dashboard.dashboard', compact('user'));
+        // Fetch counts
+        $studentsCount = Student::count();
+        $teachersCount = User::where('role_id', 4)->count(); // Assuming role_id 4 is teacher
+        $parentsCount = User::where('role_id', 5)->count(); // Assuming role_id 5 is parent
+        $staffsCount = User::where('role_id', 6)->count(); // Assuming role_id 6 is staff
+
+        // Fetch financial data using existing models
+        $totalIncome = FeeInvoice::sum('paid_amount');
+        $totalExpenses = 0; // No expense model, set to 0
+        $totalProfit = $totalIncome - $totalExpenses;
+        $totalRevenue = $totalIncome;
+
+        // Fetch notices using Content model
+        $notices = Content::latest()->take(5)->get();
+
+        // Fetch events using Course model
+        $events = Course::all();
+
+        // Fetch todos - using a simple array for now
+        $todos = []; // Or create a model later
+
+        return view('pages.dashboard.dashboard', compact(
+            'user',
+            'studentsCount',
+            'teachersCount',
+            'parentsCount',
+            'staffsCount',
+            'totalIncome',
+            'totalExpenses',
+            'totalProfit',
+            'totalRevenue',
+            'notices',
+            'events',
+            'todos'
+        ));
     }
 
 
