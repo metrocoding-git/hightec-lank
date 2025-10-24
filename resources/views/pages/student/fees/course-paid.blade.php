@@ -184,12 +184,12 @@
                                     <label>Select Course <span class="text-danger">*</span></label>
                                     <select class="primary_select form-control mb-2" id="course_id" name="course_id">
                                         <option value="">select course</option>
-                                        @foreach ($courses as $course)
-                                            <option value="{{ $course->id }}" data-price="{{ $course->price }}">
-                                                {{ $course->name }}
-                                            </option>
-                                        @endforeach
+                                        <!-- Options will be loaded via AJAX -->
                                     </select>
+                                    <div class="pull-right loader" id="selectCourseLoader" style="display:none;">
+                                        <img src="{{ asset('Modules/Fees/Resources/assets/img/pre-loader.gif') }}"
+                                            style="width:28px;height:28px;">
+                                    </div>
                                     {{-- Table --}}
                                     <div class="big-table table-responsive mt-4">
                                         <table class="table school-table-style fees_invoice_type_table w-100">
@@ -245,6 +245,42 @@
                 } else {
                     $('#selectStudentLoader').hide();
                     $('#student_id').html('<option value="">Select Student</option>');
+                    $('#course_id').empty().append('<option value="">select course</option>');
+                    $('#course_id').niceSelect('update');
+                    $('.allCourseDetails').empty();
+                    addedCourseId = null;
+                }
+            });
+
+            // AJAX: Load courses based on student
+            $('#student_id').change(function() {
+                let studentId = $(this).val();
+                if (studentId) {
+                    $('#selectCourseLoader').show();
+                    $('.allCourseDetails').empty();
+                    addedCourseId = null;
+                    $.ajax({
+                        url: '{{ route('get-courses-by-student', ':studentId') }}'.replace(':studentId', studentId),
+                        type: 'GET',
+                        success: function(data) {
+                            $('#course_id').empty().append('<option value="">select course</option>');
+                            if (data.success && data.courses.length > 0) {
+                                data.courses.forEach(function(course) {
+                                    $('#course_id').append('<option value="' + course.id + '" data-price="' + course.price + '">' + course.name + '</option>');
+                                });
+                            }
+                            $('#course_id').niceSelect('update');
+                            $('#selectCourseLoader').hide();
+                        },
+                        error: function() {
+                            $('#selectCourseLoader').hide();
+                        }
+                    });
+                } else {
+                    $('#course_id').empty().append('<option value="">select course</option>');
+                    $('#course_id').niceSelect('update');
+                    $('.allCourseDetails').empty();
+                    addedCourseId = null;
                 }
             });
 

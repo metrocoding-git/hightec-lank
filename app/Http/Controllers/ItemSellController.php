@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+
 use App\Models\Course;
 use App\Models\Intake;
 use App\Models\Inventory_item;
-use App\Models\ItemSell;
+use App\Models\ItemSellBatch;
+use App\Models\ItemSellItem;
 use App\Models\ItemInventory;
 use App\Models\Role;
 use App\Models\Student;
@@ -28,11 +30,9 @@ class ItemSellController extends Controller
 
     public function saveItemSellData(Request $request)
     {
-        // Validate incoming data
         $request->validate([
             'payment_method' => 'required|string',
-            // 'role_id' => 'required|integer|exists:roles,id',
-            'sell_date' => 'required|string', // will parse m/d/Y -> Y-m-d
+            'sell_date' => 'required|string',
             'item_id' => 'required|array|min:1',
             'item_id.*' => 'required|integer|exists:inventory_items,id',
             'unit_price' => 'required|array|min:1',
@@ -45,10 +45,8 @@ class ItemSellController extends Controller
         ]);
 
         try {
-            // Parse date from the UI (m/d/Y) to database format (Y-m-d)
             $sellDate = Carbon::createFromFormat('m/d/Y', $request->sell_date)->format('Y-m-d');
         } catch (\Throwable $e) {
-            // Fallback: try to parse a standard Y-m-d or Y/m/d if user typed differently
             try {
                 $sellDate = Carbon::parse($request->sell_date)->format('Y-m-d');
             } catch (\Throwable $e2) {
@@ -60,10 +58,25 @@ class ItemSellController extends Controller
         }
 
         try {
-            // Create one row per item, duplicating header fields as per existing schema
-            $createdSells = [];
+            // Create ItemSellBatch record
+            $itemSellBatch = ItemSellBatch::create([
+                'payment_method' => $request->payment_method,
+                'role_id' => $request->role_id,
+                'student_id' => $request->student ?? null,
+                'user_id' => $request->staff_id ?? null,
+                'others_name' => $request->customer_name ?? null,
+                'reference_no' => $request->reference_no,
+                'sell_date' => $sellDate,
+                'description' => $request->description,
+                'total_quantity' => $request->subTotalQuantityValue ?? 0,
+                'total_sell_price' => $request->subTotalValue ?? 0,
+                'total_paid' => $request->totalPaid ?? 0,
+                'total_due' => $request->totalDue ?? 0,
+                'status' => ($request->totalDue > 0) ? 'PP' : 'P', // Partial Paid or Paid
+            ]);
+
+            // Create ItemSellItem records for each item in the batch
             foreach ($request->item_id as $index => $itemId) {
-                // Check available quantity
                 $availableQuantity = ItemInventory::getCurrentBalance($itemId);
                 if ($request->quantity[$index] > $availableQuantity) {
                     return response()->json([
@@ -72,25 +85,13 @@ class ItemSellController extends Controller
                     ], 422);
                 }
 
-                $itemSell = ItemSell::create([
-                    'payment_method' => $request->payment_method,
-                    'role_id' => $request->role_id,
-                    'course_id' => $request->class ?? null, // Map 'class' to 'course_id'
-                    'intake_id' => $request->section ?? null, // Map 'section' to 'intake_id'
-                    'student_id' => $request->student ?? null, // Map 'student' to 'student_id'
-                    'user_id' => $request->staff_id ?? null, // Map 'staff_id' to 'user_id'
-                    'reference_no' => $request->reference_no,
-                    'sell_date' => $sellDate,
-                    'others_name' => $request->customer_name ?? null,
-                    'description' => $request->description,
+                ItemSellItem::create([
+                    'item_sell_batch_id' => $itemSellBatch->id,
                     'item_id' => $itemId,
-                    'total_quantity' => $request->quantity[$index],
-                    'sell_price' => $request->unit_price[$index],
-                    'total_paid' => $request->totalPaid ?? 0,
-                    'total_due' => $request->totalDue ?? 0,
+                    'unit_price' => $request->unit_price[$index],
+                    'quantity' => $request->quantity[$index],
+                    'sub_total' => $request->totalValue[$index],
                 ]);
-
-                $createdSells[] = $itemSell;
 
                 // Track inventory changes for this item sell (decrease inventory)
                 $currentBalance = ItemInventory::getCurrentBalance($itemId);
@@ -99,7 +100,7 @@ class ItemSellController extends Controller
                 ItemInventory::create([
                     'item_id' => $itemId,
                     'transaction_type' => 'sell',
-                    'transaction_id' => $itemSell->id,
+                    'transaction_id' => $itemSellBatch->id, // Link to ItemSellBatch
                     'quantity' => $request->quantity[$index],
                     'current_balance' => $newBalance,
                     'reference_no' => $request->reference_no,
@@ -109,7 +110,7 @@ class ItemSellController extends Controller
             }
 
             return response()->json([
-                'success' => 'success',
+                'success' => true,
                 'message' => 'Item sold successfully!'
             ]);
         } catch (\Throwable $e) {
@@ -124,32 +125,57 @@ class ItemSellController extends Controller
 
     public function itemSellList()
     {
-        $allItemSellLists = ItemSell::with(['role', 'student', 'user'])->get();
+        $allItemSellLists = ItemSellBatch::with(['role', 'student', 'user'])->get();
         return view('pages.account.inventory.item-sell-list', compact('allItemSellLists'));
     }
 
     public function viewItemSell($id)
     {
-        $itemSell = ItemSell::findOrFail($id);
-        return view('pages.account.inventory.item-sell-modal.item-sell-view-modal', compact('itemSell'));
+        $itemSell = ItemSellBatch::with(['role', 'student', 'user', 'items.item'])->findOrFail($id);
+
+        $buyerName = 'N/A';
+        if ($itemSell->role_id == 2 && $itemSell->student) {
+            $buyerName = $itemSell->student->student_name;
+        } elseif ($itemSell->role_id == 3 && $itemSell->user) {
+            $buyerName = $itemSell->user->name;
+        } elseif ($itemSell->others_name) {
+            $buyerName = $itemSell->others_name;
+        }
+
+        return response()->json([
+            'itemSell' => [
+                'reference_no' => $itemSell->reference_no,
+                'buyer_name' => $buyerName,
+                'items' => $itemSell->items, // Return all items in the batch
+                'sell_date' => $itemSell->sell_date,
+                'total_quantity' => $itemSell->total_quantity,
+                'sell_price' => $itemSell->total_sell_price,
+                'total_paid' => $itemSell->total_paid,
+                'total_due' => $itemSell->total_due,
+                'course' => null, // Course data not available in current structure
+                'intake' => null, // Intake data not available in current structure
+                'description' => $itemSell->description,
+                'status' => $itemSell->status,
+            ]
+        ]);
     }
 
     public function editItemSell($id)
     {
-        $itemSell = ItemSell::with(['role', 'student', 'user', 'item'])->findOrFail($id);
+        $itemSellBatch = ItemSellBatch::with(['role', 'student', 'user', 'items.item'])->findOrFail($id);
         $items = Inventory_item::all();
         $classes = Course::all();
         $sections = Intake::all();
         $roles = Role::all();
         $students = Student::all();
         $users = User::all();
-        return view('pages.account.inventory.item-sell-modal.item-sell-edit-modal', compact('itemSell', 'items', 'classes', 'sections', 'roles', 'students', 'users'));
+        return view('pages.account.inventory.item-sell-modal.item-sell-edit-modal', compact('itemSellBatch', 'items', 'classes', 'sections', 'roles', 'students', 'users'));
     }
 
     public function deleteItemSellView($id)
     {
-        $itemSell = ItemSell::findOrFail($id);
-        return view('pages.account.inventory.item-sell-modal.item-sell-delete-modal', compact('itemSell'));
+        $itemSellBatch = ItemSellBatch::findOrFail($id);
+        return view('pages.account.inventory.item-sell-modal.item-sell-delete-modal', compact('itemSellBatch'));
     }
 
     public function updateItemSell(Request $request, $id)
@@ -183,23 +209,43 @@ class ItemSellController extends Controller
         }
 
         try {
-            $itemSell = ItemSell::findOrFail($id);
-            $itemSell->update([
+            $itemSellBatch = ItemSellBatch::findOrFail($id);
+            $itemSellBatch->update([
                 'payment_method' => $request->payment_method,
                 'role_id' => $request->role_id,
-                'course_id' => $request->class ?? null,
-                'intake_id' => $request->section ?? null,
                 'student_id' => $request->student ?? null,
                 'user_id' => $request->staff_id ?? null,
+                'others_name' => $request->customer_name ?? null,
                 'reference_no' => $request->reference_no,
                 'sell_date' => $sellDate,
                 'description' => $request->description,
-                'item_id' => $request->item_id[0], // Assuming single item update for simplicity
-                'total_quantity' => $request->quantity[0],
-                'sell_price' => $request->unit_price[0],
+                'total_quantity' => $request->subTotalQuantityValue ?? 0,
+                'total_sell_price' => $request->subTotalValue ?? 0,
                 'total_paid' => $request->totalPaid ?? 0,
                 'total_due' => $request->totalDue ?? 0,
+                'status' => ($request->totalDue > 0) ? 'PP' : 'P',
             ]);
+
+            // Delete existing items and re-create
+            $itemSellBatch->items()->delete();
+
+            foreach ($request->item_id as $index => $itemId) {
+                $availableQuantity = ItemInventory::getCurrentBalance($itemId);
+                if ($request->quantity[$index] > $availableQuantity) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Quantity for item cannot exceed available quantity (' . $availableQuantity . ')',
+                    ], 422);
+                }
+
+                ItemSellItem::create([
+                    'item_sell_batch_id' => $itemSellBatch->id,
+                    'item_id' => $itemId,
+                    'unit_price' => $request->unit_price[$index],
+                    'quantity' => $request->quantity[$index],
+                    'sub_total' => $request->totalValue[$index],
+                ]);
+            }
 
             return response()->json([
                 'success' => true,
@@ -216,21 +262,23 @@ class ItemSellController extends Controller
 
     public function addPaymentSell($id)
     {
-        $itemSell = ItemSell::findOrFail($id);
-        return view('pages.account.inventory.item-sell-modal.item-sell-add-payment-modal', compact('itemSell'));
+        $itemSellBatch = ItemSellBatch::findOrFail($id);
+        return view('pages.account.inventory.item-sell-modal.item-sell-add-payment-modal', compact('itemSellBatch'));
     }
 
     public function viewSellPayments($id)
     {
-        $itemSell = ItemSell::findOrFail($id);
-        return view('pages.account.inventory.item-sell-modal.item-sell-view-payments-modal', compact('itemSell'));
+        $itemSellBatch = ItemSellBatch::with(['items.item'])->findOrFail($id);
+        return response()->json([
+            'itemSellBatch' => $itemSellBatch
+        ]);
     }
 
     public function deleteItemSell($id)
     {
         try {
-            $itemSell = ItemSell::findOrFail($id);
-            $itemSell->delete();
+            $itemSellBatch = ItemSellBatch::findOrFail($id);
+            $itemSellBatch->delete(); // This will also delete associated ItemSellItems due to cascade delete
             return redirect()
                 ->back()
                 ->with('success', 'Item sell deleted successfully!');
@@ -246,12 +294,11 @@ class ItemSellController extends Controller
     public function cancelItemSell($id)
     {
         try {
-            $itemSell = ItemSell::findOrFail($id);
-            // Logic to cancel item sell (e.g., update status, refund)
-            // For now, just update total_due to grand_total and total_paid to 0
-            $itemSell->update([
+            $itemSellBatch = ItemSellBatch::findOrFail($id);
+            $itemSellBatch->update([
                 'total_paid' => 0,
-                'total_due' => $itemSell->sell_price * $itemSell->total_quantity, // Assuming this is the grand total
+                'total_due' => $itemSellBatch->total_sell_price,
+                'status' => 'U', // Unpaid
             ]);
             return redirect()
                 ->back()
@@ -268,14 +315,14 @@ class ItemSellController extends Controller
 
     public function cancelItemSellView($id)
     {
-        $itemSell = ItemSell::findOrFail($id);
-        return view('pages.account.inventory.item-sell-modal.item-sell-cancel-modal', compact('itemSell'));
+        $itemSellBatch = ItemSellBatch::findOrFail($id);
+        return view('pages.account.inventory.item-sell-modal.item-sell-cancel-modal', compact('itemSellBatch'));
     }
 
     public function returnItemSellView($id)
     {
-        $itemSell = ItemSell::findOrFail($id);
-        return view('pages.account.inventory.item-sell-modal.item-sell-return-modal', compact('itemSell'));
+        $itemSellBatch = ItemSellBatch::findOrFail($id);
+        return view('pages.account.inventory.item-sell-modal.item-sell-return-modal', compact('itemSellBatch'));
     }
 
     public function returnItemSell(Request $request, $id)
@@ -284,44 +331,49 @@ class ItemSellController extends Controller
             'return_quantity' => 'required|integer|min:1',
             'return_date' => 'required|string',
             'return_reason' => 'nullable|string',
+            'item_sell_item_id' => 'required|integer|exists:item_sell_items,id', // New: specify which item to return
         ]);
 
         try {
-            $itemSell = ItemSell::findOrFail($id);
+            $itemSellItem = ItemSellItem::findOrFail($request->item_sell_item_id);
+            $itemSellBatch = $itemSellItem->itemSellBatch;
 
-            // Validate return quantity doesn't exceed sold quantity
-            if ($request->return_quantity > $itemSell->total_quantity) {
+            if ($request->return_quantity > $itemSellItem->quantity) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Return quantity cannot exceed sold quantity (' . $itemSell->total_quantity . ')',
+                    'message' => 'Return quantity cannot exceed sold quantity for this item (' . $itemSellItem->quantity . ')',
                 ], 422);
             }
 
             $returnDate = Carbon::createFromFormat('m/d/Y', $request->return_date)->format('Y-m-d');
 
-            // Track inventory changes for this item return (increase inventory)
-            $currentBalance = ItemInventory::getCurrentBalance($itemSell->item_id);
+            // Update inventory
+            $currentBalance = ItemInventory::getCurrentBalance($itemSellItem->item_id);
             $newBalance = $currentBalance + $request->return_quantity;
 
             ItemInventory::create([
-                'item_id' => $itemSell->item_id,
+                'item_id' => $itemSellItem->item_id,
                 'transaction_type' => 'sell_return',
-                'transaction_id' => $itemSell->id,
+                'transaction_id' => $itemSellBatch->id, // Link to ItemSellBatch
                 'quantity' => $request->return_quantity,
                 'current_balance' => $newBalance,
-                'reference_no' => $itemSell->reference_no,
+                'reference_no' => $itemSellBatch->reference_no,
                 'transaction_date' => $returnDate,
                 'description' => $request->return_reason ?? 'Item returned from sell',
             ]);
 
-            // Update the sold item record to reflect the return
-            $newQuantity = $itemSell->total_quantity - $request->return_quantity;
-            $newTotalDue = $itemSell->total_due + ($itemSell->sell_price * $request->return_quantity);
-
-            $itemSell->update([
-                'total_quantity' => $newQuantity,
-                'total_due' => $newTotalDue,
+            // Update the sold item record (ItemSellItem)
+            $newQuantity = $itemSellItem->quantity - $request->return_quantity;
+            $itemSellItem->update([
+                'quantity' => $newQuantity,
+                'sub_total' => $newQuantity * $itemSellItem->unit_price,
             ]);
+
+            // Update the ItemSellBatch totals
+            $itemSellBatch->total_quantity -= $request->return_quantity;
+            $itemSellBatch->total_sell_price -= ($request->return_quantity * $itemSellItem->unit_price);
+            $itemSellBatch->total_due += ($request->return_quantity * $itemSellItem->unit_price);
+            $itemSellBatch->save();
 
             return response()->json([
                 'success' => true,
@@ -345,13 +397,12 @@ class ItemSellController extends Controller
         ]);
 
         try {
-            $itemSell = ItemSell::findOrFail($id);
+            $itemSellBatch = ItemSellBatch::findOrFail($id);
 
             $paymentDate = Carbon::createFromFormat('m/d/Y', $request->payment_date)->format('Y-m-d');
 
-            // Update total_paid and total_due
-            $newTotalPaid = $itemSell->total_paid + $request->amount;
-            $newTotalDue = $itemSell->total_due - $request->amount;
+            $newTotalPaid = $itemSellBatch->total_paid + $request->amount;
+            $newTotalDue = $itemSellBatch->total_due - $request->amount;
 
             if ($newTotalDue < 0) {
                 return response()->json([
@@ -360,19 +411,11 @@ class ItemSellController extends Controller
                 ], 422);
             }
 
-            $itemSell->update([
+            $itemSellBatch->update([
                 'total_paid' => $newTotalPaid,
                 'total_due' => $newTotalDue,
+                'status' => ($newTotalDue == 0) ? 'P' : 'PP',
             ]);
-
-            // Optionally, save payment details to a separate payments table if one exists
-            // For now, we're just updating the ItemSell record.
-            // If a dedicated payments table is needed, it would look something like:
-            // $itemSell->payments()->create([
-            //     'amount' => $request->amount,
-            //     'payment_method' => $request->payment_method,
-            //     'payment_date' => $paymentDate,
-            // ]);
 
             return response()->json([
                 'success' => true,
@@ -394,9 +437,9 @@ class ItemSellController extends Controller
         ]);
 
         try {
-            $itemSell = ItemSell::findOrFail($id);
+            $itemSellBatch = ItemSellBatch::findOrFail($id);
 
-            $itemSell->update([
+            $itemSellBatch->update([
                 'status' => $request->status,
             ]);
 
@@ -416,39 +459,45 @@ class ItemSellController extends Controller
     public function directReturnItemSell(Request $request, $id)
     {
         try {
-            $itemSell = ItemSell::findOrFail($id);
+            $itemSellBatch = ItemSellBatch::with('items')->findOrFail($id);
 
-            // Update inventory for full return
-            $currentBalance = ItemInventory::getCurrentBalance($itemSell->item_id);
-            $newBalance = $currentBalance + $itemSell->total_quantity;
+            foreach ($itemSellBatch->items as $itemSellItem) {
+                // Update inventory for each item in the batch
+                $currentBalance = ItemInventory::getCurrentBalance($itemSellItem->item_id);
+                $newBalance = $currentBalance + $itemSellItem->quantity;
 
-            ItemInventory::create([
-                'item_id' => $itemSell->item_id,
-                'transaction_type' => 'sell_return',
-                'transaction_id' => $itemSell->id,
-                'quantity' => $itemSell->total_quantity,
-                'current_balance' => $newBalance,
-                'reference_no' => $itemSell->reference_no,
-                'transaction_date' => now(),
-                'description' => 'Full item return from sell',
-            ]);
+                ItemInventory::create([
+                    'item_id' => $itemSellItem->item_id,
+                    'transaction_type' => 'sell_return',
+                    'transaction_id' => $itemSellBatch->id,
+                    'quantity' => $itemSellItem->quantity,
+                    'current_balance' => $newBalance,
+                    'reference_no' => $itemSellBatch->reference_no,
+                    'transaction_date' => now(),
+                    'description' => 'Full item return from sell (Batch ID: ' . $itemSellBatch->id . ')',
+                ]);
+            }
 
-            // Update sell record to reflect return
-            $itemSell->update([
+            // Update sell batch record to reflect full return
+            $itemSellBatch->update([
                 'total_quantity' => 0,
+                'total_sell_price' => 0,
                 'total_paid' => 0,
                 'total_due' => 0,
                 'status' => 'R',
             ]);
 
+            // Delete all associated item sell items
+            $itemSellBatch->items()->delete();
+
             return response()->json([
                 'success' => true,
-                'message' => 'Item returned successfully!'
+                'message' => 'Item batch returned successfully!'
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to return item.',
+                'message' => 'Failed to return item batch.',
                 'error' => $e->getMessage(),
             ], 500);
         }

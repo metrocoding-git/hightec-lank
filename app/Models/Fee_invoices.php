@@ -45,7 +45,7 @@ class Fee_invoices extends Model
 
     public function student()
     {
-        return $this->belongsTo(Student::class);
+        return $this->belongsTo(Student::class,'student_id','id');
     }
     // Fee_invoices.php
     public function invoice_item()

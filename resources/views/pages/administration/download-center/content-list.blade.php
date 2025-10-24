@@ -314,103 +314,107 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row">
-                            <div class="col-lg-12">
-                                <a class="primary-btn fix-gr-bg submit mt-0 shareContentData" id="shareContentModal"
-                                    href="#">@lang('downloadCenter.share')</a>
-                                <a class="primary-btn fix-gr-bg submit mt-0 shareContentData" id="generateUrlModal"
-                                    href="#">@lang('downloadCenter.generate_url')</a>
-                                {{-- <!-- generate Url btn --> --}}
-                                <div class="mt-3">
-                                    <x-table>
-                                        {{-- //Content List Table --}}
-                                        <table id="table_id " class="table Crm_table_active3 content-table"
-                                            cellspacing="0" width="100%">
-                                            <thead>
-                                                <tr>
-                                                    <th>ID</th>
-                                                    <th>@lang('downloadCenter.document')</th>
-                                                    <th>@lang('downloadCenter.content_type')</th>
-                                                    <th>@lang('downloadCenter.size')</th>
-                                                    <th>@lang('downloadCenter.uploaded_by')</th>
-                                                    <th>@lang('downloadCenter.created_on')</th>
-                                                    <th>@lang('downloadCenter.action')</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach (@$contents as $key => $content)
-                                                    <tr>
-                                                        <td>
-                                                            {{-- Content List Id  --}}
-                                                            <input type="checkbox" id="content{{ $content->id }}"
-                                                                class="common-checkbox video-list contentDataCheckbox"
-                                                                data-name="{{ $content->file_name }}" name="content[]"
-                                                                value="{{ $content->id }}">
-                                                            <label for="content{{ $content->id }}"></label>
-                                                            {{ $key + 1 }}
-                                                        </td>
-                                                        <td class="text-break">{{ $content->file_name }}</td>
-                                                        <td>{{ $content->content_type->name ?? 'N/A' }}</td>
-                                                        <td>{{ $content->file_size ?? 'N/A' }}</td>
+                       
 
-                                                        <td>{{ $content->created_at }}</td>
-                                                        <td>{{ $content->created_at }}</td>
-                                                        <td>
-                                                            <x-drop-down>
-                                                                <a class="dropdown-item"
-                                                                    href="{{ route('content-edit', $content->id) }}">@lang('common.edit')</a>
-                                                                <a class="dropdown-item" data-toggle="modal"
-                                                                    data-target="#deleteContentModal{{ @$content->id }}"
-                                                                    href="#">@lang('common.delete')</a>
-                                                            </x-drop-down>
-                                                        </td>
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <a class="primary-btn fix-gr-bg submit mt-0 shareContentData" id="shareContentModal"
+                                        href="#">@lang('downloadCenter.share')</a>
+                                    <a class="primary-btn fix-gr-bg submit mt-0 shareContentData" id="generateUrlModal"
+                                        href="#">@lang('downloadCenter.generate_url')</a>
+                                    {{-- <!-- generate Url btn --> --}}
+                                    <div class="mt-3">
+                                        <div class="table-responsive">
+                                            <x-table>
+                                                {{-- //Content List Table --}}
+                                                <table id="table_id " class="table Crm_table_active3 content-table"
+                                                    cellspacing="0" width="100%">
+                                                <thead>
+                                                    <tr>
+                                                        <th>ID</th>
+                                                        <th>@lang('downloadCenter.document')</th>
+                                                        <th>@lang('downloadCenter.content_type')</th>
+                                                        <th>@lang('downloadCenter.size')</th>
+                                                        <th>@lang('downloadCenter.uploaded_by')</th>
+                                                        <th>@lang('downloadCenter.created_on')</th>
+                                                        <th>@lang('downloadCenter.action')</th>
                                                     </tr>
-                                                    <div class="modal fade admin-query"
-                                                        id="deleteContentModal{{ @$content->id }}">
-                                                        <div class="modal-dialog modal-dialog-centered">
-                                                            <div class="modal-content">
-                                                                <div class="modal-header">
-                                                                    <h4 class="modal-title">
-                                                                        @lang('downloadCenter.delete_content')
-                                                                    </h4>
-                                                                    <button type="button" class="close"
-                                                                        data-dismiss="modal">
-                                                                        &times;
-                                                                    </button>
-                                                                </div>
-                                                                <div class="modal-body">
-                                                                    <div class="text-center">
-                                                                        <h4>@lang('common.are_you_sure_to_delete')</h4>
-                                                                    </div>
-                                                                    <div class="mt-40 d-flex justify-content-between">
-                                                                        <button type="button" class="primary-btn tr-bg"
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (@$contents as $key => $content)
+                                                        <tr>
+                                                            <td>
+                                                                {{-- Content List Id  --}}
+                                                                <input type="checkbox" id="content{{ $content->id }}"
+                                                                    class="common-checkbox video-list contentDataCheckbox"
+                                                                    data-name="{{ $content->file_name }}" name="content[]"
+                                                                    value="{{ $content->id }}">
+                                                                <label for="content{{ $content->id }}"></label>
+                                                                {{ $key + 1 }}
+                                                            </td>
+                                                            <td class="text-break">{{ $content->file_name }}</td>
+                                                            <td>{{ $content->content_type->name ?? 'N/A' }}</td>
+                                                            <td>{{ $content->file_size ?? 'N/A' }}</td>
+    
+                                                            <td>{{ $content->created_at }}</td>
+                                                            <td>{{ $content->created_at }}</td>
+                                                            <td>
+                                                                <x-drop-down>
+                                                                    <a class="dropdown-item"
+                                                                        href="{{ route('content-edit', $content->id) }}">@lang('common.edit')</a>
+                                                                    <a class="dropdown-item" data-toggle="modal"
+                                                                        data-target="#deleteContentModal{{ @$content->id }}"
+                                                                        href="#">@lang('common.delete')</a>
+                                                                </x-drop-down>
+                                                            </td>
+                                                        </tr>
+                                                        <div class="modal fade admin-query"
+                                                            id="deleteContentModal{{ @$content->id }}">
+                                                            <div class="modal-dialog modal-dialog-centered">
+                                                                <div class="modal-content">
+                                                                    <div class="modal-header">
+                                                                        <h4 class="modal-title">
+                                                                            @lang('downloadCenter.delete_content')
+                                                                        </h4>
+                                                                        <button type="button" class="close"
                                                                             data-dismiss="modal">
-                                                                            @lang('common.cancel')
+                                                                            &times;
                                                                         </button>
-                                                                        <form
-                                                                            action="{{ route('content-delete', $content->id) }}"
-                                                                            method="POST" enctype="multipart/form-data">
-                                                                            @csrf
-                                                                            @method('DELETE')
-                                                                            <button class="primary-btn fix-gr-bg"
-                                                                                type="submit">
-                                                                                @lang('common.delete')
+                                                                    </div>
+                                                                    <div class="modal-body">
+                                                                        <div class="text-center">
+                                                                            <h4>@lang('common.are_you_sure_to_delete')</h4>
+                                                                        </div>
+                                                                        <div class="mt-40 d-flex justify-content-between">
+                                                                            <button type="button" class="primary-btn tr-bg"
+                                                                                data-dismiss="modal">
+                                                                                @lang('common.cancel')
                                                                             </button>
-                                                                        </form>
+                                                                            <form
+                                                                                action="{{ route('content-delete', $content->id) }}"
+                                                                                method="POST" enctype="multipart/form-data">
+                                                                                @csrf
+                                                                                @method('DELETE')
+                                                                                <button class="primary-btn fix-gr-bg"
+                                                                                    type="submit">
+                                                                                    @lang('common.delete')
+                                                                                </button>
+                                                                            </form>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                @endforeach
-
-
-                                            </tbody>
-                                        </table>
-                                    </x-table>
+                                                    @endforeach
+    
+    
+                                                </tbody>
+                                            </table>
+                                        </x-table>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        
                     </div>
                 </div>
             </div>

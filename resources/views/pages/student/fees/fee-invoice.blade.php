@@ -55,9 +55,9 @@
                                                 <th>@lang('common.student')</th>
                                                 <th>Branch</th>
                                                 <th>@lang('admin.admission_no')</th>
-                                                <th>@lang('accounts.amount')</th>
-                                                <th>@lang('fees.paid')</th>
-                                                <th>@lang('accounts.balance')</th>
+                                                <th>@lang('accounts.amount')(Rs)</th>
+                                                <th>@lang('fees.paid')(Rs)</th>
+                                                <th>@lang('accounts.balance')(Rs)</th>
                                                 <th>Payment Method</th>
                                                 <th>Payment Status</th>
                                                 <th>Payment Date</th>
@@ -94,7 +94,7 @@
 
                                                     <td>{{ $amount }}</td>
                                                     <td>{{ $paid_amount }}</td>
-                                                    <td>{{ $balance }}</td>
+                                                    <td>{{ $balance }}.00</td>
                                                     <td>{{ $invoice->payment_method }}</td>
 
                                                     <td>
@@ -873,6 +873,42 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- View Bank Details Modal -->
+                            <div class="modal fade admin-query" id="viewBankDetailsModal" tabindex="-1"
+                                role="dialog" aria-labelledby="viewBankDetailsModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h4 class="modal-title" id="viewBankDetailsModalLabel">Bank Payment Details</h4>
+                                            <button type="button" class="close" data-dismiss="modal"
+                                                aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label for="bankPaymentDateDisplay">Bank Payment Date</label>
+                                                        <input type="text" class="form-control" id="bankPaymentDateDisplay" readonly>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label for="bankPaymentAmountDisplay">Bank Payment Amount</label>
+                                                        <input type="text" class="form-control" id="bankPaymentAmountDisplay" readonly>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="primary-btn tr-bg"
+                                                data-dismiss="modal">@lang('common.close')</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1157,6 +1193,10 @@
                                 actionDropdown +=
                                     `<a style="padding:4px;margin: 2px; background-color: #007bff; color: #fff; text-align: center;" class="dropdown-item add-payment-invoice-number-btn" href="#" data-payment-id="${payment.id}">Add Invoice No.</a>`;
                             }
+                            if (payment.payment_method === 'Bank Transfer') {
+                                actionDropdown +=
+                                    `<a style="padding:4px;margin: 2px; background-color: #28a745; color: #fff; text-align: center;" class="dropdown-item view-bank-details-btn" href="#" data-payment-id="${payment.id}" data-bank-date="${payment.bank_payment_date}" data-bank-amount="${payment.bank_payment_amount}">View Bank Details</a>`;
+                            }
                             if (payment.payment_method !== 'Refund' && payment
                                 .payment_status !== 'refunded' && payment.amount > 0) {
                                 actionDropdown +=
@@ -1388,18 +1428,18 @@
                 }
 
                 // Validate bank payment amount
-                if (!bankAmount || parseFloat(bankAmount) <= 0) {
-                    $('#addPaymentForm').prepend(
-                        '<div class="alert alert-danger">Bank payment amount must be greater than 0</div>');
-                    $('#bankPaymentAmountInput').focus();
-                    return;
-                }
+                // if (!bankAmount || parseFloat(bankAmount) <= 0) {
+                //     $('#addPaymentForm').prepend(
+                //         '<div class="alert alert-danger">Bank payment amount must be greater than 0</div>');
+                //     $('#bankPaymentAmountInput').focus();
+                //     return;
+                // }
 
                 // Validate bank amount is at least the due amount
                 var dueAmount = parseFloat($('#dueAmountDisplay').text()) || 0;
                 if (parseFloat(bankAmount) < dueAmount) {
                     $('#addPaymentForm').prepend(
-                        '<div class="alert alert-danger">Bank payment amount must be at least the due amount (' +
+                        // '<div class="alert alert-danger">Bank payment amount must be at least the due amount (' +
                         dueAmount + ')</div>');
                     $('#bankPaymentAmountInput').focus();
                     return;
@@ -1638,8 +1678,8 @@
                 // Validate bank payment amount
                 if (!bankAmount || parseFloat(bankAmount) <= 0) {
                     $('#bankPaymentAmountInput').addClass('is-invalid');
-                    $('#bankPaymentAmountInput').after(
-                        '<div class="invalid-feedback bank-field-error">Bank payment amount must be greater than 0</div>'
+                    $('#bankPaymentAmountInput').closest('.form-group').after(
+                        '<div class="alert alert-danger bank-field-error" style="margin-top: 10px;">Bank payment amount must be greater than 0</div>'
                         );
                     isValid = false;
                 }
@@ -1649,8 +1689,8 @@
                 var dueAmount = parseFloat($('#dueAmountDisplay').text()) || 0;
                 if (bankAmount && dueAmount && parseFloat(bankAmount) < dueAmount) {
                     $('#bankPaymentAmountInput').addClass('is-invalid');
-                    $('#bankPaymentAmountInput').after(
-                        '<div class="invalid-feedback bank-field-error">Bank payment amount must be at least the due amount (' +
+                    $('#bankPaymentAmountInput').closest('.form-group').after(
+                        '<div class="alert alert-danger bank-field-error" style="margin-top: 10px;">Bank payment amount must be at least the due amount (' +
                         dueAmount + ')</div>');
                     isValid = false;
                 }
@@ -1658,5 +1698,29 @@
 
             return isValid;
         }
+
+        // Handle view bank details button click (delegated event for dropdown items)
+        $(document).on('click', '.view-bank-details-btn', function(e) {
+            e.preventDefault();
+            var bankDate = $(this).data('bank-date');
+            var bankAmount = $(this).data('bank-amount');
+
+            // Format the date if it's a valid date
+            if (bankDate) {
+                var dateObj = new Date(bankDate);
+                if (!isNaN(dateObj.getTime())) {
+                    bankDate = dateObj.toLocaleDateString();
+                }
+            } else {
+                bankDate = 'N/A';
+            }
+
+            // Set the values in the modal
+            $('#bankPaymentDateDisplay').val(bankDate);
+            $('#bankPaymentAmountDisplay').val(bankAmount || 'N/A');
+
+            // Show the modal
+            $('#viewBankDetailsModal').modal('show');
+        });
     </script>
 @endpush

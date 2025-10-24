@@ -48,15 +48,14 @@
                                         <thead>
                                             <tr>
                                                 <th>@lang('common.sl')</th>
+                                                {{-- <th>@lang('inventory.transaction_id')</th> --}}
                                                 <th>@lang('inventory.reference_no')</th>
-                                                <th>@lang('inventory.item_name')</th>
                                                 <th>@lang('inventory.supplier_company_name')</th>
                                                 <th>@lang('common.date')</th>
-                                                <th>@lang('inventory.quantity')</th>
-                                                <th>@lang('inventory.unit_price')</th>
+                                                <th>@lang('inventory.total_quantity')</th>
                                                 <th>@lang('inventory.grand_total')</th>
-                                                <th>@lang('inventory.paid')</th>
-                                                <th>@lang('inventory.balance') (Rs)</th>
+                                                {{-- <th>@lang('inventory.paid')</th> --}}
+                                                {{-- <th>@lang('inventory.balance') (Rs)</th> --}}
                                                 <th>@lang('common.action')</th>
                                             </tr>
                                         </thead>
@@ -64,28 +63,27 @@
                                             @foreach ($itemReceives as $key => $itemReceive)
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
+                                                    {{-- <td>{{ $itemReceive->transaction_id }}</td> --}}
                                                     <td>{{ $itemReceive->reference_no }}</td>
-                                                    <td>{{ optional($itemReceive->item)->item_name ?? 'N/A' }}</td>
                                                     <td>{{ optional($itemReceive->supplier)->company_name }}</td>
                                                     <td>{{ $itemReceive->receive_date }}</td>
-                                                    <td>{{ $itemReceive->quantity }}</td>
-                                                    <td>{{ number_format($itemReceive->unit_price, 2) }}</td>
-                                                    <td>{{ number_format($itemReceive->sub_total, 2) }}</td>
-                                                    <td>{{ number_format($itemReceive->total_paid, 2) }}</td>
-                                                    <td>{{ number_format($itemReceive->sub_total - $itemReceive->total_paid, 2) }}</td>
+                                                    <td>{{ $itemReceive->total_quantity }}</td>
+                                                    <td>{{ number_format($itemReceive->total_sub_total, 2) }}</td>
+                                                    {{-- <td>{{ number_format($itemReceive->total_paid, 2) }}</td> --}}
+                                                    {{-- <td>{{ number_format($itemReceive->total_balance, 2) }}</td> --}}
                                                     <td>
                                                         <x-drop-down>
                                                             <a class="dropdown-item view-item-receive" href="#"
-                                                                data-id="{{ $itemReceive->id }}">
-                                                                <i class="ti-eye"></i> @lang('common.view')
+                                                                data-id="{{ $itemReceive->transaction_id }}">
+                                                                 @lang('common.view')
                                                             </a>
                                                             <a class="dropdown-item edit-item-receive" href="#"
-                                                                data-id="{{ $itemReceive->id }}">
-                                                                <i class="ti-pencil"></i> @lang('common.edit')
+                                                                data-id="{{ $itemReceive->transaction_id }}">
+                                                                 @lang('common.edit')
                                                             </a>
                                                             <a class="dropdown-item delete-item-receive" href="#"
-                                                                data-id="{{ $itemReceive->id }}">
-                                                                <i class="ti-trash"></i> @lang('common.delete')
+                                                                data-id="{{ $itemReceive->transaction_id }}">
+                                                                 @lang('common.delete')
                                                             </a>
                                                         </x-drop-down>
                                                     </td>
@@ -104,42 +102,39 @@
 
     {{-- View Modal --}}
     <div class="modal fade admin-query" id="viewItemReceiveModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">@lang('inventory.view_item_receive_details')</h4>
+                    <h4 class="modal-title">View Item Receive Details</h4>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <!-- Item Information Section -->
+                    <!-- Items Table Section -->
                     <div class="row mb-4">
                         <div class="col-lg-12">
                             <h5 class="text-primary mb-3">
-                                <i class="ti-package"></i> @lang('inventory.item_information')
+                                <i class="ti-package"></i> Items Details
                             </h5>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="info-card p-3 mb-3" style="background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff;">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <h6 class="mb-1 text-muted">@lang('inventory.item_name')</h6>
-                                                <p class="mb-0 font-weight-bold" id="view_item_name" style="font-size: 16px;">-</p>
-                                            </div>
-                                            <i class="ti-package text-primary" style="font-size: 24px;"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="info-card p-3 mb-3" style="background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #28a745;">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <h6 class="mb-1 text-muted">@lang('inventory.quantity')</h6>
-                                                <p class="mb-0 font-weight-bold text-success" id="view_quantity" style="font-size: 16px;">-</p>
-                                            </div>
-                                            <i class="ti-layers text-success" style="font-size: 24px;"></i>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped text-center">
+                                    <thead class="thead-dark">
+                                        <tr>
+                                            <th class="text-center">Item Name</th>
+                                            <th class="text-center">Quantity</th>
+                                            <th class="text-center">Unit Price</th>
+                                            <th class="text-center">Sub Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="view_items_table_body">
+                                        <!-- Items will be populated here -->
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="font-weight-bold">
+                                            <td colspan="3" class="text-center">Total</td>
+                                            <td id="view_total_quantity" class="text-center">0</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -148,11 +143,15 @@
                     <div class="row mb-4">
                         <div class="col-lg-12">
                             <h5 class="text-primary mb-3">
-                                <i class="ti-receipt"></i> @lang('inventory.transaction_details')
+                                <i class="ti-receipt"></i> Transaction Details
                             </h5>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <table class="table table-sm">
+                                    <table class="table table-sm table-borderless">
+                                        <tr>
+                                            <td><strong>Transaction:</strong></td>
+                                            <td><span id="view_transaction_id" class="badge badge-primary"></span></td>
+                                        </tr>
                                         <tr>
                                             <td><strong>@lang('inventory.reference_no'):</strong></td>
                                             <td><span id="view_reference_no" class="badge badge-info"></span></td>
@@ -161,18 +160,10 @@
                                             <td><strong>@lang('inventory.receive_date'):</strong></td>
                                             <td><span id="view_receive_date"></span></td>
                                         </tr>
-                                        <tr>
-                                            <td><strong>@lang('inventory.unit_price'):</strong></td>
-                                            <td><span id="view_unit_price" class="text-primary font-weight-bold"></span></td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>@lang('inventory.sub_total'):</strong></td>
-                                            <td><span id="view_sub_total" class="text-info font-weight-bold"></span></td>
-                                        </tr>
                                     </table>
                                 </div>
                                 <div class="col-md-6">
-                                    <table class="table table-sm">
+                                    <table class="table table-sm table-borderless">
                                         <tr>
                                             <td><strong>@lang('inventory.payment_method'):</strong></td>
                                             <td><span id="view_payment_method" class="badge badge-warning"></span></td>
@@ -182,12 +173,8 @@
                                             <td><span id="view_total_paid" class="text-success font-weight-bold"></span></td>
                                         </tr>
                                         <tr>
-                                            <td><strong>@lang('inventory.balance'):</strong></td>
-                                            <td><span id="view_total_due" class="text-danger font-weight-bold"></span></td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>@lang('common.status'):</strong></td>
-                                            <td><span id="view_status_badge" class="badge"></span></td>
+                                            <td><strong>@lang('inventory.grand_total'):</strong></td>
+                                            <td><span id="view_grand_total" class="text-info font-weight-bold"></span></td>
                                         </tr>
                                     </table>
                                 </div>
@@ -199,13 +186,13 @@
                     <div class="row mb-4">
                         <div class="col-lg-12">
                             <h5 class="text-primary mb-3">
-                                <i class="ti-info-circle"></i> @lang('inventory.supplier_store_info')
+                                <i class="ti-info-circle"></i> Store Information
                             </h5>
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="info-section p-3" style="background-color: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
                                         <h6 class="mb-2 text-warning">
-                                            <i class="ti-truck"></i> @lang('inventory.supplier_information')
+                                            <i class="ti-truck"></i> Supplier Information
                                         </h6>
                                         <p class="mb-1"><strong>@lang('inventory.supplier_company_name'):</strong> <span id="view_supplier_name"></span></p>
                                     </div>
@@ -213,7 +200,7 @@
                                 <div class="col-md-6">
                                     <div class="info-section p-3" style="background-color: #d4edda; border-radius: 8px; border-left: 4px solid #28a745;">
                                         <h6 class="mb-2 text-success">
-                                            <i class="ti-home"></i> @lang('inventory.store_information')
+                                            <i class="ti-home"></i> Store Information
                                         </h6>
                                         <p class="mb-1"><strong>@lang('inventory.store_name'):</strong> <span id="view_store_name"></span></p>
                                     </div>
@@ -429,56 +416,58 @@
                 //  View Item Receive
                 $(document).on('click', '.view-item-receive', function(e) {
                     e.preventDefault();
-                    let id = $(this).data('id');
+                    let transactionId = $(this).data('id');
 
                     $.ajax({
-                        url: '/account/inventory/item-receive/' + id + '/edit', // ✅ fixed URL
+                        url: '/account/inventory/item-receive/' + transactionId + '/view',
                         type: 'GET',
                         success: function(response) {
-                            let itemReceive = response.itemReceive;
-
-                            // Format currency values
-                            let unitPrice = parseFloat(itemReceive.unit_price || 0);
-                            let subTotal = parseFloat(itemReceive.sub_total || 0);
-                            let totalPaid = parseFloat(itemReceive.total_paid || 0);
-                            let balance = subTotal - totalPaid;
-
-                            // Determine payment status
-                            let statusBadge = '';
-                            if (balance === 0) {
-                                statusBadge = '<span class="badge badge-success">Paid</span>';
-                            } else if (totalPaid > 0) {
-                                statusBadge = '<span class="badge badge-warning">Partially Paid</span>';
-                            } else {
-                                statusBadge = '<span class="badge badge-danger">Unpaid</span>';
+                            if (response.error) {
+                                toastr.error(response.error);
+                                return;
                             }
 
-                            // Item Information Section
-                            $('#view_item_name').text(itemReceive.item?.item_name ?? 'N/A');
-                            $('#view_quantity').text(itemReceive.quantity || '0');
+                            let transaction = response.transaction;
+                            let items = response.items;
+                            let totals = response.totals;
 
                             // Transaction Details Section
-                            $('#view_reference_no').text(itemReceive.reference_no || 'N/A');
-                            $('#view_receive_date').text(moment(itemReceive.receive_date).format('MM/DD/YYYY'));
-                            $('#view_unit_price').text('Rs ' + unitPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
-                            $('#view_sub_total').text('Rs ' + subTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
-                            $('#view_payment_method').text(itemReceive.payment_method || 'N/A');
-                            $('#view_total_paid').text('Rs ' + totalPaid.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
-                            $('#view_total_due').text('Rs ' + balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
-                            $('#view_status_badge').html(statusBadge);
+                            $('#view_transaction_id').text(transaction.transaction_id || 'N/A');
+                            $('#view_reference_no').text(transaction.reference_no || 'N/A');
+                            $('#view_receive_date').text(moment(transaction.receive_date).format('MM/DD/YYYY'));
+                            $('#view_payment_method').text(transaction.payment_method || 'N/A');
+                            $('#view_total_paid').text('Rs ' + parseFloat(totals.total_paid || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                            $('#view_grand_total').text('Rs ' + parseFloat(totals.total_sub_total || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
 
                             // Supplier & Store Information
-                            $('#view_supplier_name').text(itemReceive.supplier?.company_name ?? 'N/A');
-                            $('#view_store_name').text(itemReceive.branch?.name ?? 'N/A');
+                            $('#view_supplier_name').text(transaction.supplier?.company_name ?? 'N/A');
+                            $('#view_store_name').text(transaction.branch?.name ?? 'N/A');
 
                             // Description
-                            $('#view_description').text(itemReceive.description || 'No description available');
+                            $('#view_description').text(transaction.description || 'No description available');
+
+                            // Items Table
+                            let itemsHtml = '';
+                            items.forEach(item => {
+                                itemsHtml += `<tr>
+                                    <td>${item.item?.item_name ?? 'N/A'}</td>
+                                    <td>${item.quantity}</td>
+                                    <td>Rs ${parseFloat(item.unit_price || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                    <td>Rs ${parseFloat(item.sub_total || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                </tr>`;
+                            });
+                            $('#view_items_table_body').html(itemsHtml);
+                            $('#view_total_quantity').text(totals.total_quantity || '0');
 
                             $('#viewItemReceiveModal').modal('show');
                         },
                         error: function(xhr) {
                             console.error('Error response:', xhr.responseText);
-                            toastr.error("Failed to fetch item receive details.");
+                            if (xhr.responseJSON && xhr.responseJSON.error) {
+                                toastr.error(xhr.responseJSON.error);
+                            } else {
+                                toastr.error("Failed to fetch item receive details. Please check the console for more information.");
+                            }
                         }
                     });
                 });
@@ -486,51 +475,66 @@
                 //  Edit Item Receive
                 $(document).on('click', '.edit-item-receive', function(e) {
                     e.preventDefault();
-                    let id = $(this).data('id');
+                    let transactionId = $(this).data('id');
 
-                    $('#editItemReceiveForm').attr('action', '/account/inventory/item-receive/' + id);
+                    $('#editItemReceiveForm').attr('action', '/account/inventory/item-receive/' + transactionId);
 
                     $.ajax({
-                        url: '/account/inventory/item-receive/' + id + '/edit', // ✅ fixed URL
+                        url: '/account/inventory/item-receive/' + transactionId + '/edit',
                         type: 'GET',
                         success: function(response) {
-                            let itemReceive = response.itemReceive;
+                            if (response.error) {
+                                toastr.error(response.error);
+                                return;
+                            }
 
-                            $('#edit_item_receive_id').val(id);
-                            $('#edit_payment_method').val(itemReceive.payment_method);
-                            $('#edit_reference_no').val(itemReceive.reference_no);
-                            $('#edit_receive_date').val(moment(itemReceive.receive_date)
-                                .format('MM/DD/YYYY'));
-                            $('#edit_unit_price').val(itemReceive.unit_price);
-                            $('#edit_quantity').val(itemReceive.quantity);
-                            $('#edit_description').val(itemReceive.description);
+                            let transaction = response.transaction;
+                            let itemReceives = response.itemReceives;
+
+                            // Use the first item for basic form population
+                            let firstItem = itemReceives[0];
+
+                            $('#edit_item_receive_id').val(transactionId);
+                            $('#edit_payment_method').val(transaction.payment_method);
+                            $('#edit_reference_no').val(transaction.reference_no);
+                            $('#edit_receive_date').val(moment(transaction.receive_date).format('MM/DD/YYYY'));
+                            $('#edit_description').val(transaction.description);
 
                             // Populate suppliers dropdown
                             let supplierOptions = '<option data-display="@lang('inventory.select_supplier') *" value="">@lang('common.select')</option>';
                             response.suppliers.forEach(supplier => {
-                                supplierOptions += `<option value="${supplier.id}" ${itemReceive.supplier_id == supplier.id ? 'selected' : ''}>${supplier.company_name}</option>`;
+                                supplierOptions += `<option value="${supplier.id}" ${transaction.supplier_id == supplier.id ? 'selected' : ''}>${supplier.company_name}</option>`;
                             });
                             $('#edit_supplier_id').html(supplierOptions);
 
                             // Populate branches/stores dropdown
                             let branchOptions = '<option data-display="@lang('inventory.select_store') *" value="">@lang('common.select')</option>';
                             response.branches.forEach(branch => {
-                                branchOptions += `<option value="${branch.id}" ${itemReceive.store_id == branch.id ? 'selected' : ''}>${branch.name}</option>`;
+                                branchOptions += `<option value="${branch.id}" ${transaction.store_id == branch.id ? 'selected' : ''}>${branch.name}</option>`;
                             });
                             $('#edit_store_id').html(branchOptions);
 
-                            // Populate items dropdown
+                            // Populate items dropdown (for first item)
                             let itemOptions = '<option data-display="@lang('inventory.select_item') *" value="">@lang('common.select')</option>';
                             response.items.forEach(item => {
-                                itemOptions += `<option value="${item.id}" ${itemReceive.item_id == item.id ? 'selected' : ''}>${item.item_name}</option>`;
+                                itemOptions += `<option value="${item.id}" ${firstItem.item_id == item.id ? 'selected' : ''}>${item.item_name}</option>`;
                             });
                             $('#edit_item_id').html(itemOptions);
+
+                            // Set first item's details
+                            $('#edit_unit_price').val(firstItem.unit_price);
+                            $('#edit_quantity').val(firstItem.quantity);
 
                             $('.primary_select').niceSelect('update');
                             $('#editItemReceiveModal').modal('show');
                         },
-                        error: function() {
-                            toastr.error("Failed to load item for editing.");
+                        error: function(xhr) {
+                            console.error('Error response:', xhr.responseText);
+                            if (xhr.responseJSON && xhr.responseJSON.error) {
+                                toastr.error(xhr.responseJSON.error);
+                            } else {
+                                toastr.error("Failed to load transaction for editing.");
+                            }
                         }
                     });
                 });
@@ -547,11 +551,22 @@
                         data: formData,
                         success: function(response) {
                             $('#editItemReceiveModal').modal('hide');
-                            toastr.success(response.message ?? "Updated successfully!");
-                            location.reload();
+                            if (response.status) {
+                                toastr.success(response.message);
+                                location.reload();
+                            } else {
+                                toastr.warning(response.message);
+                            }
                         },
                         error: function(xhr) {
-                            toastr.error("Update failed: " + xhr.responseText);
+                            console.error('Error response:', xhr.responseText);
+                            if (xhr.responseJSON && xhr.responseJSON.error) {
+                                toastr.error(xhr.responseJSON.error);
+                            } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                                toastr.error(xhr.responseJSON.message);
+                            } else {
+                                toastr.error("Update failed. Please check the console for more information.");
+                            }
                         }
                     });
                 });

@@ -12,6 +12,7 @@ return new class extends Migration {
     {
         Schema::create('item_receive', function (Blueprint $table) {
             $table->id();
+            $table->string('transaction_id')->unique();
             $table->unsignedBigInteger('supplier_id');
             $table->unsignedBigInteger('store_id');
             $table->unsignedBigInteger('item_id');

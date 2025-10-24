@@ -8,7 +8,7 @@
 
             <div class="row">
 
-                <div class="col-lg-3">
+                <div class="col-lg-4">
                     <div class="row">
                         <div class="col-lg-12">
 
@@ -71,7 +71,7 @@
                     </div>
                 </div>
 
-                <div class="col-lg-9">
+                <div class="col-lg-8">
                     <div class="white-box">
                         <div class="row">
                             <div class="col-lg-4 no-gutters">

@@ -25,7 +25,7 @@
                                     <h3>Students</h3>
                                     <p class="mb-0">Total Students count</p>
                                 </div>
-                                <h1 class="gradient-color2">20,453</h1>
+                                <h1 class="gradient-color2">{{ number_format($studentsCount) }}</h1>
                             </div>
                         </div>
                     </a>
@@ -38,7 +38,7 @@
                                     <h3>Teachers</h3>
                                     <p class="mb-0">Total Teachers count</p>
                                 </div>
-                                <h1 class="gradient-color2">2,150</h1>
+                                <h1 class="gradient-color2">{{ number_format($teachersCount) }}</h1>
                             </div>
                         </div>
                     </a>
@@ -51,7 +51,7 @@
                                     <h3>Parents</h3>
                                     <p class="mb-0">Total Parents count</p>
                                 </div>
-                                <h1 class="gradient-color2">1,500</h1>
+                                <h1 class="gradient-color2">{{ number_format($parentsCount) }}</h1>
                             </div>
                         </div>
                     </a>
@@ -64,7 +64,7 @@
                                     <h3>Staffs</h3>
                                     <p class="mb-0">Total Staffs count</p>
                                 </div>
-                                <h1 class="gradient-color2">2,500</h1>
+                                <h1 class="gradient-color2">{{ number_format($staffsCount) }}</h1>
                             </div>
                         </div>
                     </a>
@@ -95,25 +95,25 @@
                         <div class="row">
                             <div class="col-lg-3 col-md-6">
                                 <div class="text-center">
-                                    <h1>$50,300</h1>
+                                    <h1>${{ number_format($totalIncome) }}</h1>
                                     <p>Total Income</p>
                                 </div>
                             </div>
                             <div class="col-lg-3 col-md-6">
                                 <div class="text-center">
-                                    <h1>$22,365</h1>
+                                    <h1>${{ number_format($totalExpenses) }}</h1>
                                     <p>Total Expenses</p>
                                 </div>
                             </div>
                             <div class="col-lg-3 col-md-6">
                                 <div class="text-center">
-                                    <h1>$15,000</h1>
+                                    <h1>${{ number_format($totalProfit) }}</h1>
                                     <p>Total Profit</p>
                                 </div>
                             </div>
                             <div class="col-lg-3 col-md-6">
                                 <div class="text-center">
-                                    <h1>$46,750</h1>
+                                    <h1>${{ number_format($totalRevenue) }}</h1>
                                     <p>Total Revenue</p>
                                 </div>
                             </div>
@@ -149,25 +149,25 @@
                         <div class="row">
                             <div class="col-lg-3 col-md-6">
                                 <div class="text-center">
-                                    <h1>$50,300</h1>
+                                    <h1>${{ number_format($totalIncome) }}</h1>
                                     <p>Total Income</p>
                                 </div>
                             </div>
                             <div class="col-lg-3 col-md-6">
                                 <div class="text-center">
-                                    <h1>$22,365</h1>
+                                    <h1>${{ number_format($totalExpenses) }}</h1>
                                     <p>Total Expenses</p>
                                 </div>
                             </div>
                             <div class="col-lg-3 col-md-6">
                                 <div class="text-center">
-                                    <h1>$15,000</h1>
+                                    <h1>${{ number_format($totalProfit) }}</h1>
                                     <p>Total Profit</p>
                                 </div>
                             </div>
                             <div class="col-lg-3 col-md-6">
                                 <div class="text-center">
-                                    <h1>$46,750</h1>
+                                    <h1>${{ number_format($totalRevenue) }}</h1>
                                     <p>Total Revenue</p>
                                 </div>
                             </div>
@@ -202,51 +202,17 @@
                         </thead>
 
                         <tbody>
+                        @foreach($notices as $notice)
                         <tr>
-                            <td>Notice 01</td>
-                            <td>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor
-                                incididunt ut labore et dolore magna aliqua.
-                            </td>
+                            <td>{{ $notice->file_name ?? 'Notice' }}</td>
+                            <td>{{ Str::limit('Content uploaded', 100) }}</td>
                             <td>
                                 <a href="#" class="primary-btn small tr-bg">View</a>
+                                <a href="#" class="primary-btn small fix-gr-bg">Edit</a>
+                                <a href="#" class="primary-btn small danger-btn">Delete</a>
                             </td>
                         </tr>
-                        <tr>
-                            <td>Notice 01</td>
-                            <td>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor
-                                incididunt ut labore et dolore magna aliqua.
-                            </td>
-                            <td>
-                                <a href="#" class="primary-btn small tr-bg">View</a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Notice 01</td>
-                            <td>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor
-                                incididunt ut labore et dolore magna aliqua.
-                            </td>
-                            <td>
-                                <a href="#" class="primary-btn small tr-bg">View</a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Notice 01</td>
-                            <td>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor
-                                incididunt ut labore et dolore magna aliqua.
-                            </td>
-                            <td>
-                                <a href="#" class="primary-btn small tr-bg">View</a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Notice 01</td>
-                            <td>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor
-                                incididunt ut labore et dolore magna aliqua.
-                            </td>
-                            <td>
-                                <a href="#" class="primary-btn small tr-bg">View</a>
-                            </td>
-                        </tr>
+                        @endforeach
                         </tbody>
                     </table>
                 </div>
@@ -269,6 +235,18 @@
                         <div class="col-lg-12">
                             <div class="white-box">
                                 <div class='common-calendar'></div>
+                                <div class="mt-20">
+                                    <h4>Upcoming Events</h4>
+                                    @if($events->isEmpty())
+                                        <p>No events available.</p>
+                                    @else
+                                        <ul>
+                                            @foreach($events as $event)
+                                            <li>{{ $event->name }} - Course available</li>
+                                            @endforeach
+                                        </ul>
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -285,89 +263,32 @@
                     <div class="row">
                         <div class="col-lg-12">
                             <div class="white-box school-table">
-                                <div class="single-to-do d-flex justify-content-between">
-                                    <div>
-                                        <input type="checkbox" id="midterm1" class="common-checkbox" name="midterm1">
-                                        <label for="midterm1">
-                                            <h5 class="d-inline">Midterm Exam Schedule</h5>
-                                            <p class="ml-35">20th Nov, 2018</p>
-                                        </label>
-                                    </div>
+                                @if(empty($todos))
+                                    <p>No todos available.</p>
+                                @else
+                                    @foreach($todos as $todo)
+                                    <div class="single-to-do d-flex justify-content-between">
+                                        <div>
+                                            <input type="checkbox" id="todo{{ $todo->id }}" class="common-checkbox" name="todo{{ $todo->id }}">
+                                            <label for="todo{{ $todo->id }}">
+                                                <h5 class="d-inline">{{ $todo->title ?? 'Todo' }}</h5>
+                                                <p class="ml-35">{{ $todo->date ?? 'No date' }}</p>
+                                            </label>
+                                        </div>
 
-                                    <div class="dropdown">
-                                        <button type="button" class="btn dropdown-toggle" data-toggle="dropdown">
-                                            Edit
-                                        </button>
-                                        <div class="dropdown-menu dropdown-menu-right">
-                                            <a class="dropdown-item" href="#">view</a>
-                                            <a class="dropdown-item" href="#">edit</a>
-                                            <a class="dropdown-item" href="#">delete</a>
+                                        <div class="dropdown">
+                                            <button type="button" class="btn dropdown-toggle" data-toggle="dropdown">
+                                                Edit
+                                            </button>
+                                            <div class="dropdown-menu dropdown-menu-right">
+                                                <a class="dropdown-item" href="#">view</a>
+                                                <a class="dropdown-item" href="#">edit</a>
+                                                <a class="dropdown-item" href="#">delete</a>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-
-                                <div class="single-to-do d-flex justify-content-between">
-                                    <div>
-                                        <input type="checkbox" id="midterm2" class="common-checkbox" name="midterm2">
-                                        <label for="midterm2">
-                                            <h5 class="d-inline">Midterm Exam Schedule</h5>
-                                            <p class="ml-35">20th Nov, 2018</p>
-                                        </label>
-                                    </div>
-
-                                    <div class="dropdown">
-                                        <button type="button" class="btn dropdown-toggle" data-toggle="dropdown">
-                                            Edit
-                                        </button>
-                                        <div class="dropdown-menu dropdown-menu-right">
-                                            <a class="dropdown-item" href="#">view</a>
-                                            <a class="dropdown-item" href="#">edit</a>
-                                            <a class="dropdown-item" href="#">delete</a>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="single-to-do d-flex justify-content-between">
-                                    <div>
-                                        <input type="checkbox" id="midterm3" class="common-checkbox" name="midterm3">
-                                        <label for="midterm3">
-                                            <h5 class="d-inline">Midterm Exam Schedule</h5>
-                                            <p class="ml-35">20th Nov, 2018</p>
-                                        </label>
-                                    </div>
-
-                                    <div class="dropdown">
-                                        <button type="button" class="btn dropdown-toggle" data-toggle="dropdown">
-                                            Edit
-                                        </button>
-                                        <div class="dropdown-menu dropdown-menu-right">
-                                            <a class="dropdown-item" href="#">view</a>
-                                            <a class="dropdown-item" href="#">edit</a>
-                                            <a class="dropdown-item" href="#">delete</a>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="single-to-do d-flex justify-content-between">
-                                    <div>
-                                        <input type="checkbox" id="midterm4" class="common-checkbox" name="midterm4">
-                                        <label for="midterm4">
-                                            <h5 class="d-inline">Midterm Exam Schedule</h5>
-                                            <p class="ml-35">20th Nov, 2018</p>
-                                        </label>
-                                    </div>
-
-                                    <div class="dropdown">
-                                        <button type="button" class="btn dropdown-toggle" data-toggle="dropdown">
-                                            Edit
-                                        </button>
-                                        <div class="dropdown-menu dropdown-menu-right">
-                                            <a class="dropdown-item" href="#">view</a>
-                                            <a class="dropdown-item" href="#">edit</a>
-                                            <a class="dropdown-item" href="#">delete</a>
-                                        </div>
-                                    </div>
-                                </div>
+                                    @endforeach
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -376,18 +297,3 @@
         </div>
     </section>
 @endsection
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-   

@@ -17,7 +17,7 @@ class FeeTypeController extends Controller
         //
      
    
-       $feesTypes = FeeType::all();
+       $feesTypes = FeeType::orderBy('id', 'desc')->get();
         $feesGroups = FeesGroup::all();
         return view('pages.student.fees.fee-type', compact('feesTypes', 'feesGroups'));
     
@@ -66,7 +66,7 @@ class FeeTypeController extends Controller
         //
         $feesType = FeeType::findOrFail($id);
         $feesGroups = FeesGroup::all();
-        $feesTypes = FeeType::with('feeGroup')->get();
+        $feesTypes = FeeType::with('feeGroup')->orderBy('id', 'desc')->get();
 
        
         return view('pages.student.fees.fee-type', compact('feesType', 'feesGroups', 'feesTypes'));

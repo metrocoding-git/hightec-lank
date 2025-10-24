@@ -26,9 +26,10 @@ use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\TopicOverviewController;
 use App\Http\Controllers\StudentCategoryController;
 use App\Http\Controllers\ItemSellController; // Import the new controller
+use App\Http\Controllers\ReportController; // Import the new controller
 use App\Http\Controllers\RoleController; // Import the new controller
 
-Route::controller(HomeController::class)->group(callback: function () {
+Route::controller(HomeController::class)->middleware(['permission'])->group(callback: function () {
     Route::get('dashboard', 'dashboard')->name('dashboard');
     Route::get('/', 'login')->name('login');
 });
@@ -161,6 +162,8 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
     // Dependent dropdown AJAX routes for student info and fees
     Route::get('student/student-info/get-intakes-by-branch/{branchId}', 'getIntakesByBranch')->name('get-intakes-by-branch');
     Route::get('student/student-info/get-courses-by-intake/{intakeId}', 'getCoursesByIntake')->name('get-courses-by-intake');
+    Route::get('student/student-info/get-courses-by-branch/{branchId}', 'getCoursesByBranch')->name('get-courses-by-branch')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('student/student-info/get-courses-by-student/{studentId}', 'getCoursesByStudent')->name('get-courses-by-student')->withoutMiddleware(['csrf', 'permission']);
 
     // Other existing dependent dropdown AJAX routes
     Route::get('student/student-info/get-intakes/{branchId}', 'getIntakes')->name('student.get-intakes');
@@ -188,13 +191,14 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
 
     // Route::get('account/inventory/item-list', 'itemList')->name('item-list');
     // Route::get('account/inventory/supplier', 'supplier')->name('supplier');
-    Route::get('account/inventory/item-receive', 'itemReceive')->name('item-receive');
-    Route::get('account/inventory/item-receive-list', 'itemReceiveList')->name('item-receive-list');
-    Route::get('account/inventory/item-receive/{id}/edit', [HomeController::class, 'editItemReceive'])->name('item-receive.edit');
-    Route::put('account/inventory/item-receive/{id}', [HomeController::class, 'updateItemReceive'])->name('item-receive.update');
-    Route::delete('account/inventory/item-receive/{id}', [HomeController::class, 'deleteItemReceive'])->name('item-receive.destroy');
+    Route::get('account/inventory/item-receive', 'itemReceive')->name('item-receive')->withoutMiddleware(['permission']);
+    Route::get('account/inventory/item-receive-list', 'itemReceiveList')->name('item-receive-list')->withoutMiddleware(['permission']);
+    Route::get('account/inventory/item-receive/{transactionId}/view', [HomeController::class, 'viewItemReceive'])->name('item-receive.view')->withoutMiddleware(['permission']);
+    Route::get('account/inventory/item-receive/{transactionId}/edit', [HomeController::class, 'editItemReceive'])->name('item-receive.edit')->withoutMiddleware(['permission']);
+    Route::put('account/inventory/item-receive/{id}', [HomeController::class, 'updateItemReceive'])->name('item-receive.update')->withoutMiddleware(['permission']);
+    Route::delete('account/inventory/item-receive/{transactionId}', [HomeController::class, 'deleteItemReceive'])->name('item-receive.destroy')->withoutMiddleware(['permission']);
     Route::post('/item-receive/save', [HomeController::class, 'itemReceivePost'])
-        ->name('save-item-receive-data');
+        ->name('save-item-receive-data')->withoutMiddleware(['permission']);
 });
 
 Route::controller(ItemSellController::class)
@@ -210,7 +214,7 @@ Route::controller(ItemSellController::class)
     Route::get('account/inventory/item-sell/{id}/add-payment', 'addPaymentSell')->name('add-payment-sell');
     Route::post('account/inventory/item-sell/{id}/payments', 'storeItemSellPayment')->name('item-sell-payments.store');
     Route::get('account/inventory/item-sell/{id}/view-payments', 'viewSellPayments')->name('view-sell-payments');
-    Route::post('account/inventory/item-sell/{id}', 'deleteItemSell')->name('delete-item-sell');
+    Route::delete('account/inventory/item-sell/{id}', 'deleteItemSell')->name('delete-item-sell');
     Route::get('account/inventory/item-sell/{id}/cancel-view', 'cancelItemSellView')->name('cancel-item-sell-view');
     Route::post('account/inventory/item-sell/{id}/cancel', 'cancelItemSell')->name('cancel-item-sell');
     Route::post('account/inventory/item-sell/{id}/update-status', 'updateItemSellStatus')->name('update-item-sell-status');
@@ -395,4 +399,14 @@ Route::controller(UserController::class)->prefix('role-management')->middleware(
     Route::get('create-user', 'createUser')->name('role-management.create-user');
     Route::post('store-user', 'storeUser')->name('role-management.store-user');
     Route::get('get-student-details/{id}', 'getStudentDetails')->name('role-management.get-student-details');
+});
+
+// Reports Routes
+Route::controller(ReportController::class)->prefix('reports')
+// ->middleware(['permission'])
+->group(function () {
+    Route::get('course-paid', 'coursePaid')->name('reports.course-paid');
+    Route::get('sell-items', 'sellItems')->name('reports.sell-items');
+    Route::get('issue-items', 'issueItems')->name('reports.issue-items');
+    Route::get('students-paid', 'studentsPaid')->name('reports.students-paid');
 });

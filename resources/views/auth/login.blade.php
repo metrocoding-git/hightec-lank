@@ -41,6 +41,7 @@ $css = 'background: url(' . url('backEnd/img/login-bg.png') . ')  no-repeat cent
             align-items: center;
             justify-content: center;
             /* Your original background will be applied via inline style */
+            overflow-x: hidden;
         }
 
         .login-container {
@@ -51,9 +52,10 @@ $css = 'background: url(' . url('backEnd/img/login-bg.png') . ')  no-repeat cent
             padding: 50px 40px;
             width: 100%;
             max-width: 480px;
+            max-height: 90vh;
+            overflow-y: auto;
             border: 1px solid rgba(255, 255, 255, 0.3);
             position: relative;
-            overflow: hidden;
             margin: 20px;
         }
 
@@ -282,6 +284,7 @@ $css = 'background: url(' . url('backEnd/img/login-bg.png') . ')  no-repeat cent
             .login-container {
                 padding: 40px 30px;
                 max-width: 90%;
+                max-height: 95vh;
             }
 
             .login-title h4 {
@@ -303,6 +306,8 @@ $css = 'background: url(' . url('backEnd/img/login-bg.png') . ')  no-repeat cent
             .login-container {
                 padding: 30px 20px;
                 margin: 15px;
+                max-width: 95%;
+                max-height: 90vh;
             }
 
             .logo-container img {
@@ -321,6 +326,36 @@ $css = 'background: url(' . url('backEnd/img/login-bg.png') . ')  no-repeat cent
             .input-icon {
                 font-size: 16px;
                 left: 16px;
+            }
+
+            .form-options {
+                gap: 10px;
+            }
+
+            .copyright {
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 320px) {
+            .login-container {
+                padding: 20px 15px;
+                margin: 10px;
+                max-width: 100%;
+            }
+
+            .login-title h4 {
+                font-size: 20px;
+            }
+
+            .form-control-custom {
+                padding: 12px 14px 12px 45px;
+                font-size: 13px;
+            }
+
+            .input-icon {
+                font-size: 14px;
+                left: 14px;
             }
         }
 

@@ -12,6 +12,7 @@ class ItemReceive extends Model
     protected $table = 'item_receive'; 
 
     protected $fillable = [
+        'transaction_id',
         'supplier_id',
         'store_id',
         'item_id',

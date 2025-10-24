@@ -578,9 +578,9 @@
                             if (data) {
                                 $('#fee_student_name').val(data.student_name || 'N/A');
                                 $('#fee_total_invoices').val(data.total_invoices || 0);
-                                $('#fee_total_fees').val('$' + (data.total_fees || 0).toFixed(2));
-                                $('#fee_total_paid').val('$' + (data.total_paid || 0).toFixed(2));
-                                $('#fee_total_due').val('$' + (data.total_due || 0).toFixed(2));
+                                $('#fee_total_fees').val('Rs ' + (data.total_fees || 0).toFixed(2));
+                                $('#fee_total_paid').val('Rs ' + (data.total_paid || 0).toFixed(2));
+                                $('#fee_total_due').val('Rs ' + (data.total_due || 0).toFixed(2));
 
                                 var tableHtml = '';
                                 if (data.fee_invoices && data.fee_invoices.length > 0) {
@@ -588,9 +588,9 @@
                                         var dueAmount = (invoice.amount || 0) - (invoice.paid_amount || 0);
                                         tableHtml += '<tr>' +
                                             '<td>' + (invoice.fee_type_name || 'N/A') + '</td>' +
-                                            '<td>$' + (invoice.amount || 0).toFixed(2) + '</td>' +
-                                            '<td>$' + (invoice.paid_amount || 0).toFixed(2) + '</td>' +
-                                            '<td>$' + dueAmount.toFixed(2) + '</td>' +
+                                            '<td>Rs' + (invoice.amount || 0).toFixed(2) + '</td>' +
+                                            '<td>Rs' + (invoice.paid_amount || 0).toFixed(2) + '</td>' +
+                                            '<td>Rs' + dueAmount.toFixed(2) + '</td>' +
                                             '</tr>';
                                     });
                                 } else {
