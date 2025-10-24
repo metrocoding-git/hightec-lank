@@ -166,6 +166,24 @@
 <body class="admin">
     {{-- @include('backEnd.preloader') --}}
 
+
+    {{-- <div class="preloader" dir="ltr">
+        <div class="circle circle1"></div>
+    </div> --}}
+
+    {{-- <div class="preloader" dir="ltr">
+        <div class="circle circle2"></div>
+    </div> --}}
+
+    <div class="preloader" dir="ltr">
+        <div class="dot dot3"></div>
+        <div class="dot dot3 dot31"></div>
+    </div>
+
+    {{-- <div class="preloader" dir="ltr">
+        <div class="circle circle3 c31"></div>
+        <div class="circle circle3 c32"></div>
+    </div> --}}
     <input type="hidden" id="demoMode" value="{{ config('app.app_sync') }}">
 
     <input type="text" hidden value="sss" id="logo_img">
