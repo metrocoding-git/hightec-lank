@@ -189,13 +189,14 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
 
     // Route::get('account/inventory/item-list', 'itemList')->name('item-list');
     // Route::get('account/inventory/supplier', 'supplier')->name('supplier');
-    Route::get('account/inventory/item-receive', 'itemReceive')->name('item-receive');
-    Route::get('account/inventory/item-receive-list', 'itemReceiveList')->name('item-receive-list');
-    Route::get('account/inventory/item-receive/{id}/edit', [HomeController::class, 'editItemReceive'])->name('item-receive.edit');
-    Route::put('account/inventory/item-receive/{id}', [HomeController::class, 'updateItemReceive'])->name('item-receive.update');
-    Route::delete('account/inventory/item-receive/{id}', [HomeController::class, 'deleteItemReceive'])->name('item-receive.destroy');
+    Route::get('account/inventory/item-receive', 'itemReceive')->name('item-receive')->withoutMiddleware(['permission']);
+    Route::get('account/inventory/item-receive-list', 'itemReceiveList')->name('item-receive-list')->withoutMiddleware(['permission']);
+    Route::get('account/inventory/item-receive/{transactionId}/view', [HomeController::class, 'viewItemReceive'])->name('item-receive.view')->withoutMiddleware(['permission']);
+    Route::get('account/inventory/item-receive/{transactionId}/edit', [HomeController::class, 'editItemReceive'])->name('item-receive.edit')->withoutMiddleware(['permission']);
+    Route::put('account/inventory/item-receive/{id}', [HomeController::class, 'updateItemReceive'])->name('item-receive.update')->withoutMiddleware(['permission']);
+    Route::delete('account/inventory/item-receive/{transactionId}', [HomeController::class, 'deleteItemReceive'])->name('item-receive.destroy')->withoutMiddleware(['permission']);
     Route::post('/item-receive/save', [HomeController::class, 'itemReceivePost'])
-        ->name('save-item-receive-data');
+        ->name('save-item-receive-data')->withoutMiddleware(['permission']);
 });
 
 Route::controller(ItemSellController::class)

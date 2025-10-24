@@ -634,10 +634,14 @@ class HomeController extends Controller
         }
 
         try {
+            // Generate a unique transaction ID
+            $transactionId = 'TRX-' . time() . '-' . rand(1000, 9999);
+
             // Create one row per item, duplicating header fields as per existing schema
             $createdReceives = [];
             foreach ($request->item_id as $index => $itemId) {
                 $itemReceive = ItemReceive::create([
+                    'transaction_id' => $transactionId,
                     'payment_method' => $request->payment_method,
                     'supplier_id' => $request->supplier_id,
                     'store_id' => $request->store_id,
@@ -688,35 +692,97 @@ class HomeController extends Controller
 
     public function itemReceiveList()
     {
-        $itemReceives = ItemReceive::with('supplier')->get(); // Eager load supplier for company_name
+        // Group by transaction_id and get the first record for each transaction
+        $transactions = ItemReceive::with(['supplier', 'branch'])
+            ->select('transaction_id', 'supplier_id', 'store_id', 'reference_no', 'receive_date', 'payment_method', 'total_paid', 'description')
+            ->distinct()
+            ->get()
+            ->groupBy('transaction_id');
+
+        // For each transaction, get all items
+        $itemReceives = [];
+        foreach ($transactions as $transactionId => $records) {
+            $record = $records->first();
+            $items = ItemReceive::where('transaction_id', $transactionId)->with('item')->get();
+            $record->items = $items;
+            $record->total_quantity = $items->sum('quantity');
+            $record->total_sub_total = $items->sum('sub_total');
+            $record->total_balance = $record->total_sub_total - $record->total_paid;
+            $itemReceives[] = $record;
+        }
+
         $items = Inventory_item::all();
         $suppliers = Supplier::all();
         $branches = Branch::all();
         return view('pages.account.inventory.item-receive-list', compact('itemReceives', 'items', 'suppliers', 'branches'));
     }
 
-    public function editItemReceive($id)
+    public function viewItemReceive($transactionId)
     {
-        $itemReceive = ItemReceive::with('supplier', 'item', 'branch')->findOrFail($id);
-        $items = Inventory_item::all();
-        $suppliers = Supplier::all();
-        $branches = Branch::all();
-        return response()->json([
-            'itemReceive' => $itemReceive,
-            'items' => $items,
-            'suppliers' => $suppliers,
-            'branches' => $branches,
-        ]);
+        try {
+            $transaction = ItemReceive::where('transaction_id', $transactionId)->first();
+            if (!$transaction) {
+                return response()->json(['error' => 'Transaction not found'], 404);
+            }
+
+            $items = ItemReceive::where('transaction_id', $transactionId)->with('item')->get();
+
+            // Calculate totals
+            $totalQuantity = $items->sum('quantity');
+            $totalSubTotal = $items->sum('sub_total');
+            $totalPaid = $transaction->total_paid;
+            $totalBalance = $totalSubTotal - $totalPaid;
+
+            return response()->json([
+                'transaction' => $transaction,
+                'items' => $items,
+                'totals' => [
+                    'total_quantity' => $totalQuantity,
+                    'total_sub_total' => $totalSubTotal,
+                    'total_paid' => $totalPaid,
+                    'total_balance' => $totalBalance,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to fetch transaction details: ' . $e->getMessage()], 500);
+        }
     }
 
-    public function updateItemReceive(Request $request, $id)
+    public function editItemReceive($transactionId)
+    {
+        try {
+            $itemReceives = ItemReceive::where('transaction_id', $transactionId)->with('supplier', 'item', 'branch')->get();
+            if ($itemReceives->isEmpty()) {
+                return response()->json(['error' => 'Transaction not found'], 404);
+            }
+
+            $items = Inventory_item::all();
+            $suppliers = Supplier::all();
+            $branches = Branch::all();
+
+            // Get the first record for common transaction details
+            $transaction = $itemReceives->first();
+
+            return response()->json([
+                'transaction' => $transaction,
+                'itemReceives' => $itemReceives,
+                'items' => $items,
+                'suppliers' => $suppliers,
+                'branches' => $branches,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to load transaction for editing: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function updateItemReceive(Request $request, $transactionId)
     {
         $request->validate([
             'payment_method' => 'required|string',
             'supplier_id' => 'required|integer',
             'store_id' => 'required|integer',
             'receive_date' => 'required|string',
-            'item_id' => 'required|integer', // Assuming one item per receive record for simplicity based on current schema
+            'item_id' => 'required|integer',
             'unit_price' => 'required|numeric',
             'quantity' => 'required|numeric',
         ]);
@@ -727,41 +793,50 @@ class HomeController extends Controller
             try {
                 $receiveDate = \Carbon\Carbon::parse($request->receive_date)->format('Y-m-d');
             } catch (\Throwable $e2) {
-                return redirect()->back()->with('error', 'Invalid receive date format.');
+                return response()->json(['error' => 'Invalid receive date format.'], 422);
             }
         }
 
         try {
-            $itemReceive = ItemReceive::findOrFail($id);
-            $itemReceive->update([
+            // Update all items in the transaction with common fields
+            ItemReceive::where('transaction_id', $transactionId)->update([
                 'payment_method' => $request->payment_method,
                 'supplier_id' => $request->supplier_id,
                 'store_id' => $request->store_id,
                 'reference_no' => $request->reference_no,
                 'receive_date' => $receiveDate,
                 'description' => $request->description,
-                'item_id' => $request->item_id,
-                'unit_price' => $request->unit_price,
-                'quantity' => $request->quantity,
-                'sub_total' => (float) $request->unit_price * (float) $request->quantity,
                 'total_paid' => $request->totalPaid ?? 0,
                 'bank_id' => $request->bank_id ?? null,
             ]);
 
+            // Update the first item with specific item details
+            $firstItem = ItemReceive::where('transaction_id', $transactionId)->first();
+            if ($firstItem) {
+                $firstItem->update([
+                    'item_id' => $request->item_id,
+                    'unit_price' => $request->unit_price,
+                    'quantity' => $request->quantity,
+                    'sub_total' => (float) $request->unit_price * (float) $request->quantity,
+                ]);
+            }
+
             return response()->json([
                 'status' => true,
-                'message' => 'Item receive updated successfully!',
+                'message' => 'Transaction updated successfully! Note: Only the first item details were updated. For complex multi-item edits, consider deleting and recreating the transaction.',
             ]);
         } catch (\Throwable $e) {
-            return redirect()->back()->with('error', 'Failed to update item receive: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to update transaction: ' . $e->getMessage()], 500);
         }
     }
 
-    public function deleteItemReceive($id)
+    public function deleteItemReceive($transactionId)
     {
         try {
-            $itemReceive = ItemReceive::findOrFail($id);
-            $itemReceive->delete();
+            $itemReceives = ItemReceive::where('transaction_id', $transactionId)->get();
+            foreach ($itemReceives as $itemReceive) {
+                $itemReceive->delete();
+            }
             return response()->json([
                 'status' => true,
                 'message' => 'Item receive deleted successfully!',
