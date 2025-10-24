@@ -12,6 +12,11 @@
             #selectStaffsDiv {
                 display: none;
             }
+
+            .available_quantity input {
+                width: 100px !important;
+                text-align: center;
+            }
         </style>
     @endpush
     <section class="sms-breadcrumb mb-20">
@@ -31,11 +36,11 @@
             <form class="form-horizontal" id="item-sell-form">
                 @csrf
                 <div class="row">
-                    <div class="col-lg-3">
+                    <div class="col-lg-4">
                         <div class="row">
                             <div class="col-lg-12">
-                                <div class="main-title">
-                                    <h3 class="mb-30">
+                                {{-- <div class="main-title">
+                                    <h3 class="mb-15">
                                         @if (isset($editData))
                                             @lang('common.edit_sell')
                                         @else
@@ -43,7 +48,7 @@
                                         @endif
 
                                     </h3>
-                                </div>
+                                </div> --}}
 
                                 <div class="white-box">
                                     <div class="add-visitor">
@@ -68,7 +73,7 @@
                                                     </span>
                                                 @endif
                                             </div> --}}
-                                            <div class="col-lg-12 mb-30">
+                                            <div class="col-lg-12 mb-15">
                                                 <label class="primary_input_label" for="">@lang('inventory.payment_method') <span
                                                         class="text-danger"> *</span> </label>
                                                 <select class="primary_select  form-control" name="payment_method"
@@ -109,7 +114,7 @@
                                                 </div>
                                             </div> --}}
 
-                                            <div class="col-lg-12 mb-30">
+                                            <div class="col-lg-12 mb-15">
                                                 <label class="primary_input_label" for="">@lang('inventory.sell_to') <span
                                                         class="text-danger"> *</span> </label>
                                                 <select
@@ -130,7 +135,7 @@
 
                                             <div class="col-lg-12" id="student_section" style="display: none;">
                                                 <div class="row">
-                                                    <div class="col-lg-12 mb-30">
+                                                    <div class="col-lg-12 mb-15">
                                                         <label class="primary_input_label" for="">@lang('common.student')
                                                             <span class="text-danger"> *</span> </label>
                                                         <select
@@ -156,7 +161,7 @@
 
                                             <div class="col-lg-12" id="other_section" style="display: none;">
                                                 <div class="row">
-                                                    <div class="col-lg-12 mb-30">
+                                                    <div class="col-lg-12 mb-15">
                                                         <label class="primary_input_label" for="">@lang('common.name')
                                                             <span class="text-danger"> *</span> </label>
                                                         <input class="primary_input_field form-control{{ $errors->has('customer_name') ? ' is-invalid' : '' }}"
@@ -172,7 +177,7 @@
                                                 </div>
                                             </div>
 
-                                            {{-- <div class="col-lg-12 mb-30" id="selectStaffsDiv">
+                                            {{-- <div class="col-lg-12 mb-15" id="selectStaffsDiv">
                                                 <label class="primary_input_label" for="">@lang('common.name') <span
                                                         class="text-danger"> *</span> </label>
                                                 <select
@@ -197,7 +202,7 @@
                                                 @endif
                                             </div> --}}
 
-                                            <div class="col-lg-12 mb-30">
+                                            <div class="col-lg-12 mb-15">
                                                 <div class="primary_input">
                                                     <label class="primary_input_label"
                                                         for="">@lang('inventory.reference_no')</label>
@@ -211,7 +216,7 @@
                                             </div>
 
 
-                                            <div class="col-lg-12 mb-30">
+                                            <div class="col-lg-12 mb-15">
                                                 <div class="primary_input ">
                                                     <label class="primary_input_label" for="">@lang('inventory.sell_date')
                                                         <span></span> </label>
@@ -257,16 +262,16 @@
                         </div>
                     </div>
 
-                    <div class="col-lg-9">
+                    <div class="col-lg-8">
                         <div class="white-box">
                             <div class="row xm_3 aling-tiems-center">
-                                <div class="col-lg-4 no-gutters col-6 xs_mt_0">
+                                <div class="col-lg-6 no-gutters col-6 xs_mt_0">
                                     <div class="main-title">
                                         <h3 class="mb-15">@lang('inventory.item_receive')</h3>
                                     </div>
                                 </div>
 
-                                <div class="offset-lg-6 col-lg-2 col-6 text-right col-md-6 col-5">
+                                <div class="col-lg-6 col-6 text-right col-md-6 col-5">
                                     <button type="button" class="primary-btn small fix-gr-bg" id="addRowBtn">
                                         <span class="ti-plus pr-2"></span>
                                         @lang('common.add')
@@ -283,7 +288,7 @@
                                             <div id="quantityError"></div>
                                         </div> --}}
                                         <div class="table-responsive">
-                                            <table class="table" id="productTable">
+                                            <table class="table table school-table-style" id="productTable">
                                                 <thead>
                                                     <tr>
                                                         <th> @lang('inventory.product_name')* </th>
@@ -426,7 +431,7 @@
                        autocomplete="off" value="" readonly="readonly" onkeyup="getTotalByPrice(${rowCount})">
             </div>
         </td>
-        <td class="border-top-0">
+        <td class="border-top-0 available_quantity">
             <div class="primary_input">
                 <input class="primary_input_field form-control" type="text" id="available_quantity${rowCount}"
                        name="available_quantity[]" autocomplete="off" value="" readonly="readonly">
