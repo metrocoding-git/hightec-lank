@@ -28,7 +28,7 @@ use App\Http\Controllers\StudentCategoryController;
 use App\Http\Controllers\ItemSellController; // Import the new controller
 use App\Http\Controllers\RoleController; // Import the new controller
 
-Route::controller(HomeController::class)->group(callback: function () {
+Route::controller(HomeController::class)->middleware(['permission'])->group(callback: function () {
     Route::get('dashboard', 'dashboard')->name('dashboard');
     Route::get('/', 'login')->name('login');
 });
