@@ -597,21 +597,37 @@
                         }
                         refreshNiceSelect('#branch_select');
 
-                        // Populate Intake dropdown
-                        var intakeOptionsHtml = '<option value="">Select Student First *</option>';
-                        if (data.intakes && data.intakes.length > 0) {
-                            data.intakes.forEach(function(intake) {
-                                intakeOptionsHtml += '<option value="' + intake.id + '">' +
-                                    intake.name + '</option>';
+                        // Populate Intake dropdown based on branch
+                        var studentBranchId = data.branch_id;
+                        if (studentBranchId) {
+                            var intakesByBranchUrl = '{{ route('item-issue.get-intakes-by-branch', ':branchId') }}'
+                                .replace(':branchId', studentBranchId);
+                            console.log('🌐 Intakes by Branch AJAX URL:', intakesByBranchUrl);
+
+                            $.get(intakesByBranchUrl, function(intakeData) {
+                                console.log('✅ Intakes by branch received:', intakeData);
+                                var intakeOptionsHtml = '<option value="">Select Intake *</option>';
+                                if (intakeData && intakeData.length > 0) {
+                                    intakeData.forEach(function(intake) {
+                                        intakeOptionsHtml += '<option value="' + intake.id + '">' +
+                                            intake.name + '</option>';
+                                    });
+                                    $('#intake_select').html(intakeOptionsHtml).prop('disabled', false);
+                                } else {
+                                    intakeOptionsHtml += '<option value="">No Intakes Found for this Branch</option>';
+                                    $('#intake_select').html(intakeOptionsHtml).prop('disabled', true);
+                                }
+                                refreshNiceSelect('#intake_select');
+                            }).fail(function(xhr, status, error) {
+                                console.error('❌ AJAX Error fetching intakes by branch:', error);
+                                $('#intake_select').html('<option value="">Error loading intakes</option>').prop('disabled', true);
+                                refreshNiceSelect('#intake_select');
                             });
-                            $('#intake_select').html(intakeOptionsHtml).prop('disabled',
-                                false); // Enable after populating
                         } else {
-                            intakeOptionsHtml += '<option value="">No Intakes Found</option>';
-                            $('#intake_select').html(intakeOptionsHtml).prop('disabled',
-                                true); // Keep disabled if no options
+                            var intakeOptionsHtml = '<option value="">No Branch Selected for Student</option>';
+                            $('#intake_select').html(intakeOptionsHtml).prop('disabled', true);
+                            refreshNiceSelect('#intake_select');
                         }
-                        refreshNiceSelect('#intake_select');
 
                         // Populate Course dropdown
                         var courseOptionsHtml = '<option value="">Select Student First *</option>';
