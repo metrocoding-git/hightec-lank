@@ -318,6 +318,12 @@
                 addedItemTypes.add('{{ $editData->item_id }}');
             @endif
 
+            // Track the next available index for item rows
+            let itemRowIndex = 0;
+            @if (isset($editData))
+                itemRowIndex = 1; // If there's an existing item, start new items from index 1
+            @endif
+
             function updateSerialNumbers() {
                 $('.allIssuedItems tr').each(function(index) {
                     $(this).find('.sl').text(index + 1);
@@ -415,8 +421,8 @@
             });
 
             function addItemRow(itemId, itemName, categoryId, categoryName, itemPrice = '0') {
-                // Use a simple index for array keys to avoid conflicts
-                let itemIndex = $('.allIssuedItems tr').length;
+                // Use a global index for array keys to ensure uniqueness
+                let currentIndex = itemRowIndex++;
 
                 // Format price for display
                 let displayPrice = itemPrice ? 'Rs.' + parseFloat(itemPrice).toFixed(2) : 'N/A';
@@ -433,13 +439,13 @@
                                 <td class="category_name">${categoryName}</td>
                                 <td class="item_name">${itemName}</td>
                                 <td class="available_quantity">
-                                    <input type="text" class="primary_input_field form-control" id="available_quantity_${itemIndex}" value="${availableQuantity}" readonly>
+                                    <input type="text" class="primary_input_field form-control" id="available_quantity_${currentIndex}" value="${availableQuantity}" readonly>
                                 </td>
                                 <td>
-                                    <input type="number" name="items[${itemIndex}][quantity]" class="primary_input_field form-control item_quantity" value="1" min="1" max="${availableQuantity}" required oninput="validateQuantity(${itemIndex})" onchange="validateQuantity(${itemIndex})">
-                                    <input type="hidden" name="items[${itemIndex}][item_id]" value="${itemId}">
-                                    <input type="hidden" name="items[${itemIndex}][item_category_id]" value="${categoryId}">
-                                    <input type="hidden" name="items[${itemIndex}][item_price]" value="${itemPrice}">
+                                    <input type="number" name="items[${currentIndex}][quantity]" class="primary_input_field form-control item_quantity" value="1" min="1" max="${availableQuantity}" required oninput="validateQuantity(${currentIndex})" onchange="validateQuantity(${currentIndex})">
+                                    <input type="hidden" name="items[${currentIndex}][item_id]" value="${itemId}">
+                                    <input type="hidden" name="items[${currentIndex}][item_category_id]" value="${categoryId}">
+                                    <input type="hidden" name="items[${currentIndex}][item_price]" value="${itemPrice}">
                                 </td>
                                 <td class="text-center align-middle p-1">
                                     <button type="button" class="btn btn-danger btn-sm remove_item_btn" >
