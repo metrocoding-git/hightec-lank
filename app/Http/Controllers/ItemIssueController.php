@@ -568,6 +568,7 @@ class ItemIssueController extends Controller
 
             return response()->json([
                 'branch' => $student->branch,
+                'branch_id' => $student->branch ? $student->branch->id : null, // Add branch_id
                 'intakes' => $student->intakes, // Return all intakes
                 'courses' => $student->courses, // Return all courses
             ]);

@@ -318,6 +318,12 @@
                 addedItemTypes.add('{{ $editData->item_id }}');
             @endif
 
+            // Track the next available index for item rows
+            let itemRowIndex = 0;
+            @if (isset($editData))
+                itemRowIndex = 1; // If there's an existing item, start new items from index 1
+            @endif
+
             function updateSerialNumbers() {
                 $('.allIssuedItems tr').each(function(index) {
                     $(this).find('.sl').text(index + 1);
@@ -415,8 +421,8 @@
             });
 
             function addItemRow(itemId, itemName, categoryId, categoryName, itemPrice = '0') {
-                // Use a simple index for array keys to avoid conflicts
-                let itemIndex = $('.allIssuedItems tr').length;
+                // Use a global index for array keys to ensure uniqueness
+                let currentIndex = itemRowIndex++;
 
                 // Format price for display
                 let displayPrice = itemPrice ? 'Rs.' + parseFloat(itemPrice).toFixed(2) : 'N/A';
@@ -433,13 +439,13 @@
                                 <td class="category_name">${categoryName}</td>
                                 <td class="item_name">${itemName}</td>
                                 <td class="available_quantity">
-                                    <input type="text" class="primary_input_field form-control" id="available_quantity_${itemIndex}" value="${availableQuantity}" readonly>
+                                    <input type="text" class="primary_input_field form-control" id="available_quantity_${currentIndex}" value="${availableQuantity}" readonly>
                                 </td>
                                 <td>
-                                    <input type="number" name="items[${itemIndex}][quantity]" class="primary_input_field form-control item_quantity" value="1" min="1" max="${availableQuantity}" required oninput="validateQuantity(${itemIndex})" onchange="validateQuantity(${itemIndex})">
-                                    <input type="hidden" name="items[${itemIndex}][item_id]" value="${itemId}">
-                                    <input type="hidden" name="items[${itemIndex}][item_category_id]" value="${categoryId}">
-                                    <input type="hidden" name="items[${itemIndex}][item_price]" value="${itemPrice}">
+                                    <input type="number" name="items[${currentIndex}][quantity]" class="primary_input_field form-control item_quantity" value="1" min="1" max="${availableQuantity}" required oninput="validateQuantity(${currentIndex})" onchange="validateQuantity(${currentIndex})">
+                                    <input type="hidden" name="items[${currentIndex}][item_id]" value="${itemId}">
+                                    <input type="hidden" name="items[${currentIndex}][item_category_id]" value="${categoryId}">
+                                    <input type="hidden" name="items[${currentIndex}][item_price]" value="${itemPrice}">
                                 </td>
                                 <td class="text-center align-middle p-1">
                                     <button type="button" class="btn btn-danger btn-sm remove_item_btn" >
@@ -591,21 +597,37 @@
                         }
                         refreshNiceSelect('#branch_select');
 
-                        // Populate Intake dropdown
-                        var intakeOptionsHtml = '<option value="">Select Student First *</option>';
-                        if (data.intakes && data.intakes.length > 0) {
-                            data.intakes.forEach(function(intake) {
-                                intakeOptionsHtml += '<option value="' + intake.id + '">' +
-                                    intake.name + '</option>';
+                        // Populate Intake dropdown based on branch
+                        var studentBranchId = data.branch_id;
+                        if (studentBranchId) {
+                            var intakesByBranchUrl = '{{ route('item-issue.get-intakes-by-branch', ':branchId') }}'
+                                .replace(':branchId', studentBranchId);
+                            console.log('🌐 Intakes by Branch AJAX URL:', intakesByBranchUrl);
+
+                            $.get(intakesByBranchUrl, function(intakeData) {
+                                console.log('✅ Intakes by branch received:', intakeData);
+                                var intakeOptionsHtml = '<option value="">Select Intake *</option>';
+                                if (intakeData && intakeData.length > 0) {
+                                    intakeData.forEach(function(intake) {
+                                        intakeOptionsHtml += '<option value="' + intake.id + '">' +
+                                            intake.name + '</option>';
+                                    });
+                                    $('#intake_select').html(intakeOptionsHtml).prop('disabled', false);
+                                } else {
+                                    intakeOptionsHtml += '<option value="">No Intakes Found for this Branch</option>';
+                                    $('#intake_select').html(intakeOptionsHtml).prop('disabled', true);
+                                }
+                                refreshNiceSelect('#intake_select');
+                            }).fail(function(xhr, status, error) {
+                                console.error('❌ AJAX Error fetching intakes by branch:', error);
+                                $('#intake_select').html('<option value="">Error loading intakes</option>').prop('disabled', true);
+                                refreshNiceSelect('#intake_select');
                             });
-                            $('#intake_select').html(intakeOptionsHtml).prop('disabled',
-                                false); // Enable after populating
                         } else {
-                            intakeOptionsHtml += '<option value="">No Intakes Found</option>';
-                            $('#intake_select').html(intakeOptionsHtml).prop('disabled',
-                                true); // Keep disabled if no options
+                            var intakeOptionsHtml = '<option value="">No Branch Selected for Student</option>';
+                            $('#intake_select').html(intakeOptionsHtml).prop('disabled', true);
+                            refreshNiceSelect('#intake_select');
                         }
-                        refreshNiceSelect('#intake_select');
 
                         // Populate Course dropdown
                         var courseOptionsHtml = '<option value="">Select Student First *</option>';

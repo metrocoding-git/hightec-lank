@@ -77,10 +77,10 @@
                                                                 data-id="{{ $itemReceive->transaction_id }}">
                                                                  @lang('common.view')
                                                             </a>
-                                                            <a class="dropdown-item edit-item-receive" href="#"
+                                                            {{-- <a class="dropdown-item edit-item-receive" href="#"
                                                                 data-id="{{ $itemReceive->transaction_id }}">
                                                                  @lang('common.edit')
-                                                            </a>
+                                                            </a> --}}
                                                             <a class="dropdown-item delete-item-receive" href="#"
                                                                 data-id="{{ $itemReceive->transaction_id }}">
                                                                  @lang('common.delete')

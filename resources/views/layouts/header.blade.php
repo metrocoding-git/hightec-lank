@@ -159,7 +159,21 @@
             --box_shadow: rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px !important;
         }
     </style>
+    <script>
+        window._locale = '{{ App::getLocale() }}';
+        window._translations = {!! json_encode(\Cache::rememberForever('translations', function () {
+            $files = glob(resource_path('lang/' . App::getLocale() . '/*.php'));
+            $translations = collect($files)->flatMap(function ($file) {
+                return [basename($file, '.php') => require $file];
+            })->toArray();
 
+            $jsonTranslations = file_exists(resource_path('lang/' . App::getLocale() . '.json'))
+                                ? file_get_contents(resource_path('lang/' . App::getLocale() . '.json'))
+                                : '{}';
+
+            return ['php' => $translations, 'json' => $jsonTranslations];
+        })) !!};
+    </script>
 </head>
 
 
