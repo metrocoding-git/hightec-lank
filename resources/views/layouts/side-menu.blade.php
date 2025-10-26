@@ -256,7 +256,7 @@
 
 
         {{-- Student Section --}}
-        @if(Auth::check() && (Auth::user()->hasPermission('student-category.index') || Auth::user()->hasPermission('add-student.index') || Auth::user()->hasPermission('student-list') || Auth::user()->hasPermission('disabled-students') || Auth::user()->hasPermission('student-attendance') || Auth::user()->hasPermission('student.add-intake.index') || Auth::user()->hasPermission('fee-group') || Auth::user()->hasPermission('fees.fees-type') || Auth::user()->hasPermission('fees.fee-invoice.add') || Auth::user()->hasPermission('fees.course-paid.index') || Auth::user()->hasPermission('fees.fee-invoice.index') || Auth::user()->hasPermission('fee-invoice-setting') || Auth::user()->hasPermission('fee-return')))
+        @if(Auth::check() && (Auth::user()->hasPermission('student-category.index') || Auth::user()->hasPermission('add-student.index') || Auth::user()->hasPermission('student-list') || Auth::user()->hasPermission('disabled-students') || Auth::user()->hasPermission('student-attendance') || Auth::user()->hasPermission('student.add-intake-with-courses.index') || Auth::user()->hasPermission('fee-group') || Auth::user()->hasPermission('fees.fees-type') || Auth::user()->hasPermission('fees.fee-invoice.add') || Auth::user()->hasPermission('fees.course-paid.index') || Auth::user()->hasPermission('fees.fee-invoice.index') || Auth::user()->hasPermission('fee-invoice-setting') || Auth::user()->hasPermission('fee-return')))
         <span class="menu_seperator" id="seperator_student_section" data-section="student_section">Student
             Section</span>
         <span class="menu_seperator" id="seperator_student_section" data-section="student_section">Student
@@ -265,7 +265,7 @@
 
 
         {{-- Student Info Section --}}
-        @if(Auth::check() && (Auth::user()->hasPermission('student-category.index') || Auth::user()->hasPermission('add-student.index') || Auth::user()->hasPermission('student-list') || Auth::user()->hasPermission('disabled-students') || Auth::user()->hasPermission('student-attendance') || Auth::user()->hasPermission('student.add-intake.index')))
+        @if(Auth::check() && (Auth::user()->hasPermission('student-category.index') || Auth::user()->hasPermission('add-student.index') || Auth::user()->hasPermission('student-list') || Auth::user()->hasPermission('disabled-students') || Auth::user()->hasPermission('student-attendance') || Auth::user()->hasPermission('student.add-intake-with-courses.index')))
         <li
             class="studentInfo_section {{ request()->is('student-info') || request()->is('student/student-info/*') ? 'mm-active' : '' }}">
             <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
@@ -324,7 +324,7 @@
                         Student Add Course
                     </a>
                 </li> --}}
-                @if(Auth::check() && Auth::user()->hasPermission('student.add-intake.index'))
+                @if(Auth::check() && Auth::user()->hasPermission('student.add-intake-with-courses.index'))
                 <li>
                     <a href="/student/student-info/student-add-intake"
                         class="{{ request()->is('student/student-info/student-add-intake') ? 'active a' : '' }}">

@@ -474,17 +474,24 @@ class ItemIssueController extends Controller
         }
     }
 
-    public function getStudentFeeData(Request $request, $studentId)
+    public function getStudentFeeData(Request $request)
     {
         try {
-            $student_id = $studentId; // Use the route parameter
-            Log::info('=== getStudentFeeData CALLED ===');
-            Log::info('Student ID: ' . $student_id);
-
-            // First check if student exists
+            $student_id = $request->student_id;
+            $branch_id = $request->branch_id;
+            $intake_id = $request->intake_id;
+            $course_id = $request->course_id;
+    
+            Log::info('=== getStudentFeeData CALLED ===', [
+                'student_id' => $student_id,
+                'branch_id' => $branch_id,
+                'intake_id' => $intake_id,
+                'course_id' => $course_id
+            ]);
+    
+            // Basic student validation
             $student = Student::find($student_id);
             if (!$student) {
-                Log::warning('Student not found: ' . $student_id);
                 return response()->json([
                     'student_name' => 'Student not found',
                     'total_invoices' => 0,
@@ -494,24 +501,22 @@ class ItemIssueController extends Controller
                     'fee_invoices' => []
                 ]);
             }
-
-            // Get student fee invoices using Eloquent relationships
+    
+            // Optional: Filter fee invoices based on branch/course/intake if your DB supports those relations
             $feeInvoices = FeeInvoice::where('student_id', $student_id)
+                // ->when($branch_id, fn($q) => $q->where('branch_id', $branch_id))
+                // ->when($intake_id, fn($q) => $q->where('intake_id', $intake_id))
+                // ->when($course_id, fn($q) => $q->where('course_id', $course_id))
                 ->with(['invoice_item.feeType'])
                 ->get();
-
-            Log::info('Found fee invoices count: ' . $feeInvoices->count());
-
-            // Calculate total fees and payments
+    
             $totalFees = $feeInvoices->sum('total_amount');
             $totalPaid = $feeInvoices->sum('paid_amount');
             $totalDue = $totalFees - $totalPaid;
-
-            // Format fee invoices for display
+    
             $formattedInvoices = [];
             foreach ($feeInvoices as $invoice) {
-                $invoiceItems = $invoice->invoice_item ?? collect();
-                foreach ($invoiceItems as $item) {
+                foreach ($invoice->invoice_item as $item) {
                     $formattedInvoices[] = [
                         'fee_type_name' => $item->feeType->name ?? 'N/A',
                         'amount' => $item->amount ?? 0,
@@ -519,34 +524,25 @@ class ItemIssueController extends Controller
                     ];
                 }
             }
-
-            $studentData = [
-                'student_name' => $student->student_name ?? 'N/A',
+    
+            return response()->json([
+                'student_name' => $student->student_name,
                 'total_invoices' => $feeInvoices->count(),
                 'total_fees' => $totalFees,
                 'total_paid' => $totalPaid,
                 'total_due' => $totalDue,
                 'fee_invoices' => $formattedInvoices
-            ];
-
-            Log::info('Student data prepared: ' . json_encode($studentData));
-
-            return response()->json($studentData);
+            ]);
+    
         } catch (Exception $e) {
             Log::error('Error in getStudentFeeData: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json([
-                'error' => 'Operation Failed: ' . $e->getMessage(),
-                'student_name' => 'Error loading data',
-                'total_invoices' => 0,
-                'total_fees' => 0,
-                'total_paid' => 0,
-                'total_due' => 0,
-                'fee_invoices' => []
+                'error' => 'Failed to fetch fee data',
+                'details' => $e->getMessage()
             ], 500);
         }
     }
-
+    
     public function getStudentDetails(Request $request, $studentId)
     {
         try {

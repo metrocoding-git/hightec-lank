@@ -437,6 +437,7 @@
                 </select>
             </div>
         </td>
+        
         <td class="border-top-0">
             <div class="primary_input">
                 <input oninput="numberCheckWithDot(this)" class="primary_input_field form-control"

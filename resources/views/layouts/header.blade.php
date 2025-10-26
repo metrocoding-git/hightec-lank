@@ -161,18 +161,20 @@
     </style>
     <script>
         window._locale = '{{ App::getLocale() }}';
-        window._translations = {!! json_encode(\Cache::rememberForever('translations', function () {
-            $files = glob(resource_path('lang/' . App::getLocale() . '/*.php'));
-            $translations = collect($files)->flatMap(function ($file) {
-                return [basename($file, '.php') => require $file];
-            })->toArray();
-
-            $jsonTranslations = file_exists(resource_path('lang/' . App::getLocale() . '.json'))
-                                ? file_get_contents(resource_path('lang/' . App::getLocale() . '.json'))
-                                : '{}';
-
-            return ['php' => $translations, 'json' => $jsonTranslations];
-        })) !!};
+        window._translations = {!! json_encode(
+            \Cache::rememberForever('translations', function () {
+                $files = glob(resource_path('lang/' . App::getLocale() . '/*.php'));
+                $translations = collect($files)->flatMap(function ($file) {
+                        return [basename($file, '.php') => require $file];
+                    })->toArray();
+        
+                $jsonTranslations = file_exists(resource_path('lang/' . App::getLocale() . '.json'))
+                    ? file_get_contents(resource_path('lang/' . App::getLocale() . '.json'))
+                    : '{}';
+        
+                return ['php' => $translations, 'json' => $jsonTranslations];
+            }),
+        ) !!};
     </script>
 </head>
 

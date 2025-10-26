@@ -109,7 +109,7 @@
                                                     <td>
                                                         <x-drop-down>
                                                             @if ($batch->issue_status == 'I')
-                                                                <form action="{{ route('return-item') }}" method="POST">
+                                                                <form action="{{ route('return-item') }}" method="POST" class="m-0">
                                                                     @csrf
                                                                     <input type="hidden" name="id"
                                                                         value="{{ @$batch->id }}">
@@ -117,7 +117,7 @@
                                                                         class="dropdown-item">@lang('inventory.return')</button>
                                                                 </form>
                                                             @else
-                                                                <form action="{{ route('issue-item') }}" method="POST">
+                                                                <form action="{{ route('issue-item') }}" method="POST" class="m-0">
                                                                     @csrf
                                                                     <input type="hidden" name="id"
                                                                         value="{{ @$batch->id }}">

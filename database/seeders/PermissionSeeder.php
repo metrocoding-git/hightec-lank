@@ -69,7 +69,7 @@ class PermissionSeeder extends Seeder
             'student.add-course.edit',
             'student.add-course.update',
             'student.add-course.destroy',
-            'student.add-intake.index',
+            'student.add-intake-with-courses.index',
             'student.add-intake-with-courses.store',
             'student.add-intake.edit',
             'student.add-intake.update',

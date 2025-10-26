@@ -9,6 +9,7 @@ use App\Models\Gender;
 use App\Models\Intake;
 use App\Models\Student;
 use App\Models\StudentCategory;
+use App\Models\StudentCourse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -59,7 +60,7 @@ class AddStudentController extends Controller
             'guardians_phone' => 'nullable|string|max:20',
             'guardians_occupation' => 'nullable|string|max:255',
             'guardians_address' => 'nullable|string',
-           
+
             'national_id_number' => ['required', 'string', 'regex:/^([0-9]{9}[vV]|[0-9]{12})$/'],
             'additional_notes' => 'nullable|string',
             'document_title_1' => 'nullable|string|max:255',
@@ -95,7 +96,7 @@ class AddStudentController extends Controller
         $validatedData['student_name'] = $validatedData['first_name'] . ' ' . $validatedData['last_name'];
 
         Student::create($validatedData);
-        return redirect()->route('student.add-intake.index')->with('success', 'Student created successfully');
+        return redirect()->route('student.add-intake-with-courses.index')->with('success', 'Student created successfully');
     }
 
 
@@ -123,7 +124,7 @@ class AddStudentController extends Controller
     public function update(Request $request, Student $student)
     {
         $validatedData = $request->validate([
-             'branch_id' => 'required|exists:branches,id',
+            'branch_id' => 'required|exists:branches,id',
             'admission_number' => 'required|string',
             'admission_date' => 'required|date',
             'student_category_id' => 'nullable|exists:student_categories,id',
@@ -149,7 +150,7 @@ class AddStudentController extends Controller
             'guardians_phone' => 'nullable|string|max:20',
             'guardians_occupation' => 'nullable|string|max:255',
             'guardians_address' => 'nullable|string',
-           
+
             'national_id_number' => ['required', 'string', 'regex:/^([0-9]{9}[vV]|[0-9]{12})$/'],
             'additional_notes' => 'nullable|string',
             'document_title_1' => 'nullable|string|max:255',
@@ -307,8 +308,13 @@ class AddStudentController extends Controller
             ->join('students', 'student_intakes.student_id', '=', 'students.id')
             ->join('intakes', 'student_intakes.intake_id', '=', 'intakes.id')
             ->leftJoin('branches', 'intakes.branch_id', '=', 'branches.id')
-            ->select('student_intakes.*', 'students.student_name', 'students.admission_number',
-                     'intakes.name as intake_name', 'branches.name as branch_name')
+            ->select(
+                'student_intakes.*',
+                'students.student_name',
+                'students.admission_number',
+                'intakes.name as intake_name',
+                'branches.name as branch_name'
+            )
             ->orderBy('student_intakes.id', 'desc')
             ->get();
 
@@ -357,13 +363,18 @@ class AddStudentController extends Controller
             ->join('students', 'student_intakes.student_id', '=', 'students.id')
             ->join('intakes', 'student_intakes.intake_id', '=', 'intakes.id')
             ->leftJoin('branches', 'intakes.branch_id', '=', 'branches.id')
-            ->select('student_intakes.*', 'students.student_name', 'students.admission_number',
-                     'intakes.name as intake_name', 'branches.name as branch_name')
+            ->select(
+                'student_intakes.*',
+                'students.student_name',
+                'students.admission_number',
+                'intakes.name as intake_name',
+                'branches.name as branch_name'
+            )
             ->orderBy('student_intakes.id', 'desc')
             ->get();
 
         if (!$studentIntake) {
-            return redirect()->route('student.add-intake.index')->with('error', 'Enrollment not found.');
+            return redirect()->route('student.add-intake-with-courses.index')->with('error', 'Enrollment not found.');
         }
 
         return view('pages.student.student-info.student-add-intake', compact('studentIntake', 'students', 'intakes', 'studentIntakes'));
@@ -404,52 +415,55 @@ class AddStudentController extends Controller
         return back()->with('success', 'Intake enrollment updated successfully.');
     }
 
-    public function destroyStudentIntake($id)
-    {
-        DB::table('student_intakes')->where('id', $id)->delete();
-        return back()->with('success', 'Intake enrollment removed successfully.');
-    }
+
 
     // New method to handle intake with courses assignment
-    public function studentAddIntakeWithCourses()
+    public function studentAddIntakeWithCourses(Request $request)
     {
         $students = Student::all();
         $branches = Branch::all();
         $intakes = Intake::with('branch')->get();
         $courses = Course::all();
 
-        // Get student intakes with courses
-        $studentIntakes = DB::table('student_intakes')
-            ->join('students', 'student_intakes.student_id', '=', 'students.id')
-            ->join('intakes', 'student_intakes.intake_id', '=', 'intakes.id')
-            ->leftJoin('branches', 'intakes.branch_id', '=', 'branches.id')
-            ->select('student_intakes.*', 'students.student_name', 'students.admission_number',
-                     'intakes.name as intake_name', 'branches.name as branch_name')
-            ->orderBy('student_intakes.id', 'desc')
-            ->get();
+        // Build query with filters
+        $query = StudentCourse::with(['student', 'intake', 'course', 'branch'])->orderBy('id', 'desc');
 
-        // Get related courses for each intake
-        foreach ($studentIntakes as $intake) {
-            $intake->courses = DB::table('student_courses')
-                ->join('courses', 'student_courses.course_id', '=', 'courses.id')
-                ->where('student_courses.student_id', $intake->student_id)
-                ->whereIn('student_courses.course_id', function($query) use ($intake) {
-                    $query->select('course_id')
-                          ->from('course_intake')
-                          ->where('intake_id', $intake->intake_id);
-                })
-                ->select('courses.id', 'courses.name', 'courses.code')
-                ->get();
+        if ($request->filled('branch_id')) {
+            $query->where('branch_id', $request->branch_id);
         }
 
-        return view('pages.student.student-info.student-add-intake',
-            compact('students', 'branches', 'intakes', 'courses', 'studentIntakes'));
+        if ($request->filled('intake_id')) {
+            $query->where('intake_id', $request->intake_id);
+        }
+
+        if ($request->filled('course_id')) {
+            $query->where('course_id', $request->course_id);
+        }
+
+        $studentIntakes = $query->get();
+
+        // Pass selected values to the view so they stay after search
+        $search_branch_id = $request->branch_id;
+        $search_intake_id = $request->intake_id;
+        $search_course_id = $request->course_id;
+
+        return view('pages.student.student-info.student-add-intake', compact(
+            'students',
+            'branches',
+            'intakes',
+            'courses',
+            'studentIntakes',
+            'search_branch_id',
+            'search_intake_id',
+            'search_course_id'
+        ));
     }
 
     public function storeStudentIntakeWithCourses(Request $request)
     {
         $validatedData = $request->validate([
             'student_id' => 'required|exists:students,id',
+            'branch_id' => 'required|exists:branches,id',
             'intake_id' => 'required|exists:intakes,id',
             'course_ids' => 'required|array',
             'course_ids.*' => 'exists:courses,id',
@@ -459,56 +473,27 @@ class AddStudentController extends Controller
         ]);
 
         // Check if student is already enrolled in this intake
-        $intakeExists = DB::table('student_intakes')
-            ->where('student_id', $validatedData['student_id'])
+        $courseExists = StudentCourse::where('student_id', $validatedData['student_id'])
             ->where('intake_id', $validatedData['intake_id'])
+            ->whereIn('course_id', $validatedData['course_ids'])
             ->exists();
 
-        if ($intakeExists) {
-            return back()->withErrors(['intake_id' => 'Student is already enrolled in this intake. Please edit the existing enrollment instead.']);
+        if ($courseExists) {
+            return back()->withErrors(['intake_id' => 'Student is already enrolled in this intake this course. Please edit the existing enrollment instead.']);
         }
 
-        // Check for duplicate courses in the selection
-        $uniqueCourses = array_unique($validatedData['course_ids']);
-        if (count($uniqueCourses) !== count($validatedData['course_ids'])) {
-            return back()->withErrors(['course_ids' => 'Duplicate courses selected. Please select each course only once.']);
-        }
-
-        // Check if student is already enrolled in any of the selected courses
-        $existingCourses = DB::table('student_courses')
-            ->where('student_id', $validatedData['student_id'])
-            ->whereIn('course_id', $validatedData['course_ids'])
-            ->pluck('course_id')
-            ->toArray();
-
-        if (!empty($existingCourses)) {
-            $existingCourseNames = DB::table('courses')
-                ->whereIn('id', $existingCourses)
-                ->pluck('name')
-                ->toArray();
-            return back()->withErrors(['course_ids' => 'Student is already enrolled in the following courses: ' . implode(', ', $existingCourseNames) . '. Please remove these from selection or edit existing enrollments.']);
-        }
 
         // Start transaction
         DB::beginTransaction();
 
         try {
-            // Insert intake enrollment
-            $intakeId = DB::table('student_intakes')->insertGetId([
-                'student_id' => $validatedData['student_id'],
-                'intake_id' => $validatedData['intake_id'],
-                'enrolled_at' => $validatedData['enrolled_at'],
-                'status' => $validatedData['status'],
-                'notes' => $validatedData['notes'],
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
-
             // Insert course enrollments
             foreach ($validatedData['course_ids'] as $courseId) {
-                DB::table('student_courses')->insert([
+                StudentCourse::create([
                     'student_id' => $validatedData['student_id'],
+                    'branch_id' => $validatedData['branch_id'],
                     'course_id' => $courseId,
+                    'intake_id' =>  $validatedData['intake_id'],
                     'enrolled_at' => $validatedData['enrolled_at'],
                     'status' => $validatedData['status'],
                     'notes' => $validatedData['notes'],
@@ -519,17 +504,55 @@ class AddStudentController extends Controller
 
             DB::commit();
             return back()->with('success', 'Student enrolled in intake and courses successfully.');
-
         } catch (\Exception $e) {
             DB::rollback();
             return back()->withErrors(['error' => 'Failed to enroll student. Please try again.']);
         }
     }
 
-    /**
-     * Generate the next admission number in the format "stu-XXX"
-     * where XXX is a zero-padded number starting from 001
-     */
+
+
+    public function updateStatus(Request $request, $id)
+    {
+        try {
+            // Validate the request
+            $validatedData = $request->validate([
+                'status' => 'required|in:pending,start,return,complete',
+            ]);
+
+            // Also update the status in related student_courses records
+            DB::table('student_courses')
+                ->where('id', $id)
+                ->update([
+                    'status' => $validatedData['status'],
+                    'updated_at' => now()
+                ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status updated successfully.'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid status value provided.'
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update status. Please try again.'
+            ], 500);
+        }
+    }
+
+    public function destroyStudentAddIntakeWithCourses($id)
+    {
+        StudentCourse::where('id', $id)->delete();
+        return back()->with('success', 'Intake enrollment removed successfully.');
+    }
+    // ===============
+
+
     private function generateNextAdmissionNumber()
     {
         // Get the last student by admission number
@@ -573,76 +596,7 @@ class AddStudentController extends Controller
         ]);
     }
 
-    public function searchStudentIntake(Request $request)
-    {
-        $query = DB::table('student_intakes')
-            ->join('students', 'student_intakes.student_id', '=', 'students.id')
-            ->join('intakes', 'student_intakes.intake_id', '=', 'intakes.id')
-            ->leftJoin('branches', 'intakes.branch_id', '=', 'branches.id')
-            ->select('student_intakes.*', 'students.student_name', 'students.admission_number',
-                     'intakes.name as intake_name', 'branches.name as branch_name');
 
-        if ($request->filled('branch_id')) {
-            $query->where('intakes.branch_id', $request->branch_id);
-        }
-        if ($request->filled('intake_id')) {
-            $query->where('student_intakes.intake_id', $request->intake_id);
-        }
-        if ($request->filled('course_id')) {
-            $query->whereExists(function ($subquery) use ($request) {
-                $subquery->select(DB::raw(1))
-                         ->from('student_courses')
-                         ->whereColumn('student_courses.student_id', 'student_intakes.student_id')
-                         ->where('student_courses.course_id', $request->course_id);
-            });
-        }
-
-        $studentIntakes = $query->orderBy('student_intakes.id', 'desc')->get();
-
-        // Get related courses for each intake
-        foreach ($studentIntakes as $intake) {
-            $intake->courses = DB::table('student_courses')
-                ->join('courses', 'student_courses.course_id', '=', 'courses.id')
-                ->where('student_courses.student_id', $intake->student_id)
-                ->whereIn('student_courses.course_id', function($subquery) use ($intake) {
-                    $subquery->select('course_id')
-                          ->from('course_intake')
-                          ->where('intake_id', $intake->intake_id);
-                })
-                ->select('courses.id', 'courses.name', 'courses.code')
-                ->get();
-        }
-
-        $students = Student::all();
-        $branches = Branch::all();
-        $intakes = Intake::with('branch')->get(); // All intakes for the modal
-        $courses = Course::all(); // All courses for the modal
-
-        // Pass search parameters back to the view to retain selected values
-        $search_branch_id = $request->branch_id;
-        $search_intake_id = $request->intake_id;
-        $search_course_id = $request->course_id;
-
-        // Load intakes and courses for the search dropdowns if a branch/intake was selected
-        $search_intakes = collect();
-        $search_courses = collect();
-
-        if ($search_branch_id) {
-            $search_intakes = Intake::where('branch_id', $search_branch_id)->get();
-        }
-        if ($search_intake_id) {
-            $search_courses = DB::table('course_intake')
-                ->join('courses', 'course_intake.course_id', '=', 'courses.id')
-                ->where('course_intake.intake_id', $search_intake_id)
-                ->select('courses.id', 'courses.name', 'courses.code')
-                ->get();
-        }
-
-        return view('pages.student.student-info.student-add-intake',
-            compact('students', 'branches', 'intakes', 'courses', 'studentIntakes',
-                    'search_branch_id', 'search_intake_id', 'search_course_id',
-                    'search_intakes', 'search_courses'));
-    }
 
     public function getSearchIntakesByBranch($branchId)
     {
@@ -663,60 +617,4 @@ class AddStudentController extends Controller
     /**
      * Update the status of a student intake enrollment
      */
-    public function updateStatus(Request $request, $id)
-    {
-        try {
-            // Validate the request
-            $validatedData = $request->validate([
-                'status' => 'required|in:pending,start,return,complete'
-            ]);
-
-            // Find the student intake record
-            $studentIntake = DB::table('student_intakes')->where('id', $id)->first();
-
-            if (!$studentIntake) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Student intake enrollment not found.'
-                ], 404);
-            }
-
-            // Update the status in student_intakes table
-            DB::table('student_intakes')
-                ->where('id', $id)
-                ->update([
-                    'status' => $validatedData['status'],
-                    'updated_at' => now()
-                ]);
-
-            // Also update the status in related student_courses records
-            DB::table('student_courses')
-                ->where('student_id', $studentIntake->student_id)
-                ->whereIn('course_id', function($query) use ($studentIntake) {
-                    $query->select('course_id')
-                          ->from('course_intake')
-                          ->where('intake_id', $studentIntake->intake_id);
-                })
-                ->update([
-                    'status' => $validatedData['status'],
-                    'updated_at' => now()
-                ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Status updated successfully.'
-            ]);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid status value provided.'
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update status. Please try again.'
-            ], 500);
-        }
-    }
 }

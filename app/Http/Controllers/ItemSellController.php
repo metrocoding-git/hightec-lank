@@ -325,66 +325,62 @@ class ItemSellController extends Controller
         return view('pages.account.inventory.item-sell-modal.item-sell-return-modal', compact('itemSellBatch'));
     }
 
-    public function returnItemSell(Request $request, $id)
+    public function returnItemSell($id)
     {
-        $request->validate([
-            'return_quantity' => 'required|integer|min:1',
-            'return_date' => 'required|string',
-            'return_reason' => 'nullable|string',
-            'item_sell_item_id' => 'required|integer|exists:item_sell_items,id', // New: specify which item to return
-        ]);
+       
 
         try {
-            $itemSellItem = ItemSellItem::findOrFail($request->item_sell_item_id);
-            $itemSellBatch = $itemSellItem->itemSellBatch;
+            $itemSellItem = ItemSellItem::where('item_sell_batch_id', $id)->get();
+            $itemSellBatch = ItemSellBatch::findOrFail($id);
+            $returnDate = Carbon::today()->format('Y-m-d');
 
-            if ($request->return_quantity > $itemSellItem->quantity) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Return quantity cannot exceed sold quantity for this item (' . $itemSellItem->quantity . ')',
-                ], 422);
+            
+            foreach ($itemSellItem as $item) {
+
+
+                $availableQuantity = $item->quantity;
+                
+                $currentBalance = ItemInventory::getCurrentBalance($item->item_id);
+                $newBalance = $currentBalance + $availableQuantity;
+                ItemInventory::create([
+                    'item_id' => $item->item_id,
+                    'transaction_type' => 'sell_return',
+                    'transaction_id' => $itemSellBatch->id, // Link to ItemSellBatch
+                    'quantity' => $item->quantity,
+                    'current_balance' => $newBalance,
+                    'reference_no' => $itemSellBatch->reference_no,
+                    'transaction_date' => $returnDate,
+                    'description' => $request->return_reason ?? 'Item returned from sell',
+                ]);
+
+
+                $newQuantity = $item->quantity - $item->quantity;
+                $item->update([
+                    'quantity' => $newQuantity,
+                    'sub_total' => $newQuantity * $item->unit_price,
+                ]);
+
+
+                // Update the ItemSellBatch totals
+                $itemSellBatch->total_quantity -= $item->quantityy;
+                $itemSellBatch->total_sell_price -= ($item->quantity * $item->unit_price);
+                $itemSellBatch->total_due += ($item->quantity * $item->unit_price);
+                $itemSellBatch->status = 'R';
+                $itemSellBatch->save();
+
             }
 
-            $returnDate = Carbon::createFromFormat('m/d/Y', $request->return_date)->format('Y-m-d');
-
-            // Update inventory
-            $currentBalance = ItemInventory::getCurrentBalance($itemSellItem->item_id);
-            $newBalance = $currentBalance + $request->return_quantity;
-
-            ItemInventory::create([
-                'item_id' => $itemSellItem->item_id,
-                'transaction_type' => 'sell_return',
-                'transaction_id' => $itemSellBatch->id, // Link to ItemSellBatch
-                'quantity' => $request->return_quantity,
-                'current_balance' => $newBalance,
-                'reference_no' => $itemSellBatch->reference_no,
-                'transaction_date' => $returnDate,
-                'description' => $request->return_reason ?? 'Item returned from sell',
-            ]);
-
-            // Update the sold item record (ItemSellItem)
-            $newQuantity = $itemSellItem->quantity - $request->return_quantity;
-            $itemSellItem->update([
-                'quantity' => $newQuantity,
-                'sub_total' => $newQuantity * $itemSellItem->unit_price,
-            ]);
-
-            // Update the ItemSellBatch totals
-            $itemSellBatch->total_quantity -= $request->return_quantity;
-            $itemSellBatch->total_sell_price -= ($request->return_quantity * $itemSellItem->unit_price);
-            $itemSellBatch->total_due += ($request->return_quantity * $itemSellItem->unit_price);
-            $itemSellBatch->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Item return processed successfully!'
-            ]);
+            return redirect()
+            ->back()
+            ->with('success', 'Item return processed successfully!',);
+          
+         
         } catch (\Throwable $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to process item return.',
-                'error' => $e->getMessage(),
-            ], 500);
+            
+            return redirect()
+            ->back()
+            ->with('error', 'Failed to process item return.');
+          
         }
     }
 

@@ -26,15 +26,13 @@
     </div>
 </div>
 <!--================Footer Area ================= -->
-<footer class="footer-area new-footer" style="margin-top: 50px absolute">
+<footer class="footer-area new-footer mt-2" >
     <div class="container">
         <div class="row">
             <div class="col-lg-12 text-center">
-                @if (Auth::check())
-                    <p>Copyright © 2025 All rights reserved | This application is made with by MetroCoding</p>
-                @else
-                    <p>Copyright © 2025 All rights reserved | This application is made with by MetroCoding</p>
-                @endif
+
+                <p>Copyright © 2025 All rights reserved | This application is made with by MetroCoding</p>
+
             </div>
         </div>
     </div>
@@ -42,9 +40,7 @@
 
 <!-- ================End Footer Area ================= -->
 <style>
-    body {
-        padding-bottom: 50px; /* Adjust this value based on your footer's height */
-    }
+
     .new-footer {
         position: flex;
         /* z-index: 1; */

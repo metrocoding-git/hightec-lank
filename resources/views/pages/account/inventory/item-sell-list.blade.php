@@ -128,7 +128,7 @@
                                                                         @endif
                                                                     @endif
 
-                                                                    @if ($value->status != 'R')
+                                                                    {{-- @if ($value->status != 'R')
                                                                         @if ($value->total_due > 0)
                                                                             <a class="dropdown-item modalLink"
                                                                                 title="@lang('inventory.add_payment')"
@@ -140,7 +140,7 @@
                                                                     <a class="dropdown-item view-sell-payments"
                                                                         title="@lang('inventory.view_payment')"
                                                                         data-id="{{ $value->id }}"
-                                                                        href="#">@lang('inventory.view_payment')</a>
+                                                                        href="#">@lang('inventory.view_payment')</a> --}}
 
                                                                     @if ($value->status != 'R')
                                                                         @if ($value->total_paid == 0)
@@ -151,19 +151,12 @@
                                                                         @endif
                                                                     @endif
 
-                                                                    @if ($value->status != 'R')
-                                                                        @if ($value->total_paid > 0)
-                                                                            <a class="dropdown-item deleteUrl"
-                                                                                data-modal-size="modal-md"
-                                                                                title="Cancel Item Sell"
-                                                                                href="{{ route('cancel-item-sell-view', $value->id) }}">@lang('common.cancel')</a>
-                                                                        @endif
-                                                                    @endif
-
+                                                                 
                                                                     @if ($value->status != 'R')
                                                                         <a class="dropdown-item return-button"
                                                                             data-id="{{ $value->id }}"
-                                                                            title="Return Item Sell">@lang('inventory.return')</a>
+                                                                            title="Return Item Sell"
+                                                                             href="{{ route('return-item-sell', $value->id) }}">@lang('inventory.return')</a>
                                                                     @endif
                                                                 </x-drop-down>
                                                             </td>

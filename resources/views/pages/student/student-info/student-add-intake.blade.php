@@ -45,7 +45,7 @@
             <div class="row mt-40">
                 <div class="col-lg-12">
                     <div class="white-box filter_card">
-                        <form class="form-horizontal" action="{{ route('student.add-intake.search') }}" method="post">
+                        <form class="form-horizontal" action="{{ route('student.add-intake-with-courses.index') }}" method="GET">
                             @csrf
                             <div class="row">
                                 <div class="col-lg-8 col-md-6 col-sm-6">
@@ -152,21 +152,12 @@
                                             @forelse($studentIntakes as $key => $studentIntake)
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
-                                                    <td>{{ $studentIntake->student_name }}</td>
-                                                    <td>{{ $studentIntake->admission_number }}</td>
-                                                    <td>{{ $studentIntake->intake_name }}</td>
-                                                    <td>{{ $studentIntake->branch_name ?? 'N/A' }}</td>
-                                                    <td>
-                                                        @if (isset($studentIntake->courses) && $studentIntake->courses->count() > 0)
-                                                            @foreach ($studentIntake->courses as $course)
-                                                                <span class="badge badge-info">{{ $course->name }}</span>
-                                                            @endforeach
-                                                        @else
-                                                            <span class="text-muted">No courses</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>{{ $studentIntake->enrolled_at ? date('Y-m-d', strtotime($studentIntake->enrolled_at)) : '-' }}
-                                                    </td>
+                                                    <td>{{ $studentIntake->student->student_name }}</td>
+                                                    <td>{{ $studentIntake->student->admission_number }}</td>
+                                                    <td>{{ $studentIntake->intake->name }}</td>
+                                                    <td>{{ $studentIntake->branch->name }}</td>
+                                                    <td>{{ $studentIntake->course->name }}</td>
+                                                    <td>{{ $studentIntake->enrolled_at ? date('Y-m-d', strtotime($studentIntake->enrolled_at)) : '-' }}</td>
                                                     <td>
                                                         <span
                                                             class="badge {{ $studentIntake->status == 'pending' ? 'badge-success' : ($studentIntake->status == 'start' ? 'badge-info' : ($studentIntake->status == 'return' ? 'badge-warning' : 'badge-primary')) }}">
@@ -178,34 +169,34 @@
                                                             @if ($studentIntake->status == 'pending')
                                                                 <a class="dropdown-item" href="#"
                                                                     onclick="changeStatus({{ $studentIntake->id }}, 'start')">
-                                                                    <span class="text-info">▶ Start</span>
+                                                                    <span class="text-info">Start</span>
                                                                 </a>
                                                             @endif
                                                             @if ($studentIntake->status == 'start')
                                                                 <a class="dropdown-item" href="#"
                                                                     onclick="changeStatus({{ $studentIntake->id }}, 'return')">
-                                                                    <span class="text-warning">↩ Return</span>
+                                                                    <span class="text-warning">Return</span>
                                                                 </a>
                                                                 <a class="dropdown-item" href="#"
                                                                     onclick="changeStatus({{ $studentIntake->id }}, 'complete')">
-                                                                    <span class="text-success">✓ Complete</span>
+                                                                    <span class="text-success">Complete</span>
                                                                 </a>
                                                             @endif
                                                             @if ($studentIntake->status == 'return')
                                                                 <a class="dropdown-item" href="#"
                                                                     onclick="changeStatus({{ $studentIntake->id }}, 'start')">
-                                                                    <span class="text-info">▶ Restart</span>
+                                                                    <span class="text-info">Restart</span>
                                                                 </a>
                                                                 <a class="dropdown-item" href="#"
                                                                     onclick="changeStatus({{ $studentIntake->id }}, 'complete')">
-                                                                    <span class="text-success">✓ Complete</span>
+                                                                    <span class="text-success">Complete</span>
                                                                 </a>
                                                             @endif
-                                                            <div class="dropdown-divider"></div>
+                                                           
                                                             <a class="dropdown-item" data-toggle="modal"
                                                                 data-target="#deleteStudentIntakeModal{{ $studentIntake->id }}"
                                                                 href="#">
-                                                                <span class="text-danger">🗑 Delete</span>
+                                                                <span class="text-danger">Delete</span>
                                                             </a>
                                                         </x-drop-down>
                                                     </td>
@@ -842,14 +833,14 @@
         });
 
         // Function to handle status changes
-        function changeStatus(studentIntakeId, newStatus) {
+        function changeStatus(id, newStatus) {
             // Show loading state
             $.ajax({
-                url: '{{ route('student.add-intake.update-status', ':id') }}'.replace(':id', studentIntakeId),
+                url: '{{ route('student.add-intake.update-status', ':id') }}'.replace(':id', id),
                 type: 'POST',
                 data: {
                     _token: '{{ csrf_token() }}',
-                    status: newStatus
+                    status: newStatus,
                 },
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',

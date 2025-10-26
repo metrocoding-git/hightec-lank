@@ -87,7 +87,7 @@ class RoleController extends Controller
         'student.add-course.edit' => 'student.add-course.edit',
         'student.add-course.update' => 'student.add-course.update',
         'student.add-course.destroy' => 'student.add-course.destroy',
-        'student.add-intake.index' => 'student.add-intake.index',
+        'student.add-intake-with-courses.index' => 'student.add-intake-with-courses.index',
         'student.add-intake.store' => 'student.add-intake-with-courses.store', // Mismatch in seeder/route
         'student.add-intake.edit' => 'student.add-intake.edit',
         'student.add-intake.update' => 'student.add-intake.update',

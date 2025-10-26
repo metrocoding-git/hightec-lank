@@ -488,8 +488,6 @@
 
             // Debug function to log form data before submission
             function debugFormData() {
-                console.log('🔍 === FORM DEBUG DATA ===');
-
                 // Collect all form data
                 let formData = new FormData(document.querySelector('form'));
                 let formObject = {};
@@ -504,8 +502,6 @@
                         formObject[key] = value;
                     }
                 }
-
-                console.log('📋 Form Data Object:', formObject);
 
                 // Specifically check items array
                 let items = [];
@@ -555,6 +551,86 @@
                 }
             }
 
+            $('#student_select, #branch_select, #intake_select, #course_select').on('change', function() {
+                checkAndFetchFeeData();
+            });
+
+            function checkAndFetchFeeData() {
+                let student_id = $('#student_select').val();
+                let branch_id = $('#branch_select').val();
+                let intake_id = $('#intake_select').val();
+                let course_id = $('#course_select').val();
+
+                console.log('Selected:', {
+                    student_id,
+                    branch_id,
+                    intake_id,
+                    course_id
+                });
+
+                // Only proceed if all are selected
+                if (student_id && branch_id && intake_id && course_id) {
+                    console.log('✅ All selected — fetching fee data...');
+
+                    // Build URL dynamically
+                    var url = '{{ route('item-issue.get-student-fee-data') }}';
+
+                    $.ajax({
+                        url: url,
+                        type: 'GET',
+                        data: {
+                            student_id: student_id,
+                            branch_id: branch_id,
+                            intake_id: intake_id,
+                            course_id: course_id
+                        },
+                        dataType: 'json',
+                        beforeSend: function() {
+                            $('#student-fee-data').show();
+                            $('#fee_invoices_tbody').html(
+                                '<tr><td colspan="4" class="text-center">Loading fee data...</td></tr>'
+                            );
+                        },
+                        success: function(data) {
+                            console.log('✅ Fee data received:', data);
+
+                            $('#fee_student_name').val(data.student_name || 'N/A');
+                            $('#fee_total_invoices').val(data.total_invoices || 0);
+                            $('#fee_total_fees').val('Rs ' + (data.total_fees || 0).toFixed(2));
+                            $('#fee_total_paid').val('Rs ' + (data.total_paid || 0).toFixed(2));
+                            $('#fee_total_due').val('Rs ' + (data.total_due || 0).toFixed(2));
+
+                            let tableHtml = '';
+                            if (data.fee_invoices && data.fee_invoices.length > 0) {
+                                data.fee_invoices.forEach(invoice => {
+                                    let due = (invoice.amount || 0) - (invoice.paid_amount ||
+                                    0);
+                                    tableHtml += `<tr>
+                            <td>${invoice.fee_type_name || 'N/A'}</td>
+                            <td>Rs ${invoice.amount.toFixed(2)}</td>
+                            <td>Rs ${invoice.paid_amount.toFixed(2)}</td>
+                            <td>Rs ${due.toFixed(2)}</td>
+                        </tr>`;
+                                });
+                            } else {
+                                tableHtml =
+                                    `<tr><td colspan="4" class="text-center">No fee invoices found</td></tr>`;
+                            }
+                            $('#fee_invoices_tbody').html(tableHtml);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('❌ Error fetching fee data:', error);
+                            $('#fee_invoices_tbody').html(
+                                `<tr><td colspan="4" class="text-center text-danger">Error: ${error}</td></tr>`
+                            );
+                        }
+                    });
+                } else {
+                    console.log('⚠️ Waiting for all selections to be made.');
+                    $('#student-fee-data').hide();
+                }
+            }
+
             // Handle student change - Populate Branch, Intake, Course, and Load fee data
             $('#student_select').on('change', function() {
                 var student_id = $(this).val();
@@ -600,31 +676,41 @@
                         // Populate Intake dropdown based on branch
                         var studentBranchId = data.branch_id;
                         if (studentBranchId) {
-                            var intakesByBranchUrl = '{{ route('item-issue.get-intakes-by-branch', ':branchId') }}'
+                            var intakesByBranchUrl =
+                                '{{ route('item-issue.get-intakes-by-branch', ':branchId') }}'
                                 .replace(':branchId', studentBranchId);
                             console.log('🌐 Intakes by Branch AJAX URL:', intakesByBranchUrl);
 
                             $.get(intakesByBranchUrl, function(intakeData) {
                                 console.log('✅ Intakes by branch received:', intakeData);
-                                var intakeOptionsHtml = '<option value="">Select Intake *</option>';
+                                var intakeOptionsHtml =
+                                    '<option value="">Select Intake *</option>';
                                 if (intakeData && intakeData.length > 0) {
                                     intakeData.forEach(function(intake) {
-                                        intakeOptionsHtml += '<option value="' + intake.id + '">' +
+                                        intakeOptionsHtml += '<option value="' +
+                                            intake.id + '">' +
                                             intake.name + '</option>';
                                     });
-                                    $('#intake_select').html(intakeOptionsHtml).prop('disabled', false);
+                                    $('#intake_select').html(intakeOptionsHtml).prop(
+                                        'disabled', false);
                                 } else {
-                                    intakeOptionsHtml += '<option value="">No Intakes Found for this Branch</option>';
-                                    $('#intake_select').html(intakeOptionsHtml).prop('disabled', true);
+                                    intakeOptionsHtml +=
+                                        '<option value="">No Intakes Found for this Branch</option>';
+                                    $('#intake_select').html(intakeOptionsHtml).prop(
+                                        'disabled', true);
                                 }
                                 refreshNiceSelect('#intake_select');
                             }).fail(function(xhr, status, error) {
-                                console.error('❌ AJAX Error fetching intakes by branch:', error);
-                                $('#intake_select').html('<option value="">Error loading intakes</option>').prop('disabled', true);
+                                console.error('❌ AJAX Error fetching intakes by branch:',
+                                    error);
+                                $('#intake_select').html(
+                                        '<option value="">Error loading intakes</option>')
+                                    .prop('disabled', true);
                                 refreshNiceSelect('#intake_select');
                             });
                         } else {
-                            var intakeOptionsHtml = '<option value="">No Branch Selected for Student</option>';
+                            var intakeOptionsHtml =
+                                '<option value="">No Branch Selected for Student</option>';
                             $('#intake_select').html(intakeOptionsHtml).prop('disabled', true);
                             refreshNiceSelect('#intake_select');
                         }
@@ -661,78 +747,7 @@
                         refreshNiceSelect('#course_select');
                     });
 
-                    // Existing logic for fetching student fee data
-                    $('#student-fee-data').show();
-                    $('#fee_invoices_tbody').html(
-                        '<tr><td colspan="4" class="text-center">Loading fee data...</td></tr>');
-
-                    var url = '{{ route('item-issue.get-student-fee-data', ':studentId') }}'.replace(
-                        ':studentId', student_id);
-                    console.log('🌐 Fee Data AJAX URL:', url);
-
-                    $.ajax({
-                        url: url,
-                        type: 'GET',
-                        dataType: 'json',
-                        success: function(data) {
-                            console.log('✅ Fee data received:', data);
-
-                            if (data) {
-                                $('#fee_student_name').val(data.student_name || 'N/A');
-                                $('#fee_total_invoices').val(data.total_invoices || 0);
-                                $('#fee_total_fees').val('Rs ' + (data.total_fees || 0).toFixed(
-                                    2));
-                                $('#fee_total_paid').val('Rs ' + (data.total_paid || 0).toFixed(
-                                    2));
-                                $('#fee_total_due').val('Rs ' + (data.total_due || 0).toFixed(
-                                    2));
-
-                                var tableHtml = '';
-                                if (data.fee_invoices && data.fee_invoices.length > 0) {
-                                    data.fee_invoices.forEach(function(invoice) {
-                                        var dueAmount = (invoice.amount || 0) - (invoice
-                                            .paid_amount || 0);
-                                        tableHtml += '<tr>' +
-                                            '<td>' + (invoice.fee_type_name || 'N/A') +
-                                            '</td>' +
-                                            '<td>Rs' + (invoice.amount || 0).toFixed(
-                                                2) + '</td>' +
-                                            '<td>Rs' + (invoice.paid_amount || 0)
-                                            .toFixed(2) + '</td>' +
-                                            '<td>Rs' + dueAmount.toFixed(2) + '</td>' +
-                                            '</tr>';
-                                    });
-                                } else {
-                                    tableHtml =
-                                        '<tr><td colspan="4" class="text-center">No fee invoices found</td></tr>';
-                                }
-                                $('#fee_invoices_tbody').html(tableHtml);
-                            } else {
-                                $('#fee_student_name').val('No data received');
-                                $('#fee_total_invoices').val('0');
-                                $('#fee_total_fees').val('$0.00');
-                                $('#fee_total_paid').val('$0.00');
-                                $('#fee_total_due').val('$0.00');
-                                $('#fee_invoices_tbody').html(
-                                    '<tr><td colspan="4" class="text-center text-warning">No data received</td></tr>'
-                                );
-                            }
-                        },
-                        error: function(xhr, status, error) {
-                            console.error('❌ AJAX Error:', error);
-                            console.error('❌ Status:', status);
-                            console.error('❌ Response:', xhr.responseText);
-
-                            $('#fee_student_name').val('Error loading data');
-                            $('#fee_total_invoices').val('0');
-                            $('#fee_total_fees').val('$0.00');
-                            $('#fee_total_paid').val('$0.00');
-                            $('#fee_total_due').val('$0.00');
-                            $('#fee_invoices_tbody').html(
-                                '<tr><td colspan="4" class="text-center text-danger">Error: ' +
-                                error + '</td></tr>');
-                        }
-                    });
+                   
                 } else {
                     console.log(
                         'DEBUG: Student ID is empty. Hiding fee data and resetting dropdowns.'
