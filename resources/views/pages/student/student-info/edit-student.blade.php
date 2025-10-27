@@ -726,21 +726,21 @@
                                                                         <span
                                                                             class="text-danger">{{ $errors->first('guardians_photo') }}</span>
                                                                     </div>
+                                                                    <div class="col-md-12 mt-15">
+                                                                        @if ($student->guardians_photo)
+                                                                            <img class="previewImageSize"
+                                                                                src="{{ asset('storage/' . $student->guardians_photo) }}"
+                                                                                alt="Guardian Photo" id="guardianImageShow"
+                                                                                height="100" width="100">
+                                                                        @else
+                                                                            <img class="d-none previewImageSize"
+                                                                                src="" alt=""
+                                                                                id="guardianImageShow" height="100"
+                                                                                width="100">
+                                                                        @endif
+                                                                    </div>
                                                                 </div>
 
-                                                                <div class="col-md-12 mt-15">
-                                                                    @if ($student->guardians_photo)
-                                                                        <img class="previewImageSize"
-                                                                            src="{{ asset('storage/' . $student->guardians_photo) }}"
-                                                                            alt="Guardian Photo" id="guardianImageShow"
-                                                                            height="100" width="100">
-                                                                    @else
-                                                                        <img class="d-none previewImageSize"
-                                                                            src="" alt=""
-                                                                            id="guardianImageShow" height="100"
-                                                                            width="100">
-                                                                    @endif
-                                                                </div>
 
                                                                 <div class="col-lg-6 mt-4">
                                                                     <div class="primary_input ">

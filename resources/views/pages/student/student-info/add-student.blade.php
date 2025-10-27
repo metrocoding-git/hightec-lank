@@ -945,13 +945,13 @@
                                                                         <span
                                                                             class="text-danger">{{ $errors->first('guardians_photo') }}</span>
                                                                     </div>
+                                                                    <div class="col-md-12 mt-15">
+                                                                        <img class="d-none previewImageSize" src=""
+                                                                            alt="" id="guardianImageShow"
+                                                                            height="100%" width="100%">
+                                                                    </div>
                                                                 </div>
 
-                                                                <div class="col-md-12 mt-15">
-                                                                    <img class="d-none previewImageSize" src=""
-                                                                        alt="" id="guardianImageShow"
-                                                                        height="100%" width="100%">
-                                                                </div>
 
                                                                 <div class="col-lg-6 mt-4">
                                                                     <div class="primary_input ">
