@@ -52,6 +52,7 @@
                                             <tr>
                                                 <th>ID</th>
                                                 <th>Main Invoice No.</th>
+                                                <th>Course</th>
                                                 <th>@lang('common.student')</th>
                                                 <th>Branch</th>
                                                 <th>@lang('admin.admission_no')</th>
@@ -69,6 +70,7 @@
 
                                         <tbody>
                                             @foreach ($fee_invoices as $key => $invoice)
+                                            {{-- {{ dd($invoice) }} --}}
                                                 @php
                                                     $amount = $invoice->total_amount;
                                                     $paid_amount = $invoice->paid_amount;
@@ -83,6 +85,11 @@
                                                             {{ $invoice->main_invoice_number }}
                                                         </a>
                                                     </td>
+                                                    {{-- <td>{{ $invoice->paidCourses->course->name }}</td> --}}
+                                                    <td>
+                                                        {{ $invoice->paidCourses->first() ? $invoice->paidCourses->first()->course->name : 'N/A' }} ({{ $invoice->paidCourses->first() ? $invoice->paidCourses->first()->course_id : 'N/A' }})
+                                                    </td>
+                                                    
                                                     <td>
                                                         <a href="{{ route('fees.fee-invoice-view', ['id' => $invoice->id, 'state' => 'view']) }}"
                                                             target="_blank">
