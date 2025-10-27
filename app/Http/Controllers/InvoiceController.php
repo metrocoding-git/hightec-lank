@@ -829,8 +829,12 @@ class InvoiceController extends Controller
                 ->findOrFail($invoiceId);
 
             $courseName = 'N/A';
+            $created_at = 'N/A';
+            $expiration_date = 'N/A';
             try {
                 $courseName = $invoice->paidCourses && $invoice->paidCourses->first() ? $invoice->paidCourses->first()->course->name : 'N/A';
+                $created_at = $invoice->paidCourses && $invoice->paidCourses->first() ? Carbon::parse($invoice->paidCourses->first()->course->created_at)->format('Y-m-d') : 'N/A';
+                $expiration_date = $invoice->paidCourses && $invoice->paidCourses->first() ? $invoice->paidCourses->first()->course->expiration_date : 'N/A';
             } catch (\Exception $e) {
                 $courseName = 'N/A';
             }
@@ -841,6 +845,8 @@ class InvoiceController extends Controller
                 'invoice_items' => $invoice->invoice_item,
                 'payments' => $invoice->payments,
                 'course_name' => $courseName,
+                'created_at' => $created_at,
+                'expiration_date' => $expiration_date
             ]);
         } catch (\Exception $e) {
             Log::error('Error fetching invoice report: ' . $e->getMessage());

@@ -1800,6 +1800,7 @@
                         month: 'long',
                         year: 'numeric'
                     });
+                    
 
                     // Generate report HTML based on the provided style
                     let reportHtml = `
@@ -1824,7 +1825,11 @@
 
                             <div style=" align-items: center;  padding-top: 15px;">
                                 <div style="font-size: 14px; font-weight: bold; color: #333;">${response.invoice.total_amount}</div>
-                                <div style="font-size: 14px; color: #666;">Registration fee</div>
+                                <div style="font-size: 14px; font-weight: bold; color: #333;">${response.invoice.paid_amount}</div>
+                                <div style="font-size: 14px; font-weight: bold; color: #333;">${response.invoice.due_amount}</div>
+                                <div style="font-size: 14px; font-weight: bold; color: #333;">${response.created_at}</div>
+                                <div style="font-size: 14px; font-weight: bold; color: #333;">${response.expiration_date}</div>
+                                
                             </div>
                         </div>
                     `;
