@@ -1793,85 +1793,39 @@
                 },
                 success: function(response) {
                     console.log('Invoice report response:', response);
-                    // Generate report HTML based on response
+                    // Format date to show only date, month, year
+                    const date = new Date(response.invoice.create_date);
+                    const formattedDate = date.toLocaleDateString('en-US', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    });
+
+                    // Generate report HTML based on the provided style
                     let reportHtml = `
-                        <div class="invoice-report">
-                            <h5>Invoice Details</h5>
-                            <table class="table table-bordered">
-                                <tr><td><strong>Invoice ID:</strong></td><td>${response.invoice.id}</td></tr>
-                                <tr><td><strong>Main Invoice Number:</strong></td><td>${response.invoice.main_invoice_number}</td></tr>
-                                <tr><td><strong>Student:</strong></td><td>${response.invoice.student.student_name}</td></tr>
-                                <tr><td><strong>Branch:</strong></td><td>${response.invoice.branch.name}</td></tr>
-                                <tr><td><strong>Admission Number:</strong></td><td>${response.invoice.student.admission_number}</td></tr>
-                                <tr><td><strong>Course:</strong></td><td>${response.course_name}</td></tr>
-                                <tr><td><strong>Total Amount:</strong></td><td>${response.invoice.total_amount}</td></tr>
-                                <tr><td><strong>Paid Amount:</strong></td><td>${response.invoice.paid_amount}</td></tr>
-                                <tr><td><strong>Balance:</strong></td><td>${response.invoice.total_amount - response.invoice.paid_amount}</td></tr>
-                                <tr><td><strong>Payment Method:</strong></td><td>${response.invoice.payment_method}</td></tr>
-                                <tr><td><strong>Payment Status:</strong></td><td>${response.invoice.payment_status}</td></tr>
-                                <tr><td><strong>Create Date:</strong></td><td>${response.invoice.create_date}</td></tr>
-                                <tr><td><strong>Due Date:</strong></td><td>${response.invoice.due_date}</td></tr>
-                            </table>
+                        <div class="invoice-report" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: white;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                                <div style="flex: 1;">
+                                    <h3 style="margin: 0; font-size: 14px; font-weight: bold; color: #333;">${response.course_name}</h3>
+                                </div>
+                                <div style="text-align: right;">
+                                    <p style="margin: 0; font-size: 14px; color: #666;">${formattedDate}</p>
+                                    <p style="margin: 5px 0 0 0; font-size: 14px; font-weight: bold; color: #333;">${response.invoice.main_invoice_number}</p>
+                                    <p style="margin: 5px 0 0 0; font-size: 14px; font-weight: bold; color: #333;">${response.invoice.student.admission_number}</p>
+                                </div>
+                            </div>
 
-                            <h5>Invoice Items</h5>
-                            <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Fee Type</th>
-                                        <th>Amount</th>
-                                        <th>Paid Amount</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                    `;
-                    if (response.invoice_items.length > 0) {
-                        response.invoice_items.forEach(function(item) {
-                            reportHtml += `
-                                <tr>
-                                    <td>${item.fee_type.name}</td>
-                                    <td>${item.amount}</td>
-                                    <td>${item.paid_amount}</td>
-                                </tr>
-                            `;
-                        });
-                    } else {
-                        reportHtml += '<tr><td colspan="3">No items found.</td></tr>';
-                    }
-                    reportHtml += `
-                                </tbody>
-                            </table>
+                            <div style="margin-bottom: 20px;">
+                                <p style="margin: 0; font-size: 14px; font-weight: bold; color: #333;">${response.invoice.student.student_name}</p>
+                                <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">National ID: ${response.invoice.student.national_id_number || 'N/A'}</p>
+                                <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">${response.invoice.student.permanent_address || 'N/A'}</p>
+                                <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">${response.invoice.student.phone_number || 'N/A'}</p>
+                            </div>
 
-                            <h5>Payment History</h5>
-                            <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Receipt Number</th>
-                                        <th>Amount</th>
-                                        <th>Method</th>
-                                        <th>Type</th>
-                                        <th>Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                    `;
-                    if (response.payments.length > 0) {
-                        response.payments.forEach(function(payment) {
-                            reportHtml += `
-                                <tr>
-                                    <td>${payment.receipt_number}</td>
-                                    <td>${payment.amount}</td>
-                                    <td>${payment.payment_method}</td>
-                                    <td>${payment.payment_type}</td>
-                                    <td>${new Date(payment.created_at).toLocaleDateString()}</td>
-                                </tr>
-                            `;
-                        });
-                    } else {
-                        reportHtml += '<tr><td colspan="5">No payments found.</td></tr>';
-                    }
-                    reportHtml += `
-                                </tbody>
-                            </table>
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #ddd; padding-top: 15px;">
+                                <div style="font-size: 14px; font-weight: bold; color: #333;">${response.invoice.total_amount}</div>
+                                <div style="font-size: 14px; color: #666;">Registration fee</div>
+                            </div>
                         </div>
                     `;
                     modal.find('#invoiceReportContent').html(reportHtml);
