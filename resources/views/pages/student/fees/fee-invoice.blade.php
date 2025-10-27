@@ -1800,7 +1800,8 @@
                         month: 'long',
                         year: 'numeric'
                     });
-                    
+
+                    // Format created_to_due to YMD
 
                     // Generate report HTML based on the provided style
                     let reportHtml = `
@@ -1827,9 +1828,8 @@
                                 <div style="font-size: 14px; font-weight: bold; color: #333;">${response.invoice.total_amount}</div>
                                 <div style="font-size: 14px; font-weight: bold; color: #333;">${response.invoice.paid_amount}</div>
                                 <div style="font-size: 14px; font-weight: bold; color: #333;">${response.invoice.due_amount}</div>
-                                <div style="font-size: 14px; font-weight: bold; color: #333;">${response.created_at}</div>
-                                <div style="font-size: 14px; font-weight: bold; color: #333;">${response.expiration_date}</div>
-                                
+                                <div style="font-size: 14px; font-weight: bold; color: #333;">${response.created_to_due}</div>
+
                             </div>
                         </div>
                     `;
