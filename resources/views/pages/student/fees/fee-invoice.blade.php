@@ -1803,7 +1803,7 @@
 
                     // Generate report HTML based on the provided style
                     let reportHtml = `
-                        <div class="invoice-report" style="font-family: Arial, sans-serif; max-width:800px; margin: 0 auto; padding: 20px; background: white;">
+                        <div class="invoice-report" style="font-family: Arial, sans-serif; max-width:800px; padding:40px; margin: 0 auto; padding: 20px; background: white;">
                             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; margin-top:40px;">
                                 <div style="flex: 1;">
                                     <h3 style="margin: 0; font-size: 14px; font-weight: bold; color: #333;">${response.course_name}</h3>
@@ -1815,9 +1815,9 @@
                                 </div>
                             </div>
 
-                            <div style="margin-bottom: 40px; margin-left: 40px;">
+                            <div style="margin-bottom: 40px; margin-left: 80px;">
                                 <p style="margin: 0; font-size: 14px; font-weight: bold; color: #333;">${response.invoice.student.student_name}</p>
-                                <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">National ID: ${response.invoice.student.national_id_number || 'N/A'}</p>
+                                <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">${response.invoice.student.national_id_number || 'N/A'}</p>
                                 <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">${response.invoice.student.permanent_address || 'N/A'}</p>
                                 <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">${response.invoice.student.phone_number || 'N/A'}</p>
                             </div>
