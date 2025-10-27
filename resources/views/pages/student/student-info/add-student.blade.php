@@ -816,28 +816,28 @@
                                                                             <div class="d-flex radio-btn-flex flex-wrap">
                                                                                 <div class="mr-30">
                                                                                     <input type="radio"
-                                                                                        name="relationButton"
-                                                                                        id="relationFather" value="F"
+                                                                                        name="relation_guardian_id"
+                                                                                        id="relationFather" value="1"
                                                                                         class="common-radio relationButton"
-                                                                                        {{ old('relationButton') == 'F' ? 'checked' : '' }}>
+                                                                                        {{ old('relation_guardian_id', isset($student) ? $student->relation_guardian_id : '') == '1' ? 'checked' : '' }}>
                                                                                     <label
                                                                                         for="relationFather">@lang('student.father')</label>
                                                                                 </div>
                                                                                 <div class="mr-30">
                                                                                     <input type="radio"
-                                                                                        name="relationButton"
-                                                                                        id="relationMother" value="M"
+                                                                                        name="relation_guardian_id"
+                                                                                        id="relationMother" value="2"
                                                                                         class="common-radio relationButton"
-                                                                                        {{ old('relationButton') == 'M' ? 'checked' : '' }}>
+                                                                                        {{ old('relation_guardian_id', isset($student) ? $student->relation_guardian_id : '') == '2' ? 'checked' : '' }}>
                                                                                     <label
                                                                                         for="relationMother">@lang('student.mother')</label>
                                                                                 </div>
                                                                                 <div>
                                                                                     <input type="radio"
-                                                                                        name="relationButton"
-                                                                                        id="relationOther" value="O"
+                                                                                        name="relation_guardian_id"
+                                                                                        id="relationOther" value="3"
                                                                                         class="common-radio relationButton"
-                                                                                        {{ old('relationButton') != '' ? (old('relationButton') == 'O' ? 'checked' : '') : 'checked' }}>
+                                                                                        {{ old('relation_guardian_id', isset($student) ? $student->relation_guardian_id : '') == '3' ? 'checked' : '' }}>
                                                                                     <label
                                                                                         for="relationOther">@lang('student.Other')</label>
                                                                                 </div>
@@ -884,8 +884,8 @@
                                                                             name="relation" id="relation" value="Other"
                                                                             readonly>
 
-                                                                        <input type="hidden" name="relationButton"
-                                                                            id="relationButtonHidden" value="O">
+                                                                        <input type="hidden" name="relation_guardian_id"
+                                                                            id="relationButtonHidden" value="{{ old('relation_guardian_id', isset($student) ? $student->relation_guardian_id : '3') }}">
 
                                                                         @if ($errors->has('relation'))
                                                                             <span class="text-danger">
@@ -1122,7 +1122,7 @@
                                                                                 <input
                                                                                     class="primary_input_field form-control{{ $errors->has('document_title_1') ? ' is-invalid' : '' }}"
                                                                                     type="text" name="document_title_1"
-                                                                                    value="{{ old('document_title_1') }}">
+                                                                                    value="{{ old('document_title_1', isset($student) ? $student->document_title_1 : '') }}">
                                                                                 @if ($errors->has('document_title_1'))
                                                                                     <span class="text-danger">
                                                                                         {{ $errors->first('document_title_1') }}
@@ -1136,10 +1136,10 @@
                                                                                 <div class="primary_file_uploader">
                                                                                     <input class="primary_input_field"
                                                                                         type="text"
-                                                                                        name="document_title_1"
                                                                                         id="placeholderFileOneName"
                                                                                         placeholder="01  document_file_1 * "
-                                                                                        readonly="">
+                                                                                        readonly=""
+                                                                                        value="{{ isset($student) ? $student->document_file_1 : '' }}">
                                                                                     <button class="" type="button">
                                                                                         <label
                                                                                             class="primary-btn small fix-gr-bg"
@@ -1166,7 +1166,7 @@
                                                                                 <input
                                                                                     class="primary_input_field form-control{{ $errors->has('document_title_2') ? ' is-invalid' : '' }}"
                                                                                     type="text" name="document_title_2"
-                                                                                    value="{{ old('document_title_2') }}">
+                                                                                    value="{{ old('document_title_2', isset($student) ? $student->document_title_2 : '') }}">
 
 
                                                                                 @if ($errors->has('document_title_2'))
@@ -1350,21 +1350,21 @@
                                                                             </span>
                                                                         </label>
                                                                         <select
-                                                                            class="primary_select form-control{{ $errors->has('dormitory_name') ? ' is-invalid' : '' }}"
-                                                                            name="dormitory_name" id="SelectDormitory">
+                                                                            class="primary_select form-control{{ $errors->has('dormitory_id') ? ' is-invalid' : '' }}"
+                                                                            name="dormitory_id" id="SelectDormitory">
                                                                             <option data-display="@lang('dormitory.dormitory_name') "
                                                                                 value="">
                                                                                 @lang('dormitory.dormitory_name')
 
                                                                             </option>
-                                                                            <option value="1"> 1 </option>
-                                                                            <option value="2"> 2 </option>
+                                                                            <option value="1" {{ old('dormitory_id', isset($student) ? $student->dormitory_id : '') == '1' ? 'selected' : '' }}> 1 </option>
+                                                                            <option value="2" {{ old('dormitory_id', isset($student) ? $student->dormitory_id : '') == '2' ? 'selected' : '' }}> 2 </option>
                                                                         </select>
 
                                                                     </div>
-                                                                    @if ($errors->has('dormitory_name'))
+                                                                    @if ($errors->has('dormitory_id'))
                                                                         <span class="text-danger">
-                                                                            {{ $errors->first('dormitory_name') }}
+                                                                            {{ $errors->first('dormitory_id') }}
                                                                         </span>
                                                                     @endif
                                                                 </div>
@@ -1489,6 +1489,19 @@
                 $('#relation').val(relationText);
                 $('#relationButtonHidden').val(relationValue);
             });
+
+            // Initialize relation on page load
+            let initialRelation = $('#relationButtonHidden').val();
+            if (initialRelation === '1') {
+                $('#relationFather').prop('checked', true);
+                $('#relation').val('Father');
+            } else if (initialRelation === '2') {
+                $('#relationMother').prop('checked', true);
+                $('#relation').val('Mother');
+            } else {
+                $('#relationOther').prop('checked', true);
+                $('#relation').val('Other');
+            }
 
         })
         $(document).on('change', '#addStudentImage', function(event) {
