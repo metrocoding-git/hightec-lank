@@ -57,4 +57,9 @@ class Fee_invoices extends Model
     {
         return $this->hasMany(Invoices_payments::class, 'invoice_id', 'id');
     }
+
+    public function paidCourses()
+    {
+        return $this->hasMany(PaidCourse::class, 'invoice_id');
+    }
 }

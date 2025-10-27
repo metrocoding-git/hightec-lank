@@ -33,6 +33,15 @@ class InvoiceController extends Controller
     }
 
     /**
+     * Display the invoice report.
+     */
+    public function invoiceReport()
+    {
+        $fee_invoices = Fee_invoices::with('student', 'branch', 'invoice_item', 'payments')->get();
+        return view('pages.student.fees.fee-invoice-report', compact('fee_invoices'));
+    }
+
+    /**
      * Show the form for creating a new resource.
      */
     public function create()
@@ -809,5 +818,67 @@ class InvoiceController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get invoice report data for a specific invoice
+     */
+    public function getInvoiceReport($invoiceId)
+{
+    try {
+        $invoice = Fee_invoices::with(['student', 'branch', 'invoice_item.fee_type', 'payments', 'paidCourses.course'])
+            ->findOrFail($invoiceId);
+
+        $courseName = 'N/A';
+        $created_at = 'N/A';
+        $expiration_date = 'N/A';
+        $created_to_due = 'N/A';
+
+        try {
+            if ($invoice->paidCourses && $invoice->paidCourses->first()) {
+                $course = $invoice->paidCourses->first()->course;
+
+                $courseName = $course->name ?? 'N/A';
+
+                // Format created_at as date
+                $created_at = $course->created_at
+                    ? Carbon::parse($course->created_at)->format('Y-m-d')
+                    : 'N/A';
+
+                // Get expiration_date (integer number of days)
+                $expiration_date = is_numeric($course->expiration_date)
+                    ? (int)$course->expiration_date
+                    : 'N/A';
+
+                // Add expiration days to created_at
+                if ($created_at !== 'N/A' && is_int($expiration_date)) {
+                    $created_to_due = Carbon::parse($created_at)
+                        ->addDays($expiration_date)
+                        ->format('Y-m-d');
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Error calculating due date: ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'success' => true,
+            'invoice' => $invoice,
+            'invoice_items' => $invoice->invoice_item,
+            'payments' => $invoice->payments,
+            'course_name' => $courseName,
+            'created_at' => $created_at,
+            'expiration_date' => $expiration_date,
+            'created_to_due' => $created_to_due,
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Error fetching invoice report: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching invoice report',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+}
+
 
 }

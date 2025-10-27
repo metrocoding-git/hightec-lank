@@ -52,11 +52,12 @@
                                             <tr>
                                                 <th>ID</th>
                                                 <th>Main Invoice No.</th>
+                                                {{-- <th>Course</th> --}}
                                                 <th>@lang('common.student')</th>
                                                 <th>Branch</th>
                                                 <th>@lang('admin.admission_no')</th>
                                                 <th>@lang('accounts.amount')(Rs)</th>
-                                                <th>@lang('fees.paid')(Rs)</th>
+                                                {{-- <th>@lang('fees.paid')(Rs)</th> --}}
                                                 <th>@lang('accounts.balance')(Rs)</th>
                                                 <th>Payment Method</th>
                                                 <th>Payment Status</th>
@@ -69,6 +70,7 @@
 
                                         <tbody>
                                             @foreach ($fee_invoices as $key => $invoice)
+                                            {{-- {{ dd($invoice) }} --}}
                                                 @php
                                                     $amount = $invoice->total_amount;
                                                     $paid_amount = $invoice->paid_amount;
@@ -83,6 +85,11 @@
                                                             {{ $invoice->main_invoice_number }}
                                                         </a>
                                                     </td>
+                                                    {{-- <td>{{ $invoice->paidCourses->course->name }}</td> --}}
+                                                    {{-- <td>
+                                                        {{ $invoice->paidCourses->first() ? $invoice->paidCourses->first()->course->name : 'N/A' }} ({{ $invoice->paidCourses->first() ? $invoice->paidCourses->first()->course_id : 'N/A' }})
+                                                    </td> --}}
+                                                    
                                                     <td>
                                                         <a href="{{ route('fees.fee-invoice-view', ['id' => $invoice->id, 'state' => 'view']) }}"
                                                             target="_blank">
@@ -93,7 +100,7 @@
                                                     <td>{{ $invoice->student->admission_number }}</td>
 
                                                     <td>{{ $amount }}</td>
-                                                    <td>{{ $paid_amount }}</td>
+                                                    {{-- <td>{{ $paid_amount }}</td> --}}
                                                     <td>{{ $balance }}.00</td>
                                                     <td>{{ $invoice->payment_method }}</td>
 
@@ -132,6 +139,7 @@
                                                                 <a class="dropdown-item" data-toggle="modal"
                                                                     data-target="#viewPaymentHistoryModal"
                                                                     data-invoice-id="{{ $invoice->id }}"
+                                                                    data-course-name="{{ $invoice->paidCourses->first() ? $invoice->paidCourses->first()->course->name : 'N/A' }}"
                                                                     href="#">View Payment</a>
 
                                                                 {{-- Show Make Invoice option for non-returned invoices --}}
@@ -148,6 +156,12 @@
                                                                         href="#">Return</a>
                                                                 @endif
                                                             @endif
+
+                                                            {{-- Show Report option --}}
+                                                            <a class="dropdown-item" data-toggle="modal"
+                                                                data-target="#invoiceReportModal"
+                                                                data-invoice-id="{{ $invoice->id }}"
+                                                                href="#">Report</a>
 
                                                             {{-- Always show Delete option --}}
                                                             <a class="dropdown-item" data-toggle="modal"
@@ -682,7 +696,7 @@
                                     <div class="modal-content">
                                         <div class="modal-header">
                                             <h4 class="modal-title" id="viewPaymentHistoryModalLabel">Payment History for
-                                                Invoice #<span id="paymentHistoryInvoiceId"></span></h4>
+                                                Invoice #<span id="paymentHistoryInvoiceId"></span> </h4>
                                             <button type="button" class="close" data-dismiss="modal"
                                                 aria-label="Close">
                                                 <span aria-hidden="true">&times;</span>
@@ -917,6 +931,35 @@
         </div>
     </section>
 
+    <!-- Invoice Report Modal -->
+    <div class="modal fade admin-query" id="invoiceReportModal" tabindex="-1" role="dialog"
+        aria-labelledby="invoiceReportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="invoiceReportModalLabel">Invoice Report for Invoice #<span id="reportInvoiceId"></span></h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="report-container" id="invoiceReportContent">
+                        <!-- Report content will be loaded here via AJAX -->
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <p>Loading invoice report...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="primary-btn tr-bg" data-dismiss="modal">@lang('common.close')</button>
+                    <button type="button" class="primary-btn fix-gr-bg" onclick="printReport()">Print Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     {{-- View Fees Modal End --}}
 @endsection
@@ -1153,9 +1196,11 @@
         $('#viewPaymentHistoryModal').on('show.bs.modal', function(event) {
             var button = $(event.relatedTarget);
             var invoiceId = button.data('invoice-id');
+            var courseName = button.data('course-name'); // Get course name
             var modal = $(this);
 
             modal.find('#paymentHistoryInvoiceId').text(invoiceId);
+            modal.find('#paymentHistoryCourseName').text(courseName || 'N/A'); // Display course name
             modal.find('#addPaymentInvoiceId').val(invoiceId); // Set invoice ID for add payment form
 
             // Fetch payment history and invoice details via AJAX
@@ -1184,7 +1229,7 @@
                     modal.find('#paymentAmountInput').attr('max', response.due_amount);
 
                     let historyHtml =
-                        '<table class="table table-bordered" style="text-align: center; width: 100%;"><thead style="background-color: #f8f9fa;"><tr><th style="text-align: center; padding: 12px;">Invoice Number</th><th style="text-align: center; padding: 12px;">Amount</th><th style="text-align: center; padding: 12px;">Method</th><th style="text-align: center; padding: 12px;">Type</th><th style="text-align: center; padding: 12px;">Receipt No.</th><th style="text-align: center; padding: 12px;">Date</th><th style="text-align: center; padding: 12px;">Action</th></tr></thead><tbody>';
+                        '<table class="table table-bordered" style="text-align: center; width: 100%;"><thead style="background-color: #f8f9fa;"><tr><th style="text-align: center; padding: 12px;">Invoice Number</th><th style="text-align: center; padding: 12px;">Course Name</th><th style="text-align: center; padding: 12px;">Amount</th><th style="text-align: center; padding: 12px;">Method</th><th style="text-align: center; padding: 12px;">Type</th><th style="text-align: center; padding: 12px;">Receipt No.</th><th style="text-align: center; padding: 12px;">Date</th><th style="text-align: center; padding: 12px;">Action</th></tr></thead><tbody>';
                     if (response.payments.length > 0) {
                         response.payments.forEach(function(payment) {
                             let actionDropdown = '';
@@ -1206,6 +1251,7 @@
                             historyHtml += `
                                 <tr style="border-bottom: 1px solid #dee2e6;">
                                     <td style="padding: 12px; text-align: center;">${payment.payment_invoice_number || 'N/A'}</td>
+                                    <td style="padding: 12px; text-align: center;">${courseName || 'N/A'}</td>
                                     <td style="padding: 12px; text-align: center;">${payment.amount}</td>
                                     <td style="padding: 12px; text-align: center;">${payment.payment_method}</td>
                                     <td style="padding: 12px; text-align: center;">${payment.payment_type}</td>
@@ -1228,7 +1274,7 @@
                         });
                     } else {
                         historyHtml +=
-                            '<tr><td colspan="7" style="text-align: center; padding: 20px; color: #6c757d;">No payment history found.</td></tr>';
+                            '<tr><td colspan="8" style="text-align: center; padding: 20px; color: #6c757d;">No payment history found.</td></tr>';
                     }
                     historyHtml += '</tbody></table>';
                     modal.find('#paymentHistoryContent').html(historyHtml);
@@ -1722,5 +1768,93 @@
             // Show the modal
             $('#viewBankDetailsModal').modal('show');
         });
+
+        // Handle invoice report modal
+        $('#invoiceReportModal').on('show.bs.modal', function(event) {
+            var button = $(event.relatedTarget);
+            var invoiceId = button.data('invoice-id');
+            var modal = $(this);
+
+            modal.find('#reportInvoiceId').text(invoiceId);
+
+            // Fetch invoice report data via AJAX
+            $.ajax({
+                url: `/student/fees/invoice-report/${invoiceId}`, // New route for fetching invoice report
+                type: 'GET',
+                beforeSend: function() {
+                    modal.find('#invoiceReportContent').html(`
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <p>Loading invoice report...</p>
+                        </div>
+                    `);
+                },
+                success: function(response) {
+                    console.log('Invoice report response:', response);
+                    // Format date to show only date, month, year
+                    const date = new Date(response.invoice.create_date);
+                    const formattedDate = date.toLocaleDateString('en-US', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    });
+
+                    // Format created_to_due to YMD
+
+                    // Generate report HTML based on the provided style
+                    let reportHtml = `
+                        <div class="invoice-report" style="font-family: Arial, sans-serif; max-width:800px; padding:40px; margin: 0 auto; padding: 20px; background: white;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; margin-top:40px;">
+                                <div style="flex: 1;">
+                                    <h3 style="margin: 0; font-size: 14px; font-weight: bold; color: #333;">${response.course_name}</h3>
+                                </div>
+                                <div style="text-align: right;">
+                                    <p style="margin: 0; font-size: 14px; color: #666;">${formattedDate}</p>
+                                    <p style="margin: 5px 0 0 0; font-size: 14px; font-weight: bold; color: #333;">${response.invoice.main_invoice_number}</p>
+                                    <p style="margin: 5px 0 0 0; font-size: 14px; font-weight: bold; color: #333;">${response.invoice.student.admission_number}</p>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 40px; margin-left: 80px;">
+                                <p style="margin: 0; font-size: 14px; font-weight: bold; color: #333;">${response.invoice.student.student_name}</p>
+                                <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">${response.invoice.student.national_id_number || 'N/A'}</p>
+                                <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">${response.invoice.student.permanent_address || 'N/A'}</p>
+                                <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">${response.invoice.student.phone_number || 'N/A'}</p>
+                            </div>
+
+                            <div style=" align-items: center;  padding-top: 15px;">
+                                <div style="font-size: 14px; font-weight: bold; color: #333;">${response.invoice.total_amount}</div>
+                                <div style="font-size: 14px; font-weight: bold; color: #333;">${response.invoice.paid_amount}</div>
+                                <div style="font-size: 14px; font-weight: bold; color: #333;">${response.invoice.due_amount}</div>
+                                <div style="font-size: 14px; font-weight: bold; color: #333;">${response.created_to_due}</div>
+
+                            </div>
+                        </div>
+                    `;
+                    modal.find('#invoiceReportContent').html(reportHtml);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching invoice report:', xhr.responseText);
+                    modal.find('#invoiceReportContent').html(`
+                        <div class="alert alert-danger">Error loading invoice report. Please try again.</div>
+                    `);
+                }
+            });
+        });
+
+        // Function to print the report
+        function printReport() {
+            var printContent = document.getElementById('invoiceReportContent').innerHTML;
+            var originalContent = document.body.innerHTML;
+
+            document.body.innerHTML = printContent;
+            window.print();
+            document.body.innerHTML = originalContent;
+
+            // Reinitialize any necessary scripts after printing
+            location.reload();
+        }
     </script>
 @endpush
