@@ -1815,14 +1815,14 @@
                                 </div>
                             </div>
 
-                            <div style="margin-bottom: 20px;">
+                            <div style="margin-bottom: 40px; margin-left: 40px;">
                                 <p style="margin: 0; font-size: 14px; font-weight: bold; color: #333;">${response.invoice.student.student_name}</p>
                                 <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">National ID: ${response.invoice.student.national_id_number || 'N/A'}</p>
                                 <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">${response.invoice.student.permanent_address || 'N/A'}</p>
                                 <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">${response.invoice.student.phone_number || 'N/A'}</p>
                             </div>
 
-                            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #ddd; padding-top: 15px;">
+                            <div style=" align-items: center; border-top: 1px solid #ddd; padding-top: 15px;">
                                 <div style="font-size: 14px; font-weight: bold; color: #333;">${response.invoice.total_amount}</div>
                                 <div style="font-size: 14px; color: #666;">Registration fee</div>
                             </div>
