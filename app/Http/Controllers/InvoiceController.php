@@ -33,6 +33,15 @@ class InvoiceController extends Controller
     }
 
     /**
+     * Display the invoice report.
+     */
+    public function invoiceReport()
+    {
+        $fee_invoices = Fee_invoices::with('student', 'branch', 'invoice_item', 'payments')->get();
+        return view('pages.student.fees.fee-invoice-report', compact('fee_invoices'));
+    }
+
+    /**
      * Show the form for creating a new resource.
      */
     public function create()
@@ -805,6 +814,39 @@ class InvoiceController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching return fee data',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get invoice report data for a specific invoice
+     */
+    public function getInvoiceReport($invoiceId)
+    {
+        try {
+            $invoice = Fee_invoices::with(['student', 'branch', 'invoice_item.fee_type', 'payments', 'paidCourses.course'])
+                ->findOrFail($invoiceId);
+
+            $courseName = 'N/A';
+            try {
+                $courseName = $invoice->paidCourses && $invoice->paidCourses->first() ? $invoice->paidCourses->first()->course->name : 'N/A';
+            } catch (\Exception $e) {
+                $courseName = 'N/A';
+            }
+
+            return response()->json([
+                'success' => true,
+                'invoice' => $invoice,
+                'invoice_items' => $invoice->invoice_item,
+                'payments' => $invoice->payments,
+                'course_name' => $courseName,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching invoice report: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching invoice report',
                 'error' => $e->getMessage(),
             ], 500);
         }

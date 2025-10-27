@@ -157,6 +157,12 @@
                                                                 @endif
                                                             @endif
 
+                                                            {{-- Show Report option --}}
+                                                            <a class="dropdown-item" data-toggle="modal"
+                                                                data-target="#invoiceReportModal"
+                                                                data-invoice-id="{{ $invoice->id }}"
+                                                                href="#">Report</a>
+
                                                             {{-- Always show Delete option --}}
                                                             <a class="dropdown-item" data-toggle="modal"
                                                                 data-target="#deletecategoryModal{{ $invoice->id }}"
@@ -925,6 +931,35 @@
         </div>
     </section>
 
+    <!-- Invoice Report Modal -->
+    <div class="modal fade admin-query" id="invoiceReportModal" tabindex="-1" role="dialog"
+        aria-labelledby="invoiceReportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="invoiceReportModalLabel">Invoice Report for Invoice #<span id="reportInvoiceId"></span></h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="report-container" id="invoiceReportContent">
+                        <!-- Report content will be loaded here via AJAX -->
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <p>Loading invoice report...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="primary-btn tr-bg" data-dismiss="modal">@lang('common.close')</button>
+                    <button type="button" class="primary-btn fix-gr-bg" onclick="printReport()">Print Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     {{-- View Fees Modal End --}}
 @endsection
@@ -1733,5 +1768,134 @@
             // Show the modal
             $('#viewBankDetailsModal').modal('show');
         });
+
+        // Handle invoice report modal
+        $('#invoiceReportModal').on('show.bs.modal', function(event) {
+            var button = $(event.relatedTarget);
+            var invoiceId = button.data('invoice-id');
+            var modal = $(this);
+
+            modal.find('#reportInvoiceId').text(invoiceId);
+
+            // Fetch invoice report data via AJAX
+            $.ajax({
+                url: `/student/fees/invoice-report/${invoiceId}`, // New route for fetching invoice report
+                type: 'GET',
+                beforeSend: function() {
+                    modal.find('#invoiceReportContent').html(`
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <p>Loading invoice report...</p>
+                        </div>
+                    `);
+                },
+                success: function(response) {
+                    console.log('Invoice report response:', response);
+                    // Generate report HTML based on response
+                    let reportHtml = `
+                        <div class="invoice-report">
+                            <h5>Invoice Details</h5>
+                            <table class="table table-bordered">
+                                <tr><td><strong>Invoice ID:</strong></td><td>${response.invoice.id}</td></tr>
+                                <tr><td><strong>Main Invoice Number:</strong></td><td>${response.invoice.main_invoice_number}</td></tr>
+                                <tr><td><strong>Student:</strong></td><td>${response.invoice.student.student_name}</td></tr>
+                                <tr><td><strong>Branch:</strong></td><td>${response.invoice.branch.name}</td></tr>
+                                <tr><td><strong>Admission Number:</strong></td><td>${response.invoice.student.admission_number}</td></tr>
+                                <tr><td><strong>Course:</strong></td><td>${response.course_name}</td></tr>
+                                <tr><td><strong>Total Amount:</strong></td><td>${response.invoice.total_amount}</td></tr>
+                                <tr><td><strong>Paid Amount:</strong></td><td>${response.invoice.paid_amount}</td></tr>
+                                <tr><td><strong>Balance:</strong></td><td>${response.invoice.total_amount - response.invoice.paid_amount}</td></tr>
+                                <tr><td><strong>Payment Method:</strong></td><td>${response.invoice.payment_method}</td></tr>
+                                <tr><td><strong>Payment Status:</strong></td><td>${response.invoice.payment_status}</td></tr>
+                                <tr><td><strong>Create Date:</strong></td><td>${response.invoice.create_date}</td></tr>
+                                <tr><td><strong>Due Date:</strong></td><td>${response.invoice.due_date}</td></tr>
+                            </table>
+
+                            <h5>Invoice Items</h5>
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Fee Type</th>
+                                        <th>Amount</th>
+                                        <th>Paid Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    if (response.invoice_items.length > 0) {
+                        response.invoice_items.forEach(function(item) {
+                            reportHtml += `
+                                <tr>
+                                    <td>${item.fee_type.name}</td>
+                                    <td>${item.amount}</td>
+                                    <td>${item.paid_amount}</td>
+                                </tr>
+                            `;
+                        });
+                    } else {
+                        reportHtml += '<tr><td colspan="3">No items found.</td></tr>';
+                    }
+                    reportHtml += `
+                                </tbody>
+                            </table>
+
+                            <h5>Payment History</h5>
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Receipt Number</th>
+                                        <th>Amount</th>
+                                        <th>Method</th>
+                                        <th>Type</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    if (response.payments.length > 0) {
+                        response.payments.forEach(function(payment) {
+                            reportHtml += `
+                                <tr>
+                                    <td>${payment.receipt_number}</td>
+                                    <td>${payment.amount}</td>
+                                    <td>${payment.payment_method}</td>
+                                    <td>${payment.payment_type}</td>
+                                    <td>${new Date(payment.created_at).toLocaleDateString()}</td>
+                                </tr>
+                            `;
+                        });
+                    } else {
+                        reportHtml += '<tr><td colspan="5">No payments found.</td></tr>';
+                    }
+                    reportHtml += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    modal.find('#invoiceReportContent').html(reportHtml);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching invoice report:', xhr.responseText);
+                    modal.find('#invoiceReportContent').html(`
+                        <div class="alert alert-danger">Error loading invoice report. Please try again.</div>
+                    `);
+                }
+            });
+        });
+
+        // Function to print the report
+        function printReport() {
+            var printContent = document.getElementById('invoiceReportContent').innerHTML;
+            var originalContent = document.body.innerHTML;
+
+            document.body.innerHTML = printContent;
+            window.print();
+            document.body.innerHTML = originalContent;
+
+            // Reinitialize any necessary scripts after printing
+            location.reload();
+        }
     </script>
 @endpush
