@@ -28,6 +28,7 @@ use App\Http\Controllers\StudentCategoryController;
 use App\Http\Controllers\ItemSellController; // Import the new controller
 use App\Http\Controllers\ReportController; // Import the new controller
 use App\Http\Controllers\RoleController; // Import the new controller
+use App\Http\Controllers\StudentViewController; // Import the new controller
 
 Route::controller(HomeController::class)->middleware(['permission'])->group(callback: function () {
     Route::get('dashboard', 'dashboard')->name('dashboard');
@@ -153,7 +154,7 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
 
     Route::get('student/student-info/student-list', 'studentList')->name('student-list');
     Route::put('student/update-status', 'updateStudetStatus')->name('student.update-status');
-    Route::get('student/student-info/student-view/{id}', 'studentView')->name('student-details');
+    Route::get('student/student-info/student-view/{id}', [StudentViewController::class, 'studentView'])->name('student-details');
 
     Route::get('student/student-info/disabled-student', 'disabledStudents')->name('disabled-students');
     Route::get('student/student-info/student-attendance', 'studentAttendance')->name('student-attendance');
