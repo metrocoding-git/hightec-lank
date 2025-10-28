@@ -486,11 +486,11 @@
             table-layout: fixed;
         }
 
-        .table-bordered th,
+        /* .table-bordered th,
         .table-bordered td {
             padding: 20px;
             font-size: 18px;
-        }
+        } */
 
         .table-bordered td {
             opacity: 0.9;
