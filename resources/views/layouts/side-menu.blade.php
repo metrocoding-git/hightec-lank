@@ -557,6 +557,14 @@
                     </a>
                 </li>
                 @endif
+                @if(Auth::check() && Auth::user()->hasPermission('fees.course-paid'))
+                <li>
+                    <a href="/reports/course-paid"
+                        class="{{ request()->is('reports/course-paid') ? 'active a' : '' }}">
+                        Course Paid
+                    </a>
+                </li>
+                @endif
             </ul>
         </li>
         @endif

@@ -35,8 +35,8 @@
                                         <thead>
                                             <tr>
                                                 <th>ID</th>
-                                                <th>Reference No</th>
                                                 <th>Item Name</th>
+                                                <th>Reference No</th>
                                                 <th>Buyer Name</th>
                                                 <th>Sell Date</th>
                                                 <th>Sell Price</th>
@@ -50,31 +50,31 @@
                                                 @foreach ($itemSells as $key => $itemSell)
                                                     <tr>
                                                         <td>{{ $key + 1 }}</td>
-                                                        <td>{{ $itemSell->reference_no }}</td>
                                                         <td>{{ $itemSell->item ? $itemSell->item->item_name : 'N/A' }}</td>
+                                                        <td>{{ $itemSell->itemSellBatch->reference_no }}</td>
                                                         <td>
-                                                            @if ($itemSell->role_id == 2 && $itemSell->student)
-                                                                {{ $itemSell->student->student_name }}
-                                                            @elseif ($itemSell->role_id == 0 && $itemSell->others_name)
-                                                                {{ $itemSell->others_name }}
-                                                            @elseif ($itemSell->role_id == 3 && $itemSell->user)
-                                                                {{ $itemSell->user->name }}
+                                                            @if ($itemSell->itemSellBatch->role_id == 2 && $itemSell->itemSellBatch->student)
+                                                                {{ $itemSell->itemSellBatch->student->student_name }}
+                                                            @elseif ($itemSell->itemSellBatch->role_id == 0 && $itemSell->itemSellBatch->others_name)
+                                                                {{ $itemSell->itemSellBatch->others_name }}
+                                                            @elseif ($itemSell->itemSellBatch->role_id == 3 && $itemSell->itemSellBatch->user)
+                                                                {{ $itemSell->itemSellBatch->user->name }}
                                                             @else
                                                                 N/A
                                                             @endif
                                                         </td>
-                                                        <td>{{ $itemSell->sell_date ? \Carbon\Carbon::parse($itemSell->sell_date)->format('m/d/Y') : '' }}</td>
-                                                        <td>{{ number_format((float) $itemSell->sell_price, 2, '.', '') }}</td>
-                                                        <td>{{ $itemSell->total_quantity }}</td>
-                                                        <td>{{ number_format((float) $itemSell->total_paid, 2, '.', '') }}</td>
+                                                        <td>{{ $itemSell->itemSellBatch->sell_date ? \Carbon\Carbon::parse($itemSell->itemSellBatch->sell_date)->format('m/d/Y') : '' }}</td>
+                                                        <td>{{ number_format((float) $itemSell->unit_price, 2, '.', '') }}</td>
+                                                        <td>{{ $itemSell->quantity }}</td>
+                                                        <td>{{ number_format((float) $itemSell->itemSellBatch->total_paid, 2, '.', '') }}</td>
                                                         <td>
-                                                            @if ($itemSell->status == 'P')
+                                                            @if ($itemSell->itemSellBatch->status == 'P')
                                                                 Paid
-                                                            @elseif($itemSell->status == 'PP')
+                                                            @elseif($itemSell->itemSellBatch->status == 'PP')
                                                                 Partial
-                                                            @elseif($itemSell->status == 'U')
+                                                            @elseif($itemSell->itemSellBatch->status == 'U')
                                                                 Unpaid
-                                                            @elseif($itemSell->status == 'R')
+                                                            @elseif($itemSell->itemSellBatch->status == 'R')
                                                                 Returned
                                                             @else
                                                                 N/A

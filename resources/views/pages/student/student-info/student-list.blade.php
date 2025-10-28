@@ -156,6 +156,11 @@
                                                     <td valign="top">
                                                         @php
                                                             $routeList = [
+                                                                '<a class="dropdown-item" target="_blank" href="' .
+                                                                route('student-details', $student->id) .
+                                                                '">' .
+                                                                __('common.view') .
+                                                                '</a>',
                                                                 '<a class="dropdown-item" href="' .
                                                                 route('add-student.edit', $student->id) .
                                                                 '">' .
@@ -163,7 +168,7 @@
                                                                 '</a>',
                                                                 '<a class="dropdown-item" data-toggle="modal" data-student-id="' .
                                                                 $student->id .
-                                                                '" data-target="#statusUpdateModal" 
+                                                                '" data-target="#statusUpdateModal"
                                                                 href="' .
                                                                 route('student.update-status', $student->id) .
                                                                 '">' .

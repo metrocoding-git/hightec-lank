@@ -70,9 +70,9 @@ class HomeController extends Controller
 
         // Fetch counts
         $studentsCount = Student::count();
-        $teachersCount = User::where('role_id', 4)->count(); // Assuming role_id 4 is teacher
-        $parentsCount = User::where('role_id', 5)->count(); // Assuming role_id 5 is parent
-        $staffsCount = User::where('role_id', 6)->count(); // Assuming role_id 6 is staff
+        $teachersCount = User::whereHas('role', function($q) { $q->where('role_name', 'Teacher'); })->count();
+        $labourCount = User::whereHas('role', function($q) { $q->where('role_name', 'Labour'); })->count();
+        $adminCount = User::whereHas('role', function($q) { $q->where('role_name', 'Admin'); })->count();
 
         // Fetch financial data using existing models
         $totalIncome = FeeInvoice::sum('paid_amount');
@@ -86,6 +86,9 @@ class HomeController extends Controller
         // Fetch events using Course model
         $events = Course::all();
 
+        // Fetch branches with intakes and courses
+        $branches = Branch::with(['intakes.courses'])->get();
+
         // Fetch todos - using a simple array for now
         $todos = []; // Or create a model later
 
@@ -93,14 +96,15 @@ class HomeController extends Controller
             'user',
             'studentsCount',
             'teachersCount',
-            'parentsCount',
-            'staffsCount',
+            'labourCount',
+            'adminCount',
             'totalIncome',
             'totalExpenses',
             'totalProfit',
             'totalRevenue',
             'notices',
             'events',
+            'branches',
             'todos'
         ));
     }
