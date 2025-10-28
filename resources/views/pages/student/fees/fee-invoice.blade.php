@@ -139,7 +139,7 @@
                                                                 <a class="dropdown-item" data-toggle="modal"
                                                                     data-target="#viewPaymentHistoryModal"
                                                                     data-invoice-id="{{ $invoice->id }}"
-                                                                    data-course-name="{{ $invoice->paidCourses->first() ? $invoice->paidCourses->first()->course->name : 'N/A' }}"
+                                                                    data-course-name="{{ optional(optional($invoice->paidCourses->first())->course)->name ?? 'N/A' }}"
                                                                     href="#">View Payment</a>
 
                                                                 {{-- Show Make Invoice option for non-returned invoices --}}
