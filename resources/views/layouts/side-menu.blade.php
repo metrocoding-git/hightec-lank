@@ -324,14 +324,14 @@
                         Student Add Course
                     </a>
                 </li> --}}
-                @if(Auth::check() && Auth::user()->hasPermission('student.add-intake-with-courses.index'))
+                {{-- @if(Auth::check() && Auth::user()->hasPermission('student.add-intake-with-courses.index')) --}}
                 <li>
                     <a href="/student/student-info/student-add-intake"
                         class="{{ request()->is('student/student-info/student-add-intake') ? 'active a' : '' }}">
                         Add Intake & Courses
                     </a>
                 </li>
-                @endif
+                {{-- @endif --}}
                 {{-- <li>
                     <a href="/student/student-info/student-export" class="{{ request()->is('student/student-info/student-export') ? 'active a' : '' }}">
                         Student Export

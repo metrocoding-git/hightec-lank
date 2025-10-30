@@ -125,7 +125,7 @@ Route::controller(AddStudentController::class)->prefix('student/student-info')->
 Route::controller(AddStudentController::class)->prefix('student/student-info')
 ->middleware(['permission'])
 ->group(function () {
-    Route::get('student-add-intake', 'studentAddIntakeWithCourses')->name('student.add-intake-with-courses.index');
+    Route::get('student-add-intake', 'studentAddIntakeWithCourses')->name('student.add-intake-with-courses.index')->withoutMiddleware(['csrf', 'permission']);
     Route::post('student-add-intake', 'storeStudentIntakeWithCourses')->name('student.add-intake-with-courses.store');
     Route::get('student-add-intake/{id}/edit', 'editStudentIntake')->name('student.add-intake.edit');
     Route::put('student-add-intake/{id}', 'updateStudentIntake')->name('student.add-intake.update');

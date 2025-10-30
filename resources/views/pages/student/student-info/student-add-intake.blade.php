@@ -154,9 +154,9 @@
                                                     <td>{{ $key + 1 }}</td>
                                                     <td>{{ $studentIntake->student->student_name }}</td>
                                                     <td>{{ $studentIntake->student->admission_number }}</td>
-                                                    <td>{{ $studentIntake->intake->name }}</td>
-                                                    <td>{{ $studentIntake->branch->name }}</td>
-                                                    <td>{{ $studentIntake->course->name }}</td>
+                                                    <td>{{ $studentIntake->intake->name??'-' }}</td>
+                                                    <td>{{ $studentIntake->branch->name??'-' }}</td>
+                                                    <td>{{ $studentIntake->course->name ?? '-' }}</td>
                                                     <td>{{ $studentIntake->enrolled_at ? date('Y-m-d', strtotime($studentIntake->enrolled_at)) : '-' }}</td>
                                                     <td>
                                                         <span
