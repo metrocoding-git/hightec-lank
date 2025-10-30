@@ -914,6 +914,13 @@
                                                         <input type="text" class="form-control" id="bankPaymentAmountDisplay" readonly>
                                                     </div>
                                                 </div>
+                                                <div class="col-md-12">
+                                                    <div class="form-group">
+                                                        <label for="paymentFileDisplay">Payment File</label>
+                                                        <input type="text" class="form-control" id="paymentFileDisplay" readonly>
+                                                        <a href="#" id="paymentFileLink" target="_blank" style="display: none;">View File</a>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="modal-footer">
@@ -1240,7 +1247,7 @@
                             }
                             if (payment.payment_method === 'Bank Transfer') {
                                 actionDropdown +=
-                                    `<a style="padding:4px;margin: 2px; background-color: #28a745; color: #fff; text-align: center;" class="dropdown-item view-bank-details-btn" href="#" data-payment-id="${payment.id}" data-bank-date="${payment.bank_payment_date}" data-bank-amount="${payment.bank_payment_amount}">View Bank Details</a>`;
+                                    `<a style="padding:4px;margin: 2px; background-color: #28a745; color: #fff; text-align: center;" class="dropdown-item view-bank-details-btn" href="#" data-payment-id="${payment.id}" data-bank-date="${payment.bank_payment_date}" data-bank-amount="${payment.bank_payment_amount}" data-payment-file="${payment.payment_file || ''}">View Bank Details</a>`;
                             }
                             if (payment.payment_method !== 'Refund' && payment
                                 .payment_status !== 'refunded' && payment.amount > 0) {
@@ -1750,6 +1757,7 @@
             e.preventDefault();
             var bankDate = $(this).data('bank-date');
             var bankAmount = $(this).data('bank-amount');
+            var paymentFile = $(this).data('payment-file');
 
             // Format the date if it's a valid date
             if (bankDate) {
@@ -1764,6 +1772,15 @@
             // Set the values in the modal
             $('#bankPaymentDateDisplay').val(bankDate);
             $('#bankPaymentAmountDisplay').val(bankAmount || 'N/A');
+
+            // Handle payment file display
+            if (paymentFile) {
+                $('#paymentFileDisplay').val(paymentFile.split('/').pop()); // Display only the file name
+                $('#paymentFileLink').attr('href', `{{ url('storage') }}/${paymentFile}`).show();
+            } else {
+                $('#paymentFileDisplay').val('N/A');
+                $('#paymentFileLink').hide();
+            }
 
             // Show the modal
             $('#viewBankDetailsModal').modal('show');

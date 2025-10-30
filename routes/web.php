@@ -307,7 +307,7 @@ Route::controller(InvoiceController::class)->middleware(['permission'])->group(f
     Route::post('fees/update-invoice-number', 'updateInvoiceNumber')->name('fees.update-invoice-number');
     Route::post('fees/mark-as-paid', 'markAsPaid')->name('fees.mark-as-paid');
     Route::post('fees/refund-payment/{paymentId}', 'refundPayment')->name('fees.refund-payment')->withoutMiddleware(['csrf', 'permission']);
-    Route::post('fees/add-payment-invoice-number', 'addPaymentInvoiceNumber')->name('fees.add-payment-invoice-number');
+    Route::post('fees/add-payment-invoice-number', 'addPaymentInvoiceNumber')->name('fees.add-payment-invoice-number')->withoutMiddleware(['csrf', 'permission']);
 
     // New route for invoice report
     // Route::get('student/fees/invoice-report', 'invoiceReport')->name('fees.invoice-report')->withoutMiddleware(['permission']);
