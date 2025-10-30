@@ -179,31 +179,6 @@
                                                 </div>
                                             </div>
 
-                                            {{-- <div class="col-lg-12 mb-15" id="selectStaffsDiv">
-                                                <label class="primary_input_label" for="">@lang('common.name') <span
-                                                        class="text-danger"> *</span> </label>
-                                                <select
-                                                    class="primary_select  form-control{{ $errors->has('staff_id') ? ' is-invalid' : '' }}"
-                                                    name="staff_id" id="selectStaffs">
-                                                    <option data-display="@lang('common.name')" value="">
-                                                        @lang('common.name')</option>
-
-
-                                                    @foreach ($users as $value)
-                                                        <option value="{{ $value->id }}">
-                                                            {{ $value->name }}</option>
-                                                    @endforeach
-
-
-                                                </select>
-                                                <div class="text-danger" id="nameError"></div>
-                                                @if ($errors->has('staff_id'))
-                                                    <span class="text-danger invalid-select" role="alert">
-                                                        {{ $errors->first('staff_id') }}
-                                                    </span>
-                                                @endif
-                                            </div> --}}
-
                                             <div class="col-lg-12 mb-15">
                                                 <div class="primary_input">
                                                     <label class="primary_input_label"
@@ -630,6 +605,13 @@
                 $('#student_section').hide();
                 $('#other_section').hide();
 
+                // Clear validation errors and values when sections are hidden
+                $('#select_student').val('').trigger('change'); // Clear student selection
+                $('#studentError').text(''); // Clear student error
+                $('#customer_name').val(''); // Clear customer name
+                $('#customerNameError').text(''); // Clear customer name error
+
+
                 // Show appropriate section based on selection
                 if (selectedValue == '2') {
                     $('#student_section').show();
@@ -655,6 +637,34 @@
 
         $('#item-sell-form').on('submit', function(e) {
             e.preventDefault();
+
+            // Client-side validation
+            let isValid = true;
+            $('#studentError').text('');
+            $('#customerNameError').text('');
+
+            const buyerType = $('#buyer_type').val();
+
+            if (buyerType === '2') { // Student selected
+                if (!$('#select_student').val()) {
+                    $('#studentError').text('Student name is required.');
+                    isValid = false;
+                }
+            } else if (buyerType === '0') { // Other selected
+                if (!$('#customer_name').val()) {
+                    $('#customerNameError').text('Customer name is required.');
+                    isValid = false;
+                }
+            } else { // No buyer type selected
+                $('#buyerError').text('Sell to field is required.');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                toastr.error('Please fill in all required fields.', 'Validation Error');
+                return;
+            }
+
             let formData = $(this).serialize();
 
             $.ajax({
