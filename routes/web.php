@@ -125,7 +125,7 @@ Route::controller(AddStudentController::class)->prefix('student/student-info')->
 Route::controller(AddStudentController::class)->prefix('student/student-info')
 ->middleware(['permission'])
 ->group(function () {
-    Route::get('student-add-intake', 'studentAddIntakeWithCourses')->name('student.add-intake-with-courses.index');
+    Route::get('student-add-intake', 'studentAddIntakeWithCourses')->name('student.add-intake-with-courses.index')->withoutMiddleware(['csrf', 'permission']);
     Route::post('student-add-intake', 'storeStudentIntakeWithCourses')->name('student.add-intake-with-courses.store');
     Route::get('student-add-intake/{id}/edit', 'editStudentIntake')->name('student.add-intake.edit');
     Route::put('student-add-intake/{id}', 'updateStudentIntake')->name('student.add-intake.update');
@@ -307,7 +307,7 @@ Route::controller(InvoiceController::class)->middleware(['permission'])->group(f
     Route::post('fees/update-invoice-number', 'updateInvoiceNumber')->name('fees.update-invoice-number');
     Route::post('fees/mark-as-paid', 'markAsPaid')->name('fees.mark-as-paid');
     Route::post('fees/refund-payment/{paymentId}', 'refundPayment')->name('fees.refund-payment')->withoutMiddleware(['csrf', 'permission']);
-    Route::post('fees/add-payment-invoice-number', 'addPaymentInvoiceNumber')->name('fees.add-payment-invoice-number');
+    Route::post('fees/add-payment-invoice-number', 'addPaymentInvoiceNumber')->name('fees.add-payment-invoice-number')->withoutMiddleware(['csrf', 'permission']);
 
     // New route for invoice report
     // Route::get('student/fees/invoice-report', 'invoiceReport')->name('fees.invoice-report')->withoutMiddleware(['permission']);

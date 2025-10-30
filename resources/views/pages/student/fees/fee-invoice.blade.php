@@ -914,6 +914,13 @@
                                                         <input type="text" class="form-control" id="bankPaymentAmountDisplay" readonly>
                                                     </div>
                                                 </div>
+                                                <div class="col-md-12">
+                                                    <div class="form-group">
+                                                        <label for="paymentFileDisplay">Payment File</label>
+                                                        <input type="text" class="form-control" id="paymentFileDisplay" readonly>
+                                                        <a href="#" id="paymentFileLink" target="_blank" style="display: none;">View File</a>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="modal-footer">
@@ -1240,7 +1247,7 @@
                             }
                             if (payment.payment_method === 'Bank Transfer') {
                                 actionDropdown +=
-                                    `<a style="padding:4px;margin: 2px; background-color: #28a745; color: #fff; text-align: center;" class="dropdown-item view-bank-details-btn" href="#" data-payment-id="${payment.id}" data-bank-date="${payment.bank_payment_date}" data-bank-amount="${payment.bank_payment_amount}">View Bank Details</a>`;
+                                    `<a style="padding:4px;margin: 2px; background-color: #28a745; color: #fff; text-align: center;" class="dropdown-item view-bank-details-btn" href="#" data-payment-id="${payment.id}" data-bank-date="${payment.bank_payment_date}" data-bank-amount="${payment.bank_payment_amount}" data-payment-file="${payment.payment_file || ''}">View Bank Details</a>`;
                             }
                             if (payment.payment_method !== 'Refund' && payment
                                 .payment_status !== 'refunded' && payment.amount > 0) {
@@ -1750,6 +1757,7 @@
             e.preventDefault();
             var bankDate = $(this).data('bank-date');
             var bankAmount = $(this).data('bank-amount');
+            var paymentFile = $(this).data('payment-file');
 
             // Format the date if it's a valid date
             if (bankDate) {
@@ -1764,6 +1772,15 @@
             // Set the values in the modal
             $('#bankPaymentDateDisplay').val(bankDate);
             $('#bankPaymentAmountDisplay').val(bankAmount || 'N/A');
+
+            // Handle payment file display
+            if (paymentFile) {
+                $('#paymentFileDisplay').val(paymentFile.split('/').pop()); // Display only the file name
+                $('#paymentFileLink').attr('href', `{{ url('storage') }}/${paymentFile}`).show();
+            } else {
+                $('#paymentFileDisplay').val('N/A');
+                $('#paymentFileLink').hide();
+            }
 
             // Show the modal
             $('#viewBankDetailsModal').modal('show');
@@ -1805,14 +1822,14 @@
 
                     // Generate report HTML based on the provided style
                     let reportHtml = `
-                        <div class="invoice-report" style="font-family: Arial, sans-serif; max-width:800px; padding:40px; margin: 0 auto; padding: 20px; background: white;">
+                        <div class="invoice-report" style="font-family: Arial, sans-serif; max-width:800px; padding:40px; margin-top:40px; margin-left:auto; padding: 20px; background: white;">
                             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; margin-top:40px;">
                                 <div style="flex: 1;">
                                     <h3 style="margin: 0; font-size: 14px; font-weight: bold; color: #333;">
                                         ${response.course_name && response.course_name !== 'N/A' ? response.course_name : (response.invoice_items && response.invoice_items.length > 0 ? response.invoice_items[0].fee_type.name : 'Fee Details')}
                                     </h3>
                                 </div>
-                                <div style="text-align: right;">
+                                <div style="text-align: left;">
                                     <p style="margin: 0; font-size: 14px; color: #666;">${formattedDate}</p>
                                     <p style="margin: 5px 0 0 0; font-size: 14px; font-weight: bold; color: #333;">${response.invoice.main_invoice_number}</p>
                                     <p style="margin: 5px 0 0 0; font-size: 14px; font-weight: bold; color: #333;">${response.invoice.student.admission_number}</p>
