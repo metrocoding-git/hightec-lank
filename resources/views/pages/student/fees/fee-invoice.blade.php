@@ -1822,14 +1822,14 @@
 
                     // Generate report HTML based on the provided style
                     let reportHtml = `
-                        <div class="invoice-report" style="font-family: Arial, sans-serif; max-width:800px; padding:40px; margin: 0 auto; padding: 20px; background: white;">
+                        <div class="invoice-report" style="font-family: Arial, sans-serif; max-width:800px; padding:40px; margin-top:40px; margin-left:auto; padding: 20px; background: white;">
                             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; margin-top:40px;">
                                 <div style="flex: 1;">
                                     <h3 style="margin: 0; font-size: 14px; font-weight: bold; color: #333;">
                                         ${response.course_name && response.course_name !== 'N/A' ? response.course_name : (response.invoice_items && response.invoice_items.length > 0 ? response.invoice_items[0].fee_type.name : 'Fee Details')}
                                     </h3>
                                 </div>
-                                <div style="text-align: right;">
+                                <div style="text-align: left;">
                                     <p style="margin: 0; font-size: 14px; color: #666;">${formattedDate}</p>
                                     <p style="margin: 5px 0 0 0; font-size: 14px; font-weight: bold; color: #333;">${response.invoice.main_invoice_number}</p>
                                     <p style="margin: 5px 0 0 0; font-size: 14px; font-weight: bold; color: #333;">${response.invoice.student.admission_number}</p>
