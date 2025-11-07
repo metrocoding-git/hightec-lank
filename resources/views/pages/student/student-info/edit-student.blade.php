@@ -164,7 +164,7 @@
                                                                                         id="admission_date" type="date"
                                                                                         name="admission_date"
                                                                                         value="{{ old('admission_date', $student->admission_date) }}"
-                                                                                        autocomplete="off">
+                                                                                        autocomplete="off" readonly>
                                                                                 </div>
                                                                                 <button class="btn-date"
                                                                                     data-id="#admission_date"
@@ -422,7 +422,7 @@
                                                                                         id="date_of_birth" type="date"
                                                                                         name="date_of_birth"
                                                                                         value="{{ old('date_of_birth', $student->date_of_birth) }}"
-                                                                                        autocomplete="off" readonly>
+                                                                                        autocomplete="off" >
                                                                                 </div>
                                                                                 <button class="btn-date"
                                                                                     data-id="#date_of_birth"
