@@ -717,29 +717,12 @@ class HomeController extends Controller
             $request->validate([
                 'invoice_number' => 'required|string|max:255',
             ]);
-        } elseif ($request->payment_method === 'Bank Transfer') {
-            $request->validate([
-                'bank_payment_amount' => 'required|numeric',
-                'bank_payment_date' => 'required|string',
-            ]);
-        }
+    }
 
         try {
-            // Parse date from the UI (m/d/Y) to database format (Y-m-d)
-            $receiveDate = \Carbon\Carbon::createFromFormat('m/d/Y', $request->receive_date)->format('Y-m-d');
-        } catch (\Throwable $e) {
-            // Fallback: try to parse a standard Y-m-d or Y/m/d if user typed differently
-            try {
-                $receiveDate = \Carbon\Carbon::parse($request->receive_date)->format('Y-m-d');
-            } catch (\Throwable $e2) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Invalid receive date format.',
-                ], 422);
-            }
-        }
+            // Parse receive_date from the UI (YYYY-MM-DD) to database format (Y-m-d)
+            $receiveDate = \Carbon\Carbon::createFromFormat('Y-m-d', $request->receive_date)->format('Y-m-d');
 
-        try {
             // Generate a unique transaction ID
             $transactionId = 'TRX-' . time() . '-' . rand(1000, 9999);
 
@@ -752,12 +735,26 @@ class HomeController extends Controller
             // Create one row per item, duplicating header fields as per existing schema
             $createdReceives = [];
             foreach ($request->item_id as $index => $itemId) {
+                $lineTotal = (float) $request->unit_price[$index] * (float) $request->quantity[$index];
+
+                $totalPaidAmount = 0;
+                if ($request->payment_method === 'Bank Transfer') {
+                    $totalPaidAmount = $request->bank_payment_amount ?? 0;
+                } else {
+                    $totalPaidAmount = $request->totalPaid ?? 0;
+                }
+
+                $bankPaymentDate = null;
+                if ($request->payment_method === 'Bank Transfer' && $request->bank_payment_date) {
+                    $bankPaymentDate = \Carbon\Carbon::createFromFormat('Y-m-d', $request->bank_payment_date)->format('Y-m-d');
+                }
+
                 $itemReceive = ItemReceive::create([
                     'transaction_id' => $transactionId,
                     'payment_method' => $request->payment_method,
                     'invoice_number' => $request->payment_method === 'Invoice' ? $request->invoice_number : null,
                     'bank_payment_amount' => $request->payment_method === 'Bank Transfer' ? $request->bank_payment_amount : null,
-                    'bank_payment_date' => $request->payment_method === 'Bank Transfer' ? \Carbon\Carbon::createFromFormat('m/d/Y', $request->bank_payment_date)->format('Y-m-d') : null,
+                    'bank_payment_date' => $bankPaymentDate,
                     'bank_payment_document' => $request->payment_method === 'Bank Transfer' ? $bankPaymentDocumentPath : null,
                     'supplier_id' => $request->supplier_id,
                     'store_id' => $request->store_id,
@@ -767,12 +764,8 @@ class HomeController extends Controller
                     'item_id' => $itemId,
                     'unit_price' => $request->unit_price[$index],
                     'quantity' => $request->quantity[$index],
-                    // Map line total to existing column name 'sub_total'
-                    'sub_total' => $request->total[$index] ?? ((float) $request->unit_price[$index] * (float) $request->quantity[$index]),
-                    // Store overall paid if provided; schema has 'total_paid'
-                    'total_paid' => $request->totalPaid ?? 0,
-                    // Optional bank id if payment_method requires it
-                    'bank_id' => $request->bank_id ?? null,
+                    'sub_total' => $lineTotal,
+                    'total_paid' => $totalPaidAmount,
                 ]);
 
                 $createdReceives[] = $itemReceive;

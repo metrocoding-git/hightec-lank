@@ -631,29 +631,39 @@
         $('#item-receive-form').on('submit', function(e) {
             e.preventDefault(); // prevent normal form submit
 
-            const selectedMethod = $('#item_receive_payment_method').val();
-            const bankPaymentAmount = parseFloat($('#bank_payment_amount').val()) || 0;
-            const subTotal = parseFloat($('#subTotal').val()) || 0;
-
-            if (selectedMethod === 'Bank Transfer' && bankPaymentAmount <= subTotal) {
-                toastr.error("Bank Payment Amount must be greater than the Item Receive Total!", 'Validation Error');
-                return; // Prevent form submission
-            }
-
-            let formData = $(this).serialize();
+            let formData = new FormData($(this)[0]); // Use FormData for file uploads
 
             $.ajax({
                 url: '{{ route('save-item-receive-data') }}',
                 type: 'POST',
                 data: formData,
+                processData: false, // Important for FormData
+                contentType: false, // Important for FormData
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
                 success: function(response) {
-                    toastr.success("Item received successfully!", 'Success');
-                    location.reload(); // or reset form if you want
+                    if (response.success) {
+                        toastr.success(response.message, 'Success');
+                        setTimeout(function() {
+                            window.location.href = '{{ route("item-receive-list") }}';
+                        }, 2000);
+                    } else {
+                        toastr.error(response.message, 'Error');
+                    }
                 },
                 error: function(xhr) {
-                    let errors = xhr.responseJSON.errors;
-                    console.log(errors);
-                    // display errors if needed
+                    console.error('AJAX Error Status:', xhr.status);
+                    console.error('AJAX Error Response Text:', xhr.responseText);
+                    console.error('Full AJAX Error Object:', xhr);
+                    let errors = xhr.responseJSON ? xhr.responseJSON.errors : null;
+                    if (errors) {
+                        $.each(errors, function(key, value) {
+                            toastr.error(value[0], 'Validation Error');
+                        });
+                    } else {
+                        toastr.error('An error occurred while processing your request.', 'Error');
+                    }
                 }
             });
         });
