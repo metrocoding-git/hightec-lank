@@ -610,26 +610,124 @@
                 $('#bankPaymentDocumentField').addClass('d-none');
                 $('#itemReceivebankAccount').addClass('d-none');
 
+                // Clear required attributes when hidden
+                $('#invoice_number').removeAttr('required');
+                $('#bank_payment_amount').removeAttr('required');
+                $('#bank_payment_date').removeAttr('required');
 
                 // Show fields based on selected method
                 if (selectedMethod === 'Invoice') {
                     $('#invoiceNumberField').removeClass('d-none');
+                    $('#invoice_number').attr('required', 'required');
                 } else if (selectedMethod === 'Bank Transfer') {
                     $('#bankPaymentAmountField').removeClass('d-none');
                     $('#bankPaymentDateField').removeClass('d-none');
                     $('#bankPaymentDocumentField').removeClass('d-none');
                     $('#itemReceivebankAccount').removeClass('d-none');
+                    $('#bank_payment_amount').attr('required', 'required');
+                    $('#bank_payment_date').attr('required', 'required');
                 }
             });
 
             // Trigger change on load to set initial state
             $('#item_receive_payment_method').trigger('change');
             // Also update the payment method niceSelect on load
-            $('#item_receive_payment_method').niceSelect('update');
+            if ($.fn.niceSelect) {
+                $('#item_receive_payment_method').niceSelect('update');
+            }
         });
 
         $('#item-receive-form').on('submit', function(e) {
             e.preventDefault(); // prevent normal form submit
+
+            // Frontend validation
+            let isValid = true;
+            $('.error-message').hide(); // Hide all error messages
+            $('.is-invalid').removeClass('is-invalid'); // Remove invalid class
+
+            if (!$('#supplier_id').val()) {
+                $('#supplierError').show();
+                $('#supplier_id').addClass('is-invalid');
+                isValid = false;
+            }
+            if (!$('#store_id').val()) {
+                $('#storeError').show();
+                $('#store_id').addClass('is-invalid');
+                isValid = false;
+            }
+            if (!$('#item_receive_payment_method').val()) {
+                $('#paymentError').show();
+                $('#item_receive_payment_method').addClass('is-invalid');
+                isValid = false;
+            }
+
+            const selectedMethod = $('#item_receive_payment_method').val();
+            if (selectedMethod === 'Invoice') {
+                if (!$('#invoice_number').val()) {
+                    $('#invoiceError').show();
+                    $('#invoice_number').addClass('is-invalid');
+                    isValid = false;
+                }
+            } else if (selectedMethod === 'Bank Transfer') {
+                const bankPaymentAmount = parseFloat($('#bank_payment_amount').val()) || 0;
+                const subTotal = parseFloat($('#subTotal').val()) || 0;
+
+                if (!$('#bank_payment_amount').val()) {
+                    $('#bankAmountError').show();
+                    $('#bank_payment_amount').addClass('is-invalid');
+                    isValid = false;
+                } else if (bankPaymentAmount <= subTotal) {
+                    $('#bankAmountError').text("Bank Payment Amount must be greater than the Item Receive Total!").show();
+                    $('#bank_payment_amount').addClass('is-invalid');
+                    isValid = false;
+                }
+
+                if (!$('#bank_payment_date').val()) {
+                    $('#bankDateError').show();
+                    $('#bank_payment_date').addClass('is-invalid');
+                    isValid = false;
+                }
+            }
+
+            // Validate item rows
+            let hasValidRow = false;
+            $('tbody tr').each(function(index) {
+                const row = index + 1;
+                const itemSelect = $(`#productName${row}`);
+                const unitPrice = $(`#unit_price${row}`);
+                const quantity = $(`#quantity${row}`);
+
+                if (itemSelect.val() && unitPrice.val() && quantity.val()) {
+                    hasValidRow = true;
+                }
+
+                if (!itemSelect.val()) {
+                    $(`#itemError${row}`).show();
+                    itemSelect.addClass('is-invalid');
+                    isValid = false;
+                }
+
+                if (!unitPrice.val()) {
+                    $(`#priceError${row}`).show();
+                    unitPrice.addClass('is-invalid');
+                    isValid = false;
+                }
+
+                if (!quantity.val()) {
+                    $(`#quantityError${row}`).show();
+                    quantity.addClass('is-invalid');
+                    isValid = false;
+                }
+            });
+
+            if (!hasValidRow) {
+                toastr.error("Please add at least one valid item row!", 'Validation Error');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                return; // Prevent form submission if frontend validation fails
+            }
 
             let formData = new FormData($(this)[0]); // Use FormData for file uploads
 

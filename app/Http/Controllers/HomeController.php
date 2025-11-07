@@ -717,7 +717,23 @@ class HomeController extends Controller
             $request->validate([
                 'invoice_number' => 'required|string|max:255',
             ]);
-    }
+        } elseif ($request->payment_method === 'Bank Transfer') {
+            $request->validate([
+                'bank_payment_amount' => 'required|numeric|min:0.01',
+                'bank_payment_date' => 'required|date',
+            ]);
+
+            $subTotal = array_sum(array_map(function($price, $qty) {
+                return (float)$price * (float)$qty;
+            }, $request->unit_price, $request->quantity));
+
+            if (($request->bank_payment_amount ?? 0) <= $subTotal) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bank Payment Amount must be greater than the Item Receive Total!',
+                ], 422);
+            }
+        }
 
         try {
             // Parse receive_date from the UI (YYYY-MM-DD) to database format (Y-m-d)
