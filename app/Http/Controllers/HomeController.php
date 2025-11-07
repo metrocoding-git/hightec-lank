@@ -706,7 +706,23 @@ class HomeController extends Controller
             'unit_price.*' => 'required|numeric',
             'quantity' => 'required|array|min:1',
             'quantity.*' => 'required|numeric',
+            'invoice_number' => 'nullable|string|max:255',
+            'bank_payment_amount' => 'nullable|numeric',
+            'bank_payment_date' => 'nullable|string',
+            'bank_payment_document' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:2048', // Max 2MB
         ]);
+
+        // Conditional validation based on payment method
+        if ($request->payment_method === 'Invoice') {
+            $request->validate([
+                'invoice_number' => 'required|string|max:255',
+            ]);
+        } elseif ($request->payment_method === 'Bank Transfer') {
+            $request->validate([
+                'bank_payment_amount' => 'required|numeric',
+                'bank_payment_date' => 'required|string',
+            ]);
+        }
 
         try {
             // Parse date from the UI (m/d/Y) to database format (Y-m-d)
@@ -727,12 +743,22 @@ class HomeController extends Controller
             // Generate a unique transaction ID
             $transactionId = 'TRX-' . time() . '-' . rand(1000, 9999);
 
+            // Handle file upload for bank_payment_document
+            $bankPaymentDocumentPath = null;
+            if ($request->hasFile('bank_payment_document')) {
+                $bankPaymentDocumentPath = $request->file('bank_payment_document')->store('bank_documents', 'public');
+            }
+
             // Create one row per item, duplicating header fields as per existing schema
             $createdReceives = [];
             foreach ($request->item_id as $index => $itemId) {
                 $itemReceive = ItemReceive::create([
                     'transaction_id' => $transactionId,
                     'payment_method' => $request->payment_method,
+                    'invoice_number' => $request->payment_method === 'Invoice' ? $request->invoice_number : null,
+                    'bank_payment_amount' => $request->payment_method === 'Bank Transfer' ? $request->bank_payment_amount : null,
+                    'bank_payment_date' => $request->payment_method === 'Bank Transfer' ? \Carbon\Carbon::createFromFormat('m/d/Y', $request->bank_payment_date)->format('Y-m-d') : null,
+                    'bank_payment_document' => $request->payment_method === 'Bank Transfer' ? $bankPaymentDocumentPath : null,
                     'supplier_id' => $request->supplier_id,
                     'store_id' => $request->store_id,
                     'reference_no' => $request->reference_no,

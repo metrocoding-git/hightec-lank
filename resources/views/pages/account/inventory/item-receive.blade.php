@@ -595,6 +595,7 @@
 
         // Initial row total calculation
         $(document).ready(function() {
+            toastr.options.timeOut = 5000; // Set toastr alerts to show for 5 seconds
             calculateGrandTotal();
 
             // Handle payment method change using event delegation
@@ -629,6 +630,16 @@
 
         $('#item-receive-form').on('submit', function(e) {
             e.preventDefault(); // prevent normal form submit
+
+            const selectedMethod = $('#item_receive_payment_method').val();
+            const bankPaymentAmount = parseFloat($('#bank_payment_amount').val()) || 0;
+            const subTotal = parseFloat($('#subTotal').val()) || 0;
+
+            if (selectedMethod === 'Bank Transfer' && bankPaymentAmount <= subTotal) {
+                toastr.error("Bank Payment Amount must be greater than the Item Receive Total!", 'Validation Error');
+                return; // Prevent form submission
+            }
+
             let formData = $(this).serialize();
 
             $.ajax({
