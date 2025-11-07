@@ -229,6 +229,77 @@
                                     </div>
                                 </div>
 
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="info-card bg-light p-3 rounded mb-3">
+                                            <div class="d-flex align-items-center">
+                                                <i class="ti-wallet text-primary mr-3" style="font-size: 24px;"></i>
+                                                <div>
+                                                    <h6 class="mb-1">Payment Method</h6>
+                                                    <span class="text-muted" id="itemSellPaymentMethod"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="invoiceDetails" class="d-none">
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="info-card bg-light p-3 rounded mb-3">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="ti-receipt text-warning mr-3" style="font-size: 24px;"></i>
+                                                    <div>
+                                                        <h6 class="mb-1">Invoice Number</h6>
+                                                        <span class="text-muted" id="itemSellInvoiceNumber"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="bankTransferDetails" class="d-none">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="info-card bg-light p-3 rounded mb-3">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="ti-money text-success mr-3" style="font-size: 24px;"></i>
+                                                    <div>
+                                                        <h6 class="mb-1">Bank Payment Amount</h6>
+                                                        <span class="text-muted" id="itemSellBankPaymentAmount"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="info-card bg-light p-3 rounded mb-3">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="ti-calendar text-info mr-3" style="font-size: 24px;"></i>
+                                                    <div>
+                                                        <h6 class="mb-1">Bank Payment Date</h6>
+                                                        <span class="text-muted" id="itemSellBankPaymentDate"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="info-card bg-light p-3 rounded mb-3">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="ti-file text-secondary mr-3" style="font-size: 24px;"></i>
+                                                    <div>
+                                                        <h6 class="mb-1">Bank Payment Document</h6>
+                                                        <a href="#" id="itemSellBankPaymentDocument" target="_blank" class="text-primary">View Document</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+>>>>>>> Stashed changes
+
 
 
                                 <div class="row">
@@ -513,6 +584,28 @@
                                 statusText = '@lang('inventory.N/A')';
                             }
                             $('#itemSellStatus').text(statusText);
+
+                            // Handle payment method details
+                            $('#itemSellPaymentMethod').text(data.itemSell.payment_method);
+                            if (data.itemSell.payment_method === 'Invoice') {
+                                $('#invoiceDetails').removeClass('d-none');
+                                $('#bankTransferDetails').addClass('d-none');
+                                $('#itemSellInvoiceNumber').text(data.itemSell.invoice_number);
+                            } else if (data.itemSell.payment_method === 'Bank Transfer') {
+                                $('#invoiceDetails').addClass('d-none');
+                                $('#bankTransferDetails').removeClass('d-none');
+                                $('#itemSellBankPaymentAmount').text(parseFloat(data.itemSell.bank_payment_amount).toFixed(2));
+                                $('#itemSellBankPaymentDate').text(data.itemSell.bank_payment_date ? moment(data.itemSell.bank_payment_date).format('MM/DD/YYYY') : '');
+                                if (data.itemSell.bank_payment_document) {
+                                    $('#itemSellBankPaymentDocument').attr('href', '{{ asset('storage') }}/' + data.itemSell.bank_payment_document);
+                                    $('#itemSellBankPaymentDocument').parent().parent().parent().parent().removeClass('d-none');
+                                } else {
+                                    $('#itemSellBankPaymentDocument').parent().parent().parent().parent().addClass('d-none');
+                                }
+                            } else {
+                                $('#invoiceDetails').addClass('d-none');
+                                $('#bankTransferDetails').addClass('d-none');
+                            }
 
                             // Populate items table
                             let itemsTableBody = '';

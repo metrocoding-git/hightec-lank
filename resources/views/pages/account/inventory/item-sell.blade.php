@@ -33,7 +33,7 @@
     <section class="admin-visitor-area">
         <div class="container-fluid p-0">
 
-            <form class="form-horizontal" id="item-sell-form">
+            <form class="form-horizontal" id="item-sell-form" enctype="multipart/form-data">
                 @csrf
                 <div class="row">
                     <div class="col-lg-3">
@@ -86,6 +86,73 @@
                                                     <option value="Bank Transfer">Bank Transfer</option>
                                                 </select>
                                                 <div class="text-danger" id="paymentError"></div>
+                                            </div>
+
+                                            {{-- Invoice Number Field --}}
+                                            <div class="col-lg-12 mb-15 d-none" id="invoiceNumberField">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label" for="invoice_number">Invoice Number
+                                                        <span class="text-danger"> *</span> </label>
+                                                    <input class="primary_input_field form-control" type="text"
+                                                        name="invoice_number" id="invoice_number" autocomplete="off"
+                                                        value="{{ isset($editData) ? $editData->invoice_number : '' }}">
+                                                    @if ($errors->has('invoice_number'))
+                                                        <span class="text-danger">
+                                                            {{ $errors->first('invoice_number') }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            </div>
+
+                                            {{-- Bank Transfer Fields --}}
+                                            <div class="col-lg-12 mb-15 d-none" id="bankPaymentAmountField">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label" for="bank_payment_amount">Bank Payment Amount
+                                                        <span class="text-danger"> *</span> </label>
+                                                    <input class="primary_input_field form-control" type="number" step="0.01"
+                                                        name="bank_payment_amount" id="bank_payment_amount" autocomplete="off"
+                                                        value="{{ isset($editData) ? $editData->bank_payment_amount : '' }}">
+                                                    @if ($errors->has('bank_payment_amount'))
+                                                        <span class="text-danger">
+                                                            {{ $errors->first('bank_payment_amount') }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            </div>
+
+                                            <div class="col-lg-12 mb-15 d-none" id="bankPaymentDateField">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label" for="bank_payment_date">Bank Payment Date
+                                                        <span class="text-danger"> *</span> </label>
+                                                    <div class="primary_datepicker_input">
+                                                        <div class="no-gutters input-right-icon">
+                                                            <div class="col">
+                                                                <div class="">
+                                                                    <input class="primary_input_field primary_input_field date form-control"
+                                                                        id="bank_payment_date" type="date"
+                                                                        name="bank_payment_date"
+                                                                        value="{{ isset($editData) ? date('m/d/Y', strtotime($editData->bank_payment_date)) : date('m/d/Y') }}"
+                                                                        autocomplete="off">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <span class="text-danger">{{ $errors->first('bank_payment_date') }}</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-lg-12 mb-15 d-none" id="bankPaymentDocumentField">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label" for="bank_payment_document">Bank Payment Document
+                                                        <span></span> </label>
+                                                    <input class="primary_input_field form-control" type="file"
+                                                        name="bank_payment_document" id="bank_payment_document">
+                                                    @if ($errors->has('bank_payment_document'))
+                                                        <span class="text-danger">
+                                                            {{ $errors->first('bank_payment_document') }}
+                                                        </span>
+                                                    @endif
+                                                </div>
                                             </div>
 
                                             {{-- <div class="col-lg-12 mb-30 d-none" id="add_item_sell_bankAccount">
@@ -596,6 +663,37 @@
 
         // Handle buyer type selection
         $(document).ready(function() {
+            // Handle payment method change using event delegation
+            $(document).on('change', '#item_sell_payment_method_id', function() {
+                const selectedMethod = $(this).val();
+
+                // Hide all conditional fields first
+                $('#invoiceNumberField').addClass('d-none');
+                $('#bankPaymentAmountField').addClass('d-none');
+                $('#bankPaymentDateField').addClass('d-none');
+                $('#bankPaymentDocumentField').addClass('d-none');
+
+                // Clear required attributes when hidden
+                $('#invoice_number').removeAttr('required');
+                $('#bank_payment_amount').removeAttr('required');
+                $('#bank_payment_date').removeAttr('required');
+
+                // Show fields based on selected method
+                if (selectedMethod === 'Invoice') {
+                    $('#invoiceNumberField').removeClass('d-none');
+                    $('#invoice_number').attr('required', 'required');
+                } else if (selectedMethod === 'Bank Transfer') {
+                    $('#bankPaymentAmountField').removeClass('d-none');
+                    $('#bankPaymentDateField').removeClass('d-none');
+                    $('#bankPaymentDocumentField').removeClass('d-none');
+                    $('#bank_payment_amount').attr('required', 'required');
+                    $('#bank_payment_date').attr('required', 'required');
+                }
+            });
+
+            // Trigger change on load to set initial state
+            $('#item_sell_payment_method_id').trigger('change');
+            
             $('#buyer_type').on('change', function() {
                 var selectedValue = $(this).val();
                 var selectedText = $(this).find('option:selected').text();
@@ -665,12 +763,14 @@
                 return;
             }
 
-            let formData = $(this).serialize();
+            let formData = new FormData(this);
 
             $.ajax({
                 url: '{{ route('save-item-sell-data') }}',
                 type: 'POST',
                 data: formData,
+                processData: false, // Important for FormData
+                contentType: false, // Important for FormData
                 success: function(response) {
                     if (response.success) {
                         toastr.success(response.message, 'Success');
