@@ -204,16 +204,16 @@
 
                                                                     <input
                                                                         class="primary_input_field  primary_input_field date form-control form-control{{ $errors->has('sell_date') ? ' is-invalid' : '' }}"
-                                                                        id="sell_date" type="text" name="sell_date"
+                                                                        id="sell_date" type="date" name="sell_date"
                                                                         value="{{ isset($editData) ? date('m/d/Y', strtotime($editData->sell_date)) : date('m/d/Y') }}"
                                                                         autocomplete="off">
                                                                 </div>
                                                             </div>
-                                                            <button class="btn-date" data-id="#sell_date" type="button">
+                                                            {{-- <button class="btn-date" data-id="#sell_date" type="button">
                                                                 <label for="sell_date" class="m-0 p-0">
                                                                     <i class="ti-calendar" id="start-date-icon"></i>
                                                                 </label>
-                                                            </button>
+                                                            </button> --}}
                                                         </div>
                                                     </div>
                                                     <span class="text-danger">{{ $errors->first('sell_date') }}</span>

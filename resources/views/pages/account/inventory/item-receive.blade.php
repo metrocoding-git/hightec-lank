@@ -89,51 +89,6 @@
                                             </div> --}}
                                             <div class="col-lg-12 mb-15">
                                                 <div class="primary_input">
-                                                    <label class="primary_input_label" for="">@lang('inventory.payment_method')
-                                                        <span class="text-danger"> *</span> </label>
-                                                    <select
-                                                        class="primary_select  form-control{{ $errors->has('payment_method') ? ' is-invalid' : '' }}"
-                                                        name="payment_method" id="item_receive_payment_method">
-                                                        <option data-display="@lang('inventory.payment_method')*" value="">
-                                                            @lang('inventory.payment_method')*</option>
-                                                        <option value="Cash">Cash</option>
-                                                        <option value="Invoice">Invoice</option>
-                                                        <option value="Bank Transfer">Bank Transfer</option>
-                                                    </select>
-                                                    <div class="text-danger" id="paymentError"></div>
-
-                                                    @if ($errors->has('payment_method'))
-                                                        <span class="text-danger invalid-select" role="alert">
-                                                            {{ $errors->first('payment_method') }}
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                            <div class="col-lg-12 mb-15 d-none" id="itemReceivebankAccount">
-                                                <div class="primary_input">
-                                                    <label class="primary_input_label" for="">@lang('inventory.bank')
-                                                        <span></span> </label>
-                                                    <select
-                                                        class="primary_select  form-control{{ $errors->has('bank_id') ? ' is-invalid' : '' }}"
-                                                        name="bank_id" id="account_id">
-                                                        {{-- @if (isset($account_id))
-                                                            @foreach ($account_id as $key => $value)
-                                                                <option value="{{ $value->id }}">
-                                                                    {{ $value->account_name }} ({{ $value->bank_name }})
-                                                                </option>
-                                                            @endforeach
-                                                        @endif --}}
-                                                    </select>
-
-                                                    @if ($errors->has('bank_id'))
-                                                        <span class="text-danger invalid-select" role="alert">
-                                                            <strong>{{ $errors->first('bank_id') }}</strong>
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                            <div class="col-lg-12 mb-15">
-                                                <div class="primary_input">
                                                     <label class="primary_input_label" for="">@lang('inventory.supplier')
                                                         <span class="text-danger"> *</span> </label>
                                                     <select
@@ -218,18 +173,18 @@
                                                                 <div class="">
                                                                     <input
                                                                         class="primary_input_field primary_input_field date form-control"
-                                                                        id="receive_date" type="text"
+                                                                        id="receive_date" type="date"
                                                                         name="receive_date"
                                                                         value="{{ isset($editData) ? date('m/d/Y', strtotime($editData->receive_date)) : date('m/d/Y') }}"
                                                                         autocomplete="off">
                                                                 </div>
                                                             </div>
-                                                            <button class="btn-date" data-id="#receive_date"
+                                                            {{-- <button class="btn-date" data-id="#receive_date"
                                                                 type="button">
                                                                 <label class="m-0 p-0" for="receive_date">
                                                                     <i class="ti-calendar" id="start-date-icon"></i>
                                                                 </label>
-                                                            </button>
+                                                            </button> --}}
                                                         </div>
                                                     </div>
                                                     <span class="text-danger">{{ $errors->first('receive_date') }}</span>
@@ -245,6 +200,98 @@
 
                                                 </div>
                                             </div>
+
+                                            {{-- Payment Method Field --}}
+                                            <div class="col-lg-12 mb-15">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label" for="">Payment Method
+                                                        <span class="text-danger"> *</span> </label>
+                                                    <select
+                                                        class="primary_select  form-control{{ $errors->has('payment_method') ? ' is-invalid' : '' }}"
+                                                        name="payment_method" id="item_receive_payment_method">
+                                                        <option data-display="Payment Method*" value="">
+                                                            Payment Method*</option>
+                                                        <option value="Cash">Cash</option>
+                                                        <option value="Invoice">Invoice</option>
+                                                        <option value="Bank Transfer">Bank Transfer</option>
+                                                    </select>
+                                                    <div class="text-danger" id="paymentError"></div>
+
+                                                    @if ($errors->has('payment_method'))
+                                                        <span class="text-danger invalid-select" role="alert">
+                                                            {{ $errors->first('payment_method') }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            </div>
+
+                                            {{-- Invoice Number Field --}}
+                                            <div class="col-lg-12 mb-15 d-none" id="invoiceNumberField">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label" for="invoice_number">Invoice Number
+                                                        <span class="text-danger"> *</span> </label>
+                                                    <input class="primary_input_field form-control" type="text"
+                                                        name="invoice_number" id="invoice_number" autocomplete="off"
+                                                        value="{{ isset($editData) ? $editData->invoice_number : '' }}">
+                                                    @if ($errors->has('invoice_number'))
+                                                        <span class="text-danger">
+                                                            {{ $errors->first('invoice_number') }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            </div>
+
+                                            {{-- Bank Transfer Fields --}}
+                                            <div class="col-lg-12 mb-15 d-none" id="bankPaymentAmountField">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label" for="bank_payment_amount">Bank Payment Amount
+                                                        <span class="text-danger"> *</span> </label>
+                                                    <input class="primary_input_field form-control" type="number" step="0.01"
+                                                        name="bank_payment_amount" id="bank_payment_amount" autocomplete="off"
+                                                        value="{{ isset($editData) ? $editData->bank_payment_amount : '' }}">
+                                                    @if ($errors->has('bank_payment_amount'))
+                                                        <span class="text-danger">
+                                                            {{ $errors->first('bank_payment_amount') }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            </div>
+
+                                            <div class="col-lg-12 mb-15 d-none" id="bankPaymentDateField">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label" for="bank_payment_date">Bank Payment Date
+                                                        <span class="text-danger"> *</span> </label>
+                                                    <div class="primary_datepicker_input">
+                                                        <div class="no-gutters input-right-icon">
+                                                            <div class="col">
+                                                                <div class="">
+                                                                    <input class="primary_input_field primary_input_field date form-control"
+                                                                        id="bank_payment_date" type="date"
+                                                                        name="bank_payment_date"
+                                                                        value="{{ isset($editData) ? date('m/d/Y', strtotime($editData->bank_payment_date)) : date('m/d/Y') }}"
+                                                                        autocomplete="off">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <span class="text-danger">{{ $errors->first('bank_payment_date') }}</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-lg-12 mb-15 d-none" id="bankPaymentDocumentField">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label" for="bank_payment_document">Bank Payment Document
+                                                        <span></span> </label>
+                                                    <input class="primary_input_field form-control" type="file"
+                                                        name="bank_payment_document" id="bank_payment_document">
+                                                    @if ($errors->has('bank_payment_document'))
+                                                        <span class="text-danger">
+                                                            {{ $errors->first('bank_payment_document') }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            </div>
+
                                         </div>
 
                                     </div>
@@ -549,6 +596,35 @@
         // Initial row total calculation
         $(document).ready(function() {
             calculateGrandTotal();
+
+            // Handle payment method change using event delegation
+            $(document).on('change', '#item_receive_payment_method', function() {
+                const selectedMethod = $(this).val();
+                console.log('Payment method changed to:', selectedMethod); // Debugging line
+
+                // Hide all conditional fields first
+                $('#invoiceNumberField').addClass('d-none');
+                $('#bankPaymentAmountField').addClass('d-none');
+                $('#bankPaymentDateField').addClass('d-none');
+                $('#bankPaymentDocumentField').addClass('d-none');
+                $('#itemReceivebankAccount').addClass('d-none');
+
+
+                // Show fields based on selected method
+                if (selectedMethod === 'Invoice') {
+                    $('#invoiceNumberField').removeClass('d-none');
+                } else if (selectedMethod === 'Bank Transfer') {
+                    $('#bankPaymentAmountField').removeClass('d-none');
+                    $('#bankPaymentDateField').removeClass('d-none');
+                    $('#bankPaymentDocumentField').removeClass('d-none');
+                    $('#itemReceivebankAccount').removeClass('d-none');
+                }
+            });
+
+            // Trigger change on load to set initial state
+            $('#item_receive_payment_method').trigger('change');
+            // Also update the payment method niceSelect on load
+            $('#item_receive_payment_method').niceSelect('update');
         });
 
         $('#item-receive-form').on('submit', function(e) {
