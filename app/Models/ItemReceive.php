@@ -23,6 +23,10 @@ class ItemReceive extends Model
         'receive_date',
         'description',
         'payment_method',
+        'invoice_number',
+        'bank_payment_amount',
+        'bank_payment_date',
+        'bank_payment_document',
         'bank_id',
         'total_paid',
     ];

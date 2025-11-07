@@ -70,3 +70,16 @@ MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 ALTER TABLE `branches` MODIFY COLUMN `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 ALTER TABLE `branches` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+
+ALTER TABLE `item_sell_batches`
+ADD COLUMN `invoice_number` VARCHAR(255) NULL AFTER `payment_method`,
+ADD COLUMN `bank_payment_amount` DECIMAL(10,2) NULL AFTER `invoice_number`,
+ADD COLUMN `bank_payment_date` DATE NULL AFTER `bank_payment_amount`,
+ADD COLUMN `bank_payment_document` VARCHAR(255) NULL AFTER `bank_payment_date`;
+
+ALTER TABLE `item_receive`
+ADD COLUMN `invoice_number` VARCHAR(255) NULL AFTER `payment_method`,
+ADD COLUMN `bank_payment_amount` DECIMAL(10,2) NULL AFTER `invoice_number`,
+ADD COLUMN `bank_payment_date` DATE NULL AFTER `bank_payment_amount`,
+ADD COLUMN `bank_payment_document` VARCHAR(255) NULL AFTER `bank_payment_date`;

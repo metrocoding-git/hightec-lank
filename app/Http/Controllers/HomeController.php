@@ -706,33 +706,72 @@ class HomeController extends Controller
             'unit_price.*' => 'required|numeric',
             'quantity' => 'required|array|min:1',
             'quantity.*' => 'required|numeric',
+            'invoice_number' => 'nullable|string|max:255',
+            'bank_payment_amount' => 'nullable|numeric',
+            'bank_payment_date' => 'nullable|string',
+            'bank_payment_document' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:2048', // Max 2MB
         ]);
 
-        try {
-            // Parse date from the UI (m/d/Y) to database format (Y-m-d)
-            $receiveDate = \Carbon\Carbon::createFromFormat('m/d/Y', $request->receive_date)->format('Y-m-d');
-        } catch (\Throwable $e) {
-            // Fallback: try to parse a standard Y-m-d or Y/m/d if user typed differently
-            try {
-                $receiveDate = \Carbon\Carbon::parse($request->receive_date)->format('Y-m-d');
-            } catch (\Throwable $e2) {
+        // Conditional validation based on payment method
+        if ($request->payment_method === 'Invoice') {
+            $request->validate([
+                'invoice_number' => 'required|string|max:255',
+            ]);
+        } elseif ($request->payment_method === 'Bank Transfer') {
+            $request->validate([
+                'bank_payment_amount' => 'required|numeric|min:0.01',
+                'bank_payment_date' => 'required|date',
+            ]);
+
+            $subTotal = array_sum(array_map(function($price, $qty) {
+                return (float)$price * (float)$qty;
+            }, $request->unit_price, $request->quantity));
+
+            if (($request->bank_payment_amount ?? 0) <= $subTotal) {
                 return response()->json([
-                    'status' => false,
-                    'message' => 'Invalid receive date format.',
+                    'success' => false,
+                    'message' => 'Bank Payment Amount must be greater than the Item Receive Total!',
                 ], 422);
             }
         }
 
         try {
+            // Parse receive_date from the UI (YYYY-MM-DD) to database format (Y-m-d)
+            $receiveDate = \Carbon\Carbon::createFromFormat('Y-m-d', $request->receive_date)->format('Y-m-d');
+
             // Generate a unique transaction ID
             $transactionId = 'TRX-' . time() . '-' . rand(1000, 9999);
+
+            // Handle file upload for bank_payment_document
+            $bankPaymentDocumentPath = null;
+            if ($request->hasFile('bank_payment_document')) {
+                $bankPaymentDocumentPath = $request->file('bank_payment_document')->store('bank_documents', 'public');
+            }
 
             // Create one row per item, duplicating header fields as per existing schema
             $createdReceives = [];
             foreach ($request->item_id as $index => $itemId) {
+                $lineTotal = (float) $request->unit_price[$index] * (float) $request->quantity[$index];
+
+                $totalPaidAmount = 0;
+                if ($request->payment_method === 'Bank Transfer') {
+                    $totalPaidAmount = $request->bank_payment_amount ?? 0;
+                } else {
+                    $totalPaidAmount = $request->totalPaid ?? 0;
+                }
+
+                $bankPaymentDate = null;
+                if ($request->payment_method === 'Bank Transfer' && $request->bank_payment_date) {
+                    $bankPaymentDate = \Carbon\Carbon::createFromFormat('Y-m-d', $request->bank_payment_date)->format('Y-m-d');
+                }
+
                 $itemReceive = ItemReceive::create([
                     'transaction_id' => $transactionId,
                     'payment_method' => $request->payment_method,
+                    'invoice_number' => $request->payment_method === 'Invoice' ? $request->invoice_number : null,
+                    'bank_payment_amount' => $request->payment_method === 'Bank Transfer' ? $request->bank_payment_amount : null,
+                    'bank_payment_date' => $bankPaymentDate,
+                    'bank_payment_document' => $request->payment_method === 'Bank Transfer' ? $bankPaymentDocumentPath : null,
                     'supplier_id' => $request->supplier_id,
                     'store_id' => $request->store_id,
                     'reference_no' => $request->reference_no,
@@ -741,12 +780,8 @@ class HomeController extends Controller
                     'item_id' => $itemId,
                     'unit_price' => $request->unit_price[$index],
                     'quantity' => $request->quantity[$index],
-                    // Map line total to existing column name 'sub_total'
-                    'sub_total' => $request->total[$index] ?? ((float) $request->unit_price[$index] * (float) $request->quantity[$index]),
-                    // Store overall paid if provided; schema has 'total_paid'
-                    'total_paid' => $request->totalPaid ?? 0,
-                    // Optional bank id if payment_method requires it
-                    'bank_id' => $request->bank_id ?? null,
+                    'sub_total' => $lineTotal,
+                    'total_paid' => $totalPaidAmount,
                 ]);
 
                 $createdReceives[] = $itemReceive;

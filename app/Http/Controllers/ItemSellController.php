@@ -14,6 +14,7 @@ use App\Models\Student;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 class ItemSellController extends Controller
 {
@@ -30,6 +31,7 @@ class ItemSellController extends Controller
 
     public function saveItemSellData(Request $request)
     {
+        // Base validation
         $request->validate([
             'payment_method' => 'required|string',
             'sell_date' => 'required|string',
@@ -42,25 +44,58 @@ class ItemSellController extends Controller
             'totalPaid' => 'nullable|numeric',
             'subTotal' => 'nullable|numeric',
             'totalDue' => 'nullable|numeric',
+            'bank_payment_document' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:2048', // Max 2MB
         ]);
 
-        try {
-            $sellDate = Carbon::createFromFormat('m/d/Y', $request->sell_date)->format('Y-m-d');
-        } catch (\Throwable $e) {
-            try {
-                $sellDate = Carbon::parse($request->sell_date)->format('Y-m-d');
-            } catch (\Throwable $e2) {
+        // Conditional validation
+        if ($request->payment_method === 'Invoice') {
+            $request->validate([
+                'invoice_number' => 'required|string|max:255',
+            ]);
+        } elseif ($request->payment_method === 'Bank Transfer') {
+            $request->validate([
+                'bank_payment_amount' => 'required|numeric|min:0.01',
+                'bank_payment_date' => 'required|date',
+            ]);
+
+            $subTotal = $request->subTotalValue ?? 0;
+
+            if (($request->bank_payment_amount ?? 0) <= $subTotal) {
                 return response()->json([
-                    'status' => false,
-                    'message' => 'Invalid sell date format.',
+                    'success' => false,
+                    'message' => 'Bank Payment Amount must be greater than the Item Sell Total!',
                 ], 422);
             }
         }
 
         try {
+            $sellDate = Carbon::parse($request->sell_date)->format('Y-m-d');
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid sell date format.',
+            ], 422);
+        }
+
+        try {
+            // Handle file upload
+            $bankPaymentDocumentPath = null;
+            if ($request->hasFile('bank_payment_document')) {
+                $bankPaymentDocumentPath = $request->file('bank_payment_document')->store('bank_payment_documents', 'public');
+            }
+
+            $bankPaymentDate = null;
+            if ($request->payment_method === 'Bank Transfer' && $request->bank_payment_date) {
+                $bankPaymentDate = Carbon::parse($request->bank_payment_date)->format('Y-m-d');
+            }
+
             // Create ItemSellBatch record
             $itemSellBatch = ItemSellBatch::create([
                 'payment_method' => $request->payment_method,
+                'invoice_number' => $request->payment_method === 'Invoice' ? $request->invoice_number : null,
+                'bank_payment_amount' => $request->payment_method === 'Bank Transfer' ? $request->bank_payment_amount : null,
+                'bank_payment_date' => $bankPaymentDate,
+                'bank_payment_document' => $request->payment_method === 'Bank Transfer' ? $bankPaymentDocumentPath : null,
                 'role_id' => $request->role_id,
                 'student_id' => $request->student ?? null,
                 'user_id' => $request->staff_id ?? null,
@@ -156,6 +191,11 @@ class ItemSellController extends Controller
                 'intake' => null, // Intake data not available in current structure
                 'description' => $itemSell->description,
                 'status' => $itemSell->status,
+                'payment_method' => $itemSell->payment_method,
+                'invoice_number' => $itemSell->invoice_number,
+                'bank_payment_amount' => $itemSell->bank_payment_amount,
+                'bank_payment_date' => $itemSell->bank_payment_date,
+                'bank_payment_document' => $itemSell->bank_payment_document,
             ]
         ]);
     }
@@ -182,6 +222,10 @@ class ItemSellController extends Controller
     {
         $request->validate([
             'payment_method' => 'required|string',
+            'invoice_number' => 'required_if:payment_method,Invoice|nullable|string',
+            'bank_payment_amount' => 'required_if:payment_method,Bank Transfer|nullable|numeric',
+            'bank_payment_date' => 'required_if:payment_method,Bank Transfer|nullable|date',
+            'bank_payment_document' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx',
             'role_id' => 'required|integer|exists:roles,id',
             'sell_date' => 'required|string',
             'item_id' => 'required|array|min:1',
@@ -210,8 +254,23 @@ class ItemSellController extends Controller
 
         try {
             $itemSellBatch = ItemSellBatch::findOrFail($id);
+
+            $bankPaymentDocumentPath = $itemSellBatch->bank_payment_document;
+            if ($request->hasFile('bank_payment_document')) {
+                if ($bankPaymentDocumentPath && Storage::disk('public')->exists($bankPaymentDocumentPath)) {
+                    Storage::disk('public')->delete($bankPaymentDocumentPath);
+                }
+                $file = $request->file('bank_payment_document');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $bankPaymentDocumentPath = $file->storeAs('bank_payment_documents', $filename, 'public');
+            }
+
             $itemSellBatch->update([
                 'payment_method' => $request->payment_method,
+                'invoice_number' => $request->invoice_number,
+                'bank_payment_amount' => $request->bank_payment_amount,
+                'bank_payment_date' => $request->bank_payment_date ? Carbon::parse($request->bank_payment_date)->format('Y-m-d') : null,
+                'bank_payment_document' => $bankPaymentDocumentPath,
                 'role_id' => $request->role_id,
                 'student_id' => $request->student ?? null,
                 'user_id' => $request->staff_id ?? null,

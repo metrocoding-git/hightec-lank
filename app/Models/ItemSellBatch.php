@@ -8,6 +8,10 @@ class ItemSellBatch extends Model
 {
     protected $fillable = [
         'payment_method',
+        'invoice_number',
+        'bank_payment_amount',
+        'bank_payment_date',
+        'bank_payment_document',
         'role_id',
         'student_id',
         'user_id',

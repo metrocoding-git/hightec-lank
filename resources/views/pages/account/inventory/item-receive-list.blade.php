@@ -182,6 +182,24 @@
                         </div>
                     </div>
 
+                    <!-- Payment Method Specific Details -->
+                    <div class="row mb-4" id="payment_details_section">
+                        <div class="col-lg-12">
+                            <h5 class="text-primary mb-3">
+                                <i class="ti-money"></i> Payment Details
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <table class="table table-sm table-borderless">
+                                        <tbody id="payment_method_specific_details">
+                                            <!-- Payment method specific details will be populated here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Supplier & Store Information Section -->
                     <div class="row mb-4">
                         <div class="col-lg-12">
@@ -458,6 +476,44 @@
                             });
                             $('#view_items_table_body').html(itemsHtml);
                             $('#view_total_quantity').text(totals.total_quantity || '0');
+
+                            // Payment Method Specific Details
+                            let paymentSpecificHtml = '';
+                            if (transaction.payment_method === 'Invoice') {
+                                paymentSpecificHtml += `
+                                    <tr>
+                                        <td><strong>Invoice Number:</strong></td>
+                                        <td><span class="badge badge-secondary">${transaction.invoice_number || 'N/A'}</span></td>
+                                    </tr>
+                                `;
+                            } else if (transaction.payment_method === 'Bank Transfer') {
+                                paymentSpecificHtml += `
+                                    <tr>
+                                        <td><strong>Bank Payment Amount:</strong></td>
+                                        <td>Rs ${parseFloat(transaction.bank_payment_amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Bank Payment Date:</strong></td>
+                                        <td>${transaction.bank_payment_date ? moment(transaction.bank_payment_date).format('MM/DD/YYYY') : 'N/A'}</td>
+                                    </tr>
+                                `;
+                                if (transaction.bank_payment_document) {
+                                    paymentSpecificHtml += `
+                                        <tr>
+                                            <td><strong>Bank Payment Document:</strong></td>
+                                            <td><a href="/storage/${transaction.bank_payment_document}" target="_blank" class="primary-btn small fix-gr-bg">View Document</a></td>
+                                        </tr>
+                                    `;
+                                } else {
+                                    paymentSpecificHtml += `
+                                        <tr>
+                                            <td><strong>Bank Payment Document:</strong></td>
+                                            <td>N/A</td>
+                                        </tr>
+                                    `;
+                                }
+                            }
+                            $('#payment_method_specific_details').html(paymentSpecificHtml);
 
                             $('#viewItemReceiveModal').modal('show');
                         },
