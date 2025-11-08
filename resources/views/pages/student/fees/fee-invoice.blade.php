@@ -1822,36 +1822,81 @@
 
                     // Generate report HTML based on the provided style
                     let reportHtml = `
-                        <div class="invoice-report" style="font-family: Arial, sans-serif; max-width:800px; padding:40px; margin-top:40px; margin-left:auto; padding: 20px; background: white;">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; margin-top:40px;">
-                                <div style="flex: 1;">
-                                    <h3 style="margin: 0; font-size: 14px; font-weight: bold; color: #333;">
-                                        ${response.course_name && response.course_name !== 'N/A' ? response.course_name : (response.invoice_items && response.invoice_items.length > 0 ? response.invoice_items[0].fee_type.name : 'Fee Details')}
-                                    </h3>
-                                </div>
-                                <div style="text-align: left;">
-                                    <p style="margin: 0; font-size: 14px; color: #666;">${formattedDate}</p>
-                                    <p style="margin: 5px 0 0 0; font-size: 14px; font-weight: bold; color: #333;">${response.invoice.main_invoice_number}</p>
-                                    <p style="margin: 5px 0 0 0; font-size: 14px; font-weight: bold; color: #333;">${response.invoice.student.admission_number}</p>
-                                </div>
-                            </div>
+<style>
+@media print {
+  @page {
+    size: 210mm 148.5mm; /* Half of A4 height */
+    margin: 0; /* remove margins */
+  }
 
-                            <div style="margin-bottom: 40px; margin-left: 80px;">
-                                <p style="margin: 0; font-size: 14px; font-weight: bold; color: #333;">${response.invoice.student.student_name}</p>
-                                <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">${response.invoice.student.national_id_number || 'N/A'}</p>
-                                <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">${response.invoice.student.permanent_address || 'N/A'}</p>
-                                <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">${response.invoice.student.phone_number || 'N/A'}</p>
-                            </div>
+  body {
+    margin: 0;
+    padding: 0;
+    background: #fff;
+  }
 
-                            <div style=" align-items: center;  padding-top: 15px;">
-                                <div style="font-size: 14px; font-weight: bold; color: #333;">${response.invoice.total_amount}</div>
-                                <div style="font-size: 14px; font-weight: bold; color: #333;">${response.invoice.paid_amount}</div>
-                                <div style="font-size: 14px; font-weight: bold; color: #333;">${response.invoice.due_amount}</div>
-                                <div style="font-size: 14px; font-weight: bold; color: #333;">${response.created_to_due}</div>
+  .invoice-report {
+    width: 100%;
+    height: 148.5mm;
+    position: relative;
+    background: transparent;
+    font-family: 'Arial', sans-serif;
+    font-size: 15px;
+    color: #000;
+  }
 
-                            </div>
-                        </div>
-                    `;
+  .field {
+    position: absolute;
+    font-family: 'Arial', sans-serif;
+    font-size: 13px;
+    color: #000;
+  }
+
+  /* === FIELD POSITIONS (cm) === */
+  .course-name   { left: 4.2cm;  top: 4.4cm;  font-weight: bold; font-size: 14px; }
+  .invoice-date  { left: 16.8cm; top: 4.5cm; }
+  .invoice-no    { left: 16.8cm; top: 5.0cm; font-weight: bold; }
+  .admission-no  { left: 16.8cm; top: 5.5cm; font-weight: bold; }
+
+  .student-name  { left: 8.9cm; top: 5.9cm; font-weight: bold; }
+  .student-nic     { left: 8.9cm; top: 6.5cm;  font-weight: bold;}
+  .student-address { left: 8.9cm; top: 7.2cm;  font-weight: bold;}
+  .student-phone   { left: 8.9cm; top: 7.8cm;  font-weight: bold;}
+
+  .total-amount  { left: 6.0cm; top: 8.5cm; font-weight: bold; }
+  .paid-amount   { left: 6.0cm; top: 9.2cm; font-weight: bold; }
+  .due-amount    { left: 6.0cm; top: 9.8cm; font-weight: bold; }
+  .due-date      { left: 6.0cm; top: 10.5cm; font-weight: bold; }
+}
+</style>
+
+<div class="invoice-report">
+  <div class="field course-name">
+    ${response.course_name && response.course_name !== 'N/A'
+      ? response.course_name
+      : (response.invoice_items && response.invoice_items.length > 0
+        ? response.invoice_items[0].fee_type.name
+        : 'Fee Details')}
+  </div>
+
+  <div class="field invoice-date">${formattedDate}</div>
+  <div class="field invoice-no">${response.invoice.main_invoice_number}</div>
+  <div class="field admission-no">${response.invoice.student.admission_number}</div>
+
+  <div class="field student-name">${response.invoice.student.student_name}</div>
+  <div class="field student-nic">${response.invoice.student.national_id_number || 'N/A'}</div>
+  <div class="field student-address">${response.invoice.student.permanent_address || 'N/A'}</div>
+  <div class="field student-phone">${response.invoice.student.phone_number || 'N/A'}</div>
+
+  <div class="field total-amount"> ${response.invoice.total_amount}</div>
+  <div class="field paid-amount"> ${response.invoice.paid_amount}</div>
+  <div class="field due-amount"> ${response.invoice.due_amount}</div>
+  <div class="field due-date"> ${response.created_to_due}</div>
+</div>
+`;
+
+
+
                     modal.find('#invoiceReportContent').html(reportHtml);
                 },
                 error: function(xhr, status, error) {
