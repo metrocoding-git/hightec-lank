@@ -70,7 +70,7 @@
 
                                         <tbody>
                                             @foreach ($fee_invoices as $key => $invoice)
-                                            {{-- {{ dd($invoice) }} --}}
+                                                {{-- {{ dd($invoice) }} --}}
                                                 @php
                                                     $amount = $invoice->total_amount;
                                                     $paid_amount = $invoice->paid_amount;
@@ -89,7 +89,7 @@
                                                     {{-- <td>
                                                         {{ $invoice->paidCourses->first() ? $invoice->paidCourses->first()->course->name : 'N/A' }} ({{ $invoice->paidCourses->first() ? $invoice->paidCourses->first()->course_id : 'N/A' }})
                                                     </td> --}}
-                                                    
+
                                                     <td>
                                                         <a href="{{ route('fees.fee-invoice-view', ['id' => $invoice->id, 'state' => 'view']) }}"
                                                             target="_blank">
@@ -168,44 +168,46 @@
                                                                 data-target="#deletecategoryModal{{ $invoice->id }}"
                                                                 href="#">@lang('common.delete')</a>
                                                         </x-drop-down>
-                                            </td>
-                                            </tr>
+                                                    </td>
+                                                </tr>
 
-                                            <div class="modal fade admin-query"
-                                                id="deletecategoryModal{{ $invoice->id }}">
-                                                <div class="modal-dialog modal-dialog-centered">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header">
-                                                            <h4 class="modal-title">@lang('fees.delete_fees_type')</h4>
-                                                            <button type="button" class="close"
-                                                                data-dismiss="modal">&times;</button>
-                                                        </div>
-                                                        <div class="modal-body">
-                                                            <div class="text-center">
-                                                                <h4>@lang('common.are_you_sure_to_delete')</h4>
+                                                <div class="modal fade admin-query"
+                                                    id="deletecategoryModal{{ $invoice->id }}">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h4 class="modal-title">@lang('fees.delete_fees_type')</h4>
+                                                                <button type="button" class="close"
+                                                                    data-dismiss="modal">&times;</button>
                                                             </div>
-                                                            <div class="mt-40 d-flex justify-content-between">
-                                                                <button type="button" class="primary-btn tr-bg"
-                                                                    data-dismiss="modal">
-                                                                    @lang('common.cancel')
-                                                                </button>
-                                                                <form action="{{ route('fees.fee-delete', $invoice->id) }}"
-                                                                    method="POST">
-                                                                    @csrf
-                                                                    @method('DELETE')
-                                                                    <button class="primary-btn fix-gr-bg" type="submit">
-                                                                        @lang('common.delete')
+                                                            <div class="modal-body">
+                                                                <div class="text-center">
+                                                                    <h4>@lang('common.are_you_sure_to_delete')</h4>
+                                                                </div>
+                                                                <div class="mt-40 d-flex justify-content-between">
+                                                                    <button type="button" class="primary-btn tr-bg"
+                                                                        data-dismiss="modal">
+                                                                        @lang('common.cancel')
                                                                     </button>
-                                                                </form>
+                                                                    <form
+                                                                        action="{{ route('fees.fee-delete', $invoice->id) }}"
+                                                                        method="POST">
+                                                                        @csrf
+                                                                        @method('DELETE')
+                                                                        <button class="primary-btn fix-gr-bg"
+                                                                            type="submit">
+                                                                            @lang('common.delete')
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
                                                             </div>
-                                                        </div>
 
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
 
 
-                                            <!-- Add Payment Modal -->
+                                                <!-- Add Payment Modal -->
                                             @endforeach
                                         </tbody>
                                     </table>
@@ -820,7 +822,8 @@
                                         <div class="modal-body">
                                             <div class="alert alert-info">
                                                 <i class="fas fa-info-circle"></i>
-                                                This invoice has been marked as returned. Payment history and return details are shown below.
+                                                This invoice has been marked as returned. Payment history and return details
+                                                are shown below.
                                             </div>
 
                                             <!-- Return Information Section -->
@@ -829,23 +832,29 @@
                                                     <h5><i class="fas fa-undo-alt"></i> Return Information</h5>
                                                     <div class="row">
                                                         <div class="col-md-6">
-                                                            <p><strong>Return Amount:</strong> <span id="returnAmountDisplay" class="text-danger"></span></p>
+                                                            <p><strong>Return Amount:</strong> <span
+                                                                    id="returnAmountDisplay" class="text-danger"></span>
+                                                            </p>
                                                         </div>
                                                         <div class="col-md-6">
-                                                            <p><strong>Return Date:</strong> <span id="returnDateDisplay"></span></p>
+                                                            <p><strong>Return Date:</strong> <span
+                                                                    id="returnDateDisplay"></span></p>
                                                         </div>
                                                     </div>
                                                     <div class="row">
                                                         <div class="col-md-12">
-                                                            <p><strong>Return Reason:</strong> <span id="returnReasonDisplay"></span></p>
+                                                            <p><strong>Return Reason:</strong> <span
+                                                                    id="returnReasonDisplay"></span></p>
                                                         </div>
                                                     </div>
                                                     <div class="row">
                                                         <div class="col-md-6">
-                                                            <p><strong>Returned By:</strong> <span id="returnedByDisplay"></span></p>
+                                                            <p><strong>Returned By:</strong> <span
+                                                                    id="returnedByDisplay"></span></p>
                                                         </div>
                                                         <div class="col-md-6">
-                                                            <p><strong>Original Paid Amount:</strong> <span id="originalPaidAmountDisplay"></span></p>
+                                                            <p><strong>Original Paid Amount:</strong> <span
+                                                                    id="originalPaidAmountDisplay"></span></p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -871,10 +880,12 @@
                                                     <h5>Paid Amount: <span id="detailsPaidAmountDisplay"></span></h5>
                                                 </div>
                                                 <div class="col-md-3">
-                                                    <h5>Returned Amount: <span id="detailsReturnedAmountDisplay" class="text-danger">0.00</span></h5>
+                                                    <h5>Returned Amount: <span id="detailsReturnedAmountDisplay"
+                                                            class="text-danger">0.00</span></h5>
                                                 </div>
                                                 <div class="col-md-3">
-                                                    <h5>Net Amount: <span id="detailsNetAmountDisplay" class="text-success"></span></h5>
+                                                    <h5>Net Amount: <span id="detailsNetAmountDisplay"
+                                                            class="text-success"></span></h5>
                                                 </div>
                                             </div>
 
@@ -889,12 +900,13 @@
                             </div>
 
                             <!-- View Bank Details Modal -->
-                            <div class="modal fade admin-query" id="viewBankDetailsModal" tabindex="-1"
-                                role="dialog" aria-labelledby="viewBankDetailsModalLabel" aria-hidden="true">
+                            <div class="modal fade admin-query" id="viewBankDetailsModal" tabindex="-1" role="dialog"
+                                aria-labelledby="viewBankDetailsModalLabel" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered" role="document">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h4 class="modal-title" id="viewBankDetailsModalLabel">Bank Payment Details</h4>
+                                            <h4 class="modal-title" id="viewBankDetailsModalLabel">Bank Payment Details
+                                            </h4>
                                             <button type="button" class="close" data-dismiss="modal"
                                                 aria-label="Close">
                                                 <span aria-hidden="true">&times;</span>
@@ -905,20 +917,24 @@
                                                 <div class="col-md-6">
                                                     <div class="form-group">
                                                         <label for="bankPaymentDateDisplay">Bank Payment Date</label>
-                                                        <input type="text" class="form-control" id="bankPaymentDateDisplay" readonly>
+                                                        <input type="text" class="form-control"
+                                                            id="bankPaymentDateDisplay" readonly>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="form-group">
                                                         <label for="bankPaymentAmountDisplay">Bank Payment Amount</label>
-                                                        <input type="text" class="form-control" id="bankPaymentAmountDisplay" readonly>
+                                                        <input type="text" class="form-control"
+                                                            id="bankPaymentAmountDisplay" readonly>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-12">
                                                     <div class="form-group">
                                                         <label for="paymentFileDisplay">Payment File</label>
-                                                        <input type="text" class="form-control" id="paymentFileDisplay" readonly>
-                                                        <a href="#" id="paymentFileLink" target="_blank" style="display: none;">View File</a>
+                                                        <input type="text" class="form-control"
+                                                            id="paymentFileDisplay" readonly>
+                                                        <a href="#" id="paymentFileLink" target="_blank"
+                                                            style="display: none;">View File</a>
                                                     </div>
                                                 </div>
                                             </div>
@@ -944,7 +960,8 @@
         <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="invoiceReportModalLabel">Invoice Report for Invoice #<span id="reportInvoiceId"></span></h4>
+                    <h4 class="modal-title" id="invoiceReportModalLabel">Invoice Report for Invoice #<span
+                            id="reportInvoiceId"></span></h4>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -1229,7 +1246,7 @@
                     modal.find('#totalAmountDisplay').text(response.total_amount);
                     modal.find('#mainInvoiceNumber').text(response.main_invoice_number);
                     modal.find('#paidAmountDisplay').text(response
-                    .paid_amount_sum); // Display sum of paid amounts
+                        .paid_amount_sum); // Display sum of paid amounts
                     modal.find('#dueAmountDisplay').text(response.due_amount);
 
                     // Set the max attribute for the payment amount input
@@ -1266,15 +1283,15 @@
                                     <td style="padding: 12px; text-align: center;">${new Date(payment.created_at).toLocaleDateString()}</td>
                                     <td style="padding: 12px; text-align: center;">
                                         ${actionDropdown ? `
-                                                <div class="dropdown">
-                                                    <button class="primary-btn small fix-gr-bg dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" style="border-radius: 6px; padding: 6px 12px; font-size: 12px;">
-                                                        Actions
-                                                    </button>
-                                                    <div class="dropdown-menu" style="min-width: 150px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                                                        ${actionDropdown}
+                                                    <div class="dropdown">
+                                                        <button class="primary-btn small fix-gr-bg dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" style="border-radius: 6px; padding: 6px 12px; font-size: 12px;">
+                                                            Actions
+                                                        </button>
+                                                        <div class="dropdown-menu" style="min-width: 150px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                                            ${actionDropdown}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ` : '<span class="text-muted">No actions</span>'}
+                                                ` : '<span class="text-muted">No actions</span>'}
                                     </td>
                                 </tr>
                             `;
@@ -1337,18 +1354,24 @@
                             var returnedBy = '';
                             var originalPaidAmount = response.paid_amount_sum;
 
-                            if (returnResponse.return_fees && returnResponse.return_fees.length > 0) {
+                            if (returnResponse.return_fees && returnResponse.return_fees
+                                .length > 0) {
                                 // Sum all return amounts for this invoice
                                 returnResponse.return_fees.forEach(function(returnFee) {
-                                    returnAmount += parseFloat(returnFee.return_amount) || 0;
+                                    returnAmount += parseFloat(returnFee
+                                        .return_amount) || 0;
                                     if (!returnDate && returnFee.created_at) {
-                                        returnDate = new Date(returnFee.created_at).toLocaleDateString();
+                                        returnDate = new Date(returnFee.created_at)
+                                            .toLocaleDateString();
                                     }
                                     if (returnFee.short_note) {
                                         returnReason = returnFee.short_note;
                                     }
-                                    if (returnFee.return_user && returnFee.return_user.first_name) {
-                                        returnedBy = returnFee.return_user.first_name + ' ' + (returnFee.return_user.last_name || '');
+                                    if (returnFee.return_user && returnFee
+                                        .return_user.first_name) {
+                                        returnedBy = returnFee.return_user
+                                            .first_name + ' ' + (returnFee
+                                                .return_user.last_name || '');
                                     }
                                 });
                             }
@@ -1356,27 +1379,35 @@
                             // Show return information section if there are returns
                             if (returnAmount > 0) {
                                 modal.find('#returnInfoSection').show();
-                                modal.find('#returnAmountDisplay').text(returnAmount.toFixed(2));
+                                modal.find('#returnAmountDisplay').text(returnAmount
+                                    .toFixed(2));
                                 modal.find('#returnDateDisplay').text(returnDate || 'N/A');
-                                modal.find('#returnReasonDisplay').text(returnReason || 'N/A');
+                                modal.find('#returnReasonDisplay').text(returnReason ||
+                                    'N/A');
                                 modal.find('#returnedByDisplay').text(returnedBy || 'N/A');
-                                modal.find('#originalPaidAmountDisplay').text(originalPaidAmount.toFixed(2));
+                                modal.find('#originalPaidAmountDisplay').text(
+                                    originalPaidAmount.toFixed(2));
 
                                 // Calculate and display net amount
                                 var netAmount = originalPaidAmount - returnAmount;
-                                modal.find('#detailsReturnedAmountDisplay').text(returnAmount.toFixed(2));
-                                modal.find('#detailsNetAmountDisplay').text(netAmount.toFixed(2));
+                                modal.find('#detailsReturnedAmountDisplay').text(
+                                    returnAmount.toFixed(2));
+                                modal.find('#detailsNetAmountDisplay').text(netAmount
+                                    .toFixed(2));
 
                                 // Add color coding for net amount
                                 if (netAmount < 0) {
-                                    modal.find('#detailsNetAmountDisplay').addClass('text-danger').removeClass('text-success');
+                                    modal.find('#detailsNetAmountDisplay').addClass(
+                                        'text-danger').removeClass('text-success');
                                 } else {
-                                    modal.find('#detailsNetAmountDisplay').addClass('text-success').removeClass('text-danger');
+                                    modal.find('#detailsNetAmountDisplay').addClass(
+                                        'text-success').removeClass('text-danger');
                                 }
                             } else {
                                 modal.find('#returnInfoSection').hide();
                                 modal.find('#detailsReturnedAmountDisplay').text('0.00');
-                                modal.find('#detailsNetAmountDisplay').text(originalPaidAmount.toFixed(2));
+                                modal.find('#detailsNetAmountDisplay').text(
+                                    originalPaidAmount.toFixed(2));
                             }
 
                             // Create read-only payment history table (no action buttons)
@@ -1387,9 +1418,12 @@
                                     // Highlight return/refund payments
                                     var rowStyle = '';
                                     var amountStyle = '';
-                                    if (payment.payment_method === 'Refund' || payment.payment_type === 'return') {
-                                        rowStyle = 'style="background-color: #fff3cd; border-left: 4px solid #ffc107;"';
-                                        amountStyle = 'style="color: #856404; font-weight: bold;"';
+                                    if (payment.payment_method === 'Refund' ||
+                                        payment.payment_type === 'return') {
+                                        rowStyle =
+                                            'style="background-color: #fff3cd; border-left: 4px solid #ffc107;"';
+                                        amountStyle =
+                                            'style="color: #856404; font-weight: bold;"';
                                     }
 
                                     detailsHtml += `
@@ -1411,11 +1445,13 @@
                             modal.find('#paymentDetailsContent').html(detailsHtml);
                         },
                         error: function(xhr, status, error) {
-                            console.error('Error fetching return fee data:', xhr.responseText);
+                            console.error('Error fetching return fee data:', xhr
+                                .responseText);
                             // Continue with payment details even if return fee fetch fails
                             modal.find('#returnInfoSection').hide();
                             modal.find('#detailsReturnedAmountDisplay').text('0.00');
-                            modal.find('#detailsNetAmountDisplay').text(response.paid_amount_sum);
+                            modal.find('#detailsNetAmountDisplay').text(response
+                                .paid_amount_sum);
 
                             // Still show payment history
                             let detailsHtml =
@@ -1724,7 +1760,7 @@
                     $('#bankPaymentDateInput').addClass('is-invalid');
                     $('#bankPaymentDateInput').after(
                         '<div class="invalid-feedback bank-field-error">Bank payment date is required for Bank Transfer</div>'
-                        );
+                    );
                     isValid = false;
                 }
 
@@ -1733,7 +1769,7 @@
                     $('#bankPaymentAmountInput').addClass('is-invalid');
                     $('#bankPaymentAmountInput').closest('.form-group').after(
                         '<div class="alert alert-danger bank-field-error" style="margin-top: 10px;">Bank payment amount must be greater than 0</div>'
-                        );
+                    );
                     isValid = false;
                 }
 
@@ -1825,48 +1861,57 @@
 <style>
 @media print {
   @page {
-    size: 210mm 148.5mm; /* Half of A4 height */
-    margin: 0; /* remove margins */
+    size: 21.5cm 14cm portrait; 
+    margin: 0;
   }
 
-  body {
+  html, body {
     margin: 0;
     padding: 0;
     background: #fff;
   }
+    
 
   .invoice-report {
-    width: 100%;
-    height: 148.5mm;
+    width: 100%;  /* Full paper width */
+    height: 14cm;   /* Full paper height */
     position: relative;
-    background: transparent;
-    font-family: 'Arial', sans-serif;
-    font-size: 15px;
+    font-family: 'Arial Black', 'Courier New', monospace;
+    font-size: 16px;
     color: #000;
   }
 
   .field {
     position: absolute;
-    font-family: 'Arial', sans-serif;
-    font-size: 13px;
+    font-family: 'Arial Black', 'Courier New', monospace;    
     color: #000;
+    line-height: 1;
+    font-size: 16px;
+    font-weight: bold;
   }
 
-  /* === FIELD POSITIONS (cm) === */
-  .course-name   { left: 4.2cm;  top: 4.4cm;  font-weight: bold; font-size: 14px; }
-  .invoice-date  { left: 16.8cm; top: 4.5cm; }
-  .invoice-no    { left: 16.8cm; top: 5.0cm; font-weight: bold; }
-  .admission-no  { left: 16.8cm; top: 5.5cm; font-weight: bold; }
+  .field2 {
+    position: absolute;
+    font-family: 'Arial Black', 'Courier New', monospace;    
+    color: #000;
+    line-height: 1;
+    font-size: 14.5px;
+  }
 
-  .student-name  { left: 8.9cm; top: 5.9cm; font-weight: bold; }
-  .student-nic     { left: 8.9cm; top: 6.5cm;  font-weight: bold;}
-  .student-address { left: 8.9cm; top: 7.2cm;  font-weight: bold;}
-  .student-phone   { left: 8.9cm; top: 7.8cm;  font-weight: bold;}
+.course-name   { left: 4.2cm;  top: 4.7cm; font-weight: bold; font-size: 18px; }
+  .invoice-date  { left: 19.0cm; top: 4.8cm; }
+  .invoice-no    { left: 19.0cm; top: 5.5cm; font-weight: bold; }
+  .admission-no  { left: 19.0cm; top: 6.1cm; font-weight: bold; }
 
-  .total-amount  { left: 6.0cm; top: 8.5cm; font-weight: bold; }
-  .paid-amount   { left: 6.0cm; top: 9.2cm; font-weight: bold; }
-  .due-amount    { left: 6.0cm; top: 9.8cm; font-weight: bold; }
-  .due-date      { left: 6.0cm; top: 10.5cm; font-weight: bold; }
+  .student-name      { left: 9.7cm; top: 6.58cm; font-weight: bold; }
+  .student-nic       { left: 9.7cm; top: 7.3cm; font-weight: bold; }
+  .student-address   { left: 9.7cm; top: 8.1cm; font-weight: bold; }
+  .student-phone     { left: 9.7cm; top: 8.9cm; font-weight: bold; }
+
+  .total-amount  { left: 7.2cm; top: 9.72cm; font-weight: bold; }
+  .paid-amount   { left: 7.2cm; top: 10.42cm; font-weight: bold; }
+  .due-amount    { left: 7.2cm; top: 11.2cm; font-weight: bold; }
+  .due-date      { left: 7.2cm; top: 12.0cm; font-weight: bold; }
 }
 </style>
 
@@ -1879,23 +1924,21 @@
         : 'Fee Details')}
   </div>
 
-  <div class="field invoice-date">${formattedDate}</div>
-  <div class="field invoice-no">${response.invoice.main_invoice_number}</div>
-  <div class="field admission-no">${response.invoice.student.admission_number}</div>
+  <div class="field2 invoice-date">${formattedDate}</div>
+  <div class="field2 invoice-no">${response.invoice.main_invoice_number}</div>
+  <div class="field2 admission-no">${response.invoice.student.admission_number}</div>
 
   <div class="field student-name">${response.invoice.student.student_name}</div>
   <div class="field student-nic">${response.invoice.student.national_id_number || 'N/A'}</div>
   <div class="field student-address">${response.invoice.student.permanent_address || 'N/A'}</div>
   <div class="field student-phone">${response.invoice.student.phone_number || 'N/A'}</div>
 
-  <div class="field total-amount"> ${response.invoice.total_amount}</div>
-  <div class="field paid-amount"> ${response.invoice.paid_amount}</div>
-  <div class="field due-amount"> ${response.invoice.due_amount}</div>
-  <div class="field due-date"> ${response.created_to_due}</div>
+  <div class="field total-amount">${response.invoice.total_amount}</div>
+  <div class="field paid-amount">${response.invoice.paid_amount}</div>
+  <div class="field due-amount">${response.invoice.due_amount}</div>
+  <div class="field due-date">${response.created_to_due}</div>
 </div>
 `;
-
-
 
                     modal.find('#invoiceReportContent').html(reportHtml);
                 },
