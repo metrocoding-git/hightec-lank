@@ -880,5 +880,34 @@ class InvoiceController extends Controller
     }
 }
 
+public function getCoursePaymentHistory($studentId, $courseId)
+    {
+        try {
+            $paidCourses = PaidCourse::whereHas('invoice', function ($query) use ($studentId) {
+                $query->where('student_id', $studentId);
+            })
+                ->where('course_id', $courseId)
+                ->with('invoice')
+                ->get();
 
+            $totalPaid = $paidCourses->sum('paid_amount');
+            $coursePrice = $paidCourses->first()->course_price ?? 0;
+            $dueAmount = $coursePrice - $totalPaid;
+
+            return response()->json([
+                'success' => true,
+                'history' => $paidCourses,
+                'total_paid' => $totalPaid,
+                'due_amount' => $dueAmount,
+                'course_price' => $coursePrice,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching course payment history: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching course payment history',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

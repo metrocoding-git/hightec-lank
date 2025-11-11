@@ -210,6 +210,30 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <div class="white-box">
+                                        <div class="main-title mb-3">
+                                            <h3>Payment History</h3>
+                                        </div>
+                                        <div class="table-responsive">
+                                            <table class="table school-table-style w-100" id="paymentHistoryTable">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Date</th>
+                                                        <th>Paid Amount</th>
+                                                        <th>Payment Method</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {{-- Rows added by JS --}}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
                         </div>
                     </div>
@@ -293,10 +317,12 @@
                 let courseId = selectedOption.val();
                 let courseName = selectedOption.text().trim();
                 let coursePrice = parseFloat(selectedOption.data('price')) || 0;
+                let studentId = $('#student_id').val();
 
                 if (!courseId) {
                     $('.allCourseDetails').empty();
                     addedCourseId = null;
+                    $('#paymentHistoryTable tbody').empty();
                     return;
                 }
 
@@ -311,6 +337,35 @@
 
                 addCourseRow(courseId, courseName, coursePrice);
                 addedCourseId = courseId;
+
+                // Fetch payment history
+                if (studentId && courseId) {
+                    $.ajax({
+                        url: '{{ route('fees.course-payment-history', [':studentId', ':courseId']) }}'.replace(':studentId', studentId).replace(':courseId', courseId),
+                        type: 'GET',
+                        success: function(data) {
+                            if (data.success) {
+                                let historyTable = $('#paymentHistoryTable tbody');
+                                historyTable.empty();
+                                if (data.history.length > 0) {
+                                    data.history.forEach(function(payment) {
+                                        let row = `<tr>
+                                            <td>${new Date(payment.invoice.create_date).toLocaleDateString()}</td>
+                                            <td>${payment.paid_amount}</td>
+                                            <td>${payment.payment_method}</td>
+                                            <td>${payment.payment_status}</td>
+                                        </tr>`;
+                                        historyTable.append(row);
+                                    });
+                                } else {
+                                    historyTable.append('<tr><td colspan="4">No payment history found.</td></tr>');
+                                }
+                                // Update due amount in the main table
+                                $('.due_amount_display').val(data.due_amount.toFixed(2));
+                            }
+                        }
+                    });
+                }
 
                 $(this).val('').niceSelect('update'); // Clear selection after adding
             });

@@ -297,6 +297,7 @@ Route::controller(InvoiceController::class)->middleware(['permission'])->group(f
     Route::get('fees/return-fee-data/{invoiceId}', 'getReturnFeeData')->name('fees.return-fee-data')->withoutMiddleware(['csrf', 'permission']);
     Route::post('student/fees/course-payment-store', 'storeCoursePayment')->name('fees.course-payment.store'); // New route for course payments
     Route::get('student/fees/course-payment', 'indexCoursePayment')->name('fees.course-payment'); // Route for course payment index view
+    Route::get('student/fees/course-payment-history/{studentId}/{courseId}', 'getCoursePaymentHistory')->name('fees.course-payment-history')->withoutMiddleware(['csrf', 'permission']);
     // Route::get('student/fees/fee-edit/{id}', 'edit')->name('fees.fee-edit-invoice');
     Route::get('student/fees/fee-invoice-edit/{id}', 'edit')->name('fees.fee-invoice-edit'); // GET edit
 
