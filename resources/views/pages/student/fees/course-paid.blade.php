@@ -456,8 +456,6 @@
                     }
                 }
 
-                let dueAmount = coursePrice - effectivePaidAmount;
-                $('.due_amount_display').val(dueAmount.toFixed(2));
             }
 
             // Event listeners for price and paid amount changes
