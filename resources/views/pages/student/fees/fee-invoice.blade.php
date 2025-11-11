@@ -52,7 +52,7 @@
                                             <tr>
                                                 <th>ID</th>
                                                 <th>Main Invoice No.</th>
-                                                {{-- <th>Course</th> --}}
+                                                <th>Course</th>
                                                 <th>@lang('common.student')</th>
                                                 <th>Branch</th>
                                                 <th>@lang('admin.admission_no')</th>
@@ -85,11 +85,9 @@
                                                             {{ $invoice->main_invoice_number }}
                                                         </a>
                                                     </td>
-                                                    {{-- <td>{{ $invoice->paidCourses->course->name }}</td> --}}
-                                                    {{-- <td>
-                                                        {{ $invoice->paidCourses->first() ? $invoice->paidCourses->first()->course->name : 'N/A' }} ({{ $invoice->paidCourses->first() ? $invoice->paidCourses->first()->course_id : 'N/A' }})
-                                                    </td> --}}
-
+                                                    <td>
+                                                        {{ optional(optional($invoice->paidCourses->first())->course)->name ?? 'N/A' }}
+                                                    </td>
                                                     <td>
                                                         <a href="{{ route('fees.fee-invoice-view', ['id' => $invoice->id, 'state' => 'view']) }}"
                                                             target="_blank">
@@ -147,7 +145,7 @@
                                                                     data-target="#makeInvoiceModal"
                                                                     data-student-id="{{ $invoice->student->id }}"
                                                                     data-invoice-id="{{ $invoice->id }}"
-                                                                    onclick="populateInvoiceModal(this)">Make Invoice</a>
+                                                                    onclick="populateInvoiceModal(this)">Invoice</a>
 
                                                                 {{-- Show Return option only if there's paid amount and not returned --}}
                                                                 @if ($invoice->paid_amount > 0)
@@ -161,7 +159,7 @@
                                                             <a class="dropdown-item" data-toggle="modal"
                                                                 data-target="#invoiceReportModal"
                                                                 data-invoice-id="{{ $invoice->id }}"
-                                                                href="#">Report</a>
+                                                                href="#">Re-Print</a>
 
                                                             {{-- Always show Delete option --}}
                                                             <a class="dropdown-item" data-toggle="modal"
@@ -1935,12 +1933,14 @@
 
   <div class="field total-amount">${response.invoice.total_amount}</div>
   <div class="field paid-amount">${response.invoice.paid_amount}</div>
-  <div class="field due-amount">${response.invoice.due_amount}</div>
+  <div class="field due-amount">${response.invoice.total_amount - response.invoice.paid_amount}</div>
   <div class="field due-date">${response.created_to_due}</div>
 </div>
 `;
 
                     modal.find('#invoiceReportContent').html(reportHtml);
+                    // Automatically print the report after content is loaded
+                    printReport();
                 },
                 error: function(xhr, status, error) {
                     console.error('Error fetching invoice report:', xhr.responseText);
