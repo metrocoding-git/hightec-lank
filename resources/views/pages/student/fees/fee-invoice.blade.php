@@ -52,7 +52,7 @@
                                             <tr>
                                                 <th>ID</th>
                                                 <th>Main Invoice No.</th>
-                                                {{-- <th>Course</th> --}}
+                                                <th>Course</th>
                                                 <th>@lang('common.student')</th>
                                                 <th>Branch</th>
                                                 <th>@lang('admin.admission_no')</th>
@@ -85,11 +85,9 @@
                                                             {{ $invoice->main_invoice_number }}
                                                         </a>
                                                     </td>
-                                                    {{-- <td>{{ $invoice->paidCourses->course->name }}</td> --}}
-                                                    {{-- <td>
-                                                        {{ $invoice->paidCourses->first() ? $invoice->paidCourses->first()->course->name : 'N/A' }} ({{ $invoice->paidCourses->first() ? $invoice->paidCourses->first()->course_id : 'N/A' }})
-                                                    </td> --}}
-
+                                                    <td>
+                                                        {{ optional(optional($invoice->paidCourses->first())->course)->name ?? 'N/A' }}
+                                                    </td>
                                                     <td>
                                                         <a href="{{ route('fees.fee-invoice-view', ['id' => $invoice->id, 'state' => 'view']) }}"
                                                             target="_blank">

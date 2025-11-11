@@ -28,7 +28,19 @@ class InvoiceController extends Controller
      */
     public function index()
     {
-        $fee_invoices = Fee_invoices::with('student', 'branch', 'invoice_item')->get();
+        $fee_invoices = Fee_invoices::with('student', 'branch', 'invoice_item', 'paidCourses.course')
+            ->whereHas('paidCourses') // Only include invoices that have associated paid courses
+            ->get()
+            ->groupBy(function($invoice) {
+                $studentId = $invoice->student_id;
+                $courseId = optional(optional($invoice->paidCourses->first())->course)->id ?? 'no_course';
+                return "{$studentId}-{$courseId}";
+            })
+            ->map(function($group) {
+                // Get the latest invoice from each group
+                return $group->sortByDesc('id')->first();
+            });
+
         return view('pages.student.fees.fee-invoice', compact('fee_invoices'));
     }
 
@@ -726,57 +738,113 @@ class InvoiceController extends Controller
             $paymentMethod = $request->payment_method;
             $dueAmount = $coursePrice - $paidAmount;
 
-            $main_invoice_number = 'INV-' . time() . '-' . uniqid();
             $create_user_id = Auth::check() ? Auth::id() : null;
-            Log::debug('Generated main_invoice_number (storeCoursePayment): ' . $main_invoice_number);
-            Log::debug('Auth::id() (storeCoursePayment): ' . $create_user_id);
 
-            // Create a Fee_invoices record
-            $fee_invoice = Fee_invoices::create([
-                'invoice_type' => 'course',
-                'branch_id' => $request->branch_id,
-                'student_id' => $request->student_id,
-                'create_date' => Carbon::createFromFormat('m/d/Y', $request->create_date)->format('Y-m-d'),
-                'due_date' => Carbon::createFromFormat('m/d/Y', $request->due_date)->format('Y-m-d'),
-                'payment_status' => $request->payment_status,
-                'payment_method' => $paymentMethod,
-                'total_amount' => $coursePrice,
-                'paid_amount' => $paidAmount,
-                'due_amount' => $dueAmount,
-                'main_invoice_number' => $main_invoice_number,
-                'create_user_id' => $create_user_id,
-                'payment_file' => null, // Will be handled below if file exists
-            ]);
-            Log::debug('Course Fee_invoice created with main_invoice_number: ' . $fee_invoice->main_invoice_number . ' and create_user_id: ' . $fee_invoice->create_user_id);
+            // Find an existing Fee_invoices record of type 'course' for this student
+            $existingFeeInvoice = Fee_invoices::where('student_id', $request->student_id)
+                                              ->where('invoice_type', 'course')
+                                              ->first();
 
+            $existingPaidCourse = null;
+            if ($existingFeeInvoice) {
+                // Now check if this existing Fee_invoices is associated with the specific course
+                $existingPaidCourse = PaidCourse::where('invoice_id', $existingFeeInvoice->id)
+                                                ->where('course_id', $request->course_id)
+                                                ->first();
+            }
 
-            // Save data to the new paid_courses table
-            $paidCourse = PaidCourse::create([
-                'invoice_id' => $fee_invoice->id,
-                'course_id' => $request->course_id,
-                'course_price' => $coursePrice,
-                'paid_amount' => $paidAmount,
-                'due_amount' => $dueAmount,
-                'payment_status' => $request->payment_status,
-                'payment_method' => $paymentMethod,
-                'bank_paid_amount' => ($paymentMethod === 'Card' || $paymentMethod === 'Bank Transfer') && $request->bank_paid_amount !== null ? $request->bank_paid_amount : null,
-                'bank_paid_date' => ($paymentMethod === 'Card' || $paymentMethod === 'Bank Transfer') && $request->bank_paid_date
-                    ? Carbon::createFromFormat('Y-m-d', $request->bank_paid_date)->format('Y-m-d')
-                    : null,
-                'payment_file' => null, // Will be handled below if file exists
-            ]);
+            $fee_invoice = null;
+            $paidCourse = null;
 
-            // Handle payment file upload for paid_courses
+            if ($existingFeeInvoice && $existingPaidCourse) {
+                // Case 1: Existing invoice and paid course found, update them
+                $fee_invoice = $existingFeeInvoice;
+                $paidCourse = $existingPaidCourse;
+
+                // Update Fee_invoices
+                $fee_invoice->paid_amount += $paidAmount;
+                $fee_invoice->due_amount -= $paidAmount;
+                $fee_invoice->payment_status = ($fee_invoice->paid_amount >= $fee_invoice->total_amount) ? 'full' : 'partial';
+                $fee_invoice->payment_method = $paymentMethod; // Update to latest payment method
+                $fee_invoice->save();
+
+                // Update PaidCourse
+                $paidCourse->paid_amount += $paidAmount;
+                $paidCourse->due_amount -= $paidAmount;
+                $paidCourse->payment_status = ($paidCourse->paid_amount >= $paidCourse->course_price) ? 'full' : 'partial';
+                $paidCourse->payment_method = $paymentMethod; // Update to latest payment method
+                $paidCourse->save();
+
+                Log::debug('Course Fee_invoice and PaidCourse updated for student_id: ' . $request->student_id . ' course_id: ' . $request->course_id);
+
+            } else {
+                // Case 2: No existing invoice/paid course found, create new ones
+                $main_invoice_number = 'INV-' . time() . '-' . uniqid();
+                Log::debug('Generated main_invoice_number (storeCoursePayment): ' . $main_invoice_number);
+                Log::debug('Auth::id() (storeCoursePayment): ' . $create_user_id);
+
+                // Create a Fee_invoices record
+                $fee_invoice = Fee_invoices::create([
+                    'invoice_type' => 'course',
+                    'branch_id' => $request->branch_id,
+                    'student_id' => $request->student_id,
+                    'create_date' => Carbon::createFromFormat('m/d/Y', $request->create_date)->format('Y-m-d'),
+                    'due_date' => Carbon::createFromFormat('m/d/Y', $request->due_date)->format('Y-m-d'),
+                    'payment_status' => $request->payment_status,
+                    'payment_method' => $paymentMethod,
+                    'total_amount' => $coursePrice,
+                    'paid_amount' => $paidAmount,
+                    'due_amount' => $dueAmount,
+                    'main_invoice_number' => $main_invoice_number,
+                    'create_user_id' => $create_user_id,
+                    'payment_file' => null, // Will be handled below if file exists
+                ]);
+                Log::debug('Course Fee_invoice created with main_invoice_number: ' . $fee_invoice->main_invoice_number . ' and create_user_id: ' . $fee_invoice->create_user_id);
+
+                // Save data to the new paid_courses table
+                $paidCourse = PaidCourse::create([
+                    'invoice_id' => $fee_invoice->id,
+                    'course_id' => $request->course_id,
+                    'course_price' => $coursePrice,
+                    'paid_amount' => $paidAmount,
+                    'due_amount' => $dueAmount,
+                    'payment_status' => $request->payment_status,
+                    'payment_method' => $paymentMethod,
+                    'bank_paid_amount' => ($paymentMethod === 'Card' || $paymentMethod === 'Bank Transfer') && $request->bank_paid_amount !== null ? $request->bank_paid_amount : null,
+                    'bank_paid_date' => ($paymentMethod === 'Card' || $paymentMethod === 'Bank Transfer') && $request->bank_paid_date
+                        ? Carbon::createFromFormat('Y-m-d', $request->bank_paid_date)->format('Y-m-d')
+                        : null,
+                    'payment_file' => null, // Will be handled below if file exists
+                ]);
+            }
+
+            // Handle payment file upload for Invoices_payments
+            $paymentFile = null;
+            if ($request->hasFile('payment_file')) {
+                $paymentFile = $request->file('payment_file')->store('payments', 'public');
+            }
+
+            $bankPaidAmountForPayment = null;
+            $bankPaidDateForPayment = null;
+
+            if ($paymentMethod === 'Bank Transfer') {
+                $bankPaidAmountForPayment = $request->bank_paid_amount;
+                if (!empty($request->bank_paid_date)) {
+                    $bankPaidDateForPayment = Carbon::createFromFormat('Y-m-d', $request->bank_paid_date)->format('Y-m-d');
+                }
+            }
+
             // Create a new payment record in invoices_payments table
             Invoices_payments::create([
                 'invoice_id' => $fee_invoice->id,
-                // 'payment_invoice_number' => add by modal
                 'amount' => $paidAmount,
                 'payment_method' => $paymentMethod,
                 'payment_type' => 'course',
-                'payment_file' => $paidCourse->payment_file, // Use the file path from paidCourse
-                'receipt_number' => 'REC-' . time() . '-' . uniqid(), // Generate a unique receipt number
+                'payment_file' => $paymentFile, // Use the newly uploaded file or null
+                'receipt_number' => 'REC-' . time() . '-' . uniqid(),
                 'create_user_id' => $create_user_id,
+                'bank_payment_amount' => $bankPaidAmountForPayment,
+                'bank_payment_date' => $bankPaidDateForPayment,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
