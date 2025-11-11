@@ -951,23 +951,47 @@ class InvoiceController extends Controller
 public function getCoursePaymentHistory($studentId, $courseId)
     {
         try {
-            $paidCourses = PaidCourse::whereHas('invoice', function ($query) use ($studentId) {
-                $query->where('student_id', $studentId);
-            })
-                ->where('course_id', $courseId)
-                ->with('invoice')
-                ->get();
+            // Find the Fee_invoices record associated with this student and course
+            // This assumes there's one primary Fee_invoices of type 'course' per student-course combination
+            $feeInvoice = Fee_invoices::where('student_id', $studentId)
+                                      ->where('invoice_type', 'course')
+                                      ->whereHas('paidCourses', function($query) use ($courseId) {
+                                          $query->where('course_id', $courseId);
+                                      })
+                                      ->first();
 
-            $totalPaid = $paidCourses->sum('paid_amount');
-            $coursePrice = $paidCourses->first()->course_price ?? 0;
+            if (!$feeInvoice) {
+                return response()->json([
+                    'success' => true,
+                    'history' => [],
+                    'total_paid' => 0,
+                    'due_amount' => 0,
+                    'course_price' => 0,
+                ]);
+            }
+
+            // Get all payments for this specific fee invoice, eager load the invoice for status
+            $payments = Invoices_payments::where('invoice_id', $feeInvoice->id)
+                                         ->with('invoice') // Eager load the Fee_invoices to get payment_status
+                                         ->orderBy('created_at', 'asc')
+                                         ->get();
+
+            // Get the course price from the associated PaidCourse
+            $paidCourse = PaidCourse::where('invoice_id', $feeInvoice->id)
+                                    ->where('course_id', $courseId)
+                                    ->first();
+
+            $coursePrice = $paidCourse->course_price ?? 0;
+            $totalPaid = $payments->sum('amount');
             $dueAmount = $coursePrice - $totalPaid;
 
             return response()->json([
                 'success' => true,
-                'history' => $paidCourses,
+                'history' => $payments, // Now returning Invoices_payments
                 'total_paid' => $totalPaid,
                 'due_amount' => $dueAmount,
                 'course_price' => $coursePrice,
+                'invoice_id' => $feeInvoice->id, // Also return invoice_id for potential use
             ]);
         } catch (\Exception $e) {
             Log::error('Error fetching course payment history: ' . $e->getMessage());

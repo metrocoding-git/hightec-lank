@@ -350,10 +350,10 @@
                                 if (data.history.length > 0) {
                                     data.history.forEach(function(payment) {
                                         let row = `<tr>
-                                            <td>${new Date(payment.invoice.create_date).toLocaleDateString()}</td>
-                                            <td>${payment.paid_amount}</td>
+                                            <td>${new Date(payment.created_at).toLocaleDateString()}</td>
+                                            <td>${payment.amount}</td>
                                             <td>${payment.payment_method}</td>
-                                            <td>${payment.payment_status}</td>
+                                            <td>${payment.invoice.payment_status}</td>
                                         </tr>`;
                                         historyTable.append(row);
                                     });
@@ -361,7 +361,9 @@
                                     historyTable.append('<tr><td colspan="4">No payment history found.</td></tr>');
                                 }
                                 // Update due amount in the main table
-                                $('.due_amount_display').val(data.due_amount.toFixed(2));
+                                
+                                $('.allCourseDetails tr').find('.due_amount_display').val(data.due_amount.toFixed(2));
+                                $('.allCourseDetails tr').find('.paid_amount_input').attr('max', data.course_price);
                             }
                         }
                     });
