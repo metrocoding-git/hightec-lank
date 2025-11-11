@@ -145,7 +145,7 @@
                                                                     data-target="#makeInvoiceModal"
                                                                     data-student-id="{{ $invoice->student->id }}"
                                                                     data-invoice-id="{{ $invoice->id }}"
-                                                                    onclick="populateInvoiceModal(this)">Make Invoice</a>
+                                                                    onclick="populateInvoiceModal(this)">Invoice</a>
 
                                                                 {{-- Show Return option only if there's paid amount and not returned --}}
                                                                 @if ($invoice->paid_amount > 0)
@@ -159,7 +159,7 @@
                                                             <a class="dropdown-item" data-toggle="modal"
                                                                 data-target="#invoiceReportModal"
                                                                 data-invoice-id="{{ $invoice->id }}"
-                                                                href="#">Report</a>
+                                                                href="#">Re-Print</a>
 
                                                             {{-- Always show Delete option --}}
                                                             <a class="dropdown-item" data-toggle="modal"
