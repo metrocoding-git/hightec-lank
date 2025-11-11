@@ -223,7 +223,7 @@
                                                         <th>Date</th>
                                                         <th>Paid Amount</th>
                                                         <th>Payment Method</th>
-                                                        <th>Status</th>
+                                                        {{-- <th>Status</th> --}}
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -353,7 +353,7 @@
                                             <td>${new Date(payment.created_at).toLocaleDateString()}</td>
                                             <td>${payment.amount}</td>
                                             <td>${payment.payment_method}</td>
-                                            <td>${payment.invoice.payment_status}</td>
+                                           
                                         </tr>`;
                                         historyTable.append(row);
                                     });
