@@ -1933,7 +1933,7 @@
 
   <div class="field total-amount">${response.invoice.total_amount}</div>
   <div class="field paid-amount">${response.invoice.paid_amount}</div>
-  <div class="field due-amount">${response.invoice.due_amount}</div>
+  <div class="field due-amount">${response.invoice.total_amount - response.invoice.paid_amount}</div>
   <div class="field due-date">${response.created_to_due}</div>
 </div>
 `;
