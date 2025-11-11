@@ -1939,6 +1939,8 @@
 `;
 
                     modal.find('#invoiceReportContent').html(reportHtml);
+                    // Automatically print the report after content is loaded
+                    printReport();
                 },
                 error: function(xhr, status, error) {
                     console.error('Error fetching invoice report:', xhr.responseText);
