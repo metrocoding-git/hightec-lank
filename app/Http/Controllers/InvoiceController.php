@@ -961,12 +961,15 @@ public function getCoursePaymentHistory($studentId, $courseId)
                                       ->first();
 
             if (!$feeInvoice) {
+                // If no invoice exists, it's the first payment. Due amount is the full course price.
+                $course = Course::find($courseId);
+                $coursePrice = $course ? $course->price : 0;
                 return response()->json([
                     'success' => true,
                     'history' => [],
                     'total_paid' => 0,
-                    'due_amount' => 0,
-                    'course_price' => 0,
+                    'due_amount' => $coursePrice,
+                    'course_price' => $coursePrice,
                 ]);
             }
 

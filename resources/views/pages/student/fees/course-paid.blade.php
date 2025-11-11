@@ -347,6 +347,8 @@
                             if (data.success) {
                                 let historyTable = $('#paymentHistoryTable tbody');
                                 historyTable.empty();
+                                $('.allCourseDetails tr').removeClass('first-payment');
+
                                 if (data.history.length > 0) {
                                     data.history.forEach(function(payment) {
                                         let row = `<tr>
@@ -358,12 +360,19 @@
                                         historyTable.append(row);
                                     });
                                 } else {
-                                    historyTable.append('<tr><td colspan="4">No payment history found.</td></tr>');
+                                    historyTable.append(
+                                        '<tr><td colspan="4">No payment history found.</td></tr>'
+                                    );
+                                    $('.allCourseDetails tr').addClass('first-payment');
                                 }
                                 // Update due amount in the main table
-                                
-                                $('.allCourseDetails tr').find('.due_amount_display').val(data.due_amount.toFixed(2));
-                                $('.allCourseDetails tr').find('.paid_amount_input').attr('max', data.course_price);
+
+                                $('.allCourseDetails tr').find('.due_amount_display').val(data
+                                    .due_amount.toFixed(2));
+                                $('.allCourseDetails tr').find('.due_amount_display').data(
+                                    'initial-due', data.due_amount);
+                                $('.allCourseDetails tr').find('.paid_amount_input').attr('max',
+                                    data.due_amount);
                             }
                         }
                     });
@@ -435,12 +444,20 @@
                 let paidAmount = parseFloat($('.paid_amount_input').val()) || 0;
                 let paymentMethod = $('#paymentMethodName').val();
                 let bankPaidAmount = parseFloat($('#bank_paid_amount').val()) || 0;
+                let initialDue = $('.allCourseDetails tr').find('.due_amount_display').data('initial-due') ||
+                    coursePrice;
 
-                let effectivePaidAmount = paidAmount;
+                if ($('.allCourseDetails tr').hasClass('first-payment')) {
+                    $('.allCourseDetails tr').find('.due_amount_display').val(paidAmount.toFixed(2));
+                } else {
+                    let newDue = initialDue - paidAmount;
+                    $('.allCourseDetails tr').find('.due_amount_display').val(newDue.toFixed(2));
+                }
+
+                let totalPaidAfterThisTransaction = (coursePrice - initialDue) + paidAmount;
 
                 if (paymentMethod === 'Bank Transfer') {
                     effectivePaidAmount = bankPaidAmount;
-                    // For bank transfer, if bank paid amount is greater than or equal to course price, set status to full
                     if (bankPaidAmount >= coursePrice && coursePrice > 0) {
                         $('#status').val('full').niceSelect('update');
                     } else if (bankPaidAmount > 0 && bankPaidAmount < coursePrice) {
@@ -449,16 +466,16 @@
                         $('#status').val('not').niceSelect('update');
                     }
                 } else {
-                    if (paidAmount >= coursePrice && coursePrice > 0) {
+                    if (totalPaidAfterThisTransaction >= coursePrice && coursePrice > 0) {
                         $('#status').val('full').niceSelect('update');
-                    } else if (paidAmount > 0 && paidAmount < coursePrice) {
+                    } else if (totalPaidAfterThisTransaction > 0) {
                         $('#status').val('partial').niceSelect('update');
                     } else {
                         $('#status').val('not').niceSelect('update');
                     }
                 }
-
             }
+
 
             // Event listeners for price and paid amount changes
             $(document).on('input', '.course_price_input, .paid_amount_input', function() {
@@ -470,20 +487,12 @@
             function validatePaidAmount() {
                 $('.paid_amount_input').each(function() {
                     let paidAmountInput = $(this);
-                    let coursePriceInput = paidAmountInput.closest('tr').find('.course_price_input');
-                    let dueAmountDisplay = paidAmountInput.closest('tr').find('.due_amount_display');
-
-                    let coursePrice = parseFloat(coursePriceInput.val()) || 0;
+                    let maxAmount = parseFloat(paidAmountInput.attr('max')) || 0;
                     let paidAmount = parseFloat(paidAmountInput.val()) || 0;
-                    let dueAmount = parseFloat(dueAmountDisplay.val()) || 0;
 
-                    // Update max attribute to current course price
-                    paidAmountInput.attr('max', coursePrice);
-
-                    // Check if paid amount exceeds course price
-                    if (paidAmount > coursePrice) {
-                        paidAmountInput.val(coursePrice.toFixed(2));
-                        toastr.warning('Paid amount cannot exceed the course price');
+                    if (paidAmount > maxAmount) {
+                        paidAmountInput.val(maxAmount.toFixed(2));
+                        toastr.warning('Paid amount cannot exceed the due amount');
                         updatePaymentStatusAndDue();
                     }
                 });
