@@ -10,6 +10,7 @@ use App\Models\Intake;
 use App\Models\Student;
 use App\Models\StudentCategory;
 use App\Models\StudentCourse;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -95,8 +96,36 @@ class AddStudentController extends Controller
         // Combine first and last name
         $validatedData['student_name'] = $validatedData['first_name'] . ' ' . $validatedData['last_name'];
 
-        Student::create($validatedData);
-        return redirect()->route('student.add-intake-with-courses.index')->with('success', 'Student created successfully');
+        $student = Student::create($validatedData);
+
+        // ✅ Automatically call FeeInvoiceController@store to create invoice
+        $feeInvoiceController = new InvoiceController();
+        $invoiceRequest = new Request([
+            'branch_id' => $request->branch_id,
+            'student_id' => $student->id, // newly created student
+            'create_date' => Carbon::now()->format('m/d/Y'),
+            'due_date' => Carbon::now()->addDays(30)->format('m/d/Y'),
+            'fee_type_id' => [1],
+            'price' => [1 => 2000],
+            'paidPrice' => [1 => 2000],
+            'payment_method' => 'Cash',
+        ]);
+
+        $invoiceResponse = $feeInvoiceController->store($invoiceRequest);
+
+        // Optional: check response
+        if ($invoiceResponse->getData()->success) {
+            $invoiceId = $invoiceResponse->getData()->invoice_id;
+
+            // Generate URLs
+            $redirectUrl = route('student.add-intake-with-courses.index');
+
+            // Return the small "open and redirect" page
+            return view('pages.student.fees.open-and-redirect', compact('redirectUrl', 'invoiceId'));
+        } else {
+            return redirect()->route('student.add-intake-with-courses.index')
+                ->with('error', 'Student created, but failed to create invoice.');
+        }
     }
 
 

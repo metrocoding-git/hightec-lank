@@ -671,6 +671,10 @@
                     processData: false,
                     success: function(response) {
                         if (response.success) {
+                            const reprintUrl =
+                                `/student/fees/invoice-item-print/${response.invoice_id}/${response.payment_id}`;
+                            window.open(reprintUrl, '_blank');
+
                             // Redirect with flash message in the URL (encoded)
                             const message = encodeURIComponent('successfully!');
                             window.location.href = '{{ route('fees.add-invoice') }}' +

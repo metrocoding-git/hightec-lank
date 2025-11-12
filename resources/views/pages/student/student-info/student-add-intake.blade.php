@@ -3,6 +3,9 @@
     Student Add Intake
 @endsection
 @section('mainContent')
+
+
+
     <section class="sms-breadcrumb mb-20 up_breadcrumb">
         <div class="container-fluid">
             <div class="row justify-content-between">
@@ -45,7 +48,8 @@
             <div class="row mt-40">
                 <div class="col-lg-12">
                     <div class="white-box filter_card">
-                        <form class="form-horizontal" action="{{ route('student.add-intake-with-courses.index') }}" method="GET">
+                        <form class="form-horizontal" action="{{ route('student.add-intake-with-courses.index') }}"
+                            method="GET">
                             @csrf
                             <div class="row">
                                 <div class="col-lg-8 col-md-6 col-sm-6">
@@ -154,10 +158,11 @@
                                                     <td>{{ $key + 1 }}</td>
                                                     <td>{{ $studentIntake->student->student_name }}</td>
                                                     <td>{{ $studentIntake->student->admission_number }}</td>
-                                                    <td>{{ $studentIntake->intake->name??'-' }}</td>
-                                                    <td>{{ $studentIntake->branch->name??'-' }}</td>
+                                                    <td>{{ $studentIntake->intake->name ?? '-' }}</td>
+                                                    <td>{{ $studentIntake->branch->name ?? '-' }}</td>
                                                     <td>{{ $studentIntake->course->name ?? '-' }}</td>
-                                                    <td>{{ $studentIntake->enrolled_at ? date('Y-m-d', strtotime($studentIntake->enrolled_at)) : '-' }}</td>
+                                                    <td>{{ $studentIntake->enrolled_at ? date('Y-m-d', strtotime($studentIntake->enrolled_at)) : '-' }}
+                                                    </td>
                                                     <td>
                                                         <span
                                                             class="badge {{ $studentIntake->status == 'pending' ? 'badge-success' : ($studentIntake->status == 'start' ? 'badge-info' : ($studentIntake->status == 'return' ? 'badge-warning' : 'badge-primary')) }}">
@@ -192,7 +197,7 @@
                                                                     <span class="text-success">Complete</span>
                                                                 </a>
                                                             @endif
-                                                           
+
                                                             <a class="dropdown-item" data-toggle="modal"
                                                                 data-target="#deleteStudentIntakeModal{{ $studentIntake->id }}"
                                                                 href="#">
@@ -276,8 +281,7 @@
                                         name="student_id" id="modal_student_id" required>
                                         <option value="">Select Student</option>
                                         @foreach ($students as $student)
-                                            <option value="{{ $student->id }}"
-                                                {{ old('student_id', $studentIntake->student_id ?? null) == $student->id ? 'selected' : '' }}>
+                                            <option value="{{ $student->id }}">
                                                 {{ $student->student_name }} ({{ $student->admission_number }})
                                             </option>
                                         @endforeach
@@ -299,8 +303,7 @@
                                         name="branch_id" id="modal_branch_id" required>
                                         <option value="">Select Branch</option>
                                         @foreach ($branches as $branch)
-                                            <option value="{{ $branch->id }}"
-                                                {{ old('branch_id', $studentIntake->branch_id ?? null) == $branch->id ? 'selected' : '' }}>
+                                            <option value="{{ $branch->id }}">
                                                 {{ $branch->name }}
                                             </option>
                                         @endforeach
@@ -387,7 +390,7 @@
                                             {{ old('status', 'pending') == 'pending' ? 'selected' : '' }}>
                                             Pending
                                         </option>
-                                       
+
                                     </select>
                                     @error('status')
                                         <span class="text-danger">{{ $message }}</span>
@@ -461,7 +464,7 @@
             ordering: true,
             info: true,
             // order: [[0, 'desc']], // Sort by first column (No.) in descending order to show latest data first
-          
+
 
             // 👇 This part adds the search and pagination icons
             language: {
@@ -480,6 +483,7 @@
 
     <script>
         $(document).ready(function() {
+
             // Handle branch change event to load intakes dynamically (Modal)
             $('#modal_branch_id').on('change', function() {
                 var branchId = $(this).val();
@@ -528,7 +532,7 @@
                             console.error('Error loading intakes:', error);
                             console.error('XHR response:', xhr.responseText);
                             intakeSelect.html(
-                            '<option value="">Error loading intakes</option>');
+                                '<option value="">Error loading intakes</option>');
                             courseSelect.html('<option value="">Select Courses</option>');
 
                             // Trigger niceSelect update if using niceSelect
@@ -598,7 +602,7 @@
                             console.error('Error loading courses:', error);
                             console.error('XHR response:', xhr.responseText);
                             courseSelect.html(
-                            '<option value="">Error loading courses</option>');
+                                '<option value="">Error loading courses</option>');
 
                             // Trigger niceSelect update if using niceSelect
                             if (courseSelect.hasClass('primary_select')) {
@@ -647,7 +651,7 @@
                 $('#modal_branch_id').val('{{ $studentIntake->branch_id ?? '' }}').trigger('change');
                 $('#modal_enrolled_at').val(
                     '{{ $studentIntake->enrolled_at ? date('Y-m-d', strtotime($studentIntake->enrolled_at)) : '' }}'
-                    );
+                );
                 $('#modal_status').val('{{ $studentIntake->status }}');
 
                 // Set intake and courses after a delay to allow branch change to complete
@@ -715,7 +719,7 @@
                             console.error('Error loading search intakes:', error);
                             console.error('XHR response:', xhr.responseText);
                             intakeSelect.html(
-                            '<option value="">Error loading intakes</option>');
+                                '<option value="">Error loading intakes</option>');
                             courseSelect.html('<option value="">Select Course</option>');
 
                             // Trigger niceSelect update if using niceSelect
@@ -785,7 +789,7 @@
                             console.error('Error loading search courses:', error);
                             console.error('XHR response:', xhr.responseText);
                             courseSelect.html(
-                            '<option value="">Error loading courses</option>');
+                                '<option value="">Error loading courses</option>');
 
                             // Trigger niceSelect update if using niceSelect
                             if (courseSelect.hasClass('primary_select')) {

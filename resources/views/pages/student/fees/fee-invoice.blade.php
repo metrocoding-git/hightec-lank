@@ -86,10 +86,10 @@
                                                         </a>
                                                     </td>
                                                     <td>
-                                                        {{ optional(optional($invoice->paidCourses->first())->course)->name ?? 'N/A' }}
+                                                        {{ optional(value: optional($invoice->paidCourses->first())->course)->name ?? 'N/A' }}
                                                     </td>
                                                     <td>
-                                                        <a href="{{ route('fees.fee-invoice-view', ['id' => $invoice->id, 'state' => 'view']) }}"
+                                                        <a href="{{ route('student-details', ['id' => $invoice->student->id, 'state' => 'view']) }}"
                                                             target="_blank">
                                                             {{ $invoice->student->student_name }}
                                                         </a>
@@ -156,10 +156,9 @@
                                                             @endif
 
                                                             {{-- Show Report option --}}
-                                                            <a class="dropdown-item" data-toggle="modal"
-                                                                data-target="#invoiceReportModal"
-                                                                data-invoice-id="{{ $invoice->id }}"
-                                                                href="#">Re-Print</a>
+                                                            <a class="dropdown-item" 
+                                                               
+                                                                href="{{ route('fees.invoice-print', $invoice->id) }}" target="_blank" >Re-Print</a>
 
                                                             {{-- Always show Delete option --}}
                                                             <a class="dropdown-item" data-toggle="modal"
@@ -1253,8 +1252,11 @@
                     let historyHtml =
                         '<table class="table table-bordered" style="text-align: center; width: 100%;"><thead style="background-color: #f8f9fa;"><tr><th style="text-align: center; padding: 12px;">Invoice Number</th><th style="text-align: center; padding: 12px;">Course Name</th><th style="text-align: center; padding: 12px;">Amount</th><th style="text-align: center; padding: 12px;">Method</th><th style="text-align: center; padding: 12px;">Type</th><th style="text-align: center; padding: 12px;">Receipt No.</th><th style="text-align: center; padding: 12px;">Date</th><th style="text-align: center; padding: 12px;">Action</th></tr></thead><tbody>';
                     if (response.payments.length > 0) {
+                        let baseUrl = "{{ url('/student/fees/invoice-item-print') }}";
                         response.payments.forEach(function(payment) {
-                            let actionDropdown = '';
+                            let actionDropdown =
+                                `<a href="${baseUrl}/${invoiceId}/${payment.id}" target="_blank" class="btn btn-sm btn-primary col-12 w-full">Re-print</a>`;
+
                             if (payment.payment_method === 'Invoice' && !payment
                                 .payment_invoice_number) {
                                 actionDropdown +=
@@ -1830,7 +1832,7 @@
 
             // Fetch invoice report data via AJAX
             $.ajax({
-                url: `/student/fees/invoice-report/${invoiceId}`, // New route for fetching invoice report
+                url: `/student/fees/invoice-print/${invoiceId}`, // New route for fetching invoice report
                 type: 'GET',
                 beforeSend: function() {
                     modal.find('#invoiceReportContent').html(`

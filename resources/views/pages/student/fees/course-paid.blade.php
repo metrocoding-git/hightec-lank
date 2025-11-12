@@ -45,7 +45,8 @@
     <!-- Main Content -->
     <section class="admin-visitor-area up_st_admin_visitor">
         <div class="container-fluid">
-            <form action="{{ route('fees.course-payment.store') }}" method="POST" enctype="multipart/form-data" id="invoiceForm">
+            <form action="{{ route('fees.course-payment.store') }}" method="POST" enctype="multipart/form-data"
+                id="invoiceForm">
                 @csrf
 
                 <div class="row g-4">
@@ -123,7 +124,8 @@
                                 <div class="row mt-15">
                                     <div class="col-lg-12">
                                         <label>@lang('fees.payment_method') <span class="text-danger">*</span></label>
-                                        <select class="primary_select form-control" id="paymentMethodName" name="payment_method">
+                                        <select class="primary_select form-control" id="paymentMethodName"
+                                            name="payment_method">
                                             <option value="">@lang('fees.payment_method')</option>
                                             <option value="Cash">Cash</option>
                                             <option value="Invoice">Invoice</option>
@@ -142,8 +144,8 @@
 
                                     <div class="col-lg-12 mt-15" id="bankPaidDateRow">
                                         <label>Bank Paid Date <span class="text-danger">*</span></label>
-                                        <input type="date" class="primary_input_field date form-control" id="bank_paid_date"
-                                            name="bank_paid_date" value="{{ date('Y-m-d') }}">
+                                        <input type="date" class="primary_input_field date form-control"
+                                            id="bank_paid_date" name="bank_paid_date" value="{{ date('Y-m-d') }}">
                                     </div>
 
                                     <div class="col-lg-12 mt-15" id="uploadDocumentRow">
@@ -151,7 +153,8 @@
                                         <div class="d-flex align-items-center gap-2">
                                             <input type="file" name="payment_file" id="payment_file" class="d-none"
                                                 accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
-                                            <button type="button" id="uploadBtn" class="primary-btn fix-gr-bg flex-grow-1">
+                                            <button type="button" id="uploadBtn"
+                                                class="primary-btn fix-gr-bg flex-grow-1">
                                                 <span class="ti-upload"></span> Browse
                                             </button>
                                             <span id="fileName" class="text-muted small"></span>
@@ -259,10 +262,12 @@
                 $('#student_id').html('<option value="">Loading...</option>');
 
                 if (branchId) {
-                    let filteredStudents = @json($students).filter(student => student.branch_id == branchId);
+                    let filteredStudents = @json($students).filter(student => student
+                        .branch_id == branchId);
                     $('#student_id').empty().append('<option value="">Select Student</option>');
                     $.each(filteredStudents, function(index, student) {
-                        $('#student_id').append('<option value="' + student.id + '">' + student.student_name + '</option>');
+                        $('#student_id').append('<option value="' + student.id + '">' + student
+                            .student_name + '</option>');
                     });
                     $('#student_id').niceSelect('update');
                     $('#selectStudentLoader').hide();
@@ -284,13 +289,17 @@
                     $('.allCourseDetails').empty();
                     addedCourseId = null;
                     $.ajax({
-                        url: '{{ route('get-courses-by-student', ':studentId') }}'.replace(':studentId', studentId),
+                        url: '{{ route('get-courses-by-student', ':studentId') }}'.replace(
+                            ':studentId', studentId),
                         type: 'GET',
                         success: function(data) {
-                            $('#course_id').empty().append('<option value="">select course</option>');
+                            $('#course_id').empty().append(
+                                '<option value="">select course</option>');
                             if (data.success && data.courses.length > 0) {
                                 data.courses.forEach(function(course) {
-                                    $('#course_id').append('<option value="' + course.id + '" data-price="' + course.price + '">' + course.name + '</option>');
+                                    $('#course_id').append('<option value="' + course
+                                        .id + '" data-price="' + course.price +
+                                        '">' + course.name + '</option>');
                                 });
                             }
                             $('#course_id').niceSelect('update');
@@ -341,7 +350,8 @@
                 // Fetch payment history
                 if (studentId && courseId) {
                     $.ajax({
-                        url: '{{ route('fees.course-payment-history', [':studentId', ':courseId']) }}'.replace(':studentId', studentId).replace(':courseId', courseId),
+                        url: '{{ route('fees.course-payment-history', [':studentId', ':courseId']) }}'
+                            .replace(':studentId', studentId).replace(':courseId', courseId),
                         type: 'GET',
                         success: function(data) {
                             if (data.success) {
@@ -447,12 +457,10 @@
                 let initialDue = $('.allCourseDetails tr').find('.due_amount_display').data('initial-due') ||
                     coursePrice;
 
-                if ($('.allCourseDetails tr').hasClass('first-payment')) {
-                    $('.allCourseDetails tr').find('.due_amount_display').val(paidAmount.toFixed(2));
-                } else {
+               
                     let newDue = initialDue - paidAmount;
                     $('.allCourseDetails tr').find('.due_amount_display').val(newDue.toFixed(2));
-                }
+                
 
                 let totalPaidAfterThisTransaction = (coursePrice - initialDue) + paidAmount;
 
@@ -547,7 +555,7 @@
             $('#uploadBtn').on('click', function() {
                 $('#payment_file').click();
             });
-            
+
             $('#payment_file').on('change', function() {
                 $('#fileName').text(this.files[0] ? this.files[0].name : 'No file chosen');
             });
@@ -574,6 +582,7 @@
                 let coursePrice = parseFloat(courseRow.find('.course_price_input').val());
                 let paidAmount = parseFloat(courseRow.find('.paid_amount_input').val());
 
+                console.log('Course ID:', paidAmount);
                 // Validate course details
                 if (!courseId) {
                     toastr.error('Course is required');
@@ -583,7 +592,7 @@
                     toastr.error('Course price must be a valid number greater than 0');
                     return;
                 }
-                if (isNaN(paidAmount) || paidAmount < 0) {
+                if (isNaN(paidAmount) || paidAmount <= 0) {
                     toastr.error('Paid amount must be a valid number (0 or greater)');
                     return;
                 }
@@ -625,6 +634,7 @@
                     return;
                 }
 
+                
                 // Validate bank payment fields if visible
                 if (paymentMethod === 'Bank Transfer') {
                     let bankPaidAmount = parseFloat($('#bank_paid_amount').val());
@@ -634,8 +644,12 @@
                         toastr.error('Bank Paid Amount is required and must be greater than 0');
                         return;
                     }
-                    if (bankPaidAmount < coursePrice) {
-                        toastr.error('Bank Paid Amount must be greater than or equal to Course Price for Full Paid status');
+
+                    
+                    if (bankPaidAmount < paidAmount) {
+                        toastr.error(
+                            'Bank Paid Amount must be greater than or equal to Course Price for Full Paid status'
+                        );
                         return;
                     }
                     if (!bankPaidDate) {
@@ -678,10 +692,16 @@
                     processData: false,
                     success: function(response) {
                         if (response.success) {
+                            const reprintUrl =
+                                `/student/fees/invoice-item-print/${response.invoice_id}/${response.payment_id}`;
+                            window.open(reprintUrl, '_blank');
+
                             const message = encodeURIComponent('successfully!');
                             window.location.href = '{{ route('fees.course-payment') }}' +
                                 '?message-success=' + message;
                         }
+
+
                     },
                     error: function(xhr) {
                         let msg = 'An unexpected error occurred';
@@ -689,7 +709,8 @@
 
                         if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
                             const errors = xhr.responseJSON.errors;
-                            console.error('Validation Errors:', errors); // Log validation errors
+                            console.error('Validation Errors:',
+                                errors); // Log validation errors
                             Object.values(errors).forEach((messages) => {
                                 messages.forEach((message) => {
                                     toastr.error(message);
@@ -700,7 +721,8 @@
 
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             msg = xhr.responseJSON.message;
-                            console.error('Server Error Message:', msg); // Log server error message
+                            console.error('Server Error Message:',
+                                msg); // Log server error message
                         }
 
                         toastr.error(msg);

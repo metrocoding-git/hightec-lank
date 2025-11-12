@@ -110,7 +110,9 @@ Route::controller(AddStudentController::class)->prefix('student/student-info/add
     Route::put('update/{student}', 'update')->name('add-student.update');
     Route::get('edit/{student}', 'edit')->name('add-student.edit');
     Route::delete('destroy/{id}', 'destroy')->name('add-student.destroy');
+    
 });
+
 
 // Student Course Management Routes
 Route::controller(AddStudentController::class)->prefix('student/student-info')->middleware(['permission'])->group(function () {
@@ -282,6 +284,7 @@ Route::controller(FeeTypeController::class)->middleware(['permission'])->group(f
     Route::delete('student/fees/fee-type-delete/{id}', 'destroy')->name('fees.fees-type-delete');
 });
 
+
 Route::controller(InvoiceController::class)->middleware(['permission'])->group(function () {
 
     Route::get('student/fees/invoice/view/{id}', 'viewFeeInvoice')->name('fees.fee-invoice-view');
@@ -311,9 +314,11 @@ Route::controller(InvoiceController::class)->middleware(['permission'])->group(f
     Route::post('fees/add-payment-invoice-number', 'addPaymentInvoiceNumber')->name('fees.add-payment-invoice-number')->withoutMiddleware(['csrf', 'permission']);
 
     // New route for invoice report
-    // Route::get('student/fees/invoice-report', 'invoiceReport')->name('fees.invoice-report')->withoutMiddleware(['permission']);
+    // Route::get('student/fees/invoice-print', 'invoiceReport')->name('fees.invoice-report')->withoutMiddleware(['permission']);
     // Route for invoice report data (AJAX)
-    Route::get('student/fees/invoice-report/{invoiceId}', 'getInvoiceReport')->name('fees.invoice-report')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('student/fees/invoice-print/{invoiceId}', 'invoicePrint')->name('fees.invoice-print')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('student/fees/invoice-item-print/{invoiceId}/{paymentId}', 'invoiceItemPrint')->name('fees.invoice-item-print')->withoutMiddleware(['csrf', 'permission']);
+
 });
 
 

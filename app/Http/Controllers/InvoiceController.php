@@ -31,12 +31,12 @@ class InvoiceController extends Controller
         $fee_invoices = Fee_invoices::with('student', 'branch', 'invoice_item', 'paidCourses.course')
             ->whereHas('paidCourses') // Only include invoices that have associated paid courses
             ->get()
-            ->groupBy(function($invoice) {
+            ->groupBy(function ($invoice) {
                 $studentId = $invoice->student_id;
                 $courseId = optional(optional($invoice->paidCourses->first())->course)->id ?? 'no_course';
                 return "{$studentId}-{$courseId}";
             })
-            ->map(function($group) {
+            ->map(function ($group) {
                 // Get the latest invoice from each group
                 return $group->sortByDesc('id')->first();
             });
@@ -161,7 +161,7 @@ class InvoiceController extends Controller
                         Log::warning('No authenticated user found when creating Invoices_payments in store method.');
                     }
 
-                    Invoices_payments::create([
+                    $payment = Invoices_payments::create([
                         'invoice_id' => $fee_invoice->id,
                         // 'payment_invoice_number' => , add by modal
                         'amount' => $paid_price,
@@ -176,6 +176,11 @@ class InvoiceController extends Controller
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
+                }else{
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Please enter paid amount to generate payment record.',
+                    ], 500);
                 }
             }
 
@@ -183,6 +188,7 @@ class InvoiceController extends Controller
                 'success' => true,
                 'message' => 'Invoice, items, and initial payments created successfully',
                 'invoice_id' => $fee_invoice->id,
+                'payment_id' => $payment->id,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -605,7 +611,6 @@ class InvoiceController extends Controller
                 'new_invoice_paid_amount' => $invoice->paid_amount,
                 'new_invoice_due_amount' => $invoice->due_amount,
             ], 200);
-
         } catch (\Exception $e) {
             Log::error('Error processing refund: ' . $e->getMessage() . ' Stack: ' . $e->getTraceAsString());
             return response()->json([
@@ -742,15 +747,15 @@ class InvoiceController extends Controller
 
             // Find an existing Fee_invoices record of type 'course' for this student
             $existingFeeInvoice = Fee_invoices::where('student_id', $request->student_id)
-                                              ->where('invoice_type', 'course')
-                                              ->first();
+                ->where('invoice_type', 'course')
+                ->first();
 
             $existingPaidCourse = null;
             if ($existingFeeInvoice) {
                 // Now check if this existing Fee_invoices is associated with the specific course
                 $existingPaidCourse = PaidCourse::where('invoice_id', $existingFeeInvoice->id)
-                                                ->where('course_id', $request->course_id)
-                                                ->first();
+                    ->where('course_id', $request->course_id)
+                    ->first();
             }
 
             $fee_invoice = null;
@@ -776,7 +781,6 @@ class InvoiceController extends Controller
                 $paidCourse->save();
 
                 Log::debug('Course Fee_invoice and PaidCourse updated for student_id: ' . $request->student_id . ' course_id: ' . $request->course_id);
-
             } else {
                 // Case 2: No existing invoice/paid course found, create new ones
                 $main_invoice_number = 'INV-' . time() . '-' . uniqid();
@@ -835,7 +839,7 @@ class InvoiceController extends Controller
             }
 
             // Create a new payment record in invoices_payments table
-            Invoices_payments::create([
+            $payment = Invoices_payments::create([
                 'invoice_id' => $fee_invoice->id,
                 'amount' => $paidAmount,
                 'payment_method' => $paymentMethod,
@@ -853,6 +857,8 @@ class InvoiceController extends Controller
                 'success' => true,
                 'message' => 'Course payment saved successfully!',
                 'paid_course_id' => $paidCourse->id,
+                'invoice_id' => $fee_invoice->id,
+                'payment_id' => $payment->id,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -890,75 +896,138 @@ class InvoiceController extends Controller
     /**
      * Get invoice report data for a specific invoice
      */
-    public function getInvoiceReport($invoiceId)
-{
-    try {
-        $invoice = Fee_invoices::with(['student', 'branch', 'invoice_item.fee_type', 'payments', 'paidCourses.course'])
-            ->findOrFail($invoiceId);
-
-        $courseName = 'N/A';
-        $created_at = 'N/A';
-        $expiration_date = 'N/A';
-        $created_to_due = 'N/A';
-
+    public function invoicePrint($invoiceId)
+    {
         try {
-            if ($invoice->paidCourses && $invoice->paidCourses->first()) {
-                $course = $invoice->paidCourses->first()->course;
+            $invoice = Fee_invoices::with(['student', 'branch', 'invoice_item.fee_type', 'payments', 'paidCourses.course'])
+                ->findOrFail($invoiceId);
 
-                $courseName = $course->name ?? 'N/A';
 
-                // Format created_at as date
-                $created_at = $course->created_at
-                    ? Carbon::parse($course->created_at)->format('Y-m-d')
-                    : 'N/A';
+            $courseName = 'N/A';
+            $created_at = 'N/A';
+            $expiration_date = 'N/A';
+            $created_to_due = 'N/A';
 
-                // Get expiration_date (integer number of days)
-                $expiration_date = is_numeric($course->expiration_date)
-                    ? (int)$course->expiration_date
-                    : 'N/A';
+            try {
+                if ($invoice->paidCourses && $invoice->paidCourses->first()) {
+                    $course = $invoice->paidCourses->first()->course;
 
-                // Add expiration days to created_at
-                if ($created_at !== 'N/A' && is_int($expiration_date)) {
-                    $created_to_due = Carbon::parse($created_at)
-                        ->addDays($expiration_date)
-                        ->format('Y-m-d');
+                    $courseName = $course->name ?? 'N/A';
+
+                    // Format created_at as date
+                    $created_at = $course->created_at
+                        ? Carbon::parse($course->created_at)->format('Y-m-d')
+                        : 'N/A';
+
+                    // Get expiration_date (integer number of days)
+                    $expiration_date = is_numeric($course->expiration_date)
+                        ? (int)$course->expiration_date
+                        : 'N/A';
+
+                    // Add expiration days to created_at
+                    if ($created_at !== 'N/A' && is_int($expiration_date)) {
+                        $created_to_due = Carbon::parse($created_at)
+                            ->addDays($expiration_date)
+                            ->format('Y-m-d');
+                    }
                 }
+            } catch (\Exception $e) {
+                Log::error('Error calculating due date: ' . $e->getMessage());
             }
+
+            return view('pages.student.fees.invoice', [
+                'success' => true,
+                'invoice' => $invoice,
+                'invoice_items' => $invoice->invoice_item,
+                'payments' => $invoice->payments,
+                'course_name' => $courseName,
+                'created_at' => $created_at,
+                'expiration_date' => $expiration_date,
+                'created_to_due' => $created_to_due,
+            ]);
         } catch (\Exception $e) {
-            Log::error('Error calculating due date: ' . $e->getMessage());
+            Log::error('Error fetching invoice report: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching invoice report',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'invoice' => $invoice,
-            'invoice_items' => $invoice->invoice_item,
-            'payments' => $invoice->payments,
-            'course_name' => $courseName,
-            'created_at' => $created_at,
-            'expiration_date' => $expiration_date,
-            'created_to_due' => $created_to_due,
-        ]);
-    } catch (\Exception $e) {
-        Log::error('Error fetching invoice report: ' . $e->getMessage());
-        return response()->json([
-            'success' => false,
-            'message' => 'Error fetching invoice report',
-            'error' => $e->getMessage(),
-        ], 500);
     }
-}
 
-public function getCoursePaymentHistory($studentId, $courseId)
+    public function invoiceItemPrint($invoiceId, $paymentId)
+    {
+        try {
+            $invoice = Invoices_payments::with(['invoice', 'invoice.student', 'invoice.branch', 'invoice.paidCourses.course'])
+                ->where('id', $paymentId)
+                ->where('invoice_id', $invoiceId)
+                ->firstOrFail();
+
+            $courseName = 'N/A';
+            $created_at = 'N/A';
+            $expiration_date = 'N/A';
+            $created_to_due = 'N/A';
+
+            try {
+
+                if ($invoice->invoice->paidCourses && $invoice->invoice->paidCourses->first()) {
+                    $course = $invoice->invoice->paidCourses->first()->course;
+
+                    $courseName = $course->name ?? 'N/A';
+
+                    // Format created_at as date
+                    $created_at = $course->created_at
+                        ? Carbon::parse($course->created_at)->format('Y-m-d')
+                        : 'N/A';
+
+                    // Get expiration_date (integer number of days)
+                    $expiration_date = is_numeric($course->expiration_date)
+                        ? (int)$course->expiration_date
+                        : 'N/A';
+
+                    // Add expiration days to created_at
+                    if ($created_at !== 'N/A' && is_int($expiration_date)) {
+                        $created_to_due = Carbon::parse($created_at)
+                            ->addDays($expiration_date)
+                            ->format('Y-m-d');
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::error('Error calculating due date: ' . $e->getMessage());
+            }
+
+            return view('pages.student.fees.item-invoice', [
+                'success' => true,
+                'invoice' => $invoice,
+                'invoice_items' => $invoice->invoice_item,
+                'payments' => $invoice->payments,
+                'course_name' => $courseName,
+                'created_at' => $created_at,
+                'expiration_date' => $expiration_date,
+                'created_to_due' => $created_to_due,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error fetching invoice report: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching invoice report',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getCoursePaymentHistory($studentId, $courseId)
     {
         try {
             // Find the Fee_invoices record associated with this student and course
             // This assumes there's one primary Fee_invoices of type 'course' per student-course combination
             $feeInvoice = Fee_invoices::where('student_id', $studentId)
-                                      ->where('invoice_type', 'course')
-                                      ->whereHas('paidCourses', function($query) use ($courseId) {
-                                          $query->where('course_id', $courseId);
-                                      })
-                                      ->first();
+                ->where('invoice_type', 'course')
+                ->whereHas('paidCourses', function ($query) use ($courseId) {
+                    $query->where('course_id', $courseId);
+                })
+                ->first();
 
             if (!$feeInvoice) {
                 // If no invoice exists, it's the first payment. Due amount is the full course price.
@@ -975,14 +1044,14 @@ public function getCoursePaymentHistory($studentId, $courseId)
 
             // Get all payments for this specific fee invoice, eager load the invoice for status
             $payments = Invoices_payments::where('invoice_id', $feeInvoice->id)
-                                         ->with('invoice') // Eager load the Fee_invoices to get payment_status
-                                         ->orderBy('created_at', 'asc')
-                                         ->get();
+                ->with('invoice') // Eager load the Fee_invoices to get payment_status
+                ->orderBy('created_at', 'asc')
+                ->get();
 
             // Get the course price from the associated PaidCourse
             $paidCourse = PaidCourse::where('invoice_id', $feeInvoice->id)
-                                    ->where('course_id', $courseId)
-                                    ->first();
+                ->where('course_id', $courseId)
+                ->first();
 
             $coursePrice = $paidCourse->course_price ?? 0;
             $totalPaid = $payments->sum('amount');
