@@ -131,7 +131,11 @@
         {{-- Course Name --}}
         <div class="field course-name">
             {{-- {{ $invoice->invoice->paidCourses ?? ($invoice->invoice->paidCourses->course->name )?? 'Fee Details' }} --}}
-            {{ $invoice->invoice->paidCourses->course->name ?? 'Admition fee' }}
+            {{ $invoice->invoice->invoice_type == 'fee'
+            ? $invoice->invoice->invoice_item[0]->fee_type->name
+            : ($invoice->invoice_type == 'course'
+                ? $invoice->paidCourses->course->name
+                : '-') }}
         </div>
 
         {{-- Invoice Info --}}

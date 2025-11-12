@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Invoice Print</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -7,60 +8,120 @@
 
     <style>
         @media print {
-          @page {
-            size: 21.5cm 14cm portrait; 
-            margin: 0;
-          }
-        
-          html, body {
-            margin: 0;
-            padding: 0;
-            background: #fff;
-          }
-            
-        
-          .invoice-report {
-            width: 100%;  /* Full paper width */
-            height: 14cm;   /* Full paper height */
-            position: relative;
-            font-family: 'Arial Black', 'Courier New', monospace;
-            font-size: 16px;
-            color: #000;
-          }
-        
-          .field {
-            position: absolute;
-            font-family: 'Arial Black', 'Courier New', monospace;    
-            color: #000;
-            line-height: 1;
-            font-size: 16px;
-            font-weight: bold;
-          }
-        
-          .field2 {
-            position: absolute;
-            font-family: 'Arial Black', 'Courier New', monospace;    
-            color: #000;
-            line-height: 1;
-            font-size: 14.5px;
-          }
-        
-        .course-name   { left: 4.2cm;  top: 4.7cm; font-weight: bold; font-size: 18px; }
-          .invoice-date  { left: 19.0cm; top: 4.8cm; }
-          .invoice-no    { left: 19.0cm; top: 5.5cm; font-weight: bold; }
-          .admission-no  { left: 19.0cm; top: 6.1cm; font-weight: bold; }
-        
-          .student-name      { left: 9.7cm; top: 6.58cm; font-weight: bold; }
-          .student-nic       { left: 9.7cm; top: 7.3cm; font-weight: bold; }
-          .student-address   { left: 9.7cm; top: 8.1cm; font-weight: bold; }
-          .student-phone     { left: 9.7cm; top: 8.9cm; font-weight: bold; }
-        
-          .total-amount  { left: 7.2cm; top: 9.72cm; font-weight: bold; }
-          .paid-amount   { left: 7.2cm; top: 10.42cm; font-weight: bold; }
-          .due-amount    { left: 7.2cm; top: 11.2cm; font-weight: bold; }
-          .due-date      { left: 7.2cm; top: 12.0cm; font-weight: bold; }
+            @page {
+                size: 21.5cm 14cm portrait;
+                margin: 0;
+            }
+
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                background: #fff;
+            }
+
+
+            .invoice-report {
+                width: 100%;
+                /* Full paper width */
+                height: 14cm;
+                /* Full paper height */
+                position: relative;
+                font-family: 'Arial Black', 'Courier New', monospace;
+                font-size: 16px;
+                color: #000;
+            }
+
+            .field {
+                position: absolute;
+                font-family: 'Arial Black', 'Courier New', monospace;
+                color: #000;
+                line-height: 1;
+                font-size: 16px;
+                font-weight: bold;
+            }
+
+            .field2 {
+                position: absolute;
+                font-family: 'Arial Black', 'Courier New', monospace;
+                color: #000;
+                line-height: 1;
+                font-size: 14.5px;
+            }
+
+            .course-name {
+                left: 4.2cm;
+                top: 4.7cm;
+                font-weight: bold;
+                font-size: 18px;
+            }
+
+            .invoice-date {
+                left: 19.0cm;
+                top: 4.8cm;
+            }
+
+            .invoice-no {
+                left: 19.0cm;
+                top: 5.5cm;
+                font-weight: bold;
+            }
+
+            .admission-no {
+                left: 19.0cm;
+                top: 6.1cm;
+                font-weight: bold;
+            }
+
+            .student-name {
+                left: 9.7cm;
+                top: 6.58cm;
+                font-weight: bold;
+            }
+
+            .student-nic {
+                left: 9.7cm;
+                top: 7.3cm;
+                font-weight: bold;
+            }
+
+            .student-address {
+                left: 9.7cm;
+                top: 8.1cm;
+                font-weight: bold;
+            }
+
+            .student-phone {
+                left: 9.7cm;
+                top: 8.9cm;
+                font-weight: bold;
+            }
+
+            .total-amount {
+                left: 7.2cm;
+                top: 9.72cm;
+                font-weight: bold;
+            }
+
+            .paid-amount {
+                left: 7.2cm;
+                top: 10.42cm;
+                font-weight: bold;
+            }
+
+            .due-amount {
+                left: 7.2cm;
+                top: 11.2cm;
+                font-weight: bold;
+            }
+
+            .due-date {
+                left: 7.2cm;
+                top: 12.0cm;
+                font-weight: bold;
+            }
         }
-        </style>
+    </style>
 </head>
 
 <body>
@@ -68,7 +129,12 @@
 
         {{-- Course Name --}}
         <div class="field course-name">
-            {{ ($invoice->invoice_item[0]->fee_type->name ?? 'Fee Details') }}
+
+            {{ $invoice->invoice_type == 'fee'
+                ? $invoice->invoice_item[0]->fee_type->name
+                : ($invoice->invoice_type == 'course'
+                    ? $invoice->paidCourses->course->name
+                    : '-') }}
         </div>
 
         {{-- Invoice Info --}}
@@ -92,11 +158,11 @@
 
     {{-- ✅ Auto print on page load --}}
     <script>
-        window.onload = function () {
+        window.onload = function() {
             window.print();
         };
         window.onafterprint = () => window.close();
-
     </script>
 </body>
+
 </html>

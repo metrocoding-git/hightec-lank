@@ -109,7 +109,9 @@ class InvoiceController extends Controller
                 $payment_status = 'full';
             }
 
-            $main_invoice_number = 'INV-' . time() . '-' . uniqid();
+            do {
+                $main_invoice_number = 'INV-' . rand(100000, 999999);
+            } while (\App\Models\Fee_invoices::where('main_invoice_number', $main_invoice_number)->exists());
             $create_user_id = Auth::check() ? Auth::id() : null;
             Log::debug('Generated main_invoice_number (store): ' . $main_invoice_number);
             Log::debug('Auth::id() (store): ' . $create_user_id);
@@ -176,7 +178,7 @@ class InvoiceController extends Controller
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
-                }else{
+                } else {
                     return response()->json([
                         'success' => false,
                         'message' => 'Please enter paid amount to generate payment record.',
@@ -745,26 +747,20 @@ class InvoiceController extends Controller
 
             $create_user_id = Auth::check() ? Auth::id() : null;
 
-            // Find an existing Fee_invoices record of type 'course' for this student
-            $existingFeeInvoice = Fee_invoices::where('student_id', $request->student_id)
-                ->where('invoice_type', 'course')
+            $existingInvoice = Fee_invoices::join('paid_courses', 'fee_invoices.id', '=', 'paid_courses.invoice_id')
+                ->where('fee_invoices.student_id', $request->student_id)
+                ->where('fee_invoices.invoice_type', 'course')
+                ->where('paid_courses.course_id', $request->course_id)
+                ->select('fee_invoices.id as fee_invoice_id', 'paid_courses.id as paid_course_id')
                 ->first();
 
-            $existingPaidCourse = null;
-            if ($existingFeeInvoice) {
-                // Now check if this existing Fee_invoices is associated with the specific course
-                $existingPaidCourse = PaidCourse::where('invoice_id', $existingFeeInvoice->id)
-                    ->where('course_id', $request->course_id)
-                    ->first();
-            }
 
             $fee_invoice = null;
             $paidCourse = null;
+            if ($existingInvoice) {
 
-            if ($existingFeeInvoice && $existingPaidCourse) {
-                // Case 1: Existing invoice and paid course found, update them
-                $fee_invoice = $existingFeeInvoice;
-                $paidCourse = $existingPaidCourse;
+                $fee_invoice = Fee_invoices::find($existingInvoice->fee_invoice_id);
+                $paidCourse = PaidCourse::find($existingInvoice->paid_course_id);
 
                 // Update Fee_invoices
                 $fee_invoice->paid_amount += $paidAmount;
@@ -783,7 +779,9 @@ class InvoiceController extends Controller
                 Log::debug('Course Fee_invoice and PaidCourse updated for student_id: ' . $request->student_id . ' course_id: ' . $request->course_id);
             } else {
                 // Case 2: No existing invoice/paid course found, create new ones
-                $main_invoice_number = 'INV-' . time() . '-' . uniqid();
+                do {
+                    $main_invoice_number = 'INV-' . rand(100000, 999999);
+                } while (\App\Models\Fee_invoices::where('main_invoice_number', $main_invoice_number)->exists());
                 Log::debug('Generated main_invoice_number (storeCoursePayment): ' . $main_invoice_number);
                 Log::debug('Auth::id() (storeCoursePayment): ' . $create_user_id);
 
@@ -1006,7 +1004,6 @@ class InvoiceController extends Controller
                 'expiration_date' => $expiration_date,
                 'created_to_due' => $created_to_due,
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error fetching invoice report: ' . $e->getMessage());
             return response()->json([

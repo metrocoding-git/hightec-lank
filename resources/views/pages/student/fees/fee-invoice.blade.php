@@ -52,7 +52,7 @@
                                             <tr>
                                                 <th>ID</th>
                                                 <th>Main Invoice No.</th>
-                                                <th>Course</th>
+                                                <th>Fee Name</th>
                                                 <th>@lang('common.student')</th>
                                                 <th>Branch</th>
                                                 <th>@lang('admin.admission_no')</th>
@@ -86,7 +86,14 @@
                                                         </a>
                                                     </td>
                                                     <td>
-                                                        {{ optional(value: optional($invoice->paidCourses->first())->course)->name ?? 'N/A' }}
+                                                      
+                                                        @if ($invoice->invoice_type == 'fee')
+                                                            {{$invoice->invoice_item[0]->fee_type->name}}
+                                                        @elseif ($invoice->invoice_type == 'course')
+                                                            {{ $invoice->paidCourses->course->name }}
+                                                        @else 
+                                                            -
+                                                        @endif
                                                     </td>
                                                     <td>
                                                         <a href="{{ route('student-details', ['id' => $invoice->student->id, 'state' => 'view']) }}"
@@ -137,7 +144,7 @@
                                                                 <a class="dropdown-item" data-toggle="modal"
                                                                     data-target="#viewPaymentHistoryModal"
                                                                     data-invoice-id="{{ $invoice->id }}"
-                                                                    data-course-name="{{ optional(optional($invoice->paidCourses->first())->course)->name ?? 'N/A' }}"
+                                                                    data-course-name="{{ optional(optional($invoice->paidCourses)->course)->name ?? 'N/A' }}"
                                                                     href="#">View Payment</a>
 
                                                                 {{-- Show Make Invoice option for non-returned invoices --}}

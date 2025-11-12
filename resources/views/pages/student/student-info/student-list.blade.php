@@ -307,6 +307,7 @@
             searching: true,
             ordering: true,
             info: true,
+            order: [[0, 'desc']], // 👈 ensure newest entries show first
 
             // 👇 This part adds the search and pagination icons
             language: {

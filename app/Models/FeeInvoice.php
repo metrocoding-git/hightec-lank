@@ -56,6 +56,6 @@ class FeeInvoice extends Model
 
     public function paidCourses()
     {
-        return $this->hasMany(PaidCourse::class, 'invoice_id');
+        return $this->hasone(PaidCourse::class, 'invoice_id');
     }
 }
