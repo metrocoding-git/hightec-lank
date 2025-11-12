@@ -1,29 +1,27 @@
-{{-- resources/views/utils/open-and-redirect.blade.php --}}
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-    <title>Redirecting...</title>
-</head>
 
-<body>
+@extends('layouts.app')
+@section('title')
+    About
+@endsection
 
-    <script>
+@section('mainContent')
 
-        $(document).ready(function() {
-            const reprintUrl = "{{ route('fees.invoice-print', $invoiceId) }}";
+@endsection
 
-            window.open(reprintUrl, '_blank');
+@push('script')
+<script>
 
-            // setTimeout(function() {
-            //     window.location.href = '{{ $redirectUrl }}';
-            // }, 250);
+    $(document).ready(function() {
+        const reprintUrl = "{{ route('fees.invoice-print', $invoiceId) }}";
 
-        });
-    </script>
-</body>
+        window.open(reprintUrl, '_blank');
 
-</html>
+        setTimeout(function() {
+            window.location.href = '{{ $redirectUrl }}';
+        }, 2500);
+
+    });
+</script>
+@endpush
