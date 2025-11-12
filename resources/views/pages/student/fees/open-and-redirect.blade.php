@@ -18,9 +18,9 @@
 
             window.open(reprintUrl, '_blank');
 
-            setTimeout(function() {
-                window.location.href = '{{ $redirectUrl }}';
-            }, 250);
+            // setTimeout(function() {
+            //     window.location.href = '{{ $redirectUrl }}';
+            // }, 250);
 
         });
     </script>
