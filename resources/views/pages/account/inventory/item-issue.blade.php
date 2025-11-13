@@ -76,9 +76,12 @@
                                     <div class="col-lg-12 mb-15">
                                         <label class="primary_input_label">Course <span class="text-danger">*</span></label>
                                         <select class="primary_select form-control" name="course_id" id="course_select"
-                                            disabled>
+                                            disabled required>
                                             <option value="">Select Student First *</option>
                                         </select>
+                                        @error('course_id')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
 
 
@@ -676,7 +679,7 @@
                                 if (intakeData && intakeData.length > 0) {
                                     intakeData.forEach(function(intake) {
                                         intakeOptionsHtml += '<option value="' +
-                                            intake.id + '">' +
+                                            intake.id + '" data-start-date="' + (intake.start_date || '') + '">' +
                                             intake.name + '</option>';
                                     });
                                     $('#intake_select').html(intakeOptionsHtml).prop(
@@ -765,6 +768,32 @@
                 $('#course_select').html('<option value="">Loading courses...</option>').prop('disabled',
                     true);
                 refreshNiceSelect('#course_select');
+
+                // Get intake start date
+                var selectedIntakeOption = $(this).find("option:selected");
+                var intakeStartDateStr = selectedIntakeOption.data('start-date');
+                console.log('📅 Intake Start Date:', intakeStartDateStr);
+
+                if (intakeStartDateStr) {
+                    var intakeStartDate = new Date(intakeStartDateStr);
+                    var today = new Date();
+                    
+
+                    if (intakeStartDate > today) {
+                        toastr.warning(`This intake has not started yet. Start date: ${intakeStartDateStr}`, '', {
+                            timeOut: 5000,
+                            extendedTimeOut: 1000
+                        });
+                        // Optionally disable further selections or the submit button if intake hasn't started
+                        // For now, just show a warning.
+                    } else {
+                        toastr.success(`Intake has started. Start date: ${intakeStartDateStr}`, '', {
+                            timeOut: 3000,
+                            extendedTimeOut: 1000
+                        });
+                    }
+                }
+
 
                 if (intake_id && intake_id !== '' && student_id && student_id !== '') {
                     var url =

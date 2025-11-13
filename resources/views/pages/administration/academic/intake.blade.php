@@ -97,7 +97,7 @@
                                         {{-- Intake Date --}}
                                         <div class="col-lg-12 mt-20">
                                             <div class="primary_input">
-                                                <label class="primary_input_label">Intake Date <span>*</span></label>
+                                                <label class="primary_input_label">Intake Start Date <span>*</span></label>
                                                 <input type="date" name="date"
                                                     class="primary_input_field form-control @error('date') is-invalid @enderror"
                                                     value="{{ old('date', $intake->start_date ?? '') }}" autocomplete="off">

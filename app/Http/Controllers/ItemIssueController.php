@@ -19,6 +19,7 @@ use App\Models\Student;
 use App\Models\Course;
 use App\Models\Intake;
 use App\Models\FeeInvoice;
+use App\Models\StudentCourse;
 
 class ItemIssueController extends Controller
 {
@@ -146,6 +147,22 @@ class ItemIssueController extends Controller
 
             $batch->save();
             Log::info('Batch created with ID: ' . $batch->id);
+
+            // Update student_courses status if student, intake, and course are provided
+            if ($request->student_id && $request->intake_id && $request->course_id) {
+                $studentCourse = StudentCourse::where('student_id', $request->student_id)
+                    ->where('intake_id', $request->intake_id)
+                    ->where('course_id', $request->course_id)
+                    ->first();
+
+                if ($studentCourse) {
+                    $studentCourse->status = 'start';
+                    $studentCourse->save();
+                    Log::info('StudentCourse status updated to "start" for student_id: ' . $request->student_id . ', intake_id: ' . $request->intake_id . ', course_id: ' . $request->course_id);
+                } else {
+                    Log::warning('StudentCourse record not found for student_id: ' . $request->student_id . ', intake_id: ' . $request->intake_id . ', course_id: ' . $request->course_id);
+                }
+            }
 
             $savedItems = [];
             foreach ($request->items as $index => $itemData) {
