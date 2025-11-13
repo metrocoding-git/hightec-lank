@@ -114,7 +114,6 @@ Route::controller(AddStudentController::class)->prefix('student/student-info/add
     
 });
 
-
 // Student Course Management Routes
 Route::controller(AddStudentController::class)->prefix('student/student-info')->middleware(['permission'])->group(function () {
     Route::get('student-add-course', 'studentAddCourse')->name('student.add-course.index');
@@ -250,8 +249,6 @@ Route::controller(FeesGroupController::class)->middleware(['permission'])->group
     Route::get('student/fees/course-paid', 'coursePaidView')->name('fees.course-paid'); // GET view
 });
 
-
-
 Route::controller(FeeTypeController::class)->middleware(['permission'])->group(function () {
 
     Route::get('student/fees/fee-type', 'index')->name('fees.fees-type');
@@ -260,7 +257,6 @@ Route::controller(FeeTypeController::class)->middleware(['permission'])->group(f
     Route::put('student/fees/fee-type-update/{id}', 'update')->name('fees.fees-type-update');
     Route::delete('student/fees/fee-type-delete/{id}', 'destroy')->name('fees.fees-type-delete');
 });
-
 
 Route::controller(InvoiceController::class)->middleware(['permission'])->group(function () {
 
@@ -298,27 +294,18 @@ Route::controller(InvoiceController::class)->middleware(['permission'])->group(f
 
 });
 
-
 Route::controller(HomeController::class)->middleware(['permission'])->group(function () {
     Route::get('student/fees/fee-invoice', 'feeInvoice')->name('fees.fee-invoice');
     Route::post('student/fees/fee-return/search', 'feeReturn')->name('fees.fee-return.search');
 });
 
-
-
-
 Route::controller(CategoryController::class)->middleware(['permission'])->group(function () {
-
-
-
     Route::get('account/inventory/item-category', 'index')->name('item-category');
     Route::post('account/inventory/item-category/store', 'store')->name('item-category-store');
     Route::get('account/inventory/item-category/edit/{id}', 'edit')->name('item-category-edit');
     Route::put('account/inventory/item-category/update/{id}', 'update')->name('item-category-update');
     Route::delete('account/inventory/item-category/delete/{id}', 'destroy')->name('delete-item-category');
 });
-
-
 
 Route::controller(InventoryItemController::class)->middleware(['permission'])->group(function () {
     Route::get('account/inventory/item-list', 'index')->name('item-list');
@@ -346,7 +333,6 @@ Route::controller(ContentTypeController::class)->middleware(['permission'])->gro
 });
 
 Route::controller(ContentController::class)->middleware(['permission'])->group(function () {
-
     Route::get('administration/download-center/content-list', 'index')->name('content-list');
     Route::post('account/content-store', 'store')->name('content-store');
     Route::get('account/content-edit/{id}', 'edit')->name('content-edit');
@@ -372,8 +358,6 @@ Route::controller(ReturnFeeController::class)->middleware(['permission'])->group
     Route::post('/student/fees/return-fees', 'store')->name('return-fees.store');
 
 });
-
-// Role Management Routes
 
 // Role Management Routes
 Route::controller(RoleController::class)->prefix('role-management')->middleware(['permission'])->group(function () {
