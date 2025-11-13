@@ -119,38 +119,7 @@
                                                                         title="@lang('common.view') @lang('inventory.item_sell')"
                                                                         data-id="{{ $value->id }}"
                                                                         href="#">@lang('common.view')</a>
-                                                                    @if ($value->status != 'R')
-                                                                        @if ($value->total_paid == 0)
-                                                                            <a class="dropdown-item modalLink"
-                                                                                title="@lang('common.edit') @lang('inventory.item_sell')"
-                                                                                data-modal-size="modal-lg"
-                                                                                href="{{ route('edit-item-sell', $value->id) }}">@lang('common.edit')</a>
-                                                                        @endif
-                                                                    @endif
-
-                                                                    {{-- @if ($value->status != 'R')
-                                                                        @if ($value->total_due > 0)
-                                                                            <a class="dropdown-item modalLink"
-                                                                                title="@lang('inventory.add_payment')"
-                                                                                data-modal-size="modal-md"
-                                                                                href="{{ route('add-payment-sell', $value->id) }}">@lang('common.add_payment')</a>
-                                                                        @endif
-                                                                    @endif
-
-                                                                    <a class="dropdown-item view-sell-payments"
-                                                                        title="@lang('inventory.view_payment')"
-                                                                        data-id="{{ $value->id }}"
-                                                                        href="#">@lang('inventory.view_payment')</a> --}}
-
-                                                                    @if ($value->status != 'R')
-                                                                        @if ($value->total_paid == 0)
-                                                                            <a class="dropdown-item deleteUrl"
-                                                                                data-modal-size="modal-md"
-                                                                                title="@lang('inventory.delete_sold_item')"
-                                                                                href="{{ route('delete-item-sell-view', $value->id) }}">@lang('common.delete')</a>
-                                                                        @endif
-                                                                    @endif
-
+                                            
                                                                  
                                                                     @if ($value->status != 'R')
                                                                         <a class="dropdown-item return-button"
@@ -298,7 +267,7 @@
                                         </div>
                                     </div>
                                 </div>
->>>>>>> Stashed changes
+
 
 
 
@@ -405,123 +374,8 @@
     </div>
 </div>
 
-<!-- Item Sell Payment Details Modal -->
-<div class="modal fade admin-query" id="itemSellPaymentsModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content">
-            <div class="modal-header" style="background-color: #6f42c1; color: white;">
-                <h4 class="modal-title">Payment Details</h4>
-                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
-            </div>
-            <div class="modal-body modal-info">
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            {{-- <div class="card-header bg-success text-white">
-                                <h4 class="card-title mb-0">
-                                    <i class="ti-credit-card mr-2"></i>Payment Details
-                                </h4>
-                            </div> --}}
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="payment-summary bg-light p-4 rounded mb-3">
-                                            <div class="d-flex align-items-center justify-content-between">
-                                                <div class="d-flex align-items-center">
-                                                    <i class="ti-receipt text-primary mr-3"
-                                                        style="font-size: 32px;"></i>
-                                                    <div>
-                                                        <h5 class="mb-1">@lang('inventory.reference_no')</h5>
-                                                        <span class="text-muted" id="itemSellBatchReferenceNo"></span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="payment-summary bg-light p-4 rounded mb-3">
-                                            <div class="d-flex align-items-center justify-content-between">
-                                                <div class="d-flex align-items-center">
-                                                    <i class="ti-money text-success mr-3"
-                                                        style="font-size: 32px;"></i>
-                                                    <div>
-                                                        <h5 class="mb-1">@lang('inventory.total_paid')</h5>
-                                                        <span class="text-muted" id="itemSellBatchTotalPaid"></span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
 
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="payment-summary bg-light p-4 rounded mb-3">
-                                            <div class="d-flex align-items-center justify-content-between">
-                                                <div class="d-flex align-items-center">
-                                                    <i class="ti-alert text-danger mr-3" style="font-size: 32px;"></i>
-                                                    <div>
-                                                        <h5 class="mb-1">@lang('inventory.total_due')</h5>
-                                                        <span class="text-muted" id="itemSellBatchTotalDue"></span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="payment-summary bg-light p-4 rounded mb-3">
-                                            <div class="d-flex align-items-center justify-content-between">
-                                                <div class="d-flex align-items-center">
-                                                    <i class="ti-bar-chart text-info mr-3"
-                                                        style="font-size: 32px;"></i>
-                                                    <div>
-                                                        <h5 class="mb-1">@lang('inventory.grand_total')</h5>
-                                                        <span class="text-muted" id="itemSellBatchGrandTotal"></span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
 
-                                {{-- Payment Status Badge --}}
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <div class="text-center mb-3" id="itemSellBatchStatusBadge">
-                                            {{-- Status badge will be inserted here by JS --}}
-                                        </div>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <h5 class="mt-4 mb-3">Item Sold</h5>
-                                <div class="table-responsive">
-                                    <table class="table table-striped">
-                                        <thead class="thead-dark">
-                                            <tr>
-                                                <th>#</th>
-                                                <th>Item</th>
-                                                <th>@lang('inventory.quantity')</th>
-                                                <th>@lang('inventory.unit_price')</th>
-                                                <th>@lang('inventory.sub_total')</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="itemSellBatchItemsTableBody">
-                                            {{-- Items will be inserted here by JS --}}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 @include('components.partials.data_table_js')
 @include('components.partials.multi_select_js')

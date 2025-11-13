@@ -83,17 +83,6 @@
 
 
 
-                                    {{-- Staff Dropdown --}}
-                                    {{-- <div class="col-lg-12 mb-15">
-                                    <label class="primary_input_label">Issue To</label>
-                                    <select class="primary_select form-control" name="staff_id" id="staff_select">
-                                        <option value="">Select Staff</option>
-                                        @foreach ($staffs as $staff)
-                                            <option value="{{ $staff->id }}">{{ $staff->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div> --}}
-
                                     {{-- Issue Date --}}
                                     <div class="col-lg-12 mb-15">
                                         <label class="primary_input_label">Issue Date</label>
@@ -102,8 +91,8 @@
                                             value="{{ isset($editData) ? date('m/d/Y', strtotime($editData->issue_date)) : date('m/d/Y') }}">
                                     </div>
 
-                                    {{-- Due Date --}}
-                                    <div class="col-lg-12 mb-15" hidden>
+                                    {{-- Due Date (hidden by default, can be shown if needed) --}}
+                                    <div class="col-lg-12 mb-15" style="display: none;">
                                         <label class="primary_input_label">Due Date</label>
                                         <input class="primary_input_field form-control date" type="text" name="due_date"
                                             value="{{ isset($editData) ? date('m/d/Y', strtotime($editData->due_date)) : date('m/d/Y') }}">
@@ -290,10 +279,9 @@
     </section>
 @endsection
 
-@include('components.partials.data_table_js')
-@include('components.partials.date_picker_css_js')
-
 @push('scripts')
+    @include('components.partials.data_table_js')
+    @include('components.partials.date_picker_css_js')
     <script>
         $(document).ready(function() {
             // Configure toastr options
@@ -604,7 +592,7 @@
                             if (data.fee_invoices && data.fee_invoices.length > 0) {
                                 data.fee_invoices.forEach(invoice => {
                                     let due = (invoice.amount || 0) - (invoice.paid_amount ||
-                                    0);
+                                        0);
                                     tableHtml += `<tr>
                             <td>${invoice.fee_type_name || 'N/A'}</td>
                             <td>Rs ${invoice.amount.toFixed(2)}</td>
@@ -747,7 +735,7 @@
                         refreshNiceSelect('#course_select');
                     });
 
-                   
+
                 } else {
                     console.log(
                         'DEBUG: Student ID is empty. Hiding fee data and resetting dropdowns.'

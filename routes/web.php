@@ -197,8 +197,8 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
     Route::get('account/inventory/item-receive', 'itemReceive')->name('item-receive')->withoutMiddleware(['permission']);
     Route::get('account/inventory/item-receive-list', 'itemReceiveList')->name('item-receive-list')->withoutMiddleware(['permission']);
     Route::get('account/inventory/item-receive/{transactionId}/view', [HomeController::class, 'viewItemReceive'])->name('item-receive.view')->withoutMiddleware(['permission']);
-    Route::get('account/inventory/item-receive/{transactionId}/edit', [HomeController::class, 'editItemReceive'])->name('item-receive.edit')->withoutMiddleware(['permission']);
-    Route::put('account/inventory/item-receive/{id}', [HomeController::class, 'updateItemReceive'])->name('item-receive.update')->withoutMiddleware(['permission']);
+    // Route::get('account/inventory/item-receive/{transactionId}/edit', [HomeController::class, 'editItemReceive'])->name('item-receive.edit')->withoutMiddleware(['permission']);
+    // Route::put('account/inventory/item-receive/{id}', [HomeController::class, 'updateItemReceive'])->name('item-receive.update')->withoutMiddleware(['permission']);
     Route::delete('account/inventory/item-receive/{transactionId}', [HomeController::class, 'deleteItemReceive'])->name('item-receive.destroy')->withoutMiddleware(['permission']);
     Route::post('/item-receive/save', [HomeController::class, 'itemReceivePost'])
         ->name('save-item-receive-data')->withoutMiddleware(['permission']);
@@ -211,18 +211,7 @@ Route::controller(ItemSellController::class)
     Route::post('account/inventory/item-sell/save', 'saveItemSellData')->name('save-item-sell-data');
     Route::get('account/inventory/item-sell-list', 'itemSellList')->name('item-sell-list');
     Route::get('account/inventory/item-sell/{id}', 'viewItemSell')->name('view-item-sell');
-    Route::get('account/inventory/item-sell/{id}/edit', 'editItemSell')->name('edit-item-sell');
-    Route::put('account/inventory/item-sell/{id}', 'updateItemSell')->name('update-item-sell');
-    Route::get('account/inventory/item-sell/{id}/delete-view', 'deleteItemSellView')->name('delete-item-sell-view');
-    Route::get('account/inventory/item-sell/{id}/add-payment', 'addPaymentSell')->name('add-payment-sell');
-    Route::post('account/inventory/item-sell/{id}/payments', 'storeItemSellPayment')->name('item-sell-payments.store');
-    Route::get('account/inventory/item-sell/{id}/view-payments', 'viewSellPayments')->name('view-sell-payments');
-    Route::delete('account/inventory/item-sell/{id}', 'deleteItemSell')->name('delete-item-sell');
     Route::get('account/inventory/item-sell/{id}/return', 'returnItemSell')->name('return-item-sell');
-
-    
-    Route::get('account/inventory/item-sell/{id}/cancel-view', 'cancelItemSellView')->name('cancel-item-sell-view');
-    Route::post('account/inventory/item-sell/{id}/cancel', 'cancelItemSell')->name('cancel-item-sell');
     Route::post('account/inventory/item-sell/{id}/update-status', 'updateItemSellStatus')->name('update-item-sell-status');
     
     Route::post('account/inventory/item-sell/{id}/direct-return', 'directReturnItemSell')->name('direct-return-item-sell');
@@ -234,21 +223,21 @@ Route::controller(ItemIssueController::class)->middleware(['permission'])->group
     Route::get('account/inventory/item-issue', 'index')->name('item-issue');
     Route::get('account/inventory/item-issue-list', 'issueListView')->name('item-issue-list');
     Route::post('account/inventory/save-item-issue-data', 'saveItemIssueData')->name('save-item-issue-data');
-    Route::get('account/inventory/item-issue-edit/{id}', 'edit')->name('item-issue-edit');
-    Route::put('account/inventory/item-issue-update/{id}', 'update')->name('item-issue-update');
+    // Route::get('account/inventory/item-issue-edit/{id}', 'edit')->name('item-issue-edit');
+    // Route::put('account/inventory/item-issue-update/{id}', 'update')->name('item-issue-update');
     Route::get('account/inventory/return-item-view/{id}', 'returnItemView')->name('return-item-view');
     Route::post('account/inventory/return-item', 'returnItem')->name('return-item');
     Route::post('account/inventory/issue-item', 'IssueItem')->name('issue-item');
 
     // AJAX routes for dynamic filtering
-    Route::get('account/inventory/get-intakes-by-branch/{branchId}', 'getIntakesByBranch')->name('item-issue.get-intakes-by-branch')->withoutMiddleware(['csrf', 'permission']);
-    Route::get('account/inventory/get-courses-by-intake/{intakeId}', 'getCoursesByIntake')->name('item-issue.get-courses-by-intake')->withoutMiddleware(['csrf', 'permission']);
-    Route::get('account/inventory/get-students-by-course/{courseId}', 'getStudentsByCourse')->name('item-issue.get-students-by-course')->withoutMiddleware(['csrf', 'permission']);
-    Route::get('account/inventory/get-items-by-category/{categoryId}', 'getItemsByCategory')->name('item-issue.get-items-by-category')->withoutMiddleware(['csrf', 'permission']);
-    Route::get('account/inventory/get-student-fee-data', 'getStudentFeeData')->name('item-issue.get-student-fee-data')->withoutMiddleware(['csrf', 'permission']);
-    Route::get('item-issue/get-student-details/{studentId}', 'getStudentDetails')->name('item-issue.get-student-details')->withoutMiddleware(['csrf', 'permission']);
-    Route::get('item-issue/get-courses-by-intake-and-student/{intakeId}/{studentId}', 'getCoursesByIntakeAndStudent')->name('item-issue.get-courses-by-intake-and-student')->withoutMiddleware(['csrf', 'permission']);
-    Route::get('item-issue/get-batch-details/{batchId}', 'getBatchDetails')->name('item-issue.get-batch-details')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('account/inventory/get-intakes-by-branch/{branchId}', 'getIntakesByBranch')->name('item-issue.get-intakes-by-branch')->withoutMiddleware([ 'permission']);
+    Route::get('account/inventory/get-courses-by-intake/{intakeId}', 'getCoursesByIntake')->name('item-issue.get-courses-by-intake')->withoutMiddleware([ 'permission']);
+    Route::get('account/inventory/get-students-by-course/{courseId}', 'getStudentsByCourse')->name('item-issue.get-students-by-course')->withoutMiddleware([ 'permission']);
+    Route::get('account/inventory/get-items-by-category/{categoryId}', 'getItemsByCategory')->name('item-issue.get-items-by-category')->withoutMiddleware([ 'permission']);
+    Route::get('account/inventory/get-student-fee-data', 'getStudentFeeData')->name('item-issue.get-student-fee-data')->withoutMiddleware([ 'permission']);
+    Route::get('item-issue/get-student-details/{studentId}', 'getStudentDetails')->name('item-issue.get-student-details')->withoutMiddleware([ 'permission']);
+    Route::get('item-issue/get-courses-by-intake-and-student/{intakeId}/{studentId}', 'getCoursesByIntakeAndStudent')->name('item-issue.get-courses-by-intake-and-student')->withoutMiddleware([ 'permission']);
+    Route::get('item-issue/get-batch-details/{batchId}', 'getBatchDetails')->name('item-issue.get-batch-details')->withoutMiddleware([ 'permission']);
 
 });
 Route::controller(LoginController::class)->group(function () {

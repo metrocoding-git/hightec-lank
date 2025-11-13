@@ -873,87 +873,89 @@ class HomeController extends Controller
         }
     }
 
-    public function editItemReceive($transactionId)
-    {
-        try {
-            $itemReceives = ItemReceive::where('transaction_id', $transactionId)->with('supplier', 'item', 'branch')->get();
-            if ($itemReceives->isEmpty()) {
-                return response()->json(['error' => 'Transaction not found'], 404);
-            }
+    // public function editItemReceive($transactionId)
+    // {
+    //     try {
+    //         $itemReceives = ItemReceive::where('transaction_id', $transactionId)->with('supplier', 'item', 'branch')->get();
+    //         if ($itemReceives->isEmpty()) {
+    //             return response()->json(['error' => 'Transaction not found'], 404);
+    //         }
 
-            $items = Inventory_item::all();
-            $suppliers = Supplier::all();
-            $branches = Branch::all();
+    //         $items = Inventory_item::all();
+    //         $suppliers = Supplier::all();
+    //         $branches = Branch::all();
 
-            // Get the first record for common transaction details
-            $transaction = $itemReceives->first();
+    //         // Get the first record for common transaction details
+    //         $transaction = $itemReceives->first();
 
-            return response()->json([
-                'transaction' => $transaction,
-                'itemReceives' => $itemReceives,
-                'items' => $items,
-                'suppliers' => $suppliers,
-                'branches' => $branches,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to load transaction for editing: ' . $e->getMessage()], 500);
-        }
-    }
+    //         return response()->json([
+    //             'transaction' => $transaction,
+    //             'itemReceives' => $itemReceives,
+    //             'items' => $items,
+    //             'suppliers' => $suppliers,
+    //             'branches' => $branches,
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         return response()->json(['error' => 'Failed to load transaction for editing: ' . $e->getMessage()], 500);
+    //     }
+    // }
 
-    public function updateItemReceive(Request $request, $transactionId)
-    {
-        $request->validate([
-            'payment_method' => 'required|string',
-            'supplier_id' => 'required|integer',
-            'store_id' => 'required|integer',
-            'receive_date' => 'required|string',
-            'item_id' => 'required|integer',
-            'unit_price' => 'required|numeric',
-            'quantity' => 'required|numeric',
-        ]);
+    // ==============================
 
-        try {
-            $receiveDate = \Carbon\Carbon::createFromFormat('m/d/Y', $request->receive_date)->format('Y-m-d');
-        } catch (\Throwable $e) {
-            try {
-                $receiveDate = \Carbon\Carbon::parse($request->receive_date)->format('Y-m-d');
-            } catch (\Throwable $e2) {
-                return response()->json(['error' => 'Invalid receive date format.'], 422);
-            }
-        }
+    // public function updateItemReceive(Request $request, $transactionId)
+    // {
+    //     $request->validate([
+    //         'payment_method' => 'required|string',
+    //         'supplier_id' => 'required|integer',
+    //         'store_id' => 'required|integer',
+    //         'receive_date' => 'required|string',
+    //         'item_id' => 'required|integer',
+    //         'unit_price' => 'required|numeric',
+    //         'quantity' => 'required|numeric',
+    //     ]);
 
-        try {
-            // Update all items in the transaction with common fields
-            ItemReceive::where('transaction_id', $transactionId)->update([
-                'payment_method' => $request->payment_method,
-                'supplier_id' => $request->supplier_id,
-                'store_id' => $request->store_id,
-                'reference_no' => $request->reference_no,
-                'receive_date' => $receiveDate,
-                'description' => $request->description,
-                'total_paid' => $request->totalPaid ?? 0,
-                'bank_id' => $request->bank_id ?? null,
-            ]);
+    //     try {
+    //         $receiveDate = \Carbon\Carbon::createFromFormat('m/d/Y', $request->receive_date)->format('Y-m-d');
+    //     } catch (\Throwable $e) {
+    //         try {
+    //             $receiveDate = \Carbon\Carbon::parse($request->receive_date)->format('Y-m-d');
+    //         } catch (\Throwable $e2) {
+    //             return response()->json(['error' => 'Invalid receive date format.'], 422);
+    //         }
+    //     }
 
-            // Update the first item with specific item details
-            $firstItem = ItemReceive::where('transaction_id', $transactionId)->first();
-            if ($firstItem) {
-                $firstItem->update([
-                    'item_id' => $request->item_id,
-                    'unit_price' => $request->unit_price,
-                    'quantity' => $request->quantity,
-                    'sub_total' => (float) $request->unit_price * (float) $request->quantity,
-                ]);
-            }
+    //     try {
+    //         // Update all items in the transaction with common fields
+    //         ItemReceive::where('transaction_id', $transactionId)->update([
+    //             'payment_method' => $request->payment_method,
+    //             'supplier_id' => $request->supplier_id,
+    //             'store_id' => $request->store_id,
+    //             'reference_no' => $request->reference_no,
+    //             'receive_date' => $receiveDate,
+    //             'description' => $request->description,
+    //             'total_paid' => $request->totalPaid ?? 0,
+    //             'bank_id' => $request->bank_id ?? null,
+    //         ]);
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Transaction updated successfully! Note: Only the first item details were updated. For complex multi-item edits, consider deleting and recreating the transaction.',
-            ]);
-        } catch (\Throwable $e) {
-            return response()->json(['error' => 'Failed to update transaction: ' . $e->getMessage()], 500);
-        }
-    }
+    //         // Update the first item with specific item details
+    //         $firstItem = ItemReceive::where('transaction_id', $transactionId)->first();
+    //         if ($firstItem) {
+    //             $firstItem->update([
+    //                 'item_id' => $request->item_id,
+    //                 'unit_price' => $request->unit_price,
+    //                 'quantity' => $request->quantity,
+    //                 'sub_total' => (float) $request->unit_price * (float) $request->quantity,
+    //             ]);
+    //         }
+
+    //         return response()->json([
+    //             'status' => true,
+    //             'message' => 'Transaction updated successfully! Note: Only the first item details were updated. For complex multi-item edits, consider deleting and recreating the transaction.',
+    //         ]);
+    //     } catch (\Throwable $e) {
+    //         return response()->json(['error' => 'Failed to update transaction: ' . $e->getMessage()], 500);
+    //     }
+    // }
 
     public function deleteItemReceive($transactionId)
     {

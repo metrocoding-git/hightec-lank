@@ -356,7 +356,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5>@lang('common.delete_item_receive')</h5>
+                    <h5 style="color: seashell">Delete Item Receive</h5>
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
                 <div class="modal-body">
@@ -374,7 +374,7 @@
         </div>
     </div>
 @endsection
-
+@push('script')
 @include('components.partials.data_table_js')
 @include('components.partials.server_side_datatable')
 @include('components.partials.date_picker_css_js')

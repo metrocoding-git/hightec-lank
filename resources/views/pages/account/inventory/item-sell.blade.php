@@ -39,40 +39,10 @@
                     <div class="col-lg-3">
                         <div class="row">
                             <div class="col-lg-12">
-                                {{-- <div class="main-title">
-                                    <h3 class="mb-15">
-                                        @if (isset($editData))
-                                            @lang('common.edit_sell')
-                                        @else
-                                            @lang('inventory.sells_details')
-                                        @endif
-
-                                    </h3>
-                                </div> --}}
-
                                 <div class="white-box">
                                     <div class="add-visitor">
                                         <div class="row">
-                                            {{-- <div class="col-lg-12 mb-30">
-                                                <label class="primary_input_label" for="">@lang('inventory.income_head') <span
-                                                        class="text-danger"> *</span> </label>
-                                                <select
-                                                    class="primary_select  form-control{{ $errors->has('income_head_id') ? ' is-invalid' : '' }}"
-                                                    name="income_head_id" id="income_head_id">
-                                                    <option data-display="@lang('inventory.income_head')*" value="">
-                                                        @lang('common.select') *
-                                                    </option>
-                                                    @foreach ($sell_heads as $sell_head)
-                                                    <option value="{{ $sell_head->id }}">{{ $sell_head->head }}</option>
-                                                @endforeach
-                                                </select>
-                                                <div class="text-danger" id="incomeError"></div>
-                                                @if ($errors->has('income_head_id'))
-                                                    <span class="text-danger invalid-select" role="alert">
-                                                        {{ $errors->first('income_head_id') }}
-                                                    </span>
-                                                @endif
-                                            </div> --}}
+                                          
                                             <div class="col-lg-12 mb-15">
                                                 <label class="primary_input_label" for="">@lang('inventory.payment_method') <span
                                                         class="text-danger"> *</span> </label>
@@ -421,45 +391,7 @@
                                         </div>
 
 
-                                        <div class="row">
-                                            {{-- <div class="col-lg-4">
-                                                <div class="col-lg-12 mt-30">
-                                                    <div class="primary_input" style="display: none;">
-                                                        <input type="checkbox" id="full_paid"
-                                                            class="common-checkbox form-control{{ $errors->has('full_paid') ? ' is-invalid' : '' }}"
-                                                            name="full_paid" value="1" checked>
-                                                        <label for="full_paid">@lang('inventory.full_paid')</label>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-lg-4 mt-30-md" style="display: none;">
-                                                <div class="col-lg-12">
-                                                    <div class="primary_input md_mb_20">
-                                                        <label class="primary_input_label"
-                                                            for="">@lang('inventory.total_paid')</label>
-                                                        <input class="primary_input_field" type="number" step="0.1"
-                                                            value="0" name="totalPaid" id="totalPaid"
-                                                            onkeyup="paidAmount();">
-                                                        <input type="hidden" id="totalPaidValue" name="totalPaidValue">
-
-
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-lg-4 mt-10-md" style="display: none;">
-                                                <div class="col-lg-12">
-                                                    <div class="primary_input md_mb_10">
-                                                        <label class="primary_input_label"
-                                                            for="">@lang('inventory.total_due')</label>
-                                                        <input class="primary_input_field" type="text" name="totalDue"
-                                                            value="0.00" id="totalDue" readonly>
-                                                        <input type="hidden" id="totalDueValue" name="totalDueValue">
-
-
-                                                    </div>
-                                                </div>
-                                            </div> --}}
-
+                                        <div class="row">                           
                                             <div class="col-12  text-center">
                                                 <button class="primary-btn fix-gr-bg w-100" data-toggle="tooltip">
                                                     <span class="ti-check"></span>

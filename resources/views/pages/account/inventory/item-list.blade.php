@@ -33,13 +33,6 @@
                 <div class="col-lg-3">
                     <div class="row">
                         <div class="col-lg-12">
-                            {{-- @if (isset($editData))
-                                {{ Form::open(['class' => 'form-horizontal', 'route' => ['item-list-update', $editData->id], 'method' => 'PUT']) }}
-                            @else
-                                @if (userPermission('item-list-store'))
-                                    {{ Form::open(['class' => 'form-horizontal', 'route' => 'item-list-store', 'method' => 'POST']) }}
-                                @endif
-                            @endif --}}
                             <form class="form-horizontal"
                                 action="{{ isset($editData) ? route('item-update', $editData->id) : route('item-store') }}"
                                 method="POST">
@@ -352,12 +345,10 @@
         </div>
     </section>
 @endsection
-@include('components.partials.data_table_js')
-@include('components.partials.server_side_datatable')
-@include('components.partials.data_table_css')
-@include('components.partials.data_table_css')
-@include('components.partials.data_table_js')
 @push('script')
+    @include('components.partials.data_table_js')
+    @include('components.partials.server_side_datatable')
+    @include('components.partials.data_table_css')
     <script>
         $('#table_id').DataTable({
             responsive: true,
@@ -384,7 +375,7 @@
             modal.find('#modal-item-description').text('Loading...');
             modal.find('#inventory-history-body').html(
                 '<tr><td colspan="6" class="text-center text-muted"><i class="ti-reload mr-2"></i>Loading inventory history...</td></tr>'
-                );
+            );
 
             // Fetch item details and history
             $.ajax({
@@ -451,13 +442,13 @@
                     } else {
                         modal.find('#inventory-history-body').html(
                             '<tr><td colspan="6" class="text-center text-muted"><i class="ti-info-alt mr-2"></i>No inventory history available</td></tr>'
-                            );
+                        );
                     }
                 },
                 error: function() {
                     modal.find('#inventory-history-body').html(
                         '<tr><td colspan="6" class="text-center text-danger"><i class="ti-alert mr-2"></i>Error loading inventory data</td></tr>'
-                        );
+                    );
                 }
             });
         });

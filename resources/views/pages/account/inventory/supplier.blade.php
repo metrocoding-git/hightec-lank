@@ -39,19 +39,6 @@
                 <div class="col-lg-3">
                     <div class="row">
                         <div class="col-lg-12">
-                            {{-- @if (isset($editData))
-                                {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => ['suppliers-update', $editData->id], 'method' => 'PUT', 'enctype' => 'multipart/form-data']) }}
-                            @else
-                                @if (userPermission('suppliers-store'))
-                                    {{ Form::open([
-                                        'class' => 'form-horizontal',
-                                        'files' => true,
-                                        'route' => 'suppliers-store',
-                                        'method' => 'POST',
-                                        'enctype' => 'multipart/form-data',
-                                    ]) }}
-                                @endif
-                            @endif --}}
                             <form class="form-horizontal"
                                 action="{{ isset($editData) ? route('supplier-update', $editData->id) : route('supplier-store') }}"
                                 method="POST">
@@ -163,14 +150,6 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        {{-- @php
-                                        $tooltip = '';
-                                        if (userPermission('suppliers-store') || userPermission('suppliers-edit')) {
-                                            $tooltip = '';
-                                        } else {
-                                            $tooltip = 'You have no permission to add';
-                                        }
-                                    @endphp --}}
                                         <div class="row mt-40">
                                             <div class="col-lg-12 text-center">
                                                 <button class="primary-btn fix-gr-bg submit" data-toggle="tooltip">
@@ -297,13 +276,13 @@
         </div>
     </section>
 @endsection
-@include('components.partials.data_table_js')
-@include('components.partials.multi_select_js')
-@include('components.partials.date_picker_css_js')
-@include('components.partials.data_table_css')
 @push('script')
- <script>
-       $('#table_id').DataTable({
+    @include('components.partials.data_table_js')
+    @include('components.partials.multi_select_js')
+    @include('components.partials.date_picker_css_js')
+    @include('components.partials.data_table_css')
+    <script>
+        $('#table_id').DataTable({
             responsive: true,
             dom: 'Bfrtip',
 
@@ -339,7 +318,7 @@
             ordering: true,
             info: true,
 
-            // 👇 This part adds the search and pagination icons
+            // This part adds the search and pagination icons
             language: {
                 search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
                 searchPlaceholder: 'Search...',
@@ -348,5 +327,6 @@
                     next: '<i class="fa-solid fa-angle-right"></i>'
                 }
             }
-        });    </script>
+        });
+    </script>
 @endpush
