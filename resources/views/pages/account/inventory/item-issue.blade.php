@@ -809,7 +809,7 @@
                         if (data && Array.isArray(data) && data.length > 0) {
                             data.forEach(function(course) {
                                 optionsHtml += '<option value="' + course.id +
-                                    '" data-created-date="' + (course.created_at || '') +
+                                    '" data-intake-start-date="' + intakeStartDateStr + // Pass intake start date
                                     '" data-expiration-date="' + (course.expiration_date ||
                                         '') + '">' + course.name + '</option>';
                             });
@@ -839,29 +839,35 @@
             $('#course_select').on('change', function() {
                 var course_id = $(this).val();
                 var selectedOption = $(this).find("option:selected");
-                var createdDate = selectedOption.data('created-date');
+                var intakeStartDateStr = selectedOption.data('intake-start-date'); // Get intake start date
                 var expirationDate = selectedOption.data('expiration-date');
 
                 console.log('📖 Course selected:', course_id);
-                console.log('📅 Course created date:', createdDate);
-                console.log('⏰ Course expiration date:', expirationDate);
+                console.log('📅 Intake Start Date:', intakeStartDateStr);
+                console.log('⏰ Course expiration date (days):', expirationDate);
 
-                if (course_id && course_id !== '' && createdDate && expirationDate) {
-                    // Calculate days difference between course creation and today
-                    var courseCreatedDate = new Date(createdDate);
+                if (course_id && course_id !== '' && intakeStartDateStr && expirationDate) {
+                    // Calculate expiration based on intake start date + course expiration days
+                    var intakeStartDate = new Date(intakeStartDateStr);
+                    var expirationDays = parseInt(expirationDate);
+
+                    // Add expiration days to intake start date
+                    var courseExpirationCalculatedDate = new Date(intakeStartDate);
+                    courseExpirationCalculatedDate.setDate(intakeStartDate.getDate() + expirationDays);
+
                     var today = new Date();
-                    var timeDifference = today.getTime() - courseCreatedDate.getTime();
-                    var daysDifference = Math.ceil(timeDifference / (1000 * 3600 * 24));
+                    today.setHours(0, 0, 0, 0); // Normalize today to start of day for comparison
+                    courseExpirationCalculatedDate.setHours(0, 0, 0, 0); // Normalize for comparison
 
-                    console.log('📊 Days since course creation:', daysDifference);
-                    console.log('📊 Course expiration days:', expirationDate);
+                    console.log('📊 Calculated Course Expiration Date:', courseExpirationCalculatedDate);
+                    console.log('📊 Today:', today);
 
                     // Check if course has expired
-                    if (daysDifference > parseInt(expirationDate)) {
+                    if (courseExpirationCalculatedDate < today) {
                         console.log('❌ Course has expired');
                         toastr.error(
-                            'This course has expired and cannot be issued to students. Course expired ' +
-                            (daysDifference - parseInt(expirationDate)) + ' days ago.', '', {
+                            'This course has expired based on intake start date. Expiration date: ' +
+                            courseExpirationCalculatedDate.toLocaleDateString(), '', {
                                 timeOut: 5000,
                                 extendedTimeOut: 1000
                             });
@@ -869,10 +875,11 @@
                         return;
                     } else {
                         console.log('✅ Course is valid');
-                        toastr.success('Course is valid and can be issued', '', {
-                            timeOut: 5000,
-                            extendedTimeOut: 1000
-                        });
+                        toastr.success('Course is valid and can be issued. Expires on: ' +
+                            courseExpirationCalculatedDate.toLocaleDateString(), '', {
+                                timeOut: 5000,
+                                extendedTimeOut: 1000
+                            });
                     }
                 }
             });
