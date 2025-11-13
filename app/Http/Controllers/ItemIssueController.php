@@ -19,6 +19,7 @@ use App\Models\Student;
 use App\Models\Course;
 use App\Models\Intake;
 use App\Models\FeeInvoice;
+use App\Models\StudentCourse;
 
 class ItemIssueController extends Controller
 {
@@ -147,6 +148,22 @@ class ItemIssueController extends Controller
             $batch->save();
             Log::info('Batch created with ID: ' . $batch->id);
 
+            // Update student_courses status if student, intake, and course are provided
+            if ($request->student_id && $request->intake_id && $request->course_id) {
+                $studentCourse = StudentCourse::where('student_id', $request->student_id)
+                    ->where('intake_id', $request->intake_id)
+                    ->where('course_id', $request->course_id)
+                    ->first();
+
+                if ($studentCourse) {
+                    $studentCourse->status = 'start';
+                    $studentCourse->save();
+                    Log::info('StudentCourse status updated to "start" for student_id: ' . $request->student_id . ', intake_id: ' . $request->intake_id . ', course_id: ' . $request->course_id);
+                } else {
+                    Log::warning('StudentCourse record not found for student_id: ' . $request->student_id . ', intake_id: ' . $request->intake_id . ', course_id: ' . $request->course_id);
+                }
+            }
+
             $savedItems = [];
             foreach ($request->items as $index => $itemData) {
                 Log::info('Processing item ' . ($index + 1) . ': ' . json_encode($itemData));
@@ -210,97 +227,97 @@ class ItemIssueController extends Controller
         }
     }
 
-    public function edit($id)
-    {
-        try {
-            $issuedItems = ItemIssue::where('active_status', 1)->get();
-            $courses = Course::get();
-            $staffs = User::get();
-            $inventoryItems = Inventory_item::get();
-            $intakes = Intake::get();
-            $students = Student::get();
-            $categories = Category::get();
-            $branches = Branch::get();
+    // public function edit($id)
+    // {
+    //     try {
+    //         $issuedItems = ItemIssue::where('active_status', 1)->get();
+    //         $courses = Course::get();
+    //         $staffs = User::get();
+    //         $inventoryItems = Inventory_item::get();
+    //         $intakes = Intake::get();
+    //         $students = Student::get();
+    //         $categories = Category::get();
+    //         $branches = Branch::get();
 
-            $editData = ItemIssue::findOrFail($id);
+    //         $editData = ItemIssue::findOrFail($id);
 
-            return view('pages.account.inventory.item-issue', compact('issuedItems', 'courses', 'staffs', 'intakes', 'students', 'inventoryItems', 'categories', 'branches', 'editData'));
-        } catch (Exception $e) {
-            return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
-        }
-    }
+    //         return view('pages.account.inventory.item-issue', compact('issuedItems', 'courses', 'staffs', 'intakes', 'students', 'inventoryItems', 'categories', 'branches', 'editData'));
+    //     } catch (Exception $e) {
+    //         return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
+    //     }
+    // }
 
-    public function update(Request $request, $id)
-    {
-        $request->validate([
-            'branch_id' => 'required',
-            'issue_date' => 'required|date',
-            'due_date' => 'required|date',
-            'issue_to' => 'nullable|exists:users,id', // For staff
-            'student_id' => 'nullable|exists:students,id', // For students
-            'intake_id' => 'nullable|exists:intakes,id',
-            'course_id' => 'nullable|exists:courses,id',
-            'items' => 'required|array|min:1', // Ensure at least one item is present
-            'items.*.item_id' => 'required|exists:inventory_items,id',
-            'items.*.item_category_id' => 'required|exists:categories,id',
-            'items.*.quantity' => 'required|integer|min:1',
-        ]);
+    // public function update(Request $request, $id)
+    // {
+    //     $request->validate([
+    //         'branch_id' => 'required',
+    //         'issue_date' => 'required|date',
+    //         'due_date' => 'required|date',
+    //         'issue_to' => 'nullable|exists:users,id', // For staff
+    //         'student_id' => 'nullable|exists:students,id', // For students
+    //         'intake_id' => 'nullable|exists:intakes,id',
+    //         'course_id' => 'nullable|exists:courses,id',
+    //         'items' => 'required|array|min:1', // Ensure at least one item is present
+    //         'items.*.item_id' => 'required|exists:inventory_items,id',
+    //         'items.*.item_category_id' => 'required|exists:categories,id',
+    //         'items.*.quantity' => 'required|integer|min:1',
+    //     ]);
 
-        try {
-            DB::beginTransaction();
+    //     try {
+    //         DB::beginTransaction();
 
-            // Find and delete the original item issue record
-            // This assumes $id refers to a single ItemIssue record that is being replaced
-            // by potentially multiple new records.
-            $originalItemIssue = ItemIssue::findOrFail($id);
-            $originalItemIssue->delete();
+    //         // Find and delete the original item issue record
+    //         // This assumes $id refers to a single ItemIssue record that is being replaced
+    //         // by potentially multiple new records.
+    //         $originalItemIssue = ItemIssue::findOrFail($id);
+    //         $originalItemIssue->delete();
 
-            foreach ($request->items as $itemData) {
-                $itemIssue = new ItemIssue();
-                $itemIssue->branch_id = $request->branch_id;
-                $itemIssue->item_category_id = $itemData['item_category_id'];
-                $itemIssue->item_id = $itemData['item_id'];
-                $itemIssue->issue_date = date('Y-m-d', strtotime($request->issue_date));
-                $itemIssue->due_date = date('Y-m-d', strtotime($request->due_date));
-                $itemIssue->quantity = $itemData['quantity'];
-                $itemIssue->description = $request->description; // Overall description
-                $itemIssue->issue_status = 'I'; // Issued
-                $itemIssue->active_status = 1;
+    //         foreach ($request->items as $itemData) {
+    //             $itemIssue = new ItemIssue();
+    //             $itemIssue->branch_id = $request->branch_id;
+    //             $itemIssue->item_category_id = $itemData['item_category_id'];
+    //             $itemIssue->item_id = $itemData['item_id'];
+    //             $itemIssue->issue_date = date('Y-m-d', strtotime($request->issue_date));
+    //             $itemIssue->due_date = date('Y-m-d', strtotime($request->due_date));
+    //             $itemIssue->quantity = $itemData['quantity'];
+    //             $itemIssue->description = $request->description; // Overall description
+    //             $itemIssue->issue_status = 'I'; // Issued
+    //             $itemIssue->active_status = 1;
 
-                // Check if student is selected or staff
-                if ($request->student_id) {
-                    $itemIssue->student_id = $request->student_id;
-                    $itemIssue->course_id = $request->course_id;
-                    $itemIssue->intake_id = $request->intake_id;
-                    $itemIssue->issue_to = null; // Staff ID should be null for students
-                } else {
-                    $itemIssue->issue_to = $request->staff_id;
-                    $itemIssue->student_id = null;
-                    $itemIssue->course_id = null;
-                    $itemIssue->intake_id = null;
-                }
+    //             // Check if student is selected or staff
+    //             if ($request->student_id) {
+    //                 $itemIssue->student_id = $request->student_id;
+    //                 $itemIssue->course_id = $request->course_id;
+    //                 $itemIssue->intake_id = $request->intake_id;
+    //                 $itemIssue->issue_to = null; // Staff ID should be null for students
+    //             } else {
+    //                 $itemIssue->issue_to = $request->staff_id;
+    //                 $itemIssue->student_id = null;
+    //                 $itemIssue->course_id = null;
+    //                 $itemIssue->intake_id = null;
+    //             }
 
-                $itemIssue->save();
-            }
+    //             $itemIssue->save();
+    //         }
 
-            DB::commit();
+    //         DB::commit();
 
-            return redirect()->route('item-issue')->with('success', 'Items updated successfully.');
-        } catch (Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
-        }
-    }
+    //         return redirect()->route('item-issue')->with('success', 'Items updated successfully.');
+    //     } catch (Exception $e) {
+    //         DB::rollBack();
+    //         return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
+    //     }
+    // }
 
-    public function returnItemView($id)
-    {
-        try {
-            $itemIssue = ItemIssue::findOrFail($id);
-            return view('pages.account.inventory.return-item-modal', compact('itemIssue'));
-        } catch (Exception $e) {
-            return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
-        }
-    }
+    // public function returnItemView($id)
+    // {
+    //     try {
+    //         $itemIssue = ItemIssue::findOrFail($id);
+    //         return view('pages.account.inventory.return-item-modal', compact('itemIssue'));
+    //     } catch (Exception $e) {
+    //         return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
+    //     }
+    // }
 
     public function IssueItem(Request $request)
     {
@@ -448,19 +465,19 @@ class ItemIssueController extends Controller
         }
     }
 
-    public function getStudentsByCourse(Request $request, $courseId)
-    {
-        try {
-            $course_id = $courseId; // Use the route parameter
-            $students = Student::whereHas('courses', function($query) use ($course_id) {
-                $query->where('course_id', $course_id);
-            })->get();
+    // public function getStudentsByCourse(Request $request, $courseId)
+    // {
+    //     try {
+    //         $course_id = $courseId; // Use the route parameter
+    //         $students = Student::whereHas('courses', function($query) use ($course_id) {
+    //             $query->where('course_id', $course_id);
+    //         })->get();
 
-            return response()->json($students);
-        } catch (Exception $e) {
-            return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
-        }
-    }
+    //         return response()->json($students);
+    //     } catch (Exception $e) {
+    //         return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
+    //     }
+    // }
 
     public function getItemsByCategory(Request $request, $categoryId)
     {
@@ -667,6 +684,44 @@ class ItemIssueController extends Controller
             Log::error('Error in getBatchDetails: ' . $e->getMessage());
             Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function checkStudentCourseStatus(Request $request)
+    {
+        try {
+            $student_id = $request->student_id;
+            $course_id = $request->course_id;
+            $intake_id = $request->intake_id;
+
+            Log::info('=== checkStudentCourseStatus CALLED ===', [
+                'student_id' => $student_id,
+                'course_id' => $course_id,
+                'intake_id' => $intake_id
+            ]);
+
+            $studentCourse = StudentCourse::where('student_id', $student_id)
+                ->where('course_id', $course_id)
+                ->where('intake_id', $intake_id)
+                ->first();
+
+            if ($studentCourse && $studentCourse->status === 'start') {
+                return response()->json([
+                    'can_issue' => true,
+                    'message' => 'Student course is active. Items can be issued.'
+                ]);
+            } else {
+                return response()->json([
+                    'can_issue' => false,
+                    'message' => 'Student course is not active. Cannot issue items.'
+                ]);
+            }
+        } catch (Exception $e) {
+            Log::error('Error in checkStudentCourseStatus: ' . $e->getMessage());
+            return response()->json([
+                'can_issue' => false,
+                'message' => 'Error checking course status.'
+            ], 500);
         }
     }
 }

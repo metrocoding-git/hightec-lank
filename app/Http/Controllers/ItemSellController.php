@@ -200,189 +200,189 @@ class ItemSellController extends Controller
         ]);
     }
 
-    public function editItemSell($id)
-    {
-        $itemSellBatch = ItemSellBatch::with(['role', 'student', 'user', 'items.item'])->findOrFail($id);
-        $items = Inventory_item::all();
-        $classes = Course::all();
-        $sections = Intake::all();
-        $roles = Role::all();
-        $students = Student::all();
-        $users = User::all();
-        return view('pages.account.inventory.item-sell-modal.item-sell-edit-modal', compact('itemSellBatch', 'items', 'classes', 'sections', 'roles', 'students', 'users'));
-    }
+    // public function editItemSell($id)
+    // {
+    //     $itemSellBatch = ItemSellBatch::with(['role', 'student', 'user', 'items.item'])->findOrFail($id);
+    //     $items = Inventory_item::all();
+    //     $classes = Course::all();
+    //     $sections = Intake::all();
+    //     $roles = Role::all();
+    //     $students = Student::all();
+    //     $users = User::all();
+    //     return view('pages.account.inventory.item-sell-modal.item-sell-edit-modal', compact('itemSellBatch', 'items', 'classes', 'sections', 'roles', 'students', 'users'));
+    // }
 
-    public function deleteItemSellView($id)
-    {
-        $itemSellBatch = ItemSellBatch::findOrFail($id);
-        return view('pages.account.inventory.item-sell-modal.item-sell-delete-modal', compact('itemSellBatch'));
-    }
+    // public function deleteItemSellView($id)
+    // {
+    //     $itemSellBatch = ItemSellBatch::findOrFail($id);
+    //     return view('pages.account.inventory.item-sell-modal.item-sell-delete-modal', compact('itemSellBatch'));
+    // }
 
-    public function updateItemSell(Request $request, $id)
-    {
-        $request->validate([
-            'payment_method' => 'required|string',
-            'invoice_number' => 'required_if:payment_method,Invoice|nullable|string',
-            'bank_payment_amount' => 'required_if:payment_method,Bank Transfer|nullable|numeric',
-            'bank_payment_date' => 'required_if:payment_method,Bank Transfer|nullable|date',
-            'bank_payment_document' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx',
-            'role_id' => 'required|integer|exists:roles,id',
-            'sell_date' => 'required|string',
-            'item_id' => 'required|array|min:1',
-            'item_id.*' => 'required|integer|exists:inventory_items,id',
-            'unit_price' => 'required|array|min:1',
-            'unit_price.*' => 'required|numeric',
-            'quantity' => 'required|array|min:1',
-            'quantity.*' => 'required|numeric',
-            'totalPaid' => 'nullable|numeric',
-            'subTotal' => 'nullable|numeric',
-            'totalDue' => 'nullable|numeric',
-        ]);
+    // public function updateItemSell(Request $request, $id)
+    // {
+    //     $request->validate([
+    //         'payment_method' => 'required|string',
+    //         'invoice_number' => 'required_if:payment_method,Invoice|nullable|string',
+    //         'bank_payment_amount' => 'required_if:payment_method,Bank Transfer|nullable|numeric',
+    //         'bank_payment_date' => 'required_if:payment_method,Bank Transfer|nullable|date',
+    //         'bank_payment_document' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx',
+    //         'role_id' => 'required|integer|exists:roles,id',
+    //         'sell_date' => 'required|string',
+    //         'item_id' => 'required|array|min:1',
+    //         'item_id.*' => 'required|integer|exists:inventory_items,id',
+    //         'unit_price' => 'required|array|min:1',
+    //         'unit_price.*' => 'required|numeric',
+    //         'quantity' => 'required|array|min:1',
+    //         'quantity.*' => 'required|numeric',
+    //         'totalPaid' => 'nullable|numeric',
+    //         'subTotal' => 'nullable|numeric',
+    //         'totalDue' => 'nullable|numeric',
+    //     ]);
 
-        try {
-            $sellDate = Carbon::createFromFormat('m/d/Y', $request->sell_date)->format('Y-m-d');
-        } catch (\Throwable $e) {
-            try {
-                $sellDate = Carbon::parse($request->sell_date)->format('Y-m-d');
-            } catch (\Throwable $e2) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Invalid sell date format.',
-                ], 422);
-            }
-        }
+    //     try {
+    //         $sellDate = Carbon::createFromFormat('m/d/Y', $request->sell_date)->format('Y-m-d');
+    //     } catch (\Throwable $e) {
+    //         try {
+    //             $sellDate = Carbon::parse($request->sell_date)->format('Y-m-d');
+    //         } catch (\Throwable $e2) {
+    //             return response()->json([
+    //                 'status' => false,
+    //                 'message' => 'Invalid sell date format.',
+    //             ], 422);
+    //         }
+    //     }
 
-        try {
-            $itemSellBatch = ItemSellBatch::findOrFail($id);
+    //     try {
+    //         $itemSellBatch = ItemSellBatch::findOrFail($id);
 
-            $bankPaymentDocumentPath = $itemSellBatch->bank_payment_document;
-            if ($request->hasFile('bank_payment_document')) {
-                if ($bankPaymentDocumentPath && Storage::disk('public')->exists($bankPaymentDocumentPath)) {
-                    Storage::disk('public')->delete($bankPaymentDocumentPath);
-                }
-                $file = $request->file('bank_payment_document');
-                $filename = time() . '_' . $file->getClientOriginalName();
-                $bankPaymentDocumentPath = $file->storeAs('bank_payment_documents', $filename, 'public');
-            }
+    //         $bankPaymentDocumentPath = $itemSellBatch->bank_payment_document;
+    //         if ($request->hasFile('bank_payment_document')) {
+    //             if ($bankPaymentDocumentPath && Storage::disk('public')->exists($bankPaymentDocumentPath)) {
+    //                 Storage::disk('public')->delete($bankPaymentDocumentPath);
+    //             }
+    //             $file = $request->file('bank_payment_document');
+    //             $filename = time() . '_' . $file->getClientOriginalName();
+    //             $bankPaymentDocumentPath = $file->storeAs('bank_payment_documents', $filename, 'public');
+    //         }
 
-            $itemSellBatch->update([
-                'payment_method' => $request->payment_method,
-                'invoice_number' => $request->invoice_number,
-                'bank_payment_amount' => $request->bank_payment_amount,
-                'bank_payment_date' => $request->bank_payment_date ? Carbon::parse($request->bank_payment_date)->format('Y-m-d') : null,
-                'bank_payment_document' => $bankPaymentDocumentPath,
-                'role_id' => $request->role_id,
-                'student_id' => $request->student ?? null,
-                'user_id' => $request->staff_id ?? null,
-                'others_name' => $request->customer_name ?? null,
-                'reference_no' => $request->reference_no,
-                'sell_date' => $sellDate,
-                'description' => $request->description,
-                'total_quantity' => $request->subTotalQuantityValue ?? 0,
-                'total_sell_price' => $request->subTotalValue ?? 0,
-                'total_paid' => $request->totalPaid ?? 0,
-                'total_due' => $request->totalDue ?? 0,
-                'status' => ($request->totalDue > 0) ? 'PP' : 'P',
-            ]);
+    //         $itemSellBatch->update([
+    //             'payment_method' => $request->payment_method,
+    //             'invoice_number' => $request->invoice_number,
+    //             'bank_payment_amount' => $request->bank_payment_amount,
+    //             'bank_payment_date' => $request->bank_payment_date ? Carbon::parse($request->bank_payment_date)->format('Y-m-d') : null,
+    //             'bank_payment_document' => $bankPaymentDocumentPath,
+    //             'role_id' => $request->role_id,
+    //             'student_id' => $request->student ?? null,
+    //             'user_id' => $request->staff_id ?? null,
+    //             'others_name' => $request->customer_name ?? null,
+    //             'reference_no' => $request->reference_no,
+    //             'sell_date' => $sellDate,
+    //             'description' => $request->description,
+    //             'total_quantity' => $request->subTotalQuantityValue ?? 0,
+    //             'total_sell_price' => $request->subTotalValue ?? 0,
+    //             'total_paid' => $request->totalPaid ?? 0,
+    //             'total_due' => $request->totalDue ?? 0,
+    //             'status' => ($request->totalDue > 0) ? 'PP' : 'P',
+    //         ]);
 
-            // Delete existing items and re-create
-            $itemSellBatch->items()->delete();
+    //         // Delete existing items and re-create
+    //         $itemSellBatch->items()->delete();
 
-            foreach ($request->item_id as $index => $itemId) {
-                $availableQuantity = ItemInventory::getCurrentBalance($itemId);
-                if ($request->quantity[$index] > $availableQuantity) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Quantity for item cannot exceed available quantity (' . $availableQuantity . ')',
-                    ], 422);
-                }
+    //         foreach ($request->item_id as $index => $itemId) {
+    //             $availableQuantity = ItemInventory::getCurrentBalance($itemId);
+    //             if ($request->quantity[$index] > $availableQuantity) {
+    //                 return response()->json([
+    //                     'success' => false,
+    //                     'message' => 'Quantity for item cannot exceed available quantity (' . $availableQuantity . ')',
+    //                 ], 422);
+    //             }
 
-                ItemSellItem::create([
-                    'item_sell_batch_id' => $itemSellBatch->id,
-                    'item_id' => $itemId,
-                    'unit_price' => $request->unit_price[$index],
-                    'quantity' => $request->quantity[$index],
-                    'sub_total' => $request->totalValue[$index],
-                ]);
-            }
+    //             ItemSellItem::create([
+    //                 'item_sell_batch_id' => $itemSellBatch->id,
+    //                 'item_id' => $itemId,
+    //                 'unit_price' => $request->unit_price[$index],
+    //                 'quantity' => $request->quantity[$index],
+    //                 'sub_total' => $request->totalValue[$index],
+    //             ]);
+    //         }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Item sell updated successfully!'
-            ]);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update item sell.',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Item sell updated successfully!'
+    //         ]);
+    //     } catch (\Throwable $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Failed to update item sell.',
+    //             'error' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
 
-    public function addPaymentSell($id)
-    {
-        $itemSellBatch = ItemSellBatch::findOrFail($id);
-        return view('pages.account.inventory.item-sell-modal.item-sell-add-payment-modal', compact('itemSellBatch'));
-    }
+    // public function addPaymentSell($id)
+    // {
+    //     $itemSellBatch = ItemSellBatch::findOrFail($id);
+    //     return view('pages.account.inventory.item-sell-modal.item-sell-add-payment-modal', compact('itemSellBatch'));
+    // }
 
-    public function viewSellPayments($id)
-    {
-        $itemSellBatch = ItemSellBatch::with(['items.item'])->findOrFail($id);
-        return response()->json([
-            'itemSellBatch' => $itemSellBatch
-        ]);
-    }
+    // public function viewSellPayments($id)
+    // {
+    //     $itemSellBatch = ItemSellBatch::with(['items.item'])->findOrFail($id);
+    //     return response()->json([
+    //         'itemSellBatch' => $itemSellBatch
+    //     ]);
+    // }
 
-    public function deleteItemSell($id)
-    {
-        try {
-            $itemSellBatch = ItemSellBatch::findOrFail($id);
-            $itemSellBatch->delete(); // This will also delete associated ItemSellItems due to cascade delete
-            return redirect()
-                ->back()
-                ->with('success', 'Item sell deleted successfully!');
-        } catch (\Throwable $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to delete item sell.',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
+    // public function deleteItemSell($id)
+    // {
+    //     try {
+    //         $itemSellBatch = ItemSellBatch::findOrFail($id);
+    //         $itemSellBatch->delete(); // This will also delete associated ItemSellItems due to cascade delete
+    //         return redirect()
+    //             ->back()
+    //             ->with('success', 'Item sell deleted successfully!');
+    //     } catch (\Throwable $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Failed to delete item sell.',
+    //             'error' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
 
-    public function cancelItemSell($id)
-    {
-        try {
-            $itemSellBatch = ItemSellBatch::findOrFail($id);
-            $itemSellBatch->update([
-                'total_paid' => 0,
-                'total_due' => $itemSellBatch->total_sell_price,
-                'status' => 'U', // Unpaid
-            ]);
-            return redirect()
-                ->back()
-                ->with('success', 'Item sell cancelled successfully!');
+    // public function cancelItemSell($id)
+    // {
+    //     try {
+    //         $itemSellBatch = ItemSellBatch::findOrFail($id);
+    //         $itemSellBatch->update([
+    //             'total_paid' => 0,
+    //             'total_due' => $itemSellBatch->total_sell_price,
+    //             'status' => 'U', // Unpaid
+    //         ]);
+    //         return redirect()
+    //             ->back()
+    //             ->with('success', 'Item sell cancelled successfully!');
 
-        } catch (\Throwable $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to cancel item sell.',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
+    //     } catch (\Throwable $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Failed to cancel item sell.',
+    //             'error' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
 
-    public function cancelItemSellView($id)
-    {
-        $itemSellBatch = ItemSellBatch::findOrFail($id);
-        return view('pages.account.inventory.item-sell-modal.item-sell-cancel-modal', compact('itemSellBatch'));
-    }
+    // public function cancelItemSellView($id)
+    // {
+    //     $itemSellBatch = ItemSellBatch::findOrFail($id);
+    //     return view('pages.account.inventory.item-sell-modal.item-sell-cancel-modal', compact('itemSellBatch'));
+    // }
 
-    public function returnItemSellView($id)
-    {
-        $itemSellBatch = ItemSellBatch::findOrFail($id);
-        return view('pages.account.inventory.item-sell-modal.item-sell-return-modal', compact('itemSellBatch'));
-    }
+    // public function returnItemSellView($id)
+    // {
+    //     $itemSellBatch = ItemSellBatch::findOrFail($id);
+    //     return view('pages.account.inventory.item-sell-modal.item-sell-return-modal', compact('itemSellBatch'));
+    // }
 
     public function returnItemSell($id)
     {

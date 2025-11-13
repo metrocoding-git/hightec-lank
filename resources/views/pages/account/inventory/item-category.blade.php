@@ -31,21 +31,8 @@
                 <div class="col-lg-4">
                     <div class="row">
                         <div class="col-lg-12">
-                            {{-- @if (isset($editData))
-                                {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => ['item-category-update', $editData->id], 'method' => 'PUT', 'enctype' => 'multipart/form-data']) }}
-                            @else
-                                @if (userPermission('item-category-store'))
-                                    {{ Form::open([
-                                        'class' => 'form-horizontal',
-                                        'files' => true,
-                                        'route' => 'item-category-store',
-                                        'method' => 'POST',
-                                        'enctype' => 'multipart/form-data',
-                                    ]) }}
-                                                                    @endif
-                                                                @endif --}}
-                                                    <form id="categoryForm" class="form-horizontal"
-                                                        @isset($editData) 
+                            <form id="categoryForm" class="form-horizontal"
+                                @isset($editData) 
                                 action="{{ route('item-category-update', $editData->id) }}" 
                                 method="POST" 
                             @else 
@@ -122,7 +109,7 @@
                                             <tr>
                                                 <th> @lang('common.sl')</th>
                                                 <th> @lang('student.category_title')</th>
-                                                <th > @lang('common.action')</th>
+                                                <th> @lang('common.action')</th>
                                             </tr>
                                         </thead>
 
@@ -137,7 +124,7 @@
                                                                 href="{{ route('item-category-edit', $category->id) }}">
                                                                 @lang('common.edit')
                                                             </a>
-                                                            
+
                                                             <a class="dropdown-item" data-toggle="modal"
                                                                 data-target="#deletecategoryModal{{ $category->id }}"
                                                                 href="#">@lang('common.delete')</a>
@@ -188,23 +175,20 @@
                                     </table>
                                 </x-table>
                             </div>
-                            
+
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
-    
 @endsection
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-@include('components.partials.data_table_js')
-@include('components.partials.server_side_datatable')
 @include('components.partials.data_table_css')
-@include('components.partials.data_table_css')
-@include('components.partials.data_table_js')
 @push('script')
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    @include('components.partials.data_table_js')
+    @include('components.partials.server_side_datatable')
     <script>
         $('#table_id').DataTable({
             responsive: true,
@@ -217,61 +201,13 @@
             ordering: true,
             info: true,
         });
+
+        @if (session('message-success'))
+            toastr.success("{{ session('message-success') }}");
+        @endif
+
+        @if (session('message-error'))
+            toastr.error("{{ session('message-error') }}");
+        @endif
     </script>
-    {{-- <script>
-        $(document).ready(function() {
-            $('#categoryForm').on('submit', function(e) {
-                e.preventDefault();
-
-                let form = $(this);
-                let formData = new FormData(this);
-                let actionUrl = form.attr('action');
-
-                $.ajax({
-                    url: actionUrl,
-                    type: 'POST', // always POST
-                    headers: {
-                        'X-CSRF-TOKEN': $('input[name="_token"]').val() // CSRF token
-                    },
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function(response) {
-                        if (response.success) {
-                            toastr.success(response.message);
-                            $('#categoryForm')[0].reset();
-                            $('#category_name_error').text('');
-
-                            // Reload to show updated table
-                            location.reload();
-                        }
-                    },
-                    error: function(xhr) {
-                        if (xhr.status === 422) {
-                            let errors = xhr.responseJSON.errors;
-                            $('#category_name_error').text(errors.name ? errors.name[0] : '');
-                        } else {
-                            toastr.error("Something went wrong!");
-                        }
-                    }
-                });
-            });
-        });
-
-
-         --}}
-         <script>
-    @if(session('message-success'))
-        toastr.success("{{ session('message-success') }}");
-    @endif
-
-    @if(session('message-error'))
-        toastr.error("{{ session('message-error') }}");
-    @endif
-</script>
-
-    </script>
-
-
-
 @endpush

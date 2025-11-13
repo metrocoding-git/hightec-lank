@@ -76,23 +76,15 @@
                                     <div class="col-lg-12 mb-15">
                                         <label class="primary_input_label">Course <span class="text-danger">*</span></label>
                                         <select class="primary_select form-control" name="course_id" id="course_select"
-                                            disabled>
+                                            disabled required>
                                             <option value="">Select Student First *</option>
                                         </select>
+                                        @error('course_id')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
 
 
-
-                                    {{-- Staff Dropdown --}}
-                                    {{-- <div class="col-lg-12 mb-15">
-                                    <label class="primary_input_label">Issue To</label>
-                                    <select class="primary_select form-control" name="staff_id" id="staff_select">
-                                        <option value="">Select Staff</option>
-                                        @foreach ($staffs as $staff)
-                                            <option value="{{ $staff->id }}">{{ $staff->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div> --}}
 
                                     {{-- Issue Date --}}
                                     <div class="col-lg-12 mb-15">
@@ -102,8 +94,8 @@
                                             value="{{ isset($editData) ? date('m/d/Y', strtotime($editData->issue_date)) : date('m/d/Y') }}">
                                     </div>
 
-                                    {{-- Due Date --}}
-                                    <div class="col-lg-12 mb-15" hidden>
+                                    {{-- Due Date (hidden by default, can be shown if needed) --}}
+                                    <div class="col-lg-12 mb-15" style="display: none;">
                                         <label class="primary_input_label">Due Date</label>
                                         <input class="primary_input_field form-control date" type="text" name="due_date"
                                             value="{{ isset($editData) ? date('m/d/Y', strtotime($editData->due_date)) : date('m/d/Y') }}">
@@ -175,7 +167,8 @@
                                                             <td class="category_name">
                                                                 {{ $editData->category->name ?? 'N/A' }}
                                                             </td>
-                                                            <td class="item_name">{{ $editData->item->item_name ?? 'N/A' }}
+                                                            <td class="item_name">
+                                                                {{ $editData->item->item_name ?? 'N/A' }}
                                                             </td>
                                                             <td class="item_price">
                                                                 Rs.{{ number_format($editData->item->item_price ?? 0, 2) }}
@@ -290,10 +283,9 @@
     </section>
 @endsection
 
-@include('components.partials.data_table_js')
-@include('components.partials.date_picker_css_js')
-
 @push('scripts')
+    @include('components.partials.data_table_js')
+    @include('components.partials.date_picker_css_js')
     <script>
         $(document).ready(function() {
             // Configure toastr options
@@ -604,7 +596,7 @@
                             if (data.fee_invoices && data.fee_invoices.length > 0) {
                                 data.fee_invoices.forEach(invoice => {
                                     let due = (invoice.amount || 0) - (invoice.paid_amount ||
-                                    0);
+                                        0);
                                     tableHtml += `<tr>
                             <td>${invoice.fee_type_name || 'N/A'}</td>
                             <td>Rs ${invoice.amount.toFixed(2)}</td>
@@ -688,7 +680,8 @@
                                 if (intakeData && intakeData.length > 0) {
                                     intakeData.forEach(function(intake) {
                                         intakeOptionsHtml += '<option value="' +
-                                            intake.id + '">' +
+                                            intake.id + '" data-start-date="' + (
+                                                intake.start_date || '') + '">' +
                                             intake.name + '</option>';
                                     });
                                     $('#intake_select').html(intakeOptionsHtml).prop(
@@ -747,7 +740,7 @@
                         refreshNiceSelect('#course_select');
                     });
 
-                   
+
                 } else {
                     console.log(
                         'DEBUG: Student ID is empty. Hiding fee data and resetting dropdowns.'
@@ -778,6 +771,33 @@
                     true);
                 refreshNiceSelect('#course_select');
 
+                // Get intake start date
+                var selectedIntakeOption = $(this).find("option:selected");
+                var intakeStartDateStr = selectedIntakeOption.data('start-date');
+                console.log('📅 Intake Start Date:', intakeStartDateStr);
+
+                if (intakeStartDateStr) {
+                    var intakeStartDate = new Date(intakeStartDateStr);
+                    var today = new Date();
+
+
+                    if (intakeStartDate > today) {
+                        toastr.warning(`This intake has not started yet. Start date: ${intakeStartDateStr}`,
+                            '', {
+                                timeOut: 5000,
+                                extendedTimeOut: 1000
+                            });
+                        // Optionally disable further selections or the submit button if intake hasn't started
+                        // For now, just show a warning.
+                    } else {
+                        toastr.success(`Intake has started. Start date: ${intakeStartDateStr}`, '', {
+                            timeOut: 3000,
+                            extendedTimeOut: 1000
+                        });
+                    }
+                }
+
+
                 if (intake_id && intake_id !== '' && student_id && student_id !== '') {
                     var url =
                         '{{ route('item-issue.get-courses-by-intake-and-student', [':intakeId', ':studentId']) }}'
@@ -792,7 +812,8 @@
                         if (data && Array.isArray(data) && data.length > 0) {
                             data.forEach(function(course) {
                                 optionsHtml += '<option value="' + course.id +
-                                    '" data-created-date="' + (course.created_at || '') +
+                                    '" data-intake-start-date="' + intakeStartDateStr +
+                                    // Pass intake start date
                                     '" data-expiration-date="' + (course.expiration_date ||
                                         '') + '">' + course.name + '</option>';
                             });
@@ -818,45 +839,54 @@
                 }
             });
 
-            // Handle course change - Validate course expiration
+            // Handle course change - Validate StudentCourse status
             $('#course_select').on('change', function() {
                 var course_id = $(this).val();
-                var selectedOption = $(this).find("option:selected");
-                var createdDate = selectedOption.data('created-date');
-                var expirationDate = selectedOption.data('expiration-date');
+                var student_id = $('#student_select').val();
+                var intake_id = $('#intake_select').val();
 
                 console.log('📖 Course selected:', course_id);
-                console.log('📅 Course created date:', createdDate);
-                console.log('⏰ Course expiration date:', expirationDate);
+                console.log('👨‍🎓 Student ID:', student_id);
+                console.log('📚 Intake ID:', intake_id);
 
-                if (course_id && course_id !== '' && createdDate && expirationDate) {
-                    // Calculate days difference between course creation and today
-                    var courseCreatedDate = new Date(createdDate);
-                    var today = new Date();
-                    var timeDifference = today.getTime() - courseCreatedDate.getTime();
-                    var daysDifference = Math.ceil(timeDifference / (1000 * 3600 * 24));
+                if (course_id && course_id !== '' && student_id && student_id !== '' && intake_id && intake_id !== '') {
+                    // Check StudentCourse status
+                    $.ajax({
+                        url: '{{ route('item-issue.check-student-course-status') }}',
+                        type: 'GET',
+                        data: {
+                            student_id: student_id,
+                            course_id: course_id,
+                            intake_id: intake_id
+                        },
+                        success: function(response) {
+                            console.log('✅ StudentCourse status check response:', response);
 
-                    console.log('📊 Days since course creation:', daysDifference);
-                    console.log('📊 Course expiration days:', expirationDate);
-
-                    // Check if course has expired
-                    if (daysDifference > parseInt(expirationDate)) {
-                        console.log('❌ Course has expired');
-                        toastr.error(
-                            'This course has expired and cannot be issued to students. Course expired ' +
-                            (daysDifference - parseInt(expirationDate)) + ' days ago.', '', {
+                            if (response.can_issue) {
+                                console.log('✅ Student course is active - items can be issued');
+                                toastr.success(response.message, '', {
+                                    timeOut: 3000,
+                                    extendedTimeOut: 1000
+                                });
+                            } else {
+                                console.log('❌ Student course is not active - cannot issue items');
+                                toastr.error(response.message, '', {
+                                    timeOut: 5000,
+                                    extendedTimeOut: 1000
+                                });
+                                $('#course_select').val('').niceSelect('update');
+                                return;
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('❌ Error checking student course status:', error);
+                            toastr.error('Error checking course status. Please try again.', '', {
                                 timeOut: 5000,
                                 extendedTimeOut: 1000
                             });
-                        $('#course_select').val('').niceSelect('update');
-                        return;
-                    } else {
-                        console.log('✅ Course is valid');
-                        toastr.success('Course is valid and can be issued', '', {
-                            timeOut: 5000,
-                            extendedTimeOut: 1000
-                        });
-                    }
+                            $('#course_select').val('').niceSelect('update');
+                        }
+                    });
                 }
             });
 

@@ -173,8 +173,7 @@
                                                                 <div class="">
                                                                     <input
                                                                         class="primary_input_field primary_input_field date form-control"
-                                                                        id="receive_date" type="date"
-                                                                        name="receive_date"
+                                                                        id="receive_date" type="date" name="receive_date"
                                                                         value="{{ isset($editData) ? date('m/d/Y', strtotime($editData->receive_date)) : date('m/d/Y') }}"
                                                                         autocomplete="off">
                                                                 </div>
@@ -195,8 +194,7 @@
                                                 <div class="primary_input">
                                                     <label class="primary_input_label" for="">@lang('common.description')
                                                         <span></span> </label>
-                                                    <textarea class="primary_input_field form-control" cols="0" rows="4" name="description"
-                                                        id="description">{{ isset($editData) ? $editData->description : '' }}</textarea>
+                                                    <textarea class="primary_input_field form-control" cols="0" rows="4" name="description" id="description">{{ isset($editData) ? $editData->description : '' }}</textarea>
 
                                                 </div>
                                             </div>
@@ -244,10 +242,12 @@
                                             {{-- Bank Transfer Fields --}}
                                             <div class="col-lg-12 mb-15 d-none" id="bankPaymentAmountField">
                                                 <div class="primary_input">
-                                                    <label class="primary_input_label" for="bank_payment_amount">Bank Payment Amount
+                                                    <label class="primary_input_label" for="bank_payment_amount">Bank
+                                                        Payment Amount
                                                         <span class="text-danger"> *</span> </label>
-                                                    <input class="primary_input_field form-control" type="number" step="0.01"
-                                                        name="bank_payment_amount" id="bank_payment_amount" autocomplete="off"
+                                                    <input class="primary_input_field form-control" type="number"
+                                                        step="0.01" name="bank_payment_amount"
+                                                        id="bank_payment_amount" autocomplete="off"
                                                         value="{{ isset($editData) ? $editData->bank_payment_amount : '' }}">
                                                     @if ($errors->has('bank_payment_amount'))
                                                         <span class="text-danger">
@@ -259,13 +259,15 @@
 
                                             <div class="col-lg-12 mb-15 d-none" id="bankPaymentDateField">
                                                 <div class="primary_input">
-                                                    <label class="primary_input_label" for="bank_payment_date">Bank Payment Date
+                                                    <label class="primary_input_label" for="bank_payment_date">Bank
+                                                        Payment Date
                                                         <span class="text-danger"> *</span> </label>
                                                     <div class="primary_datepicker_input">
                                                         <div class="no-gutters input-right-icon">
                                                             <div class="col">
                                                                 <div class="">
-                                                                    <input class="primary_input_field primary_input_field date form-control"
+                                                                    <input
+                                                                        class="primary_input_field primary_input_field date form-control"
                                                                         id="bank_payment_date" type="date"
                                                                         name="bank_payment_date"
                                                                         value="{{ isset($editData) ? date('m/d/Y', strtotime($editData->bank_payment_date)) : date('m/d/Y') }}"
@@ -274,13 +276,15 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <span class="text-danger">{{ $errors->first('bank_payment_date') }}</span>
+                                                    <span
+                                                        class="text-danger">{{ $errors->first('bank_payment_date') }}</span>
                                                 </div>
                                             </div>
 
                                             <div class="col-lg-12 mb-15 d-none" id="bankPaymentDocumentField">
                                                 <div class="primary_input">
-                                                    <label class="primary_input_label" for="bank_payment_document">Bank Payment Document
+                                                    <label class="primary_input_label" for="bank_payment_document">Bank
+                                                        Payment Document
                                                         <span></span> </label>
                                                     <input class="primary_input_field form-control" type="file"
                                                         name="bank_payment_document" id="bank_payment_document">
@@ -321,11 +325,7 @@
                             <div class="row">
                                 <div class="col-lg-12">
                                     <div class="white-box">
-                                        {{-- <div class="alert alert-danger" id="errorMessage2">
-                                            <div id="itemError"></div>
-                                            <div id="priceError"></div>
-                                            <div id="quantityError"></div>
-                                        </div> --}}
+
                                         <div class="table-responsive">
                                             <table class="table  table-bordered school-table-style" id="productTable"
                                                 style="width:100%; table-layout:fixed;">
@@ -410,40 +410,6 @@
                                             </div>
                                         </div>
                                         <div class="row">
-                                            {{-- <div class="col-lg-4">
-                                                <div class="col-lg-12 mt-30">
-                                                    <div class="primary_input" style="display: none;">
-                                                        <input type="checkbox" id="full_paid"
-                                                            class="common-checkbox form-control{{ $errors->has('full_paid') ? ' is-invalid' : '' }}"
-                                                            name="full_paid" value="1" checked>
-                                                        <label for="full_paid">@lang('inventory.full_paid')</label>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-lg-4 mt-30-md" style="display: none;">
-                                                <div class="col-lg-12">
-                                                    <div class="primary_input md_mb_20">
-                                                        <label class="primary_input_label"
-                                                            for="">@lang('inventory.total_paid')</label>
-                                                        <input class="primary_input_field" type="number" step="0.1"
-                                                            value="0" name="totalPaid" id="totalPaid"
-                                                            onkeyup="paidAmount();">
-                                                        <input type="hidden" id="totalPaidValue" name="totalPaidValue">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-lg-4 mt-30-md" style="display: none;">
-                                                <div class="col-lg-12">
-                                                    <div class="primary_input md_mb_20">
-                                                        <label class="primary_input_label"
-                                                            for="">@lang('inventory.total_due')</label>
-                                                        <input class="primary_input_field" type="text" value="0.00"
-                                                            id="totalDue" readonly>
-                                                        <input type="hidden" id="totalDueValue" name="totalDueValue">
-                                                    </div>
-                                                </div>
-                                            </div> --}}
-
                                             <div class="col-12 ">
                                                 <button class="primary-btn fix-gr-bg w-100" data-toggle="tooltip">
                                                     <span class="ti-check"></span>
@@ -677,7 +643,8 @@
                     $('#bank_payment_amount').addClass('is-invalid');
                     isValid = false;
                 } else if (bankPaymentAmount <= subTotal) {
-                    $('#bankAmountError').text("Bank Payment Amount must be greater than the Item Receive Total!").show();
+                    $('#bankAmountError').text("Bank Payment Amount must be greater than the Item Receive Total!")
+                        .show();
                     $('#bank_payment_amount').addClass('is-invalid');
                     isValid = false;
                 }
@@ -744,7 +711,7 @@
                     if (response.success) {
                         toastr.success(response.message, 'Success');
                         setTimeout(function() {
-                            window.location.href = '{{ route("item-receive-list") }}';
+                            window.location.href = '{{ route('item-receive-list') }}';
                         }, 2000);
                     } else {
                         toastr.error(response.message, 'Error');
