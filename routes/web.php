@@ -29,6 +29,7 @@ use App\Http\Controllers\ItemSellController; // Import the new controller
 use App\Http\Controllers\ReportController; // Import the new controller
 use App\Http\Controllers\RoleController; // Import the new controller
 use App\Http\Controllers\StudentViewController; // Import the new controller
+use App\Http\Controllers\UserController; // Import the new controller
 
 Route::controller(HomeController::class)->middleware(['permission'])->group(callback: function () {
     Route::get('dashboard', 'dashboard')->name('dashboard');
@@ -178,20 +179,10 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
     //filter student list by branch
     Route::post('student/student-info/diabled-filter', 'filter_disabled_StudentList')->name('frontend.disabled-student.search');
     Route::post('student/student-info/filtert', 'filterStudentList')->name('frontend.student.search');
-
-
-
-
-
-
-
-
     // Route::get('student/fees/fee-invoice', 'feeInvoice')->name('fee-invoice');
     // Route::get('student/fees/add-invoice', 'addInvoice')->name('add-invoice');
     Route::get('student/fees/fee-invoice-setting', 'feeInvoiceSetting')->name('fee-invoice-setting');
     Route::get('student/fees/fee-return', 'feeReturn')->name('fee-return');
-
-
     // Route::get('account/inventory/item-list', 'itemList')->name('item-list');
     // Route::get('account/inventory/supplier', 'supplier')->name('supplier');
     Route::get('account/inventory/item-receive', 'itemReceive')->name('item-receive')->withoutMiddleware(['permission']);
@@ -213,7 +204,6 @@ Route::controller(ItemSellController::class)
     Route::get('account/inventory/item-sell/{id}', 'viewItemSell')->name('view-item-sell');
     Route::get('account/inventory/item-sell/{id}/return', 'returnItemSell')->name('return-item-sell');
     Route::post('account/inventory/item-sell/{id}/update-status', 'updateItemSellStatus')->name('update-item-sell-status');
-    
     Route::post('account/inventory/item-sell/{id}/direct-return', 'directReturnItemSell')->name('direct-return-item-sell');
     Route::get('account/inventory/item-sell/{id}/return-view', action: 'returnItemSellView')->name('return-item-sell-view');
     Route::get('account/inventory/get-item-price/{id}', 'getItemPrice')->name('get-item-price')->withoutMiddleware(['csrf', 'permission']);
@@ -256,9 +246,7 @@ Route::controller(FeesGroupController::class)->middleware(['permission'])->group
     Route::get('student/fees/fee-group-edit/{id}', 'edit')->name('fee-group-edit'); // GET edit
     Route::put('student/fees/fee-group-update/{id}', 'update')->name('fee-group-update'); // PUT update
     Route::delete('student/fees/fee-group-delete/{id}', 'delete')->name('fee-group-delete'); // DELETE delete
-});
 
-Route::controller(FeesGroupController::class)->middleware(['permission'])->group(function () {
     Route::get('student/fees/course-paid', 'coursePaidView')->name('fees.course-paid'); // GET view
 });
 
@@ -386,7 +374,6 @@ Route::controller(ReturnFeeController::class)->middleware(['permission'])->group
 });
 
 // Role Management Routes
-use App\Http\Controllers\UserController; // Import the new controller
 
 // Role Management Routes
 Route::controller(RoleController::class)->prefix('role-management')->middleware(['permission'])->group(function () {
