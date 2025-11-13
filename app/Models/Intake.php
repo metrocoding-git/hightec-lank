@@ -28,7 +28,7 @@ class Intake extends Model
 
     public function students()
     {
-        return $this->belongsToMany(Student::class, 'student_intakes', 'intake_id', 'student_id')
+        return $this->belongsToMany(Student::class, 'student_courses', 'intake_id', 'student_id')
                     ->withPivot('enrolled_at', 'status', 'notes')
                     ->withTimestamps();
     }

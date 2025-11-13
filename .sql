@@ -17,3 +17,7 @@ ADD COLUMN `invoice_number` VARCHAR(255) NULL AFTER `payment_method`,
 ADD COLUMN `bank_payment_amount` DECIMAL(10,2) NULL AFTER `invoice_number`,
 ADD COLUMN `bank_payment_date` DATE NULL AFTER `bank_payment_amount`,
 ADD COLUMN `bank_payment_document` VARCHAR(255) NULL AFTER `bank_payment_date`;
+
+
+-- 11/14
+ALTER TABLE `student_courses` DROP `enrolled_at`;

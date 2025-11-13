@@ -174,7 +174,7 @@
                                                                     <input
                                                                         class="primary_input_field primary_input_field date form-control"
                                                                         id="receive_date" type="date" name="receive_date"
-                                                                        value="{{ isset($editData) ? date('m/d/Y', strtotime($editData->receive_date)) : date('m/d/Y') }}"
+                                                                        value="{{ old('receive_date', isset($editData) ? date('Y-m-d', strtotime($editData->receive_date)) : date('Y-m-d')) }}"
                                                                         autocomplete="off">
                                                                 </div>
                                                             </div>
@@ -218,22 +218,6 @@
                                                     @if ($errors->has('payment_method'))
                                                         <span class="text-danger invalid-select" role="alert">
                                                             {{ $errors->first('payment_method') }}
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            </div>
-
-                                            {{-- Invoice Number Field --}}
-                                            <div class="col-lg-12 mb-15 d-none" id="invoiceNumberField">
-                                                <div class="primary_input">
-                                                    <label class="primary_input_label" for="invoice_number">Invoice Number
-                                                        <span class="text-danger"> *</span> </label>
-                                                    <input class="primary_input_field form-control" type="text"
-                                                        name="invoice_number" id="invoice_number" autocomplete="off"
-                                                        value="{{ isset($editData) ? $editData->invoice_number : '' }}">
-                                                    @if ($errors->has('invoice_number'))
-                                                        <span class="text-danger">
-                                                            {{ $errors->first('invoice_number') }}
                                                         </span>
                                                     @endif
                                                 </div>
@@ -582,10 +566,7 @@
                 $('#bank_payment_date').removeAttr('required');
 
                 // Show fields based on selected method
-                if (selectedMethod === 'Invoice') {
-                    $('#invoiceNumberField').removeClass('d-none');
-                    $('#invoice_number').attr('required', 'required');
-                } else if (selectedMethod === 'Bank Transfer') {
+                if (selectedMethod === 'Bank Transfer') {
                     $('#bankPaymentAmountField').removeClass('d-none');
                     $('#bankPaymentDateField').removeClass('d-none');
                     $('#bankPaymentDocumentField').removeClass('d-none');
@@ -628,13 +609,7 @@
             }
 
             const selectedMethod = $('#item_receive_payment_method').val();
-            if (selectedMethod === 'Invoice') {
-                if (!$('#invoice_number').val()) {
-                    $('#invoiceError').show();
-                    $('#invoice_number').addClass('is-invalid');
-                    isValid = false;
-                }
-            } else if (selectedMethod === 'Bank Transfer') {
+            if (selectedMethod === 'Bank Transfer') {
                 const bankPaymentAmount = parseFloat($('#bank_payment_amount').val()) || 0;
                 const subTotal = parseFloat($('#subTotal').val()) || 0;
 

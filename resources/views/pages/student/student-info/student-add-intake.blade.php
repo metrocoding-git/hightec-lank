@@ -161,7 +161,7 @@
                                                     <td>{{ $studentIntake->intake->name ?? '-' }}</td>
                                                     <td>{{ $studentIntake->branch->name ?? '-' }}</td>
                                                     <td>{{ $studentIntake->course->name ?? '-' }}</td>
-                                                    <td>{{ $studentIntake->enrolled_at ? date('Y-m-d', strtotime($studentIntake->enrolled_at)) : '-' }}
+                                                    <td>{{ $studentIntake->created_at ? date('Y-m-d', strtotime($studentIntake->created_at)) : '-' }}
                                                     </td>
                                                     <td>
                                                         <span
@@ -270,6 +270,10 @@
                     @csrf
                     <div class="modal-body">
                         <div class="row">
+                            <div id="studentCountAlert" class="alert alert-info col-12 text-center"
+                                style="display:none;"></div>
+                            <div id="courseStatusAlert" class="alert col-12 text-center" style="display:none;"></div>
+
                             <!-- Student Selection -->
                             <div class="col-lg-6">
                                 <div class="primary_input">
@@ -362,7 +366,7 @@
                             </div>
 
                             <!-- Enrollment Date -->
-                            <div class="col-lg-6 mt-4" hidden>
+                            {{-- <div class="col-lg-6 mt-4" hidden>
                                 <div class="primary_input">
                                     <label class="primary_input_label" for="modal_enrolled_at">
                                         Enrollment Date <span class="text-danger">*</span>
@@ -375,7 +379,7 @@
                                         <span class="text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
-                            </div>
+                            </div> --}}
 
                             <!-- Status -->
                             <div class="col-lg-6 mt-4" hidden>
@@ -415,7 +419,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="primary-btn tr-bg" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="primary-btn fix-gr-bg">Assign</button>
+                        <button type="submit" id="assignBtn" class="primary-btn fix-gr-bg">Assign</button>
                     </div>
                 </form>
             </div>
@@ -431,7 +435,7 @@
         $('#table_id').DataTable({
             responsive: true,
             dom: 'Bfrtip',
-
+            order: [[0, 'desc']],
             buttons: [{
                     extend: 'copyHtml5',
                     text: '<i class="fa-regular fa-copy"></i>',
@@ -458,7 +462,6 @@
                     titleAttr: 'Print'
                 }
             ],
-
             paging: true,
             searching: true,
             ordering: true,
@@ -483,6 +486,86 @@
 
     <script>
         $(document).ready(function() {
+            function clearAlerts() {
+                $('#studentCountAlert, #courseStatusAlert')
+                    .fadeOut(200, function() {
+                        $(this).removeClass('alert-info alert-success alert-danger').empty();
+                    });
+            }
+
+            $('#addStudentIntakeModal').on('show.bs.modal', function() {
+                clearAlerts();
+                $('#assignBtn').prop('disabled', true);
+            });
+
+            $('#modal_student_id, #modal_branch_id, #modal_intake_id, #modal_course_ids').on('change', function() {
+                clearAlerts();
+            });
+
+
+            // Geting added student count
+            $('#modal_course_ids').on('change', function() {
+                const intakeId = $('#modal_intake_id').val();
+                const courseId = $(this).val();
+
+                if (intakeId && courseId) {
+                    $.ajax({
+                        url: "{{ route('student.intake-course.search') }}",
+                        type: "GET",
+                        data: {
+                            intake_id: intakeId,
+                            course_id: courseId
+                        },
+                        success: function(response) {
+                            // show student count alert
+                            $('#studentCountAlert')
+                                .removeClass('alert-danger alert-success')
+                                .addClass('alert-info')
+                                .html(`<strong>Student Count:</strong> ${response.count}`)
+                                .fadeIn();
+
+
+                            // course status alert
+                            if (response.can_add) {
+                                $('#courseStatusAlert')
+                                    .removeClass('alert-danger')
+                                    .addClass('alert-success')
+                                    .html(
+                                        `<strong>✅ ${response.message}</strong><br>Expiry Date: ${response.expire_date}`
+                                    )
+                                    .fadeIn();
+
+                                // enable Assign button
+                                $('#assignBtn').prop('disabled', false);
+                            } else {
+                                $('#courseStatusAlert')
+                                    .removeClass('alert-success')
+                                    .addClass('alert-danger')
+                                    .html(
+                                        `<strong>⚠️ ${response.message}</strong><br>Expiry Date: ${response.expire_date}`
+                                    )
+                                    .fadeIn();
+
+                                // disable Assign button
+                                $('#assignBtn').prop('disabled', true);
+                            }
+
+                        },
+                        error: function() {
+                            $('#studentCountAlert')
+                                .removeClass('alert-info alert-success')
+                                .addClass('alert-danger')
+                                .text('Error fetching course info.')
+                                .fadeIn();
+
+                            setTimeout(() => $('#studentCountAlert').fadeOut(), 5000);
+                        }
+                    });
+                } else {
+                    $('#studentCount').text('');
+                }
+
+            });
 
             // Handle branch change event to load intakes dynamically (Modal)
             $('#modal_branch_id').on('change', function() {

@@ -240,7 +240,6 @@ class AddStudentController extends Controller
         $validatedData = $request->validate([
             'student_id' => 'required|exists:students,id',
             'course_id' => 'required|exists:courses,id',
-            'enrolled_at' => 'required|date',
             'status' => 'required',
             'notes' => 'nullable|string'
         ]);
@@ -258,7 +257,6 @@ class AddStudentController extends Controller
         DB::table('student_courses')->insert([
             'student_id' => $validatedData['student_id'],
             'course_id' => $validatedData['course_id'],
-            'enrolled_at' => $validatedData['enrolled_at'],
             'status' => $validatedData['status'],
             'notes' => $validatedData['notes'],
             'created_at' => now(),
@@ -291,7 +289,6 @@ class AddStudentController extends Controller
         $validatedData = $request->validate([
             'student_id' => 'required|exists:students,id',
             'course_id' => 'required|exists:courses,id',
-            'enrolled_at' => 'required|date',
             'status' => 'required',
             'notes' => 'nullable|string'
         ]);
@@ -312,7 +309,6 @@ class AddStudentController extends Controller
             ->update([
                 'student_id' => $validatedData['student_id'],
                 'course_id' => $validatedData['course_id'],
-                'enrolled_at' => $validatedData['enrolled_at'],
                 'status' => $validatedData['status'],
                 'notes' => $validatedData['notes'],
                 'updated_at' => now()
@@ -355,7 +351,6 @@ class AddStudentController extends Controller
         $validatedData = $request->validate([
             'student_id' => 'required|exists:students,id',
             'intake_id' => 'required|exists:intakes,id',
-            'enrolled_at' => 'required|date',
             'status' => 'required',
             'notes' => 'nullable|string'
         ]);
@@ -373,7 +368,6 @@ class AddStudentController extends Controller
         DB::table('student_intakes')->insert([
             'student_id' => $validatedData['student_id'],
             'intake_id' => $validatedData['intake_id'],
-            'enrolled_at' => $validatedData['enrolled_at'],
             'status' => $validatedData['status'],
             'notes' => $validatedData['notes'],
             'created_at' => now(),
@@ -414,7 +408,6 @@ class AddStudentController extends Controller
         $validatedData = $request->validate([
             'student_id' => 'required|exists:students,id',
             'intake_id' => 'required|exists:intakes,id',
-            'enrolled_at' => 'required|date',
             'status' => 'required',
             'notes' => 'nullable|string'
         ]);
@@ -435,7 +428,6 @@ class AddStudentController extends Controller
             ->update([
                 'student_id' => $validatedData['student_id'],
                 'intake_id' => $validatedData['intake_id'],
-                'enrolled_at' => $validatedData['enrolled_at'],
                 'status' => $validatedData['status'],
                 'notes' => $validatedData['notes'],
                 'updated_at' => now()
@@ -455,7 +447,7 @@ class AddStudentController extends Controller
         $courses = Course::all();
 
         // Build query with filters
-        $query = StudentCourse::with(['student', 'intake', 'course', 'branch'])->orderBy('id', 'desc');
+        $query = StudentCourse::with(['student', 'intake', 'course', 'branch'])->orderBy('created_at', 'desc');
 
         if ($request->filled('branch_id')) {
             $query->where('branch_id', $request->branch_id);
@@ -496,7 +488,6 @@ class AddStudentController extends Controller
             'intake_id' => 'required|exists:intakes,id',
             'course_ids' => 'required|array',
             'course_ids.*' => 'exists:courses,id',
-            'enrolled_at' => 'required|date',
             'status' => 'required',
             'notes' => 'nullable|string'
         ]);
@@ -523,7 +514,6 @@ class AddStudentController extends Controller
                     'branch_id' => $validatedData['branch_id'],
                     'course_id' => $courseId,
                     'intake_id' =>  $validatedData['intake_id'],
-                    'enrolled_at' => $validatedData['enrolled_at'],
                     'status' => $validatedData['status'],
                     'notes' => $validatedData['notes'],
                     'created_at' => now(),
@@ -538,8 +528,6 @@ class AddStudentController extends Controller
             return back()->withErrors(['error' => 'Failed to enroll student. Please try again.']);
         }
     }
-
-
 
     public function updateStatus(Request $request, $id)
     {
@@ -578,6 +566,37 @@ class AddStudentController extends Controller
     {
         StudentCourse::where('id', $id)->delete();
         return back()->with('success', 'Intake enrollment removed successfully.');
+    }
+
+    public function intakeCourseSearch(Request $request)
+    {
+        $intakeId = $request->input('intake_id');
+        $courseId = $request->input('course_id');
+
+        if (!$intakeId || !$courseId) {
+            return response()->json(['count' => 0]);
+        }
+
+        $intake = Intake::find($intakeId);
+        $course = Course::find($courseId);
+        $expireDate = Carbon::parse($intake->start_date)->addDays((int)$course->expiration_date);
+
+        $canAdd = now()->lte($expireDate);
+        $message = $canAdd
+            ? 'Course is available for adding students.'
+            : 'Course period has expired. Cannot add new students.';
+
+
+        $count = StudentCourse::where('intake_id', $intakeId)
+            ->where('course_id', $courseId)
+            ->count();
+
+        return response()->json([
+            'count' => $count,
+            'can_add' => $canAdd,
+            'message' => $message,
+            'expire_date' => $expireDate->toDateString(),
+        ]);
     }
     // ===============
 

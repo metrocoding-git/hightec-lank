@@ -15,7 +15,6 @@ class StudentCourse extends Model
         'course_id',
         'intake_id',
         'branch_id',
-        'enrolled_at',
         'status',
         'notes'
     ];

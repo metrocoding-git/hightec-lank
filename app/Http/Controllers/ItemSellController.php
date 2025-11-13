@@ -48,11 +48,7 @@ class ItemSellController extends Controller
         ]);
 
         // Conditional validation
-        if ($request->payment_method === 'Invoice') {
-            $request->validate([
-                'invoice_number' => 'required|string|max:255',
-            ]);
-        } elseif ($request->payment_method === 'Bank Transfer') {
+        if ($request->payment_method === 'Bank Transfer') {
             $request->validate([
                 'bank_payment_amount' => 'required|numeric|min:0.01',
                 'bank_payment_date' => 'required|date',
@@ -92,7 +88,6 @@ class ItemSellController extends Controller
             // Create ItemSellBatch record
             $itemSellBatch = ItemSellBatch::create([
                 'payment_method' => $request->payment_method,
-                'invoice_number' => $request->payment_method === 'Invoice' ? $request->invoice_number : null,
                 'bank_payment_amount' => $request->payment_method === 'Bank Transfer' ? $request->bank_payment_amount : null,
                 'bank_payment_date' => $bankPaymentDate,
                 'bank_payment_document' => $request->payment_method === 'Bank Transfer' ? $bankPaymentDocumentPath : null,
@@ -179,6 +174,7 @@ class ItemSellController extends Controller
 
         return response()->json([
             'itemSell' => [
+                'id' => $itemSell->id,
                 'reference_no' => $itemSell->reference_no,
                 'buyer_name' => $buyerName,
                 'items' => $itemSell->items, // Return all items in the batch
@@ -198,6 +194,19 @@ class ItemSellController extends Controller
                 'bank_payment_document' => $itemSell->bank_payment_document,
             ]
         ]);
+    }
+
+    public function itemSellSaveInvoiceNumber(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|exists:item_sell_batches,id',
+            'invoice_number' => 'required|string|max:50',
+        ]);
+    
+        $ItemReceive = ItemSellBatch::findOrFail($request->id);
+        $ItemReceive->invoice_number = $request->invoice_number;
+        $ItemReceive->save();
+    
     }
 
     // public function editItemSell($id)
@@ -386,19 +395,19 @@ class ItemSellController extends Controller
 
     public function returnItemSell($id)
     {
-       
+
 
         try {
             $itemSellItem = ItemSellItem::where('item_sell_batch_id', $id)->get();
             $itemSellBatch = ItemSellBatch::findOrFail($id);
             $returnDate = Carbon::today()->format('Y-m-d');
 
-            
+
             foreach ($itemSellItem as $item) {
 
 
                 $availableQuantity = $item->quantity;
-                
+
                 $currentBalance = ItemInventory::getCurrentBalance($item->item_id);
                 $newBalance = $currentBalance + $availableQuantity;
                 ItemInventory::create([
@@ -426,20 +435,16 @@ class ItemSellController extends Controller
                 $itemSellBatch->total_due += ($item->quantity * $item->unit_price);
                 $itemSellBatch->status = 'R';
                 $itemSellBatch->save();
-
             }
 
             return redirect()
-            ->back()
-            ->with('success', 'Item return processed successfully!',);
-          
-         
+                ->back()
+                ->with('success', 'Item return processed successfully!',);
         } catch (\Throwable $e) {
-            
+
             return redirect()
-            ->back()
-            ->with('error', 'Failed to process item return.');
-          
+                ->back()
+                ->with('error', 'Failed to process item return.');
         }
     }
 

@@ -713,11 +713,7 @@ class HomeController extends Controller
         ]);
 
         // Conditional validation based on payment method
-        if ($request->payment_method === 'Invoice') {
-            $request->validate([
-                'invoice_number' => 'required|string|max:255',
-            ]);
-        } elseif ($request->payment_method === 'Bank Transfer') {
+        if ($request->payment_method === 'Bank Transfer') {
             $request->validate([
                 'bank_payment_amount' => 'required|numeric|min:0.01',
                 'bank_payment_date' => 'required|date',
@@ -768,7 +764,6 @@ class HomeController extends Controller
                 $itemReceive = ItemReceive::create([
                     'transaction_id' => $transactionId,
                     'payment_method' => $request->payment_method,
-                    'invoice_number' => $request->payment_method === 'Invoice' ? $request->invoice_number : null,
                     'bank_payment_amount' => $request->payment_method === 'Bank Transfer' ? $request->bank_payment_amount : null,
                     'bank_payment_date' => $bankPaymentDate,
                     'bank_payment_document' => $request->payment_method === 'Bank Transfer' ? $bankPaymentDocumentPath : null,
@@ -815,6 +810,18 @@ class HomeController extends Controller
         }
     }
 
+    public function itemReceivesaveInvoiceNumber(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|exists:item_receive,id',
+            'invoice_number' => 'required|string|max:50',
+        ]);
+    
+        $ItemReceive = ItemReceive::findOrFail($request->id);
+        $ItemReceive->invoice_number = $request->invoice_number;
+        $ItemReceive->save();
+    
+    }
     public function itemReceiveList()
     {
         // Group by transaction_id and get the first record for each transaction

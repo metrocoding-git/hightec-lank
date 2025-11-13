@@ -111,7 +111,6 @@ Route::controller(AddStudentController::class)->prefix('student/student-info/add
     Route::put('update/{student}', 'update')->name('add-student.update');
     Route::get('edit/{student}', 'edit')->name('add-student.edit');
     Route::delete('destroy/{id}', 'destroy')->name('add-student.destroy');
-    
 });
 
 // Student Course Management Routes
@@ -125,21 +124,25 @@ Route::controller(AddStudentController::class)->prefix('student/student-info')->
 
 // Student Intake Management Routes
 Route::controller(AddStudentController::class)->prefix('student/student-info')
-->middleware(['permission'])
-->group(function () {
-    Route::get('student-add-intake', 'studentAddIntakeWithCourses')->name('student.add-intake-with-courses.index')->withoutMiddleware(['csrf', 'permission']);
-    Route::post('student-add-intake', 'storeStudentIntakeWithCourses')->name('student.add-intake-with-courses.store');
-    Route::get('student-add-intake/{id}/edit', 'editStudentIntake')->name('student.add-intake.edit');
-    Route::put('student-add-intake/{id}', 'updateStudentIntake')->name('student.add-intake.update');
-    Route::delete('student-add-intake/{id}', 'destroyStudentAddIntakeWithCourses')->name('student.add-intake.destroy');
+    ->middleware(['permission'])
+    ->group(function () {
+        Route::get('student-add-intake', 'studentAddIntakeWithCourses')->name('student.add-intake-with-courses.index')->withoutMiddleware(['csrf', 'permission']);
+        Route::post('student-add-intake', 'storeStudentIntakeWithCourses')->name('student.add-intake-with-courses.store');
+        Route::get('student-add-intake/{id}/edit', 'editStudentIntake')->name('student.add-intake.edit');
+        Route::put('student-add-intake/{id}', 'updateStudentIntake')->name('student.add-intake.update');
+        Route::delete('student-add-intake/{id}', 'destroyStudentAddIntakeWithCourses')->name('student.add-intake.destroy');
 
-    // Search functionality for Student Add Intake
-    Route::post('student-add-intake/search', 'searchStudentIntake')->name('student.add-intake.search');
-    Route::get('student-add-intake/get-intakes/{branchId}', 'getSearchIntakesByBranch')->name('student.add-intake.get-intakes')->withoutMiddleware(['csrf', 'permission']);
-    Route::get('student-add-intake/get-courses/{intakeId}', 'getSearchCoursesByIntake')->name('student.add-intake.get-courses')->withoutMiddleware(['csrf', 'permission']);
-    // Status update for Student Intake
-    Route::post('student-add-intake/{id}/update-status', 'updateStatus')->name('student.add-intake.update-status');
-});
+        // Search functionality for Student Add Intake
+        Route::post('student-add-intake/search', 'searchStudentIntake')->name('student.add-intake.search');
+        Route::get('student-add-intake/get-intakes/{branchId}', 'getSearchIntakesByBranch')->name('student.add-intake.get-intakes')->withoutMiddleware(['csrf', 'permission']);
+        Route::get('student-add-intake/get-courses/{intakeId}', 'getSearchCoursesByIntake')->name('student.add-intake.get-courses')->withoutMiddleware(['csrf', 'permission']);
+        Route::get('intake-course-search', 'intakeCourseSearch')
+            ->name('student.intake-course.search')
+            ->withoutMiddleware(['csrf', 'permission']);
+
+        // Status update for Student Intake
+        Route::post('student-add-intake/{id}/update-status', 'updateStatus')->name('student.add-intake.update-status');
+    });
 
 Route::controller(HomeController::class)->middleware(['permission'])->group(callback: function () {
     // Route::get('dashboard', 'dashboard')->name('dashboard');
@@ -192,21 +195,26 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
     Route::delete('account/inventory/item-receive/{transactionId}', [HomeController::class, 'deleteItemReceive'])->name('item-receive.destroy')->withoutMiddleware(['permission']);
     Route::post('/item-receive/save', [HomeController::class, 'itemReceivePost'])
         ->name('save-item-receive-data')->withoutMiddleware(['permission']);
+    Route::post('/item-receive/save-invoice-number', [HomeController::class, 'itemReceivesaveInvoiceNumber'])
+        ->name('item-receive.invoic-save')->withoutMiddleware(['permission']);
 });
 
 Route::controller(ItemSellController::class)
-->middleware(['permission'])
-->group(function () {
-    Route::get('account/inventory/item-sell', 'itemSell')->name('item-sell');
-    Route::post('account/inventory/item-sell/save', 'saveItemSellData')->name('save-item-sell-data');
-    Route::get('account/inventory/item-sell-list', 'itemSellList')->name('item-sell-list');
-    Route::get('account/inventory/item-sell/{id}', 'viewItemSell')->name('view-item-sell');
-    Route::get('account/inventory/item-sell/{id}/return', 'returnItemSell')->name('return-item-sell');
-    Route::post('account/inventory/item-sell/{id}/update-status', 'updateItemSellStatus')->name('update-item-sell-status');
-    Route::post('account/inventory/item-sell/{id}/direct-return', 'directReturnItemSell')->name('direct-return-item-sell');
-    Route::get('account/inventory/item-sell/{id}/return-view', action: 'returnItemSellView')->name('return-item-sell-view');
-    Route::get('account/inventory/get-item-price/{id}', 'getItemPrice')->name('get-item-price')->withoutMiddleware(['csrf', 'permission']);
-});
+    ->middleware(['permission'])
+    ->group(function () {
+        Route::get('account/inventory/item-sell', 'itemSell')->name('item-sell');
+        Route::post('account/inventory/item-sell/save', 'saveItemSellData')->name('save-item-sell-data');
+        Route::get('account/inventory/item-sell-list', 'itemSellList')->name('item-sell-list');
+        Route::get('account/inventory/item-sell/{id}', 'viewItemSell')->name('view-item-sell');
+        Route::get('account/inventory/item-sell/{id}/return', 'returnItemSell')->name('return-item-sell');
+        Route::post('account/inventory/item-sell/{id}/update-status', 'updateItemSellStatus')->name('update-item-sell-status');
+        Route::post('account/inventory/item-sell/{id}/direct-return', 'directReturnItemSell')->name('direct-return-item-sell');
+        Route::get('account/inventory/item-sell/{id}/return-view', action: 'returnItemSellView')->name('return-item-sell-view');
+        Route::get('account/inventory/get-item-price/{id}', 'getItemPrice')->name(name: 'get-item-price')->withoutMiddleware(['csrf', 'permission']);
+        Route::post('account/inventory/item-sell/save-invoice-number', 'itemSellSaveInvoiceNumber')
+        ->name('item-sell.invoic-save')->withoutMiddleware(['permission']);
+
+    });
 
 Route::controller(ItemIssueController::class)->middleware(['permission'])->group(function () {
     Route::get('account/inventory/item-issue', 'index')->name('item-issue');
@@ -219,16 +227,17 @@ Route::controller(ItemIssueController::class)->middleware(['permission'])->group
     Route::post('account/inventory/issue-item', 'IssueItem')->name('issue-item');
 
     // AJAX routes for dynamic filtering
-    Route::get('account/inventory/get-intakes-by-branch/{branchId}', 'getIntakesByBranch')->name('item-issue.get-intakes-by-branch')->withoutMiddleware([ 'permission']);
-    Route::get('account/inventory/get-courses-by-intake/{intakeId}', 'getCoursesByIntake')->name('item-issue.get-courses-by-intake')->withoutMiddleware([ 'permission']);
-    Route::get('account/inventory/get-students-by-course/{courseId}', 'getStudentsByCourse')->name('item-issue.get-students-by-course')->withoutMiddleware([ 'permission']);
-    Route::get('account/inventory/get-items-by-category/{categoryId}', 'getItemsByCategory')->name('item-issue.get-items-by-category')->withoutMiddleware([ 'permission']);
-    Route::get('account/inventory/get-student-fee-data', 'getStudentFeeData')->name('item-issue.get-student-fee-data')->withoutMiddleware([ 'permission']);
-    Route::get('item-issue/get-student-details/{studentId}', 'getStudentDetails')->name('item-issue.get-student-details')->withoutMiddleware([ 'permission']);
-    Route::get('item-issue/get-courses-by-intake-and-student/{intakeId}/{studentId}', 'getCoursesByIntakeAndStudent')->name('item-issue.get-courses-by-intake-and-student')->withoutMiddleware([ 'permission']);
-    Route::get('item-issue/get-batch-details/{batchId}', 'getBatchDetails')->name('item-issue.get-batch-details')->withoutMiddleware([ 'permission']);
-    Route::get('item-issue/check-student-course-status', 'checkStudentCourseStatus')->name('item-issue.check-student-course-status')->withoutMiddleware([ 'permission']);
+    Route::get('account/inventory/get-intakes-by-branch/{branchId}', 'getIntakesByBranch')->name('item-issue.get-intakes-by-branch')->withoutMiddleware(['permission']);
+    Route::get('account/inventory/get-courses-by-intake/{intakeId}', 'getCoursesByIntake')->name('item-issue.get-courses-by-intake')->withoutMiddleware(['permission']);
+    Route::get('account/inventory/get-students-by-course/{courseId}', 'getStudentsByCourse')->name('item-issue.get-students-by-course')->withoutMiddleware(['permission']);
+    Route::get('account/inventory/get-items-by-category/{categoryId}', 'getItemsByCategory')->name('item-issue.get-items-by-category')->withoutMiddleware(['permission']);
+    Route::get('account/inventory/get-student-fee-data', 'getStudentFeeData')->name('item-issue.get-student-fee-data')->withoutMiddleware(['permission']);
+    Route::get('item-issue/get-student-details/{studentId}', 'getStudentDetails')->name('item-issue.get-student-details')->withoutMiddleware(['permission']);
+    Route::get('item-issue/get-courses-by-intake-and-student/{intakeId}/{studentId}', 'getCoursesByIntakeAndStudent')->name('item-issue.get-courses-by-intake-and-student')->withoutMiddleware(['permission']);
+    Route::get('item-issue/get-intake-by-branch-and-student/{branchId}/{studentId}', 'getIntakeByBranchAndStudent')->name('item-issue.get-intakes-by-branch-and-student')->withoutMiddleware(['permission']);
 
+    Route::get('item-issue/get-batch-details/{batchId}', 'getBatchDetails')->name('item-issue.get-batch-details')->withoutMiddleware(['permission']);
+    Route::get('item-issue/check-student-course-status', 'checkStudentCourseStatus')->name('item-issue.check-student-course-status')->withoutMiddleware(['permission']);
 });
 Route::controller(LoginController::class)->group(function () {
     Route::get('login', 'index')->name('login'); // For displaying the login form
@@ -292,7 +301,6 @@ Route::controller(InvoiceController::class)->middleware(['permission'])->group(f
     // Route for invoice report data (AJAX)
     Route::get('student/fees/invoice-print/{invoiceId}', 'invoicePrint')->name('fees.invoice-print')->withoutMiddleware(['csrf', 'permission']);
     Route::get('student/fees/invoice-item-print/{invoiceId}/{paymentId}', 'invoiceItemPrint')->name('fees.invoice-item-print')->withoutMiddleware(['csrf', 'permission']);
-
 });
 
 Route::controller(HomeController::class)->middleware(['permission'])->group(function () {
@@ -357,7 +365,6 @@ Route::controller(ContentController::class)->middleware(['permission'])->group(f
 
 Route::controller(ReturnFeeController::class)->middleware(['permission'])->group(function () {
     Route::post('/student/fees/return-fees', 'store')->name('return-fees.store');
-
 });
 
 // Role Management Routes
@@ -380,10 +387,10 @@ Route::controller(UserController::class)->prefix('role-management')->middleware(
 
 // Reports Routes
 Route::controller(ReportController::class)->prefix('reports')
-// ->middleware(['permission'])
-->group(function () {
-    Route::get('course-paid', 'coursePaid')->name('reports.course-paid');
-    Route::get('sell-items', 'sellItems')->name('reports.sell-items');
-    Route::get('issue-items', 'issueItems')->name('reports.issue-items');
-    Route::get('students-paid', 'studentsPaid')->name('reports.students-paid');
-});
+    // ->middleware(['permission'])
+    ->group(function () {
+        Route::get('course-paid', 'coursePaid')->name('reports.course-paid');
+        Route::get('sell-items', 'sellItems')->name('reports.sell-items');
+        Route::get('issue-items', 'issueItems')->name('reports.issue-items');
+        Route::get('students-paid', 'studentsPaid')->name('reports.students-paid');
+    });

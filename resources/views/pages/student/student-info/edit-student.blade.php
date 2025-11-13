@@ -238,7 +238,7 @@
                                                                                 <div class="primary_input">
                                                                                     <label class="primary_input_label"
                                                                                         for="">@lang('student.permanent_address')
-                                                                                        <span class="text-danger">*</span>
+                                                                                        {{-- <span class="text-danger">*</span> --}}
                                                                                     </label>
                                                                                     <textarea class="primary_input_field form-control{{ $errors->has('permanent_address') ? ' is-invalid' : '' }}"
                                                                                         cols="0" rows="3" name="permanent_address" id="permanent_address">{{ old('permanent_address', $student->permanent_address) }}</textarea>

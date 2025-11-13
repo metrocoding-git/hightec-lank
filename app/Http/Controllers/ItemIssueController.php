@@ -20,6 +20,7 @@ use App\Models\Course;
 use App\Models\Intake;
 use App\Models\FeeInvoice;
 use App\Models\StudentCourse;
+use Carbon\Carbon;
 
 class ItemIssueController extends Controller
 {
@@ -31,28 +32,29 @@ class ItemIssueController extends Controller
             $issuedItems = ItemIssue::where('active_status', 1)->get();
             $courses = Course::get(); // Fetch  classes
             $staffs = User::get(); // Fetch users
-            $inventoryItems = Inventory_item::get();//item
-            $intakes = Intake::get();//section
-            $students = Student::get();//student
+            $inventoryItems = Inventory_item::get(); //item
+            $intakes = Intake::get(); //section
+            $students = Student::get(); //student
             $categories = Category::get();
             $branches = Branch::get();
 
             // Temporarily dump data to inspect
             // dd($categories, $inventoryItems);
 
-            return view('pages.account.inventory.item-issue', compact('roles',  'issuedItems', 'courses', 'staffs','intakes','students','inventoryItems' ,'categories','branches'));
+            return view('pages.account.inventory.item-issue', compact('roles',  'issuedItems', 'courses', 'staffs', 'intakes', 'students', 'inventoryItems', 'categories', 'branches'));
         } catch (Exception $e) {
             return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
         }
     }
-    public function issueListView(){
+    public function issueListView()
+    {
         try {
             $issuedBatches = ItemIssueBatch::with(['items.item', 'items.category', 'student', 'staff', 'branch', 'course'])
                 ->where('active_status', 1)
                 ->get();
 
             // Add expiration status to each batch
-            $batchesWithCourseStatus = $issuedBatches->map(function($batch) {
+            $batchesWithCourseStatus = $issuedBatches->map(function ($batch) {
                 $course = $batch->course;
                 if ($course) {
                     $startDate = $course->created_at;
@@ -455,7 +457,7 @@ class ItemIssueController extends Controller
     {
         try {
             $intake_id = $intakeId; // Use the route parameter
-            $courses = Course::whereHas('intakes', function($query) use ($intake_id) {
+            $courses = Course::whereHas('intakes', function ($query) use ($intake_id) {
                 $query->where('intake_id', $intake_id);
             })->get();
 
@@ -498,14 +500,14 @@ class ItemIssueController extends Controller
             $branch_id = $request->branch_id;
             $intake_id = $request->intake_id;
             $course_id = $request->course_id;
-    
+
             Log::info('=== getStudentFeeData CALLED ===', [
                 'student_id' => $student_id,
                 'branch_id' => $branch_id,
                 'intake_id' => $intake_id,
                 'course_id' => $course_id
             ]);
-    
+
             // Basic student validation
             $student = Student::find($student_id);
             if (!$student) {
@@ -518,19 +520,20 @@ class ItemIssueController extends Controller
                     'fee_invoices' => []
                 ]);
             }
-    
+
             // Optional: Filter fee invoices based on branch/course/intake if your DB supports those relations
-            $feeInvoices = FeeInvoice::where('student_id', $student_id)
-                // ->when($branch_id, fn($q) => $q->where('branch_id', $branch_id))
-                // ->when($intake_id, fn($q) => $q->where('intake_id', $intake_id))
-                // ->when($course_id, fn($q) => $q->where('course_id', $course_id))
-                ->with(['invoice_item.feeType'])
+            $feeInvoices = FeeInvoice::with(['paidCourses', 'invoice_item.feeType'])
+                ->where('student_id', $student_id)
+                ->where('branch_id', $branch_id)
+                ->whereHas('paidCourses', function ($query) use ($course_id) {
+                    $query->where('course_id', $course_id);
+                })
                 ->get();
-    
+
             $totalFees = $feeInvoices->sum('total_amount');
             $totalPaid = $feeInvoices->sum('paid_amount');
             $totalDue = $totalFees - $totalPaid;
-    
+
             $formattedInvoices = [];
             foreach ($feeInvoices as $invoice) {
                 foreach ($invoice->invoice_item as $item) {
@@ -541,16 +544,13 @@ class ItemIssueController extends Controller
                     ];
                 }
             }
-    
+
             return response()->json([
-                'student_name' => $student->student_name,
-                'total_invoices' => $feeInvoices->count(),
                 'total_fees' => $totalFees,
                 'total_paid' => $totalPaid,
                 'total_due' => $totalDue,
                 'fee_invoices' => $formattedInvoices
             ]);
-    
         } catch (Exception $e) {
             Log::error('Error in getStudentFeeData: ' . $e->getMessage());
             return response()->json([
@@ -559,20 +559,28 @@ class ItemIssueController extends Controller
             ], 500);
         }
     }
-    
-    public function getStudentDetails(Request $request, $studentId)
+
+    public function getStudentDetails($studentId)
     {
         try {
             Log::info('=== getStudentDetails CALLED ===');
             Log::info('Student ID received: ' . $studentId);
 
-            // Eager load branch (belongsTo), and the first associated intake and course (belongsToMany)
-            $student = Student::with(['branch', 'intakes', 'courses'])->find($studentId);
+            $student = Student::find($studentId);
 
             if (!$student) {
                 Log::warning('Student not found for ID: ' . $studentId);
                 return response()->json(['error' => 'Student not found'], 404);
             }
+
+            $studentCourses = StudentCourse::with(['course', 'intake', 'branch'])
+                ->where('student_id', $studentId)
+                ->get();
+
+            $branches = $studentCourses->pluck('branch')->unique('id')->values();
+            $intakes  = $studentCourses->pluck('intake')->unique('id')->values();
+            $courses  = $studentCourses->pluck('course')->unique('id')->values();
+
 
             Log::info('Student found: ' . $student->student_name);
             Log::info('Student Branch: ' . ($student->branch ? $student->branch->name : 'N/A'));
@@ -580,10 +588,10 @@ class ItemIssueController extends Controller
             Log::info('Student Courses: ' . ($student->courses->isNotEmpty() ? $student->courses->pluck('name')->implode(', ') : 'N/A'));
 
             return response()->json([
-                'branch' => $student->branch,
+                'branches' => $branches,
                 'branch_id' => $student->branch ? $student->branch->id : null, // Add branch_id
-                'intakes' => $student->intakes, // Return all intakes
-                'courses' => $student->courses, // Return all courses
+                'intakes' => $intakes, // Return all intakes
+                'courses' => $courses, // Return all courses
             ]);
         } catch (Exception $e) {
             Log::error('Error in getStudentDetails: ' . $e->getMessage());
@@ -598,18 +606,18 @@ class ItemIssueController extends Controller
             Log::info('=== getCoursesByIntakeAndStudent CALLED ===');
             Log::info('Intake ID: ' . $intakeId . ', Student ID: ' . $studentId);
 
-            $courses = Course::whereHas('intakes', function($query) use ($intakeId) {
+            $courses = Course::whereHas('intakes', function ($query) use ($intakeId) {
                 $query->where('intake_id', $intakeId);
             })
-            ->whereHas('students', function($query) use ($studentId) {
-                $query->where('student_id', $studentId);
-            })
-            ->get();
+                ->whereHas('students', function ($query) use ($studentId) {
+                    $query->where('student_id', $studentId);
+                })
+                ->get();
 
             Log::info('Found courses count: ' . $courses->count());
 
             // Add course dates for expiration validation
-            $coursesWithDates = $courses->map(function($course) {
+            $coursesWithDates = $courses->map(function ($course) {
                 return [
                     'id' => $course->id,
                     'name' => $course->name,
@@ -628,6 +636,43 @@ class ItemIssueController extends Controller
         }
     }
 
+    public function getIntakeByBranchAndStudent(Request $request, $branchId, $studentId)
+    {
+        try {
+            Log::info('=== getIntakeByBranchAndStudent CALLED ===');
+            Log::info('Branch ID: ' . $branchId . ', Student ID: ' . $studentId);
+
+            // Filter intakes that belong to this branch
+            // AND have this student assigned
+
+
+            $intakes = Intake::where('branch_id', $branchId)
+                ->whereHas('students', function ($query) use ($studentId) {
+                    $query->where('student_id', $studentId);
+                })
+                ->get();
+
+            Log::info('Found intakes count: ' . $intakes->count());
+
+            $formattedIntakes = $intakes->map(function ($intake) {
+                return [
+                    'id' => $intake->id,
+                    'name' => $intake->name,
+                    'created_at' => $intake->created_at ? $intake->created_at->toISOString() : null,
+                ];
+            });
+
+            Log::info('Intake data returned: ' . json_encode($formattedIntakes->toArray()));
+
+            return response()->json($formattedIntakes);
+        } catch (Exception $e) {
+            Log::error('Error in getIntakeByBranchAndStudent: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+
+            return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
+        }
+    }
+
     public function getBatchDetails(Request $request, $batchId)
     {
         try {
@@ -636,7 +681,7 @@ class ItemIssueController extends Controller
 
             // Get batch with all related items and their relationships
             $batch = ItemIssueBatch::with([
-                'items' => function($query) {
+                'items' => function ($query) {
                     $query->with(['item', 'category']);
                 },
                 'student',
@@ -708,12 +753,22 @@ class ItemIssueController extends Controller
             if ($studentCourse && $studentCourse->status === 'start') {
                 return response()->json([
                     'can_issue' => true,
-                    'message' => 'Student course is active. Items can be issued.'
+                    'message' => 'Items can be issued.'
                 ]);
             } else {
+                $intake = Intake::find($intake_id);
+                $course = Course::find($course_id);
+                $expireDate = Carbon::parse($intake->start_date)->addDays((int)$course->expiration_date);
+
+                $canAdd = now()->lte($expireDate);
+                $message = $canAdd
+                    ? 'Items can be issued.'
+                    : 'Items Cannot be issued. expired';
+                $can_issue = $canAdd ? true : false;
+
                 return response()->json([
-                    'can_issue' => false,
-                    'message' => 'Student course is not active. Cannot issue items.'
+                    'can_issue' => $can_issue,
+                    'message' => $message
                 ]);
             }
         } catch (Exception $e) {

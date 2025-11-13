@@ -328,8 +328,8 @@
                                                                                         <label class="primary_input_label"
                                                                                             for="">@lang('student.permanent_address')
 
-                                                                                            <span class="text-danger">
-                                                                                                *</span>
+                                                                                            {{-- <span class="text-danger">
+                                                                                                *</span> --}}
 
                                                                                         </label>
                                                                                         <textarea class="primary_input_field form-control{{ $errors->has('current_address') ? ' is-invalid' : '' }}"

@@ -217,20 +217,14 @@
                                         <h4 class="mb-15">Student fee Informations</h4>
                                     </div>
                                     <div class="row">
-                                        <div class="col-lg-6">
+                                        
+                                        {{-- <div class="col-lg-12">
                                             <div class="primary_input">
-                                                <label class="primary_input_label">Student Name</label>
-                                                <input type="text" class="form-control" id="fee_student_name"
+                                                <label class="primary_input_label">Payment Count</label>
+                                                <input type="text" class="form-control" id="payment_count"
                                                     readonly>
                                             </div>
-                                        </div>
-                                        <div class="col-lg-6">
-                                            <div class="primary_input">
-                                                <label class="primary_input_label">Total Invoice</label>
-                                                <input type="text" class="form-control" id="fee_total_invoices"
-                                                    readonly>
-                                            </div>
-                                        </div>
+                                        </div> --}}
                                         <div class="col-lg-4">
                                             <div class="primary_input">
                                                 <label class="primary_input_label">Total Fees</label>
@@ -584,10 +578,7 @@
                             );
                         },
                         success: function(data) {
-                            console.log('✅ Fee data received:', data);
-
-                            $('#fee_student_name').val(data.student_name || 'N/A');
-                            $('#fee_total_invoices').val(data.total_invoices || 0);
+                            // $('#payment_count').val(data.total_invoices || 0);
                             $('#fee_total_fees').val('Rs ' + (data.total_fees || 0).toFixed(2));
                             $('#fee_total_paid').val('Rs ' + (data.total_paid || 0).toFixed(2));
                             $('#fee_total_due').val('Rs ' + (data.total_due || 0).toFixed(2));
@@ -642,123 +633,173 @@
                 refreshNiceSelect('#branch_select');
 
                 if (student_id && student_id !== '') {
-                    console.log('DEBUG: Inside student_id check. Preparing AJAX call.'); // Added debug log
-                    // AJAX call to get student details (branch, intake, course)
+                    // Build student details URL
                     var studentDetailsUrl = '{{ route('item-issue.get-student-details', ':studentId') }}'
                         .replace(':studentId', student_id);
-                    console.log('🌐 Student Details AJAX URL:', studentDetailsUrl);
 
                     $.get(studentDetailsUrl, function(data) {
-                        console.log('✅ Student details received:', data);
+                            var branchOptionsHtml = '<option value="">Select Branch *</option>';
 
-                        // Populate Branch dropdown
-                        var branchOptionsHtml = '<option value="">Select Branch *</option>';
-                        if (data.branch) {
-                            branchOptionsHtml += '<option value="' + data.branch.id +
-                                '" selected>' + data.branch.name + '</option>';
-                            $('#branch_select').html(branchOptionsHtml).prop('disabled',
-                                false); // Enable if branch found
-                        } else {
-                            branchOptionsHtml += '<option value="">No Branch Found</option>';
-                            $('#branch_select').html(branchOptionsHtml).prop('disabled',
-                                true); // Keep disabled if no branch
-                        }
-                        refreshNiceSelect('#branch_select');
+                            if (data.branches && data.branches.length > 0) {
+                                data.branches.forEach(function(branch) {
+                                    branchOptionsHtml += `
+                <option value="${branch.id}">${branch.name}</option>
+            `;
+                                });
 
-                        // Populate Intake dropdown based on branch
-                        var studentBranchId = data.branch_id;
-                        if (studentBranchId) {
-                            var intakesByBranchUrl =
-                                '{{ route('item-issue.get-intakes-by-branch', ':branchId') }}'
-                                .replace(':branchId', studentBranchId);
-                            console.log('🌐 Intakes by Branch AJAX URL:', intakesByBranchUrl);
-
-                            $.get(intakesByBranchUrl, function(intakeData) {
-                                console.log('✅ Intakes by branch received:', intakeData);
-                                var intakeOptionsHtml =
-                                    '<option value="">Select Intake *</option>';
-                                if (intakeData && intakeData.length > 0) {
-                                    intakeData.forEach(function(intake) {
-                                        intakeOptionsHtml += '<option value="' +
-                                            intake.id + '" data-start-date="' + (
-                                                intake.start_date || '') + '">' +
-                                            intake.name + '</option>';
-                                    });
-                                    $('#intake_select').html(intakeOptionsHtml).prop(
-                                        'disabled', false);
-                                } else {
-                                    intakeOptionsHtml +=
-                                        '<option value="">No Intakes Found for this Branch</option>';
-                                    $('#intake_select').html(intakeOptionsHtml).prop(
-                                        'disabled', true);
-                                }
-                                refreshNiceSelect('#intake_select');
-                            }).fail(function(xhr, status, error) {
-                                console.error('❌ AJAX Error fetching intakes by branch:',
-                                    error);
-                                $('#intake_select').html(
-                                        '<option value="">Error loading intakes</option>')
+                                $('#branch_select').html(branchOptionsHtml).prop('disabled', false);
+                            } else {
+                                $('#branch_select')
+                                    .html('<option value="">No Branches Found</option>')
                                     .prop('disabled', true);
-                                refreshNiceSelect('#intake_select');
-                            });
-                        } else {
-                            var intakeOptionsHtml =
-                                '<option value="">No Branch Selected for Student</option>';
-                            $('#intake_select').html(intakeOptionsHtml).prop('disabled', true);
+                            }
+
+                            refreshNiceSelect('#branch_select');
+
+
+
+                            var intakeOptionsHtml = '<option value="">Select Intake *</option>';
+
+                            if (data.intakes && data.intakes.length > 0) {
+                                data.intakes.forEach(function(intake) {
+                                    intakeOptionsHtml += `
+                <option value="${intake.id}" data-start-date="${intake.start_date || ''}">
+                    ${intake.name}
+                </option>
+            `;
+                                });
+
+                                $('#intake_select').html(intakeOptionsHtml).prop('disabled', false);
+                            } else {
+                                $('#intake_select')
+                                    .html('<option value="">No Intakes Found</option>')
+                                    .prop('disabled', true);
+                            }
+
                             refreshNiceSelect('#intake_select');
-                        }
 
-                        // Populate Course dropdown
-                        var courseOptionsHtml = '<option value="">Select Student First *</option>';
-                        if (data.courses && data.courses.length > 0) {
-                            data.courses.forEach(function(course) {
-                                courseOptionsHtml += '<option value="' + course.id + '">' +
-                                    course.name + '</option>';
-                            });
-                            $('#course_select').html(courseOptionsHtml).prop('disabled',
-                                false); // Enable after populating
-                        } else {
-                            courseOptionsHtml += '<option value="">No Courses Found</option>';
-                            $('#course_select').html(courseOptionsHtml).prop('disabled',
-                                true); // Keep disabled if no options
-                        }
-                        refreshNiceSelect('#course_select');
 
-                    }).fail(function(xhr, status, error) {
-                        console.error('❌ AJAX Error fetching student details:', error);
-                        console.error('DEBUG: XHR status:', xhr.status); // Added debug log
-                        console.error('DEBUG: XHR responseText:', xhr
-                            .responseText); // Added debug log
-                        $('#branch_select').html('<option value="">Error loading branch</option>')
-                            .prop('disabled', true);
-                        $('#intake_select').html('<option value="">Error loading intake</option>')
-                            .prop('disabled', true);
-                        $('#course_select').html('<option value="">Error loading course</option>')
-                            .prop('disabled', true);
-                        refreshNiceSelect('#branch_select');
-                        refreshNiceSelect('#intake_select');
-                        refreshNiceSelect('#course_select');
-                    });
+                            var courseOptionsHtml = '<option value="">Select Course *</option>';
 
+                            if (data.courses && data.courses.length > 0) {
+                                data.courses.forEach(function(course) {
+                                    courseOptionsHtml += `
+                <option value="${course.id}">${course.name}</option>
+            `;
+                                });
+
+                                $('#course_select').html(courseOptionsHtml).prop('disabled', false);
+                            } else {
+                                $('#course_select')
+                                    .html('<option value="">No Courses Found</option>')
+                                    .prop('disabled', true);
+                            }
+
+                            refreshNiceSelect('#course_select');
+
+                        })
+                        .fail(function(xhr, status, error) {
+                            console.error('❌ AJAX Error fetching student details:', error);
+                            console.error('DEBUG XHR status:', xhr.status);
+                            console.error('DEBUG response:', xhr.responseText);
+
+                            $('#branch_select')
+                                .html('<option value="">Error loading branch</option>')
+                                .prop('disabled', true);
+
+                            $('#intake_select')
+                                .html('<option value="">Error loading intake</option>')
+                                .prop('disabled', true);
+
+                            $('#course_select')
+                                .html('<option value="">Error loading course</option>')
+                                .prop('disabled', true);
+
+                            refreshNiceSelect('#branch_select');
+                            refreshNiceSelect('#intake_select');
+                            refreshNiceSelect('#course_select');
+                        });
 
                 } else {
-                    console.log(
-                        'DEBUG: Student ID is empty. Hiding fee data and resetting dropdowns.'
-                    ); // Added debug log
-                    // Hide fee data when no student is selected
+
+                    console.log("DEBUG: Student ID is empty. Resetting fields...");
+
                     $('#student-fee-data').hide();
-                    // Reset and disable Branch, Intake, Course dropdowns
-                    $('#branch_select').html('<option value="">Select Student First *</option>').prop(
-                        'disabled', true);
-                    $('#intake_select').html('<option value="">Select Student First *</option>').prop(
-                        'disabled', true);
-                    $('#course_select').html('<option value="">Select Student First *</option>').prop(
-                        'disabled', true);
+
+                    $('#branch_select')
+                        .html('<option value="">Select Student First *</option>')
+                        .prop('disabled', true);
+
+                    $('#intake_select')
+                        .html('<option value="">Select Student First *</option>')
+                        .prop('disabled', true);
+
+                    $('#course_select')
+                        .html('<option value="">Select Student First *</option>')
+                        .prop('disabled', true);
+
                     refreshNiceSelect('#branch_select');
                     refreshNiceSelect('#intake_select');
                     refreshNiceSelect('#course_select');
                 }
+
             });
+
+            // Handle branch change - Filter intakes by selected branch and student
+            $('#branch_select').on('change', function() {
+                var branch_id = $(this).val();
+                var student_id = $('#student_select').val();
+
+                // Reset Intake and Course dropdown
+                $('#intake_select').html('<option value="">Loading intakes...</option>').prop('disabled',
+                    true);
+                refreshNiceSelect('#intake_select');
+
+                $('#course_select').html('<option value="">Select Intake First *</option>').prop('disabled',
+                    true);
+                refreshNiceSelect('#course_select');
+
+                if (!branch_id || !student_id) {
+                    $('#intake_select').html('<option value="">Select Branch First *</option>');
+                    refreshNiceSelect('#intake_select');
+                    return;
+                }
+
+                // Build URL
+                var url =
+                    '{{ route('item-issue.get-intakes-by-branch-and-student', [':branchId', ':studentId']) }}'
+                    .replace(':branchId', branch_id)
+                    .replace(':studentId', student_id);
+
+
+                $.get(url, function(data) {
+
+                    var optionsHtml = '<option value="">Select Intake *</option>';
+
+                    if (Array.isArray(data) && data.length > 0) {
+                        data.forEach(function(intake) {
+                            optionsHtml += `
+                    <option value="${intake.id}" data-start-date="${intake.start_date}">
+                        ${intake.name}
+                    </option>`;
+                        });
+
+                        $('#intake_select').html(optionsHtml).prop('disabled', false);
+                    } else {
+                        $('#intake_select')
+                            .html('<option value="">No Intakes Found</option>')
+                            .prop('disabled', true);
+                    }
+
+                    refreshNiceSelect('#intake_select');
+
+                }).fail(function(xhr, status, error) {
+                    $('#intake_select').html('<option value="">Error loading intakes</option>')
+                        .prop('disabled', true);
+                    refreshNiceSelect('#intake_select');
+                });
+            });
+
 
             // Handle intake change - Filter courses by selected intake and student
             $('#intake_select').on('change', function() {
@@ -774,15 +815,13 @@
                 // Get intake start date
                 var selectedIntakeOption = $(this).find("option:selected");
                 var intakeStartDateStr = selectedIntakeOption.data('start-date');
-                console.log('📅 Intake Start Date:', intakeStartDateStr);
 
                 if (intakeStartDateStr) {
                     var intakeStartDate = new Date(intakeStartDateStr);
                     var today = new Date();
 
-
-                    if (intakeStartDate > today) {
-                        toastr.warning(`This intake has not started yet. Start date: ${intakeStartDateStr}`,
+                    if (intakeStartDate < today) {
+                        toastr.warning(`Intake has started. Start date : ${intakeStartDateStr}`,
                             '', {
                                 timeOut: 5000,
                                 extendedTimeOut: 1000
@@ -790,10 +829,11 @@
                         // Optionally disable further selections or the submit button if intake hasn't started
                         // For now, just show a warning.
                     } else {
-                        toastr.success(`Intake has started. Start date: ${intakeStartDateStr}`, '', {
-                            timeOut: 3000,
-                            extendedTimeOut: 1000
-                        });
+                        toastr.success(`This intake has not started yet. Start date: ${intakeStartDateStr}`,
+                            '', {
+                                timeOut: 3000,
+                                extendedTimeOut: 1000
+                            });
                     }
                 }
 
@@ -803,11 +843,8 @@
                         '{{ route('item-issue.get-courses-by-intake-and-student', [':intakeId', ':studentId']) }}'
                         .replace(':intakeId', intake_id)
                         .replace(':studentId', student_id);
-                    console.log('🌐 AJAX URL for courses by intake and student:', url);
 
                     $.get(url, function(data) {
-                        console.log('✅ Courses received by intake and student:', data);
-
                         var optionsHtml = '<option value="">Select Course *</option>';
                         if (data && Array.isArray(data) && data.length > 0) {
                             data.forEach(function(course) {
@@ -845,11 +882,8 @@
                 var student_id = $('#student_select').val();
                 var intake_id = $('#intake_select').val();
 
-                console.log('📖 Course selected:', course_id);
-                console.log('👨‍🎓 Student ID:', student_id);
-                console.log('📚 Intake ID:', intake_id);
-
-                if (course_id && course_id !== '' && student_id && student_id !== '' && intake_id && intake_id !== '') {
+                if (course_id && course_id !== '' && student_id && student_id !== '' && intake_id &&
+                    intake_id !== '') {
                     // Check StudentCourse status
                     $.ajax({
                         url: '{{ route('item-issue.check-student-course-status') }}',
@@ -860,16 +894,12 @@
                             intake_id: intake_id
                         },
                         success: function(response) {
-                            console.log('✅ StudentCourse status check response:', response);
-
                             if (response.can_issue) {
-                                console.log('✅ Student course is active - items can be issued');
                                 toastr.success(response.message, '', {
                                     timeOut: 3000,
                                     extendedTimeOut: 1000
                                 });
                             } else {
-                                console.log('❌ Student course is not active - cannot issue items');
                                 toastr.error(response.message, '', {
                                     timeOut: 5000,
                                     extendedTimeOut: 1000
@@ -880,10 +910,11 @@
                         },
                         error: function(xhr, status, error) {
                             console.error('❌ Error checking student course status:', error);
-                            toastr.error('Error checking course status. Please try again.', '', {
-                                timeOut: 5000,
-                                extendedTimeOut: 1000
-                            });
+                            toastr.error('Error checking course status. Please try again.',
+                                '', {
+                                    timeOut: 5000,
+                                    extendedTimeOut: 1000
+                                });
                             $('#course_select').val('').niceSelect('update');
                         }
                     });

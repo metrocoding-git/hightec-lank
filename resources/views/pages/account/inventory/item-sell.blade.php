@@ -42,7 +42,7 @@
                                 <div class="white-box">
                                     <div class="add-visitor">
                                         <div class="row">
-                                          
+
                                             <div class="col-lg-12 mb-15">
                                                 <label class="primary_input_label" for="">@lang('inventory.payment_method') <span
                                                         class="text-danger"> *</span> </label>
@@ -59,7 +59,7 @@
                                             </div>
 
                                             {{-- Invoice Number Field --}}
-                                            <div class="col-lg-12 mb-15 d-none" id="invoiceNumberField">
+                                            {{-- <div class="col-lg-12 mb-15 d-none" id="invoiceNumberField">
                                                 <div class="primary_input">
                                                     <label class="primary_input_label" for="invoice_number">Invoice Number
                                                         <span class="text-danger"> *</span> </label>
@@ -72,15 +72,17 @@
                                                         </span>
                                                     @endif
                                                 </div>
-                                            </div>
+                                            </div> --}}
 
                                             {{-- Bank Transfer Fields --}}
                                             <div class="col-lg-12 mb-15 d-none" id="bankPaymentAmountField">
                                                 <div class="primary_input">
-                                                    <label class="primary_input_label" for="bank_payment_amount">Bank Payment Amount
+                                                    <label class="primary_input_label" for="bank_payment_amount">Bank
+                                                        Payment Amount
                                                         <span class="text-danger"> *</span> </label>
-                                                    <input class="primary_input_field form-control" type="number" step="0.01"
-                                                        name="bank_payment_amount" id="bank_payment_amount" autocomplete="off"
+                                                    <input class="primary_input_field form-control" type="number"
+                                                        step="0.01" name="bank_payment_amount" id="bank_payment_amount"
+                                                        autocomplete="off"
                                                         value="{{ isset($editData) ? $editData->bank_payment_amount : '' }}">
                                                     @if ($errors->has('bank_payment_amount'))
                                                         <span class="text-danger">
@@ -92,13 +94,15 @@
 
                                             <div class="col-lg-12 mb-15 d-none" id="bankPaymentDateField">
                                                 <div class="primary_input">
-                                                    <label class="primary_input_label" for="bank_payment_date">Bank Payment Date
+                                                    <label class="primary_input_label" for="bank_payment_date">Bank Payment
+                                                        Date
                                                         <span class="text-danger"> *</span> </label>
                                                     <div class="primary_datepicker_input">
                                                         <div class="no-gutters input-right-icon">
                                                             <div class="col">
                                                                 <div class="">
-                                                                    <input class="primary_input_field primary_input_field date form-control"
+                                                                    <input
+                                                                        class="primary_input_field primary_input_field date form-control"
                                                                         id="bank_payment_date" type="date"
                                                                         name="bank_payment_date"
                                                                         value="{{ isset($editData) ? date('m/d/Y', strtotime($editData->bank_payment_date)) : date('m/d/Y') }}"
@@ -107,13 +111,15 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <span class="text-danger">{{ $errors->first('bank_payment_date') }}</span>
+                                                    <span
+                                                        class="text-danger">{{ $errors->first('bank_payment_date') }}</span>
                                                 </div>
                                             </div>
 
                                             <div class="col-lg-12 mb-15 d-none" id="bankPaymentDocumentField">
                                                 <div class="primary_input">
-                                                    <label class="primary_input_label" for="bank_payment_document">Bank Payment Document
+                                                    <label class="primary_input_label" for="bank_payment_document">Bank
+                                                        Payment Document
                                                         <span></span> </label>
                                                     <input class="primary_input_field form-control" type="file"
                                                         name="bank_payment_document" id="bank_payment_document">
@@ -199,7 +205,8 @@
                                             <div class="col-lg-12" id="other_section" style="display: none;">
                                                 <div class="row">
                                                     <div class="col-lg-12 mb-15">
-                                                        <label class="primary_input_label" for="">@lang('common.name')
+                                                        <label class="primary_input_label"
+                                                            for="">@lang('common.name')
                                                             <span class="text-danger"> *</span> </label>
                                                         <input
                                                             class="primary_input_field form-control{{ $errors->has('customer_name') ? ' is-invalid' : '' }}"
@@ -242,7 +249,7 @@
                                                                     <input
                                                                         class="primary_input_field  primary_input_field date form-control form-control{{ $errors->has('sell_date') ? ' is-invalid' : '' }}"
                                                                         id="sell_date" type="date" name="sell_date"
-                                                                        value="{{ isset($editData) ? date('m/d/Y', strtotime($editData->sell_date)) : date('m/d/Y') }}"
+                                                                        value="{{ old('sell_date', isset($editData) ? $editData->sell_date->format('Y-m-d') : now()->format('Y-m-d')) }}"
                                                                         autocomplete="off">
                                                                 </div>
                                                             </div>
@@ -391,7 +398,7 @@
                                         </div>
 
 
-                                        <div class="row">                           
+                                        <div class="row">
                                             <div class="col-12  text-center">
                                                 <button class="primary-btn fix-gr-bg w-100" data-toggle="tooltip">
                                                     <span class="ti-check"></span>
@@ -611,10 +618,7 @@
                 $('#bank_payment_date').removeAttr('required');
 
                 // Show fields based on selected method
-                if (selectedMethod === 'Invoice') {
-                    $('#invoiceNumberField').removeClass('d-none');
-                    $('#invoice_number').attr('required', 'required');
-                } else if (selectedMethod === 'Bank Transfer') {
+                if (selectedMethod === 'Bank Transfer') {
                     $('#bankPaymentAmountField').removeClass('d-none');
                     $('#bankPaymentDateField').removeClass('d-none');
                     $('#bankPaymentDocumentField').removeClass('d-none');
@@ -625,7 +629,7 @@
 
             // Trigger change on load to set initial state
             $('#item_sell_payment_method_id').trigger('change');
-            
+
             $('#buyer_type').on('change', function() {
                 var selectedValue = $(this).val();
                 var selectedText = $(this).find('option:selected').text();
@@ -705,11 +709,15 @@
                 contentType: false, // Important for FormData
                 success: function(response) {
                     if (response.success) {
+                        // toastr.success(response.message, 'Success');
+                        // $('#item-sell-form')[0].reset();
+                        // $('tbody').empty(); // Clear table body
+                        // addRow(); // Add a fresh row
+                        // calculateGrandTotal(); // Reset totals
                         toastr.success(response.message, 'Success');
-                        $('#item-sell-form')[0].reset();
-                        $('tbody').empty(); // Clear table body
-                        addRow(); // Add a fresh row
-                        calculateGrandTotal(); // Reset totals
+                        setTimeout(function() {
+                            window.location.href = '{{ route('item-sell-list') }}';
+                        }, 2000);
                     } else {
                         toastr.error(response.message || "Something went wrong", 'Error');
                     }

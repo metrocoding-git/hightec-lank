@@ -86,7 +86,7 @@ class Student extends Model
     public function courses()
     {
         return $this->belongsToMany(Course::class, 'student_courses', 'student_id', 'course_id')
-            ->withPivot('enrolled_at', 'status', 'notes')
+            ->withPivot( 'status', 'notes')
             ->withTimestamps();
     }
 
@@ -120,7 +120,7 @@ class Student extends Model
     public function intakes()
     {
         return $this->belongsToMany(Intake::class, 'student_courses', 'student_id', 'intake_id')
-            ->withPivot('enrolled_at', 'status', 'notes')
+            ->withPivot( 'status', 'notes')
             ->withTimestamps();
     }
 }

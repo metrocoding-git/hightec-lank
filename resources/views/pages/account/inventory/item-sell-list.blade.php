@@ -119,13 +119,13 @@
                                                                         title="@lang('common.view') @lang('inventory.item_sell')"
                                                                         data-id="{{ $value->id }}"
                                                                         href="#">@lang('common.view')</a>
-                                            
-                                                                 
+
+
                                                                     @if ($value->status != 'R')
                                                                         <a class="dropdown-item return-button"
                                                                             data-id="{{ $value->id }}"
                                                                             title="Return Item Sell"
-                                                                             href="{{ route('return-item-sell', $value->id) }}">@lang('inventory.return')</a>
+                                                                            href="{{ route('return-item-sell', $value->id) }}">@lang('inventory.return')</a>
                                                                     @endif
                                                                 </x-drop-down>
                                                             </td>
@@ -157,7 +157,7 @@
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="card">
-                            
+
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-6">
@@ -215,15 +215,26 @@
                                 <div id="invoiceDetails" class="d-none">
                                     <div class="row">
                                         <div class="col-md-12">
-                                            <div class="info-card bg-light p-3 rounded mb-3">
+                                            <div class="info-card bg-light p-3 rounded mb-3" id="invoiceViewBlock">
                                                 <div class="d-flex align-items-center">
-                                                    <i class="ti-receipt text-warning mr-3" style="font-size: 24px;"></i>
+                                                    <i class="ti-receipt text-warning mr-3"
+                                                        style="font-size: 24px;"></i>
                                                     <div>
                                                         <h6 class="mb-1">Invoice Number</h6>
                                                         <span class="text-muted" id="itemSellInvoiceNumber"></span>
                                                     </div>
                                                 </div>
                                             </div>
+
+                                            <div class="info-card bg-light p-3 rounded mb-3 d-none" id="invoiceAddBlock">
+                                                <label class="mb-1">Add Invoice Number</label>
+                                            
+                                                <div class="d-flex gap-2">
+                                                    <input type="text" id="newInvoiceNumber" class="form-control" placeholder="Enter invoice number">
+                                                    <button class="btn btn-primary btn-sm" id="saveInvoiceNumberBtn" data-id="">Save</button>
+                                                </div>
+                                            </div>
+                                            
                                         </div>
                                     </div>
                                 </div>
@@ -233,10 +244,12 @@
                                         <div class="col-md-6">
                                             <div class="info-card bg-light p-3 rounded mb-3">
                                                 <div class="d-flex align-items-center">
-                                                    <i class="ti-money text-success mr-3" style="font-size: 24px;"></i>
+                                                    <i class="ti-money text-success mr-3"
+                                                        style="font-size: 24px;"></i>
                                                     <div>
                                                         <h6 class="mb-1">Bank Payment Amount</h6>
-                                                        <span class="text-muted" id="itemSellBankPaymentAmount"></span>
+                                                        <span class="text-muted"
+                                                            id="itemSellBankPaymentAmount"></span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -244,7 +257,8 @@
                                         <div class="col-md-6">
                                             <div class="info-card bg-light p-3 rounded mb-3">
                                                 <div class="d-flex align-items-center">
-                                                    <i class="ti-calendar text-info mr-3" style="font-size: 24px;"></i>
+                                                    <i class="ti-calendar text-info mr-3"
+                                                        style="font-size: 24px;"></i>
                                                     <div>
                                                         <h6 class="mb-1">Bank Payment Date</h6>
                                                         <span class="text-muted" id="itemSellBankPaymentDate"></span>
@@ -257,10 +271,12 @@
                                         <div class="col-md-12">
                                             <div class="info-card bg-light p-3 rounded mb-3">
                                                 <div class="d-flex align-items-center">
-                                                    <i class="ti-file text-secondary mr-3" style="font-size: 24px;"></i>
+                                                    <i class="ti-file text-secondary mr-3"
+                                                        style="font-size: 24px;"></i>
                                                     <div>
                                                         <h6 class="mb-1">Bank Payment Document</h6>
-                                                        <a href="#" id="itemSellBankPaymentDocument" target="_blank" class="text-primary">View Document</a>
+                                                        <a href="#" id="itemSellBankPaymentDocument"
+                                                            target="_blank" class="text-primary">View Document</a>
                                                     </div>
                                                 </div>
                                             </div>
@@ -406,6 +422,7 @@
                     url: '{{ url('account/inventory/item-sell') }}/' + id,
                     method: 'GET',
                     success: function(data) {
+                        console.log('dd',data);
                         if (data.itemSell) {
                             $('#itemSellReferenceNo').text(data.itemSell.reference_no);
                             $('#itemSellBuyerName').text(data.itemSell.buyer_name);
@@ -444,17 +461,38 @@
                             if (data.itemSell.payment_method === 'Invoice') {
                                 $('#invoiceDetails').removeClass('d-none');
                                 $('#bankTransferDetails').addClass('d-none');
-                                $('#itemSellInvoiceNumber').text(data.itemSell.invoice_number);
+                                if (data.itemSell.invoice_number && data.itemSell
+                                    .invoice_number !== "") {
+                                    // Show invoice display block
+                                    $('#invoiceViewBlock').removeClass('d-none');
+                                    $('#invoiceAddBlock').addClass('d-none');
+                                    $('#itemSellInvoiceNumber').text(data.itemSell
+                                        .invoice_number);
+
+                                } else {
+                                    // Hide view, show input for adding invoice
+                                    $('#invoiceViewBlock').addClass('d-none');
+                                    $('#invoiceAddBlock').removeClass('d-none');
+                                    $('#saveInvoiceNumberBtn').attr('data-id', data.itemSell
+                                        .id);
+                                }
                             } else if (data.itemSell.payment_method === 'Bank Transfer') {
                                 $('#invoiceDetails').addClass('d-none');
                                 $('#bankTransferDetails').removeClass('d-none');
-                                $('#itemSellBankPaymentAmount').text(parseFloat(data.itemSell.bank_payment_amount).toFixed(2));
-                                $('#itemSellBankPaymentDate').text(data.itemSell.bank_payment_date ? moment(data.itemSell.bank_payment_date).format('MM/DD/YYYY') : '');
+                                $('#itemSellBankPaymentAmount').text(parseFloat(data.itemSell
+                                    .bank_payment_amount).toFixed(2));
+                                $('#itemSellBankPaymentDate').text(data.itemSell
+                                    .bank_payment_date ? moment(data.itemSell
+                                        .bank_payment_date).format('MM/DD/YYYY') : '');
                                 if (data.itemSell.bank_payment_document) {
-                                    $('#itemSellBankPaymentDocument').attr('href', '{{ asset('storage') }}/' + data.itemSell.bank_payment_document);
-                                    $('#itemSellBankPaymentDocument').parent().parent().parent().parent().removeClass('d-none');
+                                    $('#itemSellBankPaymentDocument').attr('href',
+                                        '{{ asset('storage') }}/' + data.itemSell
+                                        .bank_payment_document);
+                                    $('#itemSellBankPaymentDocument').parent().parent().parent()
+                                        .parent().removeClass('d-none');
                                 } else {
-                                    $('#itemSellBankPaymentDocument').parent().parent().parent().parent().addClass('d-none');
+                                    $('#itemSellBankPaymentDocument').parent().parent().parent()
+                                        .parent().addClass('d-none');
                                 }
                             } else {
                                 $('#invoiceDetails').addClass('d-none');
@@ -503,7 +541,7 @@
                     success: function(data) {
                         if (data.itemSellBatch) {
                             $('#itemSellBatchReferenceNo').text(data.itemSellBatch
-                            .reference_no);
+                                .reference_no);
                             $('#itemSellBatchTotalPaid').text(parseFloat(data.itemSellBatch
                                 .total_paid).toFixed(2));
                             $('#itemSellBatchTotalDue').text(parseFloat(data.itemSellBatch
@@ -585,6 +623,42 @@
                     }
                 });
             });
+
+            // add invoice number in invoice payment
+            $(document).on('click', '#saveInvoiceNumberBtn', function() {
+                let id = $(this).data('id');
+                let invoiceNumber = $('#newInvoiceNumber').val();
+
+                console.log('ddd', id,invoiceNumber);
+                if (invoiceNumber === "") {
+                    toastr.error("Invoice number cannot be empty.");
+                    return;
+                }
+
+                $.ajax({
+                    url: "{{ route('item-sell.invoic-save') }}",
+                    method: "POST",
+                    data: {
+                        id: id,
+                        invoice_number: invoiceNumber,
+                        _token: "{{ csrf_token() }}"
+                    },
+                    success: function(response) {
+                        toastr.success("Invoice number added successfully.");
+
+                        // Update UI
+                        $('#itemSellInvoiceNumber').text(invoiceNumber);
+                        $('#invoiceViewBlock').removeClass('d-none');
+                        $('#invoiceAddBlock').addClass('d-none');
+                    },
+                    error: function() {
+                        toastr.error("Failed to save invoice number.");
+                    }
+                });
+
+                
+            });
+
         });
     </script>
 
