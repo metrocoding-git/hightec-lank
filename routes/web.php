@@ -227,6 +227,7 @@ Route::controller(ItemIssueController::class)->middleware(['permission'])->group
     Route::get('item-issue/get-student-details/{studentId}', 'getStudentDetails')->name('item-issue.get-student-details')->withoutMiddleware([ 'permission']);
     Route::get('item-issue/get-courses-by-intake-and-student/{intakeId}/{studentId}', 'getCoursesByIntakeAndStudent')->name('item-issue.get-courses-by-intake-and-student')->withoutMiddleware([ 'permission']);
     Route::get('item-issue/get-batch-details/{batchId}', 'getBatchDetails')->name('item-issue.get-batch-details')->withoutMiddleware([ 'permission']);
+    Route::get('item-issue/check-student-course-status', 'checkStudentCourseStatus')->name('item-issue.check-student-course-status')->withoutMiddleware([ 'permission']);
 
 });
 Route::controller(LoginController::class)->group(function () {

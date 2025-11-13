@@ -686,4 +686,42 @@ class ItemIssueController extends Controller
             return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
         }
     }
+
+    public function checkStudentCourseStatus(Request $request)
+    {
+        try {
+            $student_id = $request->student_id;
+            $course_id = $request->course_id;
+            $intake_id = $request->intake_id;
+
+            Log::info('=== checkStudentCourseStatus CALLED ===', [
+                'student_id' => $student_id,
+                'course_id' => $course_id,
+                'intake_id' => $intake_id
+            ]);
+
+            $studentCourse = StudentCourse::where('student_id', $student_id)
+                ->where('course_id', $course_id)
+                ->where('intake_id', $intake_id)
+                ->first();
+
+            if ($studentCourse && $studentCourse->status === 'start') {
+                return response()->json([
+                    'can_issue' => true,
+                    'message' => 'Student course is active. Items can be issued.'
+                ]);
+            } else {
+                return response()->json([
+                    'can_issue' => false,
+                    'message' => 'Student course is not active. Cannot issue items.'
+                ]);
+            }
+        } catch (Exception $e) {
+            Log::error('Error in checkStudentCourseStatus: ' . $e->getMessage());
+            return response()->json([
+                'can_issue' => false,
+                'message' => 'Error checking course status.'
+            ], 500);
+        }
+    }
 }

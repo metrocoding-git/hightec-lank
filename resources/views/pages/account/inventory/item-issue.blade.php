@@ -167,7 +167,8 @@
                                                             <td class="category_name">
                                                                 {{ $editData->category->name ?? 'N/A' }}
                                                             </td>
-                                                            <td class="item_name">{{ $editData->item->item_name ?? 'N/A' }}
+                                                            <td class="item_name">
+                                                                {{ $editData->item->item_name ?? 'N/A' }}
                                                             </td>
                                                             <td class="item_price">
                                                                 Rs.{{ number_format($editData->item->item_price ?? 0, 2) }}
@@ -679,7 +680,8 @@
                                 if (intakeData && intakeData.length > 0) {
                                     intakeData.forEach(function(intake) {
                                         intakeOptionsHtml += '<option value="' +
-                                            intake.id + '" data-start-date="' + (intake.start_date || '') + '">' +
+                                            intake.id + '" data-start-date="' + (
+                                                intake.start_date || '') + '">' +
                                             intake.name + '</option>';
                                     });
                                     $('#intake_select').html(intakeOptionsHtml).prop(
@@ -777,13 +779,14 @@
                 if (intakeStartDateStr) {
                     var intakeStartDate = new Date(intakeStartDateStr);
                     var today = new Date();
-                    
+
 
                     if (intakeStartDate > today) {
-                        toastr.warning(`This intake has not started yet. Start date: ${intakeStartDateStr}`, '', {
-                            timeOut: 5000,
-                            extendedTimeOut: 1000
-                        });
+                        toastr.warning(`This intake has not started yet. Start date: ${intakeStartDateStr}`,
+                            '', {
+                                timeOut: 5000,
+                                extendedTimeOut: 1000
+                            });
                         // Optionally disable further selections or the submit button if intake hasn't started
                         // For now, just show a warning.
                     } else {
@@ -809,7 +812,8 @@
                         if (data && Array.isArray(data) && data.length > 0) {
                             data.forEach(function(course) {
                                 optionsHtml += '<option value="' + course.id +
-                                    '" data-intake-start-date="' + intakeStartDateStr + // Pass intake start date
+                                    '" data-intake-start-date="' + intakeStartDateStr +
+                                    // Pass intake start date
                                     '" data-expiration-date="' + (course.expiration_date ||
                                         '') + '">' + course.name + '</option>';
                             });
@@ -835,52 +839,54 @@
                 }
             });
 
-            // Handle course change - Validate course expiration
+            // Handle course change - Validate StudentCourse status
             $('#course_select').on('change', function() {
                 var course_id = $(this).val();
-                var selectedOption = $(this).find("option:selected");
-                var intakeStartDateStr = selectedOption.data('intake-start-date'); // Get intake start date
-                var expirationDate = selectedOption.data('expiration-date');
+                var student_id = $('#student_select').val();
+                var intake_id = $('#intake_select').val();
 
                 console.log('📖 Course selected:', course_id);
-                console.log('📅 Intake Start Date:', intakeStartDateStr);
-                console.log('⏰ Course expiration date (days):', expirationDate);
+                console.log('👨‍🎓 Student ID:', student_id);
+                console.log('📚 Intake ID:', intake_id);
 
-                if (course_id && course_id !== '' && intakeStartDateStr && expirationDate) {
-                    // Calculate expiration based on intake start date + course expiration days
-                    var intakeStartDate = new Date(intakeStartDateStr);
-                    var expirationDays = parseInt(expirationDate);
+                if (course_id && course_id !== '' && student_id && student_id !== '' && intake_id && intake_id !== '') {
+                    // Check StudentCourse status
+                    $.ajax({
+                        url: '{{ route('item-issue.check-student-course-status') }}',
+                        type: 'GET',
+                        data: {
+                            student_id: student_id,
+                            course_id: course_id,
+                            intake_id: intake_id
+                        },
+                        success: function(response) {
+                            console.log('✅ StudentCourse status check response:', response);
 
-                    // Add expiration days to intake start date
-                    var courseExpirationCalculatedDate = new Date(intakeStartDate);
-                    courseExpirationCalculatedDate.setDate(intakeStartDate.getDate() + expirationDays);
-
-                    var today = new Date();
-                    today.setHours(0, 0, 0, 0); // Normalize today to start of day for comparison
-                    courseExpirationCalculatedDate.setHours(0, 0, 0, 0); // Normalize for comparison
-
-                    console.log('📊 Calculated Course Expiration Date:', courseExpirationCalculatedDate);
-                    console.log('📊 Today:', today);
-
-                    // Check if course has expired
-                    if (courseExpirationCalculatedDate < today) {
-                        console.log('❌ Course has expired');
-                        toastr.error(
-                            'This course has expired based on intake start date. Expiration date: ' +
-                            courseExpirationCalculatedDate.toLocaleDateString(), '', {
+                            if (response.can_issue) {
+                                console.log('✅ Student course is active - items can be issued');
+                                toastr.success(response.message, '', {
+                                    timeOut: 3000,
+                                    extendedTimeOut: 1000
+                                });
+                            } else {
+                                console.log('❌ Student course is not active - cannot issue items');
+                                toastr.error(response.message, '', {
+                                    timeOut: 5000,
+                                    extendedTimeOut: 1000
+                                });
+                                $('#course_select').val('').niceSelect('update');
+                                return;
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('❌ Error checking student course status:', error);
+                            toastr.error('Error checking course status. Please try again.', '', {
                                 timeOut: 5000,
                                 extendedTimeOut: 1000
                             });
-                        $('#course_select').val('').niceSelect('update');
-                        return;
-                    } else {
-                        console.log('✅ Course is valid');
-                        toastr.success('Course is valid and can be issued. Expires on: ' +
-                            courseExpirationCalculatedDate.toLocaleDateString(), '', {
-                                timeOut: 5000,
-                                extendedTimeOut: 1000
-                            });
-                    }
+                            $('#course_select').val('').niceSelect('update');
+                        }
+                    });
                 }
             });
 
