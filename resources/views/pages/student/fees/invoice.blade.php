@@ -31,6 +31,16 @@
                 font-size: 16px;
                 color: #000;
             }
+            .rotate-container {
+                width: 21.5cm;
+                height: 14cm;
+                position: absolute;
+                top: 0;
+                left: 0;
+
+                transform-origin: top left;
+                transform: rotate(90deg) translate(0, -21.5cm);
+            }
 
             .field {
                 position: absolute;
@@ -49,82 +59,26 @@
                 font-size: 14.5px;
             }
 
-            .course-name {
-                left: 4.2cm;
-                top: 4.7cm;
-                font-weight: bold;
-                font-size: 18px;
-            }
+            .course-name { left: 4.2cm; top: 4.7cm; font-size: 18px; }
+            .invoice-date { left: 19cm; top: 4.8cm; }
+            .invoice-no { left: 19cm; top: 5.5cm; }
+            .admission-no { left: 19cm; top: 6.1cm; }
 
-            .invoice-date {
-                left: 19.0cm;
-                top: 4.8cm;
-            }
+            .student-name { left: 9.7cm; top: 6.58cm; }
+            .student-nic { left: 9.7cm; top: 7.3cm; }
+            .student-address { left: 9.7cm; top: 8.1cm; }
+            .student-phone { left: 9.7cm; top: 8.9cm; }
 
-            .invoice-no {
-                left: 19.0cm;
-                top: 5.5cm;
-                font-weight: bold;
-            }
-
-            .admission-no {
-                left: 19.0cm;
-                top: 6.1cm;
-                font-weight: bold;
-            }
-
-            .student-name {
-                left: 9.7cm;
-                top: 6.58cm;
-                font-weight: bold;
-            }
-
-            .student-nic {
-                left: 9.7cm;
-                top: 7.3cm;
-                font-weight: bold;
-            }
-
-            .student-address {
-                left: 9.7cm;
-                top: 8.1cm;
-                font-weight: bold;
-            }
-
-            .student-phone {
-                left: 9.7cm;
-                top: 8.9cm;
-                font-weight: bold;
-            }
-
-            .total-amount {
-                left: 7.2cm;
-                top: 9.72cm;
-                font-weight: bold;
-            }
-
-            .paid-amount {
-                left: 7.2cm;
-                top: 10.42cm;
-                font-weight: bold;
-            }
-
-            .due-amount {
-                left: 7.2cm;
-                top: 11.2cm;
-                font-weight: bold;
-            }
-
-            .due-date {
-                left: 7.2cm;
-                top: 12.0cm;
-                font-weight: bold;
-            }
+            .total-amount { left: 7.2cm; top: 9.72cm; }
+            .paid-amount { left: 7.2cm; top: 10.42cm; }
+            .due-amount { left: 7.2cm; top: 11.2cm; }
+            .due-date { left: 7.2cm; top: 12cm; }
         }
     </style>
 </head>
 
 <body>
+    <div class="rotate-container">
     <div class="invoice-report">
 
         {{-- Course Name --}}
@@ -155,6 +109,8 @@
         <div class="field due-date">{{ $invoice->created_to_due ?? '' }}</div>
 
     </div>
+</div>
+
 
     {{-- ✅ Auto print on page load --}}
     <script>
