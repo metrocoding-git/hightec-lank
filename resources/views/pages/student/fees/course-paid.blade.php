@@ -261,31 +261,23 @@
                 $('#selectStudentLoader').show();
                 $('#student_id').html('<option value="">Loading...</option>');
 
-                $('#selectStudentLoader').hide();
+                if (branchId) {
+                    let filteredStudents = @json($students);
+                    $('#student_id').empty().append('<option value="">Select Student</option>');
+                    $.each(filteredStudents, function(index, student) {
+                        $('#student_id').append('<option value="' + student.id + '">' + student
+                            .student_name + '</option>');
+                    });
+                    $('#student_id').niceSelect('update');
+                    $('#selectStudentLoader').hide();
+                } else {
+                    $('#selectStudentLoader').hide();
                     $('#student_id').html('<option value="">Select Student</option>');
                     $('#course_id').empty().append('<option value="">select course</option>');
                     $('#course_id').niceSelect('update');
                     $('.allCourseDetails').empty();
                     addedCourseId = null;
-                    
-                // if (branchId) {
-                //     let filteredStudents = @json($students).filter(student => student
-                //         .branch_id == branchId);
-                //     $('#student_id').empty().append('<option value="">Select Student</option>');
-                //     $.each(filteredStudents, function(index, student) {
-                //         $('#student_id').append('<option value="' + student.id + '">' + student
-                //             .student_name + '</option>');
-                //     });
-                //     $('#student_id').niceSelect('update');
-                //     $('#selectStudentLoader').hide();
-                // } else {
-                //     $('#selectStudentLoader').hide();
-                //     $('#student_id').html('<option value="">Select Student</option>');
-                //     $('#course_id').empty().append('<option value="">select course</option>');
-                //     $('#course_id').niceSelect('update');
-                //     $('.allCourseDetails').empty();
-                //     addedCourseId = null;
-                // }
+                }
             });
 
             // AJAX: Load courses based on student
