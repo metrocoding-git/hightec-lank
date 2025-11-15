@@ -116,7 +116,6 @@
 <body>
     <div class="invoice-report">
 
-        {{dd($invoice)}}
 
         {{-- Course Name --}}
         <div class="field course-name">
