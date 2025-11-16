@@ -9,9 +9,9 @@
     <style>
         @media print {
             @page {
-                size: landscape;
+                /* size: landscape;
                 height: 13.97cm;
-                width: 21.6cm;
+                width: 21.6cm; */
                 margin: 0;
             }
     
