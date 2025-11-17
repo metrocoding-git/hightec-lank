@@ -681,7 +681,7 @@ class HomeController extends Controller
     {
         $items = Inventory_item::all();
         $suppliers = Supplier::all();
-        $branches = Branch::all();
+        $branches = Auth::user()->branches;
         // $account_id = BankAccount::all();
 
         return view('pages.account.inventory.item-receive', compact(

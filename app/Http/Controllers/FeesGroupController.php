@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\FeesGroup;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class FeesGroupController extends Controller
 {
@@ -60,7 +61,7 @@ class FeesGroupController extends Controller
 
     public function coursePaidView()
     {
-        $branches = \App\Models\Branch::all();
+        $branches = Auth::user()->branches;
         $students = \App\Models\Student::all();
         $courses = []; // Empty for dynamic loading
         return view('pages.student.fees.course-paid', compact('branches', 'students', 'courses'));

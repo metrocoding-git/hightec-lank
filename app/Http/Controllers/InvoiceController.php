@@ -58,7 +58,7 @@ class InvoiceController extends Controller
      */
     public function create()
     {
-        $branches = Branch::all();
+        $branches = Auth::user()->branches;
         $feesgroups = FeesGroup::all();
         $feeTypes = FeeType::all();
         $students = Student::all();
@@ -222,7 +222,7 @@ class InvoiceController extends Controller
     public function edit($id)
     {
         $invoice = Fee_invoices::with('invoice_item.fee_type', 'student')->findOrFail($id);
-        $branches = Branch::all();
+        $branches = Auth::user()->branches;
         $feesgroups = FeesGroup::all();
         $feeTypes = FeeType::all();
 
@@ -672,7 +672,7 @@ class InvoiceController extends Controller
 
     public function indexCoursePayment()
     {
-        $branches = Branch::all();
+        $branches = Auth::user()->branches;
         $students = Student::all();
         $courses = Course::all(); // Assuming Course model exists
 

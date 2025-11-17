@@ -44,6 +44,20 @@
                                         <div class="row">
 
                                             <div class="col-lg-12 mb-15">
+                                                <label class="primary_input_label" for="">@lang('common.branch') <span
+                                                        class="text-danger"> *</span> </label>
+                                                <select class="primary_select  form-control" name="branch_id"
+                                                    id="branch_id">
+                                                    <option data-display="Select Branch*" value="">
+                                                        Select Branch*</option>
+                                                    @foreach ($branches as $branch)
+                                                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <div class="text-danger" id="branchError"></div>
+                                            </div>
+
+                                            <div class="col-lg-12 mb-15">
                                                 <label class="primary_input_label" for="">@lang('inventory.payment_method') <span
                                                         class="text-danger"> *</span> </label>
                                                 <select class="primary_select  form-control" name="payment_method"

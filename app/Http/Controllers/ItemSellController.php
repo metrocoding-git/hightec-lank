@@ -15,6 +15,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class ItemSellController extends Controller
 {
@@ -26,13 +27,15 @@ class ItemSellController extends Controller
         $roles = Role::all();
         $students = Student::all();
         $users = User::all();
-        return view('pages.account.inventory.item-sell', compact('items', 'classes', 'sections', 'roles', 'students', 'users'));
+        $branches = Auth::user()->branches;
+        return view('pages.account.inventory.item-sell', compact('items', 'classes', 'sections', 'roles', 'students', 'users', 'branches'));
     }
 
     public function saveItemSellData(Request $request)
     {
         // Base validation
         $request->validate([
+            'branch_id' => 'required|integer|exists:branches,id',
             'payment_method' => 'required|string',
             'sell_date' => 'required|string',
             'item_id' => 'required|array|min:1',
@@ -87,6 +90,7 @@ class ItemSellController extends Controller
 
             // Create ItemSellBatch record
             $itemSellBatch = ItemSellBatch::create([
+                'branch_id' => $request->branch_id,
                 'payment_method' => $request->payment_method,
                 'bank_payment_amount' => $request->payment_method === 'Bank Transfer' ? $request->bank_payment_amount : null,
                 'bank_payment_date' => $bankPaymentDate,
