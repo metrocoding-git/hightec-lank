@@ -49,11 +49,16 @@
                                                 @foreach ($paidCourses as $key => $paidCourse)
                                                     <tr>
                                                         <td>{{ $key + 1 }}</td>
-                                                        <td>{{ $paidCourse->invoice && $paidCourse->invoice->student ? $paidCourse->invoice->student->student_name : 'N/A' }}</td>
-                                                        <td>{{ $paidCourse->course ? $paidCourse->course->name : 'N/A' }}</td>
-                                                        <td>{{ number_format((float) $paidCourse->course_price, 2, '.', '') }}</td>
-                                                        <td>{{ number_format((float) $paidCourse->paid_amount, 2, '.', '') }}</td>
-                                                        <td>{{ number_format((float) $paidCourse->due_amount, 2, '.', '') }}</td>
+                                                        <td>{{ $paidCourse->invoice && $paidCourse->invoice->student ? $paidCourse->invoice->student->student_name : 'N/A' }}
+                                                        </td>
+                                                        <td>{{ $paidCourse->course ? $paidCourse->course->name : 'N/A' }}
+                                                        </td>
+                                                        <td>{{ number_format((float) $paidCourse->course_price, 2, '.', '') }}
+                                                        </td>
+                                                        <td>{{ number_format((float) $paidCourse->paid_amount, 2, '.', '') }}
+                                                        </td>
+                                                        <td>{{ number_format((float) $paidCourse->due_amount, 2, '.', '') }}
+                                                        </td>
                                                         <td>{{ $paidCourse->payment_status }}</td>
                                                         <td>{{ $paidCourse->payment_method }}</td>
                                                     </tr>

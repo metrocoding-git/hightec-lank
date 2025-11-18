@@ -43,13 +43,17 @@
                             <div class="add-visitor">
                                 <div class="row">
 
-                                    {{-- Branch Dropdown --}}
+                                     {{-- Branch Dropdown --}}
                                     <div class="col-lg-12 mb-15">
                                         <label class="primary_input_label">Branch <span class="text-danger">*</span></label>
                                         <select class="primary_select form-control" name="branch_id" id="branch_select">
-                                            <option value="">Select Branch *</option>
+                                            @if (count($branches) > 1)
+                                                <option value="">Select Branch *</option>
+                                            @endif
                                             @foreach ($branches as $branch)
-                                                <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                                <option value="{{ $branch->id }}"
+                                                    {{ count($branches) == 1 ? 'selected' : '' }}>{{ $branch->name }}
+                                                </option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -289,6 +293,10 @@
             };
 
             console.log('🚀 Item Issue Page Loaded - Starting Cascading Dropdown System');
+
+            if ({{ count($branches) }} == 1) {
+                $('#branch_select').trigger('change');
+            }
 
             // Helper function to refresh niceSelect safely
             function refreshNiceSelect(selector) {

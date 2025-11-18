@@ -60,9 +60,13 @@
 
 
                                         <select class="primary_select form-control" id="branch_id" name="branch_id">
-                                            <option value="">@lang('common.select_class')</option>
+                                            @if (count($branches) > 1)
+                                                <option value="">@lang('common.select_class')</option>
+                                            @endif
                                             @foreach ($branches as $branch)
-                                                <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                                <option value="{{ $branch->id }}"
+                                                    {{ count($branches) == 1 ? 'selected' : '' }}>{{ $branch->name }}
+                                                </option>
                                             @endforeach
                                         </select>
                                         <div class="pull-right loader" id="selectStudentLoader" style="display:none;">
@@ -215,6 +219,9 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
+            if ({{ count($branches) }} == 1) {
+                $('#branch_id').trigger('change');
+            }
 
             $('#branch_id').change(function() {
                 let branchId = $(this).val();

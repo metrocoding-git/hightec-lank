@@ -3,6 +3,10 @@
     @lang('student.edit_student')
 @endsection
 @section('mainContent')
+    @php
+        $branchCount = isset($branches) ? count($branches) : 0;
+        $singleBranchId = ($branchCount === 1 && isset($branches)) ? $branches->first()->id : null;
+    @endphp
     <style>
         #video,
         #canvas {
@@ -1242,6 +1246,18 @@
 
             // Trigger age calculation on page load
             $('#date_of_birth').trigger('change');
+
+            // Auto-select branch if only one is available
+            const branchCount = {{ $branchCount }};
+            const singleBranchId = {{ Js::from($singleBranchId) }};
+
+            if (branchCount === 1 && singleBranchId) {
+                $('#branch_id').val(singleBranchId);
+                if ($.fn.niceSelect) {
+                    $('#branch_id').niceSelect('update');
+                }
+                $('#branch_id').trigger('change'); // Trigger change event for any listeners
+            }
         });
     </script>
 @endsection

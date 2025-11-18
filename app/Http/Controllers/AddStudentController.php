@@ -245,7 +245,8 @@ class AddStudentController extends Controller
             'student_id' => 'required|exists:students,id',
             'course_id' => 'required|exists:courses,id',
             'status' => 'required',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
+            // 'user_id' => 'required|exists:users,id'
         ]);
 
         // Check if student is already enrolled in this course
@@ -520,6 +521,7 @@ class AddStudentController extends Controller
                     'intake_id' =>  $validatedData['intake_id'],
                     'status' => $validatedData['status'],
                     'notes' => $validatedData['notes'],
+                    'user_id' => Auth::id(),
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);

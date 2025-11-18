@@ -60,14 +60,18 @@
                             <div class="add-visitor">
                                 <input type="hidden" id="url" value="{{ URL::to('/') }}">
 
-                                {{-- Branch --}}
+                                 {{-- Branch --}}
                                 <div class="row mt-15">
                                     <div class="col-lg-12">
                                         <label>@lang('common.branch') <span class="text-danger">*</span></label>
                                         <select class="primary_select form-control" id="branch_id" name="branch_id">
-                                            <option value="">@lang('common.select_class')</option>
+                                            @if (count($branches) > 1)
+                                                <option value="">@lang('common.select_class')</option>
+                                            @endif
                                             @foreach ($branches as $branch)
-                                                <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                                <option value="{{ $branch->id }}"
+                                                    {{ count($branches) == 1 ? 'selected' : '' }}>{{ $branch->name }}
+                                                </option>
                                             @endforeach
                                         </select>
                                         <div class="pull-right loader" id="selectStudentLoader" style="display:none;">
@@ -249,11 +253,14 @@
     @include('components.partials.date_picker_css_js')
 @endsection
 
-@push('scripts')
-    <script>
-        $(document).ready(function() {
-            // Initialize the bank payment section as hidden
-            toggleBankPayment('');
+    @push('scripts')
+        <script>
+            $(document).ready(function() {
+                if ({{ count($branches) }} == 1) {
+                    $('#branch_id').trigger('change');
+                }
+                // Initialize the bank payment section as hidden
+                toggleBankPayment('');
 
             // AJAX: Load students based on branch
             $('#branch_id').change(function() {

@@ -66,10 +66,13 @@
                                                 class="text-danger">*</span></label>
                                         <select class="primary_select form-control ajax_select" name="branch_id"
                                             id="search_branch_id">
-                                            <option value="">Select Branch</option>
+                                            @if (count($branches) > 1)
+                                                <option value="">Select Branch</option>
+                                            @endif
                                             @foreach ($branches ?? [] as $branch)
                                                 <option value="{{ $branch->id }}"
-                                                    {{ isset($search_branch_id) && $search_branch_id == $branch->id ? 'selected' : '' }}>
+                                                    {{ isset($search_branch_id) && $search_branch_id == $branch->id ? 'selected' : '' }}
+                                                    {{   count($branches) == 1 ? 'selected' : '' }}>
                                                     {{ $branch->name }}</option>
                                             @endforeach
                                         </select>
@@ -268,11 +271,12 @@
                 </div>
                 <form method="POST" action="{{ route('student.add-intake-with-courses.store') }}">
                     @csrf
+                    <input type="hidden" name="user_id" value="{{ Auth::id() }}">
                     <div class="modal-body">
+                        <div id="studentCountAlert" class="alert alert-info col-12 text-center"
+                            style="display:none;"></div>
+                        <div id="courseStatusAlert" class="alert col-12 text-center" style="display:none;"></div>
                         <div class="row">
-                            <div id="studentCountAlert" class="alert alert-info col-12 text-center"
-                                style="display:none;"></div>
-                            <div id="courseStatusAlert" class="alert col-12 text-center" style="display:none;"></div>
 
                             <!-- Student Selection -->
                             <div class="col-lg-6">
@@ -305,9 +309,12 @@
                                     <select
                                         class="primary_select form-control{{ $errors->has('branch_id') ? ' is-invalid' : '' }}"
                                         name="branch_id" id="modal_branch_id" required>
-                                        <option value="">Select Branch</option>
+                                        @if (count($branches) > 1)
+                                            <option value="">Select Branch</option>
+                                        @endif
                                         @foreach ($branches as $branch)
-                                            <option value="{{ $branch->id }}">
+                                            <option value="{{ $branch->id }}"
+                                                {{ count($branches) == 1 ? 'selected' : '' }}>
                                                 {{ $branch->name }}
                                             </option>
                                         @endforeach
@@ -435,7 +442,9 @@
         $('#table_id').DataTable({
             responsive: true,
             dom: 'Bfrtip',
-            order: [[0, 'desc']],
+            order: [
+                [0, 'desc']
+            ],
             buttons: [{
                     extend: 'copyHtml5',
                     text: '<i class="fa-regular fa-copy"></i>',
@@ -486,6 +495,11 @@
 
     <script>
         $(document).ready(function() {
+            if ({{ count($branches) }} == 1) {
+                $('#search_branch_id').trigger('change');
+                $('#modal_branch_id').trigger('change');
+            }
+            
             function clearAlerts() {
                 $('#studentCountAlert, #courseStatusAlert')
                     .fadeOut(200, function() {

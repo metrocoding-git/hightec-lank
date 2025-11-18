@@ -51,5 +51,13 @@ ADD `create_user_id` BIGINT UNSIGNED NULL,
 ADD `update_user_id` BIGINT UNSIGNED NULL;
    
 
+-- 11/18
+ALTER TABLE `student_courses`
+ADD `user_id` BIGINT UNSIGNED NULL AFTER `branch_id`;
+
+ALTER TABLE `student_courses`
+ADD CONSTRAINT `student_courses_user_id_foreign`
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`)
+    ON DELETE SET NULL;
 
 

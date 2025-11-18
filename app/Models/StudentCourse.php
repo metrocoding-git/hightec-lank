@@ -16,7 +16,8 @@ class StudentCourse extends Model
         'intake_id',
         'branch_id',
         'status',
-        'notes'
+        'notes',
+        'user_id'
     ];
 
 
@@ -38,5 +39,10 @@ class StudentCourse extends Model
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class, 'branch_id');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 }
