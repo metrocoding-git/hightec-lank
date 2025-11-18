@@ -7,22 +7,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <style>
+        @page {
+            size: 13.97cm 21.6cm;
+            /* height: 13.97cm;
+            width: 21.6cm;
+            margin: 0; */
+        }
+
         @media print {
-            @page {
-                /* size: 13.97cm 21.6cm portrait;
-                height: 13.97cm;
-                width: 21.6cm; */
-                margin: 0;
-            }
-    
-            html, body {
+
+            html,
+            body {
                 height: 13.97cm;
                 width: 21.6cm;
                 margin: 0;
                 padding: 0;
                 background: #fff;
             }
-    
+
             .invoice-report {
                 height: 13.97cm;
                 width: 21.6cm;
@@ -31,7 +33,7 @@
                 font-size: 12px;
                 color: #000;
             }
-    
+
             .field {
                 position: absolute;
                 font-family: 'Arial Black', 'Courier New', monospace;
@@ -39,7 +41,7 @@
                 color: #000;
                 line-height: 1;
             }
-    
+
             .field2 {
                 position: absolute;
                 font-family: 'Arial Black', 'Courier New', monospace;
@@ -71,22 +73,22 @@
             }
 
             .student-name {
-                left:9.0cm;
+                left: 9.0cm;
                 top: 5.6cm;
             }
 
             .student-nic {
-                left:9.0cm;
+                left: 9.0cm;
                 top: 6.2cm;
             }
 
             .student-address {
-                left:9.0cm;
+                left: 9.0cm;
                 top: 6.8cm;
             }
 
             .student-phone {
-                left:9.0cm;
+                left: 9.0cm;
                 top: 7.4cm;
             }
 
@@ -111,7 +113,7 @@
             }
         }
     </style>
-    
+
 </head>
 
 <body>
