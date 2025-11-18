@@ -106,8 +106,8 @@ class AddStudentController extends Controller
             'create_date' => Carbon::now()->format('m/d/Y'),
             'due_date' => Carbon::now()->addDays(30)->format('m/d/Y'),
             'fee_type_id' => [1],
-            'price' => [1 => 2000],
-            'paidPrice' => [1 => 2000],
+            'price' => [1 => 1000],
+            'paidPrice' => [1 => 1000],
             'payment_method' => 'Cash',
         ]);
 
