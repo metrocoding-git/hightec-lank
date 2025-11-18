@@ -48,10 +48,14 @@
                                                         class="text-danger"> *</span> </label>
                                                 <select class="primary_select  form-control" name="branch_id"
                                                     id="branch_id">
-                                                    <option data-display="Select Branch*" value="">
-                                                        Select Branch*</option>
+                                                    @if (count($branches) > 1)
+                                                        <option data-display="Select Branch*" value="">
+                                                            Select Branch*</option>
+                                                    @endif
                                                     @foreach ($branches as $branch)
-                                                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                                        <option value="{{ $branch->id }}"
+                                                            {{ count($branches) == 1 ? 'selected' : '' }}>
+                                                            {{ $branch->name }}</option>
                                                     @endforeach
                                                 </select>
                                                 <div class="text-danger" id="branchError"></div>
@@ -434,6 +438,9 @@
 
     <script>
         $(document).ready(function() {
+            if ({{ count($branches) }} == 1) {
+                $('#branch_id').trigger('change');
+            }
 
             // Configure toastr options
             toastr.options = {
