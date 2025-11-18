@@ -605,6 +605,14 @@
                     </a>
                 </li>
                 @endif
+                {{-- @if(Auth::check() && Auth::user()->hasPermission('role-management.user-list')) --}}
+                <li>
+                    <a href="/role-management/user-list"
+                        class="{{ request()->is('role-management/user-list') ? 'active a' : '' }}">
+                        User List
+                    </a>
+                </li>
+                {{-- @endif --}}
             </ul>
         </li>
         @endif

@@ -227,9 +227,9 @@ Route::controller(ItemIssueController::class)->middleware(['permission'])->group
     Route::post('account/inventory/issue-item', 'IssueItem')->name('issue-item');
 
     // AJAX routes for dynamic filtering
+    Route::get('account/inventory/get-students-by-branch/{branchId}', 'getStudentsByBranch')->name('item-issue.get-students-by-branch')->withoutMiddleware(['permission']);
     Route::get('account/inventory/get-intakes-by-branch/{branchId}', 'getIntakesByBranch')->name('item-issue.get-intakes-by-branch')->withoutMiddleware(['permission']);
     Route::get('account/inventory/get-courses-by-intake/{intakeId}', 'getCoursesByIntake')->name('item-issue.get-courses-by-intake')->withoutMiddleware(['permission']);
-    Route::get('account/inventory/get-students-by-course/{courseId}', 'getStudentsByCourse')->name('item-issue.get-students-by-course')->withoutMiddleware(['permission']);
     Route::get('account/inventory/get-items-by-category/{categoryId}', 'getItemsByCategory')->name('item-issue.get-items-by-category')->withoutMiddleware(['permission']);
     Route::get('account/inventory/get-student-fee-data', 'getStudentFeeData')->name('item-issue.get-student-fee-data')->withoutMiddleware(['permission']);
     Route::get('item-issue/get-student-details/{studentId}', 'getStudentDetails')->name('item-issue.get-student-details')->withoutMiddleware(['permission']);
@@ -382,6 +382,10 @@ Route::controller(RoleController::class)->prefix('role-management')->middleware(
 Route::controller(UserController::class)->prefix('role-management')->middleware(['permission'])->group(function () {
     Route::get('create-user', 'createUser')->name('role-management.create-user');
     Route::post('store-user', 'storeUser')->name('role-management.store-user');
+    Route::get('user-list', 'userList')->name('role-management.user-list')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('user-details/{id}', 'getUserDetails')->name('role-management.user-details')->withoutMiddleware(['csrf', 'permission']);
+    Route::put('user-update/{id}', 'updateUser')->name('role-management.user-update')->withoutMiddleware(['csrf', 'permission']);
+    Route::post('user-change-password/{id}', 'changePassword')->name('role-management.user-change-password')->withoutMiddleware(['csrf', 'permission']);
     Route::get('get-student-details/{id}', 'getStudentDetails')->name('role-management.get-student-details');
 });
 

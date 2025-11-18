@@ -10,7 +10,9 @@
                     <div class="row align-items-center">
                         <div class="col-lg-6 col-sm-6 col-5">
                             <div class="main-title my-0 xs_mt_0 mt_0_sm">
-                                <h3 class="mb-15">Create User</h3>
+                                <h3 class="mb-15">Create User
+                                    {{-- {{ Auth::id() }} --}}
+                                </h3>
                             </div>
                         </div>
                     </div>
@@ -18,23 +20,40 @@
                         <div class="col-lg-12">
                             <form action="{{ route('role-management.store-user') }}" method="POST">
                                 @csrf
-                                <div class="primary_input mb-3">
-                                    <label class="primary_input_label" for="role_id">Select Role:</label>
-                                    <select name="role_id" id="role_id" class="primary_select form-control">
-                                        <option value="">Select Role</option>
-                                        @foreach($roles as $role)
-                                            <option value="{{ $role->id }}">{{ $role->role_name }}</option>
-                                        @endforeach
-                                    </select>
+                                <div class="row pt-4 row-gap-24">
+                                    <div class="col-lg-6">
+                                        <div class="primary_input mb-3">
+                                            <label class="primary_input_label" for="role_id">Select Role:</label>
+                                            <select name="role_id" id="role_id" class="primary_select form-control">
+                                                <option value="">Select Role</option>
+                                                @foreach ($roles as $role)
+                                                    <option value="{{ $role->id }}">{{ $role->role_name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="primary_input mb-3">
+                                            <label class="primary_input_label" for="branch_ids">Select Branches:</label>
+                                            <select name="branch_ids[]" id="branch_ids" class="primary_select form-control"
+                                                multiple>
+                                                @foreach ($branches as $branch)
+                                                    <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div id="student_fields" style="display: none;" class="my-4">
                                     <div class="primary_input mb-3">
                                         <label class="primary_input_label" for="search_student">Search Student:</label>
-                                        <select name="search_student" id="search_student" class="primary_select form-control">
+                                        <select name="search_student" id="search_student"
+                                            class="primary_select form-control">
                                             <option value="">Select Student</option>
-                                            @foreach($students as $student)
-                                                <option value="{{ $student->id }}">{{ $student->first_name }} {{ $student->last_name }} ({{ $student->admission_number }})</option>
+                                            @foreach ($students as $student)
+                                                <option value="{{ $student->id }}">{{ $student->first_name }}
+                                                    {{ $student->last_name }} ({{ $student->admission_number }})</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -43,14 +62,18 @@
                                         <div class="row pt-4 row-gap-24">
                                             <div class="col-lg-6">
                                                 <div class="primary_input mb-3">
-                                                    <label class="primary_input_label" for="admission_number">Admission Number:</label>
-                                                    <input type="text" name="admission_number" id="admission_number" class="primary_input_field form-control">
+                                                    <label class="primary_input_label" for="admission_number">Admission
+                                                        Number:</label>
+                                                    <input type="text" name="admission_number" id="admission_number"
+                                                        class="primary_input_field form-control">
                                                 </div>
                                             </div>
                                             <div class="col-lg-6">
                                                 <div class="primary_input mb-3">
-                                                    <label class="primary_input_label" for="national_id_number">National ID Number:</label>
-                                                    <input type="text" name="national_id_number" id="national_id_number" class="primary_input_field form-control">
+                                                    <label class="primary_input_label" for="national_id_number">National ID
+                                                        Number:</label>
+                                                    <input type="text" name="national_id_number" id="national_id_number"
+                                                        class="primary_input_field form-control">
                                                 </div>
                                             </div>
                                         </div>
@@ -60,26 +83,38 @@
                                         <div class="row pt-4 row-gap-24">
                                             <div class="col-lg-6">
                                                 <div class="primary_input mb-3">
-                                                    <label class="primary_input_label" for="existing_first_name">First Name (Existing):</label>
-                                                    <input type="text" name="existing_first_name" id="existing_first_name" class="primary_input_field form-control" readonly>
+                                                    <label class="primary_input_label" for="existing_first_name">First Name
+                                                        (Existing):</label>
+                                                    <input type="text" name="existing_first_name"
+                                                        id="existing_first_name" class="primary_input_field form-control"
+                                                        readonly>
                                                 </div>
                                             </div>
                                             <div class="col-lg-6">
                                                 <div class="primary_input mb-3">
-                                                    <label class="primary_input_label" for="existing_last_name">Last Name (Existing):</label>
-                                                    <input type="text" name="existing_last_name" id="existing_last_name" class="primary_input_field form-control" readonly>
+                                                    <label class="primary_input_label" for="existing_last_name">Last Name
+                                                        (Existing):</label>
+                                                    <input type="text" name="existing_last_name" id="existing_last_name"
+                                                        class="primary_input_field form-control" readonly>
                                                 </div>
                                             </div>
                                             <div class="col-lg-6">
                                                 <div class="primary_input mb-3">
-                                                    <label class="primary_input_label" for="existing_admission_number">Admission Number (Existing):</label>
-                                                    <input type="text" name="existing_admission_number" id="existing_admission_number" class="primary_input_field form-control" readonly>
+                                                    <label class="primary_input_label"
+                                                        for="existing_admission_number">Admission Number (Existing):</label>
+                                                    <input type="text" name="existing_admission_number"
+                                                        id="existing_admission_number"
+                                                        class="primary_input_field form-control" readonly>
                                                 </div>
                                             </div>
                                             <div class="col-lg-6">
                                                 <div class="primary_input mb-3">
-                                                    <label class="primary_input_label" for="existing_national_id_number">National ID Number (Existing):</label>
-                                                    <input type="text" name="existing_national_id_number" id="existing_national_id_number" class="primary_input_field form-control" readonly>
+                                                    <label class="primary_input_label"
+                                                        for="existing_national_id_number">National ID Number
+                                                        (Existing):</label>
+                                                    <input type="text" name="existing_national_id_number"
+                                                        id="existing_national_id_number"
+                                                        class="primary_input_field form-control" readonly>
                                                 </div>
                                             </div>
                                         </div>
@@ -91,13 +126,15 @@
                                         <div class="col-lg-6">
                                             <div class="primary_input mb-3">
                                                 <label class="primary_input_label" for="first_name">First Name:</label>
-                                                <input type="text" name="first_name" id="first_name" class="primary_input_field form-control">
+                                                <input type="text" name="first_name" id="first_name"
+                                                    class="primary_input_field form-control">
                                             </div>
                                         </div>
                                         <div class="col-lg-6">
                                             <div class="primary_input mb-3">
                                                 <label class="primary_input_label" for="last_name">Last Name:</label>
-                                                <input type="text" name="last_name" id="last_name" class="primary_input_field form-control">
+                                                <input type="text" name="last_name" id="last_name"
+                                                    class="primary_input_field form-control">
                                             </div>
                                         </div>
                                     </div>
@@ -105,15 +142,19 @@
 
                                 <div class="primary_input mb-3">
                                     <label class="primary_input_label" for="email_address">Email Address:</label>
-                                    <input type="email" name="email_address" id="email_address" class="primary_input_field form-control">
+                                    <input type="email" name="email_address" id="email_address"
+                                        class="primary_input_field form-control">
                                 </div>
                                 <div class="primary_input mb-3">
                                     <label class="primary_input_label" for="password">Password:</label>
-                                    <input type="password" name="password" id="password" class="primary_input_field form-control">
+                                    <input type="password" name="password" id="password"
+                                        class="primary_input_field form-control">
                                 </div>
                                 <div class="primary_input mb-3">
-                                    <label class="primary_input_label" for="password_confirmation">Confirm Password:</label>
-                                    <input type="password" name="password_confirmation" id="password_confirmation" class="primary_input_field form-control">
+                                    <label class="primary_input_label" for="password_confirmation">Confirm
+                                        Password:</label>
+                                    <input type="password" name="password_confirmation" id="password_confirmation"
+                                        class="primary_input_field form-control">
                                 </div>
 
                                 <button type="submit" class="primary-btn fix-gr-bg mt-4">Create User</button>
@@ -128,7 +169,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
-            $(document).on('change', '#role_id', function () {
+            $(document).on('change', '#role_id', function() {
                 var studentFields = $('#student_fields');
                 var newStudentInputFields = $('#new_student_input_fields');
                 var searchStudentDropdown = $('#search_student');
@@ -166,7 +207,7 @@
                 }
             });
 
-            $(document).on('change', '#search_student', function () {
+            $(document).on('change', '#search_student', function() {
                 var studentId = $(this).val();
                 var newStudentInputFields = $('#new_student_input_fields');
                 var existingStudentDisplayFields = $('#existing_student_display_fields');
@@ -180,7 +221,8 @@
                             $('#existing_first_name').val(data.first_name);
                             $('#existing_last_name').val(data.last_name);
                             $('#existing_admission_number').val(data.admission_number);
-                            $('#existing_national_id_number').val(data.national_id_number || ''); // Populate existing national ID
+                            $('#existing_national_id_number').val(data.national_id_number ||
+                                ''); // Populate existing national ID
                             $('#email_address').val(data.email_address);
                             // Clear new student input fields
                             $('#first_name').val('');

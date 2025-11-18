@@ -212,6 +212,7 @@ class PermissionSeeder extends Seeder
             'roles.savePermissions',
             'role-management.create-user',
             'role-management.store-user',
+            'role-management.user-list',
             'role-management.get-student-details',
         ];
 

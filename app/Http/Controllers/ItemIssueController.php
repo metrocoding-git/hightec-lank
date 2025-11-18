@@ -21,6 +21,7 @@ use App\Models\Intake;
 use App\Models\FeeInvoice;
 use App\Models\StudentCourse;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class ItemIssueController extends Controller
 {
@@ -36,7 +37,7 @@ class ItemIssueController extends Controller
             $intakes = Intake::get(); //section
             $students = Student::get(); //student
             $categories = Category::get();
-            $branches = Branch::get();
+             $branches = Auth::user()->branches;
 
             // Temporarily dump data to inspect
             // dd($categories, $inventoryItems);
@@ -432,6 +433,30 @@ class ItemIssueController extends Controller
         }
     }
 
+    public function getStudentsByBranch(Request $request, $branchId)
+    {
+        try {
+            Log::info('=== getStudentsByBranch CALLED ===');
+            Log::info('Branch ID: ' . $branchId);
+
+            $students = Student::where('branch_id', $branchId)->get();
+
+            Log::info('Found students count: ' . $students->count());
+
+            $formattedStudents = $students->map(function ($student) {
+                return [
+                    'id' => $student->id,
+                    'student_name' => $student->first_name . ' ' . $student->last_name,
+                ];
+            });
+
+            return response()->json($formattedStudents);
+        } catch (Exception $e) {
+            Log::error('Error in getStudentsByBranch: ' . $e->getMessage());
+            return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
+        }
+    }
+
     public function getIntakesByBranch(Request $request, $branchId)
     {
         try {
@@ -466,20 +491,6 @@ class ItemIssueController extends Controller
             return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
         }
     }
-
-    // public function getStudentsByCourse(Request $request, $courseId)
-    // {
-    //     try {
-    //         $course_id = $courseId; // Use the route parameter
-    //         $students = Student::whereHas('courses', function($query) use ($course_id) {
-    //             $query->where('course_id', $course_id);
-    //         })->get();
-
-    //         return response()->json($students);
-    //     } catch (Exception $e) {
-    //         return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
-    //     }
-    // }
 
     public function getItemsByCategory(Request $request, $categoryId)
     {

@@ -12,6 +12,7 @@ use App\Models\StudentCategory;
 use App\Models\StudentCourse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -19,7 +20,7 @@ class AddStudentController extends Controller
 {
     public function index()
     {
-        $branches = Branch::all();
+        $branches = Auth::user()->branches;
         $genders = Gender::all();
         $categories = StudentCategory::all();
         $bloodGroups = BloodGroup::all();
@@ -95,6 +96,8 @@ class AddStudentController extends Controller
 
         // Combine first and last name
         $validatedData['student_name'] = $validatedData['first_name'] . ' ' . $validatedData['last_name'];
+        $validatedData['create_user_id'] = Auth::id();
+        $validatedData['update_user_id'] = Auth::id();
 
         $student = Student::create($validatedData);
 
@@ -131,7 +134,7 @@ class AddStudentController extends Controller
 
     public function edit(Student $student)
     {
-        $branches = Branch::all();
+        $branches = Auth::user()->branches;
         $genders = Gender::all();
         $categories = StudentCategory::all();
         $bloodGroups = BloodGroup::all();
@@ -216,6 +219,7 @@ class AddStudentController extends Controller
 
         // Combine first and last name
         $validatedData['student_name'] = $validatedData['first_name'] . ' ' . $validatedData['last_name'];
+        $validatedData['update_user_id'] = Auth::id();
 
         $student->update($validatedData);
         return back()->with('success', 'Student updated successfully');
@@ -442,7 +446,7 @@ class AddStudentController extends Controller
     public function studentAddIntakeWithCourses(Request $request)
     {
         $students = Student::all();
-        $branches = Branch::all();
+        $branches = Auth::user()->branches;
         $intakes = Intake::with('branch')->get();
         $courses = Course::all();
 

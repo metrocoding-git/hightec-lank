@@ -21,16 +21,41 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
+    /**
+     * Get the branches associated with the user.
+     */
+    public function branches()
+    {
+        return $this->belongsToMany(Branch::class, 'user_branches');
+    }
+
     public function hasPermission($permissionName, $action = 'view')
     {
         if (!$this->role) {
             return false;
         }
 
-        return $this->role->permissions()
-                          ->where('permission_name', $permissionName)
-                          
-                          ->exists();
+        // Check if the permission exists for the role
+        $permissionExists = $this->role->permissions()
+                                       ->where('permission_name', $permissionName)
+                                       ->exists();
+
+        if (!$permissionExists) {
+            return false;
+        }
+
+        // If a specific action is requested, check for it
+        if ($action && $action !== 'view') { // 'view' is the default and often implied by permission existence
+            return $this->role->permissions()
+                              ->where('permission_name', $permissionName)
+                              ->where(function ($query) use ($action) {
+                                  $query->where('action_name', $action)
+                                        ->orWhere('action_name', 'all'); // 'all' action grants all sub-permissions
+                              })
+                              ->exists();
+        }
+
+        return true; // If no specific action other than 'view' is requested, and permission exists
     }
 
     /**
@@ -46,7 +71,7 @@ class User extends Authenticatable
         'password',
         'student_id',
         'status',
-        'role_id', 
+        'role_id',
     ];
 
     /**

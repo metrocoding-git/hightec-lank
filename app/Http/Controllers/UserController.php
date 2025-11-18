@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Student;
+use App\Models\Branch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -15,7 +16,8 @@ class UserController extends Controller
     {
         $roles = Role::all();
         $students = Student::all(); // Fetch all students
-        return view('pages.role_management.create-user', compact('roles', 'students'));
+        $branches = Branch::all();
+        return view('pages.role_management.create-user', compact('roles', 'students', 'branches'));
     }
 
     public function getStudentDetails($id)
@@ -34,6 +36,8 @@ class UserController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'role_id' => 'required|exists:roles,id',
+            'branch_ids' => 'required|array',
+            'branch_ids.*' => 'exists:branches,id',
             'email_address' => 'required|email|unique:users,email', // Changed to email_address for input, but maps to 'email' in users table
             'password' => 'required|string|min:8|confirmed',
             'first_name' => 'nullable|string|max:255',
@@ -65,6 +69,8 @@ class UserController extends Controller
                 'role_id' => $request->role_id,
             ]);
 
+            $user->branches()->attach($request->branch_ids);
+
             $student->update(['user_id' => $user->id]);
 
         } else {
@@ -78,6 +84,8 @@ class UserController extends Controller
                 'role_id' => $request->role_id,
             ]);
 
+            $user->branches()->attach($request->branch_ids);
+
             if ($role->name === 'Student') {
                 Student::create([
                     'user_id' => $user->id,
@@ -86,10 +94,75 @@ class UserController extends Controller
                     'email_address' => $request->email_address, // Assuming students table has email_address
                     'admission_number' => $request->admission_number,
                     'national_id_number' => $request->national_id_number,
+                    'branch_id' => $request->branch_ids[0], // For student, assign first branch or handle differently
                 ]);
             }
         }
 
         return redirect()->route('roles.index')->with('success', 'User created successfully!');
+    }
+
+    public function userList()
+    {
+        $users = User::with(['role', 'branches'])->get();
+        return view('pages.role_management.user-list', compact('users'));
+    }
+
+    public function getUserDetails($id)
+    {
+        $user = User::with(['role', 'branches'])->findOrFail($id);
+        return response()->json($user);
+    }
+
+    public function updateUser(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'role_id' => 'required|exists:roles,id',
+            'branch_ids' => 'required|array',
+            'branch_ids.*' => 'exists:branches,id',
+            'email' => 'required|email|unique:users,email,' . $id,
+            'password' => 'nullable|string|min:8|confirmed',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'status' => 'required|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $user = User::findOrFail($id);
+        $user->first_name = $request->first_name;
+        $user->last_name = $request->last_name;
+        $user->name = $request->first_name; // Update 'name' field as well
+        $user->email = $request->email;
+        $user->role_id = $request->role_id;
+        $user->status = $request->status;
+
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+        $user->save();
+
+        $user->branches()->sync($request->branch_ids);
+
+        return response()->json(['success' => true, 'message' => 'User updated successfully!']);
+    }
+
+    public function changePassword(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $user = User::findOrFail($id);
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return response()->json(['success' => true, 'message' => 'Password updated successfully!']);
     }
 }

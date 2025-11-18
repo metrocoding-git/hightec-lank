@@ -17,5 +17,10 @@ class Branch extends Model
     {
         return $this->hasMany(Intake::class);
     }
-  
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'user_branches');
+    }
+
 }

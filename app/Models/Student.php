@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Auth;
 
 class Student extends Model
 {
@@ -51,6 +52,8 @@ class Student extends Model
         'is_active',
         'phone_number_2',
         'stu_age',
+        'create_user_id',
+        'update_user_id',
     ];
 
     public function scopeActive(Builder $query)

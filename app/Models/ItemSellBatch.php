@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ItemSellBatch extends Model
 {
     protected $fillable = [
+        'branch_id',
         'payment_method',
         'invoice_number',
         'bank_payment_amount',
@@ -39,6 +40,11 @@ class ItemSellBatch extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 
     public function items()
