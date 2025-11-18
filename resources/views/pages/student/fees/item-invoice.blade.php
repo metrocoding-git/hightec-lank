@@ -48,7 +48,7 @@
                 line-height: 1;
             }
 
-
+/* 
             .course-name {
                 left: 4cm;
                 top: 4.1cm;
@@ -108,6 +108,68 @@
             .due-date {
                 left: 6.1cm;
                 top: 10.0cm;
+            } */
+
+
+            .course-name {
+                left: 3.5cm;
+                top: 4.5cm;
+                font-size: 12.5px;
+            }
+
+            .invoice-date {
+                left: 16.1cm;
+                top: 4.5cm;
+            }
+
+            .invoice-no {
+                left: 16.1cm;
+                top: 5.0cm;
+            }
+
+            .admission-no {
+                left: 16.1cm;
+                top: 5.5cm;
+            }
+
+            .student-name {
+                left:8.4cm;
+                top: 6.0cm;
+            }
+
+            .student-nic {
+                left:8.4cm;
+                top: 6.6cm;
+            }
+
+            .student-address {
+                left:8.4cm;
+                top: 7.2cm;
+            }
+
+            .student-phone {
+                left:8.4cm;
+                top: 7.8cm;
+            }
+
+            .total-amount {
+                left: 5.6cm;
+                top: 8.5cm;
+            }
+
+            .paid-amount {
+                left: 5.6cm;
+                top: 9.1cm;
+            }
+
+            .due-amount {
+                left: 5.6cm;
+                top: 9.8cm;
+            }
+
+            .due-date {
+                left: 5.6cm;
+                top: 10.4cm;
             }
         }
     </style>
