@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class PaidCourse extends Model
 {
     protected $fillable = [
-        '',
+        'invoice_id',
         'course_id',
         'course_price',
         'paid_amount',

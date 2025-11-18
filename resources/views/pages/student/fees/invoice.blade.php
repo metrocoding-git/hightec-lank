@@ -50,64 +50,64 @@
 
 
             .course-name {
-                left: 4cm;
-                top: 4.1cm;
+                left: 3.5cm;
+                top: 4.5cm;
                 font-size: 12.5px;
             }
 
             .invoice-date {
-                left: 16.6cm;
-                top: 4.1cm;
+                left: 16.1cm;
+                top: 4.5cm;
             }
 
             .invoice-no {
-                left: 16.6cm;
-                top: 4.6cm;
+                left: 16.1cm;
+                top: 5.0cm;
             }
 
             .admission-no {
-                left: 16.6cm;
-                top: 5.1cm;
+                left: 16.1cm;
+                top: 5.5cm;
             }
 
             .student-name {
-                left:9.0cm;
-                top: 5.6cm;
+                left:8.4cm;
+                top: 6.0cm;
             }
 
             .student-nic {
-                left:9.0cm;
-                top: 6.2cm;
+                left:8.4cm;
+                top: 6.6cm;
             }
 
             .student-address {
-                left:9.0cm;
-                top: 6.8cm;
+                left:8.4cm;
+                top: 7.2cm;
             }
 
             .student-phone {
-                left:9.0cm;
-                top: 7.4cm;
+                left:8.4cm;
+                top: 7.8cm;
             }
 
             .total-amount {
-                left: 6.1cm;
-                top: 8.1cm;
+                left: 5.6cm;
+                top: 8.5cm;
             }
 
             .paid-amount {
-                left: 6.1cm;
-                top: 8.7cm;
+                left: 5.6cm;
+                top: 9.1cm;
             }
 
             .due-amount {
-                left: 6.1cm;
-                top: 9.4cm;
+                left: 5.6cm;
+                top: 9.8cm;
             }
 
             .due-date {
-                left: 6.1cm;
-                top: 10.0cm;
+                left: 5.6cm;
+                top: 10.4cm;
             }
         }
     </style>
