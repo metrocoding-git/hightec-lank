@@ -9,9 +9,9 @@
     <style>
         @page {
             size: 13.97cm 21.6cm;
-            /* height: 13.97cm;
+            height: 13.97cm;
             width: 21.6cm;
-            margin: 0; */
+            margin: 0;
         }
 
         @media print {
