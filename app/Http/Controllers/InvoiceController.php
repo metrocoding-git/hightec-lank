@@ -1071,4 +1071,29 @@ class InvoiceController extends Controller
             ], 500);
         }
     }
+
+    public function getIntakesByCourse($courseId)
+    {
+        try {
+            // Find the course with its associated intakes through the pivot table
+            $course = Course::with('intakes')->findOrFail($courseId);
+
+            return response()->json([
+                'success' => true,
+                'intakes' => $course->intakes->map(function ($intake) {
+                    return [
+                        'id' => $intake->id,
+                        'name' => $intake->name, // Assuming Intake model has a 'name' attribute
+                    ];
+                }),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching intakes by course: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching intakes by course',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

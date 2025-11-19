@@ -41,6 +41,7 @@
                                             <th>@lang('inventory.issue_date')</th>
                                             <th>@lang('inventory.return_date')</th>
                                             <th>@lang('inventory.quantity')</th>
+                                            <th>Intake Name</th>
                                             <th>Course Name</th>
                                             <th>Course Expiration</th>
                                             <th hidden>@lang('common.description')</th>
@@ -92,7 +93,8 @@
                                                         {{ $batch->due_date != '' ? date('m/d/Y', strtotime($batch->due_date)) : '' }}
                                                     </td>
                                                     <td>{{ $batch->total_items ?? $batch->items->sum('quantity') }}</td>
-                                                    <td>{{ $batchData['course_name'] }}</td>
+                                                    <td>{{ $batchData['intake_name'] }}</td>                                                 
+                                                    <td>{{ $batchData['course_name'] }}</td>                                                 
                                                     <td>
                                                         <button class="primary-btn small {{ $batchData['expire_class'] }} text-white border-0">{{ $batchData['expire_status'] }}</button>
                                                     </td>
@@ -109,13 +111,17 @@
                                                     <td>
                                                         <x-drop-down>
                                                             @if ($batch->issue_status == 'I')
-                                                                <form action="{{ route('return-item') }}" method="POST" class="m-0">
-                                                                    @csrf
-                                                                    <input type="hidden" name="id"
-                                                                        value="{{ @$batch->id }}">
-                                                                    <button type="submit"
-                                                                        class="dropdown-item">@lang('inventory.return')</button>
-                                                                </form>
+                                                                @if ($batchData['expire_status'] == 'Expired')
+                                                                    <button type="button" class="dropdown-item text-danger" disabled>Cannot Return (Expired)</button>
+                                                                @else
+                                                                    <form action="{{ route('return-item') }}" method="POST" class="m-0">
+                                                                        @csrf
+                                                                        <input type="hidden" name="id"
+                                                                            value="{{ @$batch->id }}">
+                                                                        <button type="submit"
+                                                                            class="dropdown-item">@lang('inventory.return')</button>
+                                                                    </form>
+                                                                @endif
                                                             @else
                                                                 <form action="{{ route('issue-item') }}" method="POST" class="m-0">
                                                                     @csrf

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\BloodGroup;
 use App\Models\Branch;
 use App\Models\Course;
+use App\Models\District;
 use App\Models\Gender;
 use App\Models\Intake;
 use App\Models\Student;
@@ -25,11 +26,12 @@ class AddStudentController extends Controller
         $categories = StudentCategory::all();
         $bloodGroups = BloodGroup::all();
         $intakes = Intake::all();
+        $districts = District::all();
 
         // Generate next admission number
         $nextAdmissionNumber = $this->generateNextAdmissionNumber();
 
-        return view('pages.student.student-info.add-student', compact('branches', 'genders', 'categories', 'bloodGroups', 'intakes', 'nextAdmissionNumber'));
+        return view('pages.student.student-info.add-student', compact('branches',  'genders', 'categories', 'bloodGroups', 'intakes', 'nextAdmissionNumber','districts'));
     }
 
     public function store(Request $request)
@@ -41,14 +43,14 @@ class AddStudentController extends Controller
             'admission_date' => 'required|date',
             'student_category_id' => 'required|exists:student_categories,id',
             'gender_id' => 'required|exists:genders,id',
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
+            'student_name' => 'required|string|max:255',
             'date_of_birth' => 'required|date',
             'photo' => 'nullable|image|max:2048',
             'email_address' => 'nullable|email|max:255|unique:students,email_address',
-            'phone_number' => 'required|numeric|max_digits:10|unique:students,phone_number',
-            'phone_number_2' => 'nullable|numeric|max_digits:10',
+            'phone_number' => 'required|digits:10',
+            'phone_number_2' => 'nullable|digits:10',
             'stu_age' => 'nullable|integer',
+            'district_id' => 'nullable|exists:districts,id',
 
             'current_address' => 'nullable|string',
             'permanent_address' => 'nullable|string',
@@ -63,7 +65,7 @@ class AddStudentController extends Controller
             'guardians_occupation' => 'nullable|string|max:255',
             'guardians_address' => 'nullable|string',
 
-            'national_id_number' => ['required', 'string', 'regex:/^([0-9]{9}[vV]|[0-9]{12})$/'],
+            'national_id_number' => ['required', 'string', 'regex:/^([0-9]{9}[vV]|[0-9]{12})$/', 'unique:students,national_id_number'],
             'additional_notes' => 'nullable|string',
             'document_title_1' => 'nullable|string|max:255',
             'document_file_1' => 'nullable|file|max:2048',
@@ -94,8 +96,6 @@ class AddStudentController extends Controller
             }
         }
 
-        // Combine first and last name
-        $validatedData['student_name'] = $validatedData['first_name'] . ' ' . $validatedData['last_name'];
         $validatedData['create_user_id'] = Auth::id();
         $validatedData['update_user_id'] = Auth::id();
 
@@ -139,6 +139,7 @@ class AddStudentController extends Controller
         $categories = StudentCategory::all();
         $bloodGroups = BloodGroup::all();
         $intakes = Intake::all();
+        $districts = District::all();
         $student = Student::findOrFail($student->id);
         // ds($student);
 
@@ -149,6 +150,7 @@ class AddStudentController extends Controller
             'categories',
             'bloodGroups',
             'intakes',
+            'districts',
             'student',
         ]));
     }
@@ -161,14 +163,14 @@ class AddStudentController extends Controller
             'admission_date' => 'required|date',
             'student_category_id' => 'required|exists:student_categories,id',
             'gender_id' => 'required|exists:genders,id',
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
+            'student_name' => 'required|string|max:255',
             'date_of_birth' => 'required|date',
             'photo' => 'nullable|image|max:2048',
             'email_address' => 'nullable|email|max:255',
-            'phone_number' => 'required|numeric|max_digits:10',
-            'phone_number_2' => 'nullable|numeric|max_digits:10',
+            'phone_number' => 'required|digits:10',
+            'phone_number_2' => 'nullable|digits:10',
             'stu_age' => 'nullable|integer',
+            'district_id' => 'nullable|exists:districts,id',
 
             'current_address' => 'nullable|string',
             'permanent_address' => 'nullable|string',
@@ -183,7 +185,7 @@ class AddStudentController extends Controller
             'guardians_occupation' => 'nullable|string|max:255',
             'guardians_address' => 'nullable|string',
 
-            'national_id_number' => ['required', 'string', 'regex:/^([0-9]{9}[vV]|[0-9]{12})$/'],
+            'national_id_number' => ['required', 'string', 'regex:/^([0-9]{9}[vV]|[0-9]{12})$/', 'unique:students,national_id_number,' . $student->id],
             'additional_notes' => 'nullable|string',
             'document_title_1' => 'nullable|string|max:255',
             'document_file_1' => 'nullable|file|max:2048',
@@ -217,8 +219,6 @@ class AddStudentController extends Controller
             }
         }
 
-        // Combine first and last name
-        $validatedData['student_name'] = $validatedData['first_name'] . ' ' . $validatedData['last_name'];
         $validatedData['update_user_id'] = Auth::id();
 
         $student->update($validatedData);
@@ -447,7 +447,7 @@ class AddStudentController extends Controller
     public function studentAddIntakeWithCourses(Request $request)
     {
         $students = Student::all();
-        $branches = Auth::user()->branches;
+        $branches = Branch::all();
         $intakes = Intake::with('branch')->get();
         $courses = Course::all();
 

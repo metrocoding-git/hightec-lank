@@ -60,7 +60,7 @@
                             <div class="add-visitor">
                                 <input type="hidden" id="url" value="{{ URL::to('/') }}">
 
-                                 {{-- Branch --}}
+                                {{-- Branch --}}
                                 <div class="row mt-15">
                                     <div class="col-lg-12">
                                         <label>@lang('common.branch') <span class="text-danger">*</span></label>
@@ -204,6 +204,7 @@
                                                 <tr>
                                                     <th>@lang('common.sl')</th>
                                                     <th>Course Name</th>
+                                                    <th>Intake Name</th>
                                                     <th>Course Paid</th>
                                                     <th>@lang('fees.paid_amount')</th>
                                                     <th>Due Amount</th>
@@ -241,10 +242,9 @@
                                     </div>
                                 </div>
                             </div>
-
+                            </div>
                         </div>
-                    </div>
-                </div> <!-- /.row -->
+                    </div> <!-- /.row -->
             </form>
         </div>
     </section>
@@ -253,14 +253,14 @@
     @include('components.partials.date_picker_css_js')
 @endsection
 
-    @push('scripts')
-        <script>
-            $(document).ready(function() {
-                if ({{ count($branches) }} == 1) {
-                    $('#branch_id').trigger('change');
-                }
-                // Initialize the bank payment section as hidden
-                toggleBankPayment('');
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            if ({{ count($branches) }} == 1) {
+                $('#branch_id').trigger('change');
+            }
+            // Initialize the bank payment section as hidden
+            toggleBankPayment('');
 
             // AJAX: Load students based on branch
             $('#branch_id').change(function() {
@@ -338,6 +338,8 @@
                     $('.allCourseDetails').empty();
                     addedCourseId = null;
                     $('#paymentHistoryTable tbody').empty();
+                    $('#intake_details_section').hide(); // Hide intake table
+                    $('.allCourseDetails tr').find('.intake_name_cell').text('N/A'); // Clear intake name in course table
                     return;
                 }
 
@@ -353,8 +355,9 @@
                 addCourseRow(courseId, courseName, coursePrice);
                 addedCourseId = courseId;
 
-                // Fetch payment history
+                // Fetch payment history and intakes
                 if (studentId && courseId) {
+                    // Fetch payment history
                     $.ajax({
                         url: '{{ route('fees.course-payment-history', [':studentId', ':courseId']) }}'
                             .replace(':studentId', studentId).replace(':courseId', courseId),
@@ -371,7 +374,6 @@
                                             <td>${new Date(payment.created_at).toLocaleDateString()}</td>
                                             <td>${payment.amount}</td>
                                             <td>${payment.payment_method}</td>
-                                           
                                         </tr>`;
                                         historyTable.append(row);
                                     });
@@ -382,7 +384,6 @@
                                     $('.allCourseDetails tr').addClass('first-payment');
                                 }
                                 // Update due amount in the main table
-
                                 $('.allCourseDetails tr').find('.due_amount_display').val(data
                                     .due_amount.toFixed(2));
                                 $('.allCourseDetails tr').find('.due_amount_display').data(
@@ -392,6 +393,35 @@
                             }
                         }
                     });
+
+                    // Fetch intakes for the selected course
+                    $.ajax({
+                        url: '{{ route('fees.get-intakes-by-course', ':courseId') }}'.replace(':courseId', courseId),
+                        type: 'GET',
+                        success: function(data) {
+                            let intakeTableBody = $('#intakeTableBody');
+                            intakeTableBody.empty();
+                            if (data.success && data.intakes.length > 0) {
+                                data.intakes.forEach(function(intake) {
+                                    intakeTableBody.append(`<tr><td>${intake.name}</td></tr>`);
+                                });
+                                $('#intake_details_section').show();
+
+                                // Update the intake_name_cell in the allCourseDetails table
+                                $('.allCourseDetails tr').find('.intake_name_cell').text(data.intakes[0].name);
+                            } else {
+                                $('#intake_details_section').hide();
+                                $('.allCourseDetails tr').find('.intake_name_cell').text('N/A');
+                            }
+                        },
+                        error: function() {
+                            $('#intake_details_section').hide();
+                            $('.allCourseDetails tr').find('.intake_name_cell').text('N/A');
+                        }
+                    });
+                } else {
+                    $('#intake_details_section').hide();
+                    $('.allCourseDetails tr').find('.intake_name_cell').text('N/A');
                 }
 
                 $(this).val('').niceSelect('update'); // Clear selection after adding
@@ -405,6 +435,7 @@
                 let row = `<tr data-id="${id}">
                     <td class="sl">1</td>
                     <td class="course_name">${name}</td>
+                    <td class="intake_name_cell">N/A</td> <!-- Placeholder for Intake Name -->
                     <td class="course_price_cell">
                         <div class="input-group input-group-sm" style="max-width: 120px;">
                             <input type="number"
@@ -463,10 +494,10 @@
                 let initialDue = $('.allCourseDetails tr').find('.due_amount_display').data('initial-due') ||
                     coursePrice;
 
-               
-                    let newDue = initialDue - paidAmount;
-                    $('.allCourseDetails tr').find('.due_amount_display').val(newDue.toFixed(2));
-                
+
+                let newDue = initialDue - paidAmount;
+                $('.allCourseDetails tr').find('.due_amount_display').val(newDue.toFixed(2));
+
 
                 let totalPaidAfterThisTransaction = (coursePrice - initialDue) + paidAmount;
 
@@ -640,7 +671,7 @@
                     return;
                 }
 
-                
+
                 // Validate bank payment fields if visible
                 if (paymentMethod === 'Bank Transfer') {
                     let bankPaidAmount = parseFloat($('#bank_paid_amount').val());
@@ -651,7 +682,7 @@
                         return;
                     }
 
-                    
+
                     if (bankPaidAmount < paidAmount) {
                         toastr.error(
                             'Bank Paid Amount must be greater than or equal to Course Price for Full Paid status'

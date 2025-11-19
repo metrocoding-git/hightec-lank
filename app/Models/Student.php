@@ -52,6 +52,7 @@ class Student extends Model
         'is_active',
         'phone_number_2',
         'stu_age',
+        'district_id',
         'create_user_id',
         'update_user_id',
     ];
@@ -86,10 +87,15 @@ class Student extends Model
         return $this->belongsTo(BloodGroup::class);
     }
 
+    public function district(): BelongsTo
+    {
+        return $this->belongsTo(District::class);
+    }
+
     public function courses()
     {
         return $this->belongsToMany(Course::class, 'student_courses', 'student_id', 'course_id')
-            ->withPivot( 'status', 'notes')
+            ->withPivot('status', 'notes')
             ->withTimestamps();
     }
 
@@ -123,7 +129,7 @@ class Student extends Model
     public function intakes()
     {
         return $this->belongsToMany(Intake::class, 'student_courses', 'student_id', 'intake_id')
-            ->withPivot( 'status', 'notes')
+            ->withPivot('status', 'notes')
             ->withTimestamps();
     }
 }
