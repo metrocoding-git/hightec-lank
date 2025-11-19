@@ -10,7 +10,7 @@ class StudentViewController extends Controller
 {
     public function studentView($id)
     {
-        $student = Student::with(['branch', 'gender', 'studentCategory', 'bloodGroup', 'courses', 'intakes'])->findOrFail($id);
+        $student = Student::with(['branch', 'gender', 'studentCategory', 'bloodGroup', 'courses', 'intakes','courseWithIntake'])->findOrFail($id);
 
         // Fetch payment history
         $payments = FeeInvoice::where('student_id', $id)->with(['invoice_item.fee_type'])->get();

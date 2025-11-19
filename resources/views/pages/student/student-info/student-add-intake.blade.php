@@ -512,7 +512,7 @@
                 $('#assignBtn').prop('disabled', true);
             });
 
-            $('#modal_student_id, #modal_branch_id, #modal_intake_id, #modal_course_ids').on('change', function() {
+            $('#modal_student_id, #modal_branch_id, #modal_intake_id').on('change', function() {
                 clearAlerts();
             });
 

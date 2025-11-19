@@ -132,4 +132,9 @@ class Student extends Model
             ->withPivot('status', 'notes')
             ->withTimestamps();
     }
+
+    public function courseWithIntake()
+    {
+        return $this->hasMany(StudentCourse::class, 'student_id')->with(['course', 'intake', 'branch']);
+    }
 }

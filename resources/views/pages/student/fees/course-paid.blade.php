@@ -51,7 +51,7 @@
 
                 <div class="row g-4">
                     <!-- Left Section: Payment Details -->
-                    <div class="col-12 col-lg-4">
+                    <div class="col-12 col-lg-3">
                         <div class="white-box left-section-card">
                             <div class="main-title mb-3">
                                 <h3>Course Payment Details</h3>
@@ -179,7 +179,7 @@
                     </div>
 
                     <!-- Right Section: Course Table -->
-                    <div class="col-12 col-lg-8">
+                    <div class="col-12 col-lg-9">
                         <div class="white-box h-100">
                             <div class="main-title mb-3">
                                 <h3>Course Details</h3>

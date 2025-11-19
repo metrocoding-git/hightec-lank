@@ -43,7 +43,7 @@
                             <div class="add-visitor">
                                 <div class="row">
 
-                                     {{-- Branch Dropdown --}}
+                                    {{-- Branch Dropdown --}}
                                     <div class="col-lg-12 mb-15">
                                         <label class="primary_input_label">Branch <span class="text-danger">*</span></label>
                                         <select class="primary_select form-control" name="branch_id" id="branch_select">
@@ -62,7 +62,8 @@
                                     <div class="col-lg-12 mb-15">
                                         <label class="primary_input_label">Student <span
                                                 class="text-danger">*</span></label>
-                                        <select class="primary_select form-control" name="student_id" id="student_select" disabled>
+                                        <select class="primary_select form-control" name="student_id" id="student_select"
+                                            disabled>
                                             <option value="">Select Branch First *</option>
                                         </select>
                                     </div>
@@ -221,7 +222,7 @@
                                         <h4 class="mb-15">Student fee Informations</h4>
                                     </div>
                                     <div class="row">
-                                        
+
                                         {{-- <div class="col-lg-12">
                                             <div class="primary_input">
                                                 <label class="primary_input_label">Payment Count</label>
@@ -628,38 +629,51 @@
                 console.log('🌳 Branch selected:', branch_id);
 
                 // Reset and disable Student, Intake, Course dropdowns
-                $('#student_select').html('<option value="">Loading students...</option>').prop('disabled', true);
-                $('#intake_select').html('<option value="">Select Student First *</option>').prop('disabled', true);
-                $('#course_select').html('<option value="">Select Student First *</option>').prop('disabled', true);
+                $('#student_select').html('<option value="">Loading students...</option>').prop('disabled',
+                    true);
+                $('#intake_select').html('<option value="">Select Student First *</option>').prop(
+                    'disabled', true);
+                $('#course_select').html('<option value="">Select Student First *</option>').prop(
+                    'disabled', true);
                 refreshNiceSelect('#student_select');
                 refreshNiceSelect('#intake_select');
                 refreshNiceSelect('#course_select');
                 $('#student-fee-data').hide();
 
                 if (branch_id && branch_id !== '') {
-                    var url = '{{ route('item-issue.get-students-by-branch', ':branchId') }}'.replace(':branchId', branch_id);
+                    var url = '{{ route('item-issue.get-students-by-branch', ':branchId') }}'.replace(
+                        ':branchId', branch_id);
                     $.get(url, function(data) {
                         var optionsHtml = '<option value="">Select Student *</option>';
                         if (data && Array.isArray(data) && data.length > 0) {
+                            console.log("ddd",data)
                             data.forEach(function(student) {
-                                optionsHtml += `<option value="${student.id}">${student.student_name}</option>`;
+                                optionsHtml +=
+                                    `<option value="${student.id}">${student.student_name}</option>`;
                             });
                             $('#student_select').html(optionsHtml).prop('disabled', false);
                         } else {
-                            $('#student_select').html('<option value="">No Students Found</option>').prop('disabled', true);
+                            $('#student_select').html('<option value="">No Students Found</option>')
+                                .prop('disabled', true);
                         }
                         refreshNiceSelect('#student_select');
                     }).fail(function(xhr, status, error) {
                         console.error('❌ AJAX Error fetching students by branch:', error);
-                        $('#student_select').html('<option value="">Error loading students</option>').prop('disabled', true);
+                        $('#student_select').html(
+                            '<option value="">Error loading students</option>').prop('disabled',
+                            true);
                         refreshNiceSelect('#student_select');
                     });
                 } else {
-                    $('#student_select').html('<option value="">Select Branch First *</option>').prop('disabled', true);
+                    $('#student_select').html('<option value="">Select Branch First *</option>').prop(
+                        'disabled', true);
                     refreshNiceSelect('#student_select');
                 }
             });
 
+            $('#branch_select').trigger('change');
+
+            
             // Handle student change - Populate Intake dropdown
             $('#student_select').on('change', function() {
                 var student_id = $(this).val();
@@ -667,14 +681,17 @@
                 console.log('👨‍🎓 Student selected:', student_id, 'for Branch:', branch_id);
 
                 // Reset and disable Intake, Course dropdowns
-                $('#intake_select').html('<option value="">Loading intakes...</option>').prop('disabled', true);
-                $('#course_select').html('<option value="">Select Intake First *</option>').prop('disabled', true);
+                $('#intake_select').html('<option value="">Loading intakes...</option>').prop('disabled',
+                    true);
+                $('#course_select').html('<option value="">Select Intake First *</option>').prop('disabled',
+                    true);
                 refreshNiceSelect('#intake_select');
                 refreshNiceSelect('#course_select');
                 $('#student-fee-data').hide();
 
                 if (student_id && student_id !== '' && branch_id && branch_id !== '') {
-                    var url = '{{ route('item-issue.get-intakes-by-branch-and-student', [':branchId', ':studentId']) }}'
+                    var url =
+                        '{{ route('item-issue.get-intakes-by-branch-and-student', [':branchId', ':studentId']) }}'
                         .replace(':branchId', branch_id)
                         .replace(':studentId', student_id);
 
@@ -682,20 +699,25 @@
                         var optionsHtml = '<option value="">Select Intake *</option>';
                         if (Array.isArray(data) && data.length > 0) {
                             data.forEach(function(intake) {
-                                optionsHtml += `<option value="${intake.id}" data-start-date="${intake.start_date || ''}">${intake.name}</option>`;
+                                optionsHtml +=
+                                    `<option value="${intake.id}" data-start-date="${intake.start_date || ''}">${intake.name}</option>`;
                             });
                             $('#intake_select').html(optionsHtml).prop('disabled', false);
                         } else {
-                            $('#intake_select').html('<option value="">No Intakes Found</option>').prop('disabled', true);
+                            $('#intake_select').html('<option value="">No Intakes Found</option>')
+                                .prop('disabled', true);
                         }
                         refreshNiceSelect('#intake_select');
                     }).fail(function(xhr, status, error) {
-                        console.error('❌ AJAX Error fetching intakes by branch and student:', error);
-                        $('#intake_select').html('<option value="">Error loading intakes</option>').prop('disabled', true);
+                        console.error('❌ AJAX Error fetching intakes by branch and student:',
+                        error);
+                        $('#intake_select').html('<option value="">Error loading intakes</option>')
+                            .prop('disabled', true);
                         refreshNiceSelect('#intake_select');
                     });
                 } else {
-                    $('#intake_select').html('<option value="">Select Student First *</option>').prop('disabled', true);
+                    $('#intake_select').html('<option value="">Select Student First *</option>').prop(
+                        'disabled', true);
                     refreshNiceSelect('#intake_select');
                 }
             });

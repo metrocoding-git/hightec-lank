@@ -17,6 +17,7 @@ use App\Models\Category;
 use App\Models\Inventory_item;
 use App\Models\Student;
 use App\Models\Course;
+use App\Models\CourseIntake;
 use App\Models\Intake;
 use App\Models\FeeInvoice;
 use App\Models\StudentCourse;
@@ -37,7 +38,7 @@ class ItemIssueController extends Controller
             $intakes = Intake::get(); //section
             $students = Student::get(); //student
             $categories = Category::get();
-             $branches = Auth::user()->branches;
+            $branches = Auth::user()->branches;
 
             // Temporarily dump data to inspect
             // dd($categories, $inventoryItems);
@@ -57,7 +58,7 @@ class ItemIssueController extends Controller
             // Add expiration status to each batch
             $batchesWithCourseStatus = $issuedBatches->map(function ($batch) {
                 $course = $batch->course;
-                 $intake = $batch->intake;
+                $intake = $batch->intake;
                 if ($course) {
                     $startDate = Carbon::parse($intake->start_date);
                     $expirationDate = $course->expiration_date;
@@ -400,35 +401,65 @@ class ItemIssueController extends Controller
         try {
             DB::beginTransaction();
 
+
             $batch = ItemIssueBatch::findOrFail($request->id);
 
-            // Get all items in this batch before updating status
-            $batchItems = ItemIssueItem::where('batch_id', $batch->id)->get();
+            $intake = Intake::find($batch->intake_id);
+            $course = Course::find($batch->course_id);
+            $expireDate = Carbon::parse($intake->start_date)->addDays((int)$course->expiration_date);
 
-            // Track inventory changes for each item return (increase inventory)
-            foreach ($batchItems as $batchItem) {
-                $currentBalance = ItemInventory::getCurrentBalance($batchItem->item_id);
-                $newBalance = $currentBalance + $batchItem->quantity;
+            $canAdd = now()->lte($expireDate);
+            if ($canAdd) {
+                // Get all items in this batch before updating status
+                $batchItems = ItemIssueItem::where('batch_id', $batch->id)->get();
 
-                ItemInventory::create([
-                    'item_id' => $batchItem->item_id,
-                    'transaction_type' => 'issue_return',
-                    'transaction_id' => $batch->id,
-                    'quantity' => $batchItem->quantity,
-                    'current_balance' => $newBalance,
-                    'reference_no' => 'BATCH-' . $batch->id,
-                    'transaction_date' => now()->toDateString(),
-                    'description' => 'Items returned from batch',
-                ]);
+                // Track inventory changes for each item return (increase inventory)
+                foreach ($batchItems as $batchItem) {
+                    $currentBalance = ItemInventory::getCurrentBalance($batchItem->item_id);
+                    $newBalance = $currentBalance + $batchItem->quantity;
+
+                    ItemInventory::create([
+                        'item_id' => $batchItem->item_id,
+                        'transaction_type' => 'issue_return',
+                        'transaction_id' => $batch->id,
+                        'quantity' => $batchItem->quantity,
+                        'current_balance' => $newBalance,
+                        'reference_no' => 'BATCH-' . $batch->id,
+                        'transaction_date' => now()->toDateString(),
+                        'description' => 'Items returned from batch',
+                    ]);
+                }
+
+                $batch->issue_status = 'R'; // Returned
+                // $batch->return_date = date('Y-m-d'); // Set return date to today
+                $batch->save();
+
+                $batchFind = ItemIssueBatch::where('branch_id', $batch->branch_id)
+                    ->where('student_id', $batch->student_id)
+                    ->where('intake_id', $batch->intake_id)
+                    ->where('course_id', $batch->course_id)
+                    ->where('issue_status', 'I')
+                    ->first();
+
+                if (!$batchFind) {
+                    $student_course = StudentCourse::where('student_id', $batch->student_id)
+                        ->where('course_id', $batch->course_id)
+                        ->where('intake_id', $batch->intake_id)
+                        ->where('branch_id', $batch->branch_id)
+                        ->first();
+
+                    if ($student_course) {
+                        $student_course->status = 'return';
+                        $student_course->save();
+                    }
+                }
+
+                DB::commit();
+
+                return redirect()->route('item-issue-list')->with('success', 'Batch returned successfully.');
+            } else {
+                return redirect()->back()->with('error', 'Course Period has expired');
             }
-
-            $batch->issue_status = 'R'; // Returned
-            // $batch->return_date = date('Y-m-d'); // Set return date to today
-            $batch->save();
-
-            DB::commit();
-
-            return redirect()->route('item-issue-list')->with('success', 'Batch returned successfully.');
         } catch (Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
@@ -448,7 +479,7 @@ class ItemIssueController extends Controller
             $formattedStudents = $students->map(function ($student) {
                 return [
                     'id' => $student->id,
-                    'student_name' => $student->first_name . ' ' . $student->last_name,
+                    'student_name' => $student->student_name,
                 ];
             });
 
@@ -535,7 +566,7 @@ class ItemIssueController extends Controller
             }
 
             // Optional: Filter fee invoices based on branch/course/intake if your DB supports those relations
-            $feeInvoices = FeeInvoice::with(['paidCourses', 'invoice_item.feeType'])
+            $feeInvoices = FeeInvoice::with(['paidCourses'])
                 ->where('student_id', $student_id)
                 ->where('branch_id', $branch_id)
                 ->whereHas('paidCourses', function ($query) use ($course_id) {

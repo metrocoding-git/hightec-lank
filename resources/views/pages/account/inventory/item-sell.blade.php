@@ -61,6 +61,115 @@
                                                 <div class="text-danger" id="branchError"></div>
                                             </div>
 
+                                           
+
+                                            <div class="col-lg-12 mb-15">
+                                                <label class="primary_input_label" for="">@lang('inventory.sell_to') <span
+                                                        class="text-danger"> *</span> </label>
+                                                <select
+                                                    class="primary_select  form-control{{ $errors->has('role_id') ? ' is-invalid' : '' }}"
+                                                    name="role_id" id="buyer_type">
+                                                    <option data-display="@lang('inventory.sell_to') *" value="">
+                                                        @lang('inventory.sell_to') *</option>
+                                                    <option value="2">Student</option>
+                                                    <option value="0">Other</option>
+                                                </select>
+                                                <div class="text-danger" id="buyerError"></div>
+                                                @if ($errors->has('role_id'))
+                                                    <span class="text-danger invalid-select" role="alert">
+                                                        {{ $errors->first('role_id') }}
+                                                    </span>
+                                                @endif
+                                            </div>
+
+                                            <div class="col-lg-12" id="student_section" style="display: none;">
+                                                <div class="row">
+                                                    <div class="col-lg-12 mb-15">
+                                                        <label class="primary_input_label" for="">@lang('common.student')
+                                                            <span class="text-danger"> *</span> </label>
+                                                        <select
+                                                            class="primary_select form-control{{ $errors->has('student') ? ' is-invalid' : '' }}"
+                                                            id="select_student" name="student">
+                                                            <option data-display="@lang('common.select_student')" value="">
+                                                                @lang('common.select_student')</option>
+                                                            @foreach ($students as $value)
+                                                                <option value="{{ $value->id }}"
+                                                                    {{ old('student') == $value->id ? 'selected' : '' }}>
+                                                                    {{ $value->student_name }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        <div class="text-danger" id="studentError"></div>
+                                                        @if ($errors->has('student'))
+                                                            <span class="text-danger invalid-select" role="alert">
+                                                                {{ $errors->first('student') }}
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-lg-12" id="other_section" style="display: none;">
+                                                <div class="row">
+                                                    <div class="col-lg-12 mb-15">
+                                                        <label class="primary_input_label"
+                                                            for="">@lang('common.name')
+                                                            <span class="text-danger"> *</span> </label>
+                                                        <input
+                                                            class="primary_input_field form-control{{ $errors->has('customer_name') ? ' is-invalid' : '' }}"
+                                                            type="text" name="customer_name" id="customer_name"
+                                                            autocomplete="off" value="{{ old('customer_name') }}"
+                                                            placeholder="Enter customer name">
+                                                        <div class="text-danger" id="customerNameError"></div>
+                                                        @if ($errors->has('customer_name'))
+                                                            <span class="text-danger invalid-select" role="alert">
+                                                                {{ $errors->first('customer_name') }}
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-lg-12 mb-15">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label"
+                                                        for="">@lang('inventory.reference_no')</label>
+                                                    <input class="primary_input_field form-control" type="text"
+                                                        name="reference_no" autocomplete="off"
+                                                        value="{{ isset($editData) ? $editData->reference_no : '' }}">
+
+
+
+                                                </div>
+                                            </div>
+
+
+                                            <div class="col-lg-12 mb-15">
+                                                <div class="primary_input ">
+                                                    <label class="primary_input_label" for="">@lang('inventory.sell_date')
+                                                        <span></span> </label>
+                                                    <div class="primary_datepicker_input">
+                                                        <div class="no-gutters input-right-icon">
+                                                            <div class="col">
+                                                                <div class="">
+
+                                                                    <input
+                                                                        class="primary_input_field  primary_input_field date form-control form-control{{ $errors->has('sell_date') ? ' is-invalid' : '' }}"
+                                                                        id="sell_date" type="date" name="sell_date"
+                                                                        value="{{ old('sell_date', isset($editData) ? $editData->sell_date->format('Y-m-d') : now()->format('Y-m-d')) }}"
+                                                                        autocomplete="off">
+                                                                </div>
+                                                            </div>
+                                                            {{-- <button class="btn-date" data-id="#sell_date" type="button">
+                                                                <label for="sell_date" class="m-0 p-0">
+                                                                    <i class="ti-calendar" id="start-date-icon"></i>
+                                                                </label>
+                                                            </button> --}}
+                                                        </div>
+                                                    </div>
+                                                    <span class="text-danger">{{ $errors->first('sell_date') }}</span>
+                                                </div>
+                                            </div>
+
                                             <div class="col-lg-12 mb-15">
                                                 <label class="primary_input_label" for="">@lang('inventory.payment_method') <span
                                                         class="text-danger"> *</span> </label>
@@ -174,113 +283,7 @@
                                                     @endif
                                                 </div>
                                             </div> --}}
-
-                                            <div class="col-lg-12 mb-15">
-                                                <label class="primary_input_label" for="">@lang('inventory.sell_to') <span
-                                                        class="text-danger"> *</span> </label>
-                                                <select
-                                                    class="primary_select  form-control{{ $errors->has('role_id') ? ' is-invalid' : '' }}"
-                                                    name="role_id" id="buyer_type">
-                                                    <option data-display="@lang('inventory.sell_to') *" value="">
-                                                        @lang('inventory.sell_to') *</option>
-                                                    <option value="2">Student</option>
-                                                    <option value="0">Other</option>
-                                                </select>
-                                                <div class="text-danger" id="buyerError"></div>
-                                                @if ($errors->has('role_id'))
-                                                    <span class="text-danger invalid-select" role="alert">
-                                                        {{ $errors->first('role_id') }}
-                                                    </span>
-                                                @endif
-                                            </div>
-
-                                            <div class="col-lg-12" id="student_section" style="display: none;">
-                                                <div class="row">
-                                                    <div class="col-lg-12 mb-15">
-                                                        <label class="primary_input_label" for="">@lang('common.student')
-                                                            <span class="text-danger"> *</span> </label>
-                                                        <select
-                                                            class="primary_select form-control{{ $errors->has('student') ? ' is-invalid' : '' }}"
-                                                            id="select_student" name="student">
-                                                            <option data-display="@lang('common.select_student')" value="">
-                                                                @lang('common.select_student')</option>
-                                                            @foreach ($students as $value)
-                                                                <option value="{{ $value->id }}"
-                                                                    {{ old('student') == $value->id ? 'selected' : '' }}>
-                                                                    {{ $value->student_name }}</option>
-                                                            @endforeach
-                                                        </select>
-                                                        <div class="text-danger" id="studentError"></div>
-                                                        @if ($errors->has('student'))
-                                                            <span class="text-danger invalid-select" role="alert">
-                                                                {{ $errors->first('student') }}
-                                                            </span>
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-lg-12" id="other_section" style="display: none;">
-                                                <div class="row">
-                                                    <div class="col-lg-12 mb-15">
-                                                        <label class="primary_input_label"
-                                                            for="">@lang('common.name')
-                                                            <span class="text-danger"> *</span> </label>
-                                                        <input
-                                                            class="primary_input_field form-control{{ $errors->has('customer_name') ? ' is-invalid' : '' }}"
-                                                            type="text" name="customer_name" id="customer_name"
-                                                            autocomplete="off" value="{{ old('customer_name') }}"
-                                                            placeholder="Enter customer name">
-                                                        <div class="text-danger" id="customerNameError"></div>
-                                                        @if ($errors->has('customer_name'))
-                                                            <span class="text-danger invalid-select" role="alert">
-                                                                {{ $errors->first('customer_name') }}
-                                                            </span>
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-lg-12 mb-15">
-                                                <div class="primary_input">
-                                                    <label class="primary_input_label"
-                                                        for="">@lang('inventory.reference_no')</label>
-                                                    <input class="primary_input_field form-control" type="text"
-                                                        name="reference_no" autocomplete="off"
-                                                        value="{{ isset($editData) ? $editData->reference_no : '' }}">
-
-
-
-                                                </div>
-                                            </div>
-
-
-                                            <div class="col-lg-12 mb-15">
-                                                <div class="primary_input ">
-                                                    <label class="primary_input_label" for="">@lang('inventory.sell_date')
-                                                        <span></span> </label>
-                                                    <div class="primary_datepicker_input">
-                                                        <div class="no-gutters input-right-icon">
-                                                            <div class="col">
-                                                                <div class="">
-
-                                                                    <input
-                                                                        class="primary_input_field  primary_input_field date form-control form-control{{ $errors->has('sell_date') ? ' is-invalid' : '' }}"
-                                                                        id="sell_date" type="date" name="sell_date"
-                                                                        value="{{ old('sell_date', isset($editData) ? $editData->sell_date->format('Y-m-d') : now()->format('Y-m-d')) }}"
-                                                                        autocomplete="off">
-                                                                </div>
-                                                            </div>
-                                                            {{-- <button class="btn-date" data-id="#sell_date" type="button">
-                                                                <label for="sell_date" class="m-0 p-0">
-                                                                    <i class="ti-calendar" id="start-date-icon"></i>
-                                                                </label>
-                                                            </button> --}}
-                                                        </div>
-                                                    </div>
-                                                    <span class="text-danger">{{ $errors->first('sell_date') }}</span>
-                                                </div>
-                                            </div>
+                                            
                                             <div class="col-lg-12 mb-20">
                                                 <div class="primary_input">
                                                     <label class="primary_input_label" for="">@lang('common.description')

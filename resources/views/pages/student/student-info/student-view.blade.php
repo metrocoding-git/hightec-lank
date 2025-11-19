@@ -98,13 +98,17 @@
                                     <div class="col-lg-12">
                                         <h3>Students Personal Info</h3>
                                         <table class="table table-bordered">
-                                            <tr>
+                                            {{-- <tr>
                                                 <th>First Name</th>
                                                 <td>{{ $student->first_name ?? 'N/A' }}</td>
                                             </tr>
                                             <tr>
                                                 <th>Last Name</th>
                                                 <td>{{ $student->last_name ?? 'N/A' }}</td>
+                                            </tr> --}}
+                                            <tr>
+                                                <th>Full Name</th>
+                                                <td>{{ $student->student_name ?? 'N/A' }}</td>
                                             </tr>
                                             <tr>
                                                 <th>Date of Birth</th>
@@ -269,27 +273,40 @@
                                         <table class="table table-bordered">
                                             <thead>
                                                 <tr>
+                                                    <th>Branch Name</th>
+                                                    <th>Intake Name</th>
                                                     <th>Course Name</th>
-                                                    <th>Course Code</th>
-                                                    <th>Price</th>
-                                                    <th>Description</th>
-                                                    <th>Duration</th>
-                                                    <th>Expiration Date</th>
                                                     <th>Enrolled At</th>
+                                                    <th>Start Date</th>
+                                                    <th>Expiration Date</th>
                                                     <th>Status</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                @forelse($courses as $course)
+                                                @forelse($student->courseWithIntake as $course)
                                                     <tr>
-                                                        <td>{{ $course->name ?? 'N/A' }}</td>
-                                                        <td>{{ $course->code ?? 'N/A' }}</td>
-                                                        <td>{{ $course->price ?? 'N/A' }}</td>
-                                                        <td>{{ $course->description ?? 'N/A' }}</td>
-                                                        <td>{{ $course->duration ?? 'N/A' }}</td>
-                                                        <td>{{ $course->expiration_date ?? 'N/A' }}</td>
-                                                        <td>{{ $course->pivot->enrolled_at ? \Carbon\Carbon::parse($course->pivot->enrolled_at)->format('Y-m-d') : 'N/A' }}</td>
-                                                        <td>{{ $course->pivot->status ?? 'N/A' }}</td>
+                                                        <td>{{ $course->branch->name ?? 'N/A' }}</td>
+                                                        <td>{{ $course->intake->name ?? 'N/A' }}</td>
+                                                        <td>{{ $course->course->name ?? 'N/A' }}</td>
+                                                        <td>{{ $course->created_at ? \Carbon\Carbon::parse($course->created_at)->format('Y-m-d') : 'N/A' }}
+                                                        </td>
+                                                        <td>{{ $course->intake->start_date ? \Carbon\Carbon::parse($course->intake->start_date)->format('Y-m-d') : 'N/A' }}
+                                                        </td>
+                                                        <td>
+                                                            @php
+                                                                $start = $course->intake->start_date;
+                                                                $days = (int) $course->course->expiration_date;
+
+                                                                $expiration = $start
+                                                                    ? \Carbon\Carbon::parse($start)
+                                                                        ->addDays($days)
+                                                                        ->format('Y-m-d')
+                                                                    : 'N/A';
+                                                            @endphp
+
+                                                            {{ $expiration }}
+                                                        </td>
+                                                        <td>{{ $course->status ?? 'N/A' }}</td>
                                                     </tr>
                                                 @empty
                                                     <tr>
@@ -299,33 +316,6 @@
                                             </tbody>
                                         </table>
 
-                                        <h5>Intake Details</h5>
-                                        <table class="table table-bordered">
-                                            <thead>
-                                                <tr>
-                                                    <th>Intake Name</th>
-                                                    <th>Branch</th>
-                                                    <th>Start Date</th>
-                                                    <th>Enrolled At</th>
-                                                    <th>Status</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @forelse($intakes as $intake)
-                                                    <tr>
-                                                        <td>{{ $intake->name ?? 'N/A' }}</td>
-                                                        <td>{{ $intake->branch->name ?? 'N/A' }}</td>
-                                                        <td>{{ $intake->start_date ? \Carbon\Carbon::parse($intake->start_date)->format('Y-m-d') : 'N/A' }}</td>
-                                                        <td>{{ $intake->pivot->enrolled_at ? \Carbon\Carbon::parse($intake->pivot->enrolled_at)->format('Y-m-d') : 'N/A' }}</td>
-                                                        <td>{{ $intake->pivot->status ?? 'N/A' }}</td>
-                                                    </tr>
-                                                @empty
-                                                    <tr>
-                                                        <td colspan="5" class="text-center">N/A</td>
-                                                    </tr>
-                                                @endforelse
-                                            </tbody>
-                                        </table>
                                     </div>
                                 </div>
                             </div>
@@ -349,15 +339,18 @@
                                             <tbody>
                                                 @forelse($payments as $payment)
                                                     @php
-                                                        $dueAmount = ($payment->total_amount ?? 0) - ($payment->paid_amount ?? 0);
+                                                        $dueAmount =
+                                                            ($payment->total_amount ?? 0) -
+                                                            ($payment->paid_amount ?? 0);
                                                     @endphp
                                                     <tr>
                                                         <td>{{ $payment->invoice_number ?? 'N/A' }}</td>
                                                         <td>{{ $payment->total_amount ?? 'N/A' }}</td>
                                                         <td>{{ $payment->paid_amount ?? 'N/A' }}</td>
                                                         <td>{{ $dueAmount }}</td>
-                                                        <td>{{ $payment->created_at ? \Carbon\Carbon::parse($payment->created_at)->format('Y-m-d') : 'N/A' }}</td>
-                                                        <td>{{ $payment->payment_status ??   'N/A' }}</td>
+                                                        <td>{{ $payment->created_at ? \Carbon\Carbon::parse($payment->created_at)->format('Y-m-d') : 'N/A' }}
+                                                        </td>
+                                                        <td>{{ $payment->payment_status ?? 'N/A' }}</td>
                                                     </tr>
                                                 @empty
                                                     <tr>
@@ -487,10 +480,10 @@
         }
 
         /* .table-bordered th,
-        .table-bordered td {
-            padding: 20px;
-            font-size: 18px;
-        } */
+            .table-bordered td {
+                padding: 20px;
+                font-size: 18px;
+            } */
 
         .table-bordered td {
             opacity: 0.9;
