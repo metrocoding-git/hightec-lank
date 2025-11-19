@@ -111,13 +111,17 @@
                                                     <td>
                                                         <x-drop-down>
                                                             @if ($batch->issue_status == 'I')
-                                                                <form action="{{ route('return-item') }}" method="POST" class="m-0">
-                                                                    @csrf
-                                                                    <input type="hidden" name="id"
-                                                                        value="{{ @$batch->id }}">
-                                                                    <button type="submit"
-                                                                        class="dropdown-item">@lang('inventory.return')</button>
-                                                                </form>
+                                                                @if ($batchData['expire_status'] == 'Expired')
+                                                                    <button type="button" class="dropdown-item text-danger" disabled>Cannot Return (Expired)</button>
+                                                                @else
+                                                                    <form action="{{ route('return-item') }}" method="POST" class="m-0">
+                                                                        @csrf
+                                                                        <input type="hidden" name="id"
+                                                                            value="{{ @$batch->id }}">
+                                                                        <button type="submit"
+                                                                            class="dropdown-item">@lang('inventory.return')</button>
+                                                                    </form>
+                                                                @endif
                                                             @else
                                                                 <form action="{{ route('issue-item') }}" method="POST" class="m-0">
                                                                     @csrf
