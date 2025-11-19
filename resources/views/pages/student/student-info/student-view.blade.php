@@ -294,17 +294,28 @@
                                                         </td>
                                                         <td>
                                                             @php
-                                                                $start = $course->intake->start_date;
-                                                                $days = (int) $course->course->expiration_date;
+                                                                $intake = $course->intake ?? null;
+                                                                $courseData = $course->course ?? null;
 
-                                                                $expiration = $start
-                                                                    ? \Carbon\Carbon::parse($start)
+                                                                if (
+                                                                    $intake &&
+                                                                    $courseData &&
+                                                                    $intake->start_date &&
+                                                                    $courseData->expiration_date
+                                                                ) {
+                                                                    $start = \Carbon\Carbon::parse($intake->start_date);
+                                                                    $days = (int) $courseData->expiration_date;
+
+                                                                    $expiration = $start
                                                                         ->addDays($days)
-                                                                        ->format('Y-m-d')
-                                                                    : 'N/A';
+                                                                        ->format('Y-m-d');
+                                                                } else {
+                                                                    $expiration = 'N/A';
+                                                                }
                                                             @endphp
 
                                                             {{ $expiration }}
+
                                                         </td>
                                                         <td>{{ $course->status ?? 'N/A' }}</td>
                                                     </tr>
@@ -480,10 +491,10 @@
         }
 
         /* .table-bordered th,
-            .table-bordered td {
-                padding: 20px;
-                font-size: 18px;
-            } */
+                .table-bordered td {
+                    padding: 20px;
+                    font-size: 18px;
+                } */
 
         .table-bordered td {
             opacity: 0.9;
