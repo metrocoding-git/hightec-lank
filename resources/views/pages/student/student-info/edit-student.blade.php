@@ -136,10 +136,12 @@
                                                                 </div>
 
                                                                 <div class="col-lg-6 mt-4">
-                                                                    <div class="primary_input">
+                                                                    <div class="primary_input ">
                                                                         <label class="primary_input_label"
                                                                             for="">@lang('student.admission_number')
+
                                                                             <span class="text-danger"> *</span>
+
                                                                         </label>
                                                                         <input
                                                                             class="primary_input_field  form-control{{ $errors->has('admission_number') ? ' is-invalid' : '' }}"
@@ -147,9 +149,12 @@
                                                                             name="admission_number"
                                                                             value="{{ old('admission_number', $student->admission_number) }}"
                                                                             readonly>
+
+
                                                                         @if ($errors->has('admission_number'))
-                                                                            <span
-                                                                                class="text-danger">{{ $errors->first('admission_number') }}</span>
+                                                                            <span class="text-danger">
+                                                                                {{ $errors->first('admission_number') }}
+                                                                            </span>
                                                                         @endif
                                                                     </div>
                                                                 </div>
@@ -158,23 +163,31 @@
                                                                     <div class="primary_input mb-15">
                                                                         <label class="primary_input_label"
                                                                             for="admission_date">@lang('student.admission_date')
+
                                                                             <span class="text-danger"> *</span>
+
                                                                         </label>
-                                                                        <div class="primary_datepicker_input">
+                                                                        <div class="">
                                                                             <div class="no-gutters input-right-icon">
                                                                                 <div class="col">
-                                                                                    <input
-                                                                                        class="primary_input_field primary_input_field date form-control"
-                                                                                        id="admission_date" type="date"
-                                                                                        name="admission_date"
-                                                                                        value="{{ old('admission_date', $student->admission_date) }}"
-                                                                                        autocomplete="off" readonly>
+                                                                                    <div class="">
+                                                                                        <input
+                                                                                            class="primary_input_field  form-control"
+                                                                                            id="admission_date"
+                                                                                            type="date"
+                                                                                            name="admission_date"
+                                                                                            value="{{ old('admission_date', $student->admission_date) ?: \Carbon\Carbon::today()->format('Y-m-d') }}"
+                                                                                            autocomplete="off" readonly>
+                                                                                    </div>
                                                                                 </div>
                                                                                 <button class="btn-date"
+                                                                                    {{-- style="top: 55% !important;" --}}
                                                                                     data-id="#admission_date"
                                                                                     type="button">
                                                                                     <label class="m-0 p-0"
                                                                                         for="admission_date">
+                                                                                        {{-- <i class="ti-calendar"
+                                                                                            id="start-date-icon"></i> --}}
                                                                                     </label>
                                                                                 </button>
                                                                             </div>
@@ -186,152 +199,31 @@
 
                                                                 <div class="col-lg-6 mt-4">
                                                                     <div class="primary_input">
-                                                                        <label class="primary_input_label"
-                                                                            for="student_category_id">
-                                                                            @lang('student.category') <span class="text-danger">
-                                                                                *</span>
-                                                                        </label>
-                                                                        <select
-                                                                            class="primary_select form-control{{ $errors->has('student_category_id') ? ' is-invalid' : '' }}"
-                                                                            name="student_category_id"
-                                                                            id="student_category_id">
-                                                                            <option value="">Select Student Category
-                                                                            </option>
-                                                                            @foreach ($categories as $category)
-                                                                                <option value="{{ $category->id }}"
-                                                                                    @if (old('student_category_id', $student->student_category_id) == $category->id) selected @endif>
-                                                                                    {{ $category->category_name }}
-                                                                                </option>
-                                                                            @endforeach
-                                                                        </select>
-                                                                        @if ($errors->has('student_category_id'))
-                                                                            <span
-                                                                                class="text-danger">{{ $errors->first('student_category_id') }}</span>
-                                                                        @endif
-                                                                    </div>
-                                                                </div>
-                                                                {{-- === ===== --}}
-                                                                <div class="">
-                                                                    <div class="form-section">
-                                                                        <div class="row">
-                                                                            <div class="col-lg-12">
-                                                                                <div class="main-title">
-                                                                                    <h4 class="stu-sub-head">
-                                                                                        @lang('student.contact_info')</h4>
-                                                                                </div>
-                                                                            </div>
+                                                                        <div class="primary_input">
+                                                                            <label class="primary_input_label"
+                                                                                for="student_category_id">
+                                                                                @lang('student.category') <span
+                                                                                    class="text-danger"> *</span>
+                                                                            </label>
+                                                                            <select
+                                                                                class="primary_select form-control{{ $errors->has('student_category_id') ? ' is-invalid' : '' }}"
+                                                                                name="student_category_id"
+                                                                                id="student_category_id">
+                                                                                <option value="">Select Student
+                                                                                    Category</option>
+                                                                                @foreach ($categories as $category)
+                                                                                    <option value="{{ $category->id }}"
+                                                                                        @if (old('student_category_id', $student->student_category_id) == $category->id) selected @endif>
+                                                                                        {{ $category->category_name }}
+                                                                                    </option>
+                                                                                @endforeach
+                                                                            </select>
 
-                                                                            <div class="col-lg-6 mt-4">
-                                                                                <div class="primary_input ">
-                                                                                    <label class="primary_input_label"
-                                                                                        for="">@lang('common.email_address')
-                                                                                        <span class="text-danger"> </span>
-                                                                                    </label>
-                                                                                    <input oninput="emailCheck(this)"
-                                                                                        class="primary_input_field email_address form-control{{ $errors->has('email_address') ? ' is-invalid' : '' }}"
-                                                                                        id="email_address" type="text"
-                                                                                        name="email_address"
-                                                                                        value="{{ old('email_address', $student->email_address) }}">
-                                                                                    @if ($errors->has('email_address'))
-                                                                                        <span
-                                                                                            class="text-danger">{{ $errors->first('email_address') }}</span>
-                                                                                    @endif
-                                                                                </div>
-                                                                            </div>
-                                                                            <div class="col-lg-6 mt-4">
-                                                                                <div class="primary_input">
-                                                                                    <label class="primary_input_label"
-                                                                                        for="">@lang('student.permanent_address')
-                                                                                        {{-- <span class="text-danger">*</span> --}}
-                                                                                    </label>
-                                                                                    <textarea class="primary_input_field form-control{{ $errors->has('permanent_address') ? ' is-invalid' : '' }}"
-                                                                                        cols="0" rows="3" name="permanent_address" id="permanent_address">{{ old('permanent_address', $student->permanent_address) }}</textarea>
-                                                                                    @if ($errors->has('permanent_address'))
-                                                                                        <span
-                                                                                            class="text-danger">{{ $errors->first('permanent_address') }}</span>
-                                                                                    @endif
-                                                                                </div>
-                                                                            </div>
-
-                                                                            <div class="col-lg-6 mt-4">
-                                                                                <div class="primary_input ">
-                                                                                    <label class="primary_input_label"
-                                                                                        for="">@lang('student.phone_number') 1
-                                                                                        <span class="text-danger"> *</span>
-                                                                                    </label>
-                                                                                    <input oninput="phoneCheck(this)"
-                                                                                        class="primary_input_field phone_number form-control{{ $errors->has('phone_number') ? ' is-invalid' : '' }}"
-                                                                                        type="tel" name="phone_number"
-                                                                                        id="phone_number"
-                                                                                        value="{{ old('phone_number', $student->phone_number) }}">
-                                                                                    @if ($errors->has('phone_number'))
-                                                                                        <span
-                                                                                            class="text-danger">{{ $errors->first('phone_number') }}</span>
-                                                                                    @endif
-                                                                                </div>
-                                                                            </div>
-
-                                                                            {{-- Extra Phone Number --}}
-                                                                            <div class="col-lg-6 mt-4">
-                                                                                <div class="primary_input ">
-                                                                                    <label class="primary_input_label"
-                                                                                        for="">Phone Number 2
-                                                                                        (optional)
-                                                                                    </label>
-                                                                                    <input oninput="phoneCheck(this)"
-                                                                                        class="primary_input_field phone_number form-control{{ $errors->has('phone_number_2') ? ' is-invalid' : '' }}"
-                                                                                        type="tel"
-                                                                                        name="phone_number_2"
-                                                                                        id="phone_number_2"
-                                                                                        value="{{ old('phone_number_2', $student->phone_number_2) }}">
-                                                                                    @if ($errors->has('phone_number_2'))
-                                                                                        <span
-                                                                                            class="text-danger">{{ $errors->first('phone_number_2') }}</span>
-                                                                                    @endif
-                                                                                </div>
-                                                                            </div>
-
-                                                                            <div class="row mb-40 d-none"
-                                                                                id="exitStudent">
-                                                                                <div class="col-lg-12">
-                                                                                    <input type="checkbox" id="edit_info"
-                                                                                        value="yes"
-                                                                                        class="common-checkbox"
-                                                                                        name="edit_info">
-                                                                                    <label for="edit_info"
-                                                                                        class="text-danger">@lang('student.student_already_exit_this_phone_number/email_are_you_to_edit_student_parent_info')</label>
-                                                                                </div>
-                                                                            </div>
-
-                                                                            {{-- <div class="col-lg-12">
-                                                                    <div class="row mt-40">
-                                                                        <div class="col-lg-12">
-                                                                            <div class="main-title">
-                                                                                <h4 class="stu-sub-head">@lang('student.student_address_info')
-                                                                                </h4>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <div class="row">
-                                                                        <div class="col-lg-6 mt-4" hidden>
-                                                                            <div class="primary_input ">
-                                                                                <label class="primary_input_label"
-                                                                                    for="">@lang('student.current_address')
-                                                                                    <span class="text-danger">*</span>
-                                                                                </label>
-                                                                                <textarea class="primary_input_field form-control{{ $errors->has('current_address') ? ' is-invalid' : '' }}"
-                                                                                    cols="0" rows="3" name="current_address" id="current_address">{{ old('current_address', $student->current_address) }}</textarea>
-                                                                                @if ($errors->has('current_address'))
-                                                                                    <span
-                                                                                        class="text-danger">{{ $errors->first('current_address') }}</span>
-                                                                                @endif
-                                                                            </div>
-                                                                        </div>
-
-                                                                        
-                                                                    </div>
-                                                                </div> --}}
+                                                                            @if ($errors->has('student_category_id'))
+                                                                                <span class="text-danger">
+                                                                                    {{ $errors->first('student_category_id') }}
+                                                                                </span>
+                                                                            @endif
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -339,12 +231,188 @@
 
 
                                                             </div>
+                                                            {{-- ===================contact info ============================ --}}
+                                                            {{-- <div class="">
+                                                                <div class="form-section"> --}}
+                                                            <div class="row">
+                                                                <div class="col-lg-12">
+                                                                    <div class="main-title">
+                                                                        <h4 class="stu-sub-head">@lang('student.contact_info')
+                                                                        </h4>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-lg-6 mt-4">
+                                                                    <div class="primary_input ">
+                                                                        <label class="primary_input_label"
+                                                                            for="">@lang('common.email_address')
+
+                                                                            <span class="text-danger"> </span>
+
+                                                                        </label>
+                                                                        <input oninput="emailCheck(this)"
+                                                                            class="primary_input_field email_address form-control{{ $errors->has('email_address') ? ' is-invalid' : '' }}"
+                                                                            id="email_address" type="text"
+                                                                            name="email_address"
+                                                                            value="{{ old('email_address', $student->email_address) }}">
+
+
+                                                                        @if ($errors->has('email_address'))
+                                                                            <span class="text-danger">
+                                                                                {{ $errors->first('email_address') }}
+                                                                            </span>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-lg-6 mt-4">
+                                                                    <div class="primary_input">
+                                                                        <label class="primary_input_label"
+                                                                            for="">@lang('student.permanent_address')
+
+                                                                            {{-- <span class="text-danger">
+                                                                                                *</span> --}}
+
+                                                                        </label>
+                                                                        <textarea class="primary_input_field form-control{{ $errors->has('permanent_address') ? ' is-invalid' : '' }}"
+                                                                            cols="0" rows="3" name="permanent_address" id="permanent_address">{{ old('permanent_address', $student->permanent_address) }}</textarea>
+
+
+                                                                        @if ($errors->has('permanent_address'))
+                                                                            <span class="text-danger">
+                                                                                {{ $errors->first('permanent_address') }}
+                                                                            </span>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-lg-6 mt-4">
+                                                                    <div class="primary_input">
+                                                                        <label class="primary_input_label" for="district_id">
+                                                                            District
+                                                                        </label>
+                                                                        <select
+                                                                            class="primary_select form-control{{ $errors->has('district_id') ? ' is-invalid' : '' }}"
+                                                                            name="district_id" id="district_id">
+                                                                            <option value="">Select District</option>
+                                                                            @foreach ($districts as $district)
+                                                                                <option value="{{ $district->id }}"
+                                                                                    @if (old('district_id', $student->district_id) == $district->id) selected @endif>
+                                                                                    {{ $district->name }}
+                                                                                </option>
+                                                                            @endforeach
+                                                                        </select>
+
+                                                                        @error('district_id')
+                                                                            <span class="text-danger">{{ $message }}</span>
+                                                                        @enderror
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-lg-6 mt-4">
+                                                                    <div class="primary_input ">
+                                                                        <label class="primary_input_label"
+                                                                            for="">@lang('student.phone_number') 1
+
+                                                                            <span class="text-danger"> *</span>
+
+                                                                        </label>
+                                                                        <input oninput="phoneCheck(this)"
+                                                                            class="primary_input_field phone_number form-control{{ $errors->has('phone_number') ? ' is-invalid' : '' }}"
+                                                                            type="tel" name="phone_number"
+                                                                            id="phone_number"
+                                                                            value="{{ old('phone_number', $student->phone_number) }}">
+
+                                                                        @if ($errors->has('phone_number'))
+                                                                            <span class="text-danger">
+                                                                                {{ $errors->first('phone_number') }}
+                                                                            </span>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+
+                                                                {{-- Extra Phone Number --}}
+                                                                <div class="col-lg-6 mt-4">
+                                                                    <div class="primary_input ">
+                                                                        <label class="primary_input_label"
+                                                                            for="">Phone Number 2
+                                                                            (optional)
+                                                                        </label>
+                                                                        <input oninput="phoneCheck(this)"
+                                                                            class="primary_input_field phone_number form-control{{ $errors->has('phone_number_2') ? ' is-invalid' : '' }}"
+                                                                            type="tel" name="phone_number_2"
+                                                                            id="phone_number_2"
+                                                                            value="{{ old('phone_number_2', $student->phone_number_2) }}">
+                                                                        @if ($errors->has('phone_number_2'))
+                                                                            <span class="text-danger">
+                                                                                {{ $errors->first('phone_number_2') }}
+                                                                            </span>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+
+
+                                                                <div class="row mb-40 d-none" id="exitStudent">
+                                                                    <div class="col-lg-12">
+                                                                        <input type="checkbox" id="edit_info"
+                                                                            value="yes" class="common-checkbox"
+                                                                            name="edit_info">
+                                                                        <label for="edit_info"
+                                                                            class="text-danger">@lang('student.student_already_exit_this_phone_number/email_are_you_to_edit_student_parent_info')</label>
+                                                                    </div>
+                                                                </div>
+
+                                                                {{-- <div class="col-lg-12">
+
+
+                                                                            <div class="row mt-40">
+                                                                                <div class="col-lg-12">
+                                                                                    <div class="main-title">
+                                                                                        <h4 class="stu-sub-head">
+                                                                                            @lang('student.student_address_info')
+                                                                                        </h4>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <div class="row">
+
+
+                                                                                <div class="col-lg-6 mt-4" hidden>
+                                                                                    <div class="primary_input ">
+                                                                                        <label class="primary_input_label"
+                                                                                            for="">@lang('student.current_address')
+
+                                                                                            <span class="text-danger">
+                                                                                                *</span>
+
+                                                                                        </label>
+                                                                                        <textarea class="primary_input_field form-control{{ $errors->has('current_address') ? ' is-invalid' : '' }}"
+                                                                                            cols="0" rows="3" name="current_address" id="current_address">{{ old('current_address', $student->current_address) }}</textarea>
+
+
+                                                                                        @if ($errors->has('current_address'))
+                                                                                            <span class="text-danger">
+                                                                                                {{ $errors->first('current_address') }}
+                                                                                            </span>
+                                                                                        @endif
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                
+
+                                                                            </div>
+
+                                                                        </div> --}}
+                                                            </div>
+                                                            {{-- </div>
+                                                            </div> --}}
+
 
                                                         </div>
+
                                                     </div>
 
-
-                                                    {{-- ==================personal info================== --}}
+                                                    {{-- ==============personal info ============= --}}
                                                     <div class="col-lg-6">
                                                         <div class="form-section">
                                                             <div class="row">
@@ -354,36 +422,24 @@
                                                                     </div>
                                                                 </div>
 
-                                                                <div class="col-lg-6 mt-4">
+                                                                <div class="col-lg-12 mt-4">
                                                                     <div class="primary_input ">
                                                                         <label class="primary_input_label"
-                                                                            for="">@lang('student.first_name')
-                                                                            <span class="text-danger"> *</span>
-                                                                        </label>
-                                                                        <input
-                                                                            class="primary_input_field form-control{{ $errors->has('first_name') ? ' is-invalid' : '' }}"
-                                                                            type="text" name="first_name"
-                                                                            value="{{ old('first_name', $student->first_name) }}">
-                                                                        @if ($errors->has('first_name'))
-                                                                            <span
-                                                                                class="text-danger">{{ $errors->first('first_name') }}</span>
-                                                                        @endif
-                                                                    </div>
-                                                                </div>
+                                                                            for="">Full Name
 
-                                                                <div class="col-lg-6 mt-4">
-                                                                    <div class="primary_input ">
-                                                                        <label class="primary_input_label"
-                                                                            for="">@lang('student.last_name')
                                                                             <span class="text-danger"> *</span>
+
                                                                         </label>
                                                                         <input
-                                                                            class="primary_input_field form-control{{ $errors->has('last_name') ? ' is-invalid' : '' }}"
-                                                                            type="text" name="last_name"
-                                                                            value="{{ old('last_name', $student->last_name) }}">
-                                                                        @if ($errors->has('last_name'))
-                                                                            <span
-                                                                                class="text-danger">{{ $errors->first('last_name') }}</span>
+                                                                            class="primary_input_field form-control{{ $errors->has('student_name') ? ' is-invalid' : '' }}"
+                                                                            type="text" name="student_name"
+                                                                            value="{{ old('student_name', $student->student_name) }}">
+
+
+                                                                        @if ($errors->has('student_name'))
+                                                                            <span class="text-danger">
+                                                                                {{ $errors->first('student_name') }}
+                                                                            </span>
                                                                         @endif
                                                                     </div>
                                                                 </div>
@@ -392,11 +448,14 @@
                                                                     <div class="primary_input ">
                                                                         <label class="primary_input_label"
                                                                             for="">@lang('common.gender')
+
                                                                             <span class="text-danger"> *</span>
+
                                                                         </label>
                                                                         <select
                                                                             class="primary_select form-control{{ $errors->has('gender_id') ? ' is-invalid' : '' }}"
                                                                             name="gender_id">
+                                                                            <option value="">Select Gender</option>
                                                                             @foreach ($genders as $gender)
                                                                                 <option value="{{ $gender->id }}"
                                                                                     {{ old('gender_id', $student->gender_id) == $gender->id ? 'selected' : '' }}>
@@ -404,12 +463,15 @@
                                                                                 </option>
                                                                             @endforeach
                                                                         </select>
+
                                                                         @if ($errors->has('gender_id'))
-                                                                            <span
-                                                                                class="text-danger">{{ $errors->first('gender_id') }}</span>
+                                                                            <span class="text-danger">
+                                                                                {{ $errors->first('gender_id') }}
+                                                                            </span>
                                                                         @endif
                                                                     </div>
                                                                 </div>
+
 
                                                                 <div class="col-lg-6 mt-4">
                                                                     <div class="primary_input">
@@ -418,21 +480,27 @@
                                                                             {{ __('common.date_of_birth') }}
                                                                             <span class="text-danger">*</span>
                                                                         </label>
-                                                                        <div class="primary_datepicker_input">
+                                                                        <div class="">
                                                                             <div class="no-gutters input-right-icon">
                                                                                 <div class="col">
-                                                                                    <input
-                                                                                        class="primary_input_field date form-control{{ $errors->has('date_of_birth') ? ' is-invalid' : '' }}"
-                                                                                        id="date_of_birth" type="date"
-                                                                                        name="date_of_birth"
-                                                                                        value="{{ old('date_of_birth', $student->date_of_birth) }}"
-                                                                                        autocomplete="off" >
+                                                                                    <div class="">
+                                                                                        <input
+                                                                                            class="primary_input_field date form-control{{ $errors->has('date_of_birth') ? ' is-invalid' : '' }}"
+                                                                                            id="date_of_birth"
+                                                                                            type="date"
+                                                                                            name="date_of_birth"
+                                                                                            value="{{ old('date_of_birth', $student->date_of_birth) }}"
+                                                                                            autocomplete="off">
+                                                                                    </div>
                                                                                 </div>
                                                                                 <button class="btn-date"
+                                                                                    {{-- style="top: 55% !important;" --}}
                                                                                     data-id="#date_of_birth"
                                                                                     type="button">
                                                                                     <label class="m-0 p-0"
                                                                                         for="date_of_birth">
+                                                                                        {{-- <i class="ti-calendar"
+                                                                                            id="start-date-icon"></i> --}}
                                                                                     </label>
                                                                                 </button>
                                                                             </div>
@@ -448,11 +516,9 @@
                                                                         <label class="primary_input_label"
                                                                             for="age_display">Age</label>
                                                                         <input class="primary_input_field form-control"
-                                                                            type="text" id="age_display" readonly
-                                                                            value="{{ $student->age_display ?? '' }}">
+                                                                            type="text" id="age_display" readonly>
                                                                         <input type="hidden" name="stu_age"
-                                                                            id="stu_age_hidden"
-                                                                            value="{{ $student->stu_age ?? '' }}">
+                                                                            id="stu_age_hidden">
                                                                     </div>
                                                                 </div>
 
@@ -464,15 +530,17 @@
                                                                             <input
                                                                                 class="primary_input_field form-control{{ $errors->has('photo') ? ' is-invalid' : '' }}"
                                                                                 type="text" id="placeholderPhoto"
-                                                                                placeholder="@lang('common.student_photo')"
+                                                                                placeholder="@lang('common.student_photo') "
                                                                                 readonly="">
                                                                             <button class="" type="button">
                                                                                 <label class="primary-btn small fix-gr-bg"
                                                                                     for="addStudentImage">{{ __('common.browse') }}</label>
+
                                                                                 <input type="file" class="d-none"
                                                                                     name="photo" id="addStudentImage"
                                                                                     accept="image/*">
                                                                             </button>
+
                                                                         </div>
                                                                         <!-- Image preview container -->
                                                                         <div id="imagePreviewContainer" class="mt-2"
@@ -483,8 +551,9 @@
                                                                         </div>
                                                                     </div>
                                                                     @if ($errors->has('photo'))
-                                                                        <span
-                                                                            class="text-danger">{{ $errors->first('photo') }}</span>
+                                                                        <span class="text-danger">
+                                                                            {{ $errors->first('photo') }}
+                                                                        </span>
                                                                     @endif
                                                                 </div>
 
@@ -521,15 +590,13 @@
 
                                                                 <div class="col-md-12 mt-15">
                                                                     @if ($student->photo)
-                                                                        <img class="previewImageSize"
-                                                                            src="{{ asset('storage/' . $student->photo) }}"
+                                                                        <img class="previewImageSize" src="{{ asset('storage/' . $student->photo) }}"
                                                                             alt="Student Photo" id="studentImageShow"
-                                                                            height="100" width="100">
+                                                                            height="100%" width="100%">
                                                                     @else
-                                                                        <img class="d-none previewImageSize"
-                                                                            src="" alt=""
-                                                                            id="studentImageShow" height="100"
-                                                                            width="100">
+                                                                        <img class="d-none previewImageSize" src=""
+                                                                            alt="" id="studentImageShow"
+                                                                            height="100%" width="100%">
                                                                     @endif
                                                                 </div>
                                                             </div>

@@ -57,6 +57,7 @@ class ItemIssueController extends Controller
             // Add expiration status to each batch
             $batchesWithCourseStatus = $issuedBatches->map(function ($batch) {
                 $course = $batch->course;
+                 $intake = $batch->intake;
                 if ($course) {
                     $startDate = $course->created_at;
                     $expirationDate = $course->expiration_date;
@@ -79,6 +80,7 @@ class ItemIssueController extends Controller
                 return [
                     'batch' => $batch,
                     'course_name' => $course ? $course->name : 'N/A',
+                    'intake_name' => $intake ? $intake->name : 'N/A',
                     'expire_status' => $expireStatus,
                     'expire_class' => $expireClass,
                 ];

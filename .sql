@@ -61,3 +61,21 @@ ADD CONSTRAINT `student_courses_user_id_foreign`
     ON DELETE SET NULL;
 
 
+-- 11/19
+
+    -- make district and after run db seeder
+
+CREATE TABLE `districts` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(255) NOT NULL,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+);
+
+php artisan db:seed --class=DistrictsSeeder
+
+ALTER TABLE `students`
+ADD `district_id` BIGINT UNSIGNED NULL;
+
+
