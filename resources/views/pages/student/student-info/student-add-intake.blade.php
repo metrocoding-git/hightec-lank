@@ -389,7 +389,7 @@
                             </div> --}}
 
                             <!-- Status -->
-                            <div class="col-lg-6 mt-4" hidden>
+                            {{-- <div class="col-lg-6 mt-4" hidden>
                                 <div class="primary_input">
                                     <label class="primary_input_label" for="modal_status">
                                         Status <span class="text-danger">*</span>
@@ -407,7 +407,7 @@
                                         <span class="text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
-                            </div>
+                            </div> --}}
 
                             <!-- Notes -->
                             <div class="col-lg-12 mt-4">

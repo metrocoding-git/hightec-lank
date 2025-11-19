@@ -493,7 +493,6 @@ class AddStudentController extends Controller
             'intake_id' => 'required|exists:intakes,id',
             'course_ids' => 'required|array',
             'course_ids.*' => 'exists:courses,id',
-            'status' => 'required',
             'notes' => 'nullable|string'
         ]);
 
@@ -519,7 +518,7 @@ class AddStudentController extends Controller
                     'branch_id' => $validatedData['branch_id'],
                     'course_id' => $courseId,
                     'intake_id' =>  $validatedData['intake_id'],
-                    'status' => $validatedData['status'],
+                    'status' => 'pending',
                     'notes' => $validatedData['notes'],
                     'user_id' => Auth::id(),
                     'created_at' => now(),
