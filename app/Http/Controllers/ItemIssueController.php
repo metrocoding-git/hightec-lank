@@ -59,7 +59,7 @@ class ItemIssueController extends Controller
                 $course = $batch->course;
                  $intake = $batch->intake;
                 if ($course) {
-                    $startDate = $course->created_at;
+                    $startDate = Carbon::parse($intake->start_date);
                     $expirationDate = $course->expiration_date;
                     $today = now();
 
