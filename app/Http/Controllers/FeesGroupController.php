@@ -65,7 +65,7 @@ class FeesGroupController extends Controller
         $branches = Auth::user()->branches;
         $students = \App\Models\Student::select(
             'students.id',
-            DB::raw("CONCAT(students.student_name) AS name"),
+            DB::raw("CONCAT(students.student_name) AS student_name"),
             DB::raw("
                 CASE 
                     WHEN EXISTS (
