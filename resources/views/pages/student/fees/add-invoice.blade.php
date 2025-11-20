@@ -684,7 +684,7 @@
 
                             // Redirect with flash message in the URL (encoded)
                             const message = encodeURIComponent('successfully!');
-                            window.location.href = '{{ route('fees.add-invoice') }}' +
+                            window.location.href = '{{ route('student.add-intake-with-courses.index') }}' +
                                 '?message-success=' + message;
                         }
                     },
