@@ -31,7 +31,7 @@ class AddStudentController extends Controller
         // Generate next admission number
         $nextAdmissionNumber = $this->generateNextAdmissionNumber();
 
-        return view('pages.student.student-info.add-student', compact('branches',  'genders', 'categories', 'bloodGroups', 'intakes', 'nextAdmissionNumber','districts'));
+        return view('pages.student.student-info.add-student', compact('branches',  'genders', 'categories', 'bloodGroups', 'intakes', 'nextAdmissionNumber', 'districts'));
     }
 
     public function store(Request $request)
@@ -102,33 +102,34 @@ class AddStudentController extends Controller
         $student = Student::create($validatedData);
 
         // ✅ Automatically call FeeInvoiceController@store to create invoice
-        $feeInvoiceController = new InvoiceController();
-        $invoiceRequest = new Request([
-            'branch_id' => $request->branch_id,
-            'student_id' => $student->id, // newly created student
-            'create_date' => Carbon::now()->format('m/d/Y'),
-            'due_date' => Carbon::now()->addDays(30)->format('m/d/Y'),
-            'fee_type_id' => [1],
-            'price' => [1 => 1000],
-            'paidPrice' => [1 => 1000],
-            'payment_method' => 'Cash',
-        ]);
+        // $feeInvoiceController = new InvoiceController();
+        // $invoiceRequest = new Request([
+        //     'branch_id' => $request->branch_id,
+        //     'student_id' => $student->id, // newly created student
+        //     'create_date' => Carbon::now()->format('m/d/Y'),
+        //     'due_date' => Carbon::now()->addDays(30)->format('m/d/Y'),
+        //     'fee_type_id' => [1],
+        //     'price' => [1 => 1000],
+        //     'paidPrice' => [1 => 1000],
+        //     'payment_method' => 'Cash',
+        // ]);
 
-        $invoiceResponse = $feeInvoiceController->store($invoiceRequest);
+        // $invoiceResponse = $feeInvoiceController->store($invoiceRequest);
 
-        // Optional: check response
-        if ($invoiceResponse->getData()->success) {
-            $invoiceId = $invoiceResponse->getData()->invoice_id;
+        // // Optional: check response
+        // if ($invoiceResponse->getData()->success) {
+        //     $invoiceId = $invoiceResponse->getData()->invoice_id;
 
-            // Generate URLs
-            $redirectUrl = route('student.add-intake-with-courses.index');
+        //     // Generate URLs
+        //     $redirectUrl = route('student.add-intake-with-courses.index');
 
-            // Return the small "open and redirect" page
-            return view('pages.student.fees.open-and-redirect', compact('redirectUrl', 'invoiceId'));
-        } else {
-            return redirect()->route('student.add-intake-with-courses.index')
-                ->with('error', 'Student created, but failed to create invoice.');
-        }
+        //     // Return the small "open and redirect" page
+        //     return view('pages.student.fees.open-and-redirect', compact('redirectUrl', 'invoiceId'));
+        // } else {
+        //     return redirect()->route('student.add-intake-with-courses.index')
+        //         ->with('error', 'Student created, but failed to create invoice.');
+        // }
+        return redirect()->route('fees.add-invoice')->with('success', 'Student add successfully');
     }
 
 

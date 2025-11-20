@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\FeesGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class FeesGroupController extends Controller
 {
@@ -62,7 +63,22 @@ class FeesGroupController extends Controller
     public function coursePaidView()
     {
         $branches = Auth::user()->branches;
-        $students = \App\Models\Student::all();
+        $students = \App\Models\Student::select(
+            'students.id',
+            DB::raw("CONCAT(students.student_name) AS student_name"),
+            DB::raw("
+                CASE 
+                    WHEN EXISTS (
+                        SELECT 1 FROM fee_invoices fi
+                        INNER JOIN invoice_items ii ON ii.invoice_id = fi.id
+                        WHERE fi.student_id = students.id
+                        AND ii.fee_type_id = 1
+                    ) THEN 1 
+                    ELSE 0 
+                END AS is_admission
+            ")
+        )
+        ->get();        
         $courses = []; // Empty for dynamic loading
         return view('pages.student.fees.course-paid', compact('branches', 'students', 'courses'));
     }

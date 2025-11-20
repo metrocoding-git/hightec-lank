@@ -242,9 +242,9 @@
                                     </div>
                                 </div>
                             </div>
-                            </div>
                         </div>
-                    </div> <!-- /.row -->
+                    </div>
+                </div> <!-- /.row -->
             </form>
         </div>
     </section>
@@ -293,6 +293,26 @@
                 if (studentId) {
                     $('#selectCourseLoader').show();
                     $('.allCourseDetails').empty();
+
+
+
+                    let allStudents = @json($students);
+                    let selectedStudent = allStudents.find(s => s.id == studentId);
+
+                    // ❌ If admission NOT paid → Stop, show alert, reset dropdown
+                    if (selectedStudent && selectedStudent.is_admission == 0) {
+                        alert("This student has not paid the admission fee.");
+                        $(this).val(""); // reset student dropdown
+                        $('#student_id').niceSelect('update');
+                        return;
+                    }
+
+                    // ✔ If admission paid → Load courses
+                    $('#selectCourseLoader').show();
+                    $('.allCourseDetails').empty();
+                    addedCourseId = null;
+
+
                     addedCourseId = null;
                     $.ajax({
                         url: '{{ route('get-courses-by-student', ':studentId') }}'.replace(
@@ -339,7 +359,8 @@
                     addedCourseId = null;
                     $('#paymentHistoryTable tbody').empty();
                     $('#intake_details_section').hide(); // Hide intake table
-                    $('.allCourseDetails tr').find('.intake_name_cell').text('N/A'); // Clear intake name in course table
+                    $('.allCourseDetails tr').find('.intake_name_cell').text(
+                    'N/A'); // Clear intake name in course table
                     return;
                 }
 
@@ -396,19 +417,22 @@
 
                     // Fetch intakes for the selected course
                     $.ajax({
-                        url: '{{ route('fees.get-intakes-by-course', ':courseId') }}'.replace(':courseId', courseId),
+                        url: '{{ route('fees.get-intakes-by-course', ':courseId') }}'.replace(
+                            ':courseId', courseId),
                         type: 'GET',
                         success: function(data) {
                             let intakeTableBody = $('#intakeTableBody');
                             intakeTableBody.empty();
                             if (data.success && data.intakes.length > 0) {
                                 data.intakes.forEach(function(intake) {
-                                    intakeTableBody.append(`<tr><td>${intake.name}</td></tr>`);
+                                    intakeTableBody.append(
+                                        `<tr><td>${intake.name}</td></tr>`);
                                 });
                                 $('#intake_details_section').show();
 
                                 // Update the intake_name_cell in the allCourseDetails table
-                                $('.allCourseDetails tr').find('.intake_name_cell').text(data.intakes[0].name);
+                                $('.allCourseDetails tr').find('.intake_name_cell').text(data
+                                    .intakes[0].name);
                             } else {
                                 $('#intake_details_section').hide();
                                 $('.allCourseDetails tr').find('.intake_name_cell').text('N/A');
