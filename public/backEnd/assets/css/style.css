@@ -4000,7 +4000,7 @@ table.dataTable thead .sorting_desc::after {
   border-radius: 10px;
   position: absolute;
   right: 0;
-  width: 350px;
+  width: 150px;
   transform: translateY(30px) translateX(20px);
   opacity: 0;
   visibility: hidden;

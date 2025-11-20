@@ -1157,7 +1157,7 @@ table.dataTable.dtr-inline.collapsed > tbody > tr.parent > th:first-child:before
 
 @media (max-width: 420px) {
   html[dir=rtl] .Menu_NOtification_Wrap.active {
-    max-width: 300px;
+    max-width: 100px;
     transform: translateY(16px) translateX(-50%) !important;
     position: fixed;
     left: 50%;
@@ -1257,7 +1257,7 @@ html[dir=rtl] .profile_info .profile_info_iner {
   }
 
   .Menu_NOtification_Wrap.active {
-    max-width: 300px;
+    max-width: 100px;
     transform: translateY(16px) translateX(-50%) !important;
     position: fixed;
     left: 50%;

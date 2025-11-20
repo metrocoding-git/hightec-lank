@@ -9852,12 +9852,12 @@ table.dataTable thead .sorting_desc::after {
 
 /* line 168, G:/laragon/www/CRM_frontend/Admin_crm/public/frontend/scss/_common_grid_style.scss */
 .Menu_NOtification_Wrap {
-    background: #fff;
+    background: #f7f9fae6;
     box-shadow: 0px 10px 15px rgba(6, 0, 8, 0.22);
     border-radius: 10px;
     position: absolute;
     right: 0;
-    width: 350px;
+    width: 150px;
     transform: translateY(30px) translateX(20px);
     opacity: 0;
     visibility: hidden;
@@ -9946,7 +9946,7 @@ table.dataTable thead .sorting_desc::after {
 
 /* line 236, G:/laragon/www/CRM_frontend/Admin_crm/public/frontend/scss/_common_grid_style.scss */
 .Menu_NOtification_Wrap .nofity_footer {
-    padding: 15px 20px;
+    padding: 5px 5px;
 }
 
 /* line 239, G:/laragon/www/CRM_frontend/Admin_crm/public/frontend/scss/_common_grid_style.scss */

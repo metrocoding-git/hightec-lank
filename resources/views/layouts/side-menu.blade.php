@@ -15,7 +15,7 @@
             background: none;
             border: none;
             color: #a0a0a0; /* Adjust to match other menu item colors */
-            padding: 10px 15px;
+            /* padding: 10px 15px; */
             width: 100%;
             text-align: left;
             display: flex;
@@ -619,7 +619,7 @@
         {{-- ================== --}}
 
         {{-- Logout Button --}}
-        <li>
+        {{-- <li>
             <form action="{{ route('logout') }}" method="POST" id="logout-form" >
                 @csrf
                 <button type="submit" class="dropdown-item ai-icon" style="background-color: rgb(116, 46, 46)">
@@ -631,7 +631,7 @@
                     </div>
                 </button>
             </form>
-        </li>
+        </li> --}}
         {{-- ================== --}}
 
     </ul>

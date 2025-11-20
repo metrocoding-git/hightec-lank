@@ -57,7 +57,7 @@
 <div class="container-fluid no-gutters" id="main-nav-for-chat">
     <div class="row">
         <div class="col-lg-12 p-0">
-            <div class="header_iner d-flex justify-content-between align-items-center">
+            <div class="header_iner d-flex justify-content-end align-items-center">
                 <div class="small_logo_crm d-lg-none">
                     <a href="#">
                         
@@ -71,7 +71,7 @@
                     <i class="ti-menu"></i>
                 </div>
 
-                <div class="serach_field-area ml-40">
+                {{-- <div class="serach_field-area ml-40">
                     <div class="search_inner">
                         <form action="#">
                             <div class="search_field">
@@ -83,9 +83,9 @@
                         </form>
                     </div>
                     <div id="livesearch" style="display: none;"></div>
-                </div>
-                <div class="header_right d-flex justify-content-between align-items-center">
-                    <div class="serach_field-area mr-10">
+                </div> --}}
+                <div class="header_right d-flex justify-content-end align-items-center">
+                    {{-- <div class="serach_field-area mr-10">
                         <div class="search_inner">
                             <div class="search_field">
                                 <input type="text" class="form-control primary_input_field input-left-icon"
@@ -96,8 +96,8 @@
                                     style="font-size: 13px; padding-left: 13px;" class="ti-search"></i></button>
                         </div>
                         <div id="liveStudentSearch" style="display: none;"></div>
-                    </div>
-                    <select name="#" class="nice_Select bgLess mb-0 infix_session" id="infix_session">
+                    </div> --}}
+                    {{-- <select name="#" class="nice_Select bgLess mb-0 infix_session" id="infix_session">
                        
                                 <option value="1" selected>
                                   2025 [Jan-Dec]
@@ -106,7 +106,7 @@
                                   2024 [Jan-Dec]
                                 </option>
                         
-                    </select>
+                    </select> --}}
 
                     {{-- @if (@$styles && Auth::user()->role_id == 1)
                         @if (generalSetting()->style_btn == 1)
@@ -137,7 +137,7 @@
 
                     <!-- Mobile view Dropdown for selection Academic Year and Language : Start -->
 
-                    <div class="dropdown d-sm-none">
+                    {{-- <div class="dropdown d-sm-none">
                         <button class="" type="button" id="mobileSelectorDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                             <circle cx="12" cy="5" r="2"></circle>
@@ -150,7 +150,7 @@
                         
                     
                         </div>
-                    </div>
+                    </div> --}}
 
                     <!-- Mobile view Dropdown for selection Academic Year and Language : END -->
 
@@ -161,27 +161,28 @@
                         <li class="scroll_notification_list">
                             <a class="pulse theme_color bell_notification_clicker show_notifications" href="#">
                                 <!-- bell   -->
-                                <img src="{{asset('public/backEnd/assets/img/icons/notification.svg')}}" alt="">
+                                <img src="{{ asset('backEnd/assets/img/icons/profile.svg') }}" alt="">
 
-                                <!--/ bell   -->
-                                <span
-                                    class="notificationCount notification_count">66</span>
-                                <span class="pulse-ring notification_count_pulse"></span>
+                               
                             </a>
                             <!-- Menu_NOtification_Wrap  -->
                             <div class="Menu_NOtification_Wrap notifications_wrap">
-                                <div class="notification_Header">
-                                    <h4>{{ __('common.no_unread_notification') }}</h4>
-                                </div>
-                                
                                 <div class="nofity_footer">
-                                    <div class="submit_button text-center pt_20">
-                                        <a href="="
-                                            class="primary-btn radius_30px text_white  fix-gr-bg mark-all-as-read">{{ __('common.mark_all_as_read') }}</a>
-                                        <a href="/"
-                                            class="primary-btn radius_30px text_white  fix-gr-bg see_all_notification">{{ __('common.see_more') }}</a>
+                                    <div class="submit_button text-center">
+                                        <!-- Logout Button -->
+                                        <form action="{{ route('logout') }}" method="POST" id="logout-form" >
+                                            @csrf
+                                            <button type="submit" 
+                                                class="primary-btn text_white fix-gr-bg"
+                                                style="background-color:#c0392b;">
+                                                <i class="fas fa-sign-out-alt"></i> Logout
+                                            </button>
+                                        </form>
+                                
                                     </div>
                                 </div>
+                                
+                                
                             </div>
                             <!--/ Menu_NOtification_Wrap  -->
                         </li>
