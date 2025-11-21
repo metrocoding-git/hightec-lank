@@ -61,7 +61,7 @@
                 <div class="small_logo_crm d-lg-none">
                     <a href="#">
                         
-                            <img src="{{ asset('public/uploads/settings/logo.png') }}" alt="logo">
+                            <img src="{{ asset('uploads/settings/logo.png') }}" alt="logo">
                     </a>
                 </div>
                 <div id="sidebarCollapse" class="sidebar_icon  d-lg-none">
