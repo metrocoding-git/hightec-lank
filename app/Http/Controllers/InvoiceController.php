@@ -152,7 +152,9 @@ class InvoiceController extends Controller
                 // Save initial payment in invoices_payments table if any
                 if ($paid_price > 0) {
                     // Generate a unique receipt number
-                    $receipt_number = 'REC-' . time() . '-' . uniqid();
+                    // $receipt_number = 'REC-' . time() . '-' . uniqid();
+                    $receipt_number = $this->generateReceiptNumber($request->branch_id);
+
                     Log::debug('Generated receipt_number (store): ' . $receipt_number);
 
                     $payment_create_user_id = null;
@@ -425,7 +427,9 @@ class InvoiceController extends Controller
             }
 
             // Generate a unique receipt number for the payment
-            $receipt_number = 'REC-' . time() . '-' . uniqid();
+            // $receipt_number = 'REC-' . time() . '-' . uniqid();
+            $receipt_number = $this->generateReceiptNumber($invoice->branch_id);
+
             Log::debug('Generated receipt_number (addPayment): ' . $receipt_number);
 
             $payment_create_user_id = $request->input('create_user_id');
@@ -835,6 +839,8 @@ class InvoiceController extends Controller
                     $bankPaidDateForPayment = Carbon::createFromFormat('Y-m-d', $request->bank_paid_date)->format('Y-m-d');
                 }
             }
+            $receipt_number = $this->generateReceiptNumber($request->branch_id);
+
 
             // Create a new payment record in invoices_payments table
             $payment = Invoices_payments::create([
@@ -843,7 +849,7 @@ class InvoiceController extends Controller
                 'payment_method' => $paymentMethod,
                 'payment_type' => 'course',
                 'payment_file' => $paymentFile, // Use the newly uploaded file or null
-                'receipt_number' => 'REC-' . time() . '-' . uniqid(),
+                'receipt_number' => $receipt_number,
                 'create_user_id' => $create_user_id,
                 'bank_payment_amount' => $bankPaidAmountForPayment,
                 'bank_payment_date' => $bankPaidDateForPayment,
@@ -1095,5 +1101,28 @@ class InvoiceController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    private function generateReceiptNumber($branch_id)
+    {
+        // Get branch name
+        $branch = \App\Models\Branch::find($branch_id);
+        $code = strtolower(substr($branch->name, 0, 2)); // first 2 letters (ku, co)
+
+        // Get last receipt for this branch
+        $last = \App\Models\Invoices_payments::whereHas('invoice', function ($q) use ($branch_id) {
+            $q->where('branch_id', $branch_id);
+        })->orderBy('id', 'desc')
+            ->first();
+
+        // Extract last 6-digit sequence number
+        if ($last && preg_match('/(\d{6})$/', $last->receipt_number, $matches)) {
+            $next = intval($matches[1]) + 1;
+        } else {
+            $next = 1;
+        }
+
+        // Build receipt number
+        return 'REC-' . $code . '-' . str_pad($next, 6, '0', STR_PAD_LEFT);
     }
 }

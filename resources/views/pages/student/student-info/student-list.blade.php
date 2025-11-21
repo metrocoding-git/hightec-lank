@@ -144,7 +144,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @forelse ($students as $student)
+                                            @foreach ($students as $student)
                                                 <tr>
                                                     <td>{{ $student->admission_number }}</td>
                                                     <td>{{ $student->student_name ?? 'N/A' }}</td>
@@ -179,11 +179,11 @@
                                                         <x-drop-down-action-component :routeList="$routeList" />
                                                     </td>
                                                 </tr>
-                                            @empty
+                                            {{-- @empty
                                                 <tr>
                                                     <td colspan="8" class="text-center">No students found</td>
-                                                </tr>
-                                            @endforelse
+                                                </tr> --}}
+                                            @endforeach
                                         </tbody>
                                     </table>
                                 </x-table>

@@ -156,7 +156,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @forelse($studentIntakes as $key => $studentIntake)
+                                            @foreach($studentIntakes as $key => $studentIntake)
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
                                                     <td>{{ $studentIntake->student->student_name }}</td>
@@ -244,12 +244,9 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                            @empty
-                                                <tr>
-                                                    <td colspan="9" class="text-center">No intake assignments found
-                                                    </td>
-                                                </tr>
-                                            @endforelse
+                                           
+                                            @endforeach
+                                            
                                         </tbody>
                                     </table>
                                 </x-table>
@@ -442,9 +439,6 @@
         $('#table_id').DataTable({
             responsive: true,
             dom: 'Bfrtip',
-            order: [
-                [0, 'desc']
-            ],
             buttons: [{
                     extend: 'copyHtml5',
                     text: '<i class="fa-regular fa-copy"></i>',
@@ -475,10 +469,7 @@
             searching: true,
             ordering: true,
             info: true,
-            // order: [[0, 'desc']], // Sort by first column (No.) in descending order to show latest data first
-
-
-            // 👇 This part adds the search and pagination icons
+            order: [[0, 'desc']],
             language: {
                 search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
                 searchPlaceholder: 'Search...',

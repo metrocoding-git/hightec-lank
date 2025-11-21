@@ -191,7 +191,7 @@
 
         {{-- Invoice Info --}}
         <div class="field2 invoice-date">{{ \Carbon\Carbon::parse($invoice->create_date)->format('F j, Y') }}</div>
-        <div class="field2 invoice-no">{{ $invoice->invoice->main_invoice_number ?? '' }}</div>
+        <div class="field2 invoice-no">{{ $invoice->receipt_number ?? '' }}</div>
         <div class="field2 admission-no">{{ $invoice->invoice->student->admission_number ?? '' }}</div>
 
         {{-- Student Info --}}
