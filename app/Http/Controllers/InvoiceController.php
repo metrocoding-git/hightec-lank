@@ -563,7 +563,7 @@ class InvoiceController extends Controller
                 'amount' => -$refundAmount, // Store as a negative amount
                 'payment_method' => 'Refund', // Or a specific refund method
                 'payment_type' => 'refund', // Mark as a refund
-                'receipt_number' => $receipt_number,
+                'receipt_number' => $originalPayment->receipt_number ?? $receipt_number,
                 'create_user_id' => $create_user_id,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -1123,6 +1123,6 @@ class InvoiceController extends Controller
         }
 
         // Build receipt number
-        return 'REC-' . $code . '-' . str_pad($next, 6, '0', STR_PAD_LEFT);
+        return $code . '-' . str_pad($next, 6, '0', STR_PAD_LEFT);
     }
 }

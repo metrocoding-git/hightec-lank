@@ -78,6 +78,8 @@
     }
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
 <script src="{{ asset('backEnd/vendors/js/jquery-3.6.0.min.js') }}"></script>
 
 <script src="{{ asset('backEnd/') }}/vendors/js/jquery-ui.js"></script>

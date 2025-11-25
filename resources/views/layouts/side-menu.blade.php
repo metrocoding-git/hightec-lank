@@ -662,7 +662,7 @@
                         <li>
                             <a href="/reports/students-paid"
                                 class="{{ request()->is('reports/students-paid') ? 'active a' : '' }}">
-                                Students Paid
+                                 Payments List
                             </a>
                         </li>
                     @endif
