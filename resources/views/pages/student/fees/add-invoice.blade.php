@@ -116,8 +116,8 @@
                                         <select class="primary_select form-control" id="paymentMethodName"
                                             name="payment_method">
                                             <option value="not">@lang('fees.payment_method')</option>
-                                            <option value="Cash">Cash</option>
-                                            <option value="Invoice" selected>Invoice</option>
+                                            <option value="Cash" selected>Cash</option>
+                                            <option value="Invoice" >Invoice</option>
                                             <option value="Bank Transfer">Bank Transfer</option>
                                         </select>
                                     </div>
@@ -243,7 +243,7 @@
 
                             $.each(data, function(index, student) {
                                 $('#student_id').append('<option value="' + student.id +
-                                    '">' + student.admission_number + ' - ' 
+                                    '">' + student.admission_number + ' - ' +
                                     student.name + '</option>');
                             });
 
