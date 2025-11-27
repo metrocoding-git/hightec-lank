@@ -207,7 +207,7 @@ class InvoiceController extends Controller
     public function show(Fee_invoices $fee_invoicese, $branchId)
     {
         $student = Student::where('branch_id', $branchId)
-            ->select('id', DB::raw("CONCAT(student_name) as name"))
+            ->select('id', DB::raw("CONCAT(student_name) as name"), 'admission_number')
             ->get();
         return response()->json($student);
     }

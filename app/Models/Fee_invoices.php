@@ -13,6 +13,7 @@ class Fee_invoices extends Model
         'student_id',
         'total_amount',
         'paid_amount',
+        'create_user_id',
         'create_date',
         'due_date',
         'payment_status',
@@ -61,5 +62,10 @@ class Fee_invoices extends Model
     public function paidCourses()
     {
         return $this->hasOne(PaidCourse::class, 'invoice_id');
+    }
+
+    public function createUser()
+    {
+        return $this->belongsTo(User::class, 'create_user_id');
     }
 }

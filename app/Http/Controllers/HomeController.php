@@ -292,6 +292,7 @@ class HomeController extends Controller
                     'student_name',
                     'date_of_birth',
                     'phone_number',
+                    'national_id_number',
                 ])->active()->latest()->get();
         $branches = Branch::all();
 
@@ -654,7 +655,7 @@ class HomeController extends Controller
         $roles = Role::all();
         $fee_invoices = FeeInvoice::with(['student', 'branch', 'invoice_item.fee_type'])
             ->orderBy('created_at', 'desc')
-            ->paginate(perPage: 15);
+            ->get();
 
         return view('pages.student.fees.fee-invoice', compact('fee_invoices', 'roles'));
     }

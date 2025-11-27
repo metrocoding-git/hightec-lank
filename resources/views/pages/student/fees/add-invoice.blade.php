@@ -84,7 +84,7 @@
                                         <select class="primary_select form-control" id="student_id" name="student_id">
                                             <option value="">@lang('common.select_student')</option>
                                             @foreach ($students as $student)
-                                                <option value="{{ $student->id }}">{{ $student->student_name }}</option>
+                                                <option value="{{ $student->id }}">{{ $student->admission_number }} - {{ $student->student_name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -243,7 +243,7 @@
 
                             $.each(data, function(index, student) {
                                 $('#student_id').append('<option value="' + student.id +
-                                    '">' +
+                                    '">' + student.admission_number + ' - ' 
                                     student.name + '</option>');
                             });
 

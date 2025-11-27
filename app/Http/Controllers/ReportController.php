@@ -35,7 +35,10 @@ class ReportController extends Controller
 
     $query = Invoices_payments::with([
         'invoice',
+        'invoice.createUser',
         'invoice.branch',
+        'invoice.student',
+        'invoice.student.studentCategory',
         'invoice.invoice_item',
         'invoice.invoice_item.fee_type',
         'invoice.paidCourses',

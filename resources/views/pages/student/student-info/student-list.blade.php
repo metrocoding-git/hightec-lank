@@ -132,6 +132,8 @@
                                             <tr>
                                                 <th>@lang('student.admission_no')</th>
                                                 <th>@lang('student.name')</th>
+                                                <th>Nic Number</th>
+
 
                                                 <th>@lang('student.date_of_birth')</th>
 
@@ -148,6 +150,7 @@
                                                 <tr>
                                                     <td>{{ $student->admission_number }}</td>
                                                     <td>{{ $student->student_name ?? 'N/A' }}</td>
+                                                    <td>{{ $student->national_id_number ?? 'N/A' }}</td>
                                                     <td>{{ $student->date_of_birth ?? '-' }}</td>
                                                     <td>{{ $student->branch?->name }}</td>
                                                     <td>{{ $student->gender->name ?? '-' }}</td>

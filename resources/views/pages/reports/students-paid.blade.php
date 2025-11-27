@@ -83,7 +83,7 @@
                         <div class="row">
                             <div class="col-lg-4 no-gutters">
                                 <div class="main-title">
-                                    <h3 class="mb-15">Students Paid Report</h3>
+                                    <h3 class="mb-15">Payments Report</h3>
                                 </div>
                             </div>
                         </div>
@@ -98,6 +98,9 @@
                                         <thead>
                                             <tr>
                                                 <th>ID</th>
+                                                <th>Stu No</th>
+                                                <th>Stu Category</th>
+                                                <th>Stu Branch</th>
                                                 <th>Invoice Number</th>
                                                 <th>Receipt Number</th>
                                                 <th>Payment Name</th>
@@ -107,6 +110,7 @@
                                                 <th>Payment Invoice Number</th>
                                                 <th>Bank Payment Amount</th>
                                                 <th>Bank Payment Date</th>
+                                                <th>Create User</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -116,6 +120,18 @@
                                                         <td
                                                             class="{{ $feeInvoice->payment_type === 'refund' ? 'text-danger' : '' }}">
                                                             {{ $key + 1 }}</td>
+                                                        <td
+                                                            class="{{ $feeInvoice->payment_type === 'refund' ? 'text-danger' : '' }}">
+                                                            {{ $feeInvoice->invoice ? $feeInvoice->invoice->student->admission_number : 'N/A' }}
+                                                        </td>
+                                                        <td
+                                                            class="{{ $feeInvoice->payment_type === 'refund' ? 'text-danger' : '' }}">
+                                                            {{ $feeInvoice->invoice ? $feeInvoice->invoice->student->studentCategory->category_name : 'N/A' }}
+                                                        </td>
+                                                        <td
+                                                            class="{{ $feeInvoice->payment_type === 'refund' ? 'text-danger' : '' }}">
+                                                            {{ $feeInvoice->invoice ? $feeInvoice->invoice->branch->name : 'N/A' }}
+                                                        </td>
                                                         <td
                                                             class="{{ $feeInvoice->payment_type === 'refund' ? 'text-danger' : '' }}">
                                                             {{ $feeInvoice->invoice ? $feeInvoice->invoice->main_invoice_number : 'N/A' }}
@@ -155,6 +171,10 @@
                                                         <td
                                                             class="{{ $feeInvoice->payment_type === 'refund' ? 'text-danger' : '' }}">
                                                             {{ $feeInvoice->bank_payment_date ? \Carbon\Carbon::parse($feeInvoice->bank_payment_date)->format('m/d/Y') : '-' }}
+                                                        </td>
+                                                        <td
+                                                            class="{{ $feeInvoice->payment_type === 'refund' ? 'text-danger' : '' }}">
+                                                            {{ $feeInvoice->invoice && $feeInvoice->invoice->createUser ? $feeInvoice->invoice->createUser->name : 'N/A' }}
                                                         </td>
 
                                                     </tr>
@@ -199,7 +219,7 @@
             info: true,
             lengthChange: true,
             order: [
-                [0, 'desc']
+                [0, 'asc']
             ],
             lengthMenu: [
                 [10, 25, 50, 100, -1],

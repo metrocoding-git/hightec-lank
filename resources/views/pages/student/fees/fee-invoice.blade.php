@@ -86,11 +86,11 @@
                                                         </a>
                                                     </td>
                                                     <td>
-                                                      
+                                                        
                                                         @if ($invoice->invoice_type == 'fee')
                                                             {{$invoice->invoice_item[0]->fee_type->name}}
                                                         @elseif ($invoice->invoice_type == 'course')
-                                                            {{ $invoice->paidCourses->course->name }}
+                                                            {{ $invoice->paidCourses?->course?->name ?? '-' }}
                                                         @else 
                                                             -
                                                         @endif
