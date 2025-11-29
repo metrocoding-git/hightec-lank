@@ -1112,7 +1112,8 @@ class InvoiceController extends Controller
         // Get last receipt for this branch
         $last = \App\Models\Invoices_payments::whereHas('invoice', function ($q) use ($branch_id) {
             $q->where('branch_id', $branch_id);
-        })->orderBy('id', 'desc')
+        }) ->whereIn('payment_type', ['course', 'fee']) 
+        ->orderBy('id', 'desc')
             ->first();
 
         // Extract last 6-digit sequence number
