@@ -133,15 +133,13 @@
                                                 <th>@lang('student.admission_no')</th>
                                                 <th>@lang('student.name')</th>
                                                 <th>Nic Number</th>
-
-
+                                                <th>@lang('common.phone')</th>
+                                                <th>Address</th>
                                                 <th>@lang('student.date_of_birth')</th>
-
                                                 <th>@lang('student.class_sec')</th>
-
                                                 <th>@lang('common.gender')</th>
                                                 <th>@lang('common.type')</th>
-                                                <th>@lang('common.phone')</th>
+
                                                 <th>@lang('common.actions')</th>
                                             </tr>
                                         </thead>
@@ -149,13 +147,24 @@
                                             @foreach ($students as $student)
                                                 <tr>
                                                     <td>{{ $student->admission_number }}</td>
-                                                    <td>{{ $student->student_name ?? 'N/A' }}</td>
-                                                    <td>{{ $student->national_id_number ?? 'N/A' }}</td>
+                                                    <td
+                                                        class="{{ $student->isVerified('Full Name Verified') ? 'text-success' : '' }}">
+                                                        {{ $student->student_name ?? 'N/A' }}</td>
+                                                    <td
+                                                        class="{{ $student->isVerified('NIC Verified') ? 'text-success' : '' }}">
+                                                        {{ $student->national_id_number ?? 'N/A' }}</td>
+                                                    <td
+                                                        class="{{ $student->isVerified('Mobile Number Verified') ? 'text-success' : '' }}">
+                                                        {{ $student->phone_number }}</td>
+                                                    <td
+                                                        class="{{ $student->isVerified('Address Verified') ? 'text-success' : '' }}">
+                                                        {{ $student->permanent_address }}</td>
+
                                                     <td>{{ $student->date_of_birth ?? '-' }}</td>
                                                     <td>{{ $student->branch?->name }}</td>
                                                     <td>{{ $student->gender->name ?? '-' }}</td>
                                                     <td>{{ $student->studentCategory->category_name ?? 'N/A' }}</td>
-                                                    <td>{{ $student->phone_number }}</td>
+
                                                     <td valign="top">
                                                         @php
                                                             $routeList = [
@@ -164,25 +173,35 @@
                                                                 '">' .
                                                                 __('common.view') .
                                                                 '</a>',
+
                                                                 '<a class="dropdown-item" href="' .
                                                                 route('add-student.edit', $student->id) .
                                                                 '">' .
                                                                 __('common.edit') .
                                                                 '</a>',
+
+                                                                '<a class="dropdown-item" target="_blank" href="' .
+                                                                route('add-student.verify', $student->id) .
+                                                                '">Verification</a>',
+                                                                '<a class="dropdown-item openVerificationModal" href="#" data-id="' .
+                                                                $student->id .
+                                                                '">
+                                                                    Verification Check
+                                                                </a>',
                                                                 '<a class="dropdown-item" data-toggle="modal" data-student-id="' .
                                                                 $student->id .
-                                                                '" data-target="#statusUpdateModal"
-                                                                href="' .
+                                                                '" data-target="#statusUpdateModal" href="' .
                                                                 route('student.update-status', $student->id) .
                                                                 '">' .
                                                                 __('common.disable') .
                                                                 '</a>',
                                                             ];
                                                         @endphp
+
                                                         <x-drop-down-action-component :routeList="$routeList" />
                                                     </td>
                                                 </tr>
-                                            {{-- @empty
+                                                {{-- @empty
                                                 <tr>
                                                     <td colspan="8" class="text-center">No students found</td>
                                                 </tr> --}}
@@ -248,6 +267,27 @@
         </div>
     </div>
 
+    {{-- varification model --}}
+    <div class="modal fade" id="verificationCheckModal">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h4 class="modal-title">Verification Details</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <div class="modal-body">
+                    <div id="verification-content">
+                        <p class="text-center text-muted">Loading...</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
     @php
         if (isset($academic_year) || isset($class_id)) {
             $ajax_url = url(
@@ -310,7 +350,9 @@
             searching: true,
             ordering: true,
             info: true,
-            order: [[0, 'desc']], // 👈 ensure newest entries show first
+            order: [
+                [0, 'desc']
+            ], // 👈 ensure newest entries show first
 
             // 👇 This part adds the search and pagination icons
             language: {
@@ -332,6 +374,73 @@
             var studentId = button.data('student-id');
             input.val(studentId);
         });
+
+
+        $(document).on('click', '.openVerificationModal', function() {
+            let studentId = $(this).data('id');
+
+            $('#verification-content').html('<p class="text-center text-muted">Loading...</p>');
+            $('#verificationCheckModal').modal('show');
+
+            $.ajax({
+                url: "/student/student-info/verification-history/" + studentId,
+                method: "GET",
+                success: function(data) {
+
+                    if (data.length === 0) {
+                        $('#verification-content').html(
+                            '<p class="text-center text-danger">No verification history found.</p>'
+                        );
+                        return;
+                    }
+
+                    let html = `
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Verified Item</th>
+                                    <th>Old Value</th>
+                                    <th>New Value</th>
+                                    <th>Updated By</th>
+                                    <th>Date</th>
+                                    <th>Signature</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    data.forEach(row => {
+                        html += `
+                            <tr>
+                                <td>${row.verification_item}</td>
+                                <td>${row.old_value ?? '-'}</td>
+                                <td class="text-success">${row.new_value ?? '-'}</td>
+                                <td>${row.user ? row.user.name : 'N/A'}</td>
+                                <td>${new Date(row.created_at).toLocaleDateString()}</td>
+                               <td>
+                                    ${row.signature_path 
+                                        ? `<a href="/storage/${row.signature_path}" target="_blank">
+                                                <img src="/storage/${row.signature_path}" 
+                                                    style="width:80px; border:1px solid #ccc; padding:2px; cursor:pointer;">
+                                        </a>`
+                                        : '-'
+                                    }
+                                </td>
+
+                            </tr>
+                        `;
+                    });
+
+                    html += `
+                            </tbody>
+                        </table>
+                    `;
+
+                    $('#verification-content').html(html);
+                }
+            });
+        });
+
 
         // $('#table_id').DataTable({
         //     dom: 'Bfrtip',

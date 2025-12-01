@@ -11,10 +11,12 @@ use App\Models\Intake;
 use App\Models\Student;
 use App\Models\StudentCategory;
 use App\Models\StudentCourse;
+use App\Models\StudentVerification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 
 class AddStudentController extends Controller
@@ -443,7 +445,6 @@ class AddStudentController extends Controller
     }
 
 
-
     // New method to handle intake with courses assignment
     public function studentAddIntakeWithCourses(Request $request)
     {
@@ -651,7 +652,6 @@ class AddStudentController extends Controller
     }
 
 
-
     public function getSearchIntakesByBranch($branchId)
     {
         $intakes = Intake::where('branch_id', $branchId)->get();
@@ -667,6 +667,87 @@ class AddStudentController extends Controller
             ->get();
         return response()->json(['courses' => $courses]);
     }
+
+    public function verify($id)
+    {
+        $student = Student::findOrFail($id);
+        return view('pages.student.student-info.verify', compact('student'));
+    }
+
+
+
+    public function verifySubmit(Request $request, $studentId)
+    {
+        $request->validate([
+            'verification_items' => 'required|array',
+            'signature_data' => 'required|string',
+        ]);
+    
+        $student = Student::findOrFail($studentId);
+    
+        // ---- SAVE SIGNATURE ----
+        $folder = storage_path('app/public/signatures/students/');
+    
+        if (!File::exists($folder)) {
+            File::makeDirectory($folder, 0777, true);
+        }
+    
+        $signature = $request->signature_data;
+        $image = str_replace('data:image/png;base64,', '', $signature);
+        $image = str_replace(' ', '+', $image);
+    
+        $imageName = 'signature_' . time() . '.png';
+    
+        File::put($folder . $imageName, base64_decode($image));
+    
+        // Save relative path for browser
+        $signaturePath = 'signatures/students/' . $imageName;
+    
+        // -------- SAVE EACH VERIFICATION ITEM --------
+        foreach ($request->verification_items as $item) {
+            $newValue = $request->verification_values[$item] ?? null;
+    
+            $oldValue = match ($item) {
+                'Full Name Verified' => $student->student_name,
+                'NIC Verified' => $student->national_id_number,
+                'Address Verified' => $student->permanent_address,
+                'Mobile Number Verified' => $student->phone_number,
+                default => null,
+            };
+    
+            StudentVerification::create([
+                'student_id'        => $student->id,
+                'verification_item' => $item,
+                'old_value'         => $oldValue,
+                'new_value'         => $newValue,
+                'signature_path'    => $signaturePath,
+                'updated_by'        => auth()->id(),
+            ]);
+        }
+    
+        // UPDATE STUDENT
+        $student->update([
+            'student_name'           => $request->verification_values['Full Name Verified'],
+            'national_id_number'     => $request->verification_values['NIC Verified'],
+            'permanent_address'      => $request->verification_values['Address Verified'],
+            'phone_number'           => $request->verification_values['Mobile Number Verified'],
+        ]);
+    
+        return back()->with('success', 'Verification saved successfully!');
+    }
+    
+
+    // public function verificationHistory($id)
+    // {
+    //     $verifications = StudentVerification::with('user')
+    //         ->where('student_id', $id)
+    //         ->orderBy('created_at', 'desc')
+    //         ->get();
+
+    //     return response()->json($verifications);
+    // }
+
+
 
     /**
      * Update the status of a student intake enrollment

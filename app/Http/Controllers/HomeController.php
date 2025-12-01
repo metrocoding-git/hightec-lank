@@ -51,6 +51,7 @@ use Modules\RolePermission\Entities\InfixRole;
 use Modules\Wallet\Entities\WalletTransaction;
 use Modules\Saas\Entities\SmSubscriptionPayment;
 use App\Models\Branch; // Keep this single import for Branch
+use App\Models\StudentVerification;
 
 class HomeController extends Controller
 {
@@ -283,6 +284,7 @@ class HomeController extends Controller
             'branch',
             'gender',
             'studentCategory',
+            'verifications',
         ])->select([
                     'id',
                     'admission_number',
@@ -293,6 +295,7 @@ class HomeController extends Controller
                     'date_of_birth',
                     'phone_number',
                     'national_id_number',
+                    'permanent_address',
                 ])->active()->latest()->get();
         $branches = Branch::all();
 
@@ -300,6 +303,17 @@ class HomeController extends Controller
     }
     // App\Http\Controllers\StudentController.php
 
+    public function verificationHistory($id)
+    {
+        $verifications = StudentVerification::with('user')
+            ->where('student_id', $id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($verifications);
+    }
+
+    
     public function getIntakes($branchId)
     {
         $intakes = Intake::where('branch_id', $branchId)->get(['id', 'name']);
@@ -434,6 +448,7 @@ class HomeController extends Controller
             'branch',
             'gender',
             'studentCategory',
+            'verifications',
         ])->select([
                     'id',
                     'admission_number',
@@ -443,6 +458,8 @@ class HomeController extends Controller
                     'student_name',
                     'date_of_birth',
                     'phone_number',
+                    'national_id_number',
+                    'permanent_address',
                 ]);
 
         if ($branchId) {

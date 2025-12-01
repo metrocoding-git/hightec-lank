@@ -79,3 +79,20 @@ ALTER TABLE `students`
 ADD `district_id` BIGINT UNSIGNED NULL;
 
 
+-- 12/02
+CREATE TABLE `student_verifications` (
+  `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `student_id` BIGINT UNSIGNED NOT NULL,
+
+  `verification_item` VARCHAR(255) NOT NULL,
+
+  `old_value` TEXT NULL,
+  `new_value` TEXT NULL,
+
+  `signature_path` VARCHAR(255) NULL,
+
+  `updated_by` BIGINT UNSIGNED NOT NULL,
+
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

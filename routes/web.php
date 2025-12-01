@@ -105,12 +105,18 @@ Route::controller(StudentCategoryController::class)->prefix('student/student-inf
     Route::delete('destroy/{id}', 'destroy')->name('student-category.destroy');
 });
 
-Route::controller(AddStudentController::class)->prefix('student/student-info/add-student')->middleware(['permission'])->group(callback: function () {
+// Route::controller(AddStudentController::class)->prefix('student/student-info/add-student')->middleware(['permission'])->group(callback: function () {
+Route::controller(AddStudentController::class)->prefix('student/student-info/add-student')->group(callback: function () {
+
     Route::get('/', 'index')->name('add-student.index');
     Route::post('store', 'store')->name('add-student.store');
     Route::put('update/{student}', 'update')->name('add-student.update');
     Route::get('edit/{student}', 'edit')->name('add-student.edit');
     Route::delete('destroy/{id}', 'destroy')->name('add-student.destroy');
+
+    Route::get('verify/{id}', 'verify')->name('add-student.verify');
+    Route::post('verify/{id}', 'verifySubmit')->name('add-student.verify.submit');
+
 });
 
 // Student Course Management Routes
@@ -144,7 +150,9 @@ Route::controller(AddStudentController::class)->prefix('student/student-info')
         Route::post('student-add-intake/{id}/update-status', 'updateStatus')->name('student.add-intake.update-status');
     });
 
-Route::controller(HomeController::class)->middleware(['permission'])->group(callback: function () {
+// Route::controller(HomeController::class)->middleware(['permission'])->group(callback: function () {
+Route::controller(HomeController::class)->group(callback: function () {
+
     // Route::get('dashboard', 'dashboard')->name('dashboard');
 
     Route::get('administration/study-material/upload-content', 'uploadContent')->name('upload-content');
@@ -158,6 +166,7 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
     Route::delete('administration/download-center/video-list-destroy/{id}', 'videoListDestroy')->name('download-center.video-list-destroy');
 
     Route::get('student/student-info/student-list', 'studentList')->name('student-list');
+    Route::get('student/student-info/verification-history/{id}', 'verificationHistory')->name('student-list.verification-history');
     Route::put('student/update-status', 'updateStudetStatus')->name('student.update-status');
     Route::get('student/student-info/student-view/{id}', [StudentViewController::class, 'studentView'])->name('student-details');
 
@@ -212,8 +221,7 @@ Route::controller(ItemSellController::class)
         Route::get('account/inventory/item-sell/{id}/return-view', action: 'returnItemSellView')->name('return-item-sell-view');
         Route::get('account/inventory/get-item-price/{id}', 'getItemPrice')->name(name: 'get-item-price')->withoutMiddleware(['csrf', 'permission']);
         Route::post('account/inventory/item-sell/save-invoice-number', 'itemSellSaveInvoiceNumber')
-        ->name('item-sell.invoic-save')->withoutMiddleware(['permission']);
-
+            ->name('item-sell.invoic-save')->withoutMiddleware(['permission']);
     });
 
 Route::controller(ItemIssueController::class)->middleware(['permission'])->group(function () {

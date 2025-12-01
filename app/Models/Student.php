@@ -137,4 +137,16 @@ class Student extends Model
     {
         return $this->hasMany(StudentCourse::class, 'student_id')->with(['course', 'intake', 'branch']);
     }
+
+    public function verifications()
+    {
+        return $this->hasMany(StudentVerification::class, 'student_id');
+    }
+
+    public function isVerified($key)
+    {
+        return $this->verifications
+            ->where('verification_item', $key)
+            ->count() > 0;
+    }
 }
