@@ -294,6 +294,7 @@ class HomeController extends Controller
                     'student_name',
                     'date_of_birth',
                     'phone_number',
+                    'phone_number_2',
                     'national_id_number',
                     'permanent_address',
                 ])->active()->latest()->get();
@@ -307,7 +308,7 @@ class HomeController extends Controller
     {
         $verifications = StudentVerification::with('user')
             ->where('student_id', $id)
-            ->orderBy('created_at', 'desc')
+            ->orderBy('created_at', 'asc')
             ->get();
 
         return response()->json($verifications);
@@ -670,7 +671,7 @@ class HomeController extends Controller
     public function feeInvoice()
     {
         $roles = Role::all();
-        $fee_invoices = FeeInvoice::with(['student', 'branch', 'invoice_item.fee_type'])
+        $fee_invoices = FeeInvoice::with(['student', 'branch', 'invoice_item.fee_type','student.studentCategory'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -697,7 +698,7 @@ class HomeController extends Controller
 
     public function itemReceive()
     {
-        $items = Inventory_item::all();
+        $items = Inventory_item::with('category')->get();
         $suppliers = Supplier::all();
         $branches = Auth::user()->branches;
         // $account_id = BankAccount::all();

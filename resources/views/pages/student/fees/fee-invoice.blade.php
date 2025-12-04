@@ -54,6 +54,7 @@
                                                 <th>Main Invoice No.</th>
                                                 <th>Fee Name</th>
                                                 <th>@lang('common.student')</th>
+                                                <th>Stu Category</th>
                                                 <th>Branch</th>
                                                 <th>@lang('admin.admission_no')</th>
                                                 <th>@lang('accounts.amount')(Rs)</th>
@@ -101,6 +102,7 @@
                                                             {{ $invoice->student->student_name }}
                                                         </a>
                                                     </td>
+                                                    <td>{{ $invoice->student->studentCategory->category_name }}</td>
                                                     <td>{{ $invoice->branch->name }}</td>
                                                     <td>{{ $invoice->student->admission_number }}</td>
 
@@ -125,8 +127,8 @@
                                                         @endif
 
                                                     </td>
-                                                    <td>{{ $invoice->create_date }}</td>
-                                                    <td>{{ $invoice->due_date }}</td>
+                                                    <td>{{ \Carbon\Carbon::parse($invoice->create_date)->format('m/d/Y') }}</td>
+                                                    <td>{{ \Carbon\Carbon::parse($invoice->due_date)->format('m/d/Y') }}</td>
                                                     <td>
                                                         <x-drop-down>
                                                             {{-- <a class="dropdown-item" data-toggle="modal"

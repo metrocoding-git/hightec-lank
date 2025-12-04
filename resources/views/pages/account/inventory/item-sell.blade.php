@@ -156,7 +156,7 @@
                                                                         class="primary_input_field  primary_input_field date form-control form-control{{ $errors->has('sell_date') ? ' is-invalid' : '' }}"
                                                                         id="sell_date" type="date" name="sell_date"
                                                                         value="{{ old('sell_date', isset($editData) ? $editData->sell_date->format('Y-m-d') : now()->format('Y-m-d')) }}"
-                                                                        autocomplete="off">
+                                                                        autocomplete="off" readonly>
                                                                 </div>
                                                             </div>
                                                             {{-- <button class="btn-date" data-id="#sell_date" type="button">

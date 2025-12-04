@@ -445,7 +445,7 @@
                 <select class="primary_select form-control" name="item_id[]" id="productName${rowCount}">
                     <option value="">@lang('common.select')*</option>
                     @foreach ($items as $key => $value)
-                        <option value="{{ $value->id }}">{{ $value->item_name }}</option>
+                        <option value="{{ $value->id }}">{{ $value->category->name }} - {{ $value->item_name }}</option>
                     @endforeach
                 </select>
             </div>

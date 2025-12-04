@@ -129,8 +129,8 @@ class InvoiceController extends Controller
                 'due_amount' => $due_amount,
                 'main_invoice_number' => $main_invoice_number,
                 'create_user_id' => $create_user_id, // Save the authenticated user's ID
-                'bank_paid_amount' => (trim($request->payment_method) === 'Bank Transfer') ? $request->bank_paid_amount : null,
-                'bank_paid_date' => (trim($request->payment_method) === 'Bank Transfer' && !empty($request->bank_paid_date))
+                'bank_paid_amount' => ($request->payment_method) === 'Bank Transfer' ? $request->bank_paid_amount : null,
+                'bank_paid_date' => ($request->payment_method) === 'Bank Transfer' && !empty($request->bank_paid_date)
                     ? Carbon::createFromFormat('Y-m-d', $request->bank_paid_date)->format('Y-m-d')
                     : null,
             ]);
@@ -175,6 +175,10 @@ class InvoiceController extends Controller
                             && $request->file('payment_file')
                             ? $request->file('payment_file')->store('invoices', 'public')
                             : null,
+                        'bank_payment_date' => ($request->payment_method === 'Bank Transfer' && !empty($request->bank_paid_date))
+                            ? Carbon::createFromFormat('Y-m-d', $request->bank_paid_date)->format('Y-m-d')
+                            : null,
+                        'bank_payment_amount' => ($request->payment_method === 'Bank Transfer') ? $request->bank_paid_amount : null,
                         'receipt_number' => $receipt_number,
                         'create_user_id' => $payment_create_user_id, // Save the authenticated user's ID
                         'created_at' => now(),
@@ -962,7 +966,7 @@ class InvoiceController extends Controller
     public function invoiceItemPrint($invoiceId, $paymentId)
     {
         try {
-            $invoice = Invoices_payments::with(['invoice', 'invoice.student', 'invoice.branch', 'invoice.paidCourses.course'])
+            $invoice = Invoices_payments::with(['invoice', 'invoice.student', 'invoice.branch', 'invoice.paidCourses.course','invoice.student.studentCategory'])
                 ->where('id', $paymentId)
                 ->where('invoice_id', $invoiceId)
                 ->firstOrFail();

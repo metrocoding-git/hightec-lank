@@ -147,9 +147,12 @@
                                                 <th>No.</th>
                                                 <th>Student Name</th>
                                                 <th>Admission No</th>
+                                                <th>Nic Number</th>
                                                 <th>Intake Name</th>
-                                                <th>Branch</th>
                                                 <th>Courses</th>
+                                                <th>Mobile 1</th>
+                                                <th>Mobile 2</th>
+                                                <th>Branch</th>
                                                 <th>Enrollment Date</th>
                                                 <th>Status</th>
                                                 <th>Actions</th>
@@ -159,11 +162,14 @@
                                             @foreach($studentIntakes as $key => $studentIntake)
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
-                                                    <td>{{ $studentIntake->student->student_name }}</td>
+                                                    <td class="{{ $studentIntake->student->isVerified('Full Name Verified') ? 'text-success' : '' }}">{{ $studentIntake->student->student_name }}</td>
                                                     <td>{{ $studentIntake->student->admission_number }}</td>
+                                                    <td class="{{ $studentIntake->student->isVerified('NIC Verified') ? 'text-success' : '' }}">{{ $studentIntake->student->national_id_number }}</td>
                                                     <td>{{ $studentIntake->intake->name ?? '-' }}</td>
-                                                    <td>{{ $studentIntake->branch->name ?? '-' }}</td>
                                                     <td>{{ $studentIntake->course->name ?? '-' }}</td>
+                                                    <td class="{{ $studentIntake->student->isVerified('Mobile Number Verified') ? 'text-success' : '' }}">{{ $studentIntake->student->phone_number }}</td>
+                                                    <td class="{{ $studentIntake->student->isVerified('Mobile Number Verified') ? 'text-success' : '' }}">{{ $studentIntake->student->phone_number_2 ?? '-' }}</td>
+                                                    <td>{{ $studentIntake->branch->name ?? '-' }}</td> 
                                                     <td>{{ $studentIntake->created_at ? date('Y-m-d', strtotime($studentIntake->created_at)) : '-' }}
                                                     </td>
                                                     <td>

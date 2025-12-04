@@ -31,9 +31,9 @@ class AddStudentController extends Controller
         $districts = District::all();
 
         // Generate next admission number
-        $nextAdmissionNumber = $this->generateNextAdmissionNumber();
+        // $nextAdmissionNumber = $this->generateNextAdmissionNumber();
 
-        return view('pages.student.student-info.add-student', compact('branches',  'genders', 'categories', 'bloodGroups', 'intakes', 'nextAdmissionNumber', 'districts'));
+        return view('pages.student.student-info.add-student', compact('branches',  'genders', 'categories', 'bloodGroups', 'intakes', 'districts'));
     }
 
     public function store(Request $request)
@@ -41,7 +41,7 @@ class AddStudentController extends Controller
         // dd($request);
         $validatedData = $request->validate([
             'branch_id' => 'required|exists:branches,id',
-            'admission_number' => 'required|string|unique:students,admission_number',
+            // 'admission_number' => 'required|string|unique:students,admission_number',
             'admission_date' => 'required|date',
             'student_category_id' => 'required|exists:student_categories,id',
             'gender_id' => 'required|exists:genders,id',
@@ -82,6 +82,8 @@ class AddStudentController extends Controller
             'sibling_id' => 'nullable|exists:students,id'
         ]);
 
+        $validatedData['admission_number'] = $this->generateNextAdmissionNumber();
+        
         // Handle file uploads
         $fileFields = [
             'photo' => 'student_photos',
@@ -334,13 +336,14 @@ class AddStudentController extends Controller
     // Student Intake Management Methods
     public function studentAddIntake()
     {
-        $students = Student::all();
+        $students = Student::with('verifications')->get();
         $branches = Branch::all();
         $intakes = Intake::with('branch')->get();
         $studentIntakes = DB::table('student_intakes')
             ->join('students', 'student_intakes.student_id', '=', 'students.id')
             ->join('intakes', 'student_intakes.intake_id', '=', 'intakes.id')
             ->leftJoin('branches', 'intakes.branch_id', '=', 'branches.id')
+            ->leftJoin('student_verifications', 'student_verifications.student_id', '=', 'students.id')
             ->select(
                 'student_intakes.*',
                 'students.student_name',
@@ -712,6 +715,7 @@ class AddStudentController extends Controller
                 'NIC Verified' => $student->national_id_number,
                 'Address Verified' => $student->permanent_address,
                 'Mobile Number Verified' => $student->phone_number,
+                'Mobile Number 2 Verified' => $student->phone_number_2,
                 default => null,
             };
     
@@ -731,6 +735,7 @@ class AddStudentController extends Controller
             'national_id_number'     => $request->verification_values['NIC Verified'],
             'permanent_address'      => $request->verification_values['Address Verified'],
             'phone_number'           => $request->verification_values['Mobile Number Verified'],
+            'phone_number_2'         => $request->verification_values['Mobile Number 2 Verified'],
         ]);
     
         return back()->with('success', 'Verification saved successfully!');

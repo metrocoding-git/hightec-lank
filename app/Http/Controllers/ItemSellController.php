@@ -159,7 +159,7 @@ class ItemSellController extends Controller
 
     public function itemSellList()
     {
-        $allItemSellLists = ItemSellBatch::with(['role', 'student', 'user'])->get();
+        $allItemSellLists = ItemSellBatch::with(['role', 'student', 'user','student.studentCategory'])->get();
         return view('pages.account.inventory.item-sell-list', compact('allItemSellLists'));
     }
 

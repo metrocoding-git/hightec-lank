@@ -73,7 +73,9 @@ class ReportController extends Controller
     }
 
     // Results
-    $feeInvoices = $query->orderBy('created_at', 'DESC')->get();
+    $feeInvoices = $query->orderBy('created_at', 'DESC')    
+    ->orderByRaw("CAST(SUBSTRING_INDEX(receipt_number, '-', -1) AS UNSIGNED) DESC")
+    ->get();
 
     return view('pages.reports.students-paid', compact('feeInvoices', 'branches'));
 }

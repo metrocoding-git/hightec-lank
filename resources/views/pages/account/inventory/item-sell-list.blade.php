@@ -54,6 +54,9 @@
                                                     <th>@lang('inventory.reference_no')</th>
                                                     <th>@lang('inventory.role_name')</th>
                                                     <th>@lang('inventory.buyer_name')</th>
+                                                    <th>Reg No</th>
+                                                    <th>Category</th>
+
                                                     <th>@lang('common.date')</th>
                                                     <th>Sell Price</th>
                                                     <th>@lang('inventory.grand_total')</th>
@@ -82,6 +85,20 @@
                                                                 @elseif ($value->role_id == 3 && $value->user)
                                                                     {{-- Staff Role --}}
                                                                     {{ $value->user->name }}
+                                                                @else
+                                                                    N/A
+                                                                @endif
+                                                            </td>
+                                                            <td>
+                                                                @if ($value->role_id == 2 && $value->student)
+                                                                    {{ $value->student->admission_number }}
+                                                                @else
+                                                                    N/A
+                                                                @endif
+                                                            </td>
+                                                            <td>
+                                                                @if ($value->role_id == 2 && $value->student)
+                                                                    {{ $value->student->studentCategory->category_name }}
                                                                 @else
                                                                     N/A
                                                                 @endif

@@ -134,6 +134,7 @@
                                                 <th>@lang('student.name')</th>
                                                 <th>Nic Number</th>
                                                 <th>@lang('common.phone')</th>
+                                                <th>@lang('common.phone') 2</th>
                                                 <th>Address</th>
                                                 <th>@lang('student.date_of_birth')</th>
                                                 <th>@lang('student.class_sec')</th>
@@ -156,6 +157,9 @@
                                                     <td
                                                         class="{{ $student->isVerified('Mobile Number Verified') ? 'text-success' : '' }}">
                                                         {{ $student->phone_number }}</td>
+                                                    <td
+                                                        class="{{ $student->isVerified('Mobile Number 2 Verified') ? 'text-success' : '' }}">
+                                                        {{ $student->phone_number_2 ?? '-' }}</td>
                                                     <td
                                                         class="{{ $student->isVerified('Address Verified') ? 'text-success' : '' }}">
                                                         {{ $student->permanent_address }}</td>

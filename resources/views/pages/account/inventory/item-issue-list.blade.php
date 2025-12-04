@@ -38,6 +38,8 @@
                                             <th>@lang('inventory.item_name')</th>
                                             {{-- <th>@lang('inventory.item_category')</th> --}}
                                             <th>@lang('inventory.issue_to')</th>
+                                            <th>Reg No</th>
+                                            <th>Category</th>
                                             <th>@lang('inventory.issue_date')</th>
                                             <th>@lang('inventory.return_date')</th>
                                             <th>@lang('inventory.quantity')</th>
@@ -86,6 +88,12 @@
                                                             {{ $batch->branch ? $batch->branch->name : '' }}
                                                         @endif
                                                     </td>
+                                                    <td>
+                                                        {{ $batch->student->admission_number }}
+                                                    </td>
+                                                    <td>
+                                                        {{ $batch->student->studentCategory->category_name ?? 'N/A' }}
+                                                    </td>
                                                     <td data-sort="{{ strtotime($batch->issue_date) }}">
                                                         {{ $batch->issue_date != '' ? date('m/d/Y', strtotime($batch->issue_date)) : '' }}
                                                     </td>
@@ -93,10 +101,11 @@
                                                         {{ $batch->due_date != '' ? date('m/d/Y', strtotime($batch->due_date)) : '' }}
                                                     </td>
                                                     <td>{{ $batch->total_items ?? $batch->items->sum('quantity') }}</td>
-                                                    <td>{{ $batchData['intake_name'] }}</td>                                                 
-                                                    <td>{{ $batchData['course_name'] }}</td>                                                 
+                                                    <td>{{ $batchData['intake_name'] }}</td>
+                                                    <td>{{ $batchData['course_name'] }}</td>
                                                     <td>
-                                                        <button class="primary-btn small {{ $batchData['expire_class'] }} text-white border-0">{{ $batchData['expire_status'] }}</button>
+                                                        <button
+                                                            class="primary-btn small {{ $batchData['expire_class'] }} text-white border-0">{{ $batchData['expire_status'] }}</button>
                                                     </td>
                                                     <td hidden>{{ $batch->description }}</td>
                                                     <td>
@@ -112,9 +121,11 @@
                                                         <x-drop-down>
                                                             @if ($batch->issue_status == 'I')
                                                                 @if ($batchData['expire_status'] == 'Expired')
-                                                                    <button type="button" class="dropdown-item text-danger" disabled>Cannot Return (Expired)</button>
+                                                                    <button type="button" class="dropdown-item text-danger"
+                                                                        disabled>Cannot Return (Expired)</button>
                                                                 @else
-                                                                    <form action="{{ route('return-item') }}" method="POST" class="m-0">
+                                                                    <form action="{{ route('return-item') }}"
+                                                                        method="POST" class="m-0">
                                                                         @csrf
                                                                         <input type="hidden" name="id"
                                                                             value="{{ @$batch->id }}">
@@ -123,7 +134,8 @@
                                                                     </form>
                                                                 @endif
                                                             @else
-                                                                <form action="{{ route('issue-item') }}" method="POST" class="m-0">
+                                                                <form action="{{ route('issue-item') }}" method="POST"
+                                                                    class="m-0">
                                                                     @csrf
                                                                     <input type="hidden" name="id"
                                                                         value="{{ @$batch->id }}">
@@ -236,7 +248,9 @@
             searching: true,
             ordering: true,
             info: true,
-            order: [[0, 'desc']], // Sort by first column (ID) in descending order
+            order: [
+                [0, 'desc']
+            ], // Sort by first column (ID) in descending order
         });
 
         $(document).on('click', '.view-item-issue', function(e) {
@@ -284,7 +298,7 @@
                     } else {
                         $('#modalBatchItems').html(
                             '<tr><td colspan="4" class="text-center text-danger">Error loading batch items</td></tr>'
-                            );
+                        );
                     }
                 },
                 error: function(xhr, status, error) {

@@ -131,7 +131,7 @@
                                                                         <h4 class="stu-sub-head">@lang('student.academic_info')</h4>
                                                                     </div>
                                                                 </div>
-                                                                <div class="col-lg-6 mt-4">
+                                                                <div class="col-lg-12 mt-4">
                                                                     <div class="primary_input">
                                                                         <label class="primary_input_label" for="branch">
                                                                             @lang('common.branch') <span
@@ -196,7 +196,7 @@
 
 
 
-                                                                <div class="col-lg-6 mt-4">
+                                                                {{-- <div class="col-lg-6 mt-4">
                                                                     <div class="primary_input">
                                                                         <label class="primary_input_label"
                                                                             for="">@lang('student.admission_number')
@@ -218,7 +218,7 @@
                                                                             </span>
                                                                         @endif
                                                                     </div>
-                                                                </div>
+                                                                </div> --}}
 
 
 
@@ -327,26 +327,6 @@
                                                                         @endif
                                                                     </div>
                                                                 </div>
-                                                                <div class="col-lg-6 mt-4">
-                                                                    <div class="primary_input">
-                                                                        <label class="primary_input_label"
-                                                                            for="">@lang('student.permanent_address')
-
-                                                                            {{-- <span class="text-danger">
-                                                                                                *</span> --}}
-
-                                                                        </label>
-                                                                        <textarea class="primary_input_field form-control{{ $errors->has('current_address') ? ' is-invalid' : '' }}"
-                                                                            cols="0" rows="3" name="permanent_address" id="permanent_address">{{ old('permanent_address') }}</textarea>
-
-
-                                                                        @if ($errors->has('permanent_address'))
-                                                                            <span class="text-danger">
-                                                                                {{ $errors->first('permanent_address') }}
-                                                                            </span>
-                                                                        @endif
-                                                                    </div>
-                                                                </div>
 
                                                                 <div class="col-lg-6 mt-4">
                                                                     <div class="primary_input">
@@ -370,6 +350,30 @@
                                                                         @enderror
                                                                     </div>
                                                                 </div>
+
+                                                                
+                                                                <div class="col-lg-12 mt-4">
+                                                                    <div class="primary_input">
+                                                                        <label class="primary_input_label"
+                                                                            for="">@lang('student.permanent_address')
+
+                                                                            {{-- <span class="text-danger">
+                                                                                                *</span> --}}
+
+                                                                        </label>
+                                                                        <textarea class="primary_input_field form-control{{ $errors->has('current_address') ? ' is-invalid' : '' }}"
+                                                                            cols="0" rows="3" name="permanent_address" id="permanent_address">{{ old('permanent_address') }}</textarea>
+
+
+                                                                        @if ($errors->has('permanent_address'))
+                                                                            <span class="text-danger">
+                                                                                {{ $errors->first('permanent_address') }}
+                                                                            </span>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+
+                                                               
 
                                                                 <div class="col-lg-6 mt-4">
                                                                     <div class="primary_input ">

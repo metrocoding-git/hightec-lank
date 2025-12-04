@@ -264,26 +264,6 @@
                                                                         @endif
                                                                     </div>
                                                                 </div>
-                                                                <div class="col-lg-6 mt-4">
-                                                                    <div class="primary_input">
-                                                                        <label class="primary_input_label"
-                                                                            for="">@lang('student.permanent_address')
-
-                                                                            {{-- <span class="text-danger">
-                                                                                                *</span> --}}
-
-                                                                        </label>
-                                                                        <textarea class="primary_input_field form-control{{ $errors->has('permanent_address') ? ' is-invalid' : '' }}"
-                                                                            cols="0" rows="3" name="permanent_address" id="permanent_address">{{ old('permanent_address', $student->permanent_address) }}</textarea>
-
-
-                                                                        @if ($errors->has('permanent_address'))
-                                                                            <span class="text-danger">
-                                                                                {{ $errors->first('permanent_address') }}
-                                                                            </span>
-                                                                        @endif
-                                                                    </div>
-                                                                </div>
 
                                                                 <div class="col-lg-6 mt-4">
                                                                     <div class="primary_input">
@@ -308,6 +288,30 @@
                                                                     </div>
                                                                 </div>
 
+
+                                                                <div class="col-lg-12 mt-4">
+                                                                    <div class="primary_input">
+                                                                        <label class="primary_input_label"
+                                                                            for="">@lang('student.permanent_address')
+
+                                                                            {{-- <span class="text-danger">
+                                                                                                *</span> --}}
+
+                                                                        </label>
+                                                                        <textarea class="primary_input_field form-control{{ $errors->has('permanent_address') ? ' is-invalid' : '' }} {{ $student->isVerified('Address Verified') ? 'text-success' : '' }}"
+                                                                            cols="0" rows="3" name="permanent_address" id="permanent_address" {{$student->isVerified('Address Verified') ? `readonly` : '' }} >{{ old('permanent_address', $student->permanent_address) }}</textarea>
+
+
+                                                                        @if ($errors->has('permanent_address'))
+                                                                            <span class="text-danger">
+                                                                                {{ $errors->first('permanent_address') }}
+                                                                            </span>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+
+                                                                
+
                                                                 <div class="col-lg-6 mt-4">
                                                                     <div class="primary_input ">
                                                                         <label class="primary_input_label"
@@ -317,10 +321,10 @@
 
                                                                         </label>
                                                                         <input oninput="phoneCheck(this)"
-                                                                            class="primary_input_field phone_number form-control{{ $errors->has('phone_number') ? ' is-invalid' : '' }}"
+                                                                            class="primary_input_field phone_number form-control{{ $errors->has('phone_number') ? ' is-invalid' : '' }} {{ $student->isVerified('Mobile Number Verified') ? 'text-success' : '' }}"
                                                                             type="tel" name="phone_number"
                                                                             id="phone_number"
-                                                                            value="{{ old('phone_number', $student->phone_number) }}">
+                                                                            value="{{ old('phone_number', $student->phone_number) }}" {{$student->isVerified('Mobile Number Verified') ? `readonly` : ''}}>
 
                                                                         @if ($errors->has('phone_number'))
                                                                             <span class="text-danger">
@@ -338,10 +342,10 @@
                                                                             (optional)
                                                                         </label>
                                                                         <input oninput="phoneCheck(this)"
-                                                                            class="primary_input_field phone_number form-control{{ $errors->has('phone_number_2') ? ' is-invalid' : '' }}"
+                                                                            class="primary_input_field phone_number form-control{{ $errors->has('phone_number_2') ? ' is-invalid' : '' }} {{ $student->isVerified('Mobile Number 2 Verified') ? 'text-success' : '' }}"
                                                                             type="tel" name="phone_number_2"
                                                                             id="phone_number_2"
-                                                                            value="{{ old('phone_number_2', $student->phone_number_2) }}">
+                                                                            value="{{ old('phone_number_2', $student->phone_number_2) }}" {{$student->isVerified('Mobile Number 2 Verified') ? `readonly` : '' }}>
                                                                         @if ($errors->has('phone_number_2'))
                                                                             <span class="text-danger">
                                                                                 {{ $errors->first('phone_number_2') }}
@@ -431,9 +435,9 @@
 
                                                                         </label>
                                                                         <input
-                                                                            class="primary_input_field form-control{{ $errors->has('student_name') ? ' is-invalid' : '' }}"
+                                                                            class="primary_input_field form-control{{ $errors->has('student_name') ? ' is-invalid' : '' }} {{ $student->isVerified('Full Name Verified') ? 'text-success' : '' }}"
                                                                             type="text" name="student_name"
-                                                                            value="{{ old('student_name', $student->student_name) }}">
+                                                                            value="{{ old('student_name', $student->student_name) }}" {{$student->isVerified('Full Name Verified') ? `readonly` : ''}} >
 
 
                                                                         @if ($errors->has('student_name'))
@@ -884,9 +888,9 @@
                                                                             <span class="text-danger"> *</span>
                                                                         </label>
                                                                         <input
-                                                                            class="primary_input_field form-control{{ $errors->has('national_id_number') ? ' is-invalid' : '' }}"
+                                                                            class="primary_input_field form-control{{ $errors->has('national_id_number') ? ' is-invalid' : '' }} {{ $student->isVerified('NIC Verified') ? 'text-success' : '' }}"
                                                                             type="text" name="national_id_number"
-                                                                            value="{{ old('national_id_number', $student->national_id_number) }}">
+                                                                            value="{{ old('national_id_number', $student->national_id_number) }}" {{$student->isVerified('NIC Verified') ? `readonly` : '' }}>
                                                                         @if ($errors->has('national_id_number'))
                                                                             <span
                                                                                 class="text-danger">{{ $errors->first('national_id_number') }}</span>

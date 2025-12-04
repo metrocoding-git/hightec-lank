@@ -55,6 +55,12 @@
                 font-size: 12.5px;
             }
 
+            .stu-category {
+                left: 3.5cm;
+                top: 5.0cm;
+                font-size: 12.5px;
+            }
+
             .invoice-date {
                 left: 16.1cm;
                 top: 4.5cm;
@@ -125,6 +131,9 @@
                 : ($invoice->invoice_type == 'course'
                     ? $invoice->paidCourses->course->name
                     : '-') }}
+        </div>
+        <div class="field stu-category">
+            {{ $invoice->student->studentCategory->category_name ?? 'N/A' }}
         </div>
 
         {{-- Invoice Info --}}
