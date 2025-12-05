@@ -57,14 +57,14 @@ class ItemSellController extends Controller
                 'bank_payment_date' => 'required|date',
             ]);
 
-            $subTotal = $request->subTotalValue ?? 0;
+            // $subTotal = $request->subTotalValue ?? 0;
 
-            if (($request->bank_payment_amount ?? 0) <= $subTotal) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Bank Payment Amount must be greater than the Item Sell Total!',
-                ], 422);
-            }
+            // if (($request->bank_payment_amount ?? 0) <= $subTotal) {
+            //     return response()->json([
+            //         'success' => false,
+            //         'message' => 'Bank Payment Amount must be greater than the Item Sell Total!',
+            //     ], 422);
+            // }
         }
 
         try {
