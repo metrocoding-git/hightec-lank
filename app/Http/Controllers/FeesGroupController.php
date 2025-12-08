@@ -68,17 +68,17 @@ class FeesGroupController extends Controller
             'students.admission_number',
             'students.national_id_number',
             DB::raw("CONCAT(students.student_name) AS student_name"),
+            
             DB::raw("
-                CASE 
-                    WHEN EXISTS (
-                        SELECT 1 FROM fee_invoices fi
-                        INNER JOIN invoice_items ii ON ii.invoice_id = fi.id
-                        WHERE fi.student_id = students.id
-                        AND ii.fee_type_id = 1
-                    ) THEN 1 
-                    ELSE 0 
-                END AS is_admission
-            ")
+            CASE 
+                WHEN EXISTS (
+                    SELECT 1 
+                    FROM fee_invoices fi
+                    WHERE fi.student_id = students.id
+                ) THEN 1
+                ELSE 0
+            END AS is_admission
+        ")
         )
         ->get();        
         $courses = []; // Empty for dynamic loading

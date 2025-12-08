@@ -41,8 +41,8 @@
                                 <option value="Invoice" {{ request('payment_method') == 'Invoice' ? 'selected' : '' }}>
                                     Invoice
                                 </option>
-                                <option value="Refund" {{ request('payment_method') == 'Refund' ? 'selected' : '' }}>Refund
-                                </option>
+                                {{-- <option value="Refund" {{ request('payment_method') == 'Refund' ? 'selected' : '' }}>Refund
+                                </option> --}}
                             </select>
                         </div>
 
@@ -118,62 +118,62 @@
                                                 @foreach ($feeInvoices as $key => $feeInvoice)
                                                     <tr>
                                                         <td
-                                                            class="{{ $feeInvoice->payment_type === 'refund' ? 'text-danger' : '' }}">
+                                                            class="{{  $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
                                                             {{ $key + 1 }}</td>
                                                         <td
-                                                            class="{{ $feeInvoice->payment_type === 'refund' ? 'text-danger' : '' }}">
+                                                            class="{{  $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
                                                             {{ $feeInvoice->invoice ? $feeInvoice->invoice->student->admission_number : 'N/A' }}
                                                         </td>
                                                         <td
-                                                            class="{{ $feeInvoice->payment_type === 'refund' ? 'text-danger' : '' }}">
+                                                            class="{{  $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
                                                             {{ $feeInvoice->invoice ? $feeInvoice->invoice->student->studentCategory->category_name : 'N/A' }}
                                                         </td>
                                                         <td
-                                                            class="{{ $feeInvoice->payment_type === 'refund' ? 'text-danger' : '' }}">
+                                                            class="{{  $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
                                                             {{ $feeInvoice->invoice ? $feeInvoice->invoice->branch->name : 'N/A' }}
                                                         </td>
                                                         <td
-                                                            class="{{ $feeInvoice->payment_type === 'refund' ? 'text-danger' : '' }}">
+                                                            class="{{  $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
                                                             {{ $feeInvoice->invoice ? $feeInvoice->invoice->main_invoice_number : 'N/A' }}
                                                         </td>
                                                         <td
-                                                            class="{{ $feeInvoice->payment_type === 'refund' ? 'text-danger' : '' }}">
+                                                            class="{{  $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
                                                             {{ $feeInvoice->receipt_number ?? 'N/A' }}</td>
                                                         <td
-                                                            class="{{ $feeInvoice->payment_type === 'refund' ? 'text-danger' : '' }}">
+                                                            class="{{  $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
                                                             {{ $feeInvoice->payment_type === 'course'
                                                                 ? 'Course Payment - ' . ($feeInvoice->invoice->paidCourses->course->name ?? 'N/A')
                                                                 : ($feeInvoice->payment_type === 'fee'
                                                                     ? 'Fee Payment - ' . ($feeInvoice->invoice->invoice_item[0]->fee_type->name ?? 'N/A')
-                                                                    : ($feeInvoice->payment_type === 'refund'
+                                                                    : ( $feeInvoice->amount < 0
                                                                         ? 'Refund Payment'
                                                                         : 'N/A')) }}
                                                         </td>
 
 
                                                         <td
-                                                            class="{{ $feeInvoice->payment_type === 'refund' ? 'text-danger' : '' }}">
+                                                            class="{{  $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
                                                             {{ number_format((float) $feeInvoice->amount, 2, '.', '') }}
                                                         </td>
                                                         <td
-                                                            class="{{ $feeInvoice->payment_type === 'refund' ? 'text-danger' : '' }}">
+                                                            class="{{  $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
                                                             {{ $feeInvoice->payment_method }}</td>
                                                         <td
-                                                            class="{{ $feeInvoice->payment_type === 'refund' ? 'text-danger' : '' }}">
+                                                            class="{{  $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
                                                             {{ $feeInvoice->created_at ? \Carbon\Carbon::parse($feeInvoice->created_at)->format('m/d/Y') : 'N/A' }}
                                                         </td>
                                                         <td
-                                                            class="{{ $feeInvoice->payment_type === 'refund' ? 'text-danger' : '' }}">
+                                                            class="{{  $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
                                                             {{ $feeInvoice->payment_invoice_number ?? '-' }}</td>
                                                         <td
-                                                            class="{{ $feeInvoice->payment_type === 'refund' ? 'text-danger' : '' }}">
+                                                            class="{{  $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
                                                             {{ $feeInvoice->bank_payment_amount ?? '-' }}</td>
                                                         <td
-                                                            class="{{ $feeInvoice->payment_type === 'refund' ? 'text-danger' : '' }}">
+                                                            class="{{  $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
                                                             {{ $feeInvoice->bank_payment_date ? \Carbon\Carbon::parse($feeInvoice->bank_payment_date)->format('m/d/Y') : '-' }}
                                                         </td>
                                                         <td
-                                                            class="{{ $feeInvoice->payment_type === 'refund' ? 'text-danger' : '' }}">
+                                                            class="{{  $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
                                                             {{ $feeInvoice->invoice && $feeInvoice->invoice->createUser ? $feeInvoice->invoice->createUser->name : 'N/A' }}
                                                         </td>
 

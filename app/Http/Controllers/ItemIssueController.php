@@ -479,6 +479,7 @@ class ItemIssueController extends Controller
             $formattedStudents = $students->map(function ($student) {
                 return [
                     'id' => $student->id,
+                    'admission_number' => $student->admission_number,
                     'student_name' => $student->student_name,
                 ];
             });

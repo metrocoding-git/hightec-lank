@@ -130,81 +130,183 @@
                                         cellspacing="0" width="100%">
                                         <thead>
                                             <tr>
-                                                <th>@lang('student.admission_no')</th>
-                                                <th>@lang('student.name')</th>
-                                                <th>Nic Number</th>
-                                                <th>@lang('common.phone')</th>
-                                                <th>@lang('common.phone') 2</th>
-                                                <th>Address</th>
-                                                <th>@lang('student.date_of_birth')</th>
-                                                <th>@lang('student.class_sec')</th>
-                                                <th>@lang('common.gender')</th>
-                                                <th>@lang('common.type')</th>
+                                                <th>Admission No</th>
+                                                <th>Full Name</th>
+                                                <th>Phone</th>
+                                                <th>Phone 2</th>
+                                                <th>NIC</th>
+                                                <th>Permanent Address</th>
+                                                <th>Branch</th>
 
-                                                <th>@lang('common.actions')</th>
+                                                <th>Admission Date</th>
+                                                <th>Category</th>
+                                                <th>Gender</th>
+                                                <th>Date of Birth</th>
+                                                <th>Age</th>
+                                                <th>Photo</th>
+                                                <th>Email</th>
+                                                <th>District</th>
+                                                <th>Guardian Name</th>
+                                                <th>Guardian Email</th>
+                                                <th>Guardian Photo</th>
+                                                <th>Guardian Phone</th>
+                                                <th>Guardian Occupation</th>
+                                                <th>Guardian Address</th>
+                                                <th>Notes</th>
+                                                <th>Document Title 1</th>
+                                                <th>Document File 1</th>
+                                                <th>Document Title 2</th>
+                                                <th>Document File 2</th>
+                                                <th>Document Title 3</th>
+                                                <th>Document File 3</th>
+                                                <th>Document Title 4</th>
+                                                <th>Document File 4</th>
+                                                <th>Previous Institute</th>
+                                                <th>Created By</th>
+                                                <th>Updated By</th>
+                                                <th>Actions</th>
                                             </tr>
                                         </thead>
+
                                         <tbody>
                                             @foreach ($students as $student)
                                                 <tr>
-                                                    <td>{{ $student->admission_number }}</td>
-                                                    <td
-                                                        class="{{ $student->isVerified('Full Name Verified') ? 'text-success' : '' }}">
-                                                        {{ $student->student_name ?? 'N/A' }}</td>
-                                                    <td
-                                                        class="{{ $student->isVerified('NIC Verified') ? 'text-success' : '' }}">
-                                                        {{ $student->national_id_number ?? 'N/A' }}</td>
-                                                    <td
-                                                        class="{{ $student->isVerified('Mobile Number Verified') ? 'text-success' : '' }}">
-                                                        {{ $student->phone_number }}</td>
-                                                    <td
-                                                        class="{{ $student->isVerified('Mobile Number 2 Verified') ? 'text-success' : '' }}">
-                                                        {{ $student->phone_number_2 ?? '-' }}</td>
-                                                    <td
-                                                        class="{{ $student->isVerified('Address Verified') ? 'text-success' : '' }}">
-                                                        {{ $student->permanent_address }}</td>
+                                                    <td>{{ $student->admission_number ?? '-' }}</td>
+                                                    <td class="{{ $student->isVerified('Full Name Verified') ? 'text-success' : '' }}">{{ $student->student_name ?? '-' }}</td>
+                                                    <td class="{{ $student->isVerified('Mobile Number Verified') ? 'text-success' : '' }}">{{ $student->phone_number ?? '-' }}</td>
+                                                    <td class="{{ $student->isVerified('Mobile Number 2 Verified') ? 'text-success' : '' }}">{{ $student->phone_number_2 ?? '-' }}</td>
+                                                    <td class="{{ $student->isVerified('NIC Verified') ? 'text-success' : '' }}">{{ $student->national_id_number ?? '-' }}</td>
+                                                    <td class="{{ $student->isVerified('Address Verified') ? 'text-success' : '' }}">{{ $student->permanent_address ?? '-' }}</td>
+                                                    <td>{{ $student->branch?->name ?? '-' }}</td>
 
+                                                    <td>{{ $student->admission_date ?? '-' }}</td>
+                                                    <td>{{ $student->studentCategory?->category_name ?? '-' }}</td>
+                                                    <td>{{ $student->gender?->name ?? '-' }}</td>
                                                     <td>{{ $student->date_of_birth ?? '-' }}</td>
-                                                    <td>{{ $student->branch?->name }}</td>
-                                                    <td>{{ $student->gender->name ?? '-' }}</td>
-                                                    <td>{{ $student->studentCategory->category_name ?? 'N/A' }}</td>
+                                                    <td>{{ $student->stu_age ?? '-' }}</td>
 
-                                                    <td valign="top">
-                                                        @php
-                                                            $routeList = [
-                                                                '<a class="dropdown-item" target="_blank" href="' .
-                                                                route('student-details', $student->id) .
-                                                                '">' .
-                                                                __('common.view') .
-                                                                '</a>',
+                                                    <td>
+                                                        @if ($student->photo)
+                                                            <a href="{{ asset('storage/' . $student->photo) }}"
+                                                                target="_blank">
+                                                                <img src="{{ asset('storage/' . $student->photo) }}"
+                                                                width="40">
+                                                            </a>
+                                                           
+                                                        @else
+                                                            -
+                                                        @endif
+                                                    </td>
 
-                                                                '<a class="dropdown-item" href="' .
-                                                                route('add-student.edit', $student->id) .
-                                                                '">' .
-                                                                __('common.edit') .
-                                                                '</a>',
+                                                    <td>{{ $student->email_address ?? '-' }}</td>
+                                                    
+                                                    <td>{{ $student->district->name ?? '-' }}</td>
 
-                                                                '<a class="dropdown-item" target="_blank" href="' .
-                                                                route('add-student.verify', $student->id) .
-                                                                '">Verification</a>',
-                                                                '<a class="dropdown-item openVerificationModal" href="#" data-id="' .
-                                                                $student->id .
-                                                                '">
-                                                                    Verification Check
-                                                                </a>',
-                                                                '<a class="dropdown-item" data-toggle="modal" data-student-id="' .
-                                                                $student->id .
-                                                                '" data-target="#statusUpdateModal" href="' .
-                                                                route('student.update-status', $student->id) .
-                                                                '">' .
-                                                                __('common.disable') .
-                                                                '</a>',
-                                                            ];
-                                                        @endphp
+                                                    <td>{{ $student->guardians_name ?? '-' }}</td>
+                                                    <td>{{ $student->guardians_email ?? '-' }}</td>
 
-                                                        <x-drop-down-action-component :routeList="$routeList" />
+                                                    <td>
+                                                        @if ($student->guardians_photo)
+                                                            <a href="{{ asset('storage/' . $student->guardians_photo) }}"
+                                                                target="_blank">
+                                                                <img src="{{ asset('storage/' . $student->guardians_photo) }}"
+                                                                    width="40">
+                                                            </a>
+                                                        @else
+                                                            -
+                                                        @endif
+                                                    </td>
+
+                                                    <td>{{ $student->guardians_phone ?? '-' }}</td>
+                                                    <td>{{ $student->guardians_occupation ?? '-' }}</td>
+                                                    <td>{{ $student->guardians_address ?? '-' }}</td>
+
+                                                    <td>{{ $student->additional_notes ?? '-' }}</td>
+
+                                                    <td>{{ $student->document_title_1 ?? '-' }}</td>
+
+                                                    <td>
+                                                        @if ($student->document_file_1)
+                                                            <a href="{{ asset('storage/' . $student->document_file_1) }}"
+                                                                target="_blank">
+                                                                View File
+                                                            </a>
+                                                        @else
+                                                            -
+                                                        @endif
+                                                    </td>
+
+                                                    <td>{{ $student->document_title_2 ?? '-' }}</td>
+                                                    <td>
+                                                        @if ($student->document_file_2)
+                                                            <a href="{{ asset('storage/' . $student->document_file_2) }}"
+                                                                target="_blank">
+                                                                View File
+                                                            </a>
+                                                        @else
+                                                            -
+                                                        @endif
+                                                    </td>
+                                                    <td>{{ $student->document_title_3 ?? '-' }}</td>
+                                                    <td>
+                                                        @if ($student->document_file_3)
+                                                            <a href="{{ asset('storage/' . $student->document_file_3) }}"
+                                                                target="_blank">
+                                                                View File
+                                                            </a>
+                                                        @else
+                                                            -
+                                                        @endif
+                                                    </td>
+                                                    <td>{{ $student->document_title_4 ?? '-' }}</td>
+                                                    <td>
+                                                        @if ($student->document_file_4)
+                                                            <a href="{{ asset('storage/' . $student->document_file_4) }}"
+                                                                target="_blank">
+                                                                View File
+                                                            </a>
+                                                        @else
+                                                            -
+                                                        @endif
+                                                    </td>
+
+                                                    <td>{{ $student->previous_institute_details ?? '-' }}</td>
+
+
+                                                    <td>{{ $student->createUser?->full_name ?? '-' }}</td>
+                                                    <td>{{ $student->updateUser?->full_name ?? '-' }}</td>
+
+
+                                                    <td valign="top"> @php
+                                                        $routeList = [
+                                                            '<a class="dropdown-item" target="_blank" href="' .
+                                                            route('student-details', $student->id) .
+                                                            '">' .
+                                                            __('common.view') .
+                                                            '</a>',
+                                                            '<a class="dropdown-item" href="' .
+                                                            route('add-student.edit', $student->id) .
+                                                            '">' .
+                                                            __('common.edit') .
+                                                            '</a>',
+                                                            '<a class="dropdown-item" target="_blank" href="' .
+                                                            route('add-student.verify', $student->id) .
+                                                            '">Verification</a>',
+                                                            '<a class="dropdown-item openVerificationModal" href="#" data-id="' .
+                                                            $student->id .
+                                                            '"> Verification Check </a>',
+                                                            '<a class="dropdown-item" data-toggle="modal" data-student-id="' .
+                                                            $student->id .
+                                                            '" data-target="#statusUpdateModal" href="' .
+                                                            route('student.update-status', $student->id) .
+                                                            '">' .
+                                                            __('common.disable') .
+                                                            '</a>',
+                                                    ]; @endphp <x-drop-down-action-component
+                                                            :routeList="$routeList" />
                                                     </td>
                                                 </tr>
+
                                                 {{-- @empty
                                                 <tr>
                                                     <td colspan="8" class="text-center">No students found</td>
@@ -424,9 +526,9 @@
                                <td>
                                     ${row.signature_path 
                                         ? `<a href="/storage/${row.signature_path}" target="_blank">
-                                                <img src="/storage/${row.signature_path}" 
-                                                    style="width:80px; border:1px solid #ccc; padding:2px; cursor:pointer;">
-                                        </a>`
+                                                                        <img src="/storage/${row.signature_path}" 
+                                                                            style="width:80px; border:1px solid #ccc; padding:2px; cursor:pointer;">
+                                                                </a>`
                                         : '-'
                                     }
                                 </td>

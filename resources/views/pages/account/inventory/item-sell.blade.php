@@ -95,7 +95,7 @@
                                                             @foreach ($students as $value)
                                                                 <option value="{{ $value->id }}"
                                                                     {{ old('student') == $value->id ? 'selected' : '' }}>
-                                                                    {{ $value->student_name }}</option>
+                                                                    {{ $value->admission_number }} - {{ $value->student_name }}</option>
                                                             @endforeach
                                                         </select>
                                                         <div class="text-danger" id="studentError"></div>

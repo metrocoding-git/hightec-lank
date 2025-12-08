@@ -565,7 +565,7 @@ class InvoiceController extends Controller
             Invoices_payments::create([
                 'invoice_id' => $invoice->id,
                 'amount' => -$refundAmount, // Store as a negative amount
-                'payment_method' => 'Refund', // Or a specific refund method
+                'payment_method' => $originalPayment->payment_method ?? '-', // Or a specific refund method
                 'payment_type' => 'refund', // Mark as a refund
                 'receipt_number' => $originalPayment->receipt_number ?? $receipt_number,
                 'create_user_id' => $create_user_id,

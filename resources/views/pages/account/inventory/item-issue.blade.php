@@ -649,7 +649,7 @@
                             console.log("ddd",data)
                             data.forEach(function(student) {
                                 optionsHtml +=
-                                    `<option value="${student.id}">${student.student_name}</option>`;
+                                    `<option value="${student.id}">${student.admission_number} - ${student.student_name}</option>`;
                             });
                             $('#student_select').html(optionsHtml).prop('disabled', false);
                         } else {

@@ -285,19 +285,8 @@ class HomeController extends Controller
             'gender',
             'studentCategory',
             'verifications',
-        ])->select([
-                    'id',
-                    'admission_number',
-                    'branch_id',
-                    'student_category_id',
-                    'gender_id',
-                    'student_name',
-                    'date_of_birth',
-                    'phone_number',
-                    'phone_number_2',
-                    'national_id_number',
-                    'permanent_address',
-                ])->active()->latest()->get();
+            'district',
+        ])->active()->latest()->get();
         $branches = Branch::all();
 
         return view('pages.student.student-info.student-list', compact('students', 'branches'));

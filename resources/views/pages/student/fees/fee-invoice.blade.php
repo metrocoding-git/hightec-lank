@@ -102,7 +102,7 @@
                                                             {{ $invoice->student->student_name }}
                                                         </a>
                                                     </td>
-                                                    <td>{{ $invoice->student->studentCategory->category_name }}</td>
+                                                    <td>{{ $invoice->student->studentCategory->category_name?? '-' }}</td>
                                                     <td>{{ $invoice->branch->name }}</td>
                                                     <td>{{ $invoice->student->admission_number }}</td>
 
@@ -1275,8 +1275,7 @@
                                 actionDropdown +=
                                     `<a style="padding:4px;margin: 2px; background-color: #28a745; color: #fff; text-align: center;" class="dropdown-item view-bank-details-btn" href="#" data-payment-id="${payment.id}" data-bank-date="${payment.bank_payment_date}" data-bank-amount="${payment.bank_payment_amount}" data-payment-file="${payment.payment_file || ''}">View Bank Details</a>`;
                             }
-                            if (payment.payment_method !== 'Refund' && payment
-                                .payment_status !== 'refunded' && payment.amount > 0) {
+                            if ( payment.payment_status !== 'refunded' && payment.amount > 0) {
                                 actionDropdown +=
                                     `<a style="padding:4px;margin: 2px; background-color: #dc3545; color: #fff; text-align: center;" class="dropdown-item refund-btn" href="#" data-payment-id="${payment.id}" data-amount="${payment.amount}">Refund</a>`;
                             }
@@ -1427,7 +1426,7 @@
                                     // Highlight return/refund payments
                                     var rowStyle = '';
                                     var amountStyle = '';
-                                    if (payment.payment_method === 'Refund' ||
+                                    if ( payment.amount < 0 ||
                                         payment.payment_type === 'return') {
                                         rowStyle =
                                             'style="background-color: #fff3cd; border-left: 4px solid #ffc107;"';
