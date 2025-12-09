@@ -60,7 +60,8 @@ class HomeController extends Controller
     //     $this->middleware('auth');
     // }
 
-    public function login(){
+    public function login()
+    {
         return view('auth.login');
     }
 
@@ -71,9 +72,15 @@ class HomeController extends Controller
 
         // Fetch counts
         $studentsCount = Student::count();
-        $teachersCount = User::whereHas('role', function($q) { $q->where('role_name', 'Teacher'); })->count();
-        $labourCount = User::whereHas('role', function($q) { $q->where('role_name', 'Labour'); })->count();
-        $adminCount = User::whereHas('role', function($q) { $q->where('role_name', 'Admin'); })->count();
+        $teachersCount = User::whereHas('role', function ($q) {
+            $q->where('role_name', 'Teacher');
+        })->count();
+        $labourCount = User::whereHas('role', function ($q) {
+            $q->where('role_name', 'Labour');
+        })->count();
+        $adminCount = User::whereHas('role', function ($q) {
+            $q->where('role_name', 'Admin');
+        })->count();
 
         // Fetch financial data using existing models
         $totalIncome = FeeInvoice::sum('paid_amount');
@@ -286,6 +293,8 @@ class HomeController extends Controller
             'studentCategory',
             'verifications',
             'district',
+            'createUser',
+            'updateUser'
         ])->active()->latest()->get();
         $branches = Branch::all();
 
@@ -303,7 +312,7 @@ class HomeController extends Controller
         return response()->json($verifications);
     }
 
-    
+
     public function getIntakes($branchId)
     {
         $intakes = Intake::where('branch_id', $branchId)->get(['id', 'name']);
@@ -379,7 +388,7 @@ class HomeController extends Controller
     {
         try {
             $intakes = Intake::where('branch_id', $branchId)->pluck('id');
-            $courses = Course::whereHas('intakes', function($q) use ($intakes) {
+            $courses = Course::whereHas('intakes', function ($q) use ($intakes) {
                 $q->whereIn('intake_id', $intakes);
             })->get(['id', 'name', 'price']);
 
@@ -439,18 +448,22 @@ class HomeController extends Controller
             'gender',
             'studentCategory',
             'verifications',
+            'district',
+            'createUser',
+            'updateUser'
+
         ])->select([
-                    'id',
-                    'admission_number',
-                    'branch_id',
-                    'student_category_id',
-                    'gender_id',
-                    'student_name',
-                    'date_of_birth',
-                    'phone_number',
-                    'national_id_number',
-                    'permanent_address',
-                ]);
+            'id',
+            'admission_number',
+            'branch_id',
+            'student_category_id',
+            'gender_id',
+            'student_name',
+            'date_of_birth',
+            'phone_number',
+            'national_id_number',
+            'permanent_address',
+        ]);
 
         if ($branchId) {
             $query->where('branch_id', $branchId);
@@ -497,15 +510,15 @@ class HomeController extends Controller
             'gender',
             'studentCategory',
         ])->select([
-                    'id',
-                    'admission_number',
-                    'branch_id',
-                    'student_category_id',
-                    'gender_id',
-                    'student_name',
-                    'date_of_birth',
-                    'phone_number',
-                ]);
+            'id',
+            'admission_number',
+            'branch_id',
+            'student_category_id',
+            'gender_id',
+            'student_name',
+            'date_of_birth',
+            'phone_number',
+        ]);
 
         if ($branchId) {
             $query->where('branch_id', $branchId);
@@ -565,15 +578,15 @@ class HomeController extends Controller
             'gender',
             'studentCategory',
         ])->select([
-                    'id',
-                    'admission_number',
-                    'branch_id',
-                    'student_category_id',
-                    'gender_id',
-                    'student_name',
-                    'date_of_birth',
-                    'phone_number',
-                ])->inactive()->orderBy('id', 'desc')->get();
+            'id',
+            'admission_number',
+            'branch_id',
+            'student_category_id',
+            'gender_id',
+            'student_name',
+            'date_of_birth',
+            'phone_number',
+        ])->inactive()->orderBy('id', 'desc')->get();
 
         $branches = Branch::all();
 
@@ -592,9 +605,7 @@ class HomeController extends Controller
 
 
 
-    public function feeGroup()
-    {
-    }
+    public function feeGroup() {}
 
 
 
@@ -624,7 +635,7 @@ class HomeController extends Controller
         $branches = Branch::all();
         $coursess = Course::all();
         $intakes = Intake::all();
-        
+
         $query = ReturnFee::with(['student', 'role']);
 
         if ($request->filled('branch')) {
@@ -660,7 +671,7 @@ class HomeController extends Controller
     public function feeInvoice()
     {
         $roles = Role::all();
-        $fee_invoices = FeeInvoice::with(['student', 'branch', 'invoice_item.fee_type','student.studentCategory'])
+        $fee_invoices = FeeInvoice::with(['student', 'branch', 'invoice_item.fee_type', 'student.studentCategory'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -727,7 +738,7 @@ class HomeController extends Controller
                 'bank_payment_date' => 'required|date',
             ]);
 
-            $subTotal = array_sum(array_map(function($price, $qty) {
+            $subTotal = array_sum(array_map(function ($price, $qty) {
                 return (float)$price * (float)$qty;
             }, $request->unit_price, $request->quantity));
 
@@ -824,11 +835,10 @@ class HomeController extends Controller
             'id' => 'required|exists:item_receive,id',
             'invoice_number' => 'required|string|max:50',
         ]);
-    
+
         $ItemReceive = ItemReceive::findOrFail($request->id);
         $ItemReceive->invoice_number = $request->invoice_number;
         $ItemReceive->save();
-    
     }
     public function itemReceiveList()
     {
@@ -1003,6 +1013,4 @@ class HomeController extends Controller
         $users = User::all();
         return view('pages.account.inventory.item-sell', compact('items', 'classes', 'sections', 'roles', 'students', 'users'));
     }
-
-   
 }

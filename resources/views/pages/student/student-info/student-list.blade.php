@@ -135,9 +135,8 @@
                                                 <th>Phone</th>
                                                 <th>Phone 2</th>
                                                 <th>NIC</th>
-                                                <th>Permanent Address</th>
+                                                <th>Address</th>
                                                 <th>Branch</th>
-
                                                 <th>Admission Date</th>
                                                 <th>Category</th>
                                                 <th>Gender</th>
@@ -172,11 +171,26 @@
                                             @foreach ($students as $student)
                                                 <tr>
                                                     <td>{{ $student->admission_number ?? '-' }}</td>
-                                                    <td class="{{ $student->isVerified('Full Name Verified') ? 'text-success' : '' }}">{{ $student->student_name ?? '-' }}</td>
-                                                    <td class="{{ $student->isVerified('Mobile Number Verified') ? 'text-success' : '' }}">{{ $student->phone_number ?? '-' }}</td>
-                                                    <td class="{{ $student->isVerified('Mobile Number 2 Verified') ? 'text-success' : '' }}">{{ $student->phone_number_2 ?? '-' }}</td>
-                                                    <td class="{{ $student->isVerified('NIC Verified') ? 'text-success' : '' }}">{{ $student->national_id_number ?? '-' }}</td>
-                                                    <td class="{{ $student->isVerified('Address Verified') ? 'text-success' : '' }}">{{ $student->permanent_address ?? '-' }}</td>
+                                                    <td class="{{ $student->isVerified('Full Name Verified') ? 'text-success' : '' }}">
+                                                        {{ $student->student_name ?? '-' }}
+                                                        {!! $student->isVerified('Full Name Verified') ? '<span class="text-success"> (✔)</span>' : '' !!}
+                                                    </td>
+                                                    <td class="{{ $student->isVerified('Mobile Number Verified') ? 'text-success' : '' }}">
+                                                        {{ $student->phone_number ?? '-' }}
+                                                        {!! $student->isVerified('Mobile Number Verified') ? '<span class="text-success"> (✔)</span>' : '' !!}
+                                                    </td>
+                                                    <td class="{{ $student->isVerified('Mobile Number 2 Verified') ? 'text-success' : '' }}">
+                                                        {{ $student->phone_number_2 ?? '-' }}
+                                                        {!! $student->isVerified('Mobile Number 2 Verified') ? '<span class="text-success"> (✔)</span>' : '' !!}
+                                                    </td>
+                                                    <td class="{{ $student->isVerified('NIC Verified') ? 'text-success' : '' }}">
+                                                        {{ $student->national_id_number ?? '-' }}
+                                                        {!! $student->isVerified('NIC Verified') ? '<span class="text-success"> (✔)</span>' : '' !!}
+                                                    </td>
+                                                    <td class="{{ $student->isVerified('Address Verified') ? 'text-success' : '' }}">
+                                                        {{ $student->permanent_address ?? '-' }}
+                                                        {!! $student->isVerified('Address Verified') ? '<span class="text-success"> (✔)</span>' : '' !!}
+                                                    </td>
                                                     <td>{{ $student->branch?->name ?? '-' }}</td>
 
                                                     <td>{{ $student->admission_date ?? '-' }}</td>
@@ -272,9 +286,8 @@
 
                                                     <td>{{ $student->previous_institute_details ?? '-' }}</td>
 
-
-                                                    <td>{{ $student->createUser?->full_name ?? '-' }}</td>
-                                                    <td>{{ $student->updateUser?->full_name ?? '-' }}</td>
+                                                    <td>{{ $student->createUser?->name ?? '-' }}</td>
+                                                    <td>{{ $student->updateUser?->name ?? '-' }}</td>
 
 
                                                     <td valign="top"> @php

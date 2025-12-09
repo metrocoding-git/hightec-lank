@@ -101,7 +101,6 @@ class AddStudentController extends Controller
         }
 
         $validatedData['create_user_id'] = Auth::id();
-        $validatedData['update_user_id'] = Auth::id();
 
         $student = Student::create($validatedData);
 
@@ -227,7 +226,8 @@ class AddStudentController extends Controller
         $validatedData['update_user_id'] = Auth::id();
 
         $student->update($validatedData);
-        return back()->with('success', 'Student updated successfully');
+        return redirect()->route('student-list')->with('success', 'Student edit successfully');
+
     }
 
     // Student Course Management Methods

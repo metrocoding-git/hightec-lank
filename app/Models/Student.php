@@ -149,4 +149,14 @@ class Student extends Model
             ->where('verification_item', $key)
             ->count() > 0;
     }
+
+    public function createUser()
+    {
+        return $this->belongsTo(User::class, 'create_user_id');
+    }
+
+    public function updateUser()
+    {
+        return $this->belongsTo(User::class, 'update_user_id');
+    }
 }
