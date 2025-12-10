@@ -157,11 +157,11 @@
                                                                     onclick="populateInvoiceModal(this)">Invoice</a>
 
                                                                 {{-- Show Return option only if there's paid amount and not returned --}}
-                                                                @if ($invoice->paid_amount > 0)
+                                                                {{-- @if ($invoice->paid_amount > 0) --}}
                                                                     <a class="dropdown-item" data-toggle="modal"
                                                                         data-target="#returnFeeModal{{ $invoice->id }}"
                                                                         href="#">Return</a>
-                                                                @endif
+                                                                {{-- @endif --}}
                                                             @endif
 
                                                             {{-- Show Report option --}}
@@ -170,9 +170,9 @@
                                                                 href="{{ route('fees.invoice-print', $invoice->id) }}" target="_blank" >Re-Print</a>
 
                                                             {{-- Always show Delete option --}}
-                                                            <a class="dropdown-item" data-toggle="modal"
+                                                            {{-- <a class="dropdown-item" data-toggle="modal"
                                                                 data-target="#deletecategoryModal{{ $invoice->id }}"
-                                                                href="#">@lang('common.delete')</a>
+                                                                href="#">@lang('common.delete')</a> --}}
                                                         </x-drop-down>
                                                     </td>
                                                 </tr>
@@ -229,7 +229,7 @@
                                     $paid_amount = $invoice->paid_amount;
                                     $balance = $amount - $paid_amount;
                                 @endphp
-                                @if ($invoice->paid_amount > 0)
+                                {{-- @if ($invoice->paid_amount > 0) --}}
                                     <div class="modal fade admin-query" id="returnFeeModal{{ $invoice->id }}"
                                         style="background-color: rgba(0, 0, 0, 0.5);">
                                         <div class="modal-dialog modal-lg modal-dialog-centered"
@@ -321,8 +321,8 @@
                                                                     <div class="input-group"
                                                                         style="box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); border-radius: 8px; overflow: hidden;">
                                                                         <input type="number" name="return_amount"
-                                                                            class="form-control" min="0.01"
-                                                                            max="{{ $paid_amount }}" step="0.01"
+                                                                            class="form-control" min="0.00`"
+                                                                            max="{{ $paid_amount }}" step="0.00"
                                                                             required placeholder="Enter return amount"
                                                                             style="border: 1px solid #dc3545; border-right: none; border-radius: 8px 0 0 8px; padding: 12px 15px; font-size: 1rem; color: #495057; height: 48px;">
                                                                         <div class="input-group-append">
@@ -376,7 +376,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                @endif
+                                {{-- @endif --}}
                             @endforeach
 
                             <!-- Make Invoice Modal -->

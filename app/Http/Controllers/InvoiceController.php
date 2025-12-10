@@ -858,6 +858,7 @@ class InvoiceController extends Controller
                 'create_user_id' => $create_user_id,
                 'bank_payment_amount' => $bankPaidAmountForPayment,
                 'bank_payment_date' => $bankPaidDateForPayment,
+                'branch_id' => $request->branch_id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -884,7 +885,7 @@ class InvoiceController extends Controller
     public function getReturnFeeData($invoiceId)
     {
         try {
-            $returnFees = \App\Models\ReturnFee::with('returnUser')
+            $returnFees = \App\Models\ReturnFee::with('returnUser', 'invoice')
                 ->where('invoice_id', $invoiceId)
                 ->get();
 
@@ -967,7 +968,7 @@ class InvoiceController extends Controller
     public function invoiceItemPrint($invoiceId, $paymentId)
     {
         try {
-            $invoice = Invoices_payments::with(['invoice', 'invoice.student', 'invoice.branch', 'invoice.paidCourses.course','invoice.student.studentCategory'])
+            $invoice = Invoices_payments::with(['invoice', 'invoice.student', 'invoice.branch', 'invoice.paidCourses.course', 'invoice.student.studentCategory'])
                 ->where('id', $paymentId)
                 ->where('invoice_id', $invoiceId)
                 ->firstOrFail();
@@ -1083,7 +1084,7 @@ class InvoiceController extends Controller
         }
     }
 
-    public function getIntakesByCourse($courseId,$studentId)
+    public function getIntakesByCourse($courseId, $studentId)
     {
         try {
             // Find the course with its associated intakes through the pivot table
@@ -1093,7 +1094,7 @@ class InvoiceController extends Controller
                 'success' => true,
                 'intakes' => [
                     'id' => $course->intake->id,
-                    'name' => $course->intake->name, 
+                    'name' => $course->intake->name,
                 ]
             ]);
         } catch (\Exception $e) {
@@ -1115,8 +1116,8 @@ class InvoiceController extends Controller
         // Get last receipt for this branch
         $last = \App\Models\Invoices_payments::whereHas('invoice', function ($q) use ($branch_id) {
             $q->where('branch_id', $branch_id);
-        }) ->whereIn('payment_type', ['course', 'fee']) 
-        ->orderBy('id', 'desc')
+        })->whereIn('payment_type', ['course', 'fee'])
+            ->orderBy('id', 'desc')
             ->first();
 
         // Extract last 6-digit sequence number

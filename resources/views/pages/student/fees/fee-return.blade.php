@@ -6,11 +6,11 @@
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1>Fees Forward</h1>
+                <h1>Return Fee Invoice</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">Dashboard</a>
                     <a href="#">Fees Collection</a>
-                    <a href="#">Fees Forward</a>
+                    <a href="#">Return Fee Invoice</a>
                 </div>
             </div>
         </div>
@@ -111,7 +111,7 @@
                             <div class="row">
                                 <div class="col-lg-6 no-gutters">
                                     <div class="main-title">
-                                        <h3 class="mb-15">Previous Session Balance Fees</h3>
+                                        <h3 class="mb-15">Return Fee Invoice</h3>
                                     </div>
                                 </div>
                             </div>
@@ -132,30 +132,59 @@
                                                     </tr>
                                                 @endif
                                                 <tr>
-                                                    <th width="15%">Student Name</th>
-                                                    <th width="15%">Admission No</th>
-                                                    {{-- <th width="15%">Roll Name</th> --}}
-                                                    <th width="15%">Balance</th>
-                                                    <th width="15%">Return Amount</th>
-                                                    <th width="15%">Return date</th>
-                                                    <th width="25%">Short Note</th>
+                                                    <th>ID</th>
+                                                    <th>Main Invoice No.</th>
+                                                    <th>Fee Name</th>
+                                                    <th>@lang('common.student')</th>
+                                                    <th>Stu Category</th>
+                                                    <th>Branch</th>
+                                                    <th>@lang('admin.admission_no')</th>
+                                                    <th>Balance</th>
+                                                    <th>Return Amount</th>
+                                                    <th>Return date</th>
+                                                    <th>Payment Method</th>
+                                                    <th>Payment Date</th>
+                                                    <th>Short Note</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                @foreach ($returnDetails as $student)
-                                                    <tr>
-                                                        <td>{{ $student->student->student_name }} <input type="hidden"
-                                                                name="id[]"
-                                                                value="{{ isset($update) ? @$student->studentDetail->forwardBalance->id : $student->student_id }}">
-                                                        </td>
-                                                        <td>{{ $student->student->admission_number }}</td>
-                                                        {{-- <td>{{$student->role->role_name}}</td> --}}
-                                                        <td> {{ $student->balance }} </td>
-                                                        <td> {{ $student->return_amount ?? 'N/A' }} </td>
-                                                        <td>{{ $student->created_at ? $student->created_at->format('Y-m-d') : 'N/A' }}
-                                                        </td>
+                                                @foreach ($returnDetails as $key => $rInvoice)
 
-                                                        <td> {{ $student->short_note }} </td>
+                                                    <tr>
+                                                        <td>{{ $key + 1 }}</td>
+                                                        <td>
+                                                            <a href="{{ route('fees.fee-invoice-view', ['id' => $rInvoice->invoice->id, 'state' => 'view']) }}"
+                                                                target="_blank">
+                                                                {{ $rInvoice->invoice->main_invoice_number }}
+                                                            </a>
+                                                        </td>
+                                                        <td>
+
+                                                            @if ($rInvoice->invoice->invoice_type == 'fee')
+                                                                {{ $rInvoice->invoice->invoice_item[0]->fee_type->name }}
+                                                            @elseif ($rInvoice->invoice->invoice_type == 'course')
+                                                                {{ $rInvoice->invoice->paidCourses?->course?->name ?? '-' }}
+                                                            @else
+                                                                -
+                                                            @endif
+                                                        </td>
+                                                        <td>
+                                                            <a href="{{ route('student-details', ['id' => $rInvoice->invoice->student->id, 'state' => 'view']) }}"
+                                                                target="_blank">
+                                                                {{ $rInvoice->invoice->student->student_name }}
+                                                            </a>
+                                                        </td>
+                                                        <td>{{ $rInvoice->invoice->student->studentCategory->category_name ?? '-' }}
+                                                        </td>
+                                                        <td>{{ $rInvoice->invoice->branch->name }}</td>
+                                                        <td>{{ $rInvoice->invoice->student->admission_number }}</td>
+
+                                                        <td> {{ $rInvoice->balance }} </td>
+                                                        <td> {{ $rInvoice->return_amount ?? 'N/A' }} </td>
+                                                        <td>{{ $rInvoice->created_at ? $rInvoice->created_at->format('Y-m-d') : 'N/A' }}</td>
+                                                        <td>{{ $rInvoice->invoice->payment_method }}</td>
+                                                        <td>{{ \Carbon\Carbon::parse($rInvoice->invoice->create_date)->format('m/d/Y') }}</td>
+                                                        <td> {{ $rInvoice->short_note }} </td>
 
                                                         {{-- <td> 
                                                             <div class="primary_input">
@@ -277,7 +306,7 @@
                             $('#select_intake').niceSelect('destroy');
                             $('#select_intake').empty().append(
                                 '<option data-display="Select Intake *" value="">Select Intake *</option>'
-                                ); // Re-add default option
+                            ); // Re-add default option
                             if (response.success && response.intakes.length > 0) {
                                 $.each(response.intakes, function(key, value) {
                                     $('#select_intake').append('<option value="' + value
@@ -293,7 +322,7 @@
                             $('#select_intake').niceSelect('destroy');
                             $('#select_intake').empty().append(
                                 '<option data-display="Select Intake *" value="">Select Intake *</option>'
-                                );
+                            );
                             $('#select_intake').niceSelect();
                         }
                     });
@@ -322,7 +351,7 @@
                             $('#select_course').niceSelect('destroy');
                             $('#select_course').empty().append(
                                 '<option data-display="Select Course *" value="">Select Course *</option>'
-                                ); // Re-add default option
+                            ); // Re-add default option
                             if (response.success && response.courses.length > 0) {
                                 $.each(response.courses, function(key, value) {
                                     $('#select_course').append('<option value="' + value
@@ -338,7 +367,7 @@
                             $('#select_course').niceSelect('destroy');
                             $('#select_course').empty().append(
                                 '<option data-display="Select Course *" value="">Select Course *</option>'
-                                );
+                            );
                             $('#select_course').niceSelect();
                         }
                     });

@@ -66,4 +66,9 @@ class ReturnFee extends Model
     {
         return $query->where('status', 0);
     }
+
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(FeeInvoice::class, 'invoice_id');
+    }
 }

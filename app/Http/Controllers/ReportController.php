@@ -42,7 +42,8 @@ class ReportController extends Controller
         'invoice.invoice_item',
         'invoice.invoice_item.fee_type',
         'invoice.paidCourses',
-        'invoice.paidCourses.course'
+        'invoice.paidCourses.course',
+        'branch',
     ]);
 
     // ----- DATE RANGE FILTER -----
@@ -67,9 +68,7 @@ class ReportController extends Controller
 
     // ----- BRANCH FILTER -----
     if ($request->branch_id) {
-        $query->whereHas('invoice', function ($q) use ($request) {
-            $q->where('branch_id', $request->branch_id);
-        });
+        $query->where('branch_id', $request->branch_id);
     }
 
     // Results

@@ -23,7 +23,7 @@ class ReturnFeeController extends Controller
             'admission_number' => 'required|string|max:255',
             'return_user_id' => 'nullable|exists:users,id',
             'balance' => 'required|numeric|min:0',
-            'return_amount' => 'required|numeric|min:0.01',
+            'return_amount' => 'required|numeric|min:0.00',
             'invoice_id' => 'required|exists:fee_invoices,id',
             'short_note' => 'nullable|string',
             'status' => 'nullable|boolean'
@@ -62,14 +62,14 @@ class ReturnFeeController extends Controller
             $newPaidAmount = max(0, $newPaidAmount);
 
             // Determine payment status - set to 'returned' if return was processed
-            if ($newPaidAmount == 0) {
-                $paymentStatus = 'not';
-            } elseif ($newPaidAmount >= $invoice->total_amount) {
-                $paymentStatus = 'full';
-            } else {
-                $paymentStatus = 'returned'; // Set to returned when partial payment remains after return
-            }
-
+            // if ($newPaidAmount == 0) {
+            //     $paymentStatus = 'not';
+            // } elseif ($newPaidAmount >= $invoice->total_amount) {
+            //     $paymentStatus = 'full';
+            // } else {
+            //     $paymentStatus = 'returned'; // Set to returned when partial payment remains after return
+            // }
+            $paymentStatus = 'returned';
             // Update invoice
             $invoice->update([
                 'paid_amount' => $newPaidAmount,

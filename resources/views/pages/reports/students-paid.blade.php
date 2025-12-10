@@ -100,7 +100,7 @@
                                                 <th>ID</th>
                                                 <th>Stu No</th>
                                                 <th>Stu Category</th>
-                                                <th>Stu Branch</th>
+                                                <th>Paid Branch</th>
                                                 <th>Invoice Number</th>
                                                 <th>Receipt Number</th>
                                                 <th>Payment Name</th>
@@ -130,7 +130,7 @@
                                                         </td>
                                                         <td
                                                             class="{{  $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
-                                                            {{ $feeInvoice->invoice ? $feeInvoice->invoice->branch->name : 'N/A' }}
+                                                            {{ $feeInvoice->branch ? $feeInvoice->branch->name : 'N/A' }}
                                                         </td>
                                                         <td
                                                             class="{{  $feeInvoice->amount < 0 ? 'text-danger' : '' }}">

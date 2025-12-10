@@ -412,7 +412,7 @@ class HomeController extends Controller
     {
         try {
             $student = Student::find($studentId);
-    
+
             if (!$student) {
                 return response()->json([
                     'success' => false,
@@ -420,18 +420,18 @@ class HomeController extends Controller
                     'student_id' => $studentId
                 ], 404);
             }
-    
+
             // Step 1 — Get latest record ID for each course
             $latest = StudentCourse::where('student_id', $studentId)
                 ->selectRaw('MAX(id) as id')
                 ->groupBy('course_id')
                 ->pluck('id'); // gives [12, 18, 25] (latest rows)
-    
+
             // Step 2 — Load only these records with relations
             $records = StudentCourse::with(['course', 'intake'])
                 ->whereIn('id', $latest)
                 ->get();
-    
+
             // Step 3 — Format response
             $courses = $records->map(function ($item) {
                 return [
@@ -442,13 +442,12 @@ class HomeController extends Controller
                     'intake_name' => $item->intake?->name,
                 ];
             });
-    
+
             return response()->json([
                 'success' => true,
                 'courses' => $courses,
                 'count' => $courses->count()
             ]);
-    
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -457,7 +456,7 @@ class HomeController extends Controller
             ], 500);
         }
     }
-    
+
     public function filterStudentList(Request $request)
     {
 
@@ -695,6 +694,7 @@ class HomeController extends Controller
     {
         $roles = Role::all();
         $fee_invoices = FeeInvoice::with(['student', 'branch', 'invoice_item.fee_type', 'student.studentCategory'])
+            ->where('payment_status', '!=', 'returned')
             ->orderBy('created_at', 'desc')
             ->get();
 

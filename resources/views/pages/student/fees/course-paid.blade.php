@@ -87,10 +87,10 @@
                                         <label>@lang('common.select_student') <span class="text-danger">*</span></label>
                                         <select class="primary_select form-control" id="student_id" name="student_id">
                                             <option value="">@lang('common.select_student')</option>
-                                            {{-- @foreach ($students as $student)
+                                            @foreach ($students as $student)
                                                 <option value="{{ $student->id }}">{{ $student->admission_number }} -
                                                     {{ $student->student_name }}</option>
-                                            @endforeach --}}
+                                            @endforeach
                                         </select>
                                     </div>
                                 </div>
@@ -262,12 +262,7 @@
             }
             // Initialize the bank payment section as hidden
             toggleBankPayment('');
-            function refreshNiceSelect(selector) {
-                if ($.fn.niceSelect) {
-                    $(selector).niceSelect('destroy');
-                    $(selector).niceSelect();
-                }
-            }
+
             // AJAX: Load students based on branch
             $('#branch_id').change(function() {
                 let branchId = $(this).val();
@@ -275,33 +270,18 @@
                 $('#student_id').html('<option value="">Loading...</option>');
 
                 if (branchId) {
-                    refreshNiceSelect('#student_id');
-
-                    var url = '{{ route('item-issue.get-students-by-branch', ':branchId') }}'.replace(
-                        ':branchId', branchId);
-                    $.get(url, function(data) {
-                        var optionsHtml = '<option value="">Select Student *</option>';
-                        if (data && Array.isArray(data) && data.length > 0) {
-                            console.log("ddd", data)
-                            data.forEach(function(student) {
-                                optionsHtml +=
-                                    `<option value="${student.id}">${student.admission_number} - ${student.student_name}</option>`;
-                            });
-                            $('#student_id').html(optionsHtml).prop('disabled', false);
-                        } else {
-                            $('#student_id').html('<option value="">No Students Found</option>')
-                                .prop('disabled', true);
-                        }
-                        refreshNiceSelect('#student_id');
-                    }).fail(function(xhr, status, error) {
-                        console.error('❌ AJAX Error fetching students by branch:', error);
-                        $('#student_id').html(
-                            '<option value="">Error loading students</option>').prop('disabled',
-                            true);
-                        refreshNiceSelect('#student_id');
+                    let filteredStudents = @json($students);
+                    $('#student_id').empty().append('<option value="">Select Student</option>');
+                    $.each(filteredStudents, function(index, student) {
+                        $('#student_id').append('<option value="' + student.id + '">' + student
+                            .admission_number + ' - ' + student
+                            .student_name + '</option>');
                     });
+                    $('#student_id').niceSelect('update');
                     $('#selectStudentLoader').hide();
 
+
+                    
                 } else {
                     $('#selectStudentLoader').hide();
                     $('#student_id').html('<option value="">Select Student</option>');
@@ -474,7 +454,7 @@
 
                     if (intakeName) {
 
-                        console.log('ssss', intakeName);
+                        console.log('ssss',intakeName);
                         intakeTableBody.append(
                             `<tr><td>${intakeName}</td></tr>`
                         );
