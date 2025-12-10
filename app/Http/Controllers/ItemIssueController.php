@@ -51,7 +51,7 @@ class ItemIssueController extends Controller
     public function issueListView()
     {
         try {
-            $issuedBatches = ItemIssueBatch::with(['items.item', 'items.category', 'student', 'staff', 'branch', 'course'])
+            $issuedBatches = ItemIssueBatch::with(['items.item', 'items.category', 'student', 'staff', 'branch', 'course','createdBy'])
                 ->where('active_status', 1)
                 ->get();
 
@@ -137,6 +137,7 @@ class ItemIssueController extends Controller
             $batch->description = $request->description;
             $batch->issue_status = 'I'; // Issued
             $batch->active_status = 1;
+            $batch->created_by = Auth::id();
 
             // Check if student is selected or staff
             if ($request->student_id) {

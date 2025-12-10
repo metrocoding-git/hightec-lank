@@ -106,7 +106,8 @@ class ItemSellController extends Controller
                 'total_sell_price' => $request->subTotalValue ?? 0,
                 'total_paid' => $request->totalPaid ?? 0,
                 'total_due' => $request->totalDue ?? 0,
-                'status' => ($request->totalDue > 0) ? 'PP' : 'P', // Partial Paid or Paid
+                'status' => ($request->totalDue > 0) ? 'PP' : 'P', 
+                'created_by' => Auth::id(),
             ]);
 
             // Create ItemSellItem records for each item in the batch
@@ -159,7 +160,7 @@ class ItemSellController extends Controller
 
     public function itemSellList()
     {
-        $allItemSellLists = ItemSellBatch::with(['role', 'student', 'user','student.studentCategory'])->get();
+        $allItemSellLists = ItemSellBatch::with(['role', 'student', 'user','student.studentCategory', 'createdBy'])->get();
         return view('pages.account.inventory.item-sell-list', compact('allItemSellLists'));
     }
 

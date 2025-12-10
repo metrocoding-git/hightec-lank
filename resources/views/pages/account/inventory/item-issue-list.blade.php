@@ -45,6 +45,7 @@
                                             <th>@lang('inventory.quantity')</th>
                                             <th>Intake Name</th>
                                             <th>Course Name</th>
+                                            <th>Create user</th>
                                             <th>Course Expiration</th>
                                             <th hidden>@lang('common.description')</th>
                                             <th>@lang('common.status')</th>
@@ -103,10 +104,13 @@
                                                     <td>{{ $batch->total_items ?? $batch->items->sum('quantity') }}</td>
                                                     <td>{{ $batchData['intake_name'] }}</td>
                                                     <td>{{ $batchData['course_name'] }}</td>
+                                                    <td> {{ $batch->createdBy?->name ?? '-' }}</td>
+
                                                     <td>
                                                         <button
                                                             class="primary-btn small {{ $batchData['expire_class'] }} text-white border-0">{{ $batchData['expire_status'] }}</button>
                                                     </td>
+
                                                     <td hidden>{{ $batch->description }}</td>
                                                     <td>
                                                         @if ($batch->issue_status == 'I')

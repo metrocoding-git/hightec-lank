@@ -17,6 +17,7 @@ class ItemIssueBatch extends Model
         'description',
         'issue_status',
         'active_status',
+        'created_by',
     ];
 
     // Relationships
@@ -59,5 +60,10 @@ class ItemIssueBatch extends Model
     public function getStatusTextAttribute()
     {
         return $this->issue_status === 'I' ? 'Issued' : 'Returned';
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

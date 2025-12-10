@@ -96,3 +96,9 @@ CREATE TABLE `student_verifications` (
   `created_at` TIMESTAMP NULL DEFAULT NULL,
   `updated_at` TIMESTAMP NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+
+-- 12/11
+ALTER TABLE `item_issue_batches` ADD `created_by` INT NULL AFTER `active_status`;
+ALTER TABLE `item_sell_batches` ADD `created_by` INT NULL AFTER `status`;

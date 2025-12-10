@@ -570,6 +570,10 @@ class InvoiceController extends Controller
                 'payment_type' => 'refund', // Mark as a refund
                 'receipt_number' => $originalPayment->receipt_number ?? $receipt_number,
                 'create_user_id' => $create_user_id,
+                'payment_file' => $originalPayment->payment_file,
+                'bank_payment_date' => $originalPayment->bank_payment_date, 
+                'bank_payment_amount' => $originalPayment->bank_payment_amount,
+                'payment_invoice_number' => $originalPayment->payment_invoice_number,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

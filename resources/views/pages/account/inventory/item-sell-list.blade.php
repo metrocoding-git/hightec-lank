@@ -54,15 +54,19 @@
                                                     <th>@lang('inventory.reference_no')</th>
                                                     <th>@lang('inventory.role_name')</th>
                                                     <th>@lang('inventory.buyer_name')</th>
+                                                    <th>Create User</th>
                                                     <th>Reg No</th>
                                                     <th>Category</th>
-
                                                     <th>@lang('common.date')</th>
                                                     <th>Sell Price</th>
                                                     <th>@lang('inventory.grand_total')</th>
                                                     <th>@lang('inventory.total_quantity')</th>
-                                                    {{-- <th>@lang('inventory.paid')</th>
-                                                <th>@lang('inventory.balance') (Rs)</th> --}}
+                                                    <th>Payment Method</th>
+                                                    <th>Bank Payment Amount</th>
+                                                    <th>Bank Payment Date</th>
+                                                    <th>Bank Payment Doc</th>
+                                                    <th>Invoice Number</th>
+
                                                     <th>@lang('common.status')</th>
                                                     <th>@lang('common.action')</th>
                                                 </tr>
@@ -89,15 +93,16 @@
                                                                     N/A
                                                                 @endif
                                                             </td>
+                                                            <td> {{ $value->createdBy?->name ?? '-' }}</td>
                                                             <td>
-                                                                @if ($value->role_id == 2 && $value->student)
+                                                                @if ($value->student)
                                                                     {{ $value->student->admission_number }}
                                                                 @else
                                                                     N/A
                                                                 @endif
                                                             </td>
                                                             <td>
-                                                                @if ($value->role_id == 2 && $value->student)
+                                                                @if ($value->student)
                                                                     {{ $value->student->studentCategory->category_name }}
                                                                 @else
                                                                     N/A
@@ -112,6 +117,29 @@
                                                             <td>{{ number_format((float) $value->total_paid + $value->total_due, 2, '.', '') }}
                                                             </td>
                                                             <td>{{ $value->total_quantity }}</td>
+                                                            <td>{{ $value->payment_method ?? '-' }}</td>
+                                                            <td>
+                                                                {{ $value->bank_payment_amount ? number_format((float) $value->bank_payment_amount, 2, '.', '') : '-' }}
+                                                            </td>
+                                                            <td>
+                                                                {{ $value->bank_payment_date ? \Carbon\Carbon::parse($value->bank_payment_date)->format('m/d/Y') : '-' }}
+                                                            </td>
+                                                            <td>
+                                                                @if ($value->bank_payment_document)
+                                                                    <a href="{{ asset('storage/' . $value->bank_payment_document) }}"
+                                                                        target="_blank" class="text-primary">View
+                                                                        Document</a>
+                                                                @else
+                                                                    -
+                                                                @endif
+                                                            </td>
+                                                            <td>
+                                                                @if ($value->invoice_number && $value->invoice_number != '')
+                                                                    {{ $value->invoice_number }}
+                                                                @else
+                                                                    -
+                                                                @endif
+                                                            </td>
                                                             <td>
                                                                 @if ($value->status == 'P')
                                                                     <button

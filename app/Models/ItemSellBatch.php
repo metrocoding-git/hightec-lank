@@ -25,6 +25,7 @@ class ItemSellBatch extends Model
         'total_paid',
         'total_due',
         'status',
+        'created_by'
     ];
 
     public function role()
@@ -50,6 +51,11 @@ class ItemSellBatch extends Model
     public function items()
     {
         return $this->hasMany(ItemSellItem::class, 'item_sell_batch_id');
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     // Course and intake relationships removed as they're not available in current structure
