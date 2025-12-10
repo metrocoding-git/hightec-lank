@@ -51,6 +51,7 @@ use Modules\RolePermission\Entities\InfixRole;
 use Modules\Wallet\Entities\WalletTransaction;
 use Modules\Saas\Entities\SmSubscriptionPayment;
 use App\Models\Branch; // Keep this single import for Branch
+use App\Models\StudentCourse;
 use App\Models\StudentVerification;
 
 class HomeController extends Controller
@@ -411,6 +412,7 @@ class HomeController extends Controller
     {
         try {
             $student = Student::find($studentId);
+    
             if (!$student) {
                 return response()->json([
                     'success' => false,
@@ -418,15 +420,35 @@ class HomeController extends Controller
                     'student_id' => $studentId
                 ], 404);
             }
-
-            $courses = $student->courses()->get(['courses.id', 'courses.name', 'courses.price']);
-
+    
+            // Step 1 — Get latest record ID for each course
+            $latest = StudentCourse::where('student_id', $studentId)
+                ->selectRaw('MAX(id) as id')
+                ->groupBy('course_id')
+                ->pluck('id'); // gives [12, 18, 25] (latest rows)
+    
+            // Step 2 — Load only these records with relations
+            $records = StudentCourse::with(['course', 'intake'])
+                ->whereIn('id', $latest)
+                ->get();
+    
+            // Step 3 — Format response
+            $courses = $records->map(function ($item) {
+                return [
+                    'course_id' => $item->course->id,
+                    'course_name' => $item->course->name,
+                    'course_price' => $item->course->price,
+                    'intake_id' => $item->intake?->id,
+                    'intake_name' => $item->intake?->name,
+                ];
+            });
+    
             return response()->json([
                 'success' => true,
                 'courses' => $courses,
-                'student_id' => $studentId,
                 'count' => $courses->count()
             ]);
+    
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -435,6 +457,7 @@ class HomeController extends Controller
             ], 500);
         }
     }
+    
     public function filterStudentList(Request $request)
     {
 

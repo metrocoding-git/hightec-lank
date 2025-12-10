@@ -14,6 +14,7 @@ use App\Models\Invoices_payments;
 use App\Models\PaidCourse; // Import the new PaidCourse model
 use App\Models\Student;
 use App\Models\Course; // Import the Course model
+use App\Models\StudentCourse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -1082,20 +1083,18 @@ class InvoiceController extends Controller
         }
     }
 
-    public function getIntakesByCourse($courseId)
+    public function getIntakesByCourse($courseId,$studentId)
     {
         try {
             // Find the course with its associated intakes through the pivot table
-            $course = Course::with('intakes')->findOrFail($courseId);
+            $course = StudentCourse::with('intake')->where('student_id', $studentId)->where('course_id', $courseId)->latest()->first();
 
             return response()->json([
                 'success' => true,
-                'intakes' => $course->intakes->map(function ($intake) {
-                    return [
-                        'id' => $intake->id,
-                        'name' => $intake->name, // Assuming Intake model has a 'name' attribute
-                    ];
-                }),
+                'intakes' => [
+                    'id' => $course->intake->id,
+                    'name' => $course->intake->name, 
+                ]
             ]);
         } catch (\Exception $e) {
             Log::error('Error fetching intakes by course: ' . $e->getMessage());

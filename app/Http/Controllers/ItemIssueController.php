@@ -472,7 +472,14 @@ class ItemIssueController extends Controller
             Log::info('=== getStudentsByBranch CALLED ===');
             Log::info('Branch ID: ' . $branchId);
 
-            $students = Student::where('branch_id', $branchId)->get();
+            $students = StudentCourse::where('branch_id', $branchId)
+                ->select('student_id')
+                ->distinct()
+                ->with('student')
+                ->get()
+                ->pluck('student');
+
+
 
             Log::info('Found students count: ' . $students->count());
 

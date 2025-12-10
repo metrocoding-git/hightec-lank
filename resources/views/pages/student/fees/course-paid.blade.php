@@ -87,9 +87,10 @@
                                         <label>@lang('common.select_student') <span class="text-danger">*</span></label>
                                         <select class="primary_select form-control" id="student_id" name="student_id">
                                             <option value="">@lang('common.select_student')</option>
-                                            @foreach ($students as $student)
-                                                <option value="{{ $student->id }}">{{ $student->admission_number }} - {{ $student->student_name }}</option>
-                                            @endforeach
+                                            {{-- @foreach ($students as $student)
+                                                <option value="{{ $student->id }}">{{ $student->admission_number }} -
+                                                    {{ $student->student_name }}</option>
+                                            @endforeach --}}
                                         </select>
                                     </div>
                                 </div>
@@ -261,7 +262,12 @@
             }
             // Initialize the bank payment section as hidden
             toggleBankPayment('');
-
+            function refreshNiceSelect(selector) {
+                if ($.fn.niceSelect) {
+                    $(selector).niceSelect('destroy');
+                    $(selector).niceSelect();
+                }
+            }
             // AJAX: Load students based on branch
             $('#branch_id').change(function() {
                 let branchId = $(this).val();
@@ -269,14 +275,33 @@
                 $('#student_id').html('<option value="">Loading...</option>');
 
                 if (branchId) {
-                    let filteredStudents = @json($students);
-                    $('#student_id').empty().append('<option value="">Select Student</option>');
-                    $.each(filteredStudents, function(index, student) {
-                        $('#student_id').append('<option value="' + student.id + '">' + student.admission_number + ' - ' + student 
-                            .student_name + '</option>');
+                    refreshNiceSelect('#student_id');
+
+                    var url = '{{ route('item-issue.get-students-by-branch', ':branchId') }}'.replace(
+                        ':branchId', branchId);
+                    $.get(url, function(data) {
+                        var optionsHtml = '<option value="">Select Student *</option>';
+                        if (data && Array.isArray(data) && data.length > 0) {
+                            console.log("ddd", data)
+                            data.forEach(function(student) {
+                                optionsHtml +=
+                                    `<option value="${student.id}">${student.admission_number} - ${student.student_name}</option>`;
+                            });
+                            $('#student_id').html(optionsHtml).prop('disabled', false);
+                        } else {
+                            $('#student_id').html('<option value="">No Students Found</option>')
+                                .prop('disabled', true);
+                        }
+                        refreshNiceSelect('#student_id');
+                    }).fail(function(xhr, status, error) {
+                        console.error('❌ AJAX Error fetching students by branch:', error);
+                        $('#student_id').html(
+                            '<option value="">Error loading students</option>').prop('disabled',
+                            true);
+                        refreshNiceSelect('#student_id');
                     });
-                    $('#student_id').niceSelect('update');
                     $('#selectStudentLoader').hide();
+
                 } else {
                     $('#selectStudentLoader').hide();
                     $('#student_id').html('<option value="">Select Student</option>');
@@ -323,9 +348,19 @@
                                 '<option value="">select course</option>');
                             if (data.success && data.courses.length > 0) {
                                 data.courses.forEach(function(course) {
-                                    $('#course_id').append('<option value="' + course
-                                        .id + '" data-price="' + course.price +
-                                        '">' + course.name + '</option>');
+                                    $('#course_id').append(
+                                        '<option value="' + course.course_id + '"' +
+                                        ' data-price="' + course.course_price +
+                                        '"' +
+                                        ' data-name="' + course.course_name + '"' +
+                                        ' data-intake="' + course.intake_name +
+                                        '"' +
+                                        '>' +
+                                        course.course_name + ' - ' + course
+                                        .intake_name +
+                                        '</option>'
+                                    );
+
                                 });
                             }
                             $('#course_id').niceSelect('update');
@@ -350,7 +385,10 @@
             $('#course_id').change(function() {
                 let selectedOption = $(this).find('option:selected');
                 let courseId = selectedOption.val();
-                let courseName = selectedOption.text().trim();
+                let courseName = selectedOption.data('name');
+                let intakeName = selectedOption.data('intake');
+                let intakeId = selectedOption.data('intake-id');
+
                 let coursePrice = parseFloat(selectedOption.data('price')) || 0;
                 let studentId = $('#student_id').val();
 
@@ -360,7 +398,7 @@
                     $('#paymentHistoryTable tbody').empty();
                     $('#intake_details_section').hide(); // Hide intake table
                     $('.allCourseDetails tr').find('.intake_name_cell').text(
-                    'N/A'); // Clear intake name in course table
+                        intakeName); // Clear intake name in course table
                     return;
                 }
 
@@ -405,44 +443,89 @@
                                     $('.allCourseDetails tr').addClass('first-payment');
                                 }
                                 // Update due amount in the main table
-                                $('.allCourseDetails tr').find('.due_amount_display').val(data
-                                    .due_amount.toFixed(2));
-                                $('.allCourseDetails tr').find('.due_amount_display').data(
-                                    'initial-due', data.due_amount);
-                                $('.allCourseDetails tr').find('.paid_amount_input').attr('max',
-                                    data.due_amount);
+                                // Convert safely to number
+                                let dueAmount = parseFloat(data.due_amount);
+
+                                // If NaN, set 0 to avoid errors
+                                if (isNaN(dueAmount)) {
+                                    dueAmount = 0;
+                                }
+
+                                // Update due amount in the main table
+                                $('.allCourseDetails tr')
+                                    .find('.due_amount_display')
+                                    .val(dueAmount.toFixed(2));
+
+                                $('.allCourseDetails tr')
+                                    .find('.due_amount_display')
+                                    .data('initial-due', dueAmount);
+
+                                $('.allCourseDetails tr')
+                                    .find('.paid_amount_input')
+                                    .attr('max', dueAmount);
+
                             }
                         }
                     });
 
                     // Fetch intakes for the selected course
-                    $.ajax({
-                        url: '{{ route('fees.get-intakes-by-course', ':courseId') }}'.replace(
-                            ':courseId', courseId),
-                        type: 'GET',
-                        success: function(data) {
-                            let intakeTableBody = $('#intakeTableBody');
-                            intakeTableBody.empty();
-                            if (data.success && data.intakes.length > 0) {
-                                data.intakes.forEach(function(intake) {
-                                    intakeTableBody.append(
-                                        `<tr><td>${intake.name}</td></tr>`);
-                                });
-                                $('#intake_details_section').show();
+                    let intakeTableBody = $('#intakeTableBody');
+                    intakeTableBody.empty();
 
-                                // Update the intake_name_cell in the allCourseDetails table
-                                $('.allCourseDetails tr').find('.intake_name_cell').text(data
-                                    .intakes[0].name);
-                            } else {
-                                $('#intake_details_section').hide();
-                                $('.allCourseDetails tr').find('.intake_name_cell').text('N/A');
-                            }
-                        },
-                        error: function() {
-                            $('#intake_details_section').hide();
-                            $('.allCourseDetails tr').find('.intake_name_cell').text('N/A');
-                        }
-                    });
+                    if (intakeName) {
+
+                        console.log('ssss', intakeName);
+                        intakeTableBody.append(
+                            `<tr><td>${intakeName}</td></tr>`
+                        );
+
+                        $('#intake_details_section').show();
+
+                        $('.allCourseDetails tr')
+                            .find('.intake_name_cell')
+                            .text(intakeName);
+
+                    } else {
+                        $('#intake_details_section').hide();
+                        $('.allCourseDetails tr').find('.intake_name_cell').text('N/A');
+                    }
+
+
+
+                    // $.ajax({
+                    //     url: '{{ route('fees.get-intakes-by-course', ['courseId' => ':courseId', 'studentId' => ':studentId']) }}'
+                    //         .replace(':courseId', courseId)
+                    //         .replace(':studentId', studentId),
+
+                    //     type: 'GET',
+                    //     success: function(data) {
+                    //         let intakeTableBody = $('#intakeTableBody');
+                    //         intakeTableBody.empty();
+
+                    //         if (data.success && data.intakes) {
+
+                    //             let intake = data.intakes; // object
+
+                    //             intakeTableBody.append(
+                    //                 `<tr><td>${intake.name}</td></tr>`
+                    //             );
+
+                    //             $('#intake_details_section').show();
+
+                    //             $('.allCourseDetails tr')
+                    //                 .find('.intake_name_cell')
+                    //                 .text(intake.name);
+
+                    //         } else {
+                    //             $('#intake_details_section').hide();
+                    //             $('.allCourseDetails tr').find('.intake_name_cell').text('N/A');
+                    //         }
+                    //     },
+                    //     error: function() {
+                    //         $('#intake_details_section').hide();
+                    //         $('.allCourseDetails tr').find('.intake_name_cell').text('N/A');
+                    //     }
+                    // });
                 } else {
                     $('#intake_details_section').hide();
                     $('.allCourseDetails tr').find('.intake_name_cell').text('N/A');
