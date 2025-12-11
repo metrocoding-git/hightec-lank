@@ -731,12 +731,12 @@ class AddStudentController extends Controller
     
         // UPDATE STUDENT
         $student->update([
-            'student_name'           => $request->verification_values['Full Name Verified'],
-            'national_id_number'     => $request->verification_values['NIC Verified'],
-            'permanent_address'      => $request->verification_values['Address Verified'],
-            'phone_number'           => $request->verification_values['Mobile Number Verified'],
-            'phone_number_2'         => $request->verification_values['Mobile Number 2 Verified'],
-        ]);
+            'student_name'       => $request->verification_values['Full Name Verified'] ?? null,
+            'national_id_number' => $request->verification_values['NIC Verified'] ?? null,
+            'permanent_address'  => $request->verification_values['Address Verified'] ?? null,
+            'phone_number'       => $request->verification_values['Mobile Number Verified'] ?? null,
+            'phone_number_2'     => $request->verification_values['Mobile Number 2 Verified'] ?? null,
+        ]);        
     
         return back()->with('success', 'Verification saved successfully!');
     }
