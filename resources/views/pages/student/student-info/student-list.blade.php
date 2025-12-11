@@ -145,21 +145,15 @@
                                                 <th>Photo</th>
                                                 <th>Email</th>
                                                 <th>District</th>
-                                                <th>Guardian Name</th>
-                                                <th>Guardian Email</th>
-                                                <th>Guardian Photo</th>
-                                                <th>Guardian Phone</th>
-                                                <th>Guardian Occupation</th>
-                                                <th>Guardian Address</th>
+
+                                                <th>Full Name Verification</th>
+                                                <th>Phone Verification</th>
+                                                <th>Phone 2 Verification</th>
+                                                <th>NIC Verification</th>
+                                                <th>Address Verification</th>
+
                                                 <th>Notes</th>
-                                                <th>Document Title 1</th>
-                                                <th>Document File 1</th>
-                                                <th>Document Title 2</th>
-                                                <th>Document File 2</th>
-                                                <th>Document Title 3</th>
-                                                <th>Document File 3</th>
-                                                <th>Document Title 4</th>
-                                                <th>Document File 4</th>
+                                                
                                                 <th>Previous Institute</th>
                                                 <th>Created By</th>
                                                 <th>Updated By</th>
@@ -173,23 +167,19 @@
                                                     <td>{{ $student->admission_number ?? '-' }}</td>
                                                     <td class="{{ $student->isVerified('Full Name Verified') ? 'text-success' : '' }}">
                                                         {{ $student->student_name ?? '-' }}
-                                                        {!! $student->isVerified('Full Name Verified') ? '<span class="text-success"> (✔)</span>' : '' !!}
+                                                        
                                                     </td>
                                                     <td class="{{ $student->isVerified('Mobile Number Verified') ? 'text-success' : '' }}">
                                                         {{ $student->phone_number ?? '-' }}
-                                                        {!! $student->isVerified('Mobile Number Verified') ? '<span class="text-success"> (✔)</span>' : '' !!}
                                                     </td>
                                                     <td class="{{ $student->isVerified('Mobile Number 2 Verified') ? 'text-success' : '' }}">
                                                         {{ $student->phone_number_2 ?? '-' }}
-                                                        {!! $student->isVerified('Mobile Number 2 Verified') ? '<span class="text-success"> (✔)</span>' : '' !!}
                                                     </td>
                                                     <td class="{{ $student->isVerified('NIC Verified') ? 'text-success' : '' }}">
                                                         {{ $student->national_id_number ?? '-' }}
-                                                        {!! $student->isVerified('NIC Verified') ? '<span class="text-success"> (✔)</span>' : '' !!}
                                                     </td>
                                                     <td class="{{ $student->isVerified('Address Verified') ? 'text-success' : '' }}">
                                                         {{ $student->permanent_address ?? '-' }}
-                                                        {!! $student->isVerified('Address Verified') ? '<span class="text-success"> (✔)</span>' : '' !!}
                                                     </td>
                                                     <td>{{ $student->branch?->name ?? '-' }}</td>
 
@@ -216,73 +206,26 @@
                                                     
                                                     <td>{{ $student->district->name ?? '-' }}</td>
 
-                                                    <td>{{ $student->guardians_name ?? '-' }}</td>
-                                                    <td>{{ $student->guardians_email ?? '-' }}</td>
-
-                                                    <td>
-                                                        @if ($student->guardians_photo)
-                                                            <a href="{{ asset('storage/' . $student->guardians_photo) }}"
-                                                                target="_blank">
-                                                                <img src="{{ asset('storage/' . $student->guardians_photo) }}"
-                                                                    width="40">
-                                                            </a>
-                                                        @else
-                                                            -
-                                                        @endif
+                                                    <td class="{{ $student->isVerified('Full Name Verified') ? 'text-success' : '' }}">
+                                                        {!! $student->isVerified('Full Name Verified') ? '<span class="text-success">YES</span>' : 'NO' !!}
+                                                    </td>
+                                                    <td class="{{ $student->isVerified('Mobile Number Verified') ? 'text-success' : '' }}">
+                                                        {!! $student->isVerified('Mobile Number Verified') ? '<span class="text-success">YES</span>' : 'NO' !!}
+                                                    </td>
+                                                    <td class="{{ $student->isVerified('Mobile Number 2 Verified') ? 'text-success' : '' }}">
+                                                        {!! $student->isVerified('Mobile Number 2 Verified') ? '<span class="text-success">YES</span>' : 'NO' !!}
+                                                    </td>
+                                                    <td class="{{ $student->isVerified('NIC Verified') ? 'text-success' : '' }}">
+                                                        {!! $student->isVerified('NIC Verified') ? '<span class="text-success">YES</span>' : 'NO' !!}
+                                                    </td>
+                                                    <td class="{{ $student->isVerified('Address Verified') ? 'text-success' : '' }}">
+                                                        {!! $student->isVerified('Address Verified') ? '<span class="text-success">YES</span>' : 'NO' !!}
                                                     </td>
 
-                                                    <td>{{ $student->guardians_phone ?? '-' }}</td>
-                                                    <td>{{ $student->guardians_occupation ?? '-' }}</td>
-                                                    <td>{{ $student->guardians_address ?? '-' }}</td>
 
                                                     <td>{{ $student->additional_notes ?? '-' }}</td>
 
-                                                    <td>{{ $student->document_title_1 ?? '-' }}</td>
-
-                                                    <td>
-                                                        @if ($student->document_file_1)
-                                                            <a href="{{ asset('storage/' . $student->document_file_1) }}"
-                                                                target="_blank">
-                                                                View File
-                                                            </a>
-                                                        @else
-                                                            -
-                                                        @endif
-                                                    </td>
-
-                                                    <td>{{ $student->document_title_2 ?? '-' }}</td>
-                                                    <td>
-                                                        @if ($student->document_file_2)
-                                                            <a href="{{ asset('storage/' . $student->document_file_2) }}"
-                                                                target="_blank">
-                                                                View File
-                                                            </a>
-                                                        @else
-                                                            -
-                                                        @endif
-                                                    </td>
-                                                    <td>{{ $student->document_title_3 ?? '-' }}</td>
-                                                    <td>
-                                                        @if ($student->document_file_3)
-                                                            <a href="{{ asset('storage/' . $student->document_file_3) }}"
-                                                                target="_blank">
-                                                                View File
-                                                            </a>
-                                                        @else
-                                                            -
-                                                        @endif
-                                                    </td>
-                                                    <td>{{ $student->document_title_4 ?? '-' }}</td>
-                                                    <td>
-                                                        @if ($student->document_file_4)
-                                                            <a href="{{ asset('storage/' . $student->document_file_4) }}"
-                                                                target="_blank">
-                                                                View File
-                                                            </a>
-                                                        @else
-                                                            -
-                                                        @endif
-                                                    </td>
+                                                   
 
                                                     <td>{{ $student->previous_institute_details ?? '-' }}</td>
 

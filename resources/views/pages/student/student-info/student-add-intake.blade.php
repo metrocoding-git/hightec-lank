@@ -148,6 +148,7 @@
                                                 <th>Student Name</th>
                                                 <th>Admission No</th>
                                                 <th>Nic Number</th>
+                                                <th>Nic Verification</th>
                                                 <th>Intake Name</th>
                                                 <th>Courses</th>
                                                 <th>Mobile 1</th>
@@ -167,7 +168,9 @@
                                                     <td>{{ $studentIntake->student->admission_number }}</td>
                                                     <td class="{{ $studentIntake->student->isVerified('NIC Verified') ? 'text-success' : '' }}">
                                                         {{ $studentIntake->student->national_id_number }}
-                                                        {!! $studentIntake->student->isVerified('NIC Verified') ? '<span class="text-success"> (✔)</span>' : '' !!}
+                                                    </td>
+                                                    <td class="{{ $studentIntake->student->isVerified('NIC Verified') ? 'text-success' : '' }}">
+                                                        {!! $studentIntake->student->isVerified('NIC Verified') ? '<span class="text-success">YES</span>' : 'NO' !!}
                                                     </td>
                                                     <td>{{ $studentIntake->intake->name ?? '-' }}</td>
                                                     <td>{{ $studentIntake->course->name ?? '-' }}</td>
