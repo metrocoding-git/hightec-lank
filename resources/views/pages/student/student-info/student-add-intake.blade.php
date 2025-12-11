@@ -146,6 +146,7 @@
                                             <tr>
                                                 <th>No.</th>
                                                 <th>Student Name</th>
+                                                <th>Student Category</th>
                                                 <th>Admission No</th>
                                                 <th>Nic Number</th>
                                                 <th>Nic Verification</th>
@@ -165,6 +166,7 @@
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
                                                     <td>{{ $studentIntake->student->student_name }}</td>
+                                                    <td>{{ $studentIntake->student->studentCategory->category_name }}</td>
                                                     <td>{{ $studentIntake->student->admission_number }}</td>
                                                     <td class="{{ $studentIntake->student->isVerified('NIC Verified') ? 'text-success' : '' }}">
                                                         {{ $studentIntake->student->national_id_number }}

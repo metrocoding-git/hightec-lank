@@ -50,12 +50,21 @@
                                                 <th>@lang('common.sl')</th>
                                                 {{-- <th>@lang('inventory.transaction_id')</th> --}}
                                                 <th>@lang('inventory.reference_no')</th>
+                                                <th>Item name</th>
+                                                <th>Item Category</th>
+
                                                 <th>@lang('inventory.supplier_company_name')</th>
-                                                <th>@lang('common.date')</th>
+                                                <th>@lang('inventory.unit_price')</th>
                                                 <th>@lang('inventory.total_quantity')</th>
                                                 <th>@lang('inventory.grand_total')</th>
-                                                {{-- <th>@lang('inventory.paid')</th> --}}
-                                                {{-- <th>@lang('inventory.balance') (Rs)</th> --}}
+                                                <th>Receive Date</th>
+                                                <th>Payment Method</th>
+                                                <th>Bank Payment Amount</th>
+                                                <th>Bank Payment Date</th>
+                                                <th>Bank Payment Doc</th>
+                                                <th>Invoice Number</th>
+                                                <td>Description</td>
+                                                <td>Created By</td>
                                                 <th>@lang('common.action')</th>
                                             </tr>
                                         </thead>
@@ -65,12 +74,50 @@
                                                     <td>{{ $key + 1 }}</td>
                                                     {{-- <td>{{ $itemReceive->transaction_id }}</td> --}}
                                                     <td>{{ $itemReceive->reference_no }}</td>
-                                                    <td>{{ optional($itemReceive->supplier)->company_name }}</td>
-                                                    <td>{{ $itemReceive->receive_date }}</td>
-                                                    <td>{{ $itemReceive->total_quantity }}</td>
-                                                    <td>{{ number_format($itemReceive->total_sub_total, 2) }}</td>
-                                                    {{-- <td>{{ number_format($itemReceive->total_paid, 2) }}</td> --}}
-                                                    {{-- <td>{{ number_format($itemReceive->total_balance, 2) }}</td> --}}
+                                                    <td>
+                                                         {{$itemReceive->item->item_name ?? '-'}}
+                                                    </td>
+                                                    <td>
+                                                        {{$itemReceive->item->category->name ?? '-'}}
+                                                   </td>
+                                                    <td>{{$itemReceive->supplier->company_name }}</td>
+                                                    <td>{{ number_format($itemReceive->unit_price, 2) }}</td>
+                                                    <td>{{ $itemReceive->quantity }}</td>
+                                                    <td>{{ number_format($itemReceive->sub_total, 2) }}</td>
+                                                    <td>
+                                                        {{ $itemReceive->receive_date ? \Carbon\Carbon::parse($itemReceive->receive_date)->format('m/d/Y') : '' }}
+                                                    </td>
+                                                    <td>
+                                                        {{ $itemReceive->payment_method }}
+                                                    </td>
+
+                                                    <td>
+                                                        {{ $itemReceive->bank_payment_amount ? number_format((float) $itemReceive->bank_payment_amount, 2, '.', '') : '-' }}
+                                                    </td>
+                                                    <td>
+                                                        {{ $itemReceive->bank_payment_date ? \Carbon\Carbon::parse($itemReceive->bank_payment_date)->format('m/d/Y') : '-' }}
+                                                    </td>
+                                                    <td>
+                                                        @if ($itemReceive->bank_payment_document)
+                                                            <a href="{{ asset('storage/' . $itemReceive->bank_payment_document) }}"
+                                                                target="_blank" class="text-primary">View
+                                                                Document</a>
+                                                        @else
+                                                            -
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @if ($itemReceive->invoice_number != '')
+                                                            {{ $itemReceive->invoice_number }}
+                                                        @else
+                                                            -
+                                                        @endif
+                                                    </td>
+
+                                                    <td>{{ $itemReceive->description ?? '-' }}</td>
+
+                                                    <td>{{ $itemReceive->creator->name ?? '-' }}</td>
+
                                                     <td>
                                                         <x-drop-down>
                                                             <a class="dropdown-item view-item-receive" href="#"

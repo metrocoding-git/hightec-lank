@@ -457,7 +457,7 @@ class AddStudentController extends Controller
         $courses = Course::all();
 
         // Build query with filters
-        $query = StudentCourse::with(['student', 'intake', 'course', 'branch'])->orderBy('created_at', 'desc');
+        $query = StudentCourse::with(['student', 'intake', 'course', 'branch','student.studentCategory'])->orderBy('created_at', 'desc');
 
         if ($request->filled('branch_id')) {
             $query->where('branch_id', $request->branch_id);

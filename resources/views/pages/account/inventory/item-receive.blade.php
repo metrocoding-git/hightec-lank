@@ -298,19 +298,19 @@
                                     </div>
                                 </div>
 
-                                <div class="offset-lg-6 col-lg-2 col-6 text-right col-md-6 col-5">
+                                {{-- <div class="offset-lg-6 col-lg-2 col-6 text-right col-md-6 col-5">
                                     <button type="button" class="primary-btn small fix-gr-bg" id="addRowBtn">
                                         <span class="ti-plus pr-2"></span>
                                         @lang('common.add')
                                     </button>
-                                </div>
+                                </div> --}}
                             </div>
 
                             <div class="row">
                                 <div class="col-lg-12">
                                     <div class="white-box">
 
-                                        <div class="table-responsive">
+                                        <div>
                                             <table class="table  table-bordered school-table-style" id="productTable"
                                                 style="width:100%; table-layout:fixed;">
 
@@ -320,12 +320,62 @@
                                                         <th style="width:15%;">@lang('inventory.unit_price')*</th>
                                                         <th style="width:15%;">@lang('inventory.quantity')*</th>
                                                         <th style="width:20%;">@lang('inventory.sub_total')</th>
-                                                        <th style="width:8%;" class="text-center">@lang('common.action')</th>
+
+                                                        {{-- <th style="width:8%;" class="text-center">@lang('common.action')</th> --}}
                                                     </tr>
                                                 </thead>
 
                                                 <tbody>
+                                                    <tr id="row1" class="0">
+                                                        <td class="border-top-0">
+                                                            <input type="hidden" name="url" id="url"
+                                                                value="{{ URL::to('/') }}">
+                                                            <div class="primary_input">
+                                                                <select class="primary_select  form-control"
+                                                                    name="item_id[]" id="productName1">
+                                                                    <option value="">@lang('common.select')*</option>
+                                                                    @foreach ($items as $key => $value)
+                                                                        <option value="{{ $value->id }}">
+                                                                            {{ $value->category->name }} -
+                                                                            {{ $value->item_name }}</option>
+                                                                    @endforeach
+                                                                </select>
 
+                                                            </div>
+                                                        </td>
+
+                                                        <td class="border-top-0">
+                                                            <div class="primary_input">
+                                                                <input oninput="numberCheckWithDot(this)"
+                                                                    class="primary_input_field form-control"
+                                                                    type="text" step="0.1" id="unit_price1"
+                                                                    name="unit_price[]" autocomplete="off" value=""
+                                                                    onkeyup="getTotalByPrice(1)">
+                                                            </div>
+                                                        </td>
+                                                        <td class="border-top-0">
+                                                            <div class="primary_input">
+                                                                <input oninput="numberCheckWithDot(this)"
+                                                                    class="primary_input_field form-control"
+                                                                    type="text" id="quantity1" name="quantity[]"
+                                                                    autocomplete="off" onkeyup="getTotal(1);"
+                                                                    value="">
+                                                            </div>
+                                                        </td>
+                                                        <td class="border-top-0">
+                                                            <div class="primary_input">
+                                                                <input oninput="numberCheckWithDot(this)"
+                                                                    class="primary_input_field form-control"
+                                                                    type="text" name="total[]" id="total1"
+                                                                    autocomplete="off" value="0.00">
+                                                            </div>
+                                                            <input type="hidden" name="totalValue[]" id="totalValue1"
+                                                                autocomplete="off" class="form-control" />
+                                                        </td>
+
+
+
+                                                    </tr>
                                                 </tbody>
                                                 <tfoot>
                                                     <tr class="align-middle text-center">
@@ -357,7 +407,7 @@
                                                                 </span>
                                                             @endif
                                                         </th>
-                                                        <th class="border-top-0"></th>
+                                                        {{-- <th class="border-top-0"></th> --}}
                                                     </tr>
                                                 </tfoot>
                                             </table>
@@ -415,7 +465,7 @@
 
     @php
         $branchCount = isset($branches) ? count($branches) : 0;
-        $singleBranchId = ($branchCount === 1 && isset($branches)) ? $branches->first()->id : null;
+        $singleBranchId = $branchCount === 1 && isset($branches) ? $branches->first()->id : null;
     @endphp
     <script>
         $(document).ready(function() {
@@ -442,12 +492,13 @@
         <td class="border-top-0">
             <input type="hidden" name="url" id="url" value="{{ URL::to('/') }}">
             <div class="primary_input">
-                <select class="primary_select form-control" name="item_id[]" id="productName${rowCount}">
-                    <option value="">@lang('common.select')*</option>
-                    @foreach ($items as $key => $value)
-                        <option value="{{ $value->id }}">{{ $value->category->name }} - {{ $value->item_name }}</option>
-                    @endforeach
+                <select class="primary_select  form-control" name="item_id[]" id="productName${rowCount}">
+                        <option value="">@lang('common.select')*</option>
+                        @foreach ($items as $key => $value)
+                            <option value="{{ $value->id }}">{{ $value->category->name }} - {{ $value->item_name }}</option>
+                        @endforeach
                 </select>
+                
             </div>
         </td>
         
@@ -473,14 +524,15 @@
             <input type="hidden" name="totalValue[]" id="totalValue${rowCount}" autocomplete="off" class="form-control" />
         </td>
 
-        <td class="text-center align-middle p-1">
-            <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(${rowCount})">
-                <i class="ti-trash"></i>
-            </button>
-        </td>
+       
 
     </tr>`;
 
+                // <td class="text-center align-middle p-1">
+                //         <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(${rowCount})">
+                //             <i class="ti-trash"></i>
+                //         </button>
+                //     </td>
                 $('tbody').append(newRow);
             }
 
@@ -489,7 +541,7 @@
             });
 
             // Add one row on initial load
-            addRow();
+            // addRow();
         });
 
         // Remove row function
@@ -633,7 +685,7 @@
                     $('#bankAmountError').show();
                     $('#bank_payment_amount').addClass('is-invalid');
                     isValid = false;
-                } else if (bankPaymentAmount <= subTotal) {
+                } else if (bankPaymentAmount < subTotal) {
                     $('#bankAmountError').text("Bank Payment Amount must be greater than the Item Receive Total!")
                         .show();
                     $('#bank_payment_amount').addClass('is-invalid');

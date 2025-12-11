@@ -34,42 +34,64 @@
                                     <table id="table_id" class="table" cellspacing="0" width="100%">
                                         <thead>
                                             <tr>
-                                                <th>ID</th>
-                                                <th>Issue To</th>
-                                                <th>Student Name</th>
-                                                <th>Issue Date</th>
-                                                <th>Due Date</th>
-                                                <th>Total Items</th>
-                                                <th>Status</th>
+                                                <th>#</th>
+                                                <th>@lang('inventory.item_name')</th>
+                                                <th>@lang('inventory.item_category')</th>
+                                                <th>@lang('inventory.issue_to')</th>
+                                                <th>Reg No</th>
+                                                <th>Category</th>
+                                                <th>@lang('inventory.issue_date')</th>
+                                                <th>@lang('inventory.quantity')</th>
+                                                <th>Intake Name</th>
+                                                <th>Course Name</th>
+                                                <th>Create user</th>
+                                                <th>Course Expiration</th>
+                                                <th hidden>@lang('common.description')</th>
+                                                <th>@lang('common.status')</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @if (isset($itemIssues))
-                                                @foreach ($itemIssues as $key => $itemIssue)
+                                                @foreach ($itemIssues as $key => $batchData)
                                                     <tr>
                                                         <td>{{ $key + 1 }}</td>
                                                         <td>
-                                                            @if ($itemIssue->student)
-                                                                Student
-                                                            @elseif ($itemIssue->staff)
-                                                                Staff
-                                                            @else
-                                                                N/A
-                                                            @endif
+                                                            {{ $batchData->item->item_name ?? 'No Items' }}
                                                         </td>
                                                         <td>
-                                                            @if ($itemIssue->student)
-                                                                {{ $itemIssue->student->student_name }}
-                                                            @elseif ($itemIssue->staff)
-                                                                {{ $itemIssue->staff->name }}
+                                                            {{ $batchData->item->category->name ?? '-' }} </td>
+                                                        <td>
+                                                            {{ $batchData->batch->student->student_name ?? '-' }}
+                                                        </td>
+                                                        <td>
+                                                            {{ $batchData->batch->student->admission_number ?? '-' }}
+                                                        </td>
+                                                        <td>
+                                                            {{ $batchData->batch->student->studentCategory->category_name ?? '' }}
+                                                        </td>
+
+                                                        <td data-sort="{{ strtotime($batchData->batch->issue_date) }}">
+                                                            {{ $batchData->batch->issue_date != '' ? date('m/d/Y', strtotime($batchData->batch->issue_date)) : '' }}
+                                                        </td>
+                                                        <td>{{ $batchData->quantity }}
+                                                        </td>
+                                                        <td>{{ $batchData->batch->intake->name ?? '-' }}</td>
+                                                        <td>{{ $batchData->batch->course->name ?? '-' }}</td>
+                                                        <td> {{ $batchData->batch->createdBy?->name ?? '-' }}</td>
+
+                                                        <td>
+                                                            {{ $batchData->expire_status }}
+                                                        </td>
+
+                                                        <td>{{ $batchData->batch->description }}</td>
+                                                        <td>
+                                                            @if ($batchData->batch->issue_status == 'I')
+                                                                @lang('inventory.issued')
                                                             @else
-                                                                N/A
+                                                                @lang('inventory.returned')
                                                             @endif
                                                         </td>
-                                                        <td>{{ $itemIssue->issue_date ? \Carbon\Carbon::parse($itemIssue->issue_date)->format('m/d/Y') : '' }}</td>
-                                                        <td>{{ $itemIssue->due_date ? \Carbon\Carbon::parse($itemIssue->due_date)->format('m/d/Y') : '' }}</td>
-                                                        <td>{{ $itemIssue->total_items }}</td>
-                                                        <td>{{ $itemIssue->status_text }}</td>
+
                                                     </tr>
                                                 @endforeach
                                             @endif

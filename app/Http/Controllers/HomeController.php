@@ -765,7 +765,7 @@ class HomeController extends Controller
                 return (float)$price * (float)$qty;
             }, $request->unit_price, $request->quantity));
 
-            if (($request->bank_payment_amount ?? 0) <= $subTotal) {
+            if (($request->bank_payment_amount ?? 0) < $subTotal) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Bank Payment Amount must be greater than the Item Receive Total!',
@@ -819,6 +819,7 @@ class HomeController extends Controller
                     'quantity' => $request->quantity[$index],
                     'sub_total' => $lineTotal,
                     'total_paid' => $totalPaidAmount,
+                    'created_by' => Auth::id(),
                 ]);
 
                 $createdReceives[] = $itemReceive;
@@ -866,23 +867,9 @@ class HomeController extends Controller
     public function itemReceiveList()
     {
         // Group by transaction_id and get the first record for each transaction
-        $transactions = ItemReceive::with(['supplier', 'branch', 'item'])
-            ->select('transaction_id', 'supplier_id', 'store_id', 'reference_no', 'receive_date', 'payment_method', 'total_paid', 'description')
+        $itemReceives = ItemReceive::with(['supplier', 'branch', 'item','item.category'])
             ->distinct()
-            ->get()
-            ->groupBy('transaction_id');
-
-        // For each transaction, get all items
-        $itemReceives = [];
-        foreach ($transactions as $transactionId => $records) {
-            $record = $records->first();
-            $items = ItemReceive::where('transaction_id', $transactionId)->with(['item', 'supplier', 'branch'])->get();
-            $record->items = $items;
-            $record->total_quantity = $items->sum('quantity');
-            $record->total_sub_total = $items->sum('sub_total');
-            $record->total_balance = $record->total_sub_total - $record->total_paid;
-            $itemReceives[] = $record;
-        }
+            ->get();      
 
         $items = Inventory_item::all();
         $suppliers = Supplier::all();

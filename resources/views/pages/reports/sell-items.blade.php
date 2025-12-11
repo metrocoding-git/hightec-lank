@@ -34,52 +34,125 @@
                                     <table id="table_id" class="table" cellspacing="0" width="100%">
                                         <thead>
                                             <tr>
-                                                <th>ID</th>
-                                                <th>Item Name</th>
-                                                <th>Reference No</th>
-                                                <th>Buyer Name</th>
-                                                <th>Sell Date</th>
+                                            <tr>
+                                                <th>@lang('common.sl')</th>
+                                                <th>@lang('inventory.reference_no')</th>
+                                                <th>Item</th>
+                                                <th>Item Category</th>
+                                                <th>@lang('inventory.buyer_name')</th>
+                                                <th>Create User</th>
+                                                <th>Reg No</th>
+                                                <th>Stu Category</th>
+                                                <th>@lang('common.date')</th>
                                                 <th>Sell Price</th>
-                                                <th>Quantity</th>
-                                                <th>Total Paid</th>
-                                                <th>Status</th>
+                                                <th>@lang('inventory.total_quantity')</th>
+                                                <th>@lang('inventory.grand_total')</th>
+
+                                                <th>Total Price</th>
+                                                <th>Total Qty</th>
+
+                                                <th>Payment Method</th>
+                                                <th>Bank Payment Amount</th>
+                                                <th>Bank Payment Date</th>
+                                                <th>Bank Payment Doc</th>
+                                                <th>Invoice Number</th>
+
+                                                <th>@lang('common.status')</th>
+                                            </tr>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @if (isset($itemSells))
-                                                @foreach ($itemSells as $key => $itemSell)
+                                                @foreach ($itemSells as $key => $value)
                                                     <tr>
                                                         <td>{{ $key + 1 }}</td>
-                                                        <td>{{ $itemSell->item ? $itemSell->item->item_name : 'N/A' }}</td>
-                                                        <td>{{ $itemSell->itemSellBatch->reference_no }}</td>
+                                                        <td>{{ $value->itemSellBatch->reference_no }}</td>
+                                                        <td>{{ $value->item->item_name }}</td>
+                                                        <td> {{ $value->item->category->name ?? '-' }} </td>
+
+                                                        </td>
                                                         <td>
-                                                            @if ($itemSell->itemSellBatch->role_id == 2 && $itemSell->itemSellBatch->student)
-                                                                {{ $itemSell->itemSellBatch->student->student_name }}
-                                                            @elseif ($itemSell->itemSellBatch->role_id == 0 && $itemSell->itemSellBatch->others_name)
-                                                                {{ $itemSell->itemSellBatch->others_name }}
-                                                            @elseif ($itemSell->itemSellBatch->role_id == 3 && $itemSell->itemSellBatch->user)
-                                                                {{ $itemSell->itemSellBatch->user->name }}
+                                                            @if ($value->itemSellBatch->role_id == 2 && $value->itemSellBatch->student)
+                                                                {{-- Student Role --}}
+                                                                {{ $value->itemSellBatch->student->student_name }}
+                                                            @elseif ($value->itemSellBatch->role_id == 0 && $value->itemSellBatch->others_name)
+                                                                {{-- Other/Customer Role --}}
+                                                                {{ $value->itemSellBatch->others_name }}
+                                                            @elseif ($value->itemSellBatch->role_id == 3 && $value->itemSellBatch->user)
+                                                                {{-- Staff Role --}}
+                                                                {{ $value->itemSellBatch->user->name }}
                                                             @else
-                                                                N/A
+                                                                -
                                                             @endif
                                                         </td>
-                                                        <td>{{ $itemSell->itemSellBatch->sell_date ? \Carbon\Carbon::parse($itemSell->itemSellBatch->sell_date)->format('m/d/Y') : '' }}</td>
-                                                        <td>{{ number_format((float) $itemSell->unit_price, 2, '.', '') }}</td>
-                                                        <td>{{ $itemSell->quantity }}</td>
-                                                        <td>{{ number_format((float) $itemSell->itemSellBatch->total_paid, 2, '.', '') }}</td>
+                                                        <td> {{ $value->itemSellBatch->createdBy?->name ?? '-' }}</td>
                                                         <td>
-                                                            @if ($itemSell->itemSellBatch->status == 'P')
-                                                                Paid
-                                                            @elseif($itemSell->itemSellBatch->status == 'PP')
-                                                                Partial
-                                                            @elseif($itemSell->itemSellBatch->status == 'U')
-                                                                Unpaid
-                                                            @elseif($itemSell->itemSellBatch->status == 'R')
-                                                                Returned
+                                                            @if ($value->itemSellBatch->student)
+                                                                {{ $value->itemSellBatch->student->admission_number }}
                                                             @else
-                                                                N/A
+                                                                -
                                                             @endif
                                                         </td>
+                                                        <td>
+                                                            @if ($value->itemSellBatch->student)
+                                                                {{ $value->itemSellBatch->student->studentCategory->category_name }}
+                                                            @else
+                                                                -
+                                                            @endif
+                                                        </td>
+                                                        <td data-sort="{{ strtotime($value->itemSellBatch->sell_date) }}">
+                                                            {{ $value->itemSellBatch->sell_date ? \Carbon\Carbon::parse($value->itemSellBatch->sell_date)->format('m/d/Y') : '' }}
+                                                        </td>
+                                                        <td>{{ number_format((float) $value->unit_price, 2, '.', '') }}
+                                                        </td>
+                                                        <td>{{ $value->quantity }}</td>
+
+                                                        <td>{{ number_format((float) $value->sub_total, 2, '.', '') }}
+                                                        </td>
+
+
+                                                        <td>{{ number_format((float) $value->itemSellBatch->total_sell_price, 2, '.', '') }}
+                                                        </td>
+                                                        <td>{{ $value->itemSellBatch->total_quantity }}</td>
+
+
+                                                        <td>{{ $value->itemSellBatch->payment_method ?? '-' }}</td>
+                                                        <td>
+                                                            {{ $value->itemSellBatch->bank_payment_amount ? number_format((float) $value->itemSellBatch->bank_payment_amount, 2, '.', '') : '-' }}
+                                                        </td>
+                                                        <td>
+                                                            {{ $value->itemSellBatch->bank_payment_date ? \Carbon\Carbon::parse($value->itemSellBatch->bank_payment_date)->format('m/d/Y') : '-' }}
+                                                        </td>
+                                                        <td>
+                                                            @if ($value->itemSellBatch->bank_payment_document)
+                                                                <a href="{{ asset('storage/' . $value->itemSellBatch->bank_payment_document) }}"
+                                                                    target="_blank" class="text-primary">View
+                                                                    Document</a>
+                                                            @else
+                                                                -
+                                                            @endif
+                                                        </td>
+                                                        <td>
+                                                            @if ($value->itemSellBatch->invoice_number && $value->itemSellBatch->invoice_number != '')
+                                                                {{ $value->itemSellBatch->invoice_number }}
+                                                            @else
+                                                                -
+                                                            @endif
+                                                        </td>
+                                                        <td>
+                                                            @if ($value->itemSellBatch->status == 'P')
+                                                                @lang('inventory.paid')
+                                                            @elseif($value->itemSellBatch->status == 'PP')
+                                                                @lang('inventory.partial')
+                                                            @elseif($value->itemSellBatch->status == 'U')
+                                                                @lang('inventory.unpaid')
+                                                            @elseif($value->itemSellBatch->status == 'R')
+                                                                @lang('inventory.returned')
+                                                            @else
+                                                                @lang('inventory.N/A')
+                                                            @endif
+                                                        </td>
+
                                                     </tr>
                                                 @endforeach
                                             @endif

@@ -102,3 +102,6 @@ CREATE TABLE `student_verifications` (
 -- 12/11
 ALTER TABLE `item_issue_batches` ADD `created_by` INT NULL AFTER `active_status`;
 ALTER TABLE `item_sell_batches` ADD `created_by` INT NULL AFTER `status`;
+
+
+ALTER TABLE `item_receive` ADD `created_by` INT NULL AFTER `total_paid`;

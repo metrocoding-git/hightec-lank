@@ -29,6 +29,7 @@ class ItemReceive extends Model
         'bank_payment_document',
         'bank_id',
         'total_paid',
+        'created_by',
     ];
 
     public function supplier()
@@ -44,5 +45,10 @@ class ItemReceive extends Model
     public function branch()
     {
         return $this->belongsTo(Branch::class, 'store_id');
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }
