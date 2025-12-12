@@ -72,7 +72,7 @@
                                             @foreach ($branches ?? [] as $branch)
                                                 <option value="{{ $branch->id }}"
                                                     {{ isset($search_branch_id) && $search_branch_id == $branch->id ? 'selected' : '' }}
-                                                    {{   count($branches) == 1 ? 'selected' : '' }}>
+                                                    {{ count($branches) == 1 ? 'selected' : '' }}>
                                                     {{ $branch->name }}</option>
                                             @endforeach
                                         </select>
@@ -158,27 +158,30 @@
                                                 <th>Address</th>
                                                 <th>Enrollment Date</th>
                                                 <th>Status</th>
+                                                <th>Note</th>
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach($studentIntakes as $key => $studentIntake)
+                                            @foreach ($studentIntakes as $key => $studentIntake)
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
                                                     <td>{{ $studentIntake->student->student_name }}</td>
                                                     <td>{{ $studentIntake->student->studentCategory->category_name }}</td>
                                                     <td>{{ $studentIntake->student->admission_number }}</td>
-                                                    <td class="{{ $studentIntake->student->isVerified('NIC Verified') ? 'text-success' : '' }}">
+                                                    <td
+                                                        class="{{ $studentIntake->student->isVerified('NIC Verified') ? 'text-success' : '' }}">
                                                         {{ $studentIntake->student->national_id_number }}
                                                     </td>
-                                                    <td class="{{ $studentIntake->student->isVerified('NIC Verified') ? 'text-success' : '' }}">
+                                                    <td
+                                                        class="{{ $studentIntake->student->isVerified('NIC Verified') ? 'text-success' : '' }}">
                                                         {!! $studentIntake->student->isVerified('NIC Verified') ? '<span class="text-success">YES</span>' : 'NO' !!}
                                                     </td>
                                                     <td>{{ $studentIntake->intake->name ?? '-' }}</td>
                                                     <td>{{ $studentIntake->course->name ?? '-' }}</td>
                                                     <td>{{ $studentIntake->student->phone_number }}</td>
                                                     <td>{{ $studentIntake->student->phone_number_2 ?? '-' }}</td>
-                                                    <td>{{ $studentIntake->branch->name ?? '-' }}</td> 
+                                                    <td>{{ $studentIntake->branch->name ?? '-' }}</td>
                                                     <td>
                                                         {{ $studentIntake->student->permanent_address ?? '-' }}
                                                     </td>
@@ -190,12 +193,19 @@
                                                             {{ ucfirst($studentIntake->status) }}
                                                         </span>
                                                     </td>
+                                                    <td>{{ $studentIntake->notes }}</td>
                                                     <td>
                                                         <x-drop-down>
                                                             @if ($studentIntake->status == 'pending')
                                                                 <a class="dropdown-item" href="#"
                                                                     onclick="changeStatus({{ $studentIntake->id }}, 'start')">
                                                                     <span class="text-info">Start</span>
+                                                                </a>
+
+                                                                <a class="dropdown-item" data-toggle="modal"
+                                                                    data-target="#deleteStudentIntakeModal{{ $studentIntake->id }}"
+                                                                    href="#">
+                                                                    <span class="text-danger">Delete</span>
                                                                 </a>
                                                             @endif
                                                             @if ($studentIntake->status == 'start')
@@ -219,11 +229,7 @@
                                                                 </a>
                                                             @endif
 
-                                                            <a class="dropdown-item" data-toggle="modal"
-                                                                data-target="#deleteStudentIntakeModal{{ $studentIntake->id }}"
-                                                                href="#">
-                                                                <span class="text-danger">Delete</span>
-                                                            </a>
+
                                                         </x-drop-down>
                                                     </td>
                                                 </tr>
@@ -262,9 +268,8 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                           
                                             @endforeach
-                                            
+
                                         </tbody>
                                     </table>
                                 </x-table>
@@ -288,8 +293,8 @@
                     @csrf
                     <input type="hidden" name="user_id" value="{{ Auth::id() }}">
                     <div class="modal-body">
-                        <div id="studentCountAlert" class="alert alert-info col-12 text-center"
-                            style="display:none;"></div>
+                        <div id="studentCountAlert" class="alert alert-info col-12 text-center" style="display:none;">
+                        </div>
                         <div id="courseStatusAlert" class="alert col-12 text-center" style="display:none;"></div>
                         <div class="row">
 
@@ -487,7 +492,9 @@
             searching: true,
             ordering: true,
             info: true,
-            order: [[0, 'desc']],
+            order: [
+                [0, 'desc']
+            ],
             language: {
                 search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
                 searchPlaceholder: 'Search...',
@@ -508,7 +515,7 @@
                 $('#search_branch_id').trigger('change');
                 $('#modal_branch_id').trigger('change');
             }
-            
+
             function clearAlerts() {
                 $('#studentCountAlert, #courseStatusAlert')
                     .fadeOut(200, function() {

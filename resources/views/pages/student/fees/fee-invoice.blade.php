@@ -1712,8 +1712,20 @@
                     },
                     error: function(xhr, status, error) {
                         console.error('Error refunding payment:', xhr.responseText);
-                        alert('Error refunding payment. Please try again.');
+                    
+
+                        if (xhr.status === 403) {
+                            let message = JSON.parse(xhr.responseText).message;
+                            alert(message, "Permission Denied");
+                            // toastr.error(message, "Permission Denied");
+                        } else {
+
+                            alert("Error refunding payment. Please try again.");
+                            // toastr.error("Error refunding payment. Please try again.");
+                        }
                     }
+
+                    
                 });
             }
         });

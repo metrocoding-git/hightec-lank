@@ -15,6 +15,7 @@ use App\Models\PaidCourse; // Import the new PaidCourse model
 use App\Models\Student;
 use App\Models\Course; // Import the Course model
 use App\Models\StudentCourse;
+use App\Models\UserBranch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -134,6 +135,7 @@ class InvoiceController extends Controller
                 'bank_paid_date' => ($request->payment_method) === 'Bank Transfer' && !empty($request->bank_paid_date)
                     ? Carbon::createFromFormat('Y-m-d', $request->bank_paid_date)->format('Y-m-d')
                     : null,
+
             ]);
             Log::debug('Fee_invoice created with main_invoice_number: ' . $fee_invoice->main_invoice_number . ' and create_user_id: ' . $fee_invoice->create_user_id);
 
@@ -166,6 +168,7 @@ class InvoiceController extends Controller
                         Log::warning('No authenticated user found when creating Invoices_payments in store method.');
                     }
 
+
                     $payment = Invoices_payments::create([
                         'invoice_id' => $fee_invoice->id,
                         // 'payment_invoice_number' => , add by modal
@@ -184,6 +187,7 @@ class InvoiceController extends Controller
                         'create_user_id' => $payment_create_user_id, // Save the authenticated user's ID
                         'created_at' => now(),
                         'updated_at' => now(),
+                        'branch_id' => $request->branch_id,
                     ]);
                 } else {
                     return response()->json([
@@ -516,9 +520,29 @@ class InvoiceController extends Controller
             'amount' => 'required|numeric|min:0.01',
         ]);
 
+
+
         try {
             $originalPayment = Invoices_payments::findOrFail($paymentId);
             $invoice = Fee_invoices::findOrFail($originalPayment->invoice_id);
+
+            $create_user_id = Auth::check() ? Auth::id() : null;
+            $user_branch_ids = UserBranch::where('user_id', $create_user_id)
+                ->pluck('branch_id')
+                ->toArray();
+
+            if (count($user_branch_ids) == 1 ) {
+                if($user_branch_ids[0] != $originalPayment->branch_id){
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthorized: You do not have permission to refund this payment from a different branch.',
+                    ], 403);
+                }
+
+            } else {
+                // User has MULTIPLE branches → use invoice branch
+                $branch_id = $originalPayment->branch_id;
+            }
 
             Log::debug('refundPayment: Initial invoice state:', [
                 'invoice_id' => $invoice->id,
@@ -561,8 +585,19 @@ class InvoiceController extends Controller
 
             // Create a new payment record for the refund with a negative amount
             $receipt_number = 'REF-' . time() . '-' . uniqid();
-            $create_user_id = Auth::check() ? Auth::id() : null;
 
+
+            $user_branch_ids = UserBranch::where('user_id', $create_user_id)
+                ->pluck('branch_id')
+                ->toArray();
+
+            if (count($user_branch_ids) == 1) {
+                // User has only ONE branch → use that branch
+                $branch_id = $user_branch_ids[0];
+            } else {
+                // User has MULTIPLE branches → use invoice branch
+                $branch_id = $invoice->branch_id;
+            }
             Invoices_payments::create([
                 'invoice_id' => $invoice->id,
                 'amount' => -$refundAmount, // Store as a negative amount
@@ -571,11 +606,12 @@ class InvoiceController extends Controller
                 'receipt_number' => $originalPayment->receipt_number ?? $receipt_number,
                 'create_user_id' => $create_user_id,
                 'payment_file' => $originalPayment->payment_file,
-                'bank_payment_date' => $originalPayment->bank_payment_date, 
+                'bank_payment_date' => $originalPayment->bank_payment_date,
                 'bank_payment_amount' => $originalPayment->bank_payment_amount,
                 'payment_invoice_number' => $originalPayment->payment_invoice_number,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'branch_id' => $branch_id
             ]);
 
             // Update the original payment record's status to 'refunded' when a refund is processed
