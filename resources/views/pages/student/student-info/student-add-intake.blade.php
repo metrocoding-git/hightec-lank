@@ -60,7 +60,7 @@
                             </div>
                             <div class="row row-gap-24">
                                 {{-- Branch --}}
-                                <div class="col-lg-4 mb-15">
+                                <div class="col-lg-3 mb-15">
                                     <div class="primary_input">
                                         <label class="primary_input_label" for="search_branch_id">Branch <span
                                                 class="text-danger">*</span></label>
@@ -80,7 +80,7 @@
                                 </div>
 
                                 {{-- Intake --}}
-                                <div class="col-lg-4 mb-15">
+                                <div class="col-lg-3 mb-15">
                                     <div class="primary_input">
                                         <label class="primary_input_label" for="search_intake_id">Intake <span
                                                 class="text-danger">*</span></label>
@@ -99,7 +99,7 @@
                                 </div>
 
                                 {{-- Course --}}
-                                <div class="col-lg-4 mb-15">
+                                <div class="col-lg-3 mb-15">
                                     <div class="primary_input">
                                         <label class="primary_input_label" for="search_course_id">Course <span
                                                 class="text-danger">*</span></label>
@@ -116,6 +116,39 @@
                                         </select>
                                     </div>
                                 </div>
+
+                                <div class="col-lg-3 mb-15">
+                                    <div class="primary_input">
+                                        <label class="primary_input_label" for="search_status">Status <span
+                                                class="text-danger">*</span></label>
+                                        <select class="primary_select form-control ajax_select" name="status"
+                                            id="search_status">
+                                            <option value="">Select status</option>
+
+                                            <option value="pending"
+                                                {{ isset($search_status) && $search_status == 'pending' ? 'selected' : '' }}>
+                                                Pending
+                                            </option>
+
+                                            <option value="start"
+                                                {{ isset($search_status) && $search_status == 'start' ? 'selected' : '' }}>
+                                                Started
+                                            </option>
+
+                                            <option value="return"
+                                                {{ isset($search_status) && $search_status == 'return' ? 'selected' : '' }}>
+                                                Returned
+                                            </option>
+
+                                            <option value="complete"
+                                                {{ isset($search_status) && $search_status == 'complete' ? 'selected' : '' }}>
+                                                Completed
+                                            </option>
+                                        </select>
+
+                                    </div>
+                                </div>
+
                                 <div class="col-lg-12 mt-20 text-right">
                                     <button type="submit" class="primary-btn small fix-gr-bg">
                                         <span class="ti-search pr-2"></span> Search
@@ -167,7 +200,7 @@
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
                                                     <td>{{ $studentIntake->student->student_name }}</td>
-                                                    <td>{{ $studentIntake->student->studentCategory->category_name }}</td>
+                                                    <td>{{ $studentIntake->student->studentCategory->category_name ?? '-'}}</td>
                                                     <td>{{ $studentIntake->student->admission_number }}</td>
                                                     <td
                                                         class="{{ $studentIntake->student->isVerified('NIC Verified') ? 'text-success' : '' }}">

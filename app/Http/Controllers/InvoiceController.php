@@ -89,6 +89,29 @@ class InvoiceController extends Controller
             'bank_paid_date' => 'nullable|date_format:Y-m-d',
         ]);
 
+        if (in_array(1, $request->fee_type_id)) {
+            $existingFeeTypes = Invoice_item::whereIn('fee_type_id', $request->fee_type_id)
+                ->whereHas('fee_invoice', function ($q) use ($request) {
+                    $q->where('student_id', $request->student_id);
+                    $q->where('payment_status', '!=', 'returned');
+                    // $q->where('paid_amount', '>', '0');
+
+
+                })
+                ->pluck('fee_type_id')
+                ->toArray();
+
+            if (!empty($existingFeeTypes)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Admission fee already exist.',
+                    'existing_fee_type_ids' => $existingFeeTypes
+                ], 422);
+            }
+            
+        }
+
+
         // Conditionally make bank details required if payment method is Bank Transfer
         if ($request->payment_method === 'Bank Transfer') {
             $request->validate([
@@ -531,14 +554,13 @@ class InvoiceController extends Controller
                 ->pluck('branch_id')
                 ->toArray();
 
-            if (count($user_branch_ids) == 1 ) {
-                if($user_branch_ids[0] != $originalPayment->branch_id){
+            if (count($user_branch_ids) == 1) {
+                if ($user_branch_ids[0] != $originalPayment->branch_id) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Unauthorized: You do not have permission to refund this payment from a different branch.',
                     ], 403);
                 }
-
             } else {
                 // User has MULTIPLE branches → use invoice branch
                 $branch_id = $originalPayment->branch_id;

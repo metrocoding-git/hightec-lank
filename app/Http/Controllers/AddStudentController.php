@@ -471,12 +471,18 @@ class AddStudentController extends Controller
             $query->where('course_id', $request->course_id);
         }
 
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
         $studentIntakes = $query->get();
 
         // Pass selected values to the view so they stay after search
         $search_branch_id = $request->branch_id;
         $search_intake_id = $request->intake_id;
         $search_course_id = $request->course_id;
+        $search_status    = $request->status;
+
 
         return view('pages.student.student-info.student-add-intake', compact(
             'students',
@@ -486,7 +492,8 @@ class AddStudentController extends Controller
             'studentIntakes',
             'search_branch_id',
             'search_intake_id',
-            'search_course_id'
+            'search_course_id',
+            'search_status'
         ));
     }
 

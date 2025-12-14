@@ -658,7 +658,7 @@ class HomeController extends Controller
         $coursess = Course::all();
         $intakes = Intake::all();
 
-        $query = ReturnFee::with(['student', 'role']);
+        $query = ReturnFee::with(['student', 'role','invoice']);
 
         if ($request->filled('branch')) {
             $branchId = $request->input('branch');

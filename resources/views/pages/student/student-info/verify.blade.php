@@ -104,7 +104,7 @@
 
                                     <h5 class="mt-4 mb-2">Sign Here</h5>
                                     <canvas id="signature-pad" width="900" height="350"
-                                        style="border:1px solid #ccc; width:100%;"></canvas>
+                                        style="border:1px solid #ccc; width:100%; height:350px;"></canvas>
 
                                 </div>
 
@@ -205,6 +205,23 @@
         let signaturePad = new SignaturePad(canvas);
 
 
+
+        function resizeCanvas() {
+            let canvas = document.getElementById("signature-pad");
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+
+            console.log("asasdasd", canvas.offsetWidth, ratio, canvas.width, canvas.height)
+
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+            console.log("12344", canvas.offsetWidth, ratio, canvas.width, canvas.height)
+
+            signaturePad.clear();
+        }
+
+
+
         // Open signature modal
         $("#signature-preview").click(function() {
 
@@ -217,6 +234,26 @@
             updateModalPreview();
             $("#signatureModal").modal("show");
         });
+
+
+        $('#signatureModal').on('shown.bs.modal', function() {
+
+            canvas = document.getElementById("signature-pad");
+
+            if (!signaturePad) {
+                signaturePad = new SignaturePad(canvas);
+                canvas.style.touchAction = "none"; // mobile support
+            }
+
+            resizeCanvas();
+
+            console.log(
+                "VISIBLE:",
+                canvas.offsetWidth,
+                canvas.offsetHeight
+            );
+        });
+
 
 
         // Checkbox toggle inputs
