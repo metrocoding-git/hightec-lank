@@ -1170,26 +1170,23 @@ class InvoiceController extends Controller
     }
 
     private function generateReceiptNumber($branch_id)
-    {
-        // Get branch name
-        $branch = \App\Models\Branch::find($branch_id);
-        $code = strtolower(substr($branch->name, 0, 2)); // first 2 letters (ku, co)
+{
+    $branch = \App\Models\Branch::findOrFail($branch_id);
+    $code = strtolower(substr($branch->name, 0, 2)); // ka
 
-        // Get last receipt for this branch
-        $last = \App\Models\Invoices_payments::whereHas('invoice', function ($q) use ($branch_id) {
+    // Extract ONLY the numeric part after "ka-"
+    $maxNumber = \App\Models\Invoices_payments::whereHas('invoice', function ($q) use ($branch_id) {
             $q->where('branch_id', $branch_id);
-        })->whereIn('payment_type', ['course', 'fee'])
-            ->orderBy('id', 'desc')
-            ->first();
+        })
+        ->whereIn('payment_type', ['course', 'fee'])
+        ->where('receipt_number', 'like', $code.'-%')
+        ->selectRaw("MAX(CAST(SUBSTRING_INDEX(receipt_number, '-', -1) AS UNSIGNED)) as max_no")
+        ->value('max_no');
 
-        // Extract last 6-digit sequence number
-        if ($last && preg_match('/(\d{6})$/', $last->receipt_number, $matches)) {
-            $next = intval($matches[1]) + 1;
-        } else {
-            $next = 1;
-        }
+    $next = ((int) $maxNumber) + 1;
 
-        // Build receipt number
-        return $code . '-' . str_pad($next, 6, '0', STR_PAD_LEFT);
-    }
+    return $code . '-' . str_pad($next, 6, '0', STR_PAD_LEFT);
+}
+
+    
 }
