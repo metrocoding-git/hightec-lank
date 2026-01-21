@@ -90,8 +90,13 @@
                                                         @endif
                                                     </td>
                                                     <td>
-                                                        {{ $batch->student->admission_number ? $batch->student->admission_number : 'N/A' }}
+                                                        @isset($batch->student->admission_number)
+                                                            {{ $batch->student->admission_number }}
+                                                        @else
+                                                            N/A
+                                                        @endisset
                                                     </td>
+
                                                     <td>
                                                         {{ $batch->student->studentCategory->category_name ?? 'N/A' }}
                                                     </td>
