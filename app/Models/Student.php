@@ -55,6 +55,7 @@ class Student extends Model
         'district_id',
         'create_user_id',
         'update_user_id',
+        'is_old_stu'
     ];
 
     public function scopeActive(Builder $query)

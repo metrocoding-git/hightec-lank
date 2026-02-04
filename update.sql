@@ -83,3 +83,8 @@ ADD COLUMN `invoice_number` VARCHAR(255) NULL AFTER `payment_method`,
 ADD COLUMN `bank_payment_amount` DECIMAL(10,2) NULL AFTER `invoice_number`,
 ADD COLUMN `bank_payment_date` DATE NULL AFTER `bank_payment_amount`,
 ADD COLUMN `bank_payment_document` VARCHAR(255) NULL AFTER `bank_payment_date`;
+
+
+-- 02/04/2026
+ALTER TABLE `students` ADD `is_old_stu` TINYINT NOT NULL DEFAULT '0' AFTER `district_id`;
+ALTER TABLE `fee_invoices` ADD `notes` TEXT NULL AFTER `payment_file`;

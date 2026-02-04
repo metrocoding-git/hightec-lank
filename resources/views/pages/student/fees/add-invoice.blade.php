@@ -148,6 +148,21 @@
                                     </div>
                                 </div>
 
+                                <div class="row mt-15">
+                                    <div class="col-lg-12 ">
+                                        <div class="primary_input">
+                                            <label class="primary_input_label" for="modal_notes">
+                                                Notes
+                                            </label>
+                                            <textarea class="primary_input_field form-control{{ $errors->has('notes') ? ' is-invalid' : '' }}" name="notes"
+                                                id="modal_notes" rows="4" placeholder="Add notes here">{{ old('notes') }}</textarea>
+                                            @error('notes')
+                                                <span class="text-danger">{{ $message }}</span>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="row mt-40">
                                     <div class="col-lg-12 text-center">
                                         <button id="submit"
@@ -524,6 +539,8 @@
                 let dueDate = $('#due_date').val();
                 // let status = $('#status').val(); // Removed as payment status is dynamic
                 let paymentMethod = $('#paymentMethodName').val();
+                let notes = $('#modal_notes').val();
+
 
                 // Validate
                 if (!branch) {
@@ -630,6 +647,8 @@
                 formData.append('due_date', $('#due_date').val());
                 // Payment status will be determined by the backend based on amounts
                 // formData.append('payment_status', $('#status').val());
+                formData.append('notes', notes);
+
 
 
                 $('.price_input').each(function() {

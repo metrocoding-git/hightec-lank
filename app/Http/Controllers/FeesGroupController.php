@@ -68,19 +68,22 @@ class FeesGroupController extends Controller
             'students.admission_number',
             'students.national_id_number',
             DB::raw("CONCAT(students.student_name) AS student_name"),
-            
+
             DB::raw("
-            CASE 
-                WHEN EXISTS (
-                    SELECT 1 
-                    FROM fee_invoices fi
-                    WHERE fi.student_id = students.id
-                ) THEN 1
-                ELSE 0
-            END AS is_admission
-        ")
+                CASE 
+                    WHEN students.is_old_stu = 1
+                        OR EXISTS (
+                            SELECT 1
+                            FROM fee_invoices fi
+                            WHERE fi.student_id = students.id
+                        )
+                    THEN 1
+                    ELSE 0
+                END AS is_admission
+            
+            ")
         )
-        ->get();        
+            ->get();
         $courses = []; // Empty for dynamic loading
         return view('pages.student.fees.course-paid', compact('branches', 'students', 'courses'));
     }

@@ -46,7 +46,7 @@
                                     {{-- Branch Dropdown --}}
                                     <div class="col-lg-12 mb-15">
                                         <label class="primary_input_label">Branch <span class="text-danger">*</span></label>
-                                        <select class="primary_select form-control" name="branch_id" id="branch_select">
+                                        <select class="primary_select form-control" name="branch_id" id="branch_select" required>
                                             @if (count($branches) > 1)
                                                 <option value="">Select Branch *</option>
                                             @endif
@@ -63,7 +63,7 @@
                                         <label class="primary_input_label">Student <span
                                                 class="text-danger">*</span></label>
                                         <select class="primary_select form-control" name="student_id" id="student_select"
-                                            disabled>
+                                            disabled required>
                                             <option value="">Select Branch First *</option>
                                         </select>
                                     </div>
@@ -72,7 +72,7 @@
                                     <div class="col-lg-12 mb-15">
                                         <label class="primary_input_label">Intake <span class="text-danger">*</span></label>
                                         <select class="primary_select form-control" name="intake_id" id="intake_select"
-                                            disabled>
+                                            disabled required>
                                             <option value="">Select Student First *</option>
                                         </select>
                                     </div>

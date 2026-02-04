@@ -49,12 +49,33 @@
                                     </div>
                                 </div>
 
-                                {{-- <div class="offset-lg-3 col-lg-3 text-right col-sm-6 col-7">
-                                    <a href="" class="primary-btn small fix-gr-bg">
-                                        <span class="ti-plus pr-2"></span>
-                                        @lang('student.import_student')
-                                    </a>
-                                </div> --}}
+
+                                <div class=" col-lg-6 col-sm-6 col-7">
+                                    <div class="d-flex align-items-center justify-content-end gap-3">
+
+                                        <a href="#" class="primary-btn small fix-gr-bg mr-3" data-bs-toggle="modal"
+                                            data-bs-target="#importStudentModal">
+                                            <span class="ti-plus pr-2"></span>
+                                            @lang('student.import_student')
+                                        </a>
+
+                                        <div class="form-group d-flex align-items-center gap-2 mb-0">
+                                            <label class="form-label fw-bold mb-0 pr-2">
+                                                Existing Student?
+                                            </label>
+
+                                            <label class="toggle-btn mb-0">
+                                                <input type="checkbox" id="isExistingStudent" name="is_existing_student"
+                                                    value="1"
+                                                    {{ old('is_existing_student', $student->is_old_stu ?? 0) == 1 ? 'checked' : '' }}>
+                                                <span class="slider"></span>
+                                            </label>
+                                        </div>
+
+
+
+                                    </div>
+                                </div>
 
                             </div>
                             <div class="row">
@@ -122,6 +143,8 @@
                                                 <div class="row pt-4 row-gap-12">
 
                                                     {{-- ====================acadamic info========== --}}
+                                                    <input type="hidden" name="admission_number" id="hiddenAdmissionNumber"
+                                                        value="{{ old('admission_number') }}">
 
                                                     <div class="col-lg-6">
                                                         <div class="form-section">
@@ -131,6 +154,11 @@
                                                                         <h4 class="stu-sub-head">@lang('student.academic_info')</h4>
                                                                     </div>
                                                                 </div>
+
+
+
+
+
                                                                 <div class="col-lg-12 mt-4">
                                                                     <div class="primary_input">
                                                                         <label class="primary_input_label" for="branch">
@@ -330,7 +358,8 @@
 
                                                                 <div class="col-lg-6 mt-4">
                                                                     <div class="primary_input">
-                                                                        <label class="primary_input_label" for="district_id">
+                                                                        <label class="primary_input_label"
+                                                                            for="district_id">
                                                                             District
                                                                         </label>
                                                                         <select
@@ -346,12 +375,13 @@
                                                                         </select>
 
                                                                         @error('district_id')
-                                                                            <span class="text-danger">{{ $message }}</span>
+                                                                            <span
+                                                                                class="text-danger">{{ $message }}</span>
                                                                         @enderror
                                                                     </div>
                                                                 </div>
 
-                                                                
+
                                                                 <div class="col-lg-12 mt-4">
                                                                     <div class="primary_input">
                                                                         <label class="primary_input_label"
@@ -373,7 +403,7 @@
                                                                     </div>
                                                                 </div>
 
-                                                               
+
 
                                                                 <div class="col-lg-6 mt-4">
                                                                     <div class="primary_input ">
@@ -1402,15 +1432,323 @@
                     </div>
                 </div>
             </form>
+
+            {{-- Exit student admission number --}}
+            <div class="modal fade" id="admissionModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Existing Student Verification</h5>
+                            <button type="button" class="btn-close" id="model-cancel" data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            <label class="fw-bold">Enter Admission Number</label>
+                            <input type="text" class="form-control" id="modalAdmissionNumber"
+                                placeholder="Admission Number">
+                            <small class="text-danger d-none" id="admissionError">
+                                Admission number not found
+                            </small>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" id="model-cancel-btn"
+                                data-bs-dismiss="modal">
+                                Cancel
+                            </button>
+                            <button type="button" class="btn btn-primary" id="verifyAdmission">
+                                Verify & Submit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- student import --}}
+            <div class="modal fade" id="importStudentModal" tabindex="-1">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Import Students</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            <form id="importStudentForm" enctype="multipart/form-data" method="POST"
+                                action="{{ route('students.import') }}">
+                                @csrf
+                                <div class="mb-3">
+                                    <label class="form-label">Upload Excel / CSV file</label>
+                                    <input type="file" name="students_file" id="studentsFile" class="form-control"
+                                        accept=".xlsx,.xls" required>
+                                </div>
+
+                                <div id="previewContainer" style="display: none;">
+                                    <h6>Preview</h6>
+                                    <table class="table table-bordered" id="previewTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Full Name</th>
+                                                <th>Permanent Address</th>
+                                                <th>Phone Number</th>
+                                                <th>Guardian Name</th>
+                                                <th>Guardian Phone</th>
+                                                <th>Date of Birth</th>
+                                                <th>NIC Number</th>
+                                                <th>Nearest Police Station</th>
+                                                <th>Divisional Secretariat</th>
+                                                <th>District</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="previewImport">Preview</button>
+                            <button type="submit" form="importStudentForm" class="btn btn-success" id="confirmImport"
+                                style="display:none;">Import Students</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </section>
+    <style>
+        .toggle-btn {
+            position: relative;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-btn input {
+            display: none;
+        }
+
+        .slider {
+            position: absolute;
+            background-color: #ccc;
+            border-radius: 30px;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            transition: 0.3s;
+        }
+
+        .slider::before {
+            content: "";
+            position: absolute;
+            height: 24px;
+            width: 24px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        input:checked+.slider {
+            background-color: #28a745;
+        }
+
+        input:checked+.slider::before {
+            transform: translateX(30px);
+        }
+    </style>
 @endsection
+
+
 @include('components.partials.date_picker_css_js')
 @section('script')
     {{-- <script src="{{ asset('public/backEnd/js/croppie.js') }}"></script>
     <script src="{{ asset('public/backEnd/js/st_addmision.js') }}"></script> --}}
     <script>
+        // exit admission number adding
+        document.addEventListener('DOMContentLoaded', function() {
+
+            const toggle = document.getElementById('isExistingStudent');
+            const modalEl = document.getElementById('admissionModal');
+            const modal = new bootstrap.Modal(modalEl);
+
+            const modalInput = document.getElementById('modalAdmissionNumber');
+            const errorText = document.getElementById('admissionError');
+            const hiddenAdmission = document.getElementById('hiddenAdmissionNumber');
+
+            // Toggle click → open modal
+            toggle.addEventListener('change', function() {
+                if (this.checked) {
+                    modal.show();
+                } else {
+                    toggle.checked = false;
+                    hiddenAdmission.value = '';
+                    modalInput.value = '';
+                    errorText.classList.add('d-none');
+                }
+            });
+
+            document.getElementById('model-cancel').onclick = function() {
+                modal.hide();
+                toggle.checked = false;
+                hiddenAdmission.value = '';
+                modalInput.value = '';
+                errorText.classList.add('d-none');
+            };
+
+            document.getElementById('model-cancel-btn').onclick = function() {
+                modal.hide();
+                toggle.checked = false;
+                hiddenAdmission.value = '';
+                modalInput.value = '';
+                errorText.classList.add('d-none');
+            };
+            // Verify admission number
+            document.getElementById('verifyAdmission').addEventListener('click', function() {
+
+                const admissionNo = modalInput.value.trim();
+
+                if (!admissionNo) {
+                    errorText.textContent = 'Admission number required';
+                    errorText.classList.remove('d-none');
+                    return;
+                }
+
+                fetch("{{ route('check-admission-number') }}", {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            admission_number: admissionNo
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.exists) {
+                            errorText.textContent = 'Admission number not found';
+                            errorText.classList.remove('d-none');
+                        } else {
+                            hiddenAdmission.value = admissionNo;
+
+                            errorText.classList.add('d-none');
+                            modal.hide();
+                        }
+                    });
+
+            });
+
+        });
+
+        // student import
+        document.getElementById('previewImport').addEventListener('click', function() {
+            const fileInput = document.getElementById('studentsFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a file.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {
+                    type: 'array'
+                });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+
+                // Raw JSON
+                const jsonDataRaw = XLSX.utils.sheet_to_json(worksheet, {
+                    defval: ''
+                });
+
+                // Normalize keys
+                const jsonDataClean = jsonDataRaw.map(row => {
+                    const cleanRow = {};
+                    for (let key in row) {
+                        const normalizedKey = key.replace(/[:\s]/g, '').replace(/\u00A0/g, '')
+                            .toLowerCase();
+                        cleanRow[normalizedKey] = row[key];
+                    }
+                    return cleanRow;
+                });
+
+                // Collect all NICs from file
+                const nicList = jsonDataClean.map(r => r['nicnumber']).filter(Boolean);
+
+                // AJAX check existing NICs
+                fetch("{{ route('students.check-nic') }}", {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            nics: nicList
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        const existingNics = data.existing; // array of NICs in DB
+
+                        const previewContainer = document.getElementById('previewContainer');
+                        previewContainer.innerHTML = ''; // clear old preview
+
+                        let hasDuplicate = false;
+
+                        jsonDataClean.forEach((row, index) => {
+                            // Convert Excel DOB number to date
+                            let dob = row['dateofbirth'] || '';
+                            if (typeof dob === 'number') {
+                                const date = XLSX.SSF.parse_date_code(dob);
+                                dob =
+                                    `${date.d.toString().padStart(2,'0')}/${date.m.toString().padStart(2,'0')}/${date.y}`;
+                            }
+
+                            const isDuplicate = existingNics.includes(row['nicnumber']);
+                            if (isDuplicate) hasDuplicate = true;
+
+                            const div = document.createElement('div');
+                            div.classList.add('mb-2', 'border', 'p-2', 'rounded');
+                            div.innerHTML = `
+                    <strong>Student :</strong> ${row['studentfullname'] || ''} 
+                    ${isDuplicate ? '<span class="text-danger">(NIC exists!)</span>' : ''}<br>
+                    <strong>DOB:</strong> ${dob}<br>
+                    <strong>Phone:</strong> ${row['phonenumber'] || ''}<br>
+                    <strong>Permanent Address:</strong> ${row['permanentaddress'] || ''}<br>
+                    <strong>Guardian Name:</strong> ${row['nameofguardian'] || ''}<br>
+                    <strong>Guardian Phone:</strong> ${row['guardiansphonenumber'] || ''}<br>
+                    <strong>NIC Number:</strong> ${row['nicnumber'] || ''}<br>
+                    <strong>District:</strong> ${row['district'] || ''}<br>
+                `;
+                            previewContainer.appendChild(div);
+                        });
+
+                        previewContainer.style.display = 'block';
+
+                        // Only show import button if no duplicates
+                        const confirmBtn = document.getElementById('confirmImport');
+                        if (hasDuplicate) {
+                            confirmBtn.style.display = 'none';
+                            alert('Some NIC numbers already exist! Please fix before importing.');
+                        } else {
+                            confirmBtn.style.display = 'inline-block';
+                        }
+                    });
+            };
+
+            reader.readAsArrayBuffer(file);
+        });
+
         $(document).ready(function() {
+
             var currentDate = new Date();
             $('#startDate').datepicker({
                 format: 'mm/dd/yyyy',

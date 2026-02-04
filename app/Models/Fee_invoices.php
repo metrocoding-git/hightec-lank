@@ -26,6 +26,7 @@ class Fee_invoices extends Model
         'invoice_number',
         'main_invoice_number',
         'create_user_id',
+        'notes',
       
     ];
 

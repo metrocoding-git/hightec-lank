@@ -139,12 +139,15 @@
                                     </div>
                                 </div>
 
+                            
+
+
                                 {{-- Bank Upload Section --}}
                                 <div class="row mt-15 d-none" id="bankPaymentSection">
                                     <div class="col-lg-12" id="bankPaidAmountRow">
                                         <label>Bank Paid Amount <span class="text-danger">*</span></label>
-                                        <input type="number" class="primary_input_field form-control" id="bank_paid_amount"
-                                            name="bank_paid_amount" value="0" step="0.01">
+                                        <input type="number" class="primary_input_field form-control"
+                                            id="bank_paid_amount" name="bank_paid_amount" value="0" step="0.01">
                                     </div>
 
                                     <div class="col-lg-12 mt-15" id="bankPaidDateRow">
@@ -163,6 +166,21 @@
                                                 <span class="ti-upload"></span> Browse
                                             </button>
                                             <span id="fileName" class="text-muted small"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row mt-15">
+                                    <div class="col-lg-12 ">
+                                        <div class="primary_input">
+                                            <label class="primary_input_label" for="modal_notes">
+                                                Notes
+                                            </label>
+                                            <textarea class="primary_input_field form-control{{ $errors->has('notes') ? ' is-invalid' : '' }}" name="notes"
+                                                id="modal_notes" rows="4" placeholder="Add notes here">{{ old('notes') }}</textarea>
+                                            @error('notes')
+                                                <span class="text-danger">{{ $message }}</span>
+                                            @enderror
                                         </div>
                                     </div>
                                 </div>
@@ -281,7 +299,7 @@
                     $('#selectStudentLoader').hide();
 
 
-                    
+
                 } else {
                     $('#selectStudentLoader').hide();
                     $('#student_id').html('<option value="">Select Student</option>');
@@ -454,7 +472,7 @@
 
                     if (intakeName) {
 
-                        console.log('ssss',intakeName);
+                        console.log('ssss', intakeName);
                         intakeTableBody.append(
                             `<tr><td>${intakeName}</td></tr>`
                         );
@@ -693,6 +711,8 @@
                 let dueDate = $('#due_date').val();
                 let status = $('#status').val();
                 let paymentMethod = $('#paymentMethodName').val();
+                let notes = $('#modal_notes').val();
+
 
                 // Get course details from the table
                 const courseRow = $('.allCourseDetails tr');
@@ -791,6 +811,7 @@
                 formData.append('due_date', $('#due_date').val());
                 formData.append('payment_status', $('#status').val());
                 formData.append('payment_method', $('#paymentMethodName').val());
+                formData.append('notes', notes);
 
                 // Append course details from the table
                 formData.append('course_id', courseId);

@@ -15,9 +15,12 @@ use App\Models\StudentVerification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
+use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 
 class AddStudentController extends Controller
 {
@@ -79,11 +82,20 @@ class AddStudentController extends Controller
             'document_file_4' => 'nullable|file|max:2048',
             'previous_institute_details' => 'nullable|string',
             'dormitory_id' => 'nullable|string|max:100',
-            'sibling_id' => 'nullable|exists:students,id'
+            'sibling_id' => 'nullable|exists:students,id',
+            'admission_number' => 'nullable|string|unique:students,admission_number',
         ]);
 
-        $validatedData['admission_number'] = $this->generateNextAdmissionNumber();
-        
+        $validatedData['is_old_stu'] = 0;
+        if (!$validatedData['admission_number']) {
+            $validatedData['admission_number'] = $this->generateNextAdmissionNumber();
+        } else {
+            $validatedData['is_old_stu'] = 1;
+        }
+
+        $validatedData['create_user_id'] = Auth::id();
+
+
         // Handle file uploads
         $fileFields = [
             'photo' => 'student_photos',
@@ -132,7 +144,12 @@ class AddStudentController extends Controller
         //     return redirect()->route('student.add-intake-with-courses.index')
         //         ->with('error', 'Student created, but failed to create invoice.');
         // }
-        return redirect()->route('fees.add-invoice')->with('success', 'Student add successfully');
+
+        if ($validatedData['is_old_stu'] == 1) {
+            return redirect()->route('student.add-intake-with-courses.index')->with('success', 'Student add successfully');
+        } else {
+            return redirect()->route('fees.add-invoice')->with('success', 'Student add successfully');
+        }
     }
 
 
@@ -227,7 +244,6 @@ class AddStudentController extends Controller
 
         $student->update($validatedData);
         return redirect()->route('student-list')->with('success', 'Student edit successfully');
-
     }
 
     // Student Course Management Methods
@@ -457,7 +473,7 @@ class AddStudentController extends Controller
         $courses = Course::all();
 
         // Build query with filters
-        $query = StudentCourse::with(['student', 'intake', 'course', 'branch','student.studentCategory'])->orderBy('created_at', 'desc');
+        $query = StudentCourse::with(['student', 'intake', 'course', 'branch', 'student.studentCategory'])->orderBy('created_at', 'desc');
 
         if ($request->filled('branch_id')) {
             $query->where('branch_id', $request->branch_id);
@@ -692,31 +708,31 @@ class AddStudentController extends Controller
             'verification_items' => 'required|array',
             'signature_data' => 'required|string',
         ]);
-    
+
         $student = Student::findOrFail($studentId);
-    
+
         // ---- SAVE SIGNATURE ----
         $folder = storage_path('app/public/signatures/students/');
-    
+
         if (!File::exists($folder)) {
             File::makeDirectory($folder, 0777, true);
         }
-    
+
         $signature = $request->signature_data;
         $image = str_replace('data:image/png;base64,', '', $signature);
         $image = str_replace(' ', '+', $image);
-    
+
         $imageName = 'signature_' . time() . '.png';
-    
+
         File::put($folder . $imageName, base64_decode($image));
-    
+
         // Save relative path for browser
         $signaturePath = 'signatures/students/' . $imageName;
-    
+
         // -------- SAVE EACH VERIFICATION ITEM --------
         foreach ($request->verification_items as $item) {
             $newValue = $request->verification_values[$item] ?? null;
-    
+
             $oldValue = match ($item) {
                 'Full Name Verified' => $student->student_name,
                 'NIC Verified' => $student->national_id_number,
@@ -725,7 +741,7 @@ class AddStudentController extends Controller
                 'Mobile Number 2 Verified' => $student->phone_number_2,
                 default => null,
             };
-    
+
             StudentVerification::create([
                 'student_id'        => $student->id,
                 'verification_item' => $item,
@@ -735,7 +751,7 @@ class AddStudentController extends Controller
                 'updated_by'        => auth()->id(),
             ]);
         }
-    
+
         // UPDATE STUDENT
         $student->update([
             'student_name'       => $request->verification_values['Full Name Verified'] ?? null,
@@ -743,11 +759,95 @@ class AddStudentController extends Controller
             'permanent_address'  => $request->verification_values['Address Verified'] ?? null,
             'phone_number'       => $request->verification_values['Mobile Number Verified'] ?? null,
             'phone_number_2'     => $request->verification_values['Mobile Number 2 Verified'] ?? null,
-        ]);        
-    
+        ]);
+
         return back()->with('success', 'Verification saved successfully!');
     }
+
+    public function checkAdmission(Request $request)
+    {
+        $exists = Student::where('admission_number', $request->admission_number)->exists();
+
+        return response()->json([
+            'exists' => $exists
+        ]);
+    }
+
+
+    public function studentImport(Request $request)
+    {
+        $request->validate([
+            'students_file' => 'required|file|mimes:xlsx,xls',
+        ]);
     
+        $data = Excel::toArray([], $request->file('students_file'));
+        $rows = $data[0]; // first sheet
+    
+        if (count($rows) < 2) {
+            return back()->with('error', 'No data found in the file.');
+        }
+    
+        // First row = headers
+        $headers = $rows[0];
+    
+        // Remaining rows = data
+        $dataRows = array_slice($rows, 1);
+    
+        foreach ($dataRows as $row) {
+    
+            // Combine header + row to make associative array
+            $cleanRow = array_combine($headers, $row);
+    
+            // Handle DOB: Excel numeric → date
+            $dob = $cleanRow['Date of Birth:'] ?? null;
+            if (is_numeric($dob)) {
+                $excelDate = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($dob);
+                $dob = $excelDate->format('Y-m-d');
+            }
+    
+            $nic = $cleanRow['NIC Number:'] ?? null;
+            if (!$nic) {
+                continue; // skip empty NIC
+            }
+    
+            // Skip if NIC already exists
+            if (Student::where('national_id_number', $nic)->exists()) {
+                continue;
+            }
+    
+            $admissionNumber = $this->generateNextAdmissionNumber();
+    
+            Student::create([
+                'branch_id' => 1, 
+                'admission_number' => $admissionNumber,
+                'student_name' => $cleanRow['Student Full Name:'] ?? '',
+                'permanent_address' => $cleanRow['Permanent address:'] ?? '',
+                'phone_number' => $cleanRow['Phone number :'] ?? '',
+                'guardians_name' => $cleanRow['Name of guardian:'] ?? '',
+                'guardians_phone' => $cleanRow["Guardian's Phone Number:"] ?? '',
+                'date_of_birth' => $dob,
+                'national_id_number' => $nic,
+                'district' => $cleanRow['District:'] ?? '',
+                'admission_date' => now(),
+                'is_old_stu' => 0,
+                'create_user_id' => Auth::id(),
+            ]);
+        }
+    
+        return redirect()->route('fees.add-invoice')->with('success', 'Student add successfully');
+
+    }
+    
+
+    public function checkNic(Request $request)
+    {
+        $nics = $request->input('nics', []);
+        $existing = Student::whereIn('national_id_number', $nics)->pluck('national_id_number')->toArray();
+
+        return response()->json([
+            'existing' => $existing
+        ]);
+    }
 
     // public function verificationHistory($id)
     // {

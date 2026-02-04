@@ -31,7 +31,7 @@
         <div class="row">
             <div class="col-lg-12 text-center">
 
-                <p>Copyright © 2025 All rights reserved | This application is made with by MetroCoding</p>
+                <p>Copyright © 2026 All rights reserved | This application is made with by MetroCoding</p>
 
             </div>
         </div>
@@ -87,6 +87,7 @@
 
 <script src="{{ asset('backEnd/assets/js/metisMenu.js') }}"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script src="{{ asset('backEnd/assets/js/bootstrap.min.js') }}"></script>
 
@@ -146,6 +147,9 @@
         "timeOut": "500"
     };
 </script>
+
+{{-- xlsx --}}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 
 

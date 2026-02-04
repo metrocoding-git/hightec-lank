@@ -87,6 +87,7 @@ class InvoiceController extends Controller
             'payment_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
             'bank_paid_amount' => 'nullable|numeric|min:0',
             'bank_paid_date' => 'nullable|date_format:Y-m-d',
+            'notes' => 'nullable|string',
         ]);
 
         if (in_array(1, $request->fee_type_id)) {
@@ -139,7 +140,7 @@ class InvoiceController extends Controller
             } while (\App\Models\Fee_invoices::where('main_invoice_number', $main_invoice_number)->exists());
             $create_user_id = Auth::check() ? Auth::id() : null;
             Log::debug('Generated main_invoice_number (store): ' . $main_invoice_number);
-            Log::debug('Auth::id() (store): ' . $create_user_id);
+            $create_user_id = Auth::id();
 
             // Create Fee Invoice
             $fee_invoice = Fee_invoices::create([
@@ -158,6 +159,7 @@ class InvoiceController extends Controller
                 'bank_paid_date' => ($request->payment_method) === 'Bank Transfer' && !empty($request->bank_paid_date)
                     ? Carbon::createFromFormat('Y-m-d', $request->bank_paid_date)->format('Y-m-d')
                     : null,
+                'notes' => $request->notes,
 
             ]);
             Log::debug('Fee_invoice created with main_invoice_number: ' . $fee_invoice->main_invoice_number . ' and create_user_id: ' . $fee_invoice->create_user_id);
@@ -808,6 +810,7 @@ class InvoiceController extends Controller
             'payment_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
             'bank_paid_amount' => 'nullable|numeric|min:0', // Conditional validation
             'bank_paid_date' => 'nullable|date_format:Y-m-d', // Conditional validation
+            'notes' => 'nullable|string',
         ]);
 
         try {
@@ -854,7 +857,7 @@ class InvoiceController extends Controller
                     $main_invoice_number = 'INV-' . rand(100000, 999999);
                 } while (\App\Models\Fee_invoices::where('main_invoice_number', $main_invoice_number)->exists());
                 Log::debug('Generated main_invoice_number (storeCoursePayment): ' . $main_invoice_number);
-                Log::debug('Auth::id() (storeCoursePayment): ' . $create_user_id);
+                $create_user_id = Auth::id();
 
                 // Create a Fee_invoices record
                 $fee_invoice = Fee_invoices::create([
@@ -871,6 +874,7 @@ class InvoiceController extends Controller
                     'main_invoice_number' => $main_invoice_number,
                     'create_user_id' => $create_user_id,
                     'payment_file' => null, // Will be handled below if file exists
+                    'notes' => $request->notes,
                 ]);
                 Log::debug('Course Fee_invoice created with main_invoice_number: ' . $fee_invoice->main_invoice_number . ' and create_user_id: ' . $fee_invoice->create_user_id);
 

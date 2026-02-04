@@ -64,6 +64,7 @@
                                                 <th>Payment Status</th>
                                                 <th>Payment Date</th>
                                                 <th>Due Date</th>
+                                                <th>Notes</th>
                                                 <th>@lang('common.action')</th>
                                             </tr>
                                         </thead>
@@ -129,6 +130,7 @@
                                                     </td>
                                                     <td>{{ \Carbon\Carbon::parse($invoice->create_date)->format('m/d/Y') }}</td>
                                                     <td>{{ \Carbon\Carbon::parse($invoice->due_date)->format('m/d/Y') }}</td>
+                                                   <td>{{ $invoice->notes ?? '-' }}</td>
                                                     <td>
                                                         <x-drop-down>
                                                             {{-- <a class="dropdown-item" data-toggle="modal"

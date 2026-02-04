@@ -109,6 +109,8 @@ Route::controller(StudentCategoryController::class)->prefix('student/student-inf
 Route::controller(AddStudentController::class)->prefix('student/student-info/add-student')->group(callback: function () {
 
     Route::get('/', 'index')->name('add-student.index');
+    Route::post('/check-admission-number', 'checkAdmission')->name('check-admission-number');
+
     Route::post('store', 'store')->name('add-student.store');
     Route::put('update/{student}', 'update')->name('add-student.update');
     Route::get('edit/{student}', 'edit')->name('add-student.edit');
@@ -116,7 +118,6 @@ Route::controller(AddStudentController::class)->prefix('student/student-info/add
 
     Route::get('verify/{id}', 'verify')->name('add-student.verify');
     Route::post('verify/{id}', 'verifySubmit')->name('add-student.verify.submit');
-
 });
 
 // Student Course Management Routes
@@ -132,6 +133,10 @@ Route::controller(AddStudentController::class)->prefix('student/student-info')->
 Route::controller(AddStudentController::class)->prefix('student/student-info')
     ->middleware(['permission'])
     ->group(function () {
+        Route::post('/student-import',  'studentImport')->name('students.import')->withoutMiddleware(['csrf', 'permission']);
+        // web.php
+        Route::post('/students/check-nic', 'checkNic')->name('students.check-nic')->withoutMiddleware(['csrf', 'permission']);
+
         Route::get('student-add-intake', 'studentAddIntakeWithCourses')->name('student.add-intake-with-courses.index')->withoutMiddleware(['csrf', 'permission']);
         Route::post('student-add-intake', 'storeStudentIntakeWithCourses')->name('student.add-intake-with-courses.store');
         Route::get('student-add-intake/{id}/edit', 'editStudentIntake')->name('student.add-intake.edit');
