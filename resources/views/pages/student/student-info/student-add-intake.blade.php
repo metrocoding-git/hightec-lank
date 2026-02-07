@@ -179,6 +179,7 @@
                                             <tr>
                                                 <th>No.</th>
                                                 <th>Student Name</th>
+                                                <th>Stu Name Verification</th>
                                                 <th>Student Category</th>
                                                 <th>Admission No</th>
                                                 <th>Nic Number</th>
@@ -200,7 +201,12 @@
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
                                                     <td>{{ $studentIntake->student->student_name }}</td>
-                                                    <td>{{ $studentIntake->student->studentCategory->category_name ?? '-'}}</td>
+                                                    <td
+                                                        class="{{ $studentIntake->student->isVerified('Full Name Verified') ? 'text-success' : '' }}">
+                                                        {!! $studentIntake->student->isVerified('Full Name Verified') ? '<span class="text-success">YES</span>' : 'NO' !!}
+                                                    </td>
+                                                    <td>{{ $studentIntake->student->studentCategory->category_name ?? '-' }}
+                                                    </td>
                                                     <td>{{ $studentIntake->student->admission_number }}</td>
                                                     <td
                                                         class="{{ $studentIntake->student->isVerified('NIC Verified') ? 'text-success' : '' }}">
