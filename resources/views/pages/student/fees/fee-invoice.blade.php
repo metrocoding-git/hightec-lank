@@ -69,155 +69,6 @@
                                             </tr>
                                         </thead>
 
-
-                                        <tbody>
-                                            @foreach ($fee_invoices as $key => $invoice)
-                                                {{-- {{ dd($invoice) }} --}}
-                                                @php
-                                                    $amount = $invoice->total_amount;
-                                                    $paid_amount = $invoice->paid_amount;
-                                                    $balance = $amount - $paid_amount; // This is remaining balance
-                                                    $available_for_return = $paid_amount; // This is what can actually be returned
-                                                @endphp
-                                                <tr>
-                                                    <td>{{ $key + 1 }}</td>
-                                                    <td>
-                                                        <a href="{{ route('fees.fee-invoice-view', ['id' => $invoice->id, 'state' => 'view']) }}"
-                                                            target="_blank">
-                                                            {{ $invoice->main_invoice_number }}
-                                                        </a>
-                                                    </td>
-                                                    <td>
-                                                        
-                                                        @if ($invoice->invoice_type == 'fee')
-                                                            {{$invoice->invoice_item[0]->fee_type->name}}
-                                                        @elseif ($invoice->invoice_type == 'course')
-                                                            {{ $invoice->paidCourses?->course?->name ?? '-' }}
-                                                        @else 
-                                                            -
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        <a href="{{ route('student-details', ['id' => $invoice->student->id, 'state' => 'view']) }}"
-                                                            target="_blank">
-                                                            {{ $invoice->student->student_name }}
-                                                        </a>
-                                                    </td>
-                                                    <td>{{ $invoice->student->studentCategory->category_name?? '-' }}</td>
-                                                    <td>{{ $invoice->branch->name }}</td>
-                                                    <td>{{ $invoice->student->admission_number }}</td>
-
-                                                    <td>{{ $amount }}</td>
-                                                    {{-- <td>{{ $paid_amount }}</td> --}}
-                                                    <td>{{ $balance }}.00</td>
-                                                    <td>{{ $invoice->payment_method }}</td>
-
-                                                    <td>
-                                                        @if ($invoice->payment_status == 'partial')
-                                                            <button
-                                                                class="primary-btn small bg-warning text-white border-0">@lang('fees.partial')</button>
-                                                        @elseif ($invoice->payment_status == 'full')
-                                                            <button
-                                                                class="primary-btn small bg-success text-white border-0">@lang('fees.paid')</button>
-                                                        @elseif ($invoice->payment_status == 'returned')
-                                                            <button
-                                                                class="primary-btn small bg-info text-white border-0">Returned</button>
-                                                        @elseif ($invoice->payment_status == 'not')
-                                                            <button
-                                                                class="primary-btn small bg-danger text-white border-0">@lang('fees.unpaid')</button>
-                                                        @endif
-
-                                                    </td>
-                                                    <td>{{ \Carbon\Carbon::parse($invoice->create_date)->format('m/d/Y') }}</td>
-                                                    <td>{{ \Carbon\Carbon::parse($invoice->due_date)->format('m/d/Y') }}</td>
-                                                   <td>{{ $invoice->notes ?? '-' }}</td>
-                                                    <td>
-                                                        <x-drop-down>
-                                                            {{-- <a class="dropdown-item" data-toggle="modal"
-                                                                data-target="#viewInvoiceModal{{ $invoice->id }}"
-                                                                href="#">@lang('common.view')</a> --}}
-
-                                                            {{-- Only show Payment Details and Delete for returned invoices --}}
-                                                            @if ($invoice->payment_status == 'returned')
-                                                                <a class="dropdown-item" data-toggle="modal"
-                                                                    data-target="#viewPaymentDetailsModal"
-                                                                    data-invoice-id="{{ $invoice->id }}"
-                                                                    href="#">Payment Details</a>
-                                                            @else
-                                                                {{-- Show View Payment for non-returned invoices --}}
-                                                                <a class="dropdown-item" data-toggle="modal"
-                                                                    data-target="#viewPaymentHistoryModal"
-                                                                    data-invoice-id="{{ $invoice->id }}"
-                                                                    data-course-name="{{ optional(optional($invoice->paidCourses)->course)->name ?? 'N/A' }}"
-                                                                    href="#">View Payment</a>
-
-                                                                {{-- Show Make Invoice option for non-returned invoices --}}
-                                                                <a class="dropdown-item" data-toggle="modal"
-                                                                    data-target="#makeInvoiceModal"
-                                                                    data-student-id="{{ $invoice->student->id }}"
-                                                                    data-invoice-id="{{ $invoice->id }}"
-                                                                    onclick="populateInvoiceModal(this)">Invoice</a>
-
-                                                                {{-- Show Return option only if there's paid amount and not returned --}}
-                                                                {{-- @if ($invoice->paid_amount > 0) --}}
-                                                                    <a class="dropdown-item" data-toggle="modal"
-                                                                        data-target="#returnFeeModal{{ $invoice->id }}"
-                                                                        href="#">Return</a>
-                                                                {{-- @endif --}}
-                                                            @endif
-
-                                                            {{-- Show Report option --}}
-                                                            <a class="dropdown-item" 
-                                                               
-                                                                href="{{ route('fees.invoice-print', $invoice->id) }}" target="_blank" >Re-Print</a>
-
-                                                            {{-- Always show Delete option --}}
-                                                            {{-- <a class="dropdown-item" data-toggle="modal"
-                                                                data-target="#deletecategoryModal{{ $invoice->id }}"
-                                                                href="#">@lang('common.delete')</a> --}}
-                                                        </x-drop-down>
-                                                    </td>
-                                                </tr>
-
-                                                <div class="modal fade admin-query"
-                                                    id="deletecategoryModal{{ $invoice->id }}">
-                                                    <div class="modal-dialog modal-dialog-centered">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h4 class="modal-title">@lang('fees.delete_fees_type')</h4>
-                                                                <button type="button" class="close"
-                                                                    data-dismiss="modal">&times;</button>
-                                                            </div>
-                                                            <div class="modal-body">
-                                                                <div class="text-center">
-                                                                    <h4>@lang('common.are_you_sure_to_delete')</h4>
-                                                                </div>
-                                                                <div class="mt-40 d-flex justify-content-between">
-                                                                    <button type="button" class="primary-btn tr-bg"
-                                                                        data-dismiss="modal">
-                                                                        @lang('common.cancel')
-                                                                    </button>
-                                                                    <form
-                                                                        action="{{ route('fees.fee-delete', $invoice->id) }}"
-                                                                        method="POST">
-                                                                        @csrf
-                                                                        @method('DELETE')
-                                                                        <button class="primary-btn fix-gr-bg"
-                                                                            type="submit">
-                                                                            @lang('common.delete')
-                                                                        </button>
-                                                                    </form>
-                                                                </div>
-                                                            </div>
-
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-
-                                                <!-- Add Payment Modal -->
-                                            @endforeach
-                                        </tbody>
                                     </table>
                                 </x-table>
                             </div>
@@ -232,152 +83,147 @@
                                     $balance = $amount - $paid_amount;
                                 @endphp
                                 {{-- @if ($invoice->paid_amount > 0) --}}
-                                    <div class="modal fade admin-query" id="returnFeeModal{{ $invoice->id }}"
-                                        style="background-color: rgba(0, 0, 0, 0.5);">
-                                        <div class="modal-dialog modal-lg modal-dialog-centered"
-                                            style="margin: 0 auto; max-width: 600px; display: flex; align-items: center; min-height: 100vh;">
-                                            <div class="modal-content"
-                                                style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); border: none; overflow: hidden;">
-                                                <div class="modal-header"
-                                                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px 25px; border-bottom: none;">
-                                                    <h4 class="modal-title"
-                                                        style="margin: 0; font-weight: 600; font-size: 1.4rem; display: flex; align-items: center;">
-                                                        <i class="fas fa-undo-alt"
-                                                            style="margin-right: 10px; font-size: 1.2rem;"></i>
-                                                        Return Fee - Invoice #{{ $invoice->id }}
-                                                    </h4>
-                                                    <button type="button" class="close" data-dismiss="modal"
-                                                        style="color: white; opacity: 0.8; font-size: 1.5rem; margin: 0; padding: 0; background: none; border: none;">
-                                                        &times;
-                                                    </button>
+                                <div class="modal fade admin-query" id="returnFeeModal{{ $invoice->id }}"
+                                    style="background-color: rgba(0, 0, 0, 0.5);">
+                                    <div class="modal-dialog modal-lg modal-dialog-centered"
+                                        style="margin: 0 auto; max-width: 600px; display: flex; align-items: center; min-height: 100vh;">
+                                        <div class="modal-content"
+                                            style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); border: none; overflow: hidden;">
+                                            <div class="modal-header"
+                                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px 25px; border-bottom: none;">
+                                                <h4 class="modal-title"
+                                                    style="margin: 0; font-weight: 600; font-size: 1.4rem; display: flex; align-items: center;">
+                                                    <i class="fas fa-undo-alt"
+                                                        style="margin-right: 10px; font-size: 1.2rem;"></i>
+                                                    Return Fee - Invoice #{{ $invoice->id }}
+                                                </h4>
+                                                <button type="button" class="close" data-dismiss="modal"
+                                                    style="color: white; opacity: 0.8; font-size: 1.5rem; margin: 0; padding: 0; background: none; border: none;">
+                                                    &times;
+                                                </button>
+                                            </div>
+
+                                            <form action="{{ route('return-fees.store') }}" method="POST">
+                                                @csrf
+                                                <div class="modal-body"
+                                                    style="padding: 30px 25px; background-color: #f8f9fa;">
+                                                    <div class="row" style="margin-bottom: 20px;">
+                                                        <div class="col-md-6" style="margin-bottom: 15px;">
+                                                            <div class="form-group" style="margin-bottom: 0;">
+                                                                <label
+                                                                    style="display: block; font-weight: 600; color: #495057; margin-bottom: 8px; font-size: 0.9rem;">
+                                                                    <i class="fas fa-user-graduate"
+                                                                        style="margin-right: 5px; color: #667eea;"></i>
+                                                                    @lang('common.student')
+                                                                </label>
+                                                                <input type="text" class="form-control"
+                                                                    value="{{ $invoice->student->student_name }}" readonly
+                                                                    style="background-color: white; border: 1px solid #e1e5eb; border-radius: 8px; padding: 10px 15px; font-size: 0.95rem; color: #495057; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);">
+                                                                <input type="hidden" name="student_id"
+                                                                    value="{{ $invoice->student->id }}">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6" style="margin-bottom: 15px;">
+                                                            <div class="form-group" style="margin-bottom: 0;">
+                                                                <label
+                                                                    style="display: block; font-weight: 600; color: #495057; margin-bottom: 8px; font-size: 0.9rem;">
+                                                                    <i class="fas fa-id-card"
+                                                                        style="margin-right: 5px; color: #667eea;"></i>
+                                                                    @lang('admin.admission_no')
+                                                                </label>
+                                                                <input type="text" class="form-control"
+                                                                    value="{{ $invoice->student->admission_number }}"
+                                                                    readonly
+                                                                    style="background-color: white; border: 1px solid #e1e5eb; border-radius: 8px; padding: 10px 15px; font-size: 0.95rem; color: #495057; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);">
+                                                                <input type="hidden" name="admission_number"
+                                                                    value="{{ $invoice->student->admission_number }}">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row" style="margin-bottom: 20px;">
+                                                        <div class="col-md-12">
+                                                            <div class="form-group" style="margin-bottom: 0;">
+                                                                <label
+                                                                    style="display: block; font-weight: 600; color: #495057; margin-bottom: 8px; font-size: 0.9rem;">
+                                                                    <i class="fas fa-coins"
+                                                                        style="margin-right: 5px; color: #28a745;"></i>
+                                                                    Available for Return
+                                                                </label>
+                                                                <input type="text" class="form-control"
+                                                                    value="{{ number_format($paid_amount, 2) }}" readonly
+                                                                    style="background-color: #e8f5e8; border: 1px solid #28a745; border-radius: 8px; padding: 12px 15px; font-size: 1.1rem; font-weight: 600; color: #155724; text-align: center; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);">
+                                                                <input type="hidden" name="balance"
+                                                                    value="{{ $paid_amount }}">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row" style="margin-bottom: 25px;">
+                                                        <div class="col-md-12">
+                                                            <div class="form-group" style="margin-bottom: 0;">
+                                                                <label
+                                                                    style="display: block; font-weight: 600; color: #495057; margin-bottom: 8px; font-size: 0.9rem;">
+                                                                    <i class="fas fa-money-bill-wave"
+                                                                        style="margin-right: 5px; color: #dc3545;"></i>
+                                                                    Return Amount <span style="color: #dc3545;">*</span>
+                                                                </label>
+                                                                <div class="input-group"
+                                                                    style="box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); border-radius: 8px; overflow: hidden;">
+                                                                    <input type="number" name="return_amount"
+                                                                        class="form-control" min="0.00`"
+                                                                        max="{{ $paid_amount }}" step="0.00" required
+                                                                        placeholder="Enter return amount"
+                                                                        style="border: 1px solid #dc3545; border-right: none; border-radius: 8px 0 0 8px; padding: 12px 15px; font-size: 1rem; color: #495057; height: 48px;">
+                                                                    <div class="input-group-append">
+                                                                        <span class="input-group-text"
+                                                                            style="background-color: #dc3545; color: white; border: 1px solid #dc3545; border-left: none; border-radius: 0 8px 8px 0; padding: 12px 15px; font-weight: 600; height: 48px;">
+                                                                            .00
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                <small class="text-muted"
+                                                                    style="display: block; margin-top: 8px; font-size: 0.85rem; color: #6c757d;">
+                                                                    <i class="fas fa-info-circle"
+                                                                        style="margin-right: 5px;"></i>
+                                                                    Maximum return amount: <strong
+                                                                        style="color: #28a745;">{{ number_format($paid_amount, 2) }}</strong>
+                                                                </small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="form-group" style="margin-bottom: 25px;">
+                                                        <label
+                                                            style="display: block; font-weight: 600; color: #495057; margin-bottom: 8px; font-size: 0.9rem;">
+                                                            <i class="fas fa-sticky-note"
+                                                                style="margin-right: 5px; color: #ffc107;"></i>
+                                                            @lang('fees.short_note')
+                                                        </label>
+                                                        <textarea name="short_note" class="form-control" rows="3" placeholder="Enter reason for return..."
+                                                            style="border: 1px solid #e1e5eb; border-radius: 8px; padding: 12px 15px; font-size: 0.95rem; color: #495057; resize: vertical; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); transition: border-color 0.3s ease;"></textarea>
+                                                    </div>
+
+                                                    <input type="hidden" name="invoice_id" value="{{ $invoice->id }}">
                                                 </div>
 
-                                                <form action="{{ route('return-fees.store') }}" method="POST">
-                                                    @csrf
-                                                    <div class="modal-body"
-                                                        style="padding: 30px 25px; background-color: #f8f9fa;">
-                                                        <div class="row" style="margin-bottom: 20px;">
-                                                            <div class="col-md-6" style="margin-bottom: 15px;">
-                                                                <div class="form-group" style="margin-bottom: 0;">
-                                                                    <label
-                                                                        style="display: block; font-weight: 600; color: #495057; margin-bottom: 8px; font-size: 0.9rem;">
-                                                                        <i class="fas fa-user-graduate"
-                                                                            style="margin-right: 5px; color: #667eea;"></i>
-                                                                        @lang('common.student')
-                                                                    </label>
-                                                                    <input type="text" class="form-control"
-                                                                        value="{{ $invoice->student->student_name }}"
-                                                                        readonly
-                                                                        style="background-color: white; border: 1px solid #e1e5eb; border-radius: 8px; padding: 10px 15px; font-size: 0.95rem; color: #495057; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);">
-                                                                    <input type="hidden" name="student_id"
-                                                                        value="{{ $invoice->student->id }}">
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-6" style="margin-bottom: 15px;">
-                                                                <div class="form-group" style="margin-bottom: 0;">
-                                                                    <label
-                                                                        style="display: block; font-weight: 600; color: #495057; margin-bottom: 8px; font-size: 0.9rem;">
-                                                                        <i class="fas fa-id-card"
-                                                                            style="margin-right: 5px; color: #667eea;"></i>
-                                                                        @lang('admin.admission_no')
-                                                                    </label>
-                                                                    <input type="text" class="form-control"
-                                                                        value="{{ $invoice->student->admission_number }}"
-                                                                        readonly
-                                                                        style="background-color: white; border: 1px solid #e1e5eb; border-radius: 8px; padding: 10px 15px; font-size: 0.95rem; color: #495057; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);">
-                                                                    <input type="hidden" name="admission_number"
-                                                                        value="{{ $invoice->student->admission_number }}">
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="row" style="margin-bottom: 20px;">
-                                                            <div class="col-md-12">
-                                                                <div class="form-group" style="margin-bottom: 0;">
-                                                                    <label
-                                                                        style="display: block; font-weight: 600; color: #495057; margin-bottom: 8px; font-size: 0.9rem;">
-                                                                        <i class="fas fa-coins"
-                                                                            style="margin-right: 5px; color: #28a745;"></i>
-                                                                        Available for Return
-                                                                    </label>
-                                                                    <input type="text" class="form-control"
-                                                                        value="{{ number_format($paid_amount, 2) }}"
-                                                                        readonly
-                                                                        style="background-color: #e8f5e8; border: 1px solid #28a745; border-radius: 8px; padding: 12px 15px; font-size: 1.1rem; font-weight: 600; color: #155724; text-align: center; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);">
-                                                                    <input type="hidden" name="balance"
-                                                                        value="{{ $paid_amount }}">
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="row" style="margin-bottom: 25px;">
-                                                            <div class="col-md-12">
-                                                                <div class="form-group" style="margin-bottom: 0;">
-                                                                    <label
-                                                                        style="display: block; font-weight: 600; color: #495057; margin-bottom: 8px; font-size: 0.9rem;">
-                                                                        <i class="fas fa-money-bill-wave"
-                                                                            style="margin-right: 5px; color: #dc3545;"></i>
-                                                                        Return Amount <span
-                                                                            style="color: #dc3545;">*</span>
-                                                                    </label>
-                                                                    <div class="input-group"
-                                                                        style="box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); border-radius: 8px; overflow: hidden;">
-                                                                        <input type="number" name="return_amount"
-                                                                            class="form-control" min="0.00`"
-                                                                            max="{{ $paid_amount }}" step="0.00"
-                                                                            required placeholder="Enter return amount"
-                                                                            style="border: 1px solid #dc3545; border-right: none; border-radius: 8px 0 0 8px; padding: 12px 15px; font-size: 1rem; color: #495057; height: 48px;">
-                                                                        <div class="input-group-append">
-                                                                            <span class="input-group-text"
-                                                                                style="background-color: #dc3545; color: white; border: 1px solid #dc3545; border-left: none; border-radius: 0 8px 8px 0; padding: 12px 15px; font-weight: 600; height: 48px;">
-                                                                                .00
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <small class="text-muted"
-                                                                        style="display: block; margin-top: 8px; font-size: 0.85rem; color: #6c757d;">
-                                                                        <i class="fas fa-info-circle"
-                                                                            style="margin-right: 5px;"></i>
-                                                                        Maximum return amount: <strong
-                                                                            style="color: #28a745;">{{ number_format($paid_amount, 2) }}</strong>
-                                                                    </small>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="form-group" style="margin-bottom: 25px;">
-                                                            <label
-                                                                style="display: block; font-weight: 600; color: #495057; margin-bottom: 8px; font-size: 0.9rem;">
-                                                                <i class="fas fa-sticky-note"
-                                                                    style="margin-right: 5px; color: #ffc107;"></i>
-                                                                @lang('fees.short_note')
-                                                            </label>
-                                                            <textarea name="short_note" class="form-control" rows="3" placeholder="Enter reason for return..."
-                                                                style="border: 1px solid #e1e5eb; border-radius: 8px; padding: 12px 15px; font-size: 0.95rem; color: #495057; resize: vertical; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); transition: border-color 0.3s ease;"></textarea>
-                                                        </div>
-
-                                                        <input type="hidden" name="invoice_id"
-                                                            value="{{ $invoice->id }}">
-                                                    </div>
-
-                                                    <div class="modal-footer"
-                                                        style="background-color: white; padding: 20px 25px; border-top: 1px solid #e1e5eb; border-radius: 0 0 12px 12px;">
-                                                        <button type="button" class="primary-btn tr-bg"
-                                                            data-dismiss="modal"
-                                                            style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);">
-                                                            <i class="fas fa-times" style="margin-right: 8px;"></i>
-                                                            @lang('common.cancel')
-                                                        </button>
-                                                        <button type="submit" class="primary-btn fix-gr-bg"
-                                                            style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 12px 30px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);">
-                                                            <i class="fas fa-undo-alt" style="margin-right: 8px;"></i>
-                                                            Process Return
-                                                        </button>
-                                                    </div>
-                                                </form>
-                                            </div>
+                                                <div class="modal-footer"
+                                                    style="background-color: white; padding: 20px 25px; border-top: 1px solid #e1e5eb; border-radius: 0 0 12px 12px;">
+                                                    <button type="button" class="primary-btn tr-bg" data-dismiss="modal"
+                                                        style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);">
+                                                        <i class="fas fa-times" style="margin-right: 8px;"></i>
+                                                        @lang('common.cancel')
+                                                    </button>
+                                                    <button type="submit" class="primary-btn fix-gr-bg"
+                                                        style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 12px 30px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);">
+                                                        <i class="fas fa-undo-alt" style="margin-right: 8px;"></i>
+                                                        Process Return
+                                                    </button>
+                                                </div>
+                                            </form>
                                         </div>
                                     </div>
+                                </div>
                                 {{-- @endif --}}
                             @endforeach
 
@@ -699,6 +545,9 @@
                                 </div>
                             @endforeach
 
+                            
+
+
                             <!-- View Payment History Modal (Full Featured) -->
                             <div class="modal fade admin-query" id="viewPaymentHistoryModal" tabindex="-1"
                                 role="dialog" aria-labelledby="viewPaymentHistoryModalLabel" aria-hidden="true">
@@ -1003,18 +852,75 @@
 
 @push('script')
     <script>
-        $('#table_id').DataTable({
-            responsive: true, // ✅ Enable responsive extension
-            dom: 'Bfrtip',
-            buttons: [
-                'copy', 'csv', 'excel', 'pdf', 'print'
-            ],
-            paging: true,
-            searching: true,
-            ordering: true,
-            info: true,
-            // scrollX: true,
-        });
+$('#table_id').DataTable({
+    responsive: true, 
+    processing: true,
+    serverSide: true,
+
+    dom: "<'d-flex justify-content-between align-items-center mb-2'<'me-2'l><'mx-auto'f><'ms-2'B>>" +
+         "<'row'<'col-sm-12'tr>>" +
+         "<'d-flex justify-content-between mt-2'<'i'><'p'>>",
+    lengthChange: true,
+    buttons: [
+        {
+            extend: 'pdf',
+            text: '<i title="export to pdf" class="fa fa-file-pdf-o"></i>',
+            exportOptions: { columns: ':visible' }
+        },
+        {
+            extend: 'csv',
+            text: '<i title="export to csv" class="fa fa-file-text-o"></i>',
+            exportOptions: { columns: ':visible' }
+        },
+        {
+            extend: 'excel',
+            text: '<i title="export to excel" class="fa fa-file-excel-o"></i>',
+            exportOptions: { columns: ':visible' }
+        },
+        {
+            extend: 'print',
+            text: '<i title="print" class="fa fa-print"></i>',
+            exportOptions: { columns: ':visible' }
+        },
+        {
+            extend: 'colvis',
+            text: '<i title="column visibility" class="fa fa-eye"></i>',
+            columns: ':gt(0)'
+        }
+    ],
+
+    paging: true,
+    searching: true,
+    ordering: true,
+    info: true,
+    order: [[0, 'desc']],
+    pageLength: 25,
+    lengthMenu: [[25, 50, 100, -1], [25, 50, 100, "All"]],
+    language: {
+        search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
+        searchPlaceholder: 'Search...',
+        paginate: { previous: '<i class="fa-solid fa-angle-left"></i>', next: '<i class="fa-solid fa-angle-right"></i>' }
+    },
+
+    ajax: "{{ route('fee.invoice.datatable') }}",
+    columns: [
+        { data: 'DT_RowIndex', orderable: false, searchable: false },
+        { data: 'main_invoice_number' },
+        { data: 'fee_name' },
+        { data: 'student_name' },
+        { data: 'student_category' },
+        { data: 'branch_name' },
+        { data: 'admission_number' },
+        { data: 'total_amount' },
+        { data: 'balance' },
+        { data: 'payment_method' },
+        { data: 'payment_status' },
+        { data: 'payment_date' },
+        { data: 'due_date' },
+        { data: 'notes' },
+        { data: 'action', orderable: false, searchable: false }
+    ]
+});
 
         // Handle view invoice modal
         $('[id^="viewInvoiceModal"]').on('show.bs.modal', function(event) {
@@ -1277,7 +1183,7 @@
                                 actionDropdown +=
                                     `<a style="padding:4px;margin: 2px; background-color: #28a745; color: #fff; text-align: center;" class="dropdown-item view-bank-details-btn" href="#" data-payment-id="${payment.id}" data-bank-date="${payment.bank_payment_date}" data-bank-amount="${payment.bank_payment_amount}" data-payment-file="${payment.payment_file || ''}">View Bank Details</a>`;
                             }
-                            if ( payment.payment_status !== 'refunded' && payment.amount > 0) {
+                            if (payment.payment_status !== 'refunded' && payment.amount > 0) {
                                 actionDropdown +=
                                     `<a style="padding:4px;margin: 2px; background-color: #dc3545; color: #fff; text-align: center;" class="dropdown-item refund-btn" href="#" data-payment-id="${payment.id}" data-amount="${payment.amount}">Refund</a>`;
                             }
@@ -1293,15 +1199,15 @@
                                     <td style="padding: 12px; text-align: center;">${new Date(payment.created_at).toLocaleDateString()}</td>
                                     <td style="padding: 12px; text-align: center;">
                                         ${actionDropdown ? `
-                                                    <div class="dropdown">
-                                                        <button class="primary-btn small fix-gr-bg dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" style="border-radius: 6px; padding: 6px 12px; font-size: 12px;">
-                                                            Actions
-                                                        </button>
-                                                        <div class="dropdown-menu" style="min-width: 150px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                                                            ${actionDropdown}
-                                                        </div>
-                                                    </div>
-                                                ` : '<span class="text-muted">No actions</span>'}
+                                                                <div class="dropdown">
+                                                                    <button class="primary-btn small fix-gr-bg dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" style="border-radius: 6px; padding: 6px 12px; font-size: 12px;">
+                                                                        Actions
+                                                                    </button>
+                                                                    <div class="dropdown-menu" style="min-width: 150px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                                                        ${actionDropdown}
+                                                                    </div>
+                                                                </div>
+                                                            ` : '<span class="text-muted">No actions</span>'}
                                     </td>
                                 </tr>
                             `;
@@ -1428,7 +1334,7 @@
                                     // Highlight return/refund payments
                                     var rowStyle = '';
                                     var amountStyle = '';
-                                    if ( payment.amount < 0 ||
+                                    if (payment.amount < 0 ||
                                         payment.payment_type === 'return') {
                                         rowStyle =
                                             'style="background-color: #fff3cd; border-left: 4px solid #ffc107;"';
@@ -1714,7 +1620,6 @@
                     },
                     error: function(xhr, status, error) {
                         console.error('Error refunding payment:', xhr.responseText);
-                    
 
                         if (xhr.status === 403) {
                             let message = JSON.parse(xhr.responseText).message;
@@ -1727,7 +1632,7 @@
                         }
                     }
 
-                    
+
                 });
             }
         });

@@ -153,7 +153,7 @@
                                                 <th>Address Verification</th>
 
                                                 <th>Notes</th>
-                                                
+
                                                 <th>Previous Institute</th>
                                                 <th>Created By</th>
                                                 <th>Updated By</th>
@@ -161,114 +161,7 @@
                                             </tr>
                                         </thead>
 
-                                        <tbody>
-                                            @foreach ($students as $student)
-                                                <tr>
-                                                    <td>{{ $student->admission_number ?? '-' }}</td>
-                                                    <td class="{{ $student->isVerified('Full Name Verified') ? 'text-success' : '' }}">
-                                                        {{ $student->student_name ?? '-' }}
-                                                        
-                                                    </td>
-                                                    <td class="{{ $student->isVerified('Mobile Number Verified') ? 'text-success' : '' }}">
-                                                        {{ $student->phone_number ?? '-' }}
-                                                    </td>
-                                                    <td class="{{ $student->isVerified('Mobile Number 2 Verified') ? 'text-success' : '' }}">
-                                                        {{ $student->phone_number_2 ?? '-' }}
-                                                    </td>
-                                                    <td class="{{ $student->isVerified('NIC Verified') ? 'text-success' : '' }}">
-                                                        {{ $student->national_id_number ?? '-' }}
-                                                    </td>
-                                                    <td class="{{ $student->isVerified('Address Verified') ? 'text-success' : '' }}">
-                                                        {{ $student->permanent_address ?? '-' }}
-                                                    </td>
-                                                    <td>{{ $student->branch?->name ?? '-' }}</td>
 
-                                                    <td>{{ $student->admission_date ?? '-' }}</td>
-                                                    <td>{{ $student->studentCategory?->category_name ?? '-' }}</td>
-                                                    <td>{{ $student->gender?->name ?? '-' }}</td>
-                                                    <td>{{ $student->date_of_birth ?? '-' }}</td>
-                                                    <td>{{ $student->stu_age ?? '-' }}</td>
-
-                                                    <td>
-                                                        @if ($student->photo)
-                                                            <a href="{{ asset('storage/' . $student->photo) }}"
-                                                                target="_blank">
-                                                                <img src="{{ asset('storage/' . $student->photo) }}"
-                                                                width="40">
-                                                            </a>
-                                                           
-                                                        @else
-                                                            -
-                                                        @endif
-                                                    </td>
-
-                                                    <td>{{ $student->email_address ?? '-' }}</td>
-                                                    
-                                                    <td>{{ $student->district->name ?? '-' }}</td>
-
-                                                    <td class="{{ $student->isVerified('Full Name Verified') ? 'text-success' : '' }}">
-                                                        {!! $student->isVerified('Full Name Verified') ? '<span class="text-success">YES</span>' : 'NO' !!}
-                                                    </td>
-                                                    <td class="{{ $student->isVerified('Mobile Number Verified') ? 'text-success' : '' }}">
-                                                        {!! $student->isVerified('Mobile Number Verified') ? '<span class="text-success">YES</span>' : 'NO' !!}
-                                                    </td>
-                                                    <td class="{{ $student->isVerified('Mobile Number 2 Verified') ? 'text-success' : '' }}">
-                                                        {!! $student->isVerified('Mobile Number 2 Verified') ? '<span class="text-success">YES</span>' : 'NO' !!}
-                                                    </td>
-                                                    <td class="{{ $student->isVerified('NIC Verified') ? 'text-success' : '' }}">
-                                                        {!! $student->isVerified('NIC Verified') ? '<span class="text-success">YES</span>' : 'NO' !!}
-                                                    </td>
-                                                    <td class="{{ $student->isVerified('Address Verified') ? 'text-success' : '' }}">
-                                                        {!! $student->isVerified('Address Verified') ? '<span class="text-success">YES</span>' : 'NO' !!}
-                                                    </td>
-
-
-                                                    <td>{{ $student->additional_notes ?? '-' }}</td>
-
-                                                   
-
-                                                    <td>{{ $student->previous_institute_details ?? '-' }}</td>
-
-                                                    <td>{{ $student->createUser?->name ?? '-' }}</td>
-                                                    <td>{{ $student->updateUser?->name ?? '-' }}</td>
-
-
-                                                    <td valign="top"> @php
-                                                        $routeList = [
-                                                            '<a class="dropdown-item" target="_blank" href="' .
-                                                            route('student-details', $student->id) .
-                                                            '">' .
-                                                            __('common.view') .
-                                                            '</a>',
-                                                            '<a class="dropdown-item" href="' .
-                                                            route('add-student.edit', $student->id) .
-                                                            '">' .
-                                                            __('common.edit') .
-                                                            '</a>',
-                                                            '<a class="dropdown-item" target="_blank" href="' .
-                                                            route('add-student.verify', $student->id) .
-                                                            '">Verification</a>',
-                                                            '<a class="dropdown-item openVerificationModal" href="#" data-id="' .
-                                                            $student->id .
-                                                            '"> Verification Check </a>',
-                                                            '<a class="dropdown-item" data-toggle="modal" data-student-id="' .
-                                                            $student->id .
-                                                            '" data-target="#statusUpdateModal" href="' .
-                                                            route('student.update-status', $student->id) .
-                                                            '">' .
-                                                            __('common.disable') .
-                                                            '</a>',
-                                                    ]; @endphp <x-drop-down-action-component
-                                                            :routeList="$routeList" />
-                                                    </td>
-                                                </tr>
-
-                                                {{-- @empty
-                                                <tr>
-                                                    <td colspan="8" class="text-center">No students found</td>
-                                                </tr> --}}
-                                            @endforeach
-                                        </tbody>
                                     </table>
                                 </x-table>
                             </div>
@@ -379,32 +272,45 @@
     <script>
         $('#table_id').DataTable({
             responsive: true,
-            dom: 'Bfrtip',
+            processing: true,
+            serverSide: true,
 
+            dom: "<'d-flex justify-content-between align-items-center mb-2'<'me-2'l><'mx-auto'f><'ms-2'B>>" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'d-flex justify-content-between mt-2'<'i'><'p'>>",
+            lengthChange: true,
             buttons: [{
-                    extend: 'copyHtml5',
-                    text: '<i class="fa-regular fa-copy"></i>',
-                    titleAttr: 'Copy'
+                    extend: 'pdf',
+                    text: '<i title="export to pdf" class="fa fa-file-pdf-o"></i>',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
                 },
                 {
-                    extend: 'csvHtml5',
-                    text: '<i class="fa-solid fa-file-csv"></i>',
-                    titleAttr: 'CSV'
+                    extend: 'csv',
+                    text: '<i title="export to csv" class="fa fa-file-text-o"></i>',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
                 },
                 {
-                    extend: 'excelHtml5',
-                    text: '<i class="fa-solid fa-file-excel"></i>',
-                    titleAttr: 'Excel'
-                },
-                {
-                    extend: 'pdfHtml5',
-                    text: '<i class="fa-solid fa-file-pdf"></i>',
-                    titleAttr: 'PDF'
+                    extend: 'excel',
+                    text: '<i title="export to excel" class="fa fa-file-excel-o"></i>',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
                 },
                 {
                     extend: 'print',
-                    text: '<i class="fa-solid fa-print"></i>',
-                    titleAttr: 'Print'
+                    text: '<i title="print" class="fa fa-print"></i>',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                },
+                {
+                    extend: 'colvis',
+                    text: '<i title="column visibility" class="fa fa-eye"></i>',
+                    columns: ':gt(0)'
                 }
             ],
 
@@ -414,9 +320,12 @@
             info: true,
             order: [
                 [0, 'desc']
-            ], // 👈 ensure newest entries show first
-
-            // 👇 This part adds the search and pagination icons
+            ],
+            pageLength: 25,
+            lengthMenu: [
+                [25, 50, 100, -1],
+                [25, 50, 100, "All"]
+            ],
             language: {
                 search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
                 searchPlaceholder: 'Search...',
@@ -424,12 +333,97 @@
                     previous: '<i class="fa-solid fa-angle-left"></i>',
                     next: '<i class="fa-solid fa-angle-right"></i>'
                 }
-            }
+            },
+
+
+            ajax: "{{ route('student-list.datatable') }}",
+            pageLength: 25,
+            columns: [{
+                    data: 'admission_number'
+                },
+                {
+                    data: 'student_name'
+                },
+                {
+                    data: 'phone_number'
+                },
+                {
+                    data: 'phone_number_2'
+                },
+                {
+                    data: 'nic'
+                },
+                {
+                    data: 'address'
+                },
+                {
+                    data: 'branch'
+                },
+                {
+                    data: 'admission_date'
+                },
+                {
+                    data: 'category'
+                },
+                {
+                    data: 'gender'
+                },
+                {
+                    data: 'dob'
+                },
+                {
+                    data: 'age'
+                },
+                {
+                    data: 'photo',
+                    orderable: false,
+                    searchable: false
+                },
+                {
+                    data: 'email'
+                },
+                {
+                    data: 'district'
+                },
+
+                {
+                    data: 'full_name_verification'
+                },
+                {
+                    data: 'phone_verification'
+                },
+                {
+                    data: 'phone2_verification'
+                },
+                {
+                    data: 'nic_verification'
+                },
+                {
+                    data: 'address_verification'
+                },
+
+                {
+                    data: 'notes'
+                },
+                {
+                    data: 'previous_institute'
+                },
+                {
+                    data: 'created_by'
+                },
+                {
+                    data: 'updated_by'
+                },
+                {
+                    data: 'action',
+                    orderable: false,
+                    searchable: false
+                }
+            ]
+
         });
-    </script>
 
 
-    <script>
         $('#statusUpdateModal').on('show.bs.modal', function(event) {
             var input = $('#student-id-form');
             var button = $(event.relatedTarget);
@@ -482,9 +476,9 @@
                                <td>
                                     ${row.signature_path 
                                         ? `<a href="/storage/${row.signature_path}" target="_blank">
-                                                                        <img src="/storage/${row.signature_path}" 
-                                                                            style="width:80px; border:1px solid #ccc; padding:2px; cursor:pointer;">
-                                                                </a>`
+                                                                                    <img src="/storage/${row.signature_path}" 
+                                                                                        style="width:80px; border:1px solid #ccc; padding:2px; cursor:pointer;">
+                                                                            </a>`
                                         : '-'
                                     }
                                 </td>
