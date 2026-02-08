@@ -545,7 +545,7 @@
                                 </div>
                             @endforeach
 
-                            
+
 
 
                             <!-- View Payment History Modal (Full Featured) -->
@@ -852,75 +852,124 @@
 
 @push('script')
     <script>
-$('#table_id').DataTable({
-    responsive: true, 
-    processing: true,
-    serverSide: true,
+        $('#table_id').DataTable({
+            responsive: true,
+            processing: true,
+            serverSide: true,
 
-    dom: "<'d-flex justify-content-between align-items-center mb-2'<'me-2'l><'mx-auto'f><'ms-2'B>>" +
-         "<'row'<'col-sm-12'tr>>" +
-         "<'d-flex justify-content-between mt-2'<'i'><'p'>>",
-    lengthChange: true,
-    buttons: [
-        {
-            extend: 'pdf',
-            text: '<i title="export to pdf" class="fa fa-file-pdf-o"></i>',
-            exportOptions: { columns: ':visible' }
-        },
-        {
-            extend: 'csv',
-            text: '<i title="export to csv" class="fa fa-file-text-o"></i>',
-            exportOptions: { columns: ':visible' }
-        },
-        {
-            extend: 'excel',
-            text: '<i title="export to excel" class="fa fa-file-excel-o"></i>',
-            exportOptions: { columns: ':visible' }
-        },
-        {
-            extend: 'print',
-            text: '<i title="print" class="fa fa-print"></i>',
-            exportOptions: { columns: ':visible' }
-        },
-        {
-            extend: 'colvis',
-            text: '<i title="column visibility" class="fa fa-eye"></i>',
-            columns: ':gt(0)'
-        }
-    ],
+            dom: "<'d-flex justify-content-between align-items-center mb-2'<'me-2'l><'mx-auto'f><'ms-2'B>>" +
+                "<'row'<'col-sm-12'tr>>" + 
+                "<'d-flex justify-content-between align-items-center mt-2'<'mb-0 col-4'i><'mb-0 col-8'p>>",
 
-    paging: true,
-    searching: true,
-    ordering: true,
-    info: true,
-    order: [[0, 'desc']],
-    pageLength: 25,
-    lengthMenu: [[25, 50, 100, -1], [25, 50, 100, "All"]],
-    language: {
-        search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
-        searchPlaceholder: 'Search...',
-        paginate: { previous: '<i class="fa-solid fa-angle-left"></i>', next: '<i class="fa-solid fa-angle-right"></i>' }
-    },
+            lengthChange: true,
+            buttons: [{
+                    extend: 'pdf',
+                    text: '<i title="export to pdf" class="fa fa-file-pdf-o"></i>',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                },
+                {
+                    extend: 'csv',
+                    text: '<i title="export to csv" class="fa fa-file-text-o"></i>',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                },
+                {
+                    extend: 'excel',
+                    text: '<i title="export to excel" class="fa fa-file-excel-o"></i>',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                },
+                {
+                    extend: 'print',
+                    text: '<i title="print" class="fa fa-print"></i>',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                },
+                {
+                    extend: 'colvis',
+                    text: '<i title="column visibility" class="fa fa-eye"></i>',
+                    columns: ':gt(0)'
+                }
+            ],
 
-    ajax: "{{ route('fee.invoice.datatable') }}",
-    columns: [
-        { data: 'DT_RowIndex', orderable: false, searchable: false },
-        { data: 'main_invoice_number' },
-        { data: 'fee_name' },
-        { data: 'student_name' },
-        { data: 'student_category' },
-        { data: 'branch_name' },
-        { data: 'admission_number' },
-        { data: 'total_amount' },
-        { data: 'balance' },
-        { data: 'payment_method' },
-        { data: 'payment_status' },
-        { data: 'payment_date' },
-        { data: 'due_date' },
-        { data: 'notes' },
-        { data: 'action', orderable: false, searchable: false }
-    ]
-});
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+            order: [
+                [0, 'desc']
+            ],
+            pageLength: 25,
+            lengthMenu: [
+                [25, 50, 100, -1],
+                [25, 50, 100, "All"]
+            ],
+            language: {
+                search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
+                searchPlaceholder: 'Search...',
+                paginate: {
+                    previous: '<i class="fa-solid fa-angle-left"></i>',
+                    next: '<i class="fa-solid fa-angle-right"></i>'
+                }
+            },
+
+            ajax: "{{ route('fee.invoice.datatable') }}",
+            columns: [{
+                    data: 'DT_RowIndex',
+                    orderable: false,
+                    searchable: false
+                },
+                {
+                    data: 'main_invoice_number'
+                },
+                {
+                    data: 'fee_name'
+                },
+                {
+                    data: 'student_name'
+                },
+                {
+                    data: 'student_category'
+                },
+                {
+                    data: 'branch_name'
+                },
+                {
+                    data: 'admission_number'
+                },
+                {
+                    data: 'total_amount'
+                },
+                {
+                    data: 'balance'
+                },
+                {
+                    data: 'payment_method'
+                },
+                {
+                    data: 'payment_status'
+                },
+                {
+                    data: 'payment_date'
+                },
+                {
+                    data: 'due_date'
+                },
+                {
+                    data: 'notes'
+                },
+                {
+                    data: 'action',
+                    orderable: false,
+                    searchable: false
+                }
+            ]
+        });
 
         // Handle view invoice modal
         $('[id^="viewInvoiceModal"]').on('show.bs.modal', function(event) {
@@ -1199,15 +1248,15 @@ $('#table_id').DataTable({
                                     <td style="padding: 12px; text-align: center;">${new Date(payment.created_at).toLocaleDateString()}</td>
                                     <td style="padding: 12px; text-align: center;">
                                         ${actionDropdown ? `
-                                                                <div class="dropdown">
-                                                                    <button class="primary-btn small fix-gr-bg dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" style="border-radius: 6px; padding: 6px 12px; font-size: 12px;">
-                                                                        Actions
-                                                                    </button>
-                                                                    <div class="dropdown-menu" style="min-width: 150px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                                                                        ${actionDropdown}
-                                                                    </div>
-                                                                </div>
-                                                            ` : '<span class="text-muted">No actions</span>'}
+                                                                        <div class="dropdown">
+                                                                            <button class="primary-btn small fix-gr-bg dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" style="border-radius: 6px; padding: 6px 12px; font-size: 12px;">
+                                                                                Actions
+                                                                            </button>
+                                                                            <div class="dropdown-menu" style="min-width: 150px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                                                                ${actionDropdown}
+                                                                            </div>
+                                                                        </div>
+                                                                    ` : '<span class="text-muted">No actions</span>'}
                                     </td>
                                 </tr>
                             `;

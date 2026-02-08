@@ -276,43 +276,9 @@
             serverSide: true,
 
             dom: "<'d-flex justify-content-between align-items-center mb-2'<'me-2'l><'mx-auto'f><'ms-2'B>>" +
-                "<'row'<'col-sm-12'tr>>" +
-                "<'d-flex justify-content-between mt-2'<'i'><'p'>>",
-            lengthChange: true,
-            buttons: [{
-                    extend: 'pdf',
-                    text: '<i title="export to pdf" class="fa fa-file-pdf-o"></i>',
-                    exportOptions: {
-                        columns: ':visible'
-                    }
-                },
-                {
-                    extend: 'csv',
-                    text: '<i title="export to csv" class="fa fa-file-text-o"></i>',
-                    exportOptions: {
-                        columns: ':visible'
-                    }
-                },
-                {
-                    extend: 'excel',
-                    text: '<i title="export to excel" class="fa fa-file-excel-o"></i>',
-                    exportOptions: {
-                        columns: ':visible'
-                    }
-                },
-                {
-                    extend: 'print',
-                    text: '<i title="print" class="fa fa-print"></i>',
-                    exportOptions: {
-                        columns: ':visible'
-                    }
-                },
-                {
-                    extend: 'colvis',
-                    text: '<i title="column visibility" class="fa fa-eye"></i>',
-                    columns: ':gt(0)'
-                }
-            ],
+                "<'row'<'col-sm-12'tr>>" + 
+                "<'d-flex justify-content-between align-items-center mt-2'<'mb-0 col-4'i><'mb-0 col-8'p>>",
+
 
             paging: true,
             searching: true,
