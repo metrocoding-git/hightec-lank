@@ -170,7 +170,9 @@ Route::controller(HomeController::class)->group(callback: function () {
     Route::put('administration/download-center/video-list-update/{id}', 'videoListUpdate')->name('download-center.video-list-update');
     Route::delete('administration/download-center/video-list-destroy/{id}', 'videoListDestroy')->name('download-center.video-list-destroy');
 
-    Route::get('student/student-info/student-list', 'studentList')->name('student-list');
+    Route::get('student/student-info/student-list', 'studentList')->name(name: 'student-list');
+    Route::get('/student/student-info/student-list-datatable',  'studentDatatable')->name('student-list.datatable');
+
     Route::get('student/student-info/verification-history/{id}', 'verificationHistory')->name('student-list.verification-history');
     Route::put('student/update-status', 'updateStudetStatus')->name('student.update-status');
     Route::get('student/student-info/student-view/{id}', [StudentViewController::class, 'studentView'])->name('student-details');
@@ -318,7 +320,9 @@ Route::controller(InvoiceController::class)->middleware(['permission'])->group(f
 });
 
 Route::controller(HomeController::class)->middleware(['permission'])->group(function () {
-    Route::get('student/fees/fee-invoice', 'feeInvoice')->name('fees.fee-invoice');
+    Route::get('student/fees/fee-invoice', action: 'feeInvoice')->name('fees.fee-invoice');
+    Route::get('student/fees/fee-invoice-datatable', 'invoiceDatatable')->name('fee.invoice.datatable')->withoutMiddleware(['csrf', 'permission']);
+
     Route::post('student/fees/fee-return/search', 'feeReturn')->name('fees.fee-return.search');
 });
 

@@ -53,6 +53,7 @@ use Modules\Saas\Entities\SmSubscriptionPayment;
 use App\Models\Branch; // Keep this single import for Branch
 use App\Models\StudentCourse;
 use App\Models\StudentVerification;
+use Yajra\DataTables\DataTables;
 
 class HomeController extends Controller
 {
@@ -301,6 +302,171 @@ class HomeController extends Controller
 
         return view('pages.student.student-info.student-list', compact('students', 'branches'));
     }
+
+    public function studentDatatable()
+    {
+        $query = Student::with([
+            'branch:id,name',
+            'gender:id,name',
+            'studentCategory:id,category_name',
+            'district:id,name',
+            'createUser:id,name',
+            'updateUser:id,name',
+            'verifications'
+        ])->active();
+
+        return DataTables::of($query)
+
+            ->addIndexColumn()
+
+            ->addColumn('admission_number', fn($s) => $s->admission_number ?? '-')
+
+            ->addColumn('student_name', function ($s) {
+                $class = $s->isVerified('Full Name Verified') ? 'text-success' : '';
+                return '<span class="' . $class . '">' . $s->student_name . '</span>';
+            })
+
+            ->addColumn('phone_number', function ($s) {
+                $class = $s->isVerified('Mobile Number Verified') ? 'text-success' : '';
+                return '<span class="' . $class . '">' . $s->phone_number . '</span>';
+            })
+
+            ->addColumn('phone_number_2', function ($s) {
+                $class = $s->isVerified('Mobile Number 2 Verified') ? 'text-success' : '';
+                return '<span class="' . $class . '">' . $s->phone_number_2 . '</span>';
+            })
+
+            ->addColumn('nic', function ($s) {
+                $class = $s->isVerified('NIC Verified') ? 'text-success' : '';
+                return '<span class="' . $class . '">' . $s->national_id_number . '</span>';
+            })
+
+            ->addColumn('address', function ($s) {
+                $class = $s->isVerified('Address Verified') ? 'text-success' : '';
+                return '<span class="' . $class . '">' . $s->permanent_address . '</span>';
+            })
+
+            ->addColumn('branch', fn($s) => $s->branch->name ?? '-')
+            ->addColumn('admission_date', fn($s) => $s->admission_date ?? '-')
+            ->addColumn('category', fn($s) => $s->studentCategory->category_name ?? '-')
+            ->addColumn('gender', fn($s) => $s->gender->name ?? '-')
+            ->addColumn('dob', fn($s) => $s->date_of_birth ?? '-')
+            ->addColumn('age', fn($s) => $s->stu_age ?? '-')
+
+            ->addColumn('photo', function ($s) {
+                if (!$s->photo) return '-';
+
+                $url = asset('storage/' . $s->photo);
+                return '<a href="' . $url . '" target="_blank">
+                        <img src="' . $url . '" width="40">
+                    </a>';
+            })
+
+            ->addColumn('email', fn($s) => $s->email_address ?? '-')
+            ->addColumn('district', fn($s) => $s->district->name ?? '-')
+
+            ->addColumn(
+                'full_name_verification',
+                fn($s) =>
+                $s->isVerified('Full Name Verified')
+                    ? '<span class="text-success">YES</span>'
+                    : 'NO'
+            )
+
+            ->addColumn(
+                'phone_verification',
+                fn($s) =>
+                $s->isVerified('Mobile Number Verified')
+                    ? '<span class="text-success">YES</span>'
+                    : 'NO'
+            )
+
+            ->addColumn(
+                'phone2_verification',
+                fn($s) =>
+                $s->isVerified('Mobile Number 2 Verified')
+                    ? '<span class="text-success">YES</span>'
+                    : 'NO'
+            )
+
+            ->addColumn(
+                'nic_verification',
+                fn($s) =>
+                $s->isVerified('NIC Verified')
+                    ? '<span class="text-success">YES</span>'
+                    : 'NO'
+            )
+
+            ->addColumn(
+                'address_verification',
+                fn($s) =>
+                $s->isVerified('Address Verified')
+                    ? '<span class="text-success">YES</span>'
+                    : 'NO'
+            )
+
+            ->addColumn('notes', fn($s) => $s->additional_notes ?? '-')
+            ->addColumn('previous_institute', fn($s) => $s->previous_institute_details ?? '-')
+            ->addColumn('created_by', fn($s) => $s->createUser->name ?? '-')
+            ->addColumn('updated_by', fn($s) => $s->updateUser->name ?? '-')
+
+            ->addColumn('action', function ($s) {
+                return '
+            <div class="dropdown">
+                <button class="btn btn-sm btn-primary dropdown-toggle"
+                    data-toggle="dropdown">
+                    Action
+                </button>
+
+                <div class="dropdown-menu">
+                    <a class="dropdown-item" target="_blank"
+                        href="' . route('student-details', $s->id) . '">
+                        View
+                    </a>
+
+                    <a class="dropdown-item"
+                        href="' . route('add-student.edit', $s->id) . '">
+                        Edit
+                    </a>
+
+                    <a class="dropdown-item" target="_blank"
+                        href="' . route('add-student.verify', $s->id) . '">
+                        Verification
+                    </a>
+
+                    <a class="dropdown-item openVerificationModal"
+                        href="#" data-id="' . $s->id . '">
+                        Verification Check
+                    </a>
+
+                    <a class="dropdown-item" data-toggle="modal"
+                        data-student-id="' . $s->id . '"
+                        data-target="#statusUpdateModal">
+                        Disable
+                    </a>
+                </div>
+            </div>';
+            })
+
+            ->rawColumns([
+                'admission_number',
+                'student_name',
+                'phone_number',
+                'phone_number_2',
+                'nic',
+                'address',
+                'photo',
+                'full_name_verification',
+                'phone_verification',
+                'phone2_verification',
+                'nic_verification',
+                'address_verification',
+                'action'
+            ])
+
+            ->make(true);
+    }
+
     // App\Http\Controllers\StudentController.php
 
     public function verificationHistory($id)
@@ -700,6 +866,132 @@ class HomeController extends Controller
 
         return view('pages.student.fees.fee-invoice', compact('fee_invoices', 'roles'));
     }
+
+
+
+
+    public function invoiceDatatable()
+    {
+        $query = FeeInvoice::query()
+            ->with([
+                'student:id,student_name,admission_number,student_category_id',
+                'student.studentCategory:id,category_name',
+                'branch:id,name',
+                'invoice_item.fee_type:id,name',
+                'paidCourses.course:id,name'
+            ])
+            ->where('payment_status', '!=', 'returned');
+
+        return DataTables::of($query)
+
+            ->addIndexColumn() // row_id
+
+            ->addColumn('fee_name', function ($row) {
+                if ($row->invoice_type === 'fee') {
+                    return optional($row->invoice_item->first()?->fee_type)->name ?? '-';
+                }
+                if ($row->invoice_type === 'course') {
+                    return $row->paidCourses?->course?->name ?? '-';
+                }
+                return '-';
+            })
+
+            ->addColumn('student_name', fn($row) => $row->student->student_name ?? '-')
+            ->addColumn('student_category', fn($row) => $row->student->studentCategory->category_name ?? '-')
+            ->addColumn('branch_name', fn($row) => $row->branch->name ?? '-')
+            ->addColumn('admission_number', fn($row) => $row->student->admission_number ?? '-')
+
+            ->addColumn('balance', content: function ($row) {
+                return number_format($row->total_amount - $row->paid_amount, 2);
+            })
+
+            ->addColumn(
+                'payment_date',
+                fn($row) =>
+                \Carbon\Carbon::parse($row->create_date)->format('m/d/Y')
+            )
+
+            ->addColumn(
+                'due_date',
+                fn($row) =>
+                \Carbon\Carbon::parse($row->due_date)->format('m/d/Y')
+            )
+
+            ->editColumn('notes', fn($row) => $row->notes ?? '-')
+
+            ->addColumn('action', fn($row) => $row->total_amount - $row->paid_amount)
+
+            ->addColumn('action', function ($row) {
+
+                $courseName = optional(optional($row->paidCourses)->course)->name ?? 'N/A';
+
+                return '
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-primary dropdown-toggle" type="button"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Action
+                    </button>
+            
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" data-toggle="modal"
+                           data-target="#viewPaymentHistoryModal"
+                           data-invoice-id="' . $row->id . '"
+                           data-course-name="' . $courseName . '">
+                           View Payment
+                        </a>
+            
+                        <a class="dropdown-item" data-toggle="modal"
+                           data-target="#makeInvoiceModal"
+                           data-student-id="' . $row->student->id . '"
+                           data-invoice-id="' . $row->id . '"
+                           onclick="populateInvoiceModal(this)">
+                           Invoice
+                        </a>
+            
+                        <a class="dropdown-item" data-toggle="modal"
+                           data-target="#returnFeeModal' . $row->id . '">
+                           Return
+                        </a>
+            
+                        <a class="dropdown-item"
+                           href="' . route('fees.invoice-print', $row->id) . '"
+                           target="_blank">
+                           Re-Print
+                        </a>
+                    </div>
+                </div>';
+            })
+
+
+
+            ->addColumn('payment_status', function ($row) {
+                if ($row->payment_status === 'partial') {
+                    return '<button class="primary-btn small bg-warning text-white border-0">'
+                        . __('fees.partial') .
+                        '</button>';
+                } elseif ($row->payment_status === 'full') {
+                    return '<button class="primary-btn small bg-success text-white border-0">'
+                        . __('fees.paid') .
+                        '</button>';
+                } elseif ($row->payment_status === 'returned') {
+                    return '<button class="primary-btn small bg-info text-white border-0">
+                                Returned
+                            </button>';
+                } elseif ($row->payment_status === 'not') {
+                    return '<button class="primary-btn small bg-danger text-white border-0">'
+                        . __('fees.unpaid') .
+                        '</button>';
+                }
+
+                return '-';
+            })
+
+            ->rawColumns(['payment_status', 'action'])
+
+
+            ->make(true);
+    }
+
 
 
 
