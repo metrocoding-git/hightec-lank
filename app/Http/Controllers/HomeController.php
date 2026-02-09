@@ -930,6 +930,7 @@ class HomeController extends Controller
             // ======================
             // DISPLAY COLUMNS
             // ======================
+            ->editColumn('invoice_number', fn($row) => $row->main_invoice_number ?? '-')
 
             ->editColumn('fee_name', function ($row) {
                 if ($row->invoice_type === 'fee') {
@@ -1026,7 +1027,7 @@ class HomeController extends Controller
                     $query->where(function ($q) use ($keyword) {
             
                         // Invoice fields
-                        $q->where('invoice_number', 'LIKE', "%{$keyword}%")
+                        $q->where('main_invoice_number', 'LIKE', "%{$keyword}%")
                           ->orWhere('invoice_type', 'LIKE', "%{$keyword}%")
                           ->orWhere('payment_status', 'LIKE', "%{$keyword}%")
                           ->orWhereRaw("CAST(total_amount AS CHAR) LIKE ?", ["%{$keyword}%"])
