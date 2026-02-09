@@ -319,51 +319,54 @@ class HomeController extends Controller
 
             ->addIndexColumn()
 
-            ->addColumn('admission_number', fn($s) => $s->admission_number ?? '-')
+            // ======================
+            // DISPLAY COLUMNS
+            // ======================
 
-            ->addColumn('student_name', function ($s) {
+            ->editColumn('admission_number', fn($s) => $s->admission_number ?? '-')
+
+            ->editColumn('student_name', function ($s) {
                 $class = $s->isVerified('Full Name Verified') ? 'text-success' : '';
                 return '<span class="' . $class . '">' . $s->student_name . '</span>';
             })
 
-            ->addColumn('phone_number', function ($s) {
+            ->editColumn('phone_number', function ($s) {
                 $class = $s->isVerified('Mobile Number Verified') ? 'text-success' : '';
                 return '<span class="' . $class . '">' . $s->phone_number . '</span>';
             })
 
-            ->addColumn('phone_number_2', function ($s) {
+            ->editColumn('phone_number_2', function ($s) {
                 $class = $s->isVerified('Mobile Number 2 Verified') ? 'text-success' : '';
                 return '<span class="' . $class . '">' . $s->phone_number_2 . '</span>';
             })
 
-            ->addColumn('nic', function ($s) {
+            ->editColumn('nic', function ($s) {
                 $class = $s->isVerified('NIC Verified') ? 'text-success' : '';
                 return '<span class="' . $class . '">' . $s->national_id_number . '</span>';
             })
 
-            ->addColumn('address', function ($s) {
+            ->editColumn('address', function ($s) {
                 $class = $s->isVerified('Address Verified') ? 'text-success' : '';
                 return '<span class="' . $class . '">' . $s->permanent_address . '</span>';
             })
 
-            ->addColumn('branch', fn($s) => $s->branch->name ?? '-')
+            ->editColumn('branch', fn($s) => $s->branch->name ?? '-')
             ->addColumn('admission_date', fn($s) => $s->admission_date ?? '-')
-            ->addColumn('category', fn($s) => $s->studentCategory->category_name ?? '-')
+            ->editColumn('category', fn($s) => $s->studentCategory->category_name ?? '-')
             ->addColumn('gender', fn($s) => $s->gender->name ?? '-')
             ->addColumn('dob', fn($s) => $s->date_of_birth ?? '-')
             ->addColumn('age', fn($s) => $s->stu_age ?? '-')
 
             ->addColumn('photo', function ($s) {
                 if (!$s->photo) return '-';
-
                 $url = asset('storage/' . $s->photo);
                 return '<a href="' . $url . '" target="_blank">
-                        <img src="' . $url . '" width="40">
-                    </a>';
+                            <img src="' . $url . '" width="40">
+                        </a>';
             })
 
-            ->addColumn('email', fn($s) => $s->email_address ?? '-')
-            ->addColumn('district', fn($s) => $s->district->name ?? '-')
+            ->editColumn('email', fn($s) => $s->email_address ?? '-')
+            ->editColumn('district', fn($s) => $s->district->name ?? '-')
 
             ->addColumn(
                 'full_name_verification',
@@ -407,49 +410,89 @@ class HomeController extends Controller
 
             ->addColumn('notes', fn($s) => $s->additional_notes ?? '-')
             ->addColumn('previous_institute', fn($s) => $s->previous_institute_details ?? '-')
-            ->addColumn('created_by', fn($s) => $s->createUser->name ?? '-')
-            ->addColumn('updated_by', fn($s) => $s->updateUser->name ?? '-')
+            ->editColumn('created_by', fn($s) => $s->createUser->name ?? '-')
+            ->editColumn('updated_by', fn($s) => $s->updateUser->name ?? '-')
 
             ->addColumn('action', function ($s) {
                 return '
-            <div class="dropdown">
-                <button class="btn btn-sm btn-primary dropdown-toggle"
-                    data-toggle="dropdown">
-                    Action
-                </button>
-
-                <div class="dropdown-menu">
-                    <a class="dropdown-item" target="_blank"
-                        href="' . route('student-details', $s->id) . '">
-                        View
-                    </a>
-
-                    <a class="dropdown-item"
-                        href="' . route('add-student.edit', $s->id) . '">
-                        Edit
-                    </a>
-
-                    <a class="dropdown-item" target="_blank"
-                        href="' . route('add-student.verify', $s->id) . '">
-                        Verification
-                    </a>
-
-                    <a class="dropdown-item openVerificationModal"
-                        href="#" data-id="' . $s->id . '">
-                        Verification Check
-                    </a>
-
-                    <a class="dropdown-item" data-toggle="modal"
-                        data-student-id="' . $s->id . '"
-                        data-target="#statusUpdateModal">
-                        Disable
-                    </a>
-                </div>
-            </div>';
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown">
+                        Action
+                    </button>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" target="_blank" href="' . route('student-details', $s->id) . '">View</a>
+                        <a class="dropdown-item" href="' . route('add-student.edit', $s->id) . '">Edit</a>
+                        <a class="dropdown-item" target="_blank" href="' . route('add-student.verify', $s->id) . '">Verification</a>
+                        <a class="dropdown-item openVerificationModal" href="#" data-id="' . $s->id . '">Verification Check</a>
+                        <a class="dropdown-item" data-toggle="modal"
+                           data-student-id="' . $s->id . '" data-target="#statusUpdateModal">
+                           Disable
+                        </a>
+                    </div>
+                </div>';
             })
 
+            // ======================
+            // GLOBAL SEARCH (ALL FIELDS)
+            // ======================
+
+            ->filter(function ($query) {
+                if ($keyword = request('search.value')) {
+                    $query->where(function ($q) use ($keyword) {
+
+                        $q->where('student_name', 'like', "%{$keyword}%")
+                            ->orWhere('admission_number', 'like', "%{$keyword}%")
+                            ->orWhere('phone_number', 'like', "%{$keyword}%")
+                            ->orWhere('phone_number_2', 'like', "%{$keyword}%")
+                            ->orWhere('national_id_number', 'like', "%{$keyword}%")
+                            ->orWhere('email_address', 'like', "%{$keyword}%")
+                            ->orWhere('permanent_address', 'like', "%{$keyword}%")
+                            ->orWhere('date_of_birth', 'like', "%{$keyword}%");
+
+                        $q->orWhereHas(
+                            'branch',
+                            fn($b) =>
+                            $b->where('name', 'like', "%{$keyword}%")
+                        );
+
+                        $q->orWhereHas(
+                            'studentCategory',
+                            fn($c) =>
+                            $c->where('category_name', 'like', "%{$keyword}%")
+                        );
+
+                        $q->orWhereHas(
+                            'gender',
+                            fn($g) =>
+                            $g->where('name', 'like', "%{$keyword}%")
+                        );
+
+                        $q->orWhereHas(
+                            'district',
+                            fn($d) =>
+                            $d->where('name', 'like', "%{$keyword}%")
+                        );
+
+                        $q->orWhereHas(
+                            'createUser',
+                            fn($u) =>
+                            $u->where('name', 'like', "%{$keyword}%")
+                        );
+
+                        $q->orWhereHas(
+                            'updateUser',
+                            fn($u) =>
+                            $u->where('name', 'like', "%{$keyword}%")
+                        );
+                    });
+                }
+            })
+
+            // ======================
+            // RAW HTML COLUMNS
+            // ======================
+
             ->rawColumns([
-                'admission_number',
                 'student_name',
                 'phone_number',
                 'phone_number_2',
@@ -466,6 +509,7 @@ class HomeController extends Controller
 
             ->make(true);
     }
+
 
     // App\Http\Controllers\StudentController.php
 
@@ -824,7 +868,7 @@ class HomeController extends Controller
         $coursess = Course::all();
         $intakes = Intake::all();
 
-        $query = ReturnFee::with(['student', 'role','invoice']);
+        $query = ReturnFee::with(['student', 'role', 'invoice']);
 
         if ($request->filled('branch')) {
             $branchId = $request->input('branch');
@@ -867,9 +911,6 @@ class HomeController extends Controller
         return view('pages.student.fees.fee-invoice', compact('fee_invoices', 'roles'));
     }
 
-
-
-
     public function invoiceDatatable()
     {
         $query = FeeInvoice::query()
@@ -884,26 +925,32 @@ class HomeController extends Controller
 
         return DataTables::of($query)
 
-            ->addIndexColumn() // row_id
+            ->addIndexColumn()
 
-            ->addColumn('fee_name', function ($row) {
+            // ======================
+            // DISPLAY COLUMNS
+            // ======================
+
+            ->editColumn('fee_name', function ($row) {
                 if ($row->invoice_type === 'fee') {
                     return optional($row->invoice_item->first()?->fee_type)->name ?? '-';
                 }
                 if ($row->invoice_type === 'course') {
-                    return $row->paidCourses?->course?->name ?? '-';
+                    return optional(optional($row->paidCourses)->course)->name ?? '-';
                 }
                 return '-';
             })
 
-            ->addColumn('student_name', fn($row) => $row->student->student_name ?? '-')
-            ->addColumn('student_category', fn($row) => $row->student->studentCategory->category_name ?? '-')
-            ->addColumn('branch_name', fn($row) => $row->branch->name ?? '-')
-            ->addColumn('admission_number', fn($row) => $row->student->admission_number ?? '-')
+            ->editColumn('student_name', fn($row) => $row->student->student_name ?? '-')
+            ->editColumn('student_category', fn($row) => $row->student->studentCategory->category_name ?? '-')
+            ->editColumn('branch_name', fn($row) => $row->branch->name ?? '-')
+            ->editColumn('admission_number', fn($row) => $row->student->admission_number ?? '-')
 
-            ->addColumn('balance', content: function ($row) {
-                return number_format($row->total_amount - $row->paid_amount, 2);
-            })
+            ->addColumn(
+                'balance',
+                fn($row) =>
+                number_format($row->total_amount - $row->paid_amount, 2)
+            )
 
             ->addColumn(
                 'payment_date',
@@ -919,80 +966,109 @@ class HomeController extends Controller
 
             ->editColumn('notes', fn($row) => $row->notes ?? '-')
 
-            ->addColumn('action', fn($row) => $row->total_amount - $row->paid_amount)
+            ->addColumn('payment_status', function ($row) {
+                return match ($row->payment_status) {
+                    'partial' => '<button class="primary-btn small bg-warning text-white border-0">' . __('fees.partial') . '</button>',
+                    'full'    => '<button class="primary-btn small bg-success text-white border-0">' . __('fees.paid') . '</button>',
+                    'returned' => '<button class="primary-btn small bg-info text-white border-0">Returned</button>',
+                    'not'     => '<button class="primary-btn small bg-danger text-white border-0">' . __('fees.unpaid') . '</button>',
+                    default   => '-',
+                };
+            })
 
             ->addColumn('action', function ($row) {
 
                 $courseName = optional(optional($row->paidCourses)->course)->name ?? 'N/A';
 
                 return '
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-primary dropdown-toggle" type="button"
-                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        Action
-                    </button>
-            
-                    <div class="dropdown-menu">
-                        <a class="dropdown-item" data-toggle="modal"
-                           data-target="#viewPaymentHistoryModal"
-                           data-invoice-id="' . $row->id . '"
-                           data-course-name="' . $courseName . '">
-                           View Payment
-                        </a>
-            
-                        <a class="dropdown-item" data-toggle="modal"
-                           data-target="#makeInvoiceModal"
-                           data-student-id="' . $row->student->id . '"
-                           data-invoice-id="' . $row->id . '"
-                           onclick="populateInvoiceModal(this)">
-                           Invoice
-                        </a>
-            
-                        <a class="dropdown-item" data-toggle="modal"
-                           data-target="#returnFeeModal' . $row->id . '">
-                           Return
-                        </a>
-            
-                        <a class="dropdown-item"
-                           href="' . route('fees.invoice-print', $row->id) . '"
-                           target="_blank">
-                           Re-Print
-                        </a>
-                    </div>
-                </div>';
+            <div class="dropdown">
+                <button class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown">
+                    Action
+                </button>
+                <div class="dropdown-menu">
+                    <a class="dropdown-item" data-toggle="modal"
+                       data-target="#viewPaymentHistoryModal"
+                       data-invoice-id="' . $row->id . '"
+                       data-course-name="' . $courseName . '">
+                       View Payment
+                    </a>
+
+                    <a class="dropdown-item" data-toggle="modal"
+                       data-target="#makeInvoiceModal"
+                       data-student-id="' . $row->student->id . '"
+                       data-invoice-id="' . $row->id . '"
+                       onclick="populateInvoiceModal(this)">
+                       Invoice
+                    </a>
+
+                    <a class="dropdown-item" data-toggle="modal"
+                       data-target="#returnFeeModal' . $row->id . '">
+                       Return
+                    </a>
+
+                    <a class="dropdown-item"
+                       href="' . route('fees.invoice-print', $row->id) . '"
+                       target="_blank">
+                       Re-Print
+                    </a>
+                </div>
+            </div>';
             })
 
+            // ======================
+            // GLOBAL SEARCH (ALL DATA)
+            // ======================
 
-
-            ->addColumn('payment_status', function ($row) {
-                if ($row->payment_status === 'partial') {
-                    return '<button class="primary-btn small bg-warning text-white border-0">'
-                        . __('fees.partial') .
-                        '</button>';
-                } elseif ($row->payment_status === 'full') {
-                    return '<button class="primary-btn small bg-success text-white border-0">'
-                        . __('fees.paid') .
-                        '</button>';
-                } elseif ($row->payment_status === 'returned') {
-                    return '<button class="primary-btn small bg-info text-white border-0">
-                                Returned
-                            </button>';
-                } elseif ($row->payment_status === 'not') {
-                    return '<button class="primary-btn small bg-danger text-white border-0">'
-                        . __('fees.unpaid') .
-                        '</button>';
+            ->filter(function ($query) {
+                $keyword = request('search.value');
+            
+                if (!empty($keyword)) {
+                    $query->where(function ($q) use ($keyword) {
+            
+                        // Invoice fields
+                        $q->where('invoice_number', 'LIKE', "%{$keyword}%")
+                          ->orWhere('invoice_type', 'LIKE', "%{$keyword}%")
+                          ->orWhere('payment_status', 'LIKE', "%{$keyword}%")
+                          ->orWhereRaw("CAST(total_amount AS CHAR) LIKE ?", ["%{$keyword}%"])
+                          ->orWhereRaw("CAST(paid_amount AS CHAR) LIKE ?", ["%{$keyword}%"])
+                          ->orWhereRaw("CAST(due_date AS CHAR) LIKE ?", ["%{$keyword}%"])
+                          ->orWhereRaw("CAST(create_date AS CHAR) LIKE ?", ["%{$keyword}%"])
+                          ->orWhere('notes', 'LIKE', "%{$keyword}%");
+            
+                        // Student
+                        $q->orWhereHas('student', function ($s) use ($keyword) {
+                            $s->where('student_name', 'LIKE', "%{$keyword}%")
+                              ->orWhere('admission_number', 'LIKE', "%{$keyword}%");
+                        });
+            
+                        // Student Category
+                        $q->orWhereHas('student.studentCategory', function ($c) use ($keyword) {
+                            $c->where('category_name', 'LIKE', "%{$keyword}%");
+                        });
+            
+                        // Branch
+                        $q->orWhereHas('branch', function ($b) use ($keyword) {
+                            $b->where('name', 'LIKE', "%{$keyword}%");
+                        });
+            
+                        // Fee Type
+                        $q->orWhereHas('invoice_item.fee_type', function ($f) use ($keyword) {
+                            $f->where('name', 'LIKE', "%{$keyword}%");
+                        });
+            
+                        // Course
+                        $q->orWhereHas('paidCourses.course', function ($c) use ($keyword) {
+                            $c->where('name', 'LIKE', "%{$keyword}%");
+                        });
+                    });
                 }
-
-                return '-';
             })
+            
 
             ->rawColumns(['payment_status', 'action'])
 
-
             ->make(true);
     }
-
-
 
 
     public function itemCategory()
@@ -1159,9 +1235,9 @@ class HomeController extends Controller
     public function itemReceiveList()
     {
         // Group by transaction_id and get the first record for each transaction
-        $itemReceives = ItemReceive::with(['supplier', 'branch', 'item','item.category'])
+        $itemReceives = ItemReceive::with(['supplier', 'branch', 'item', 'item.category'])
             ->distinct()
-            ->get();      
+            ->get();
 
         $items = Inventory_item::all();
         $suppliers = Supplier::all();
