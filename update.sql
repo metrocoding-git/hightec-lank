@@ -88,3 +88,6 @@ ADD COLUMN `bank_payment_document` VARCHAR(255) NULL AFTER `bank_payment_date`;
 -- 02/04/2026
 ALTER TABLE `students` ADD `is_old_stu` TINYINT NOT NULL DEFAULT '0' AFTER `district_id`;
 ALTER TABLE `fee_invoices` ADD `notes` TEXT NULL AFTER `payment_file`;
+
+-- 02/10/2026
+ALTER TABLE `invoices_payments` ADD `notes` TEXT NULL AFTER `payment_file`;

@@ -110,6 +110,7 @@
                                                 <th>Payment Invoice Number</th>
                                                 <th>Bank Payment Amount</th>
                                                 <th>Bank Payment Date</th>
+                                                <th>Note</th>
                                                 <th>Create User</th>
                                             </tr>
                                         </thead>
@@ -117,6 +118,7 @@
                                             @if (isset($feeInvoices))
                                                 @foreach ($feeInvoices as $key => $feeInvoice)
                                                     <tr>
+                                                        
                                                         <td
                                                             class="{{  $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
                                                             {{ $key + 1 }}</td>
@@ -126,7 +128,7 @@
                                                         </td>
                                                         <td
                                                             class="{{  $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
-                                                            {{ $feeInvoice->invoice ? $feeInvoice->invoice->student->studentCategory->category_name : 'N/A' }}
+                                                            {{ $feeInvoice->invoice ? $feeInvoice->invoice->student->studentCategory?->category_name : 'N/A' }}
                                                         </td>
                                                         <td
                                                             class="{{  $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
@@ -146,7 +148,7 @@
                                                                 : ($feeInvoice->payment_type === 'fee'
                                                                     ? 'Fee Payment - ' . ($feeInvoice->invoice->invoice_item[0]->fee_type->name ?? 'N/A')
                                                                     : ( $feeInvoice->amount < 0
-                                                                        ? 'Refund Payment'
+                                                                        ?  $feeInvoice->payment_type. ' Payment'
                                                                         : 'N/A')) }}
                                                         </td>
 
@@ -172,6 +174,9 @@
                                                             class="{{  $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
                                                             {{ $feeInvoice->bank_payment_date ? \Carbon\Carbon::parse($feeInvoice->bank_payment_date)->format('m/d/Y') : '-' }}
                                                         </td>
+                                                        <td
+                                                            class="{{  $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
+                                                            {{ $feeInvoice->notes ?? '-' }}</td>
                                                         <td
                                                             class="{{  $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
                                                             {{ $feeInvoice->invoice && $feeInvoice->invoice->createUser ? $feeInvoice->invoice->createUser->name : 'N/A' }}

@@ -165,6 +165,7 @@ class InvoiceController extends Controller
             Log::debug('Fee_invoice created with main_invoice_number: ' . $fee_invoice->main_invoice_number . ' and create_user_id: ' . $fee_invoice->create_user_id);
 
 
+
             // Save Invoice Items
             foreach ($request->fee_type_id as $feetypeId) {
                 $amount = $request->price[$feetypeId] ?? (FeeType::where('id', $feetypeId)->value('price') ?? 0);
@@ -194,6 +195,7 @@ class InvoiceController extends Controller
                     }
 
 
+
                     $payment = Invoices_payments::create([
                         'invoice_id' => $fee_invoice->id,
                         // 'payment_invoice_number' => , add by modal
@@ -210,6 +212,7 @@ class InvoiceController extends Controller
                         'bank_payment_amount' => ($request->payment_method === 'Bank Transfer') ? $request->bank_paid_amount : null,
                         'receipt_number' => $receipt_number,
                         'create_user_id' => $payment_create_user_id, // Save the authenticated user's ID
+                        'notes' => $request->notes,
                         'created_at' => now(),
                         'updated_at' => now(),
                         'branch_id' => $request->branch_id,
@@ -925,6 +928,7 @@ class InvoiceController extends Controller
                 'bank_payment_amount' => $bankPaidAmountForPayment,
                 'bank_payment_date' => $bankPaidDateForPayment,
                 'branch_id' => $request->branch_id,
+                'notes' => $request->notes,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

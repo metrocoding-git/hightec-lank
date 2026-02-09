@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ReturnFee;
 use App\Models\Fee_invoices as FeeInvoice;
+use App\Models\Invoices_payments;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -54,6 +55,20 @@ class ReturnFeeController extends Controller
 
             // Create return fee record first
             $returnFee = ReturnFee::create($validated);
+
+            Invoices_payments::create([
+                'invoice_id'      => $invoice->id,
+                'amount'          => -$validated['return_amount'], 
+                'payment_method'  => 'cash',
+                'payment_type'    => 'return',
+                'receipt_number'  => 'RET-' . time() . '-' . uniqid(),
+                'create_user_id'  => Auth::id(),
+                'branch_id'       => $invoice->branch_id,
+                'notes'           => $validated['short_note'] ?? 'Return fee processed',
+                'created_at'      => now(),
+                'updated_at'      => now(),
+            ]);
+            
 
             // Calculate new paid amount
             $newPaidAmount = $invoice->paid_amount - $validated['return_amount'];
