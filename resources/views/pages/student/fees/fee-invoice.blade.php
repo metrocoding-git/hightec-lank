@@ -421,7 +421,7 @@
                                 </div>
                             </div>
 
-                            <!-- Add Invoice Number Modal -->
+                            {{-- <!-- Add Invoice Number Modal -->
                             <div class="modal fade admin-query" id="addInvoiceNumberModal" tabindex="-1" role="dialog"
                                 aria-labelledby="addInvoiceNumberModalLabel" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered" role="document">
@@ -454,7 +454,7 @@
                                         </form>
                                     </div>
                                 </div>
-                            </div>
+                            </div> --}}
 
                             <!-- Mark as Paid Modal -->
                             <div class="modal fade admin-query" id="markAsPaidModal" tabindex="-1" role="dialog"
@@ -858,7 +858,7 @@
             serverSide: true,
 
             dom: "<'d-flex justify-content-between align-items-center mb-2'<'me-2'l><'mx-auto'f><'ms-2'B>>" +
-                "<'row'<'col-sm-12'tr>>" + 
+                "<'row'<'col-sm-12'tr>>" +
                 "<'d-flex justify-content-between align-items-center mt-2'<'mb-0 col-4'i><'mb-0 col-8'p>>",
 
             lengthChange: true,
@@ -1228,6 +1228,16 @@
                                 actionDropdown +=
                                     `<a style="padding:4px;margin: 2px; background-color: #007bff; color: #fff; text-align: center;" class="dropdown-item add-payment-invoice-number-btn" href="#" data-payment-id="${payment.id}">Add Invoice No.</a>`;
                             }
+                            if (payment.payment_method === 'Invoice' && payment
+                                .payment_invoice_number && !payment.invoice_payment_confirm) {
+                                actionDropdown +=
+                                    `<a style="padding:4px;margin: 2px; background-color: #28a745; color: #fff; text-align: center;" class="dropdown-item confirm-payment-invoice-btn" href="#" data-payment-id="${payment.id}">Confirm Payment Invoice</a>`;
+                            }
+                            if (payment.payment_method === 'Invoice' && payment
+                                .payment_invoice_number && !payment.invoice_payment_confirm) {
+                                actionDropdown +=
+                                    `<a style="padding:4px;margin: 2px; background-color: #28a745; color: #fff; text-align: center;" class="dropdown-item confirm-payment-invoice-btn" href="#" data-payment-id="${payment.id}">Confirm Payment Invoice</a>`;
+                            }
                             if (payment.payment_method === 'Bank Transfer') {
                                 actionDropdown +=
                                     `<a style="padding:4px;margin: 2px; background-color: #28a745; color: #fff; text-align: center;" class="dropdown-item view-bank-details-btn" href="#" data-payment-id="${payment.id}" data-bank-date="${payment.bank_payment_date}" data-bank-amount="${payment.bank_payment_amount}" data-payment-file="${payment.payment_file || ''}">View Bank Details</a>`;
@@ -1239,8 +1249,11 @@
 
                             historyHtml += `
                                 <tr style="border-bottom: 1px solid #dee2e6;">
-                                    <td style="padding: 12px; text-align: center;">${payment.payment_invoice_number || 'N/A'}</td>
-                                    <td style="padding: 12px; text-align: center;">${courseName || 'N/A'}</td>
+                                    <td style="padding: 12px; text-align: center;">
+                                        ${payment.payment_invoice_number || 'N/A'} 
+                                        ${payment.invoice_payment_confirm == 1 ? '- C' : ''}
+                                    </td>                                   
+                                     <td style="padding: 12px; text-align: center;">${courseName || 'N/A'}</td>
                                     <td style="padding: 12px; text-align: center;">${payment.amount}</td>
                                     <td style="padding: 12px; text-align: center;">${payment.payment_method}</td>
                                     <td style="padding: 12px; text-align: center;">${payment.payment_type}</td>
@@ -1248,15 +1261,15 @@
                                     <td style="padding: 12px; text-align: center;">${new Date(payment.created_at).toLocaleDateString()}</td>
                                     <td style="padding: 12px; text-align: center;">
                                         ${actionDropdown ? `
-                                                                        <div class="dropdown">
-                                                                            <button class="primary-btn small fix-gr-bg dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" style="border-radius: 6px; padding: 6px 12px; font-size: 12px;">
-                                                                                Actions
-                                                                            </button>
-                                                                            <div class="dropdown-menu" style="min-width: 150px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                                                                                ${actionDropdown}
-                                                                            </div>
-                                                                        </div>
-                                                                    ` : '<span class="text-muted">No actions</span>'}
+                                                                                                    <div class="dropdown">
+                                                                                                        <button class="primary-btn small fix-gr-bg dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" style="border-radius: 6px; padding: 6px 12px; font-size: 12px;">
+                                                                                                            Actions
+                                                                                                        </button>
+                                                                                                        <div class="dropdown-menu" style="min-width: 150px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                                                                                            ${actionDropdown}
+                                                                                                        </div>
+                                                                                                    </div>
+                                                                                                ` : '<span class="text-muted">No actions</span>'}
                                     </td>
                                 </tr>
                             `;
@@ -1273,6 +1286,37 @@
                     modal.find('#paymentHistoryContent').html(`
                         <div class="alert alert-danger">Error loading payment history. Please try again.</div>
                     `);
+                }
+            });
+        });
+
+
+        // invoice payment confirmation for invoice payment method
+        $(document).on('click', '.confirm-payment-invoice-btn', function(e) {
+            e.preventDefault();
+            var paymentId = $(this).data('payment-id');
+            var button = $(this);
+
+            if (!confirm('Are you sure you want to confirm this payment invoice?')) return;
+
+            $.ajax({
+                url: `/fees/confirm-invoice-payment/${paymentId}`, // Your route
+                type: 'GET', // or 'POST' if you prefer
+                success: function(response) {
+                    console.log('Invoice payment confirmed:', response);
+
+                    // Option 1: Disable the button and show "Confirmed"
+                    button.replaceWith(
+                        `<span class="badge badge-success" style="padding:4px;margin:2px;">Confirmed</span>`
+                    );
+
+                    // Option 2: Refresh payment history table
+                    var invoiceId = $('#addPaymentInvoiceId').val(); // Or get dynamically if needed
+                    loadPaymentHistory(invoiceId, response.course_name || 'N/A');
+                },
+                error: function(xhr) {
+                    alert('Error confirming payment invoice. Please try again.');
+                    console.error(xhr.responseText);
                 }
             });
         });
@@ -1552,14 +1596,103 @@
         $(document).on('click', '.add-payment-invoice-number-btn', function(e) {
             e.preventDefault();
             var paymentId = $(this).data('payment-id');
+
+            // Hide view modal if visible
+            var viewModal = $('#viewPaymentHistoryModal');
+            if (viewModal.is(':visible')) {
+                console.log('Hiding view modal for payment ID:', paymentId);
+                viewModal.modal('hide');
+            }
+
+            // Set payment id in Add Invoice modal
             $('#addInvoiceNumberPaymentId').val(paymentId);
+
+            // Open Add Invoice modal
             $('#addInvoiceNumberModal').modal('show');
-            // Clear any previous error messages
-            $('#addInvoiceNumberForm').find('.alert-danger').remove();
-            // Hide the view payment history modal
-            $('#viewPaymentHistoryModal').modal('hide');
         });
 
+        function loadPaymentHistory(invoiceId, courseName) {
+            var modal = $('#viewPaymentHistoryModal');
+
+            modal.find('#paymentHistoryInvoiceId').text(invoiceId);
+            modal.find('#paymentHistoryCourseName').text(courseName || 'N/A'); // optional
+            modal.find('#addPaymentInvoiceId').val(invoiceId); // set invoice ID for add payment form
+
+            $.ajax({
+                url: `/fees/payment-history/${invoiceId}`,
+                type: 'GET',
+                beforeSend: function() {
+                    modal.find('#paymentHistoryContent').html(`
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <p>Loading payment history...</p>
+                </div>
+            `);
+                },
+                success: function(response) {
+                    modal.find('#totalAmountDisplay').text(response.total_amount);
+                    modal.find('#mainInvoiceNumber').text(response.main_invoice_number);
+                    modal.find('#paidAmountDisplay').text(response.paid_amount_sum);
+                    modal.find('#dueAmountDisplay').text(response.due_amount);
+                    modal.find('#paymentAmountInput').attr('max', response.due_amount);
+
+                    // Build the history table HTML (reuse your existing code)
+                    let historyHtml =
+                        '<table class="table table-bordered" style="text-align: center; width: 100%;"><thead style="background-color: #f8f9fa;"><tr><th>Invoice Number</th><th>Course Name</th><th>Amount</th><th>Method</th><th>Type</th><th>Receipt No.</th><th>Date</th><th>Action</th></tr></thead><tbody>';
+
+                    if (response.payments.length > 0) {
+                        let baseUrl = "{{ url('/student/fees/invoice-item-print') }}";
+                        response.payments.forEach(function(payment) {
+                            let actionDropdown =
+                                `<a href="${baseUrl}/${invoiceId}/${payment.id}" target="_blank" class="btn btn-sm btn-primary col-12 w-full">Re-print</a>`;
+
+                            if (payment.payment_method === 'Invoice' && !payment
+                                .payment_invoice_number) {
+                                actionDropdown +=
+                                    `<a class="dropdown-item add-payment-invoice-number-btn" href="#" data-payment-id="${payment.id}" style="padding:4px;margin:2px;background-color:#007bff;color:#fff;text-align:center;">Add Invoice No.</a>`;
+                            }
+                            if (payment.payment_method === 'Bank Transfer') {
+                                actionDropdown +=
+                                    `<a class="dropdown-item view-bank-details-btn" href="#" data-payment-id="${payment.id}" data-bank-date="${payment.bank_payment_date}" data-bank-amount="${payment.bank_payment_amount}" data-payment-file="${payment.payment_file || ''}" style="padding:4px;margin:2px;background-color:#28a745;color:#fff;text-align:center;">View Bank Details</a>`;
+                            }
+                            if (payment.payment_status !== 'refunded' && payment.amount > 0) {
+                                actionDropdown +=
+                                    `<a class="dropdown-item refund-btn" href="#" data-payment-id="${payment.id}" data-amount="${payment.amount}" style="padding:4px;margin:2px;background-color:#dc3545;color:#fff;text-align:center;">Refund</a>`;
+                            }
+
+                            historyHtml += `
+                        <tr>
+                            <td style="padding: 12px; text-align: center;">
+                                        ${payment.payment_invoice_number || 'N/A'} 
+                                        ${payment.invoice_payment_confirm == 1 ? '- C' : ''}
+                             </td>                                   
+                            <td>${courseName || 'N/A'}</td>
+                            <td>${payment.amount}</td>
+                            <td>${payment.payment_method}</td>
+                            <td>${payment.payment_type}</td>
+                            <td>${payment.receipt_number}</td>
+                            <td>${new Date(payment.created_at).toLocaleDateString()}</td>
+                            <td>${actionDropdown ? `<div class="dropdown"><button class="primary-btn small fix-gr-bg dropdown-toggle" type="button" data-toggle="dropdown">Actions</button><div class="dropdown-menu">${actionDropdown}</div></div>` : '<span class="text-muted">No actions</span>'}</td>
+                        </tr>
+                    `;
+                        });
+                    } else {
+                        historyHtml +=
+                            '<tr><td colspan="8" style="text-align:center;padding:20px;color:#6c757d;">No payment history found.</td></tr>';
+                    }
+
+                    historyHtml += '</tbody></table>';
+                    modal.find('#paymentHistoryContent').html(historyHtml);
+                },
+                error: function(xhr) {
+                    modal.find('#paymentHistoryContent').html(
+                        `<div class="alert alert-danger">Error loading payment history. Please try again.</div>`
+                    );
+                }
+            });
+        }
         // Handle form submission for adding invoice number
         $('#addInvoiceNumberForm').on('submit', function(event) {
             event.preventDefault();
@@ -1575,65 +1708,12 @@
                 success: function(response) {
                     console.log('Invoice number added successfully:', response);
                     $('#addInvoiceNumberModal').modal('hide');
-                    // Re-show the view payment history modal and refresh its content
                     $('#viewPaymentHistoryModal').modal('show');
-                    // Manually trigger the AJAX call for payment history to update the content
-                    $.ajax({
-                        url: `/fees/payment-history/${invoiceId}`,
-                        type: 'GET',
-                        beforeSend: function() {
-                            $('#paymentHistoryContent').html(`
-                                <div class="text-center">
-                                    <div class="spinner-border" role="status">
-                                        <span class="sr-only">Loading...</span>
-                                    </div>
-                                    <p>Loading payment history...</p>
-                                </div>
-                            `);
-                        },
-                        success: function(historyResponse) {
-                            $('#totalAmountDisplay').text(historyResponse.total_amount);
-                            $('#mainInvoiceNumber').text(historyResponse
-                                .main_invoice_number);
-                            $('#paidAmountDisplay').text(historyResponse.paid_amount_sum);
-                            $('#dueAmountDisplay').text(historyResponse.due_amount);
 
-                            let historyHtml =
-                                '<table class="table table-bordered"><thead><tr><th>Invoice Number</th><th>Amount</th><th>Method</th><th>Type</th><th>Receipt No.</th><th>Date</th><th>Action</th></tr></thead><tbody>';
-                            if (historyResponse.payments.length > 0) {
-                                historyResponse.payments.forEach(function(payment) {
-                                    historyHtml += `
-                                        <tr>
-                                            <td>${payment.payment_invoice_number || 'N/A'}</td>
-                                            <td>${payment.amount}</td>
-                                            <td>${payment.payment_method}</td>
-                                            <td>${payment.payment_type}</td>
-                                            <td>${payment.receipt_number}</td>
-                                            <td>${new Date(payment.created_at).toLocaleDateString()}</td>
-                                            <td>
-                                                ${payment.payment_method === 'Invoice' && !payment.payment_invoice_number ?
-                                                    `<button class="primary-btn small fix-gr-bg add-payment-invoice-number-btn" data-payment-id="${payment.id}">Add Invoice No.</button>` : ''}
-                                                <button class="primary-btn small bg-danger text-white border-0 refund-btn" data-payment-id="${payment.id}" data-amount="${payment.amount}">Refund</button>
-                                            </td>
-                                        </tr>
-                                    `;
-                                });
-                            } else {
-                                historyHtml +=
-                                    '<tr><td colspan="7" class="text-center">No payment history found.</td></tr>';
-                            }
-                            historyHtml += '</tbody></table>';
-                            $('#paymentHistoryContent').html(historyHtml);
-                        },
-                        error: function(xhr, status, error) {
-                            console.error(
-                                'Error fetching payment history after invoice number update:',
-                                xhr.responseText);
-                            $('#paymentHistoryContent').html(`
-                                <div class="alert alert-danger">Error loading payment history after update.</div>
-                            `);
-                        }
-                    });
+                    // Refresh the payment history table inside the modal
+                    loadPaymentHistory(invoiceId, response.course_name || 'N/A');
+
+
                 },
                 error: function(xhr, status, error) {
                     console.error('Error adding invoice number:', xhr.responseText);

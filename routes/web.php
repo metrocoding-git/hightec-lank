@@ -285,6 +285,8 @@ Route::controller(FeeTypeController::class)->middleware(['permission'])->group(f
 
 Route::controller(InvoiceController::class)->middleware(['permission'])->group(function () {
 
+    Route::get('/fees/confirm-invoice-payment/{payment}', 'confirmInvoicePayment')->withoutMiddleware(['csrf', 'permission']);
+
     Route::get('student/fees/invoice/view/{id}', 'viewFeeInvoice')->name('fees.fee-invoice-view');
     Route::get('student/fees/student-details/{studentId}', 'getStudentDetails')->name('fees.student-details');
     Route::post('fees/add-payment/{invoiceId}', 'addPayment')->name('fees.add-payment');
@@ -414,5 +416,6 @@ Route::controller(ReportController::class)->prefix('reports')
         Route::get('course-paid', 'coursePaid')->name('reports.course-paid');
         Route::get('sell-items', 'sellItems')->name('reports.sell-items');
         Route::get('issue-items', 'issueItems')->name('reports.issue-items');
-        Route::get('students-paid', 'studentsPaid')->name('reports.students-paid');
+        Route::get('students-paid', 'studentsPaid')->name(name: 'reports.students-paid');
+        Route::get('course-intake-payments', 'courseIntakePayments')->name('reports.course-intake-payments');
     });

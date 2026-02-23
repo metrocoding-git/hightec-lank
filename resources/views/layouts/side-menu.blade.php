@@ -45,6 +45,7 @@
                 text-align: center !important;
             }
         }
+
         @media (max-width: 991px) {
             .sidebar-header {
                 flex-direction: row !important;
@@ -69,13 +70,13 @@
         <div class="sidebar-name" style="font-size:14px; font-weight:600;">
             HIGHTEC LANKA INTERNATIONAL
         </div>
-    
+
         <a id="close_sidebar" class="d-lg-none">
             <i class="ti-close" style="font-size:20px;"></i>
         </a>
     </div>
 
-   
+
     <ul class="sidebar_menu list-unstyled" id="sidebar_menu">
 
 
@@ -662,7 +663,7 @@
                         <li>
                             <a href="/reports/students-paid"
                                 class="{{ request()->is('reports/students-paid') ? 'active a' : '' }}">
-                                 Payments List
+                                Payments List
                             </a>
                         </li>
                     @endif
@@ -674,6 +675,14 @@
                             </a>
                         </li>
                     @endif
+                    {{-- @if (Auth::check() && Auth::user()->hasPermission('fees.course-intake-payments')) --}}
+                    <li>
+                        <a href="/reports/course-paid"
+                            class="{{ request()->is('reports/course-intake-payments') ? 'active a' : '' }}">
+                            Course Intake Payments
+                        </a>
+                    </li>
+                    {{-- @endif --}}
                 </ul>
             </li>
         @endif

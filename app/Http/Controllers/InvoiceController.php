@@ -109,7 +109,6 @@ class InvoiceController extends Controller
                     'existing_fee_type_ids' => $existingFeeTypes
                 ], 422);
             }
-            
         }
 
 
@@ -1178,23 +1177,35 @@ class InvoiceController extends Controller
     }
 
     private function generateReceiptNumber($branch_id)
-{
-    $branch = \App\Models\Branch::findOrFail($branch_id);
-    $code = strtolower(substr($branch->name, 0, 2)); // ka
+    {
+        $branch = \App\Models\Branch::findOrFail($branch_id);
+        $code = strtolower(substr($branch->name, 0, 2)); // ka
 
-    // Extract ONLY the numeric part after "ka-"
-    $maxNumber = \App\Models\Invoices_payments::whereHas('invoice', function ($q) use ($branch_id) {
+        // Extract ONLY the numeric part after "ka-"
+        $maxNumber = \App\Models\Invoices_payments::whereHas('invoice', function ($q) use ($branch_id) {
             $q->where('branch_id', $branch_id);
         })
-        ->whereIn('payment_type', ['course', 'fee'])
-        ->where('receipt_number', 'like', $code.'-%')
-        ->selectRaw("MAX(CAST(SUBSTRING_INDEX(receipt_number, '-', -1) AS UNSIGNED)) as max_no")
-        ->value('max_no');
+            ->whereIn('payment_type', ['course', 'fee'])
+            ->where('receipt_number', 'like', $code . '-%')
+            ->selectRaw("MAX(CAST(SUBSTRING_INDEX(receipt_number, '-', -1) AS UNSIGNED)) as max_no")
+            ->value('max_no');
 
-    $next = ((int) $maxNumber) + 1;
+        $next = ((int) $maxNumber) + 1;
 
-    return $code . '-' . str_pad($next, 6, '0', STR_PAD_LEFT);
-}
+        return $code . '-' . str_pad($next, 6, '0', STR_PAD_LEFT);
+    }
 
-    
+
+    public function confirmInvoicePayment($paymentId)
+    {
+        $payment = Invoices_payments::findOrFail($paymentId);
+        $payment->invoice_payment_confirm = 1;
+        $payment->save();
+
+        return response()->json([
+            'success' => true,
+            'payment_id' => $payment->id,
+            'course_name' => $payment->course->name ?? null
+        ]);
+    }
 }

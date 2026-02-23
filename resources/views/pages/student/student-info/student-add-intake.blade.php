@@ -188,8 +188,11 @@
                                                 <th>Courses</th>
                                                 <th>Mobile 1</th>
                                                 <th>Mobile 2</th>
+                                                <th>Mobile 1 Verification</th>
+                                                <th>Mobile 2 Verification</th>
                                                 <th>Branch</th>
                                                 <th>Address</th>
+                                                <th>Address Verification</th>
                                                 <th>Enrollment Date</th>
                                                 <th>Status</th>
                                                 <th>Note</th>
@@ -218,11 +221,30 @@
                                                     </td>
                                                     <td>{{ $studentIntake->intake->name ?? '-' }}</td>
                                                     <td>{{ $studentIntake->course->name ?? '-' }}</td>
-                                                    <td>{{ $studentIntake->student->phone_number }}</td>
-                                                    <td>{{ $studentIntake->student->phone_number_2 ?? '-' }}</td>
+                                                    <td class="{{ $studentIntake->student->isVerified('phone_number') ? 'text-success' : '' }}">{{ $studentIntake->student->phone_number }}</td>
+                                                    <td class="{{ $studentIntake->student->isVerified('Mobile Number 2 Verified') ? 'text-success' : '' }}">{{ $studentIntake->student->phone_number_2 ?? '-' }}</td>
+                                                    <td
+                                                        class="{{ $studentIntake->student->isVerified('phone_number') ? 'text-success' : '' }}">
+                                                        {!! $studentIntake->student->isVerified('phone_number')
+                                                            ? '<span class="text-success">YES</span>'
+                                                            : 'NO' !!}
+                                                    </td>
+                                                    <td
+                                                        class="{{ $studentIntake->student->isVerified('Mobile Number 2 Verified') ? 'text-success' : '' }}">
+                                                        {!! $studentIntake->student->isVerified('Mobile Number 2 Verified')
+                                                            ? '<span class="text-success">YES</span>'
+                                                            : 'NO' !!}
+                                                    </td>
+
                                                     <td>{{ $studentIntake->branch->name ?? '-' }}</td>
-                                                    <td>
+                                                    <td class="{{ $studentIntake->student->isVerified('permanent_address') ? 'text-success' : '' }}">
                                                         {{ $studentIntake->student->permanent_address ?? '-' }}
+                                                    </td>
+                                                    <td
+                                                        class="{{ $studentIntake->student->isVerified('permanent_address') ? 'text-success' : '' }}">
+                                                        {!! $studentIntake->student->isVerified('permanent_address')
+                                                            ? '<span class="text-success">YES</span>'
+                                                            : 'NO' !!}
                                                     </td>
                                                     <td>{{ $studentIntake->created_at ? date('Y-m-d', strtotime($studentIntake->created_at)) : '-' }}
                                                     </td>
