@@ -24,7 +24,7 @@
                     <h2>{{ pagesetting('event_heading') }}</h2>
                     <p>{!! pagesetting('event_description') !!}</p>
                 </div>
-                <x-event :count="pagesetting('event_count')"> </x-event>
+                {{-- <x-event :count="pagesetting('event_count')"> </x-event> --}}
             </div>
         </div>
     </div>
