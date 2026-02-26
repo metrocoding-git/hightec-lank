@@ -437,7 +437,7 @@
                                                                         <input
                                                                             class="primary_input_field form-control{{ $errors->has('student_name') ? ' is-invalid' : '' }} {{ $student->isVerified('Full Name Verified') ? 'text-success' : '' }}"
                                                                             type="text" name="student_name"
-                                                                            value="{{ old('student_name', $student->student_name) }}" {{$student->isVerified('Full Name Verified') ? `readonly` : ''}} >
+                                                                            value="{{ old('student_name', $student->student_name) }}" {{$student->isVerified('Full Name Verified') ? `readonly` : ''}}>
 
 
                                                                         @if ($errors->has('student_name'))
