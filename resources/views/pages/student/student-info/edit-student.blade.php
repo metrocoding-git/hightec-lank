@@ -299,7 +299,7 @@
 
                                                                         </label>
                                                                         <textarea class="primary_input_field form-control{{ $errors->has('permanent_address') ? ' is-invalid' : '' }} {{ $student->isVerified('Address Verified') ? 'text-success' : '' }}"
-                                                                            cols="0" rows="3" name="permanent_address" id="permanent_address" {{$student->isVerified('Address Verified') ? `readonly` : '' }} >{{ old('permanent_address', $student->permanent_address) }}</textarea>
+                                                                            cols="0" rows="3" name="permanent_address" id="permanent_address" {{$student->isVerified('Address Verified') ? 'readonly' : '' }} >{{ old('permanent_address', $student->permanent_address) }}</textarea>
 
 
                                                                         @if ($errors->has('permanent_address'))
@@ -324,7 +324,7 @@
                                                                             class="primary_input_field phone_number form-control{{ $errors->has('phone_number') ? ' is-invalid' : '' }} {{ $student->isVerified('Mobile Number Verified') ? 'text-success' : '' }}"
                                                                             type="tel" name="phone_number"
                                                                             id="phone_number"
-                                                                            value="{{ old('phone_number', $student->phone_number) }}" {{$student->isVerified('Mobile Number Verified') ? `readonly` : ''}}>
+                                                                            value="{{ old('phone_number', $student->phone_number) }}" {{$student->isVerified('Mobile Number Verified') ? 'readonly' : ''}}>
 
                                                                         @if ($errors->has('phone_number'))
                                                                             <span class="text-danger">
@@ -345,7 +345,7 @@
                                                                             class="primary_input_field phone_number form-control{{ $errors->has('phone_number_2') ? ' is-invalid' : '' }} {{ $student->isVerified('Mobile Number 2 Verified') ? 'text-success' : '' }}"
                                                                             type="tel" name="phone_number_2"
                                                                             id="phone_number_2"
-                                                                            value="{{ old('phone_number_2', $student->phone_number_2) }}" {{$student->isVerified('Mobile Number 2 Verified') ? `readonly` : '' }}>
+                                                                            value="{{ old('phone_number_2', $student->phone_number_2) }}" {{$student->isVerified('Mobile Number 2 Verified') ? 'readonly' : '' }}>
                                                                         @if ($errors->has('phone_number_2'))
                                                                             <span class="text-danger">
                                                                                 {{ $errors->first('phone_number_2') }}
@@ -890,7 +890,7 @@
                                                                         <input
                                                                             class="primary_input_field form-control{{ $errors->has('national_id_number') ? ' is-invalid' : '' }} {{ $student->isVerified('NIC Verified') ? 'text-success' : '' }}"
                                                                             type="text" name="national_id_number"
-                                                                            value="{{ old('national_id_number', $student->national_id_number) }}" {{$student->isVerified('NIC Verified') ? `readonly` : '' }}>
+                                                                            value="{{ old('national_id_number', $student->national_id_number) }}" {{$student->isVerified('NIC Verified') ? 'readonly' : '' }}>
                                                                         @if ($errors->has('national_id_number'))
                                                                             <span
                                                                                 class="text-danger">{{ $errors->first('national_id_number') }}</span>
