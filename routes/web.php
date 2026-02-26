@@ -255,7 +255,7 @@ Route::controller(ItemIssueController::class)->middleware(['permission'])->group
     Route::get('item-issue/check-student-course-status', 'checkStudentCourseStatus')->name('item-issue.check-student-course-status')->withoutMiddleware(['permission']);
 });
 Route::controller(LoginController::class)->group(function () {
-    Route::get('login', 'index')->name('login'); // For displaying the login form
+    // Route::get('login', 'index')->name('login'); // For displaying the login form
     Route::post('login', 'login')->name('login.post'); // For handling login form submission
     Route::get('recoveryPassword', 'recoveryPassword')->name('recoveryPassword');
     Route::get('register', 'register')->name('register');
