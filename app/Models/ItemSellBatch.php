@@ -58,5 +58,10 @@ class ItemSellBatch extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function itemSellItems()
+    {
+        return $this->hasMany(ItemSellItem::class, 'item_sell_batch_id');
+    }
+
     // Course and intake relationships removed as they're not available in current structure
 }

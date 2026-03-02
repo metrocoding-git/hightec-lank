@@ -15,6 +15,7 @@ use App\Models\ItemSellItem;
 use App\Models\StudentCourse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
@@ -133,73 +134,67 @@ class ReportController extends Controller
     public function courseIntakePayments(Request $request)
     {
         $branches = Branch::all();
-    
+
         // Default date range: last 30 days
         $to = now()->format('Y-m-d');
         $from = now()->subDays(30)->format('Y-m-d');
-    
+
+        // If user selects date range
         if ($request->date_range) {
             $dates = explode(' to ', $request->date_range);
             $from = $dates[0] ?? $from;
             $to = $dates[1] ?? $to;
         }
-    
-        // Load Paid Courses with invoice, payments, and course
-        $query = PaidCourse::with([
-            'invoice',
-            'invoice.payments',
-            'course.intakes',
-        ]);
-    
-        // Filter by branch
-        if ($request->branch_id) {
-            $query->whereHas('invoice', function($q) use ($request) {
-                $q->where('branch_id', $request->branch_id);
-            });
-        }
-    
-        $paidCourses = $query->get();
-    
-        $reportData = [];
-    
-        foreach ($paidCourses as $paidCourse) {
-            $studentId = $paidCourse->invoice->student_id ?? null;
-            $courseId = $paidCourse->course_id;
-    
-            // ✅ Only consider student_courses with status 'start' or 'Complete'
-            $studentCourse = \App\Models\StudentCourse::where('student_id', $studentId)
-                ->where('course_id', $courseId)
-                ->whereIn('status', ['start', 'Complete'])
-                ->first();
-    
-            if (!$studentCourse) {
-                continue; // Skip any student that is not enrolled or pending
-            }
-    
-            $status = $studentCourse->status;
-    
-            // Calculate net payment (including negative adjustments)
-            $netPayment = PaidCourse::where('invoice_id', $paidCourse->invoice_id)
-                ->where('course_id', $courseId)
-                ->sum('paid_amount');
-    
-            foreach ($paidCourse->course->intakes as $intake) {
-                // Check if intake falls within selected date range
-                if ($intake->start_date >= $from && $intake->start_date <= $to) {
-                    $reportData[] = [
-                        'student' => $paidCourse->invoice->student->admission_number ?? 'N/A',
-                        'branch' => $paidCourse->invoice->branch->name ?? 'N/A',
-                        'course' => $paidCourse->course->name ?? 'N/A',
-                        'intake_start_date' => $intake->start_date,
-                        'status' => ucfirst($status), // Start or Complete
-                        'payment_amount' => $netPayment,
-                        'payment_method' => $paidCourse->payment_method,
-                        'payment_date' => $paidCourse->created_at->format('Y-m-d'),
-                    ];
+
+        $query = DB::table('student_courses')
+            ->join('intakes', 'student_courses.intake_id', '=', 'intakes.id') // ✅ Correct intake for student
+            ->join('courses', 'student_courses.course_id', '=', 'courses.id')
+            ->join('paid_courses', function ($join) {
+                $join->on('student_courses.course_id', '=', 'paid_courses.course_id');
+            })
+            // ->join('fee_invoices', function ($join) {
+            //     $join->on('paid_courses.invoice_id', '=', 'fee_invoices.id')
+            //         ->whereColumn('fee_invoices.student_id', 'student_courses.student_id')
+            //         ->where('fee_invoices.payment_status', 'full'); 
+            // })
+            ->join('fee_invoices', function ($join) use ($request) {
+                $join->on('paid_courses.invoice_id', '=', 'fee_invoices.id')
+                    ->whereColumn('fee_invoices.student_id', 'student_courses.student_id');
+
+                if ($request->payment_status) {
+                    $join->where('fee_invoices.payment_status', $request->payment_status);
+                }else {
+                    $join->whereIn('fee_invoices.payment_status', ['full', 'partial']);
                 }
-            }
+            })
+            ->join('branches', 'fee_invoices.branch_id', '=', 'branches.id')
+            ->join('students', 'student_courses.student_id', '=', 'students.id')
+            ->whereBetween('intakes.start_date', [$from, $to]) // ✅ Intake start date filter
+            ->whereIn('student_courses.status', ['start', 'Complete']); // ✅ Status filter
+
+        // Optional branch filter
+        if ($request->branch_id) {
+            $query->where('fee_invoices.branch_id', $request->branch_id);
         }
-    
+
+        // Select required columns, distinct invoice per student-course
+        $reportData = $query
+            ->select(
+                'fee_invoices.main_invoice_number',
+                'students.admission_number',
+                'branches.name as branch_name',
+                'courses.name as course_name',
+                'intakes.name as intake_name',
+                'intakes.start_date as intake_start_date',
+                'student_courses.status',
+                'fee_invoices.total_amount',
+                'fee_invoices.paid_amount',
+                'fee_invoices.payment_method',
+                'fee_invoices.paid_date'
+            )
+            ->distinct('fee_invoices.id')
+            ->get();
+
         return view('pages.reports.course-intake-payments', compact('reportData', 'branches'));
     }
 }

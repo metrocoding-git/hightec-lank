@@ -2,10 +2,14 @@
 @section('title', 'Course Intake Payments Report')
 
 @section('mainContent')
-@php
-    $defaultFrom = request('date_range') ? explode(' to ', request('date_range'))[0] : \Carbon\Carbon::now()->subDays(30)->format('Y-m-d');
-    $defaultTo   = request('date_range') ? explode(' to ', request('date_range'))[1] ?? $defaultFrom : \Carbon\Carbon::now()->format('Y-m-d');
-@endphp
+    @php
+        $defaultFrom = request('date_range')
+            ? explode(' to ', request('date_range'))[0]
+            : \Carbon\Carbon::now()->subDays(30)->format('Y-m-d');
+        $defaultTo = request('date_range')
+            ? explode(' to ', request('date_range'))[1] ?? $defaultFrom
+            : \Carbon\Carbon::now()->format('Y-m-d');
+    @endphp
 
 
     <section class="sms-breadcrumb mb-20">
@@ -27,14 +31,14 @@
                 <form method="GET" action="" class="mb-20">
                     <div class="row">
                         {{-- Date Range --}}
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label>Date Range</label>
                             <input type="text" id="date_range" name="date_range" class="form-control"
                                 value="{{ $defaultFrom }} to {{ $defaultTo }}">
                         </div>
 
                         {{-- Branch --}}
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label>Branch</label>
                             <select name="branch_id" class="form-control">
                                 <option value="">All Branches</option>
@@ -44,6 +48,16 @@
                                         {{ $branch->name }}
                                     </option>
                                 @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label>Payment Status</label>
+                            <select name="payment_status" class="form-control">
+                                <option value="">All</option>
+                                <option value="full" {{ request('payment_status') == 'full' ? 'selected' : '' }}>Paid
+                                    Completed</option>
+                                <option value="partial" {{ request('payment_status') == 'partial' ? 'selected' : '' }}>Paid
+                                    Not Completed</option>
                             </select>
                         </div>
 
@@ -67,34 +81,35 @@
                         <div class="main-title mb-15">
                             <h3>Payments Report</h3>
                         </div>
-
                         <x-table>
                             <table id="table_id" class="table" cellspacing="0" width="100%">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
+                                        <th>#</th>
+                                        <th>Invoice No</th>
                                         <th>Student No</th>
                                         <th>Branch</th>
                                         <th>Course</th>
+                                        <th>Intake</th>
                                         <th>Intake Start</th>
                                         <th>Status</th>
-                                        <th>Payment Amount</th>
-                                        <th>Payment Method</th>
-                                        <th>Payment Date</th>
+                                        <th>Total Amount</th>
+                                        <th>Paid Amount</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($reportData as $key => $data)
+                                    @foreach ($reportData as $key => $data)
                                         <tr>
                                             <td>{{ $key + 1 }}</td>
-                                            <td>{{ $data['student'] }}</td>
-                                            <td>{{ $data['branch'] }}</td>
-                                            <td>{{ $data['course'] }}</td>
-                                            <td>{{ $data['intake_start_date'] }}</td>
-                                            <td>{{ $data['status'] }}</td>
-                                            <td>{{ number_format($data['payment_amount'], 2) }}</td>
-                                            <td>{{ $data['payment_method'] }}</td>
-                                            <td>{{ $data['payment_date'] }}</td>
+                                            <td>{{ $data->main_invoice_number }}</td>
+                                            <td>{{ $data->admission_number }}</td>
+                                            <td>{{ $data->branch_name }}</td>
+                                            <td>{{ $data->course_name }}</td>
+                                            <td>{{ $data->intake_name }}</td>
+                                            <td>{{ $data->intake_start_date }}</td>
+                                            <td>{{ ucfirst($data->status) }}</td>
+                                            <td>{{ number_format($data->total_amount, 2) }}</td>
+                                            <td>{{ number_format($data->paid_amount, 2) }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>

@@ -229,6 +229,7 @@ Route::controller(ItemSellController::class)
         Route::get('account/inventory/get-item-price/{id}', 'getItemPrice')->name(name: 'get-item-price')->withoutMiddleware(['csrf', 'permission']);
         Route::post('account/inventory/item-sell/save-invoice-number', 'itemSellSaveInvoiceNumber')
             ->name('item-sell.invoic-save')->withoutMiddleware(['permission']);
+        Route::get('account/inventory/item-sell-bill/{id}', 'itemSellBill')->name('inventory.item-sell-bill')->withoutMiddleware(['csrf', 'permission']);
     });
 
 Route::controller(ItemIssueController::class)->middleware(['permission'])->group(function () {

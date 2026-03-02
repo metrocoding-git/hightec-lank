@@ -165,6 +165,10 @@
                                                                         data-id="{{ $value->id }}"
                                                                         href="#">@lang('common.view')</a>
 
+                                                                     <a class="dropdown-item item-sell-bill"
+                                                                        title="Re-Print Invoice"
+                                                                        href="{{ route('inventory.item-sell-bill', $value->id) }}">Re-Print</a>
+
 
                                                                     @if ($value->status != 'R')
                                                                         <a class="dropdown-item return-button"

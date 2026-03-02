@@ -106,7 +106,7 @@ class ItemSellController extends Controller
                 'total_sell_price' => $request->subTotalValue ?? 0,
                 'total_paid' => $request->totalPaid ?? 0,
                 'total_due' => $request->totalDue ?? 0,
-                'status' => ($request->totalDue > 0) ? 'PP' : 'P', 
+                'status' => ($request->totalDue > 0) ? 'PP' : 'P',
                 'created_by' => Auth::id(),
             ]);
 
@@ -160,7 +160,7 @@ class ItemSellController extends Controller
 
     public function itemSellList()
     {
-        $allItemSellLists = ItemSellBatch::with(['role', 'student', 'user','student.studentCategory', 'createdBy'])->get();
+        $allItemSellLists = ItemSellBatch::with(['role', 'student', 'user', 'student.studentCategory', 'createdBy'])->get();
         return view('pages.account.inventory.item-sell-list', compact('allItemSellLists'));
     }
 
@@ -207,11 +207,10 @@ class ItemSellController extends Controller
             'id' => 'required|exists:item_sell_batches,id',
             'invoice_number' => 'required|string|max:50',
         ]);
-    
+
         $ItemReceive = ItemSellBatch::findOrFail($request->id);
         $ItemReceive->invoice_number = $request->invoice_number;
         $ItemReceive->save();
-    
     }
 
     // public function editItemSell($id)
@@ -584,5 +583,18 @@ class ItemSellController extends Controller
                 'message' => 'Item not found.'
             ], 404);
         }
+    }
+
+    public function itemSellBill($id)
+    {
+        // Load batch with related items
+        $itemSellBatch = ItemSellBatch::with([
+            'student',
+            'role',
+            'createdBy',
+            'itemSellItems.item', // Load items for the batch
+        ])->findOrFail($id);
+
+        return view('pages.account.inventory.item-sell-invoice', compact('itemSellBatch'));
     }
 }
