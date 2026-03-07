@@ -75,9 +75,16 @@
         {{-- Company Header --}}
         <div class="bill-header">
             <h2>HIGHTEC LANKA INTERNATIONAL VOCATIONAL & TECHNICAL TRAINING INSTITUTE (PVT) LTD.</h2>
-            <p>No. 549, Kurunegala-Kandy Road, Mawathagama, Sri Lanka</p>
+            @if ($itemSellBatch->branch_id == 1)
+                <p>No. 549, Kurunegala-Kandy Road, Mawathagama, Sri Lanka</p>
+            @endif
+            @if ($itemSellBatch->branch_id == 2)
+                <p>No. 404/51C, Weikkiyawaththa Road, Ihala Bomairiya, Kaduwela</p>
+            @endif
+
             <p>Tel: +94 37 22 97 999 , +94 37 22 99 744</p>
-            <p>TVEC Reg. No. P | <a href="https://highteclanka.com">highteclanka.com</a> | info@highteclanka.com</p>
+            <p>TVEC Reg. No. P12-0113 PV 81127 | <a href="https://highteclanka.com">highteclanka.com</a> |
+                info@highteclanka.com</p>
         </div>
 
         {{-- Receipt Title --}}
@@ -90,7 +97,7 @@
         {{-- Customer & Invoice Info --}}
         <div style="margin-bottom:5px; margin-top: 10px;">
             <table style="width:100%; font-size:12px;">
-                <tr >
+                <tr>
                     <td colspan="2"><strong>Reference No:</strong> {{ $itemSellBatch->reference_no }}</td>
                 </tr>
                 <tr>
