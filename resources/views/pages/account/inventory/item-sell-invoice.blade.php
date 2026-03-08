@@ -59,6 +59,12 @@
             }
         }
 
+        .bill-header img {
+            display: block;
+            margin: 0 auto 5px auto;
+            max-width: 80px;
+        }
+
         @media screen {
 
             /* Optional: smaller spacing for browser view */
@@ -74,12 +80,13 @@
 
         {{-- Company Header --}}
         <div class="bill-header">
-            <h2>HIGHTEC LANKA INTERNATIONAL VOCATIONAL & TECHNICAL TRAINING INSTITUTE (PVT) LTD.</h2>
+            <img src="{{ asset('uploads/settings/logo.png') }}" style="width:90px;filter: grayscale(100%); margin-bottom:5px;">
+            <h2>HIGHTEC LANKA INTERNATIONAL VOCATIONAL & TECHNICAL TRAINING INSTITUTE (PVT) LTD</h2>
             @if ($itemSellBatch->branch_id == 1)
-                <p>No. 549, Kurunegala-Kandy Road, Mawathagama, Sri Lanka</p>
+                <p>No. 549, Kurunegala-Kandy Road, Mawathagama, Sri Lanka.</p>
             @endif
             @if ($itemSellBatch->branch_id == 2)
-                <p>No. 404/51C, Weikkiyawaththa Road, Ihala Bomairiya, Kaduwela</p>
+                <p>No. 404/51C, Weikkiyawaththa Road, Ihala Bomairiya, Kaduwela.</p>
             @endif
 
             <p>Tel: +94 37 22 97 999 , +94 37 22 99 744</p>
