@@ -61,7 +61,7 @@
                                                 <div class="text-danger" id="branchError"></div>
                                             </div>
 
-                                           
+
 
                                             <div class="col-lg-12 mb-15">
                                                 <label class="primary_input_label" for="">@lang('inventory.sell_to') <span
@@ -95,7 +95,8 @@
                                                             @foreach ($students as $value)
                                                                 <option value="{{ $value->id }}"
                                                                     {{ old('student') == $value->id ? 'selected' : '' }}>
-                                                                    {{ $value->admission_number }} - {{ $value->student_name }}</option>
+                                                                    {{ $value->admission_number }} -
+                                                                    {{ $value->student_name }}</option>
                                                             @endforeach
                                                         </select>
                                                         <div class="text-danger" id="studentError"></div>
@@ -111,8 +112,7 @@
                                             <div class="col-lg-12" id="other_section" style="display: none;">
                                                 <div class="row">
                                                     <div class="col-lg-12 mb-15">
-                                                        <label class="primary_input_label"
-                                                            for="">@lang('common.name')
+                                                        <label class="primary_input_label" for="">@lang('common.name')
                                                             <span class="text-danger"> *</span> </label>
                                                         <input
                                                             class="primary_input_field form-control{{ $errors->has('customer_name') ? ' is-invalid' : '' }}"
@@ -208,8 +208,8 @@
                                                         Payment Amount
                                                         <span class="text-danger"> *</span> </label>
                                                     <input class="primary_input_field form-control" type="number"
-                                                        step="0.01" name="bank_payment_amount" id="bank_payment_amount"
-                                                        autocomplete="off"
+                                                        step="0.01" name="bank_payment_amount"
+                                                        id="bank_payment_amount" autocomplete="off"
                                                         value="{{ isset($editData) ? $editData->bank_payment_amount : '' }}">
                                                     @if ($errors->has('bank_payment_amount'))
                                                         <span class="text-danger">
@@ -221,7 +221,8 @@
 
                                             <div class="col-lg-12 mb-15 d-none" id="bankPaymentDateField">
                                                 <div class="primary_input">
-                                                    <label class="primary_input_label" for="bank_payment_date">Bank Payment
+                                                    <label class="primary_input_label" for="bank_payment_date">Bank
+                                                        Payment
                                                         Date
                                                         <span class="text-danger"> *</span> </label>
                                                     <div class="primary_datepicker_input">
@@ -283,7 +284,7 @@
                                                     @endif
                                                 </div>
                                             </div> --}}
-                                            
+
                                             <div class="col-lg-12 mb-20">
                                                 <div class="primary_input">
                                                     <label class="primary_input_label" for="">@lang('common.description')
@@ -739,6 +740,11 @@
                         // addRow(); // Add a fresh row
                         // calculateGrandTotal(); // Reset totals
                         toastr.success(response.message, 'Success');
+
+                        // OPEN PRINT PAGE
+                        let printUrl = "/account/inventory/item-sell-bill/" + response.id;
+                        window.open(printUrl, '_blank');
+
                         setTimeout(function() {
                             window.location.href = '{{ route('item-sell-list') }}';
                         }, 2000);
@@ -756,6 +762,7 @@
                     }
                 }
             });
+
         });
     </script>
 @endsection

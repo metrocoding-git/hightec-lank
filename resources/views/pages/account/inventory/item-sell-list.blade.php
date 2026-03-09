@@ -51,6 +51,7 @@
 
                                                 <tr>
                                                     <th>@lang('common.sl')</th>
+                                                    <th>Invoice NO</th>
                                                     <th>@lang('inventory.reference_no')</th>
                                                     <th>@lang('inventory.role_name')</th>
                                                     <th>@lang('inventory.buyer_name')</th>
@@ -77,6 +78,7 @@
                                                     @foreach ($allItemSellLists as $key => $value)
                                                         <tr>
                                                             <td>{{ $key + 1 }}</td>
+                                                            <td>{{  $value->invoice_number }}</td>
                                                             <td>{{ $value->reference_no }}</td>
                                                             <td>{{ $value->role ? $value->role->role_name : 'Others' }}</td>
                                                             <td>
@@ -166,7 +168,7 @@
                                                                         href="#">@lang('common.view')</a>
 
                                                                      <a class="dropdown-item item-sell-bill"
-                                                                        title="Re-Print Invoice"
+                                                                        title="Re-Print Invoice" target="_blank"
                                                                         href="{{ route('inventory.item-sell-bill', $value->id) }}">Re-Print</a>
 
 

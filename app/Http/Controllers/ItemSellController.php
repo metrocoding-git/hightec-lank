@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-
+use App\Models\Branch;
 use App\Models\Course;
 use App\Models\Intake;
 use App\Models\Inventory_item;
@@ -49,6 +49,22 @@ class ItemSellController extends Controller
             'totalDue' => 'nullable|numeric',
             'bank_payment_document' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:2048', // Max 2MB
         ]);
+
+        $branch = Branch::find($request->branch_id);
+        $branchLetter = strtoupper(substr($branch->name, 0, 2));
+        $lastRecord = ItemSellBatch::where('branch_id', $request->branch_id)
+            ->where('invoice_number', 'like', "INV-S-$branchLetter-%")
+            ->orderBy('id', 'desc')
+            ->first();
+   
+        if ($lastRecord) {
+            $lastNumber = intval(substr($lastRecord->invoice_number, -4));
+            $nextNumber = $lastNumber + 1;
+        } else {
+            $nextNumber = 1;
+        }
+
+        $invoice_number = "INV-S-" . $branchLetter . "-" . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
 
         // Conditional validation
         if ($request->payment_method === 'Bank Transfer') {
@@ -108,6 +124,7 @@ class ItemSellController extends Controller
                 'total_due' => $request->totalDue ?? 0,
                 'status' => ($request->totalDue > 0) ? 'PP' : 'P',
                 'created_by' => Auth::id(),
+                'invoice_number' => $invoice_number
             ]);
 
             // Create ItemSellItem records for each item in the batch
@@ -146,7 +163,8 @@ class ItemSellController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Item sold successfully!'
+                'message' => 'Item sold successfully!',
+                'id' => $itemSellBatch->id
             ]);
         } catch (\Throwable $e) {
             return response()->json([
@@ -160,7 +178,7 @@ class ItemSellController extends Controller
 
     public function itemSellList()
     {
-        $allItemSellLists = ItemSellBatch::with(['role', 'student', 'user', 'student.studentCategory', 'createdBy'])->get();
+        $allItemSellLists = ItemSellBatch::with(['role', 'student', 'user', 'student.studentCategory', 'createdBy'])->orderBy('created_at', 'desc')->get();
         return view('pages.account.inventory.item-sell-list', compact('allItemSellLists'));
     }
 

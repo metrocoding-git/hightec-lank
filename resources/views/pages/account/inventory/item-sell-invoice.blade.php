@@ -80,7 +80,8 @@
 
         {{-- Company Header --}}
         <div class="bill-header">
-            <img src="{{ asset('uploads/settings/logo.png') }}" style="width:90px;filter: grayscale(100%); margin-bottom:5px;">
+            <img src="{{ asset('uploads/settings/logo.png') }}"
+                style="width:90px;filter: grayscale(100%); margin-bottom:5px;">
             <h2>HIGHTEC LANKA INTERNATIONAL VOCATIONAL & TECHNICAL TRAINING INSTITUTE (PVT) LTD</h2>
             @if ($itemSellBatch->branch_id == 1)
                 <p>No. 549, Kurunegala-Kandy Road, Mawathagama, Sri Lanka.</p>
@@ -105,7 +106,7 @@
         <div style="margin-bottom:5px; margin-top: 10px;">
             <table style="width:100%; font-size:12px;">
                 <tr>
-                    <td colspan="2"><strong>Reference No:</strong> {{ $itemSellBatch->reference_no }}</td>
+                    <td colspan="2"><strong>Invoice No:</strong> {{ $itemSellBatch->invoice_number }}</td>
                 </tr>
                 <tr>
                     <td colspan="2">
@@ -173,7 +174,14 @@
     </div>
 
     <script>
-        window.print(); // Auto print on page open
+        window.onload = function() {
+            window.print();
+        };
+
+
+        window.onafterprint = function() {
+            window.close();
+        };
     </script>
 </body>
 
