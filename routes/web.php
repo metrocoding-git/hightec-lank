@@ -23,6 +23,7 @@ use App\Http\Controllers\ContentTypeController;
 use App\Http\Controllers\InvoiceItemController;
 use App\Http\Controllers\AssignSubjectController;
 use App\Http\Controllers\InventoryItemController;
+use App\Http\Controllers\InvoicePaymentController;
 use App\Http\Controllers\TopicOverviewController;
 use App\Http\Controllers\StudentCategoryController;
 use App\Http\Controllers\ItemSellController; // Import the new controller
@@ -214,6 +215,14 @@ Route::controller(HomeController::class)->group(callback: function () {
     Route::post('/item-receive/save-invoice-number', [HomeController::class, 'itemReceivesaveInvoiceNumber'])
         ->name('item-receive.invoic-save')->withoutMiddleware(['permission']);
 });
+
+Route::prefix('/student/fees/fee-invoice/invoice-payments')->group(function() {
+    Route::get('/', [InvoicePaymentController::class, 'index'])->name('invoice-payments.index');
+    Route::post('/search', [InvoicePaymentController::class, 'search'])->name('invoice-payments.search');
+    Route::get('/datatable', [InvoicePaymentController::class, 'datatable'])->name('invoice-payments.datatable');
+    Route::get('/create', [InvoicePaymentController::class, 'create'])->name('invoice-payments.create');
+    Route::put('/update-status', [InvoicePaymentController::class, 'updateStatus'])->name('invoice-payments.update-status');
+})->withoutMiddleware(['csrf', 'permission']);
 
 Route::controller(ItemSellController::class)
     ->middleware(['permission'])

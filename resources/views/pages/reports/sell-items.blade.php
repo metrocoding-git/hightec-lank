@@ -56,6 +56,7 @@
                                                 <th>Bank Payment Date</th>
                                                 <th>Bank Payment Doc</th>
                                                 <th>Invoice Number</th>
+                                                <th>Note</th>
 
                                                 <th>@lang('common.status')</th>
                                             </tr>
@@ -139,6 +140,7 @@
                                                                 -
                                                             @endif
                                                         </td>
+                                                        <td>{{ $value->itemSellBatch->description ?? '-' }}</td>
                                                         <td>
                                                             @if ($value->itemSellBatch->status == 'P')
                                                                 @lang('inventory.paid')
