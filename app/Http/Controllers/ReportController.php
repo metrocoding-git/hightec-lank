@@ -163,7 +163,7 @@ class ReportController extends Controller
 
                 if ($request->payment_status) {
                     if($request->payment_status == 'full') {
-                        $join->where('fee_invoices.total_amount', '<=', 'fee_invoices.paid_amount');
+                        $join->where('fee_invoices.total_amount', '!=', 'fee_invoices.paid_amount' || 'fee_invoices.total_amount', '<', 'fee_invoices.paid_amount');
                     }else if($request->payment_status == 'partial') {
                         $join->where('fee_invoices.total_amount', '>', 'fee_invoices.paid_amount');
                     }
