@@ -88,10 +88,13 @@
                                         <th>#</th>
                                         <th>Invoice No</th>
                                         <th>Student No</th>
+                                        <th>Student Category</th>
                                         <th>Branch</th>
                                         <th>Course</th>
                                         <th>Intake</th>
-                                        <th>Intake Start</th>
+                                        <th>Last Payment Date</th>     
+                                        <th>Invoice Create Date</th>                                   
+                                        <th>Intake Date</th>                                  
                                         <th>Status</th>
                                         <th>Total Amount</th>
                                         <th>Paid Amount</th>
@@ -103,9 +106,12 @@
                                             <td>{{ $key + 1 }}</td>
                                             <td>{{ $data->main_invoice_number }}</td>
                                             <td>{{ $data->admission_number }}</td>
+                                            <td>{{ $data->student_category_name }}</td>
                                             <td>{{ $data->branch_name }}</td>
                                             <td>{{ $data->course_name }}</td>
                                             <td>{{ $data->intake_name }}</td>
+                                            <td>{{ $data->invoice_paid_date ? \Carbon\Carbon::parse($data->invoice_paid_date)->format('Y-m-d') : '-' }}</td>
+                                            <td>{{ $data->invoice_create_date ? \Carbon\Carbon::parse($data->invoice_create_date)->format('Y-m-d') : '-' }}</td>
                                             <td>{{ $data->intake_start_date }}</td>
                                             <td>{{ ucfirst($data->status) }}</td>
                                             <td>{{ number_format($data->total_amount, 2) }}</td>

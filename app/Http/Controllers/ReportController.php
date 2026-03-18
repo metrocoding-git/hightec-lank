@@ -169,8 +169,9 @@ class ReportController extends Controller
             })
             ->join('branches', 'fee_invoices.branch_id', '=', 'branches.id')
             ->join('students', 'student_courses.student_id', '=', 'students.id')
-            ->whereBetween('intakes.start_date', [$from, $to]) // ✅ Intake start date filter
-            ->whereIn('student_courses.status', ['start', 'Complete']); // ✅ Status filter
+            ->join('student_categories', 'students.student_category_id', '=', 'student_categories.id')
+            ->whereBetween('intakes.start_date', [$from, $to]) 
+            ->whereIn('student_courses.status', ['start', 'Complete']); 
 
         // Optional branch filter
         if ($request->branch_id) {
@@ -182,6 +183,7 @@ class ReportController extends Controller
             ->select(
                 'fee_invoices.main_invoice_number',
                 'students.admission_number',
+                'student_categories.category_name as student_category_name',
                 'branches.name as branch_name',
                 'courses.name as course_name',
                 'intakes.name as intake_name',
@@ -190,7 +192,8 @@ class ReportController extends Controller
                 'fee_invoices.total_amount',
                 'fee_invoices.paid_amount',
                 'fee_invoices.payment_method',
-                'fee_invoices.paid_date'
+                'fee_invoices.create_date as invoice_create_date',
+                'fee_invoices.updated_at as invoice_paid_date'
             )
             ->distinct('fee_invoices.id')
             ->get();
