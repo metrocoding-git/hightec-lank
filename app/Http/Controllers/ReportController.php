@@ -162,12 +162,7 @@ class ReportController extends Controller
                     ->whereColumn('fee_invoices.student_id', 'student_courses.student_id');
 
                 if ($request->payment_status) {
-                    if($request->payment_status == 'full') {
-                        $join->where('fee_invoices.total_amount', '=', 'fee_invoices.paid_amount' );
-                    }else if($request->payment_status == 'partial') {
-                        $join->where('fee_invoices.total_amount', '>', 'fee_invoices.paid_amount');
-                    }
-                    
+                    $join->where('fee_invoices.payment_status', $request->payment_status);
                 }else {
                     $join->whereIn('fee_invoices.payment_status', ['full', 'partial']);
                 }
