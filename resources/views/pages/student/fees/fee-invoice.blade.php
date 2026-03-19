@@ -854,7 +854,6 @@
     <script>
         $('#table_id').DataTable({
             responsive: true,
-            processing: true,
             serverSide: true,
 
             dom: "<'d-flex justify-content-between align-items-center mb-2'<'me-2'l><'mx-auto'f><'ms-2'B>>" +
@@ -896,6 +895,7 @@
                     columns: ':gt(0)'
                 }
             ],
+            processing: false,
 
             paging: true,
             searching: true,
@@ -934,7 +934,7 @@
                     data: 'student_name'
                 },
                 {
-                    data: 'student_category'
+                    data: 'category_name'
                 },
                 {
                     data: 'branch_name'
