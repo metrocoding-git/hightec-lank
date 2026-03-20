@@ -216,12 +216,13 @@ Route::controller(HomeController::class)->group(callback: function () {
         ->name('item-receive.invoic-save')->withoutMiddleware(['permission']);
 });
 
-Route::prefix('/student/fees/fee-invoice/invoice-payments')->group(function() {
+Route::prefix('/student/fees/fee-invoice/invoice-payments')->group(function () {
     Route::get('/', [InvoicePaymentController::class, 'index'])->name('invoice-payments.index');
     Route::post('/search', [InvoicePaymentController::class, 'search'])->name('invoice-payments.search');
     Route::get('/datatable', [InvoicePaymentController::class, 'datatable'])->name('invoice-payments.datatable');
-    Route::get('/create', [InvoicePaymentController::class, 'create'])->name('invoice-payments.create');
-    Route::put('/update-status', [InvoicePaymentController::class, 'updateStatus'])->name('invoice-payments.update-status');
+    Route::post('/bulk-not-open', [InvoicePaymentController::class, 'bulkNotOpen'])->name('invoice-payments.bulk-not-open');
+    Route::post('/bulk-pending', [InvoicePaymentController::class, 'bulkPending'])->name('invoice-payments.bulk-pending');
+    Route::get('/print/{invoice_number}', [InvoicePaymentController::class, 'printInvoice'])->name('invoice-payments.print');
 })->withoutMiddleware(['csrf', 'permission']);
 
 Route::controller(ItemSellController::class)

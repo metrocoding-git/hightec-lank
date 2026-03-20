@@ -111,3 +111,9 @@ ALTER TABLE `item_receive` ADD `created_by` INT NULL AFTER `total_paid`;
 -- 02/24
 
 ALTER TABLE `invoices_payments` ADD `invoice_payment_confirm` TINYINT NULL DEFAULT NULL AFTER `payment_invoice_number`;
+
+
+
+
+
+ALTER TABLE `invoices_payments` ADD `customer_name` VARCHAR(255) NULL AFTER `notes`, ADD `invoice_payment_note` TEXT NULL AFTER `customer_name`;

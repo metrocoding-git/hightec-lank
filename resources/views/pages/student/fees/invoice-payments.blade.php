@@ -7,11 +7,10 @@
     <section class="sms-breadcrumb mb-20 up_breadcrumb">
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1>@lang('finance.Invoice Payments')</h1>
+                <h1>Invoice Method Payments</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
-                    <a href="#">@lang('finance.invoice')</a>
-                    <a href="#">@lang('finance.invoice_payments')</a>
+                    <a href="#">Invoice Method Payments Confirm</a>
                 </div>
             </div>
         </div>
@@ -19,30 +18,22 @@
 
     <section class="admin-visitor-area up_admin_visitor">
         <div class="container-fluid p-0">
-            <form class="form-horizontal" action="{{ route('invoice-payments.search') }}" method="post">
-                @csrf
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="white-box filter_card">
-                            <div class="row align-items-center mb-3">
-                                <div class="col-lg-8 col-md-6">
-                                    <h3 class="mb-15">@lang('common.select_criteria')</h3>
-                                </div>
-                                <div class="col-lg-4 col-md-6 text-left text-sm-right mb-4 mb-sm-0">
-                                    <a href="{{ route('invoice-payments.create') }}" class="primary-btn small fix-gr-bg">
-                                        <span class="ti-plus pr-2"></span>@lang('finance.add_payment')
-                                    </a>
-                                </div>
-                            </div>
+            <div class="row align-items-center mb-3">
+                <div class="col-lg-12">
 
-                            <div class="row row-gap-24">
-
+                    <div class="white-box">
+                        <div class="col-lg-8 col-md-6">
+                            <h3 class="mb-15">@lang('common.select_criteria')</h3>
+                        </div>
+                        <form class="form-horizontal" id="filter-form">
+                            @csrf
+                            <div class="row">
                                 {{-- Branch Filter --}}
-                                <div class="col-lg-4 mb-15">
+                                <div class="col-lg-6 mb-15">
                                     <div class="primary_input">
                                         <label class="primary_input_label" for="branch_id">@lang('common.branch')</label>
                                         <select class="primary_select form-control" name="branch_id" id="branch-select">
-                                            <option value="">@lang('common.select_branch')</option>
+                                            <option value="">Select Branch</option>
                                             @foreach ($branches ?? [] as $branch)
                                                 <option value="{{ $branch->id }}">{{ $branch->name }}</option>
                                             @endforeach
@@ -51,35 +42,43 @@
                                 </div>
 
                                 {{-- Payment Status Filter --}}
-                                <div class="col-lg-4 mb-15">
+                                <div class="col-lg-6 mb-15">
                                     <div class="primary_input">
                                         <label class="primary_input_label" for="payment_status">@lang('finance.payment_status')</label>
                                         <select class="primary_select form-control" name="payment_status"
                                             id="status-select">
-                                            <option value="">@lang('common.select_status')</option>
-                                            <option value="not_open">@lang('finance.not_open')</option>
-                                            <option value="pending">@lang('finance.pending')</option>
-                                            <option value="completed">@lang('finance.completed')</option>
+                                            <option value="">Select Status</option>
+                                            <option value="not_open">Not Open</option>
+                                            <option value="pending">Pending</option>
+                                            <option value="completed">Completed</option>
                                         </select>
                                     </div>
                                 </div>
 
-                                <div class="col-lg-12 mt-20 text-right">
-                                    <button type="submit" class="primary-btn small fix-gr-bg">
+                                <div class="col-lg-12 mt-1 text-right">
+                                    <button type="button" class="primary-btn small fix-gr-bg" id="submit-search">
                                         <span class="ti-search pr-2"></span>@lang('common.search')
                                     </button>
                                 </div>
-
                             </div>
-                        </div>
+                        </form>
                     </div>
                 </div>
-            </form>
+
+
+
+
+            </div>
+
 
             {{-- Payments Table --}}
             <div class="row mt-40 full_wide_table">
                 <div class="col-lg-12">
+
                     <div class="white-box">
+                        <div class="col-lg-4 col-md-6 text-left text-sm-right mb-4 offset-lg-8 offset-md-6">
+                            <button id="bulk-action-btn" class="primary-btn small">Bulk Update</button>
+                        </div>
                         <div class="main-title mb-3">
                             <h3>@lang('finance.invoice_payment_list')</h3>
                         </div>
@@ -90,7 +89,10 @@
                                 width="100%">
                                 <thead>
                                     <tr>
+                                        <th>#</th>
                                         <th>Invoice Number</th>
+                                        <th>Invoice Receipt No</th>
+                                        <th>Customer Name</th>
                                         <th>Branch</th>
                                         <th>Student Name</th>
                                         <th>Admission Number</th>
@@ -98,7 +100,9 @@
                                         <th>amount</th>
                                         <th>status</th>
                                         <th>date</th>
-                                        <th>@lang('common.actions')</th>
+                                        <th>Note</th>
+                                        <th>Action</th>
+
                                     </tr>
                                 </thead>
                             </table>
@@ -109,26 +113,43 @@
         </div>
     </section>
 
-    {{-- Status Update Modal --}}
-    <div class="modal fade admin-query" id="paymentStatusModal">
+    <!-- Bulk Update Modal -->
+    <div class="modal fade admin-query" id="bulkActionModal">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">@lang('finance.update_payment_status')</h4>
+                    <h4 class="modal-title">Bulk Update Payments</h4>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
-                <div class="modal-body text-center">
-                    <h4>@lang('common.are_you_sure_to_update_status')</h4>
-                    <div class="mt-40 d-flex justify-content-between">
-                        <button type="button" class="primary-btn tr-bg" data-dismiss="modal">@lang('common.cancel')</button>
-                        <form action="{{ route('invoice-payments.update-status') }}" method="post">
-                            @csrf
-                            @method('put')
-                            <input type="hidden" id="payment-id-form" name="payment_id" value="">
-                            <button class="primary-btn fix-gr-bg" type="submit">@lang('common.update')</button>
-                        </form>
-                    </div>
+                <div class="modal-body">
+                    <form id="bulk-action-form">
+                        <input type="hidden" name="payment_ids" id="bulk-payment-ids">
+                        <div class="form-group" id="customer-name-group">
+                            <label for="bulk-customer-name">Customer Name</label>
+                            <input type="text" class="form-control" id="bulk-customer-name" name="customer_name"
+                                required>
+                        </div>
+                        <div class="form-group" id="note-group">
+                            <label for="bulk-note">Note</label>
+                            <textarea class="form-control" id="bulk-note" name="note"></textarea>
+                        </div>
+                        <p id="confirm-text" class="text-center d-none">Are you sure you want to confirm these pending
+                            payments?</p>
+                        <div class="mt-3 text-center">
+                            <button type="submit" class="btn btn-primary col-12" id="bulk-modal-submit">Confirm</button>
+                        </div>
+                    </form>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div aria-live="polite" aria-atomic="true" class="position-fixed top-0 end-0 p-3" style="z-index: 1080;">
+        <div id="bulk-toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body"></div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
         </div>
     </div>
@@ -141,6 +162,28 @@
 
 @push('script')
     <script>
+        function showToast(message, type = 'success') {
+            let toastEl = $('#bulk-toast');
+            toastEl.removeClass('text-bg-success text-bg-danger text-bg-warning');
+
+            // Set type: success / danger / warning
+            if (type === 'success') toastEl.addClass('text-bg-success');
+            if (type === 'error') toastEl.addClass('text-bg-danger');
+            if (type === 'warning') toastEl.addClass('text-bg-warning');
+
+            toastEl.find('.toast-body').text(message);
+
+            // Show the toast
+            let toast = new bootstrap.Toast(toastEl[0], {
+                delay: 3000
+            });
+            toast.show();
+        }
+
+        // Toggle all checkboxes
+        $('#select-all').on('click', function() {
+            $('.payment-checkbox').prop('checked', this.checked);
+        });
         $('#invoice_table').DataTable({
             responsive: true,
             processing: true,
@@ -160,7 +203,18 @@
                 [0, 'desc']
             ],
             columns: [{
+                    data: 'select',
+                    orderable: false,
+                    searchable: false
+                },
+                {
                     data: 'invoice_no'
+                },
+                {
+                    data: 'invoice_receipt_no'
+                },
+                {
+                    data: 'customer_name'
                 },
                 {
                     data: 'branch'
@@ -184,23 +238,115 @@
                     data: 'date'
                 },
                 {
+                    data: 'note'
+                },
+                {
                     data: 'action',
                     orderable: false,
                     searchable: false
-                },
+                }
+
             ]
         });
 
         // Filter table on select change
-        $('#branch-select, #status-select').on('change', function() {
+        $('#submit-search').on('click', function() {
             $('#invoice_table').DataTable().ajax.reload();
+        })
+
+        let currentStatus = null;
+
+        $('#bulk-action-btn').on('click', function() {
+            let selected = $('.payment-checkbox:checked');
+            if (selected.length == 0) {
+                showToast('Please select at least one payment.', 'warning');
+                return;
+            }
+
+            let status = selected.first().data('status');
+            let ids = selected.map(function() {
+                return $(this).val();
+            }).get();
+
+            $('#bulk-payment-ids').val(ids.join(','));
+
+            if (status === 'not_open') {
+                // Show modal for customer name and note
+                $('#customer-name-group, #note-group').show();
+                $('#confirm-text').addClass('d-none');
+                $('#bulkActionModal').modal('show');
+            } else if (status === 'pending') {
+                // Show modal to confirm pending payments
+                $('#customer-name-group, #note-group').hide();
+                $('#confirm-text').removeClass('d-none');
+                $('#bulkActionModal').modal('show');
+            } else {
+                showToast('Cannot bulk update completed payments.', 'warning');
+            }
         });
 
-        // Status modal
-        $('#paymentStatusModal').on('show.bs.modal', function(event) {
-            var button = $(event.relatedTarget);
-            var paymentId = button.data('payment-id');
-            $('#payment-id-form').val(paymentId);
+        $(document).on('change', '.payment-checkbox', function() {
+            let status = $(this).data('status');
+            if (this.checked) {
+                if (currentStatus && status !== currentStatus) {
+                    showToast('You can only select payments with the same status!', 'warning');
+                    this.checked = false;
+                    return;
+                }
+                currentStatus = status;
+            } else {
+                // If unchecked, check if any remain
+                if ($('.payment-checkbox:checked').length === 0) {
+                    currentStatus = null;
+                }
+            }
+        });
+        $('#bulk-modal-submit').on('click', function(e) {
+            e.preventDefault(); // prevent default form submit
+
+            // Get all selected payment IDs
+            let paymentIds = $('#bulk-payment-ids').val().split(',');
+            if (paymentIds.length === 0) {
+                showToast('No payments selected!', 'warning');
+                return;
+            }
+
+            // Determine current bulk status
+            let status = $('.payment-checkbox:checked').first().data('status');
+
+            // Prepare POST data
+            let data = {
+                payment_ids: paymentIds,
+                _token: '{{ csrf_token() }}'
+            };
+
+            if (status === 'not_open') {
+                data.customer_name = $('#bulk-customer-name').val();
+                data.note = $('#bulk-note').val();
+                if (!data.customer_name) {
+                    showToast('Please enter customer name.', 'warning');
+                    return;
+                }
+                var route = '{{ route('invoice-payments.bulk-not-open') }}';
+            } else if (status === 'pending') {
+                var route = '{{ route('invoice-payments.bulk-pending') }}';
+            } else {
+                showToast('Cannot update completed payments.', 'warning');
+                return;
+            }
+
+            // Send AJAX POST
+            $.post(route, data, function(res) {
+                showToast(res.message, 'success');
+                currentStatus = null;
+                $('#bulkActionModal').modal('hide');
+                $('#invoice_table').DataTable().ajax.reload();
+
+                if (status === 'not_open') {
+                    window.open('/student/fees/fee-invoice/invoice-payments/print/' + res.invoice_number,
+                        '_blank');
+                }
+            });
         });
     </script>
 @endpush
