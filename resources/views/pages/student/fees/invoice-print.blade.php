@@ -2,175 +2,287 @@
 <html>
 
 <head>
-    <title>Invoice Print</title>
+    <title>Invoice</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <style>
-        @media print {
-            body {
-                width: 210mm;
-                margin: 0;
-                font-family: Arial, sans-serif;
-                font-size: 13px;
-            }
+        @page {
+            size: A4;
+            margin-top: 5cm;
+            margin-bottom: 3cm;
+            margin-left: 1cm;
+            margin-right: 1cm;
         }
 
-        .container {
-            width: 210mm;
+        body {
             margin: auto;
-            padding: 20px;
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+            color: #000;
+            height: 100%;
+            /* overflow: hidden; */
         }
 
         .header {
-            text-align: center;
-            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
         }
 
-        .header img {
-            width: 90px;
-            margin-bottom: 5px;
+        .box {
+            border: 1px solid #000;
+            padding: 10px;
         }
 
-        .header h2 {
-            margin: 0;
-            font-size: 18px;
-        }
-
-        .header p {
-            margin: 2px 0;
-            font-size: 12px;
-        }
-
-        .title {
-            text-align: center;
+        .invoice-title {
+            font-size: 48px;
             font-weight: bold;
-            margin: 10px 0;
-            font-size: 16px;
-            border-bottom: 1px solid #000;
-            padding-bottom: 5px;
+            text-align: right;
         }
 
-        table {
+        table,
+        tr,
+        td,
+        th {
+            page-break-inside: avoid;
+        }
+
+        .main-table {
+            page-break-inside: auto;
+        }
+
+        .main-table tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
+        .total-box {
+            page-break-inside: avoid;
+        }
+
+        .payment-section {
+            page-break-inside: avoid;
+        }
+
+        .info-table,
+        .main-table,
+        .payment-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-top: 15px;
         }
 
-        th,
-        td {
+        .info-table td,
+        .main-table td,
+        .main-table th,
+        .payment-table td {
             border: 1px solid #000;
             padding: 6px;
         }
 
-        .no-border td {
-            border: none;
+        .main-table th {
+            background: #ddd;
+        }
+
+        .main-table tbody tr:nth-child(even) {
+            background: #f2f2f2;
         }
 
         .text-right {
             text-align: right;
         }
 
-        .text-center {
-            text-align: center;
+        .total-box {
+            width: 300px;
+            float: right;
+            margin-top: 10px;
+            border: 1px solid #000;
+            padding: 10px;
+            font-weight: bold;
         }
 
-        .mb-10 {
-            margin-bottom: 10px;
+        .payment-section {
+            margin-top: 40px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-style: italic;
+        }
+
+        .note {
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        @media print {
+            body {
+                margin: 0;
+            }
         }
     </style>
 </head>
 
 <body>
 
-<div class="container">
+    @php
+        $payment = $payments->first();
+        $invoice = $payment->invoice;
+        $student = $invoice->student ?? null;
+    @endphp
 
-    {{-- HEADER --}}
+    {{-- Header --}}
     <div class="header">
-        <img src="{{ asset('uploads/settings/logo.png') }}">
-        <h2>HIGHTEC LANKA INTERNATIONAL VOCATIONAL & TECHNICAL TRAINING INSTITUTE</h2>
+        <div class="box" style="width: 50%;">
+            <strong>Customer Name & Address</strong><br>
+            {!! nl2br(str_replace([' / ', '/', ', '], "\n", $payment->customer_name)) !!}
+            {{-- @if (!empty($payment->invoice_payment_note))
+                <br><br>
+                <strong>Note:</strong><br>
+                {{ $payment->invoice_payment_note }}
+            @endif --}}
+        </div>
 
-        @php
-            $branchId = $payments->first()->branch_id ?? null;
-        @endphp
+        <div style="width: 45%;">
+            <div class="invoice-title">Invoice</div>
 
-        @if ($branchId == 1)
-            <p>No. 549, Kurunegala-Kandy Road, Mawathagama, Sri Lanka.</p>
-        @elseif ($branchId == 2)
-            <p>No. 404/51C, Weikkiyawaththa Road, Ihala Bomiriya, Kaduwela.</p>
-        @endif
-
-        <p>Tel: +94 37 22 97 999</p>
+            <table class="info-table">
+                <tr>
+                    <td><strong>Date</strong></td>
+                    <td><strong>Invoice No.</strong></td>
+                    <td><strong>P.O. No.</strong></td>
+                </tr>
+                <tr>
+                    <td>{{ \Carbon\Carbon::parse($payment->created_at)->format('d/m/Y') }}</td>
+                    <td>{{ $invoice_number }}</td>
+                    <td>-</td>
+                </tr>
+            </table>
+        </div>
     </div>
 
-    {{-- TITLE --}}
-    <div class="title">
-        INVOICE
-    </div>
-
-    {{-- CUSTOMER DETAILS --}}
-    <table class="no-border mb-10">
-        <tr>
-            <td><strong>Invoice No:</strong> {{ $invoice_number }}</td>
-            <td class="text-right"><strong>Date:</strong> {{ now()->format('Y-m-d') }}</td>
-        </tr>
-        <tr>
-            <td><strong>Customer Name:</strong> {{ $payments->first()->customer_name ?? '-' }}</td>
-            <td class="text-right"><strong>Status:</strong> Pending</td>
-        </tr>
-        <tr>
-            <td colspan="2">
-                <strong>Note:</strong> {{ $payments->first()->invoice_payment_note ?? '-' }}
-            </td>
-        </tr>
-    </table>
-
-    {{-- ITEMS TABLE --}}
-    <table>
+    {{-- Items Table --}}
+    <table class="main-table">
         <thead>
             <tr>
-                <th>#</th>
-                <th>Student</th>
-                <th>Admission No</th>
-                <th>Fee / Course</th>
-                <th class="text-right">Amount</th>
+                <th width="10%">Qty</th>
+                <th width="60%">Description</th>
+                <th width="15%">Rate</th>
+                <th width="15%">Amount</th>
             </tr>
         </thead>
         <tbody>
-            @foreach ($payments as $key => $payment)
+
+            @foreach ($payments as $item)
                 <tr>
-                    <td>{{ $key + 1 }}</td>
-                    <td>{{ $payment->invoice->student->student_name ?? '-' }}</td>
-                    <td>{{ $payment->invoice->student->admission_number ?? '-' }}</td>
+                    <td>1.00</td>
+
+
                     <td>
-                        @if($payment->invoice->invoice_type === 'fee')
-                            {{ optional($payment->invoice->invoice_item->first()?->fee_type)->name }}
+                        @if ($item->invoice->invoice_type === 'fee')
+                            {{ optional($item->invoice->invoice_item->first()?->fee_type)->name }}
                         @else
-                            {{ optional(optional($payment->invoice->paidCourses)->course)->name }}
+                            {{ $item->invoice->invoice_type . ' - ' . optional(optional($item->invoice->paidCourses)->course)->name }}
                         @endif
                     </td>
-                    <td class="text-right">{{ number_format($payment->amount, 2) }}</td>
+
+
+                    <td class="text-right">{{ number_format($item->amount, 2) }}</td>
+                    <td class="text-right">{{ number_format($item->amount, 2) }}</td>
                 </tr>
             @endforeach
-        </tbody>
 
-        <tfoot>
             <tr>
-                <th colspan="4" class="text-right">Total Amount</th>
-                <th class="text-right">{{ number_format($total, 2) }}</th>
+                <td colspan="4"></td>
             </tr>
-        </tfoot>
+            {{-- Student Info --}}
+            <tr>
+                <td></td>
+                <td colspan="3" style="padding:0;">
+                    <table style="width:100%; border-collapse: collapse;">
+
+                        <tr style="background:#f2f2f2;">
+                            <td style="padding:6px;">Student ID</td>
+                            <td style="padding:6px; text-align:right;">{{ $student->id ?? '' }}</td>
+                        </tr>
+
+                        <tr>
+                            <td style="padding:6px;">Register Number</td>
+                            <td style="padding:6px; text-align:right;">{{ $student->admission_number ?? '' }}</td>
+                        </tr>
+
+                        <tr style="background:#f2f2f2;">
+                            <td style="padding:6px;">NIC</td>
+                            <td style="padding:6px; text-align:right;">{{ $student->national_id_number ?? '' }}</td>
+                        </tr>
+
+                        <tr>
+                            <td style="padding:6px;">Student Name</td>
+                            <td style="padding:6px; text-align:right;">{{ $student->student_name ?? '' }}</td>
+                        </tr>
+
+                        <tr style="background:#f2f2f2;">
+                            <td style="padding:6px;">Training Centre</td>
+                            <td style="padding:6px; text-align:right;">
+                                {{ $student->training_center ?? '' }}
+                            </td>
+                        </tr>
+
+                    </table>
+                </td>
+            </tr>
+
+        </tbody>
     </table>
 
-    {{-- FOOTER --}}
-    {{-- <br>
-    <table class="no-border">
-        <tr>
-            <td>Prepared By: __________________</td>
-            <td class="text-right">Signature: __________________</td>
-        </tr>
-    </table> --}}
+    {{-- Total --}}
+    <div class="total-box">
+        Total : LKR {{ number_format($total, 2) }}
+    </div>
 
-</div>
+    <div style="clear: both;"></div>
+
+    {{-- Payment --}}
+    <div class="payment-section">
+        <strong>Payment Methods</strong>
+
+        <table class="payment-table">
+            <tr>
+                <td colspan="3"><strong>Bank Deposit or Online Fund Transfers</strong></td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    Payee Name : Hightec Lanka International Vocational & Technical Training Institute (Pvt) Ltd
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    SWIFT Address : BSAMLKLX
+                </td>
+            </tr>
+            <tr>
+                <td>Bank</td>
+                <td>Branch</td>
+                <td>Account Number</td>
+            </tr>
+            <tr>
+                <td>Sampath Bank</td>
+                <td>Mawathagama</td>
+                <td>010910000506</td>
+            </tr>
+        </table>
+    </div>
+
+    {{-- Footer --}}
+    <div class="footer">
+        It's been a pleasure working with you!
+    </div>
+
+    <div class="note">
+        This is a computer-generated document. No signature is required.
+    </div>
+
+</body>
 
 <script>
     window.onload = function() {
@@ -182,5 +294,4 @@
     };
 </script>
 
-</body>
 </html>

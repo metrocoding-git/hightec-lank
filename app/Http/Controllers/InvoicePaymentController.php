@@ -215,6 +215,36 @@ class InvoicePaymentController extends Controller
         // Calculate totals
         $total = $payments->sum('amount');
 
+        // $data = [
+        //     'customer_name' => 'National Youth Corps',
+        //     'address_line1' => 'No.420',
+        //     'address_line2' => 'Bauddhaloka Mawatha',
+        //     'city' => 'Colombo 07',
+        //     'date' => '03/09/2026',
+        //     'invoice_no' => 'INV-12564',
+        //     'po_no' => '',
+        //     'items' => [
+        //         ['qty' => 1, 'description' => 'Registration fee', 'rate' => 1000, 'amount' => 1000],
+        //         ['qty' => 1, 'description' => 'Backhoe loader course fee', 'rate' => 72500, 'amount' => 72500],
+        //         ['qty' => 1, 'description' => 'NVQ test fee (L3)', 'rate' => 7500, 'amount' => 7500],
+        //         ['qty' => 1, 'description' => 'Uniform fee', 'rate' => 2000, 'amount' => 2000],
+        //     ],
+        //     'student_id' => '37232',
+        //     'register_number' => 'MG252012M',
+        //     'nic' => '200828602213',
+        //     'student_name' => 'B.R. Dinith...',
+        //     'training_center' => 'Medirigiriya Training Centre',
+        //     'total' => 83000,
+        //     'payee_name' => 'Hightec Lanka International Vocational & Technical Training Institute (Pvt) Ltd',
+        //     'swift' => 'BSAMLKLX',
+        //     'bank' => 'Sampath Bank',
+        //     'branch' => 'Mawathagama',
+        //     'account_number' => '010910000506',
+        // ];
+
+
+        // return view('pages.student.fees.invoice-print', $data);
+
         return view('pages.student.fees.invoice-print', compact('payments', 'invoice_number', 'total'));
     }
 }
