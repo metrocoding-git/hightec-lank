@@ -147,7 +147,15 @@ class FeesGroupController extends Controller
             if ($existingInvoice) {
 
                 $fee_invoice = Fee_invoices::find($existingInvoice->fee_invoice_id);
+
                 $paidCourse = PaidCourse::find($existingInvoice->paid_course_id);
+                // Update PaidCourse
+                $paidCourse->paid_amount += $paidAmount;
+                $paidCourse->due_amount -= $paidAmount;
+                $paidCourse->payment_status = ($paidCourse->paid_amount >= $paidCourse->course_price) ? 'full' : 'partial';
+                $paidCourse->payment_method = $paymentMethod;
+                $paidCourse->save();
+
 
                 // Update Fee_invoices
                 $fee_invoice->paid_amount += $paidAmount;
@@ -155,13 +163,6 @@ class FeesGroupController extends Controller
                 $fee_invoice->payment_status = ($fee_invoice->paid_amount >= $fee_invoice->total_amount) ? 'full' : 'partial';
                 $fee_invoice->payment_method = $paymentMethod;
                 $fee_invoice->save();
-
-                // Update PaidCourse
-                $paidCourse->paid_amount += $paidAmount;
-                $paidCourse->due_amount -= $paidAmount;
-                $paidCourse->payment_status = ($paidCourse->paid_amount >= $paidCourse->course_price) ? 'full' : 'partial';
-                $paidCourse->payment_method = $paymentMethod;
-                $paidCourse->save();
             } else {
 
                 // Case 2: No existing invoice/paid course found, create new ones
@@ -220,7 +221,7 @@ class FeesGroupController extends Controller
                 }
             }
 
-            $receipt_number = $this->generateReceiptNumber($request->branch_id);
+            $receipt_number = $this->generateReceiptNumber($request->branch_id, $paymentType);
 
 
             $payment = Invoices_payments::create([
@@ -242,7 +243,7 @@ class FeesGroupController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Course payment saved successfully!',
-                'paid_course_id' => $paidCourse->id,
+                // 'paid_course_id' => $paidCourse->id,
                 'invoice_id' => $fee_invoice->id,
                 'payment_id' => $payment->id,
             ], 200);
@@ -376,10 +377,10 @@ class FeesGroupController extends Controller
             $nvqPaidCourse = PaidCourse::whereIn('invoice_id', $nvqInvoiceIds)
                 ->where('course_id', $courseId)
                 ->first();
-            if(!$nvqPaidCourse){
+            if (!$nvqPaidCourse) {
                 $course = Course::find($courseId);
                 $nvqPrice = $course->nvq_amount;
-            }else{
+            } else {
                 $nvqPrice = $nvqPaidCourse->course_price ?? 0;
             }
 
@@ -412,22 +413,28 @@ class FeesGroupController extends Controller
         }
     }
 
-    private function generateReceiptNumber($branch_id)
+    private function generateReceiptNumber($branch_id, $paymentType)
     {
         $branch = \App\Models\Branch::findOrFail($branch_id);
-        $code = strtolower(substr($branch->name, 0, 2)); // ka
+        $code = strtolower(substr($branch->name, 0, 2)); // ku / ka
 
-        // Extract ONLY the numeric part after "ka-"
+        // Prefix logic
+        if ($paymentType === 'nvq') {
+            $prefix = 'nvq-' . $code; // nvq-ku
+        } else {
+            $prefix = $code; // ku / ka
+        }
+
+        // Get last number ONLY for this prefix
         $maxNumber = \App\Models\Invoices_payments::whereHas('invoice', function ($q) use ($branch_id) {
             $q->where('branch_id', $branch_id);
         })
-            ->whereIn('payment_type', ['course', 'fee'])
-            ->where('receipt_number', 'like', $code . '-%')
+            ->where('receipt_number', 'like', $prefix . '-%')
             ->selectRaw("MAX(CAST(SUBSTRING_INDEX(receipt_number, '-', -1) AS UNSIGNED)) as max_no")
             ->value('max_no');
 
         $next = ((int) $maxNumber) + 1;
 
-        return $code . '-' . str_pad($next, 6, '0', STR_PAD_LEFT);
+        return $prefix . '-' . str_pad($next, 4, '0', STR_PAD_LEFT);
     }
 }

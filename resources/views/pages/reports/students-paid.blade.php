@@ -138,11 +138,15 @@
                                                         <td class="{{ $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
                                                             {{ $feeInvoice->payment_type === 'course'
                                                                 ? 'Course Payment - ' . ($feeInvoice->invoice->paidCourses->course->name ?? 'N/A')
-                                                                : ($feeInvoice->payment_type === 'fee'
-                                                                    ? 'Fee Payment - ' . ($feeInvoice->invoice->invoice_item[0]->fee_type->name ?? 'N/A')
-                                                                    : ($feeInvoice->amount < 0
-                                                                        ? $feeInvoice->payment_type . ' Payment'
-                                                                        : 'N/A')) }}
+                                                                : ($feeInvoice->payment_type === 'nvq'
+                                                                    ? 'NVQ Payment - ' . ($feeInvoice->invoice->paidCourses->course->name ?? 'N/A')
+                                                                    : ($feeInvoice->payment_type === 'fee'
+                                                                        ? 'Fee Payment - ' . ($feeInvoice->invoice->invoice_item[0]->fee_type->name ?? 'N/A')
+                                                                        : ($feeInvoice->payment_type === 'item_sell'
+                                                                            ? 'Item Sell' 
+                                                                            : ($feeInvoice->amount < 0
+                                                                                ? $feeInvoice->payment_type . ' Payment'
+                                                                                : 'N/A')))) }}
                                                         </td>
 
 

@@ -78,7 +78,11 @@
                     <div class="white-box">
                         <div class="col-lg-4 col-md-6 text-left text-sm-right mb-4 offset-lg-8 offset-md-6">
                             <button id="bulk-action-btn" class="primary-btn small">Bulk Update</button>
+                            <button id="bulk-back-btn" class="primary-btn small btn-warning">
+                                Bulk Back
+                            </button>
                         </div>
+
                         <div class="main-title mb-3">
                             <h3>@lang('finance.invoice_payment_list')</h3>
                         </div>
@@ -95,9 +99,13 @@
                                         <th>Customer Name</th>
                                         <th>Branch</th>
                                         <th>Student Name</th>
+                                        <th>Student Category</th>
                                         <th>Admission Number</th>
                                         <th>Fee Name</th>
                                         <th>amount</th>
+                                        <th>Cheque Number</th>
+                                        <th>Comfirm Amount</th>
+                                        <th>Confirm Note</th>
                                         <th>status</th>
                                         <th>date</th>
                                         <th>Note</th>
@@ -133,8 +141,25 @@
                             <label for="bulk-note">Note</label>
                             <textarea class="form-control" id="bulk-note" name="note"></textarea>
                         </div>
-                        <p id="confirm-text" class="text-center d-none">Are you sure you want to confirm these pending
-                            payments?</p>
+                        <div id="pending-fields" class="d-none">
+                            <div class="form-group">
+                                <label>Cheque Number</label>
+                                <input type="text" class="form-control" id="bulk-cheque-number" name="cheque_number">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Amount</label>
+                                <input type="number" class="form-control" id="bulk-amount" name="amount" step="0.01">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Note</label>
+                                <textarea class="form-control" id="bulk-confirm-note" name="confirm_note"></textarea>
+                            </div>
+                            {{-- <p id="confirm-text" class="text-center d-none">Are you sure you want to confirm these pending
+                                payments?</p> --}}
+                        </div>
+
                         <div class="mt-3 text-center">
                             <button type="submit" class="btn btn-primary col-12" id="bulk-modal-submit">Confirm</button>
                         </div>
@@ -149,7 +174,8 @@
         <div id="bulk-toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
                 <div class="toast-body"></div>
-                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
             </div>
         </div>
     </div>
@@ -224,6 +250,9 @@
                     data: 'student_name'
                 },
                 {
+                    data: 'student_category'
+                },
+                {
                     data: 'admission_number'
                 },
                 {
@@ -231,6 +260,15 @@
                 },
                 {
                     data: 'amount'
+                },
+                {
+                    data: 'confirm_cheque_number'
+                },
+                {
+                    data: 'confirm_payment_amount'
+                },
+                {
+                    data: 'confirm_note'
                 },
                 {
                     data: 'status'
@@ -286,12 +324,12 @@
             if (status === 'not_open') {
                 // Show modal for customer name and note
                 $('#customer-name-group, #note-group').show();
-                $('#confirm-text').addClass('d-none');
+                $('#pending-fields').addClass('d-none');
                 $('#bulkActionModal').modal('show');
             } else if (status === 'pending') {
                 // Show modal to confirm pending payments
                 $('#customer-name-group, #note-group').hide();
-                $('#confirm-text').removeClass('d-none');
+                $('#pending-fields').removeClass('d-none');
                 $('#bulkActionModal').modal('show');
             } else {
                 showToast('Cannot bulk update completed payments.', 'warning');
@@ -342,6 +380,14 @@
                 }
                 var route = '{{ route('invoice-payments.bulk-not-open') }}';
             } else if (status === 'pending') {
+                data.cheque_number = $('#bulk-cheque-number').val();
+                data.amount = $('#bulk-amount').val();
+                data.note = $('#bulk-confirm-note').val();
+
+                if (!data.amount) {
+                    showToast('Please enter amount.', 'warning');
+                    return;
+                }
                 var route = '{{ route('invoice-payments.bulk-pending') }}';
             } else {
                 showToast('Cannot update completed payments.', 'warning');
@@ -359,6 +405,38 @@
                     window.open('/student/fees/fee-invoice/invoice-payments/print/' + res.invoice_number,
                         '_blank');
                 }
+            });
+        });
+
+        $('#bulk-back-btn').on('click', function() {
+            let selected = $('.payment-checkbox:checked');
+
+            if (selected.length == 0) {
+                showToast('Please select at least one payment.', 'warning');
+                return;
+            }
+
+            let status = selected.first().data('status');
+            console.log('sss', status)
+            let ids = selected.map(function() {
+                return $(this).val();
+            }).get();
+
+            if (status === 'not_open') {
+                showToast('Already in Not Open state.', 'warning');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to revert selected payments?')) return;
+
+            $.post("{{ route('invoice-payments.bulk-back') }}", {
+                payment_ids: ids,
+                status: status,
+                _token: '{{ csrf_token() }}'
+            }, function(res) {
+                showToast(res.message, 'success');
+                $('#invoice_table').DataTable().ajax.reload();
+                currentStatus = null;
             });
         });
     </script>

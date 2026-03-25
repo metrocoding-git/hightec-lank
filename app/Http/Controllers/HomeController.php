@@ -653,6 +653,7 @@ class HomeController extends Controller
                     'has_nvq_payment' => $item->course->has_nvq_payment,
                     'nvq_amount' => $item->course->nvq_amount,
                     'change_course' => $item->change_course?->name ?? '',
+                    'status' => $item->status
 
                 ];
             });

@@ -134,13 +134,9 @@
     {{-- Header --}}
     <div class="header">
         <div class="box" style="width: 50%;">
-            <strong>Customer Name & Address</strong><br>
+            <strong>Customer Name & Address</strong><br><br>
             {!! nl2br(str_replace([' / ', '/', ', '], "\n", $payment->customer_name)) !!}
-            {{-- @if (!empty($payment->invoice_payment_note))
-                <br><br>
-                <strong>Note:</strong><br>
-                {{ $payment->invoice_payment_note }}
-            @endif --}}
+
         </div>
 
         <div style="width: 45%;">
@@ -150,12 +146,10 @@
                 <tr>
                     <td><strong>Date</strong></td>
                     <td><strong>Invoice No.</strong></td>
-                    <td><strong>P.O. No.</strong></td>
                 </tr>
                 <tr>
                     <td>{{ \Carbon\Carbon::parse($payment->created_at)->format('d/m/Y') }}</td>
                     <td>{{ $invoice_number }}</td>
-                    <td>-</td>
                 </tr>
             </table>
         </div>
@@ -201,10 +195,7 @@
                 <td colspan="3" style="padding:0;">
                     <table style="width:100%; border-collapse: collapse;">
 
-                        <tr style="background:#f2f2f2;">
-                            <td style="padding:6px;">Student ID</td>
-                            <td style="padding:6px; text-align:right;">{{ $student->id ?? '' }}</td>
-                        </tr>
+               
 
                         <tr>
                             <td style="padding:6px;">Register Number</td>
@@ -221,12 +212,6 @@
                             <td style="padding:6px; text-align:right;">{{ $student->student_name ?? '' }}</td>
                         </tr>
 
-                        <tr style="background:#f2f2f2;">
-                            <td style="padding:6px;">Training Centre</td>
-                            <td style="padding:6px; text-align:right;">
-                                {{ $student->training_center ?? '' }}
-                            </td>
-                        </tr>
 
                     </table>
                 </td>
@@ -272,6 +257,16 @@
             </tr>
         </table>
     </div>
+
+    @if (!empty($payment->invoice_payment_note))
+        <div class="box" style="width: 97%; margin-top: 0.2cm;">
+            <strong>Note:</strong><br>
+            {!! nl2br(str_replace([' / ', '/', ', '], "\n", $payment->invoice_payment_note)) !!}
+
+
+
+        </div>
+    @endif
 
     {{-- Footer --}}
     <div class="footer">

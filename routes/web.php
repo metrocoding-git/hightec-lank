@@ -226,6 +226,7 @@ Route::prefix('/student/fees/fee-invoice/invoice-payments')->group(function () {
     Route::post('/bulk-not-open', [InvoicePaymentController::class, 'bulkNotOpen'])->name('invoice-payments.bulk-not-open');
     Route::post('/bulk-pending', [InvoicePaymentController::class, 'bulkPending'])->name('invoice-payments.bulk-pending');
     Route::get('/print/{invoice_number}', [InvoicePaymentController::class, 'printInvoice'])->name('invoice-payments.print');
+    Route::post('/bulk-back', [InvoicePaymentController::class, 'bulkBack'])->name('invoice-payments.bulk-back');
 })->withoutMiddleware(['csrf', 'permission']);
 
 Route::controller(ItemSellController::class)

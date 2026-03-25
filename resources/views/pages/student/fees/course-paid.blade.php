@@ -368,29 +368,23 @@
                                 '<option value="">select course</option>');
                             if (data.success && data.courses.length > 0) {
                                 data.courses.forEach(function(course) {
+                                    console.log('sddd', course.status)
                                     let changeCourseText = course.change_course ?
                                         ' (Changed to: ' + course.change_course + ')' :
                                         '';
 
                                     $('#course_id').append(
-                                        '<option value="' + course
-                                        .course_id +
+                                        '<option value="' + course.course_id + '"' +
+                                        ' data-price="' + course.course_price +
                                         '"' +
-                                        ' data-price="' + course
-                                        .course_price +
+                                        ' data-name="' + course.course_name + '"' +
+                                        ' data-intake="' + course.intake_name +
                                         '"' +
-                                        ' data-name="' + course
-                                        .course_name +
+                                        ' data-has-nvq="' + course.has_nvq_payment +
                                         '"' +
-                                        ' data-intake="' + course
-                                        .intake_name +
-                                        '"' +
-                                        ' data-has-nvq="' + course
-                                        .has_nvq_payment +
-                                        '"' +
-                                        ' data-nvq-amount="' + (course
-                                            .nvq_amount ??
+                                        ' data-nvq-amount="' + (course.nvq_amount ??
                                             0) + '"' +
+                                        ' data-status="' + course.status + '"' +
                                         '>' +
                                         course.course_name + ' - ' + course
                                         .intake_name + changeCourseText +
@@ -426,6 +420,7 @@
                 let intakeName = selectedOption.data('intake');
                 let intakeId = selectedOption.data('intake-id');
                 let hasNVQ = selectedOption.data('has-nvq');
+                let status = selectedOption.data('status');
                 let nvqAmount = parseFloat(selectedOption.data('nvq-amount')) || 0;
                 let coursePrice = parseFloat(selectedOption.data('price')) || 0;
 
@@ -435,6 +430,12 @@
                         $(this).val('').niceSelect('update');
                         // return;
                     } else {
+                        if (status != 'start') {
+                            toastr.warning(`This course status: ${status}`, null, {
+                                timeOut: 20000,
+                                extendedTimeOut: 10000
+                            });
+                        }
                         coursePrice = nvqAmount;
                     }
 
@@ -445,6 +446,8 @@
                         });
                         return;
                     }
+
+
                 }
                 let studentId = $('#student_id').val();
 

@@ -21,7 +21,7 @@ class InvoicePaymentController extends Controller
     public function datatable(Request $request)
     {
         // Base query: only payments where payment_method = 'Invoice'
-        $query = Invoices_payments::with(['invoice.student', 'invoice.branch', 'branch', 'invoice.paidCourses'])
+        $query = Invoices_payments::with(['invoice.student', 'invoice.branch', 'branch', 'invoice.paidCourses', 'invoice.student.studentCategory'])
             ->where('payment_method', 'Invoice')
             ->where('payment_type', '!=', 'refund')
             ->where(function ($q) {
@@ -58,6 +58,9 @@ class InvoicePaymentController extends Controller
                     })
                     ->orWhereHas('invoice.branch', function ($q3) use ($search) {
                         $q3->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('invoice.student.studentCategory', function ($q4) use ($search) {
+                        $q4->where('category_name', 'like', "%{$search}%");
                     });
             });
         }
@@ -91,11 +94,25 @@ class InvoicePaymentController extends Controller
             ->addColumn('student_name', function ($row) {
                 return $row->invoice->student->student_name ?? '-';
             })
+            ->addColumn('student_category', function ($row) {
+                return $row->invoice->student->studentCategory->category_name ?? '-';
+            })
+
             ->addColumn('admission_number', function ($row) {
                 return $row->invoice->student->admission_number ?? '-';
             })
             ->addColumn('amount', function ($row) {
                 return number_format($row->amount, 2);
+            })
+
+            ->addColumn('confirm_cheque_number', function ($row) {
+                return $row->invoice_payment_cheque_number ?? '-';
+            })
+            ->addColumn('confirm_payment_amount', function ($row) {
+                return $row->invoice_payment_amount ? number_format($row->invoice_payment_amount, 2) : '-';
+            })
+            ->addColumn('confirm_note', function ($row) {
+                return $row->invoice_payment_confirm_note ?? '-';
             })
             ->addColumn('status', function ($row) {
                 if ($row->invoice_payment_confirm) {
@@ -183,6 +200,7 @@ class InvoicePaymentController extends Controller
 
             $payment->customer_name = $request->customer_name;
             $payment->invoice_payment_note = $request->note;
+            $payment->update_user_id = Auth::id();
             $payment->save();
         }
 
@@ -191,9 +209,17 @@ class InvoicePaymentController extends Controller
     public function bulkPending(Request $request)
     {
         $ids = $request->payment_ids;
-        Invoices_payments::whereIn('id', $ids)->update([
-            'invoice_payment_confirm' => true
-        ]);
+        foreach ($ids as $id) {
+            $payment = Invoices_payments::find($id);
+            if (!$payment) continue;
+            $payment->invoice_payment_confirm = true;
+            $payment->invoice_payment_cheque_number = $request->cheque_number;
+            $payment->invoice_payment_amount = $request->amount;
+            $payment->invoice_payment_confirm_note = $request->note;
+            $payment->update_user_id = Auth::id();
+            $payment->save();
+        }
+
 
         return response()->json(['message' => 'Selected payments confirmed successfully.']);
     }
@@ -215,36 +241,58 @@ class InvoicePaymentController extends Controller
         // Calculate totals
         $total = $payments->sum('amount');
 
-        // $data = [
-        //     'customer_name' => 'National Youth Corps',
-        //     'address_line1' => 'No.420',
-        //     'address_line2' => 'Bauddhaloka Mawatha',
-        //     'city' => 'Colombo 07',
-        //     'date' => '03/09/2026',
-        //     'invoice_no' => 'INV-12564',
-        //     'po_no' => '',
-        //     'items' => [
-        //         ['qty' => 1, 'description' => 'Registration fee', 'rate' => 1000, 'amount' => 1000],
-        //         ['qty' => 1, 'description' => 'Backhoe loader course fee', 'rate' => 72500, 'amount' => 72500],
-        //         ['qty' => 1, 'description' => 'NVQ test fee (L3)', 'rate' => 7500, 'amount' => 7500],
-        //         ['qty' => 1, 'description' => 'Uniform fee', 'rate' => 2000, 'amount' => 2000],
-        //     ],
-        //     'student_id' => '37232',
-        //     'register_number' => 'MG252012M',
-        //     'nic' => '200828602213',
-        //     'student_name' => 'B.R. Dinith...',
-        //     'training_center' => 'Medirigiriya Training Centre',
-        //     'total' => 83000,
-        //     'payee_name' => 'Hightec Lanka International Vocational & Technical Training Institute (Pvt) Ltd',
-        //     'swift' => 'BSAMLKLX',
-        //     'bank' => 'Sampath Bank',
-        //     'branch' => 'Mawathagama',
-        //     'account_number' => '010910000506',
-        // ];
-
-
-        // return view('pages.student.fees.invoice-print', $data);
 
         return view('pages.student.fees.invoice-print', compact('payments', 'invoice_number', 'total'));
+    }
+
+
+    public function bulkBack(Request $request)
+    {
+        $ids = $request->payment_ids;
+        $status = $request->status;
+
+        if (empty($ids)) {
+            return response()->json(['message' => 'No payments selected.'], 400);
+        }
+
+        if ($status === 'completed') {
+            $payments = Invoices_payments::whereIn('id', $ids)->get();
+
+            foreach ($payments as $payment) {
+                // Revert to pending
+                $payment->invoice_payment_confirm = null;
+
+                $payment->cheque_number = null;
+                $payment->amount = null;
+                $payment->invoice_payment_note = null;
+
+                // Track who reverted
+                $payment->update_user_id = Auth::id();
+
+                $payment->save();
+            }
+
+            return response()->json(['message' => 'Reverted to Pending successfully.']);
+        }
+
+        if ($status === 'pending') {
+            // Get all selected payments
+            $payments = Invoices_payments::whereIn('id', $ids)->get();
+
+            foreach ($payments as $payment) {
+                $payment->payment_invoice_number = null;
+                $payment->customer_name = null;
+                $payment->invoice_payment_note = null;
+
+                // Track the user who reverted
+                $payment->update_user_id = Auth::id();
+
+                $payment->save();
+            }
+
+            return response()->json(['message' => 'Reverted to Not Open successfully.']);
+        }
+
+        return response()->json(['message' => 'Invalid status.'], 400);
     }
 }
