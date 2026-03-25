@@ -14,15 +14,16 @@
                 width: 21.6cm; */
                 margin: 0;
             }
-    
-            html, body {
+
+            html,
+            body {
                 height: 13.97cm;
                 width: 21.6cm;
                 margin: 0;
                 padding: 0;
                 background: #fff;
             }
-    
+
             .invoice-report {
                 height: 13.97cm;
                 width: 21.6cm;
@@ -31,7 +32,7 @@
                 font-size: 12px;
                 color: #000;
             }
-    
+
             .field {
                 position: absolute;
                 font-family: 'Arial Black', 'Courier New', monospace;
@@ -39,7 +40,7 @@
                 color: #000;
                 line-height: 1;
             }
-    
+
             .field2 {
                 position: absolute;
                 font-family: 'Arial Black', 'Courier New', monospace;
@@ -77,22 +78,22 @@
             }
 
             .student-name {
-                left:8.4cm;
+                left: 8.4cm;
                 top: 6.0cm;
             }
 
             .student-nic {
-                left:8.4cm;
+                left: 8.4cm;
                 top: 6.6cm;
             }
 
             .student-address {
-                left:8.4cm;
+                left: 8.4cm;
                 top: 7.2cm;
             }
 
             .student-phone {
-                left:8.4cm;
+                left: 8.4cm;
                 top: 7.8cm;
             }
 
@@ -117,7 +118,7 @@
             }
         }
     </style>
-    
+
 </head>
 
 <body>
@@ -130,7 +131,9 @@
                 ? $invoice->invoice_item[0]->fee_type->name
                 : ($invoice->invoice_type == 'course'
                     ? $invoice->paidCourses->course->name
-                    : '-') }}
+                    : ($invoice->invoice_type == 'nvq'
+                        ? 'NVQ - ' . $invoice->paidCourses->course->name
+                        : '-')) }}
         </div>
         <div class="field stu-category">
             {{ $invoice->student->studentCategory->category_name ?? 'N/A' }}

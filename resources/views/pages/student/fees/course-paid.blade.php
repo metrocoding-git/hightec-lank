@@ -45,6 +45,11 @@
     <!-- Main Content -->
     <section class="admin-visitor-area up_st_admin_visitor">
         <div class="container-fluid">
+            <div class="mb-3 col-9 offset-3">
+                <button type="button" class=" col-12 primary-btn fix-gr-bg" id="toggleNVQ">
+                    Switch to NVQ Payment
+                </button>
+            </div>
             <form action="{{ route('fees.course-payment.store') }}" method="POST" enctype="multipart/form-data"
                 id="invoiceForm">
                 @csrf
@@ -139,15 +144,15 @@
                                     </div>
                                 </div>
 
-                            
+
 
 
                                 {{-- Bank Upload Section --}}
                                 <div class="row mt-15 d-none" id="bankPaymentSection">
                                     <div class="col-lg-12" id="bankPaidAmountRow">
                                         <label>Bank Paid Amount <span class="text-danger">*</span></label>
-                                        <input type="number" class="primary_input_field form-control"
-                                            id="bank_paid_amount" name="bank_paid_amount" value="0" step="0.01">
+                                        <input type="number" class="primary_input_field form-control" id="bank_paid_amount"
+                                            name="bank_paid_amount" value="0" step="0.01">
                                     </div>
 
                                     <div class="col-lg-12 mt-15" id="bankPaidDateRow">
@@ -224,7 +229,7 @@
                                                     <th>@lang('common.sl')</th>
                                                     <th>Course Name</th>
                                                     <th>Intake Name</th>
-                                                    <th>Course Paid</th>
+                                                    <th>Amount</th>
                                                     <th>@lang('fees.paid_amount')</th>
                                                     <th>Due Amount</th>
                                                     <th>@lang('common.action')</th>
@@ -275,6 +280,24 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
+            let isNVQMode = false;
+
+            $('#toggleNVQ').on('click', function() {
+                isNVQMode = !isNVQMode;
+
+                if (isNVQMode) {
+                    $(this).text('Switch to Normal Course Payment');
+                    toastr.success('NVQ Payment Mode Activated');
+                } else {
+                    $(this).text('Switch to NVQ Payment');
+                    toastr.success('Normal Course Payment Mode');
+                }
+
+                // Re-add selected course to update price
+                $('#course_id').trigger('change');
+            });
+
+
             if ({{ count($branches) }} == 1) {
                 $('#branch_id').trigger('change');
             }
@@ -312,17 +335,17 @@
 
             // AJAX: Load courses based on student
             $('#student_id').change(function() {
+                $('#course_id').trigger('change');
+
                 let studentId = $(this).val();
                 if (studentId) {
                     $('#selectCourseLoader').show();
                     $('.allCourseDetails').empty();
 
 
-
                     let allStudents = @json($students);
                     let selectedStudent = allStudents.find(s => s.id == studentId);
 
-                    // ❌ If admission NOT paid → Stop, show alert, reset dropdown
                     if (selectedStudent && selectedStudent.is_admission == 0) {
                         alert("This student has not paid the admission fee.");
                         $(this).val(""); // reset student dropdown
@@ -330,7 +353,6 @@
                         return;
                     }
 
-                    // ✔ If admission paid → Load courses
                     $('#selectCourseLoader').show();
                     $('.allCourseDetails').empty();
                     addedCourseId = null;
@@ -346,18 +368,32 @@
                                 '<option value="">select course</option>');
                             if (data.success && data.courses.length > 0) {
                                 data.courses.forEach(function(course) {
+
                                     $('#course_id').append(
-                                        '<option value="' + course.course_id + '"' +
-                                        ' data-price="' + course.course_price +
+                                        '<option value="' + course
+                                        .course_id +
                                         '"' +
-                                        ' data-name="' + course.course_name + '"' +
-                                        ' data-intake="' + course.intake_name +
+                                        ' data-price="' + course
+                                        .course_price +
                                         '"' +
+                                        ' data-name="' + course
+                                        .course_name +
+                                        '"' +
+                                        ' data-intake="' + course
+                                        .intake_name +
+                                        '"' +
+                                        ' data-has-nvq="' + course
+                                        .has_nvq_payment +
+                                        '"' +
+                                        ' data-nvq-amount="' + (course
+                                            .nvq_amount ??
+                                            0) + '"' +
                                         '>' +
                                         course.course_name + ' - ' + course
                                         .intake_name +
                                         '</option>'
                                     );
+
 
                                 });
                             }
@@ -386,8 +422,27 @@
                 let courseName = selectedOption.data('name');
                 let intakeName = selectedOption.data('intake');
                 let intakeId = selectedOption.data('intake-id');
-
+                let hasNVQ = selectedOption.data('has-nvq');
+                let nvqAmount = parseFloat(selectedOption.data('nvq-amount')) || 0;
                 let coursePrice = parseFloat(selectedOption.data('price')) || 0;
+
+                if (isNVQMode) {
+                    if (!hasNVQ) {
+                        // toastr.warning('This course has no NVQ payment');
+                        $(this).val('').niceSelect('update');
+                        // return;
+                    } else {
+                        coursePrice = nvqAmount;
+                    }
+
+                    if (!hasNVQ && courseId) {
+                        toastr.warning('This course has no NVQ payment', null, {
+                            timeOut: 10000,
+                            extendedTimeOut: 2000
+                        });
+                        return;
+                    }
+                }
                 let studentId = $('#student_id').val();
 
                 if (!courseId) {
@@ -412,9 +467,7 @@
                 addCourseRow(courseId, courseName, coursePrice);
                 addedCourseId = courseId;
 
-                // Fetch payment history and intakes
                 if (studentId && courseId) {
-                    // Fetch payment history
                     $.ajax({
                         url: '{{ route('fees.course-payment-history', [':studentId', ':courseId']) }}'
                             .replace(':studentId', studentId).replace(':courseId', courseId),
@@ -431,6 +484,7 @@
                                             <td>${new Date(payment.created_at).toLocaleDateString()}</td>
                                             <td>${payment.amount}</td>
                                             <td>${payment.payment_method}</td>
+                                            <th>${payment.payment_type}</th>
                                         </tr>`;
                                         historyTable.append(row);
                                     });
@@ -442,11 +496,15 @@
                                 }
                                 // Update due amount in the main table
                                 // Convert safely to number
-                                let dueAmount = parseFloat(data.due_amount);
+                                let dueAmount = 0
 
                                 // If NaN, set 0 to avoid errors
-                                if (isNaN(dueAmount)) {
-                                    dueAmount = 0;
+                                if (isNVQMode) {
+                                    console.log('sdas', data.nvq_due_amount);
+                                    dueAmount = parseFloat(data.nvq_due_amount);
+                                } else {
+                                    dueAmount = parseFloat(data.course_due_amount);
+
                                 }
 
                                 // Update due amount in the main table
@@ -534,8 +592,9 @@
 
             function addCourseRow(id, name, price) {
                 let paymentMethod = $('#paymentMethodName').val();
-                let paidAmountValue = 0; // Default to 0 for all payment methods
-                let paidAmountDisabled = ''; // Enable paid amount input for all methods
+                let paidAmountValue = '';
+                let paidAmountDisabled = '';
+                let typeLabel = isNVQMode ? 'NVQ Payment' : 'Course Payment';
 
                 let row = `<tr data-id="${id}">
                     <td class="sl">1</td>
@@ -580,6 +639,10 @@
                             >
                         </div>
                     </td>
+                    <td class="course_name">
+                        ${name} <br>
+                        <small class="text-info">${typeLabel}</small>
+                    </td>
                     <td>
                         <button type="button" class="primary-btn small bg-danger text-white border-0 remove_course_btn">
                             Delete
@@ -594,14 +657,21 @@
             function updatePaymentStatusAndDue() {
                 let coursePrice = parseFloat($('.course_price_input').val()) || 0;
                 let paidAmount = parseFloat($('.paid_amount_input').val()) || 0;
+
                 let paymentMethod = $('#paymentMethodName').val();
                 let bankPaidAmount = parseFloat($('#bank_paid_amount').val()) || 0;
                 let initialDue = $('.allCourseDetails tr').find('.due_amount_display').data('initial-due') ||
                     coursePrice;
 
+                console.log('111', coursePrice, paidAmount, initialDue, $('.allCourseDetails tr').find(
+                    '.due_amount_display').data('initial-due'))
 
-                let newDue = initialDue - paidAmount;
-                $('.allCourseDetails tr').find('.due_amount_display').val(newDue.toFixed(2));
+
+                if (coursePrice != paidAmount) {
+                    let newDue = initialDue - paidAmount;
+                    $('.allCourseDetails tr').find('.due_amount_display').val(newDue.toFixed(2));
+
+                }
 
 
                 let totalPaidAfterThisTransaction = (coursePrice - initialDue) + paidAmount;
@@ -624,6 +694,7 @@
                         $('#status').val('not').niceSelect('update');
                     }
                 }
+
             }
 
 
@@ -818,6 +889,7 @@
                 formData.append('course_name', courseName); // Also append course name for potential use
                 formData.append('course_price', coursePrice);
                 formData.append('paid_amount', paidAmount);
+                formData.append('payment_type', isNVQMode ? 'nvq' : 'course');
 
                 // Append bank payment details if applicable
                 if (paymentMethod === 'Bank Transfer') {

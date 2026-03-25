@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Branch;
 use App\Models\Course;
+use App\Models\Fee_invoices;
 use App\Models\Intake;
 use App\Models\Inventory_item;
+use App\Models\Invoices_payments;
 use App\Models\ItemSellBatch;
 use App\Models\ItemSellItem;
 use App\Models\ItemInventory;
@@ -56,7 +58,7 @@ class ItemSellController extends Controller
             ->where('invoice_number', 'like', "INV-S-$branchLetter-%")
             ->orderBy('id', 'desc')
             ->first();
-   
+
         if ($lastRecord) {
             $lastNumber = intval(substr($lastRecord->invoice_number, -4));
             $nextNumber = $lastNumber + 1;
@@ -126,6 +128,47 @@ class ItemSellController extends Controller
                 'created_by' => Auth::id(),
                 'invoice_number' => $invoice_number
             ]);
+
+            $payment_status = ($request->totalDue > 0) ? 'partial' : 'full';
+
+            $fee_invoice = Fee_invoices::create([
+                'branch_id' => $request->branch_id,
+                'student_id' => $request->student ?? null,
+                'create_date' => $sellDate,
+                'due_date' => $sellDate,
+                'payment_status' => $payment_status,
+                'payment_method' => $request->payment_method,
+                'total_amount' => $request->subTotalValue ?? 0,
+                'paid_amount' => $request->totalPaid ?? 0,
+                'due_amount' => $request->totalDue ?? 0,
+                'main_invoice_number' => $invoice_number,
+                'create_user_id' => Auth::id(),
+                'bank_paid_amount' => $request->payment_method === 'Bank Transfer'
+                    ? $request->bank_payment_amount
+                    : null,
+                'bank_paid_date' => $request->payment_method === 'Bank Transfer' && $bankPaymentDate
+                    ? $bankPaymentDate
+                    : null,
+                'notes' => $request->description,
+                'invoice_type' => 'item_sell',
+            ]);
+
+            Invoices_payments::create([
+                'invoice_id' => $fee_invoice->id,
+                'amount' => $request->subTotalValue ?? 0,
+                'payment_method' => $request->payment_method,
+                'payment_type' => 'item_sell',
+                'payment_file' =>  $request->payment_method === 'Bank Transfer' ? $bankPaymentDocumentPath : null,
+                'receipt_number' => $invoice_number,
+                'create_user_id' => Auth::id(),
+                'bank_payment_amount' => $request->payment_method === 'Bank Transfer' ? $request->bank_payment_amount : null,
+                'bank_payment_date' => $bankPaymentDate,
+                'branch_id' => $request->branch_id,
+                'notes' => $request->description,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
 
             // Create ItemSellItem records for each item in the batch
             foreach ($request->item_id as $index => $itemId) {

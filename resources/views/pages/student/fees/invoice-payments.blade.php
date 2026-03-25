@@ -187,6 +187,7 @@
         $('#invoice_table').DataTable({
             responsive: true,
             processing: true,
+            searching: true,
             serverSide: true,
             ajax: {
                 url: "{{ route('invoice-payments.datatable') }}",
@@ -248,6 +249,18 @@
 
             ]
         });
+
+        let table = $('#invoice_table').DataTable();
+
+        $('#invoice_table_filter input')
+            .off()
+            .on('keyup', function() {
+                clearTimeout($.data(this, 'timer'));
+                let wait = setTimeout(() => {
+                    table.search(this.value).draw();
+                }, 500);
+                $(this).data('timer', wait);
+            });
 
         // Filter table on select change
         $('#submit-search').on('click', function() {

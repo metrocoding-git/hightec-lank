@@ -22,8 +22,15 @@ class InvoicePaymentController extends Controller
     {
         // Base query: only payments where payment_method = 'Invoice'
         $query = Invoices_payments::with(['invoice.student', 'invoice.branch', 'branch', 'invoice.paidCourses'])
-            ->where('payment_method', 'Invoice');
-
+            ->where('payment_method', 'Invoice')
+            ->where('payment_type', '!=', 'refund')
+            ->where(function ($q) {
+                $q->where('payment_status', '!=', 'refunded')
+                    ->orWhereNull('payment_status');
+            })
+            ->whereHas('invoice', function ($q) {
+                $q->where('payment_status', '!=', 'returned');
+            });
         // Optional filters
         if ($request->branch_id) {
             $query->where('branch_id', $request->branch_id);
@@ -38,6 +45,23 @@ class InvoicePaymentController extends Controller
                 $query->where('invoice_payment_confirm', true);
             }
         }
+
+        if ($request->has('search') && $request->search['value'] != '') {
+            $search = $request->search['value'];
+
+            $query->where(function ($q) use ($search) {
+                $q->where('customer_name', 'like', "%{$search}%")
+                    ->orWhere('payment_invoice_number', 'like', "%{$search}%")
+                    ->orWhereHas('invoice.student', function ($q2) use ($search) {
+                        $q2->where('student_name', 'like', "%{$search}%")
+                            ->orWhere('admission_number', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('invoice.branch', function ($q3) use ($search) {
+                        $q3->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
 
         return DataTables::of($query)
             ->addColumn('select', function ($row) {
@@ -92,6 +116,12 @@ class InvoicePaymentController extends Controller
                 if ($row->invoice->invoice_type === 'course') {
                     return optional(optional($row->invoice->paidCourses)->course)->name ?? '-';
                 }
+                if ($row->invoice->invoice_type === 'nvq') {
+                    return  'NCQ - ' . (optional(optional($row->invoice->paidCourses)->course)->name) ?? '-';
+                }
+                if ($row->invoice->invoice_type === 'item_sell') {
+                    return  'Item Sell';
+                }
                 return '-';
             })
 
@@ -114,7 +144,7 @@ class InvoicePaymentController extends Controller
 
                 return '-';
             })
-            ->rawColumns(['action','select'])
+            ->rawColumns(['action', 'select'])
             ->make(true);
     }
 

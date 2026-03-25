@@ -14,15 +14,16 @@
                 width: 21.6cm; */
                 margin: 0;
             }
-    
-            html, body {
+
+            html,
+            body {
                 height: 13.97cm;
                 width: 21.6cm;
                 margin: 0;
                 padding: 0;
                 background: #fff;
             }
-    
+
             .invoice-report {
                 height: 13.97cm;
                 width: 21.6cm;
@@ -31,7 +32,7 @@
                 font-size: 12px;
                 color: #000;
             }
-    
+
             .field {
                 position: absolute;
                 font-family: 'Arial Black', 'Courier New', monospace;
@@ -39,7 +40,7 @@
                 color: #000;
                 line-height: 1;
             }
-    
+
             .field2 {
                 position: absolute;
                 font-family: 'Arial Black', 'Courier New', monospace;
@@ -48,7 +49,7 @@
                 line-height: 1;
             }
 
-/* 
+            /*
             .course-name {
                 left: 4cm;
                 top: 4.1cm;
@@ -140,22 +141,22 @@
             }
 
             .student-name {
-                left:8.4cm;
+                left: 8.4cm;
                 top: 6.0cm;
             }
 
             .student-nic {
-                left:8.4cm;
+                left: 8.4cm;
                 top: 6.6cm;
             }
 
             .student-address {
-                left:8.4cm;
+                left: 8.4cm;
                 top: 7.2cm;
             }
 
             .student-phone {
-                left:8.4cm;
+                left: 8.4cm;
                 top: 7.8cm;
             }
 
@@ -190,10 +191,12 @@
         <div class="field course-name">
             {{-- {{ $invoice->invoice->paidCourses ?? ($invoice->invoice->paidCourses->course->name )?? 'Fee Details' }} --}}
             {{ $invoice->invoice->invoice_type == 'fee'
-            ? $invoice->invoice->invoice_item[0]->fee_type->name
-            : ($invoice->invoice->invoice_type == 'course'
-                ? $invoice->invoice->paidCourses->course->name
-                : '-') }}
+                ? $invoice->invoice->invoice_item[0]->fee_type->name
+                : ($invoice->invoice->invoice_type == 'course'
+                    ? $invoice->invoice->paidCourses->course->name
+                    : ($invoice->invoice->invoice_type == 'nvq'
+                        ? 'NVQ - ' . $invoice->invoice->paidCourses->course->name
+                        : '-')) }}
         </div>
         <div class="field stu-category">
             {{ $invoice->invoice->student->studentCategory->category_name ?? 'N/A' }}
@@ -213,7 +216,8 @@
         {{-- Payment Info --}}
         <div class="field total-amount">{{ number_format($invoice->amount, 2) }}</div>
         <div class="field paid-amount">--</div>
-        <div class="field due-amount"> {{ number_format($invoice->invoice->total_amount - $invoice->invoice->paid_amount, 2) }}</div>
+        <div class="field due-amount">
+            {{ number_format($invoice->invoice->total_amount - $invoice->invoice->paid_amount, 2) }}</div>
         <div class="field due-date"> {{ \Carbon\Carbon::parse($invoice->invoice->due_date)->format('Y-m-d') }} </div>
 
     </div>

@@ -117,3 +117,7 @@ ALTER TABLE `invoices_payments` ADD `invoice_payment_confirm` TINYINT NULL DEFAU
 
 
 ALTER TABLE `invoices_payments` ADD `customer_name` VARCHAR(255) NULL AFTER `notes`, ADD `invoice_payment_note` TEXT NULL AFTER `customer_name`;
+
+
+-- 03/24
+ALTER TABLE `courses` ADD `has_nvq_payment` TINYINT NOT NULL DEFAULT '0' AFTER `duration`, ADD `nvq_amount` DECIMAL(10,2) NULL AFTER `has_nvq_payment`;

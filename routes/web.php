@@ -276,13 +276,18 @@ Route::controller(LoginController::class)->group(function () {
 
 
 Route::controller(FeesGroupController::class)->middleware(['permission'])->group(function () {
-    Route::get('student/fees/fee-group', 'index')->name('fee-group'); // GET list
-    Route::post('student/fees/fee-group-create', 'store')->name('fee-group-create'); // POST create
-    Route::get('student/fees/fee-group-edit/{id}', 'edit')->name('fee-group-edit'); // GET edit
-    Route::put('student/fees/fee-group-update/{id}', 'update')->name('fee-group-update'); // PUT update
-    Route::delete('student/fees/fee-group-delete/{id}', 'delete')->name('fee-group-delete'); // DELETE delete
+    Route::get('student/fees/fee-group', 'index')->name('fee-group'); 
+    Route::post('student/fees/fee-group-create', 'store')->name('fee-group-create'); 
+    Route::get('student/fees/fee-group-edit/{id}', 'edit')->name('fee-group-edit'); 
+    Route::put('student/fees/fee-group-update/{id}', 'update')->name('fee-group-update'); 
+    Route::delete('student/fees/fee-group-delete/{id}', 'delete')->name('fee-group-delete');
 
-    Route::get('student/fees/course-paid', 'coursePaidView')->name('fees.course-paid'); // GET view
+    Route::get('student/fees/course-paid', 'coursePaidView')->name('fees.course-paid'); 
+
+
+    Route::post('student/fees/course-payment-store', 'storeCoursePayment')->name('fees.course-payment.store');
+    Route::get('student/fees/course-payment', 'indexCoursePayment')->name('fees.course-payment');
+    Route::get('student/fees/course-payment-history/{studentId}/{courseId}', 'getCoursePaymentHistory')->name('fees.course-payment-history')->withoutMiddleware(['csrf', 'permission']);
 });
 
 Route::controller(FeeTypeController::class)->middleware(['permission'])->group(function () {
@@ -309,9 +314,7 @@ Route::controller(InvoiceController::class)->middleware(['permission'])->group(f
     Route::post('student/fees/fee-store', 'store')->name('fees.invoice.store');
     Route::get('fees/payment-history/{invoiceId}', 'getPaymentHistory')->name('fees.payment-history')->withoutMiddleware(['csrf', 'permission']);
     Route::get('fees/return-fee-data/{invoiceId}', 'getReturnFeeData')->name('fees.return-fee-data')->withoutMiddleware(['csrf', 'permission']);
-    Route::post('student/fees/course-payment-store', 'storeCoursePayment')->name('fees.course-payment.store'); // New route for course payments
-    Route::get('student/fees/course-payment', 'indexCoursePayment')->name('fees.course-payment'); // Route for course payment index view
-    Route::get('student/fees/course-payment-history/{studentId}/{courseId}', 'getCoursePaymentHistory')->name('fees.course-payment-history')->withoutMiddleware(['csrf', 'permission']);
+
     Route::get('fees/get-intakes-by-course/{courseId}/{studentId}', 'getIntakesByCourse')->name('fees.get-intakes-by-course')->withoutMiddleware(['csrf', 'permission']);
     // Route::get('student/fees/fee-edit/{id}', 'edit')->name('fees.fee-edit-invoice');
     Route::get('student/fees/fee-invoice-edit/{id}', 'edit')->name('fees.fee-invoice-edit'); // GET edit

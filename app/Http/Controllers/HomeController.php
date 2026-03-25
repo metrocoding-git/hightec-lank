@@ -650,6 +650,8 @@ class HomeController extends Controller
                     'course_price' => $item->course->price,
                     'intake_id' => $item->intake?->id,
                     'intake_name' => $item->intake?->name,
+                    'has_nvq_payment' => $item->course->has_nvq_payment,
+                    'nvq_amount' => $item->course->nvq_amount,
                 ];
             });
 
@@ -921,7 +923,7 @@ class HomeController extends Controller
             ->leftJoin('fee_types', 'fee_types.id', '=', 'invoice_items.fee_type_id')
             ->leftJoin('paid_courses', 'paid_courses.invoice_id', '=', 'fee_invoices.id')
             ->leftJoin('courses', 'courses.id', '=', 'paid_courses.course_id')
-            ->where('fee_invoices.payment_status', '!=', 'returned')
+            // ->where('fee_invoices.payment_status', '!=', 'returned')
             ->select([
                 'fee_invoices.*',
                 'students.student_name',
@@ -938,7 +940,7 @@ class HomeController extends Controller
             ->editColumn('fee_name', function ($row) {
                 return $row->invoice_type === 'fee'
                     ? ($row->fee_type_name ?? '-')
-                    : ($row->course_name ?? '-');
+                    : ($row->invoice_type . ($row->course_name ? ' - ' . ($row->course_name ?? '-') : '') );
             })
     
             ->addColumn('balance', function ($row) {
@@ -992,6 +994,8 @@ class HomeController extends Controller
                            data-invoice-id="' . $row->id . '">
                            Invoice
                         </a>
+
+                        <a class="dropdown-item" data-toggle="modal" data-target="#returnFeeModal' . $row->id . '"> Return </a>
             
                         <a class="dropdown-item"
                            href="' . route('fees.invoice-print', $row->id) . '"

@@ -133,7 +133,8 @@
                                         <div class="row mt-20">
                                             <div class="col-lg-12">
                                                 <div class="primary_input">
-                                                    <label class="primary_input_label" for="price">Course Expiration dates
+                                                    <label class="primary_input_label" for="price">Course Expiration
+                                                        dates
                                                         <span>*</span></label>
                                                     <input
                                                         class="primary_input_field form-control{{ $errors->has('expiration_date') ? ' is-invalid' : '' }}"
@@ -153,18 +154,55 @@
                                         <div class="row mt-20">
                                             <div class="col-lg-12">
                                                 <div class="primary_input">
-                                                    <label class="primary_input_label" for="duration">Course Duration</label>
-                                                    <select name="duration" id="duration" class="primary_select form-control{{ $errors->has('duration') ? ' is-invalid' : '' }}">
+                                                    <label class="primary_input_label" for="duration">Course
+                                                        Duration</label>
+                                                    <select name="duration" id="duration"
+                                                        class="primary_select form-control{{ $errors->has('duration') ? ' is-invalid' : '' }}">
                                                         <option value="">Select Duration</option>
-                                                        <option value="2 weeks" {{ old('duration', $course->duration ?? '') == '2 weeks' ? 'selected' : '' }}>2 Weeks</option>
-                                                        <option value="1 month" {{ old('duration', $course->duration ?? '') == '1 month' ? 'selected' : '' }}>1 Month</option>
-                                                        <option value="2 months" {{ old('duration', $course->duration ?? '') == '2 months' ? 'selected' : '' }}>2 Months</option>
+                                                        <option value="2 weeks"
+                                                            {{ old('duration', $course->duration ?? '') == '2 weeks' ? 'selected' : '' }}>
+                                                            2 Weeks</option>
+                                                        <option value="1 month"
+                                                            {{ old('duration', $course->duration ?? '') == '1 month' ? 'selected' : '' }}>
+                                                            1 Month</option>
+                                                        <option value="2 months"
+                                                            {{ old('duration', $course->duration ?? '') == '2 months' ? 'selected' : '' }}>
+                                                            2 Months</option>
                                                     </select>
                                                     @if ($errors->has('duration'))
                                                         <span class="invalid-feedback" role="alert">
                                                             <strong>{{ $errors->first('duration') }}</strong>
                                                         </span>
                                                     @endif
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {{-- NVQ Payment Available --}}
+                                        <div class="row mt-20">
+                                            <div class="col-lg-12">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label">NVQ Payment Available?</label>
+                                                    <select name="has_nvq_payment" id="has_nvq_payment"
+                                                        class="primary_select form-control">
+                                                        <option value="0">No</option>
+                                                        <option value="1"
+                                                            {{ old('has_nvq_payment', $course->has_nvq_payment ?? '') == 1 ? 'selected' : '' }}>
+                                                            Yes
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {{-- NVQ Amount --}}
+                                        <div class="row mt-20" id="nvq_amount_box" style="display:none;">
+                                            <div class="col-lg-12">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label">NVQ Amount</label>
+                                                    <input type="number" step="0.01" name="nvq_amount"
+                                                        class="primary_input_field form-control"
+                                                        value="{{ old('nvq_amount', $course->nvq_amount ?? '') }}">
                                                 </div>
                                             </div>
                                         </div>
@@ -224,7 +262,8 @@
                                             <th>Courses durations</th>
                                             <th>Start Date</th>
                                             <th>Valid Dates</th>
-                                            
+                                            <th>NVQ Payment</th>
+                                            <th>NVQ Amount</th>
                                             <th>Courses description</th>
                                             <th>@lang('common.action')</th>
                                         </tr>
@@ -237,9 +276,19 @@
                                                 {{-- <td><a href="#">{{ $course->code }}</a></td> --}}
                                                 <td>Rs.{{ number_format($course->price, 2) }}</td>
                                                 <td>{{ $course->duration ?? '-' }}</td>
-                                                <td>{{ $course->created_at ? $course->created_at->format('Y-m-d') : '-' }}</td>
-
+                                                <td>{{ $course->created_at ? $course->created_at->format('Y-m-d') : '-' }}
+                                                </td>
                                                 <td>{{ $course->expiration_date ?? '-' }}</td>
+                                                <td>
+                                                    @if ($course->has_nvq_payment)
+                                                        Yes
+                                                    @else
+                                                        No
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    {{ $course->nvq_amount ? 'Rs.' . number_format($course->nvq_amount, 2) : '-' }}
+                                                </td>
                                                 <td>{{ $course->description ?? '-' }}</td>
                                                 <td valign="top">
                                                     @php
@@ -297,8 +346,6 @@
             </div>
         </div>
     </section>
-
-    
 @endsection
 @include('components.partials.data_table_css')
 @include('components.partials.data_table_js')
@@ -306,7 +353,7 @@
 
 @push('script')
     <script>
-       $('#table_id').DataTable({
+        $('#table_id').DataTable({
             responsive: true,
             dom: 'Bfrtip',
 
@@ -351,6 +398,25 @@
                     next: '<i class="fa-solid fa-angle-right"></i>'
                 }
             }
-        });    </script>
-    
+        });
+
+        $(document).ready(function() {
+
+            function toggleNVQ() {
+                let nvq = $('#has_nvq_payment').val();
+                if (nvq == 1) {
+                    $('#nvq_amount_box').show();
+                } else {
+                    $('#nvq_amount_box').hide();
+                }
+            }
+
+            toggleNVQ();
+
+            $('#has_nvq_payment').on('change', function() {
+                toggleNVQ();
+            });
+
+        });
+    </script>
 @endpush

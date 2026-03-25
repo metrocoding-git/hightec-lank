@@ -24,6 +24,8 @@ class CourseController extends Controller
             'expiration_date' => 'required|numeric',
             'description' => 'nullable|string',
             'duration' => 'nullable|string',
+            'has_nvq_payment' => 'required|boolean',
+            'nvq_amount' => 'nullable|numeric'
         ]);
 
         $data = $request->all();
@@ -41,9 +43,11 @@ class CourseController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'price' => 'required|numeric',
-             'expiration_date' => 'required|numeric',
+            'expiration_date' => 'required|numeric',
             'description' => 'nullable|string',
             'duration' => 'nullable|string',
+            'has_nvq_payment' => 'required|boolean',
+            'nvq_amount' => 'nullable|numeric'
         ]);
 
         $course = Course::findOrFail($id);

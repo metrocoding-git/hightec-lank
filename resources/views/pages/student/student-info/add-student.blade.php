@@ -552,6 +552,7 @@
                                                                         <input
                                                                             class="primary_input_field form-control{{ $errors->has('student_name') ? ' is-invalid' : '' }}"
                                                                             type="text" name="student_name"
+                                                                            id="full_name"
                                                                             value="{{ old('student_name') }}">
 
 
@@ -1103,7 +1104,8 @@
                                                                         <input
                                                                             class="primary_input_field form-control{{ $errors->has('national_id_number') ? ' is-invalid' : '' }}"
                                                                             type="text" name="national_id_number"
-                                                                            value="{{ old('national_id_number') }}">
+                                                                            value="{{ old('national_id_number') }}"
+                                                                            id="national_id_number">
 
 
 
@@ -1566,10 +1568,12 @@
 
 @include('components.partials.date_picker_css_js')
 @section('script')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     {{-- <script src="{{ asset('public/backEnd/js/croppie.js') }}"></script>
     <script src="{{ asset('public/backEnd/js/st_addmision.js') }}"></script> --}}
     <script>
-        // exit admission number adding
+        let previewStudents = [];
+
         document.addEventListener('DOMContentLoaded', function() {
 
             const toggle = document.getElementById('isExistingStudent');
@@ -1679,6 +1683,7 @@
                     }
                     return cleanRow;
                 });
+                previewStudents = jsonDataClean;
 
                 // Collect all NICs from file
                 const nicList = jsonDataClean.map(r => r['nicnumber']).filter(Boolean);
@@ -1735,17 +1740,84 @@
 
                         // Only show import button if no duplicates
                         const confirmBtn = document.getElementById('confirmImport');
+
                         if (hasDuplicate) {
                             confirmBtn.style.display = 'none';
-                            alert('Some NIC numbers already exist! Please fix before importing.');
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Duplicate NIC found',
+                                text: 'Some NIC numbers already exist! Please fix before importing.'
+                            });
                         } else {
-                            confirmBtn.style.display = 'inline-block';
+
+                            fillStudentForm(previewStudents[0]);
+                            $('#importStudentModal').modal('hide');
+                            // Swal.fire({
+                            //     title: 'What do you want to do?',
+                            //     text: 'Import all students or continue manually?',
+                            //     icon: 'question',
+                            //     showCancelButton: true,
+                            //     confirmButtonText: 'Save All',
+                            //     cancelButtonText: 'Continue Manually'
+                            // }).then((result) => {
+
+                            //     if (result.isConfirmed) {
+                            //          confirmBtn.style.display = 'inline-block';
+                            //     } else {
+                            //         fillStudentForm(previewStudents[0]);
+                            //         $('#importStudentModal').modal('hide');
+                            //     }
+
+                            // });
+
                         }
                     });
             };
 
             reader.readAsArrayBuffer(file);
         });
+
+        function fillStudentForm(student) {
+
+            if (!student) return;
+            $('#full_name').val(student.studentfullname || '');
+            $('#permanent_address').val(student.permanentaddress || '');
+            $('#phone_number').val(student.phonenumber || '');
+            $('#guardians_name').val(student.nameofguardian || '');
+            $('#guardians_phone').val(student["guardian'sphonenumber"] || '');
+            $('#national_id_number').val(student.nicnumber || '');
+
+            // DOB convert
+            let dob = student.dateofbirth || '';
+            if (typeof dob === 'number') {
+                const date = XLSX.SSF.parse_date_code(dob);
+                dob = `${date.y}-${String(date.m).padStart(2,'0')}-${String(date.d).padStart(2,'0')}`;
+            }
+            $('#date_of_birth').val(dob);
+
+            console.log('dd', student.district)
+            const cleanDistrict = (student.district || '')
+                .replace(/\n/g, '')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .toLowerCase();
+            $("#district_id option").each(function() {
+
+                const optionText = $(this).text()
+                    .replace(/\n/g, '')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                    .toLowerCase();
+
+                if (optionText === cleanDistrict) {
+                    $(this).prop('selected', true);
+                }
+            });
+
+            $('#district_id').niceSelect('update');
+
+            toastr.success('Student data loaded to form. You can continue editing.');
+        }
 
         $(document).ready(function() {
 
