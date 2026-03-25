@@ -638,7 +638,7 @@ class HomeController extends Controller
                 ->pluck('id'); // gives [12, 18, 25] (latest rows)
 
             // Step 2 — Load only these records with relations
-            $records = StudentCourse::with(['course', 'intake'])
+            $records = StudentCourse::with(['course', 'intake','change_course'])
                 ->whereIn('id', $latest)
                 ->get();
 
@@ -652,6 +652,8 @@ class HomeController extends Controller
                     'intake_name' => $item->intake?->name,
                     'has_nvq_payment' => $item->course->has_nvq_payment,
                     'nvq_amount' => $item->course->nvq_amount,
+                    'change_course' => $item->change_course?->name ?? '',
+
                 ];
             });
 

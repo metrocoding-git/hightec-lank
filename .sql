@@ -121,3 +121,6 @@ ALTER TABLE `invoices_payments` ADD `customer_name` VARCHAR(255) NULL AFTER `not
 
 -- 03/24
 ALTER TABLE `courses` ADD `has_nvq_payment` TINYINT NOT NULL DEFAULT '0' AFTER `duration`, ADD `nvq_amount` DECIMAL(10,2) NULL AFTER `has_nvq_payment`;
+
+
+ALTER TABLE `student_courses` ADD `change_course_id` INT NULL DEFAULT NULL AFTER `intake_id`;

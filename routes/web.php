@@ -138,6 +138,9 @@ Route::controller(AddStudentController::class)->prefix('student/student-info')
         // web.php
         Route::post('/students/check-nic', 'checkNic')->name('students.check-nic')->withoutMiddleware(['csrf', 'permission']);
 
+            Route::POST('/change-course/{id}', 'changeCourse')->name('student.add-intake-with-courses.change-course')->withoutMiddleware(['csrf', 'permission']);
+
+
         Route::get('student-add-intake', 'studentAddIntakeWithCourses')->name('student.add-intake-with-courses.index')->withoutMiddleware(['csrf', 'permission']);
         Route::post('student-add-intake', 'storeStudentIntakeWithCourses')->name('student.add-intake-with-courses.store');
         Route::get('student-add-intake/{id}/edit', 'editStudentIntake')->name('student.add-intake.edit');

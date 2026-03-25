@@ -368,6 +368,9 @@
                                 '<option value="">select course</option>');
                             if (data.success && data.courses.length > 0) {
                                 data.courses.forEach(function(course) {
+                                    let changeCourseText = course.change_course ?
+                                        ' (Changed to: ' + course.change_course + ')' :
+                                        '';
 
                                     $('#course_id').append(
                                         '<option value="' + course
@@ -390,7 +393,7 @@
                                             0) + '"' +
                                         '>' +
                                         course.course_name + ' - ' + course
-                                        .intake_name +
+                                        .intake_name + changeCourseText +
                                         '</option>'
                                     );
 

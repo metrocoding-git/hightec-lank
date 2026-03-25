@@ -473,7 +473,7 @@ class AddStudentController extends Controller
         $courses = Course::all();
 
         // Build query with filters
-        $query = StudentCourse::with(['student', 'intake', 'course', 'branch', 'student.studentCategory'])->orderBy('created_at', 'desc');
+        $query = StudentCourse::with(['student', 'intake', 'course', 'branch', 'student.studentCategory','change_course'])->orderBy('created_at', 'desc');
 
         if ($request->filled('branch_id')) {
             $query->where('branch_id', $request->branch_id);
@@ -779,46 +779,46 @@ class AddStudentController extends Controller
         $request->validate([
             'students_file' => 'required|file|mimes:xlsx,xls',
         ]);
-    
+
         $data = Excel::toArray([], $request->file('students_file'));
         $rows = $data[0]; // first sheet
-    
+
         if (count($rows) < 2) {
             return back()->with('error', 'No data found in the file.');
         }
-    
+
         // First row = headers
         $headers = $rows[0];
-    
+
         // Remaining rows = data
         $dataRows = array_slice($rows, 1);
-    
+
         foreach ($dataRows as $row) {
-    
+
             // Combine header + row to make associative array
             $cleanRow = array_combine($headers, $row);
-    
+
             // Handle DOB: Excel numeric → date
             $dob = $cleanRow['Date of Birth:'] ?? null;
             if (is_numeric($dob)) {
                 $excelDate = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($dob);
                 $dob = $excelDate->format('Y-m-d');
             }
-    
+
             $nic = $cleanRow['NIC Number:'] ?? null;
             if (!$nic) {
                 continue; // skip empty NIC
             }
-    
+
             // Skip if NIC already exists
             if (Student::where('national_id_number', $nic)->exists()) {
                 continue;
             }
-    
+
             $admissionNumber = $this->generateNextAdmissionNumber();
-    
+
             Student::create([
-                'branch_id' => 1, 
+                'branch_id' => 1,
                 'admission_number' => $admissionNumber,
                 'student_name' => $cleanRow['Student Full Name:'] ?? '',
                 'permanent_address' => $cleanRow['Permanent address:'] ?? '',
@@ -833,11 +833,10 @@ class AddStudentController extends Controller
                 'create_user_id' => Auth::id(),
             ]);
         }
-    
-        return redirect()->route('fees.add-invoice')->with('success', 'Student add successfully');
 
+        return redirect()->route('fees.add-invoice')->with('success', 'Student add successfully');
     }
-    
+
 
     public function checkNic(Request $request)
     {
@@ -847,6 +846,39 @@ class AddStudentController extends Controller
         return response()->json([
             'existing' => $existing
         ]);
+    }
+
+
+    public function changeCourse(Request $request, $id)
+    {
+        $request->validate([
+            'course_id' => 'required|exists:courses,id',
+        ]);
+
+        try {
+            $studentCourse = StudentCourse::findOrFail($id);
+
+            // OPTIONAL: Prevent duplicate same course
+            if ($studentCourse->course_id == $request->course_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This course is already assigned.'
+                ]);
+            }
+
+            $studentCourse->change_course_id = $request->course_id;
+            $studentCourse->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Course updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
     }
 
     // public function verificationHistory($id)

@@ -185,7 +185,8 @@
                                                 <th>Nic Number</th>
                                                 <th>Nic Verification</th>
                                                 <th>Intake Name</th>
-                                                <th>Courses</th>
+                                                <th>Course</th>
+                                                <th>Change Course</th>
                                                 <th>Mobile 1</th>
                                                 <th>Mobile 2</th>
                                                 <th>Mobile 1 Verification</th>
@@ -221,13 +222,16 @@
                                                     </td>
                                                     <td>{{ $studentIntake->intake->name ?? '-' }}</td>
                                                     <td>{{ $studentIntake->course->name ?? '-' }}</td>
-                                                    <td class="{{ $studentIntake->student->isVerified('phone_number') ? 'text-success' : '' }}">{{ $studentIntake->student->phone_number }}</td>
-                                                    <td class="{{ $studentIntake->student->isVerified('Mobile Number 2 Verified') ? 'text-success' : '' }}">{{ $studentIntake->student->phone_number_2 ?? '-' }}</td>
+                                                    <td>{{ $studentIntake->change_course->name ?? '-' }}</td>
                                                     <td
                                                         class="{{ $studentIntake->student->isVerified('phone_number') ? 'text-success' : '' }}">
-                                                        {!! $studentIntake->student->isVerified('phone_number')
-                                                            ? '<span class="text-success">YES</span>'
-                                                            : 'NO' !!}
+                                                        {{ $studentIntake->student->phone_number }}</td>
+                                                    <td
+                                                        class="{{ $studentIntake->student->isVerified('Mobile Number 2 Verified') ? 'text-success' : '' }}">
+                                                        {{ $studentIntake->student->phone_number_2 ?? '-' }}</td>
+                                                    <td
+                                                        class="{{ $studentIntake->student->isVerified('phone_number') ? 'text-success' : '' }}">
+                                                        {!! $studentIntake->student->isVerified('phone_number') ? '<span class="text-success">YES</span>' : 'NO' !!}
                                                     </td>
                                                     <td
                                                         class="{{ $studentIntake->student->isVerified('Mobile Number 2 Verified') ? 'text-success' : '' }}">
@@ -237,14 +241,13 @@
                                                     </td>
 
                                                     <td>{{ $studentIntake->branch->name ?? '-' }}</td>
-                                                    <td class="{{ $studentIntake->student->isVerified('permanent_address') ? 'text-success' : '' }}">
+                                                    <td
+                                                        class="{{ $studentIntake->student->isVerified('permanent_address') ? 'text-success' : '' }}">
                                                         {{ $studentIntake->student->permanent_address ?? '-' }}
                                                     </td>
                                                     <td
                                                         class="{{ $studentIntake->student->isVerified('permanent_address') ? 'text-success' : '' }}">
-                                                        {!! $studentIntake->student->isVerified('permanent_address')
-                                                            ? '<span class="text-success">YES</span>'
-                                                            : 'NO' !!}
+                                                        {!! $studentIntake->student->isVerified('permanent_address') ? '<span class="text-success">YES</span>' : 'NO' !!}
                                                     </td>
                                                     <td>{{ $studentIntake->created_at ? date('Y-m-d', strtotime($studentIntake->created_at)) : '-' }}
                                                     </td>
@@ -268,6 +271,11 @@
                                                                     href="#">
                                                                     <span class="text-danger">Delete</span>
                                                                 </a>
+
+                                                                <a class="dropdown-item" href="#"
+                                                                    onclick="openChangeCourseModal({{ $studentIntake->id }}, {{ $studentIntake->course_id }}, {{ $studentIntake->intake_id }})">
+                                                                    <span class="text-primary">Change Course</span>
+                                                                </a>
                                                             @endif
                                                             @if ($studentIntake->status == 'start')
                                                                 <a class="dropdown-item" href="#"
@@ -277,6 +285,11 @@
                                                                 <a class="dropdown-item" href="#"
                                                                     onclick="changeStatus({{ $studentIntake->id }}, 'complete')">
                                                                     <span class="text-success">Complete</span>
+                                                                </a>
+
+                                                                <a class="dropdown-item" href="#"
+                                                                    onclick="openChangeCourseModal({{ $studentIntake->id }}, {{ $studentIntake->course_id }}, {{ $studentIntake->intake_id }})">
+                                                                    <span class="text-primary">Change Course</span>
                                                                 </a>
                                                             @endif
                                                             @if ($studentIntake->status == 'return')
@@ -289,6 +302,7 @@
                                                                     <span class="text-success">Complete</span>
                                                                 </a>
                                                             @endif
+
 
 
                                                         </x-drop-down>
@@ -341,6 +355,7 @@
             </div>
         </div>
     </section>
+
 
     <!-- Add Student Intake Modal -->
     <div class="modal fade admin-query" id="addStudentIntakeModal" role="dialog">
@@ -510,6 +525,42 @@
                         <button type="submit" id="assignBtn" class="primary-btn fix-gr-bg">Assign</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal fade admin-query" id="changeCourseModal" role="dialog">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Change Course</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <div class="modal-body py-0 mt-4">
+                    <form id="changeCourseForm">
+                        @csrf
+                        <input type="hidden" id="change_student_intake_id">
+
+
+
+                        <div class="primary_input">
+                            <label class="primary_input_label">Select Course</label>
+                            <select id="change_course_id" class="primary_select form-control">
+                                <option value="">Select Course</option>
+                            </select>
+                        </div>
+
+
+
+                        <div class="modal-footer">
+                            <button type="button" class="primary-btn tr-bg" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="primary-btn fix-gr-bg">Update</button>
+                        </div>
+
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -1049,5 +1100,70 @@
                 }
             });
         }
+
+
+        function openChangeCourseModal(studentIntakeId, currentCourseId, intakeId) {
+
+            $('#change_student_intake_id').val(studentIntakeId);
+
+            // Load courses based on intake
+            $.ajax({
+                url: '{{ route('get-courses-by-intake', ':id') }}'.replace(':id', intakeId),
+                type: 'GET',
+                success: function(data) {
+
+                    let options = '<option value="">Select Course</option>';
+
+                    if (data.courses && data.courses.length > 0) {
+                        data.courses.forEach(function(course) {
+
+                            let selected = (course.id == currentCourseId) ? 'selected' : '';
+
+                            options += `<option value="${course.id}" ${selected}>
+                                    ${course.name}
+                                </option>`;
+                        });
+                    }
+                    $('#change_course_id').html(options);
+
+                    if ($('#change_course_id').hasClass('primary_select')) {
+                        $('#change_course_id').niceSelect('update');
+                    }
+
+                    $('#changeCourseModal').modal('show');
+                }
+            });
+        }
+
+        $('#changeCourseForm').on('submit', function(e) {
+            e.preventDefault();
+
+            let id = $('#change_student_intake_id').val();
+            let course_id = $('#change_course_id').val();
+
+            $.ajax({
+                url: '{{ route('student.add-intake-with-courses.change-course', ':id') }}'.replace(':id',
+                    id),
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    course_id: course_id
+                },
+                success: function(response) {
+
+                    if (response.success) {
+                        toastr.success('Course updated successfully!');
+                        $('#changeCourseModal').modal('hide');
+
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        toastr.error(response.message || 'Failed to update');
+                    }
+                },
+                error: function() {
+                    toastr.error('Something went wrong!');
+                }
+            });
+        });
     </script>
 @endpush
