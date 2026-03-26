@@ -141,37 +141,49 @@ class ReportController extends Controller
 
         // If user selects date range
         if ($request->date_range) {
-            $dates = explode(' to ', $request->date_range);
-            $from = $dates[0] ?? $from;
-            $to = $dates[1] ?? $to;
+
+            if (strpos($request->date_range, ' to ') !== false) {
+                // Range
+                $dates = explode(' to ', $request->date_range);
+                $from = $dates[0] ?? null;
+                $to = $dates[1] ?? null;
+            } else {
+                // Single date
+                $from = $request->date_range;
+                $to = $request->date_range;
+            }
         }
 
+        $subQuery = DB::table('student_courses')
+            ->select(DB::raw('MIN(id) as id'))
+            ->groupBy('student_id', 'course_id');
+
         $query = DB::table('student_courses')
-            ->join('intakes', 'student_courses.intake_id', '=', 'intakes.id') // ✅ Correct intake for student
+            ->joinSub($subQuery, 'sc_min', function ($join) {
+                $join->on('student_courses.id', '=', 'sc_min.id');
+            })
+
+            ->join('intakes', 'student_courses.intake_id', '=', 'intakes.id')
             ->join('courses', 'student_courses.course_id', '=', 'courses.id')
             ->join('paid_courses', function ($join) {
                 $join->on('student_courses.course_id', '=', 'paid_courses.course_id');
             })
-            // ->join('fee_invoices', function ($join) {
-            //     $join->on('paid_courses.invoice_id', '=', 'fee_invoices.id')
-            //         ->whereColumn('fee_invoices.student_id', 'student_courses.student_id')
-            //         ->where('fee_invoices.payment_status', 'full'); 
-            // })
             ->join('fee_invoices', function ($join) use ($request) {
                 $join->on('paid_courses.invoice_id', '=', 'fee_invoices.id')
                     ->whereColumn('fee_invoices.student_id', 'student_courses.student_id');
 
                 if ($request->payment_status) {
                     $join->where('fee_invoices.payment_status', $request->payment_status);
-                }else {
+                } else {
                     $join->whereIn('fee_invoices.payment_status', ['full', 'partial']);
                 }
             })
             ->join('branches', 'fee_invoices.branch_id', '=', 'branches.id')
             ->join('students', 'student_courses.student_id', '=', 'students.id')
             ->join('student_categories', 'students.student_category_id', '=', 'student_categories.id')
-            ->whereBetween('intakes.start_date', [$from, $to]) 
-            ->whereIn('student_courses.status', ['start', 'Complete']); 
+            ->whereBetween('intakes.start_date', [$from, $to])
+            ->whereIn('student_courses.status', ['start', 'Complete'])
+            ->where('fee_invoices.invoice_type', 'course');
 
         // Optional branch filter
         if ($request->branch_id) {

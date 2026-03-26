@@ -138,10 +138,11 @@ Route::controller(AddStudentController::class)->prefix('student/student-info')
         // web.php
         Route::post('/students/check-nic', 'checkNic')->name('students.check-nic')->withoutMiddleware(['csrf', 'permission']);
 
-            Route::POST('/change-course/{id}', 'changeCourse')->name('student.add-intake-with-courses.change-course')->withoutMiddleware(['csrf', 'permission']);
+        Route::POST('/change-course/{id}', 'changeCourse')->name('student.add-intake-with-courses.change-course')->withoutMiddleware(['csrf', 'permission']);
 
 
         Route::get('student-add-intake', 'studentAddIntakeWithCourses')->name('student.add-intake-with-courses.index')->withoutMiddleware(['csrf', 'permission']);
+        Route::get('student-intake-data', 'studentAddIntakeWithCoursesData')->name('student.add-intake-with-courses.data')->withoutMiddleware(['csrf', 'permission']);
         Route::post('student-add-intake', 'storeStudentIntakeWithCourses')->name('student.add-intake-with-courses.store');
         Route::get('student-add-intake/{id}/edit', 'editStudentIntake')->name('student.add-intake.edit');
         Route::put('student-add-intake/{id}', 'updateStudentIntake')->name('student.add-intake.update');
@@ -280,13 +281,13 @@ Route::controller(LoginController::class)->group(function () {
 
 
 Route::controller(FeesGroupController::class)->middleware(['permission'])->group(function () {
-    Route::get('student/fees/fee-group', 'index')->name('fee-group'); 
-    Route::post('student/fees/fee-group-create', 'store')->name('fee-group-create'); 
-    Route::get('student/fees/fee-group-edit/{id}', 'edit')->name('fee-group-edit'); 
-    Route::put('student/fees/fee-group-update/{id}', 'update')->name('fee-group-update'); 
+    Route::get('student/fees/fee-group', 'index')->name('fee-group');
+    Route::post('student/fees/fee-group-create', 'store')->name('fee-group-create');
+    Route::get('student/fees/fee-group-edit/{id}', 'edit')->name('fee-group-edit');
+    Route::put('student/fees/fee-group-update/{id}', 'update')->name('fee-group-update');
     Route::delete('student/fees/fee-group-delete/{id}', 'delete')->name('fee-group-delete');
 
-    Route::get('student/fees/course-paid', 'coursePaidView')->name('fees.course-paid'); 
+    Route::get('student/fees/course-paid', 'coursePaidView')->name('fees.course-paid');
 
 
     Route::post('student/fees/course-payment-store', 'storeCoursePayment')->name('fees.course-payment.store');

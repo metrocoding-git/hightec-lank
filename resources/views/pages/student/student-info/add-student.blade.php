@@ -1714,7 +1714,8 @@
                             if (typeof dob === 'number') {
                                 const date = XLSX.SSF.parse_date_code(dob);
                                 dob =
-                                    `${date.d.toString().padStart(2,'0')}/${date.m.toString().padStart(2,'0')}/${date.y}`;
+                                    `${date.y}-${date.m.toString().padStart(2,'0')}-${date.d.toString().padStart(2,'0')}`;
+
                             }
 
                             const isDuplicate = existingNics.includes(row['nicnumber']);
@@ -1723,17 +1724,36 @@
                             const div = document.createElement('div');
                             div.classList.add('mb-2', 'border', 'p-2', 'rounded');
                             div.innerHTML = `
-                    <strong>Student :</strong> ${row['studentfullname'] || ''} 
-                    ${isDuplicate ? '<span class="text-danger">(NIC exists!)</span>' : ''}<br>
-                    <strong>DOB:</strong> ${dob}<br>
-                    <strong>Phone:</strong> ${row['phonenumber'] || ''}<br>
-                    <strong>Permanent Address:</strong> ${row['permanentaddress'] || ''}<br>
-                    <strong>Guardian Name:</strong> ${row['nameofguardian'] || ''}<br>
-                    <strong>Guardian Phone:</strong> ${row['guardiansphonenumber'] || ''}<br>
-                    <strong>NIC Number:</strong> ${row['nicnumber'] || ''}<br>
-                    <strong>District:</strong> ${row['district'] || ''}<br>
-                `;
+                                <strong>Student :</strong> ${row['studentfullname'] || ''} 
+                                ${isDuplicate ? '<span class="text-danger">(NIC exists!)</span>' : ''}<br>
+                                <strong>DOB:</strong> ${dob}<br>
+                                <strong>Phone:</strong> ${row['phonenumber'] || ''}<br>
+                                <strong>Permanent Address:</strong> ${row['permanentaddress'] || ''}<br>
+                                <strong>Guardian Name:</strong> ${row['nameofguardian'] || ''}<br>
+                                <strong>Guardian Phone:</strong> ${row['guardiansphonenumber'] || ''}<br>
+                                <strong>NIC Number:</strong> ${row['nicnumber'] || ''}<br>
+                                <strong>District:</strong> ${row['district'] || ''}<br>
+                            `;
                             previewContainer.appendChild(div);
+                            if (dob) {
+                                let birthDate = new Date(dob);
+                                let today = new Date();
+                                let years = today.getFullYear() - birthDate.getFullYear();
+                                let months = today.getMonth() - birthDate.getMonth();
+
+                                if (months < 0 || (months === 0 && today.getDate() < birthDate
+                                        .getDate())) {
+                                    years--;
+                                    months += 12;
+                                }
+
+                                $('#age_display').val(years + ' years, ' + months + ' months');
+                                $('#stu_age_hidden').val(years); // Set the hidden input for stu_age
+                            } else {
+                                $('#age_display').val('');
+                                $('#stu_age_hidden').val('');
+                            }
+
                         });
 
                         previewContainer.style.display = 'block';

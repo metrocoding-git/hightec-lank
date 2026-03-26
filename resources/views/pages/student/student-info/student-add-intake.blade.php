@@ -48,8 +48,7 @@
             <div class="row mt-40">
                 <div class="col-lg-12">
                     <div class="white-box filter_card">
-                        <form class="form-horizontal" action="{{ route('student.add-intake-with-courses.index') }}"
-                            method="GET">
+                        <form class="form-horizontal">
                             @csrf
                             <div class="row">
                                 <div class="col-lg-8 col-md-6 col-sm-6">
@@ -150,7 +149,7 @@
                                 </div>
 
                                 <div class="col-lg-12 mt-20 text-right">
-                                    <button type="submit" class="primary-btn small fix-gr-bg">
+                                    <button type="submit" id="filterBtn" class="primary-btn small fix-gr-bg">
                                         <span class="ti-search pr-2"></span> Search
                                     </button>
                                 </div>
@@ -200,7 +199,7 @@
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
+                                        {{-- <tbody>
                                             @foreach ($studentIntakes as $key => $studentIntake)
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
@@ -345,7 +344,7 @@
                                                 </div>
                                             @endforeach
 
-                                        </tbody>
+                                        </tbody> --}}
                                     </table>
                                 </x-table>
                             </div>
@@ -571,9 +570,87 @@
 @include('components.partials.data_table_css')
 @push('script')
     <script>
-        $('#table_id').DataTable({
+        // store DataTable in a variable
+        var table = $('#table_id').DataTable({
             responsive: true,
             dom: 'Bfrtip',
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: "{{ route('student.add-intake-with-courses.data') }}",
+                data: function(d) {
+                    d.branch_id = $('#search_branch_id').val();
+                    d.intake_id = $('#search_intake_id').val();
+                    d.course_id = $('#search_course_id').val();
+                    d.status = $('#search_status').val();
+                }
+            },
+            columns: [{
+                    data: 'id'
+                },
+                {
+                    data: 'student_name'
+                },
+                {
+                    data: 'name_verified'
+                },
+                {
+                    data: 'category'
+                },
+                {
+                    data: 'admission_no'
+                },
+                {
+                    data: 'nic'
+                },
+                {
+                    data: 'nic_verified'
+                },
+                {
+                    data: 'intake'
+                },
+                {
+                    data: 'course'
+                },
+                {
+                    data: 'change_course'
+                },
+                {
+                    data: 'mobile1'
+                },
+                {
+                    data: 'mobile2'
+                },
+                {
+                    data: 'mobile1_verified'
+                },
+                {
+                    data: 'mobile2_verified'
+                },
+                {
+                    data: 'branch'
+                },
+                {
+                    data: 'address'
+                },
+                {
+                    data: 'address_verified'
+                },
+                {
+                    data: 'enroll_date'
+                },
+                {
+                    data: 'status'
+                },
+                {
+                    data: 'note'
+                },
+                {
+                    data: 'actions',
+                    orderable: false,
+                    searchable: false
+                }
+            ],
             buttons: [{
                     extend: 'copyHtml5',
                     text: '<i class="fa-regular fa-copy"></i>',
@@ -618,10 +695,12 @@
                 }
             }
         });
-    </script>
+        $('#filterBtn').on('click', function(e) {
+            e.preventDefault(); // prevent page reload
+            table.ajax.reload(); // reload DataTable with current filter values
+        });
 
 
-    <script>
         $(document).ready(function() {
             if ({{ count($branches) }} == 1) {
                 $('#search_branch_id').trigger('change');
@@ -1106,6 +1185,15 @@
 
             $('#change_student_intake_id').val(studentIntakeId);
 
+            const courseMap = {
+                34: 43,
+                43: 34,
+                33: 44,
+                44: 33,
+                35: 45,
+                45: 35
+            };
+
             // Load courses based on intake
             $.ajax({
                 url: '{{ route('get-courses-by-intake', ':id') }}'.replace(':id', intakeId),
@@ -1115,13 +1203,20 @@
                     let options = '<option value="">Select Course</option>';
 
                     if (data.courses && data.courses.length > 0) {
+
+                        const allowedCourseId = courseMap[currentCourseId];
+
                         data.courses.forEach(function(course) {
 
-                            let selected = (course.id == currentCourseId) ? 'selected' : '';
+                            // Only allow mapped course OR current course
+                            if (course.id == currentCourseId || course.id == allowedCourseId) {
 
-                            options += `<option value="${course.id}" ${selected}>
-                                    ${course.name}
-                                </option>`;
+                                let selected = (course.id == currentCourseId) ? 'selected' : '';
+
+                                options += `<option value="${course.id}" ${selected}>
+                                            ${course.name}
+                                        </option>`;
+                            }
                         });
                     }
                     $('#change_course_id').html(options);

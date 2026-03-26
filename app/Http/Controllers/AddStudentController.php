@@ -473,31 +473,31 @@ class AddStudentController extends Controller
         $courses = Course::all();
 
         // Build query with filters
-        $query = StudentCourse::with(['student', 'intake', 'course', 'branch', 'student.studentCategory','change_course'])->orderBy('created_at', 'desc');
+        // $query = StudentCourse::with(['student', 'intake', 'course', 'branch', 'student.studentCategory', 'change_course'])->orderBy('created_at', 'desc');
 
-        if ($request->filled('branch_id')) {
-            $query->where('branch_id', $request->branch_id);
-        }
+        // if ($request->filled('branch_id')) {
+        //     $query->where('branch_id', $request->branch_id);
+        // }
 
-        if ($request->filled('intake_id')) {
-            $query->where('intake_id', $request->intake_id);
-        }
+        // if ($request->filled('intake_id')) {
+        //     $query->where('intake_id', $request->intake_id);
+        // }
 
-        if ($request->filled('course_id')) {
-            $query->where('course_id', $request->course_id);
-        }
+        // if ($request->filled('course_id')) {
+        //     $query->where('course_id', $request->course_id);
+        // }
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
+        // if ($request->filled('status')) {
+        //     $query->where('status', $request->status);
+        // }
 
-        $studentIntakes = $query->get();
+        // $studentIntakes = $query->get();
 
-        // Pass selected values to the view so they stay after search
-        $search_branch_id = $request->branch_id;
-        $search_intake_id = $request->intake_id;
-        $search_course_id = $request->course_id;
-        $search_status    = $request->status;
+        // // Pass selected values to the view so they stay after search
+        // $search_branch_id = $request->branch_id;
+        // $search_intake_id = $request->intake_id;
+        // $search_course_id = $request->course_id;
+        // $search_status    = $request->status;
 
 
         return view('pages.student.student-info.student-add-intake', compact(
@@ -505,13 +505,191 @@ class AddStudentController extends Controller
             'branches',
             'intakes',
             'courses',
-            'studentIntakes',
-            'search_branch_id',
-            'search_intake_id',
-            'search_course_id',
-            'search_status'
+            // 'studentIntakes',
+            // 'search_branch_id',
+            // 'search_intake_id',
+            // 'search_course_id',
+            // 'search_status'
         ));
     }
+
+    public function studentAddIntakeWithCoursesData(Request $request)
+    {
+        $query = StudentCourse::with([
+            'student',
+            'intake',
+            'course',
+            'branch',
+            'student.studentCategory',
+            'change_course'
+        ]);
+
+
+        // Filters
+        if ($request->branch_id) {
+            $query->where('branch_id', $request->branch_id);
+        }
+
+        if ($request->intake_id) {
+            $query->where('intake_id', $request->intake_id);
+        }
+
+        if ($request->course_id) {
+            $query->where('course_id', $request->course_id);
+        }
+
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+        if ($search = $request->input('search.value')) {
+            $query->whereHas('student', function ($q) use ($search) {
+                $q->where('student_name', 'like', "%{$search}%")
+                    ->orWhere('admission_number', 'like', "%{$search}%")
+                    ->orWhere('national_id_number', 'like', "%{$search}%")
+                    ->orWhere('phone_number', 'like', "%{$search}%")
+                    ->orWhere('phone_number_2', 'like', "%{$search}%");
+            })
+                ->orWhereHas('course', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                })
+                ->orWhereHas('intake', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                })
+                ->orWhereHas('branch', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                });
+        }
+
+
+        return datatables()->of($query)
+
+            ->addColumn('student_name', fn($row) => $row->student->student_name ?? '-')
+
+            ->addColumn('name_verified', function ($row) {
+                return $row->student->isVerified('Full Name Verified')
+                    ? '<span class="text-success">YES</span>' : 'NO';
+            })
+
+            ->addColumn('category', fn($row) => $row->student->studentCategory->category_name ?? '-')
+
+            ->addColumn('admission_no', fn($row) => $row->student->admission_number)
+
+            ->addColumn('nic', fn($row) => $row->student->national_id_number)
+
+            ->addColumn('nic_verified', function ($row) {
+                return $row->student->isVerified('NIC Verified')
+                    ? '<span class="text-success">YES</span>' : 'NO';
+            })
+
+            ->addColumn('intake', fn($row) => $row->intake->name ?? '-')
+
+            ->addColumn('course', fn($row) => $row->course->name ?? '-')
+
+            ->addColumn('change_course', fn($row) => $row->change_course->name ?? '-')
+
+            ->addColumn('mobile1', fn($row) => $row->student->phone_number)
+
+            ->addColumn('mobile2', fn($row) => $row->student->phone_number_2 ?? '-')
+
+            ->addColumn('mobile1_verified', function ($row) {
+                return $row->student->isVerified('phone_number')
+                    ? '<span class="text-success">YES</span>' : 'NO';
+            })
+
+            ->addColumn('mobile2_verified', function ($row) {
+                return $row->student->isVerified('Mobile Number 2 Verified')
+                    ? '<span class="text-success">YES</span>' : 'NO';
+            })
+
+            ->addColumn('branch', fn($row) => $row->branch->name ?? '-')
+
+            ->addColumn('address', fn($row) => $row->student->permanent_address ?? '-')
+
+            ->addColumn('address_verified', function ($row) {
+                return $row->student->isVerified('permanent_address')
+                    ? '<span class="text-success">YES</span>' : 'NO';
+            })
+
+            ->addColumn('enroll_date', fn($row) => $row->created_at ? $row->created_at->format('Y-m-d') : '-')
+
+            ->addColumn('status', function ($row) {
+                return '<span class="badge badge-info">' . ucfirst($row->status) . '</span>';
+            })
+
+            ->addColumn('note', fn($row) => $row->notes)
+
+            ->addColumn('actions', function ($row) {
+
+                $buttons = '<div class="dropdown">
+                <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-toggle="dropdown">
+                    Action
+                </button>
+                <div class="dropdown-menu">';
+
+                // PENDING
+                if ($row->status == 'pending') {
+                    $buttons .= '
+                    <a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'start\')">
+                        <span class="text-info">Start</span>
+                    </a>
+
+                    <a class="dropdown-item text-danger" href="#" onclick="deleteIntake(' . $row->id . ')">
+                        Delete
+                    </a>
+
+                    <a class="dropdown-item" href="#"
+                        onclick="openChangeCourseModal(' . $row->id . ', ' . $row->course_id . ', ' . $row->intake_id . ')">
+                        <span class="text-primary">Change Course</span>
+                    </a>';
+                }
+
+                // START
+                if ($row->status == 'start') {
+                    $buttons .= '
+                    <a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'return\')">
+                        <span class="text-warning">Return</span>
+                    </a>
+
+                    <a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'complete\')">
+                        <span class="text-success">Complete</span>
+                    </a>
+
+                    <a class="dropdown-item" href="#"
+                        onclick="openChangeCourseModal(' . $row->id . ', ' . $row->course_id . ', ' . $row->intake_id . ')">
+                        <span class="text-primary">Change Course</span>
+                    </a>';
+                }
+
+                // RETURN
+                if ($row->status == 'return') {
+                    $buttons .= '
+                    <a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'start\')">
+                        <span class="text-info">Restart</span>
+                    </a>
+
+                    <a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'complete\')">
+                        <span class="text-success">Complete</span>
+                    </a>';
+                }
+
+                $buttons .= '</div></div>';
+
+                return $buttons;
+            })
+
+            ->rawColumns([
+                'name_verified',
+                'nic_verified',
+                'mobile1_verified',
+                'mobile2_verified',
+                'address_verified',
+                'status',
+                'actions'
+            ])
+
+            ->make(true);
+    }
+
 
     public function storeStudentIntakeWithCourses(Request $request)
     {

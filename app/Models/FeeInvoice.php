@@ -23,7 +23,8 @@ class FeeInvoice extends Model
         'single_invoice',
         'clone_amount',
         'main_invoice_number',
-        'create_user_id'
+        'create_user_id',
+        'invoice_type'
     ];
 
     protected $casts = [
