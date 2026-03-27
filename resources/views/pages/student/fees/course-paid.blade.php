@@ -425,6 +425,7 @@
                 let coursePrice = parseFloat(selectedOption.data('price')) || 0;
 
                 if (isNVQMode) {
+
                     if (!hasNVQ) {
                         // toastr.warning('This course has no NVQ payment');
                         $(this).val('').niceSelect('update');
@@ -480,16 +481,23 @@
                         type: 'GET',
                         success: function(data) {
                             if (data.success) {
-                                if(hasNVQ){
+
+                                console.log(data)
+                                if(isNVQMode){
+
                                     if(data.nvq_amount){
                                         coursePrice = parseFloat(data.nvq_amount);
                                     }
                                 }else{
+
                                     if(data.course_amount){
+
                                         coursePrice =  parseFloat(data.course_amount);
 
                                     }
                                 }
+
+
                                 addCourseRow(courseId, courseName, coursePrice);
                                 let historyTable = $('#paymentHistoryTable tbody');
                                 historyTable.empty();
