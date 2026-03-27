@@ -134,6 +134,7 @@ class FeesGroupController extends Controller
             $create_user_id = Auth::check() ? Auth::id() : null;
 
             $existingInvoice = Fee_invoices::join('paid_courses', 'fee_invoices.id', '=', 'paid_courses.invoice_id')
+                ->where('fee_invoices.payment_status', '!=', 'returned')
                 ->where('fee_invoices.student_id', $request->student_id)
                 ->where('fee_invoices.invoice_type', $paymentType)
                 ->where('paid_courses.course_id', $request->course_id)
@@ -393,15 +394,17 @@ class FeesGroupController extends Controller
             return response()->json([
                 'success' => true,
 
-                // 🔥 Combined history (both types)
                 'history' => $payments,
 
-                // 🔥 Separate totals
                 'course_total_paid' => $courseTotalPaid,
                 'course_due_amount' => $courseDue,
+                'course_amount' => $coursePrice,
+
 
                 'nvq_total_paid' => $nvqTotalPaid,
                 'nvq_due_amount' => $nvqDue,
+                'nvq_amount' => $nvqPrice,
+
             ]);
         } catch (\Exception $e) {
             Log::error('Error fetching course payment history: ' . $e->getMessage());
@@ -435,6 +438,6 @@ class FeesGroupController extends Controller
 
         $next = ((int) $maxNumber) + 1;
 
-        return $prefix . '-' . str_pad($next, 4, '0', STR_PAD_LEFT);
+        return $prefix . '-' . str_pad($next, 6, '0', STR_PAD_LEFT);
     }
 }

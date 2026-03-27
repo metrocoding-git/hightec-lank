@@ -255,7 +255,7 @@
                                                         <th>Date</th>
                                                         <th>Paid Amount</th>
                                                         <th>Payment Method</th>
-                                                        {{-- <th>Status</th> --}}
+                                                        <th>Status</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -470,7 +470,7 @@
                     return; // Don't re-add the same course
                 }
 
-                addCourseRow(courseId, courseName, coursePrice);
+
                 addedCourseId = courseId;
 
                 if (studentId && courseId) {
@@ -480,6 +480,17 @@
                         type: 'GET',
                         success: function(data) {
                             if (data.success) {
+                                if(hasNVQ){
+                                    if(data.nvq_amount){
+                                        coursePrice = parseFloat(data.nvq_amount);
+                                    }
+                                }else{
+                                    if(data.course_amount){
+                                        coursePrice =  parseFloat(data.course_amount);
+
+                                    }
+                                }
+                                addCourseRow(courseId, courseName, coursePrice);
                                 let historyTable = $('#paymentHistoryTable tbody');
                                 historyTable.empty();
                                 $('.allCourseDetails tr').removeClass('first-payment');
