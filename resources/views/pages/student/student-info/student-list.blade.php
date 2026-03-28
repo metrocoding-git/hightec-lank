@@ -271,12 +271,13 @@
 @push('script')
     <script>
         $('#table_id').DataTable({
-            responsive: true,
             processing: true,
             serverSide: true,
 
+            scrollX: true,
+
             dom: "<'d-flex justify-content-between align-items-center mb-2'<'me-2'l><'mx-auto'f><'ms-2'B>>" +
-                "<'row'<'col-sm-12'tr>>" + 
+                "<'row'<'col-sm-12'tr>>" +
                 "<'d-flex justify-content-between align-items-center mt-2'<'mb-0 col-4'i><'mb-0 col-8'p>>",
 
             lengthChange: true,
@@ -314,6 +315,7 @@
                     columns: ':gt(0)'
                 }
             ],
+
 
             paging: true,
             searching: true,
@@ -476,9 +478,9 @@
                                <td>
                                     ${row.signature_path 
                                         ? `<a href="/storage/${row.signature_path}" target="_blank">
-                                                                                    <img src="/storage/${row.signature_path}" 
-                                                                                        style="width:80px; border:1px solid #ccc; padding:2px; cursor:pointer;">
-                                                                            </a>`
+                                                                                        <img src="/storage/${row.signature_path}" 
+                                                                                            style="width:80px; border:1px solid #ccc; padding:2px; cursor:pointer;">
+                                                                                </a>`
                                         : '-'
                                     }
                                 </td>

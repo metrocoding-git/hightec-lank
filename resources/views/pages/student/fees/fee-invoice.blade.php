@@ -853,7 +853,7 @@
 @push('script')
     <script>
         $('#table_id').DataTable({
-            responsive: true,
+            scrollX: true,
             serverSide: true,
 
             dom: "<'d-flex justify-content-between align-items-center mb-2'<'me-2'l><'mx-auto'f><'ms-2'B>>" +

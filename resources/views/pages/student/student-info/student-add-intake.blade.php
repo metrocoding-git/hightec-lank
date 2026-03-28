@@ -572,10 +572,15 @@
     <script>
         // store DataTable in a variable
         var table = $('#table_id').DataTable({
-            responsive: true,
-            dom: 'Bfrtip',
+            scrollX: true,
+            dom: 'Blfrtip',
             processing: true,
             serverSide: true,
+            pageLength: 25,
+lengthMenu: [
+    [25, 50, 100, -1],
+    [25, 50, 100, "All"]
+],
             ajax: {
                 url: "{{ route('student.add-intake-with-courses.data') }}",
                 data: function(d) {
@@ -695,6 +700,8 @@
                 }
             }
         });
+
+
         $('#filterBtn').on('click', function(e) {
             e.preventDefault(); // prevent page reload
             table.ajax.reload(); // reload DataTable with current filter values
