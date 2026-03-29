@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Student;
+use App\Models\FeeInvoice;
 use App\Models\BloodGroup;
 use App\Models\Branch;
 use App\Models\Course;
 use App\Models\District;
 use App\Models\Gender;
 use App\Models\Intake;
-use App\Models\Student;
 use App\Models\StudentCategory;
 use App\Models\StudentCourse;
 use App\Models\StudentVerification;
@@ -22,9 +23,10 @@ use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 
-class AddStudentController extends Controller
+class StudentController extends Controller
 {
-    public function index()
+    // ================= AddStudentController methods =================
+      public function index()
     {
         $branches = Auth::user()->branches;
         $genders = Gender::all();
@@ -1059,19 +1061,21 @@ class AddStudentController extends Controller
         }
     }
 
-    // public function verificationHistory($id)
-    // {
-    //     $verifications = StudentVerification::with('user')
-    //         ->where('student_id', $id)
-    //         ->orderBy('created_at', 'desc')
-    //         ->get();
 
-    //     return response()->json($verifications);
-    // }
+    // ================= StudentViewController methods =================
+    public function studentView($id)
+    {
+        $student = Student::with(['branch', 'gender', 'studentCategory', 'bloodGroup', 'courses', 'intakes','courseWithIntake'])->findOrFail($id);
 
+        // Fetch payment history
+        $payments = FeeInvoice::where('student_id', $id)->with(['invoice_item.fee_type'])->get();
 
+        // Fetch detailed course information for the student
+        $courses = $student->courses()->with(['intakes'])->get();
 
-    /**
-     * Update the status of a student intake enrollment
-     */
+        // Fetch detailed intake information for the student
+        $intakes = $student->intakes()->with(['branch', 'courses'])->get();
+
+        return view('pages.student.student-info.student-view', compact('student', 'payments', 'courses', 'intakes'));
+    }
 }
