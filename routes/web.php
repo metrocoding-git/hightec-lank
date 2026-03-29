@@ -433,27 +433,37 @@ Route::controller(ReturnFeeController::class)->middleware(['permission'])->group
     Route::post('/student/fees/return-fees', 'store')->name('return-fees.store');
 });
 
-// Role Management Routes
-Route::controller(RoleController::class)->prefix('role-management')->middleware(['permission'])->group(function () {
-    Route::get('roles', 'index')->name('roles.index');
-    Route::post('roles', 'store')->name('roles.store');
-    Route::put('roles/{id}', 'update')->name('roles.update');
-    Route::delete('roles/{id}', 'destroy')->name('roles.destroy');
-    Route::get('roles/{id}/edit', 'edit')->name('roles.edit');
-    Route::get('roles/{id}/grant-permissions', 'grantPermission')->name('roles.grantPermission');
-    Route::post('roles/{id}/save-permissions', 'savePermissions')->name('roles.savePermissions');
-});
 
-// User Management Routes
-Route::controller(UserController::class)->prefix('role-management')->middleware(['permission'])->group(function () {
-    Route::get('create-user', 'createUser')->name('role-management.create-user');
-    Route::post('store-user', 'storeUser')->name('role-management.store-user');
-    Route::get('user-list', 'userList')->name('role-management.user-list')->withoutMiddleware(['csrf', 'permission']);
-    Route::get('user-details/{id}', 'getUserDetails')->name('role-management.user-details')->withoutMiddleware(['csrf', 'permission']);
-    Route::put('user-update/{id}', 'updateUser')->name('role-management.user-update')->withoutMiddleware(['csrf', 'permission']);
-    Route::post('user-change-password/{id}', 'changePassword')->name('role-management.user-change-password')->withoutMiddleware(['csrf', 'permission']);
-    Route::get('get-student-details/{id}', 'getStudentDetails')->name('role-management.get-student-details');
-});
+// ================= ROLE & USER MANAGEMENT ROUTES =================
+
+// Role Management
+Route::controller(RoleController::class)
+    ->prefix('role-management')
+    ->middleware(['permission'])
+    ->group(function () {
+        Route::get('roles', 'index')->name('roles.index');
+        Route::post('roles', 'store')->name('roles.store');
+        Route::put('roles/{id}', 'update')->name('roles.update');
+        Route::delete('roles/{id}', 'destroy')->name('roles.destroy');
+        Route::get('roles/{id}/edit', 'edit')->name('roles.edit');
+        Route::get('roles/{id}/grant-permissions', 'grantPermission')->name('roles.grantPermission');
+        Route::post('roles/{id}/save-permissions', 'savePermissions')->name('roles.savePermissions');
+    });
+
+// User Management
+Route::controller(UserController::class)
+    ->prefix('role-management')
+    ->middleware(['permission'])
+    ->group(function () {
+        Route::get('create-user', 'createUser')->name('role-management.create-user');
+        Route::post('store-user', 'storeUser')->name('role-management.store-user');
+        Route::get('user-list', 'userList')->name('role-management.user-list')->withoutMiddleware(['csrf', 'permission']);
+        Route::get('user-details/{id}', 'getUserDetails')->name('role-management.user-details')->withoutMiddleware(['csrf', 'permission']);
+        Route::put('user-update/{id}', 'updateUser')->name('role-management.user-update')->withoutMiddleware(['csrf', 'permission']);
+        Route::post('user-change-password/{id}', 'changePassword')->name('role-management.user-change-password')->withoutMiddleware(['csrf', 'permission']);
+        Route::get('get-student-details/{id}', 'getStudentDetails')->name('role-management.get-student-details');
+    });
+// ================= END ROLE & USER MANAGEMENT ROUTES =================
 
 // Reports Routes
 Route::controller(ReportController::class)->prefix('reports')
