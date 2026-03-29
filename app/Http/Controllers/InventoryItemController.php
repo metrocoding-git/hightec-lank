@@ -39,15 +39,6 @@ class InventoryItemController extends Controller
         $inventoryHistory->load('item.category');
         return response()->json($inventoryHistory);
     }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
     /**
      * Store a newly created resource in storage.
      */

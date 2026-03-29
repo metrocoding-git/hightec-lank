@@ -382,6 +382,7 @@ Route::controller(CategoryController::class)->middleware(['permission'])->group(
     Route::delete('account/inventory/item-category/delete/{id}', 'destroy')->name('delete-item-category');
 });
 
+// Inventory Item Management
 Route::controller(InventoryItemController::class)->middleware(['permission'])->group(function () {
     Route::get('account/inventory/item-list', 'index')->name('item-list');
     Route::get('account/inventory/item-view/{id}', 'view')->name('item-view');
@@ -391,7 +392,7 @@ Route::controller(InventoryItemController::class)->middleware(['permission'])->g
     Route::put('account/inventory/item-update/{id}', 'update')->name('item-update');
     Route::delete('account/inventory/item-delete/{id}', 'destroy')->name('item-delete');
 });
-
+// Inventory Supplier Management
 Route::controller(SupplierController::class)->middleware(['permission'])->group(function () {
     Route::get('account/inventory/supplier', 'index')->name('supplier');
     Route::post('account/inventory/supplier-store', 'store')->name('supplier-store');
@@ -399,6 +400,7 @@ Route::controller(SupplierController::class)->middleware(['permission'])->group(
     Route::put('account/inventory/supplier-update/{id}', 'update')->name('supplier-update');
     Route::delete('account/inventory/supplier-delete/{id}', 'destroy')->name('supplier-delete');
 });
+
 Route::controller(ContentTypeController::class)->middleware(['permission'])->group(function () {
     Route::get('administration/download-center/content-type', 'index')->name('content-type');
     Route::post('account/content-type-store', 'store')->name('content-type-store');
@@ -427,7 +429,6 @@ Route::controller(ContentController::class)->middleware(['permission'])->group(f
 });
 
 // Return Fee Routes
-//return-fees.store
 
 Route::controller(ReturnFeeController::class)->middleware(['permission'])->group(function () {
     Route::post('/student/fees/return-fees', 'store')->name('return-fees.store');

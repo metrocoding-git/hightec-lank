@@ -35,9 +35,6 @@ class StudentController extends Controller
         $intakes = Intake::all();
         $districts = District::all();
 
-        // Generate next admission number
-        // $nextAdmissionNumber = $this->generateNextAdmissionNumber();
-
         return view('pages.student.student-info.add-student', compact('branches',  'genders', 'categories', 'bloodGroups', 'intakes', 'districts'));
     }
 
@@ -116,36 +113,9 @@ class StudentController extends Controller
 
         $validatedData['create_user_id'] = Auth::id();
 
-        $student = Student::create($validatedData);
+        Student::create($validatedData);
 
-        // ✅ Automatically call FeeInvoiceController@store to create invoice
-        // $feeInvoiceController = new InvoiceController();
-        // $invoiceRequest = new Request([
-        //     'branch_id' => $request->branch_id,
-        //     'student_id' => $student->id, // newly created student
-        //     'create_date' => Carbon::now()->format('m/d/Y'),
-        //     'due_date' => Carbon::now()->addDays(30)->format('m/d/Y'),
-        //     'fee_type_id' => [1],
-        //     'price' => [1 => 1000],
-        //     'paidPrice' => [1 => 1000],
-        //     'payment_method' => 'Cash',
-        // ]);
-
-        // $invoiceResponse = $feeInvoiceController->store($invoiceRequest);
-
-        // // Optional: check response
-        // if ($invoiceResponse->getData()->success) {
-        //     $invoiceId = $invoiceResponse->getData()->invoice_id;
-
-        //     // Generate URLs
-        //     $redirectUrl = route('student.add-intake-with-courses.index');
-
-        //     // Return the small "open and redirect" page
-        //     return view('pages.student.fees.open-and-redirect', compact('redirectUrl', 'invoiceId'));
-        // } else {
-        //     return redirect()->route('student.add-intake-with-courses.index')
-        //         ->with('error', 'Student created, but failed to create invoice.');
-        // }
+   
 
         if ($validatedData['is_old_stu'] == 1) {
             return redirect()->route('student.add-intake-with-courses.index')->with('success', 'Student add successfully');
@@ -164,7 +134,7 @@ class StudentController extends Controller
         $intakes = Intake::all();
         $districts = District::all();
         $student = Student::findOrFail($student->id);
-        // ds($student);
+        
 
         return view('pages.student.student-info.edit-student', compact([
             'student',
@@ -269,7 +239,6 @@ class StudentController extends Controller
             'course_id' => 'required|exists:courses,id',
             'status' => 'required',
             'notes' => 'nullable|string',
-            // 'user_id' => 'required|exists:users,id'
         ]);
 
         // Check if student is already enrolled in this course
@@ -474,44 +443,11 @@ class StudentController extends Controller
         $intakes = Intake::with('branch')->get();
         $courses = Course::all();
 
-        // Build query with filters
-        // $query = StudentCourse::with(['student', 'intake', 'course', 'branch', 'student.studentCategory', 'change_course'])->orderBy('created_at', 'desc');
-
-        // if ($request->filled('branch_id')) {
-        //     $query->where('branch_id', $request->branch_id);
-        // }
-
-        // if ($request->filled('intake_id')) {
-        //     $query->where('intake_id', $request->intake_id);
-        // }
-
-        // if ($request->filled('course_id')) {
-        //     $query->where('course_id', $request->course_id);
-        // }
-
-        // if ($request->filled('status')) {
-        //     $query->where('status', $request->status);
-        // }
-
-        // $studentIntakes = $query->get();
-
-        // // Pass selected values to the view so they stay after search
-        // $search_branch_id = $request->branch_id;
-        // $search_intake_id = $request->intake_id;
-        // $search_course_id = $request->course_id;
-        // $search_status    = $request->status;
-
-
         return view('pages.student.student-info.student-add-intake', compact(
             'students',
             'branches',
             'intakes',
             'courses',
-            // 'studentIntakes',
-            // 'search_branch_id',
-            // 'search_intake_id',
-            // 'search_course_id',
-            // 'search_status'
         ));
     }
 
