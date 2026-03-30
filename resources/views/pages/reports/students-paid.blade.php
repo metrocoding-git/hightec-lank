@@ -22,14 +22,14 @@
                     <div class="row">
 
                         {{-- Date Range --}}
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label>Date Range</label>
                             <input type="text" id="date_range" name="date_range" class="form-control"
                                 value="{{ request('date_range') }}">
                         </div>
 
                         {{-- Payment Method --}}
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label>Payment Method</label>
                             <select name="payment_method" class="form-control">
                                 <option value="">All</option>
@@ -47,7 +47,7 @@
                         </div>
 
                         {{-- Branch --}}
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label>Branch</label>
                             <select name="branch_id" class="form-control">
                                 <option value="">All Branches</option>
@@ -57,6 +57,23 @@
                                         {{ $branch->name }}
                                     </option>
                                 @endforeach
+                            </select>
+                        </div>
+
+                        {{-- Fee Type --}}
+                        <div class="col-md-6">
+                            <label>Fee Type</label>
+                            <select name="payment_type" class="form-control">
+                                <option value="">All</option>
+                                <option value="course" {{ request('payment_type') == 'course' ? 'selected' : '' }}>Course
+                                </option>
+                                <option value="nvq" {{ request('payment_type') == 'nvq' ? 'selected' : '' }}>NVQ</option>
+                                <option value="fee" {{ request('payment_type') == 'fee' ? 'selected' : '' }}>Fee
+                                </option>
+                                <option value="item_sell" {{ request('payment_type') == 'item_sell' ? 'selected' : '' }}>
+                                    Item Sell</option>
+                                <option value="others" {{ request('payment_type') == 'others' ? 'selected' : '' }}>Others
+                                </option>
                             </select>
                         </div>
                         <div class="col-lg-12 mt-20 text-right">
@@ -143,7 +160,7 @@
                                                                     : ($feeInvoice->payment_type === 'fee'
                                                                         ? 'Fee Payment - ' . ($feeInvoice->invoice->invoice_item[0]->fee_type->name ?? 'N/A')
                                                                         : ($feeInvoice->payment_type === 'item_sell'
-                                                                            ? 'Item Sell' 
+                                                                            ? 'Item Sell'
                                                                             : ($feeInvoice->amount < 0
                                                                                 ? $feeInvoice->payment_type . ' Payment'
                                                                                 : 'N/A')))) }}
