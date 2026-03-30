@@ -23,32 +23,32 @@ class ItemIssueBatch extends Model
     // Relationships
     public function branch()
     {
-        return $this->belongsTo('App\Models\Branch', 'branch_id', 'id');
+        return $this->belongsTo(Branch::class, 'branch_id', 'id');
     }
 
     public function student()
     {
-        return $this->belongsTo('App\Models\Student', 'student_id', 'id');
+        return $this->belongsTo(Student::class, 'student_id', 'id');
     }
 
     public function staff()
     {
-        return $this->belongsTo('App\Models\User', 'issue_to', 'id');
+        return $this->belongsTo(User::class, 'issue_to', 'id');
     }
 
     public function intake()
     {
-        return $this->belongsTo('App\Models\Intake', 'intake_id', 'id');
+        return $this->belongsTo(Intake::class, 'intake_id', 'id');
     }
 
     public function course()
     {
-        return $this->belongsTo('App\Models\Course', 'course_id', 'id');
+        return $this->belongsTo(Course::class, 'course_id', 'id');
     }
 
     public function items()
     {
-        return $this->hasMany('App\Models\ItemIssueItem', 'batch_id', 'id');
+        return $this->hasMany(ItemIssueItem::class, 'batch_id', 'id');
     }
 
     // Helper methods

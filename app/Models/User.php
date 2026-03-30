@@ -3,14 +3,16 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Models\Role; // Import the Role model
+
+ // Import the Role model
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
     /**
@@ -31,28 +33,28 @@ class User extends Authenticatable
 
     public function hasPermission($permissionName, $action = 'view')
     {
-        if (!$this->role) {
+        if (! $this->role) {
             return false;
         }
 
         // Check if the permission exists for the role
         $permissionExists = $this->role->permissions()
-                                       ->where('permission_name', $permissionName)
-                                       ->exists();
+            ->where('permission_name', $permissionName)
+            ->exists();
 
-        if (!$permissionExists) {
+        if (! $permissionExists) {
             return false;
         }
 
         // If a specific action is requested, check for it
         if ($action && $action !== 'view') { // 'view' is the default and often implied by permission existence
             return $this->role->permissions()
-                              ->where('permission_name', $permissionName)
-                              ->where(function ($query) use ($action) {
-                                  $query->where('action_name', $action)
-                                        ->orWhere('action_name', 'all'); // 'all' action grants all sub-permissions
-                              })
-                              ->exists();
+                ->where('permission_name', $permissionName)
+                ->where(function ($query) use ($action) {
+                    $query->where('action_name', $action)
+                        ->orWhere('action_name', 'all'); // 'all' action grants all sub-permissions
+                })
+                ->exists();
         }
 
         return true; // If no specific action other than 'view' is requested, and permission exists

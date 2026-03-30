@@ -3,16 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
-use App\Models\Course;
 use App\Models\PaidCourse;
-use App\Models\ItemSell;
-use App\Models\ItemIssueBatch;
-use App\Models\Fee_invoices;
-use App\Models\Invoices_payments;
+use App\Models\InvoicesPayments;
 use App\Models\ItemIssueItem;
-use App\Models\ItemSellBatch;
 use App\Models\ItemSellItem;
-use App\Models\StudentCourse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -79,7 +73,7 @@ class ReportController extends Controller
     {
         $branches = Branch::all();
 
-        $query = Invoices_payments::with([
+        $query = InvoicesPayments::with([
             'invoice',
             'invoice.createUser',
             'invoice.branch',

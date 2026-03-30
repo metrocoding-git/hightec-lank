@@ -8,6 +8,7 @@ use App\Models\BloodGroup;
 use App\Models\Branch;
 use App\Models\Course;
 use App\Models\District;
+use App\Models\FeeInvoices;
 use App\Models\Gender;
 use App\Models\Intake;
 use App\Models\StudentCategory;
@@ -1004,7 +1005,7 @@ class StudentController extends Controller
         $student = Student::with(['branch', 'gender', 'studentCategory', 'bloodGroup', 'courses', 'intakes','courseWithIntake'])->findOrFail($id);
 
         // Fetch payment history
-        $payments = FeeInvoice::where('student_id', $id)->with(['invoice_item.fee_type'])->get();
+        $payments = FeeInvoices::where('student_id', $id)->with(['invoice_item.fee_type'])->get();
 
         // Fetch detailed course information for the student
         $courses = $student->courses()->with(['intakes'])->get();

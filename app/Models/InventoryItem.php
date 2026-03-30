@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Inventory_item extends Model
+class InventoryItem extends Model
 {
     //
     protected $table = 'inventory_items';

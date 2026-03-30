@@ -25,7 +25,7 @@ class PaidCourse extends Model
      */
     public function invoice(): BelongsTo
     {
-        return $this->belongsTo(Fee_invoices::class, 'invoice_id','id');
+        return $this->belongsTo(FeeInvoices::class, 'invoice_id','id');
     }
 
     /**

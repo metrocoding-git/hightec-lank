@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Content;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Content_Type;
+use App\Models\ContentType;
 use App\Models\Intake;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Role;
@@ -22,7 +22,7 @@ class ContentController extends Controller
      */
     public function index(Request $request)
     {
-        $content_Types = Content_Type::all();
+        $content_Types = ContentType::all();
         $roles = Role::all();
         $users = User::all();
         $intakes = Intake::all();
@@ -43,13 +43,7 @@ class ContentController extends Controller
     }
     
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
+   
 
     /**
      * Store a newly created resource in storage.
@@ -82,13 +76,7 @@ class ContentController extends Controller
      
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Content $content)
-    {
-        //
-    }
+  
 
     /**
      * Show the form for editing the specified resource.
@@ -98,7 +86,7 @@ class ContentController extends Controller
         //
 
         $editContent = Content::findOrFail($id);
-        $content_Types = Content_Type::all();
+        $content_Types = ContentType::all();
             $contents=Content::all();
             $roles = Role::all();
         $users = User::all();

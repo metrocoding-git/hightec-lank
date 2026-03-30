@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
-use App\Models\Fee_invoices;
+use App\Models\FeeInvoices;
 use App\Models\FeesGroup;
-use App\Models\Invoices_payments;
+use App\Models\InvoicesPayments;
 use App\Models\PaidCourse;
 use App\Models\Student;
 use Illuminate\Http\Request;
@@ -133,7 +133,7 @@ class FeesGroupController extends Controller
 
             $create_user_id = Auth::check() ? Auth::id() : null;
 
-            $existingInvoice = Fee_invoices::join('paid_courses', 'fee_invoices.id', '=', 'paid_courses.invoice_id')
+            $existingInvoice = FeeInvoices::join('paid_courses', 'fee_invoices.id', '=', 'paid_courses.invoice_id')
                 ->where('fee_invoices.payment_status', '!=', 'returned')
                 ->where('fee_invoices.student_id', $request->student_id)
                 ->where('fee_invoices.invoice_type', $paymentType)
@@ -147,7 +147,7 @@ class FeesGroupController extends Controller
 
             if ($existingInvoice) {
 
-                $fee_invoice = Fee_invoices::find($existingInvoice->fee_invoice_id);
+                $fee_invoice = FeeInvoices::find($existingInvoice->fee_invoice_id);
 
                 $paidCourse = PaidCourse::find($existingInvoice->paid_course_id);
                 // Update PaidCourse
@@ -169,11 +169,11 @@ class FeesGroupController extends Controller
                 // Case 2: No existing invoice/paid course found, create new ones
                 do {
                     $main_invoice_number = 'INV-' . rand(100000, 999999);
-                } while (Fee_invoices::where('main_invoice_number', $main_invoice_number)->exists());
+                } while (FeeInvoices::where('main_invoice_number', $main_invoice_number)->exists());
                 $create_user_id = Auth::id();
 
-                // Create a Fee_invoices record
-                $fee_invoice = Fee_invoices::create([
+                // Create a FeeInvoices record
+                $fee_invoice = FeeInvoices::create([
                     'branch_id' => $request->branch_id,
                     'invoice_type' => $paymentType,
                     'student_id' => $request->student_id,
@@ -225,7 +225,7 @@ class FeesGroupController extends Controller
             $receipt_number = $this->generateReceiptNumber($request->branch_id, $paymentType);
 
 
-            $payment = Invoices_payments::create([
+            $payment = InvoicesPayments::create([
                 'invoice_id' => $fee_invoice->id,
                 'amount' => $paidAmount,
                 'payment_method' => $paymentMethod,
@@ -332,7 +332,7 @@ class FeesGroupController extends Controller
         try {
 
             // Get BOTH invoice types
-            $invoices = Fee_invoices::where('student_id', $studentId)
+            $invoices = FeeInvoices::where('student_id', $studentId)
                 ->where('payment_status', '!=', 'returned')
                 ->whereIn('invoice_type', ['course', 'nvq'])
                 ->whereHas('paidCourses', function ($query) use ($courseId) {
@@ -358,7 +358,7 @@ class FeesGroupController extends Controller
             $nvqInvoiceIds    = $invoices->where('invoice_type', 'nvq')->pluck('id');
 
             // Get payments
-            $payments = Invoices_payments::whereIn('invoice_id', $invoices->pluck('id'))
+            $payments = InvoicesPayments::whereIn('invoice_id', $invoices->pluck('id'))
                 ->orderBy('created_at', 'asc')
                 ->get();
 
@@ -429,7 +429,7 @@ class FeesGroupController extends Controller
         }
 
         // Get last number ONLY for this prefix
-        $maxNumber = \App\Models\Invoices_payments::whereHas('invoice', function ($q) use ($branch_id) {
+        $maxNumber = \App\Models\InvoicesPayments::whereHas('invoice', function ($q) use ($branch_id) {
             $q->where('branch_id', $branch_id);
         })
             ->where('receipt_number', 'like', $prefix . '-%')

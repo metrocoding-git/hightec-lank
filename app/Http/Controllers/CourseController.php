@@ -10,7 +10,6 @@ class CourseController extends Controller
     public function index()
     {
         $courses = Course::get();
-        $title = 'All Active Courses';
 
         return view('pages.administration.academic.course', [
             'courses' => $courses

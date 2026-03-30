@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Invoice_item extends Model
+class InvoiceItem extends Model
 {
     //
     protected $table = 'invoice_items';
@@ -14,7 +14,7 @@ class Invoice_item extends Model
 
     public function fee_invoice()
     {
-        return $this->belongsTo(FeeInvoice::class, 'invoice_id');
+        return $this->belongsTo(FeeInvoices::class, 'invoice_id');
     }
     // public function feeType()
     // {

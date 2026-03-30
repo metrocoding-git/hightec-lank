@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use Illuminate\Http\Request;
-use App\Models\Inventory_item;
+use App\Models\InventoryItem;
 use App\Models\ItemInventory;
 use App\Http\Controllers\Controller;
 
@@ -18,7 +18,7 @@ class InventoryItemController extends Controller
     {
         //
         $itemCategories=Category::all();
-         $items=Inventory_item::with('category')->get();
+         $items=InventoryItem::with('category')->get();
          foreach ($items as $item) {
              $item->current_balance = ItemInventory::getCurrentBalance($item->id);
          }
@@ -27,7 +27,7 @@ class InventoryItemController extends Controller
 
     public function view($id)
     {
-        $item = Inventory_item::with('category')->findOrFail($id);
+        $item = InventoryItem::with('category')->findOrFail($id);
         $inventoryHistory = ItemInventory::getInventoryHistory($id);
         return view('pages.account.inventory.item-view', compact('item', 'inventoryHistory'));
     }
@@ -53,7 +53,7 @@ class InventoryItemController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        Inventory_item::create([
+        InventoryItem::create([
             'item_name' => $request->item_name,
             'item_category_id' => $request->category_name,
             'item_price' => $request->item_price,
@@ -66,7 +66,7 @@ class InventoryItemController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Inventory_item $inventory_item)
+    public function show(InventoryItem $inventory_item)
     {
         //
     }
@@ -74,11 +74,11 @@ class InventoryItemController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Inventory_item $inventory_item, $id)
+    public function edit(InventoryItem $inventory_item, $id)
     {
         //
-        $editData = Inventory_item::findOrFail($id);
-        $items = Inventory_item::with('category')->get();
+        $editData = InventoryItem::findOrFail($id);
+        $items = InventoryItem::with('category')->get();
         foreach ($items as $item) {
             $item->current_balance = ItemInventory::getCurrentBalance($item->id);
         }
@@ -89,7 +89,7 @@ class InventoryItemController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Inventory_item $inventory_item, $id)
+    public function update(Request $request, InventoryItem $inventory_item, $id)
     {
         //
         $request->validate([
@@ -99,7 +99,7 @@ class InventoryItemController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        $item = Inventory_item::findOrFail($id);
+        $item = InventoryItem::findOrFail($id);
         $item->update([
             'item_name' => $request->item_name,
             'item_category_id' => $request->category_name,
@@ -113,10 +113,10 @@ class InventoryItemController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Inventory_item $inventory_item, $id)
+    public function destroy(InventoryItem $inventory_item, $id)
     {
         //
-        $item = Inventory_item::findOrFail($id);
+        $item = InventoryItem::findOrFail($id);
         $item->delete();
 
         return redirect()->back()->with('success', 'Item deleted successfully!');
