@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Content_Type;
+use App\Models\ContentType;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -15,7 +15,7 @@ class ContentTypeController extends Controller
     public function index()
     {
         //
-        $content_Types = Content_Type::latest()->get();
+        $content_Types = ContentType::latest()->get();
         return view('pages.administration.download-center.content-type', compact('content_Types'));
     }
 
@@ -39,34 +39,27 @@ class ContentTypeController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        Content_Type::create($request->only('name', 'description'));
+        ContentType::create($request->only('name', 'description'));
 
         return redirect()->back()->with('success', 'Content Type added successfully.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Content_Type $content_Type)
-    {
-        //
-    }
-
+   
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Content_Type $content_Type, $id)
+    public function edit(ContentType $content_Type, $id)
     {
         //
-        $type = Content_Type::findOrFail($id);
-        $content_Types = Content_Type::latest()->get();
+        $type = ContentType::findOrFail($id);
+        $content_Types = ContentType::latest()->get();
         return view('pages.administration.download-center.content-type', compact('content_Types', 'type'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Content_Type $content_Type, $id)
+    public function update(Request $request, ContentType $content_Type, $id)
     {
         //
         $request->validate([
@@ -74,7 +67,7 @@ class ContentTypeController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        $type = Content_Type::findOrFail($id);
+        $type = ContentType::findOrFail($id);
         $type->update($request->only('name', 'description'));
 
         return redirect()->route('content-type')->with('success', 'Content Type updated successfully.');
@@ -83,10 +76,10 @@ class ContentTypeController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Content_Type $content_Type, $id)
+    public function destroy(ContentType $content_Type, $id)
     {
         //
-        $type = Content_Type::findOrFail($id);
+        $type = ContentType::findOrFail($id);
         $type->delete();
 
         return redirect()->back()->with('success', 'Content Type deleted successfully.');

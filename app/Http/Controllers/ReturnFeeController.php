@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\ReturnFee;
-use App\Models\Fee_invoices as FeeInvoice;
-use App\Models\Invoices_payments;
+use App\Models\FeeInvoices;
+use App\Models\InvoicesPayments;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -31,7 +31,7 @@ class ReturnFeeController extends Controller
         ]);
 
         // Check if return amount is not greater than the current paid amount
-        $invoice = FeeInvoice::findOrFail($validated['invoice_id']);
+        $invoice = FeeInvoices::findOrFail($validated['invoice_id']);
 
         if ($validated['return_amount'] > $invoice->paid_amount) {
             return redirect()->back()
@@ -56,7 +56,7 @@ class ReturnFeeController extends Controller
             // Create return fee record first
             $returnFee = ReturnFee::create($validated);
 
-            Invoices_payments::create([
+            InvoicesPayments::create([
                 'invoice_id'      => $invoice->id,
                 'amount'          => -$validated['return_amount'], 
                 'payment_method'  => 'cash',

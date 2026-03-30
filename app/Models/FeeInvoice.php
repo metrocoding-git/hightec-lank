@@ -4,27 +4,30 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class FeeInvoice extends Model
+class FeeInvoices extends Model
 {
     //
     protected $table = 'fee_invoices';
-     protected $fillable = [
+    protected $fillable = [
         'branch_id',
         'student_id',
         'total_amount',
         'paid_amount',
-        'due_amount',
+        'create_user_id',
         'create_date',
         'due_date',
         'payment_status',
-        'payment_amount',
         'payment_method',
         'payment_file',
-        'single_invoice',
-        'clone_amount',
+        'bank_paid_amount', // Added for mass assignment
+        'bank_paid_date',
+        'invoice_type',   // Added for mass assignment
+        'paid_date',
+        'invoice_number',
         'main_invoice_number',
         'create_user_id',
-        'invoice_type'
+        'notes',
+      
     ];
 
     protected $casts = [
@@ -34,6 +37,8 @@ class FeeInvoice extends Model
         'clone_amount' => 'boolean',
     ];
 
+
+
     // Relationships
     public function branch()
     {
@@ -42,17 +47,17 @@ class FeeInvoice extends Model
 
     public function student()
     {
-        return $this->belongsTo(Student::class);
+        return $this->belongsTo(Student::class,'student_id','id');
     }
-
+    // Fee_invoices.php
     public function invoice_item()
     {
-        return $this->hasMany(Invoice_item::class, 'invoice_id');
+        return $this->hasMany(InvoiceItem::class, 'invoice_id', 'id');
     }
 
-    public function return_fees()
+    public function payments()
     {
-        return $this->hasMany(ReturnFee::class, 'invoice_id');
+        return $this->hasMany(InvoicesPayments::class, 'invoice_id', 'id');
     }
 
     public function paidCourses()
@@ -60,8 +65,8 @@ class FeeInvoice extends Model
         return $this->hasOne(PaidCourse::class, 'invoice_id');
     }
 
-    public function payments()
-{
-    return $this->hasMany(Invoices_payments::class, 'invoice_id', 'id');
-}
+    public function createUser()
+    {
+        return $this->belongsTo(User::class, 'create_user_id');
+    }
 }

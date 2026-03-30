@@ -33,7 +33,7 @@ use App\Models\SmAddExpense;
 use Illuminate\Http\Request;
 use App\Models\SmNoticeBoard;
 use App\Models\GlobalVariable;
-use App\Models\Inventory_item;
+use App\Models\InventoryItem;
 use App\Models\SmAcademicYear;
 use App\Models\SmClassSection;
 use App\Models\ShareContentList;
@@ -51,6 +51,7 @@ use Modules\RolePermission\Entities\InfixRole;
 use Modules\Wallet\Entities\WalletTransaction;
 use Modules\Saas\Entities\SmSubscriptionPayment;
 use App\Models\Branch; // Keep this single import for Branch
+use App\Models\FeeInvoices;
 use App\Models\StudentCourse;
 use App\Models\StudentVerification;
 use Yajra\DataTables\DataTables;
@@ -85,7 +86,7 @@ class HomeController extends Controller
         })->count();
 
         // Fetch financial data using existing models
-        $totalIncome = FeeInvoice::sum('paid_amount');
+        $totalIncome = FeeInvoices::sum('paid_amount');
         $totalExpenses = 0; // No expense model, set to 0
         $totalProfit = $totalIncome - $totalExpenses;
         $totalRevenue = $totalIncome;
@@ -908,7 +909,7 @@ class HomeController extends Controller
     public function feeInvoice()
     {
         $roles = Role::all();
-        $fee_invoices = FeeInvoice::with(['student', 'branch', 'invoice_item.fee_type', 'student.studentCategory'])
+        $fee_invoices = FeeInvoices::with(['student', 'branch', 'invoice_item.fee_type', 'student.studentCategory'])
             ->where('payment_status', '!=', 'returned')
             ->orderBy('created_at', 'desc')
             ->get();
@@ -1094,7 +1095,7 @@ class HomeController extends Controller
 
     public function itemReceive()
     {
-        $items = Inventory_item::with('category')->get();
+        $items = InventoryItem::with('category')->get();
         $suppliers = Supplier::all();
         $branches = Auth::user()->branches;
         // $account_id = BankAccount::all();
@@ -1244,7 +1245,7 @@ class HomeController extends Controller
             ->distinct()
             ->get();
 
-        $items = Inventory_item::all();
+        $items = InventoryItem::all();
         $suppliers = Supplier::all();
         $branches = Branch::all();
         return view('pages.account.inventory.item-receive-list', compact('itemReceives', 'items', 'suppliers', 'branches'));
@@ -1388,7 +1389,7 @@ class HomeController extends Controller
     // }
     public function itemSell()
     {
-        $items = Inventory_item::all();
+        $items = InventoryItem::all();
         $classes = Course::all();
         $sections = Intake::all();
         $roles = Role::all();

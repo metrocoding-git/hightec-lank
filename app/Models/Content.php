@@ -12,6 +12,6 @@ class Content extends Model
 
     public function content_type()
     {
-        return $this->belongsTo(Content_Type::class);
+        return $this->belongsTo(ContentType::class);
     }
 }

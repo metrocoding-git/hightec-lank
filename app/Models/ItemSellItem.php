@@ -24,6 +24,6 @@ class ItemSellItem extends Model
 
     public function item()
     {
-        return $this->belongsTo(Inventory_item::class, 'item_id');
+        return $this->belongsTo(InventoryItem::class, 'item_id');
     }
 }

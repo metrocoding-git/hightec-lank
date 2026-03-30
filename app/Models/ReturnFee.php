@@ -69,6 +69,6 @@ class ReturnFee extends Model
 
     public function invoice(): BelongsTo
     {
-        return $this->belongsTo(FeeInvoice::class, 'invoice_id');
+        return $this->belongsTo(FeeInvoices::class, 'invoice_id');
     }
 }

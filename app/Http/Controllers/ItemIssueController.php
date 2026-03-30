@@ -14,12 +14,13 @@ use App\Models\ItemIssueBatch;
 use App\Models\ItemIssueItem;
 use App\Models\ItemInventory;
 use App\Models\Category;
-use App\Models\Inventory_item;
+use App\Models\InventoryItem;
 use App\Models\Student;
 use App\Models\Course;
 use App\Models\CourseIntake;
 use App\Models\Intake;
 use App\Models\FeeInvoice;
+use App\Models\FeeInvoices;
 use App\Models\StudentCourse;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -31,10 +32,10 @@ class ItemIssueController extends Controller
         try {
             $roles = Role::where('status', 1)->get();
             // $itemCat = Category::get();
-            $issuedItems = ItemIssue::where('active_status', 1)->get();
+            $issuedItems = ItemIssueBatch::where('active_status', 1)->get();
             $courses = Course::get(); // Fetch  classes
             $staffs = User::get(); // Fetch users
-            $inventoryItems = Inventory_item::get(); //item
+            $inventoryItems = InventoryItem::get(); //item
             $intakes = Intake::get(); //section
             $students = Student::get(); //student
             $categories = Category::get();
@@ -104,7 +105,7 @@ class ItemIssueController extends Controller
         Log::info('Existing categories: ' . json_encode($existingCategories));
 
         // Debug: Check what items exist
-        $existingItems = Inventory_item::pluck('id', 'item_name')->toArray();
+        $existingItems = InventoryItem::pluck('id', 'item_name')->toArray();
         Log::info('Existing items: ' . json_encode($existingItems));
 
         $request->validate([
@@ -177,7 +178,7 @@ class ItemIssueController extends Controller
 
                 // Validate that category_id and item_id exist and match
                 $category = Category::find($itemData['item_category_id']);
-                $item = Inventory_item::find($itemData['item_id']);
+                $item = InventoryItem::find($itemData['item_id']);
 
                 if (!$category) {
                     Log::error('Category not found: ' . $itemData['item_category_id']);
@@ -538,7 +539,7 @@ class ItemIssueController extends Controller
     {
         try {
             $category_id = $categoryId; // Use the route parameter
-            $items = Inventory_item::where('item_category_id', $category_id)->get();
+            $items = InventoryItem::where('item_category_id', $category_id)->get();
 
             return response()->json($items);
         } catch (Exception $e) {
@@ -575,7 +576,7 @@ class ItemIssueController extends Controller
             }
 
             // Optional: Filter fee invoices based on branch/course/intake if your DB supports those relations
-            $feeInvoices = FeeInvoice::with(['paidCourses'])
+            $feeInvoices = FeeInvoices::with(['paidCourses'])
                 ->where('student_id', $student_id)
                 ->where('branch_id', $branch_id)
                 ->whereHas('paidCourses', function ($query) use ($course_id) {

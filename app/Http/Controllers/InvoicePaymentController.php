@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
-use App\Models\Invoices_payments;
+use App\Models\InvoicesPayments;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
@@ -21,7 +21,7 @@ class InvoicePaymentController extends Controller
     public function datatable(Request $request)
     {
         // Base query: only payments where payment_method = 'Invoice'
-        $query = Invoices_payments::with(['invoice.student', 'invoice.branch', 'branch', 'invoice.paidCourses', 'invoice.student.studentCategory'])
+        $query = InvoicesPayments::with(['invoice.student', 'invoice.branch', 'branch', 'invoice.paidCourses', 'invoice.student.studentCategory'])
             ->where('payment_method', 'Invoice')
             ->where('payment_type', '!=', 'refund')
             ->where(function ($q) {
@@ -183,7 +183,7 @@ class InvoicePaymentController extends Controller
         $branchCode = $branch ? $this->getBranchCode($branch) : 'XX';
 
 
-        $lastPaymentNumber = Invoices_payments::where('payment_invoice_number', 'like', "INV-P-{$branchCode}-%")
+        $lastPaymentNumber = InvoicesPayments::where('payment_invoice_number', 'like', "INV-P-{$branchCode}-%")
             ->selectRaw('MAX(CAST(SUBSTRING_INDEX(payment_invoice_number, "-", -1) AS UNSIGNED)) as max_number')
             ->value('max_number');
 
@@ -193,7 +193,7 @@ class InvoicePaymentController extends Controller
 
 
         foreach ($ids as $id) {
-            $payment = Invoices_payments::find($id);
+            $payment = InvoicesPayments::find($id);
             if (!$payment) continue;
 
             $payment->payment_invoice_number = $newInvoiceNumber;
@@ -210,7 +210,7 @@ class InvoicePaymentController extends Controller
     {
         $ids = $request->payment_ids;
         foreach ($ids as $id) {
-            $payment = Invoices_payments::find($id);
+            $payment = InvoicesPayments::find($id);
             if (!$payment) continue;
             $payment->invoice_payment_confirm = true;
             $payment->invoice_payment_cheque_number = $request->cheque_number;
@@ -226,7 +226,7 @@ class InvoicePaymentController extends Controller
 
     public function printInvoice($invoice_number)
     {
-        $payments = Invoices_payments::with([
+        $payments = InvoicesPayments::with([
             'invoice.student',
             'invoice.invoice_item.fee_type',
             'invoice.paidCourses.course'
@@ -256,7 +256,7 @@ class InvoicePaymentController extends Controller
         }
 
         if ($status === 'completed') {
-            $payments = Invoices_payments::whereIn('id', $ids)->get();
+            $payments = InvoicesPayments::whereIn('id', $ids)->get();
 
             foreach ($payments as $payment) {
                 // Revert to pending
@@ -277,7 +277,7 @@ class InvoicePaymentController extends Controller
 
         if ($status === 'pending') {
             // Get all selected payments
-            $payments = Invoices_payments::whereIn('id', $ids)->get();
+            $payments = InvoicesPayments::whereIn('id', $ids)->get();
 
             foreach ($payments as $payment) {
                 $payment->payment_invoice_number = null;

@@ -6,11 +6,11 @@ use App\Models\Invoice;
 
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
-use App\Models\Fee_invoices;
+use App\Models\FeeInvoices;
 use App\Models\FeesGroup;
 use App\Models\FeeType;
-use App\Models\Invoice_item;
-use App\Models\Invoices_payments;
+use App\Models\InvoiceItem;
+use App\Models\InvoicesPayments;
 use App\Models\PaidCourse; // Import the new PaidCourse model
 use App\Models\Student;
 use App\Models\Course; // Import the Course model
@@ -30,7 +30,7 @@ class InvoiceController extends Controller
      */
     public function index()
     {
-        $fee_invoices = Fee_invoices::with('student', 'branch', 'invoice_item', 'paidCourses.course')
+        $fee_invoices = FeeInvoices::with('student', 'branch', 'invoice_item', 'paidCourses.course')
             ->whereHas('paidCourses') // Only include invoices that have associated paid courses
             ->get()
             ->groupBy(function ($invoice) {
@@ -51,7 +51,7 @@ class InvoiceController extends Controller
      */
     public function invoiceReport()
     {
-        $fee_invoices = Fee_invoices::with('student', 'branch', 'invoice_item', 'payments')->get();
+        $fee_invoices = FeeInvoices::with('student', 'branch', 'invoice_item', 'payments')->get();
         return view('pages.student.fees.fee-invoice-report', compact('fee_invoices'));
     }
 
@@ -91,7 +91,7 @@ class InvoiceController extends Controller
         ]);
 
         if (in_array(1, $request->fee_type_id)) {
-            $existingFeeTypes = Invoice_item::whereIn('fee_type_id', $request->fee_type_id)
+            $existingFeeTypes = InvoiceItem::whereIn('fee_type_id', $request->fee_type_id)
                 ->whereHas('fee_invoice', function ($q) use ($request) {
                     $q->where('student_id', $request->student_id);
                     $q->where('payment_status', '!=', 'returned');
@@ -136,13 +136,13 @@ class InvoiceController extends Controller
 
             do {
                 $main_invoice_number = 'INV-' . rand(100000, 999999);
-            } while (\App\Models\Fee_invoices::where('main_invoice_number', $main_invoice_number)->exists());
+            } while (\App\Models\FeeInvoices::where('main_invoice_number', $main_invoice_number)->exists());
             $create_user_id = Auth::check() ? Auth::id() : null;
             Log::debug('Generated main_invoice_number (store): ' . $main_invoice_number);
             $create_user_id = Auth::id();
 
             // Create Fee Invoice
-            $fee_invoice = Fee_invoices::create([
+            $fee_invoice = FeeInvoices::create([
                 'branch_id' => $request->branch_id,
                 'student_id' => $request->student_id,
                 'create_date' => Carbon::createFromFormat('m/d/Y', $request->create_date)->format('Y-m-d'),
@@ -170,7 +170,7 @@ class InvoiceController extends Controller
                 $amount = $request->price[$feetypeId] ?? (FeeType::where('id', $feetypeId)->value('price') ?? 0);
                 $paid_price = $request->paidPrice[$feetypeId] ?? 0;
 
-                $invoiceItem = Invoice_item::create([
+                $invoiceItem = InvoiceItem::create([
                     'invoice_id' => $fee_invoice->id,
                     'fee_type_id' => $feetypeId,
                     'amount' => $amount,
@@ -195,7 +195,7 @@ class InvoiceController extends Controller
 
 
 
-                    $payment = Invoices_payments::create([
+                    $payment = InvoicesPayments::create([
                         'invoice_id' => $fee_invoice->id,
                         // 'payment_invoice_number' => , add by modal
                         'amount' => $paid_price,
@@ -240,7 +240,7 @@ class InvoiceController extends Controller
     }
 
 
-    public function show(Fee_invoices $fee_invoicese, $branchId)
+    public function show(FeeInvoices $fee_invoicese, $branchId)
     {
         $student = Student::where('branch_id', $branchId)
             ->select('id', DB::raw("CONCAT(student_name) as name"), 'admission_number')
@@ -248,7 +248,7 @@ class InvoiceController extends Controller
         return response()->json($student);
     }
 
-    public function dropdown_fee_types(Fee_invoices $e, $groupId)
+    public function dropdown_fee_types(FeeInvoices $e, $groupId)
     {
         $feetypes = FeeType::where('fee_group_id', $groupId)->get(['id', 'name']);
         return response()->json($feetypes);
@@ -258,8 +258,8 @@ class InvoiceController extends Controller
      * Show the form for editing the specified resource.
      */
     public function edit($id)
-    {
-        $invoice = Fee_invoices::with('invoice_item.fee_type', 'student')->findOrFail($id);
+        {
+            $invoice = FeeInvoices::with('invoice_item.fee_type', 'student')->findOrFail($id);
         $branches = Auth::user()->branches;
         $feesgroups = FeesGroup::all();
         $feeTypes = FeeType::all();
@@ -274,7 +274,7 @@ class InvoiceController extends Controller
 
     public function viewFeeInvoice($id)
     {
-        $invoice = Fee_invoices::with('invoice_item.fee_type', 'student', 'branch')->findOrFail($id);
+        $invoice = FeeInvoices::with('invoice_item.fee_type', 'student', 'branch')->findOrFail($id);
 
         if (request()->ajax() || request()->wantsJson()) {
             return view('pages.student.fees.partials.invoice-view-content', compact('invoice'));
@@ -305,7 +305,7 @@ class InvoiceController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $invoice = Fee_invoices::findOrFail($id);
+        $invoice = FeeInvoices::findOrFail($id);
 
         $request->validate([
             'branch_id' => 'required',
@@ -336,13 +336,13 @@ class InvoiceController extends Controller
             ]);
 
             // Delete old items
-            Invoice_item::where('invoice_id', $invoice->id)->delete();
+            InvoiceItem::where('invoice_id', $invoice->id)->delete();
 
             // Add updated items
             foreach ($request->price as $feeTypeId => $amount) {
                 $paid_amount = $request->paidPrice[$feeTypeId] ?? 0;
 
-                Invoice_item::create([
+                InvoiceItem::create([
                     'invoice_id' => $invoice->id,
                     'fee_type_id' => $feeTypeId,
                     'amount' => $amount,
@@ -381,13 +381,13 @@ class InvoiceController extends Controller
     {
         try {
             // Find invoice
-            $invoice = Fee_invoices::findOrFail($id);
+            $invoice = FeeInvoices::findOrFail($id);
 
             // Delete related invoice items
-            Invoice_item::where('invoice_id', $invoice->id)->delete();
+            InvoiceItem::where('invoice_id', $invoice->id)->delete();
 
             // Delete related invoice payments
-            Invoices_payments::where('invoice_id', $invoice->id)->delete();
+            InvoicesPayments::where('invoice_id', $invoice->id)->delete();
 
             // Delete uploaded payment file if exists
             if ($invoice->payment_file && Storage::disk('public')->exists($invoice->payment_file)) {
@@ -407,7 +407,7 @@ class InvoiceController extends Controller
     public function addPayment(Request $request, $invoiceId)
     {
         try {
-            $invoice = Fee_invoices::with('invoice_item', 'payments')->findOrFail($invoiceId); // Eager load payments
+            $invoice = FeeInvoices::with('invoice_item', 'payments')->findOrFail($invoiceId); // Eager load payments
 
             // Calculate the current due amount based on actual payments
             $totalPaidAmountFromPayments = $invoice->payments->sum('amount');
@@ -475,7 +475,7 @@ class InvoiceController extends Controller
             Log::debug('Auth::id() for payment (addPayment): ' . $payment_create_user_id);
 
 
-            Invoices_payments::create([
+            InvoicesPayments::create([
                 'invoice_id' => $invoice->id,
                 'amount' => $totalPaidNow,
                 'payment_method' => $request->payment_method,
@@ -523,7 +523,7 @@ class InvoiceController extends Controller
 
     public function getPaymentHistory($invoiceId)
     {
-        $invoice = Fee_invoices::with('payments')->findOrFail($invoiceId);
+        $invoice = FeeInvoices::with('payments')->findOrFail($invoiceId);
         $invoice->refresh(); // Ensure the invoice and its relationships are reloaded from the database
         $payments = $invoice->payments;
 
@@ -550,8 +550,8 @@ class InvoiceController extends Controller
 
 
         try {
-            $originalPayment = Invoices_payments::findOrFail($paymentId);
-            $invoice = Fee_invoices::findOrFail($originalPayment->invoice_id);
+            $originalPayment = InvoicesPayments::findOrFail($paymentId);
+            $invoice = FeeInvoices::findOrFail($originalPayment->invoice_id);
 
             $create_user_id = Auth::check() ? Auth::id() : null;
             $user_branch_ids = UserBranch::where('user_id', $create_user_id)
@@ -624,7 +624,7 @@ class InvoiceController extends Controller
                 // User has MULTIPLE branches → use invoice branch
                 $branch_id = $invoice->branch_id;
             }
-            Invoices_payments::create([
+            InvoicesPayments::create([
                 'invoice_id' => $invoice->id,
                 'amount' => -$refundAmount, // Store as a negative amount
                 'payment_method' => $originalPayment->payment_method ?? '-', // Or a specific refund method
@@ -645,7 +645,7 @@ class InvoiceController extends Controller
             $originalPayment->save();
 
             // Recalculate invoice's paid_amount and due_amount based on all payments
-            $allPayments = Invoices_payments::where('invoice_id', $invoice->id)->get();
+            $allPayments = InvoicesPayments::where('invoice_id', $invoice->id)->get();
             $newNetPaidAmount = $allPayments->sum('amount'); // Sum of all payments (positive and negative)
 
             // The invoice's total_amount should NOT be changed. Use its original value.
@@ -705,7 +705,7 @@ class InvoiceController extends Controller
         ]);
 
         try {
-            $invoice = Fee_invoices::findOrFail($request->invoice_id);
+            $invoice = FeeInvoices::findOrFail($request->invoice_id);
             $invoice->invoice_number = $request->invoice_number;
             $invoice->save();
 
@@ -729,7 +729,7 @@ class InvoiceController extends Controller
         ]);
 
         try {
-            $payment = Invoices_payments::findOrFail($request->payment_id);
+            $payment = InvoicesPayments::findOrFail($request->payment_id);
             $payment->payment_invoice_number = $request->invoice_number;
             $payment->save();
 
@@ -755,7 +755,7 @@ class InvoiceController extends Controller
         ]);
 
         try {
-            $invoice = Fee_invoices::findOrFail($request->invoice_id);
+            $invoice = FeeInvoices::findOrFail($request->invoice_id);
 
             // Update invoice details
             $invoice->paid_amount = $invoice->total_amount; // Set paid_amount to total_amount
@@ -765,7 +765,7 @@ class InvoiceController extends Controller
 
             // Create a new payment record
             $payment_create_user_id = Auth::check() ? Auth::id() : null; // Get authenticated user ID
-            Invoices_payments::create([
+            InvoicesPayments::create([
                 'invoice_id' => $invoice->id,
                 // 'payment_invoice_number' => ,this is add by using modal
                 'amount' => $request->paid_amount,
@@ -820,7 +820,7 @@ class InvoiceController extends Controller
     public function invoicePrint($invoiceId)
     {
         try {
-            $invoice = Fee_invoices::with(['student', 'branch', 'invoice_item.fee_type', 'payments', 'paidCourses.course'])
+            $invoice = FeeInvoices::with(['student', 'branch', 'invoice_item.fee_type', 'payments', 'paidCourses.course'])
                 ->findOrFail($invoiceId);
 
 
@@ -879,7 +879,7 @@ class InvoiceController extends Controller
     public function invoiceItemPrint($invoiceId, $paymentId)
     {
         try {
-            $invoice = Invoices_payments::with(['invoice', 'invoice.student', 'invoice.branch', 'invoice.paidCourses.course', 'invoice.student.studentCategory'])
+            $invoice = InvoicesPayments::with(['invoice', 'invoice.student', 'invoice.branch', 'invoice.paidCourses.course', 'invoice.student.studentCategory'])
                 ->where('id', $paymentId)
                 ->where('invoice_id', $invoiceId)
                 ->firstOrFail();
@@ -967,7 +967,7 @@ class InvoiceController extends Controller
         $code = strtolower(substr($branch->name, 0, 2)); // ka
 
         // Extract ONLY the numeric part after "ka-"
-        $maxNumber = \App\Models\Invoices_payments::whereHas('invoice', function ($q) use ($branch_id) {
+        $maxNumber = \App\Models\InvoicesPayments::whereHas('invoice', function ($q) use ($branch_id) {
             $q->where('branch_id', $branch_id);
         })
             ->whereIn('payment_type', ['course', 'fee'])
@@ -983,7 +983,7 @@ class InvoiceController extends Controller
 
     public function confirmInvoicePayment($paymentId)
     {
-        $payment = Invoices_payments::findOrFail($paymentId);
+        $payment = InvoicesPayments::findOrFail($paymentId);
         $payment->invoice_payment_confirm = 1;
         $payment->save();
 
