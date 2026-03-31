@@ -10,7 +10,7 @@ class InvoicesPayments extends Model
 
     public function invoice()
     {
-        return $this->belongsTo(FeeInvoices::class);
+        return $this->belongsTo(FeeInvoices::class );
     }
 
     public function branch()
