@@ -225,7 +225,6 @@ Route::controller(StudentController::class)
         Route::post('student-add-intake/{id}/update-status', 'updateStatus')->name('student.add-intake.update-status');
     });
 
-// Student List, Attendance, Export, and AJAX/Dependent Dropdowns
 // ================= END STUDENT ROUTES =================
 
 // Route::controller(HomeController::class)->middleware(['permission'])->group(callback: function () {
