@@ -111,6 +111,11 @@ class ReportController extends Controller
             $query->where('branch_id', $request->branch_id);
         }
 
+        // ----- PAYMENT TYPE FILTER -----
+        if ($request->payment_type) {
+            $query->where('payment_type', $request->payment_type);
+        }
+
         // Results
         $feeInvoices = $query->orderBy('created_at', 'DESC')
             ->orderByRaw("CAST(SUBSTRING_INDEX(receipt_number, '-', -1) AS UNSIGNED) DESC")
