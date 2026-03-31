@@ -146,30 +146,6 @@ class HomeController extends Controller
         return view('pages.administration.study-material.other-download');
     }
 
-    public function lesson()
-    {
-        return view('pages.administration.lesson-plan.lesson');
-    }
-
-    public function topic()
-    {
-        return view('pages.administration.lesson-plan.topic');
-    }
-
-    public function topicOverview()
-    {
-        return view('pages.administration.lesson-plan.topic-overview');
-    }
-
-
-    public function contentType()
-    {
-        return view('pages.administration.download-center.content-type');
-    }
-    public function contentList()
-    {
-        return view('pages.administration.download-center.content-list');
-    }
     public function sharedContentList()
     {
         $sharedContents = ShareContentList::with(['role', 'users'])
@@ -276,16 +252,6 @@ class HomeController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
-    }
-
-    public function studentCategory()
-    {
-        return view('pages.student.student-info.student-category');
-    }
-
-    public function addStudent()
-    {
-        return view('pages.student.student-info.add-student');
     }
 
     public function studentList()
@@ -804,11 +770,6 @@ class HomeController extends Controller
         return redirect()->back()->with('message-success', 'Student status update successfully!');
     }
 
-    public function studentView($id)
-    {
-        return view('pages.student.student-info.student-view', compact('id'));
-    }
-
     public function disabledStudents()
     {
         $students = $students = Student::with([
@@ -839,18 +800,6 @@ class HomeController extends Controller
     public function studentExport()
     {
         return view('pages.student.student-info.student-export');
-    }
-
-
-
-    public function feeGroup() {}
-
-
-
-
-    public function feeType()
-    {
-        return view('pages.student.fees.fee-type');
     }
 
     // public function feeInvoice()
@@ -1075,23 +1024,6 @@ class HomeController extends Controller
 //         ->rawColumns(['payment_status', 'action'])
 //         ->make(true);
 // }
-
-
-    public function itemCategory()
-    {
-        return view('pages.account.inventory.item-category');
-    }
-
-
-    public function itemList()
-    {
-        return view('pages.account.inventory.item-list');
-    }
-
-    public function supplier()
-    {
-        return view('pages.account.inventory.supplier');
-    }
 
     public function itemReceive()
     {
@@ -1387,14 +1319,4 @@ class HomeController extends Controller
     //     // itemname get using inventerory items table
     //     return view('pages.account.inventory.item-issue');
     // }
-    public function itemSell()
-    {
-        $items = InventoryItem::all();
-        $classes = Course::all();
-        $sections = Intake::all();
-        $roles = Role::all();
-        $students = Student::all();
-        $users = User::all();
-        return view('pages.account.inventory.item-sell', compact('items', 'classes', 'sections', 'roles', 'students', 'users'));
-    }
 }
