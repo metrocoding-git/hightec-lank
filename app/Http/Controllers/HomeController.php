@@ -2,54 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use Carbon\Carbon;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Content;
-use App\CheckSection;
 use App\Models\Course;
 use App\Models\Intake;
-use App\Models\SmToDo;
-use App\Models\SmClass;
-use App\Models\SmEvent;
 use App\Models\Student;
-use App\Models\SmSchool;
 use App\Models\Supplier;
 use App\Models\ReturnFee;
-use App\Models\FeeInvoice;
-use App\Models\SmHoliday;
-use App\Models\SmSection;
-use App\Models\SmStudent;
-use App\Models\SmUserLog;
 use App\Models\VideoList;
-use App\Models\YearCheck;
-use App\InfixModuleManager;
-use App\Models\BankAccount;
 use App\Models\ItemReceive;
 use App\Models\ItemInventory;
-use App\Models\SmAddIncome;
-use Illuminate\Support\Str;
-use App\Models\SmAddExpense;
 use Illuminate\Http\Request;
-use App\Models\SmNoticeBoard;
-use App\Models\GlobalVariable;
 use App\Models\InventoryItem;
-use App\Models\SmAcademicYear;
-use App\Models\SmClassSection;
 use App\Models\ShareContentList;
-use App\Models\SmCalendarSetting;
-use App\Models\SmGeneralSettings;
 use Illuminate\Support\Facades\DB;
-use App\Models\DueFeesLoginPrevent;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Session;
-use Modules\Saas\Entities\SmPackagePlan;
-use Modules\RolePermission\Entities\InfixRole;
-use Modules\Wallet\Entities\WalletTransaction;
-use Modules\Saas\Entities\SmSubscriptionPayment;
 use App\Models\Branch; // Keep this single import for Branch
 use App\Models\FeeInvoices;
 use App\Models\StudentCourse;
@@ -146,30 +114,6 @@ class HomeController extends Controller
         return view('pages.administration.study-material.other-download');
     }
 
-    public function lesson()
-    {
-        return view('pages.administration.lesson-plan.lesson');
-    }
-
-    public function topic()
-    {
-        return view('pages.administration.lesson-plan.topic');
-    }
-
-    public function topicOverview()
-    {
-        return view('pages.administration.lesson-plan.topic-overview');
-    }
-
-
-    public function contentType()
-    {
-        return view('pages.administration.download-center.content-type');
-    }
-    public function contentList()
-    {
-        return view('pages.administration.download-center.content-list');
-    }
     public function sharedContentList()
     {
         $sharedContents = ShareContentList::with(['role', 'users'])
@@ -276,16 +220,6 @@ class HomeController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
-    }
-
-    public function studentCategory()
-    {
-        return view('pages.student.student-info.student-category');
-    }
-
-    public function addStudent()
-    {
-        return view('pages.student.student-info.add-student');
     }
 
     public function studentList()
@@ -804,11 +738,6 @@ class HomeController extends Controller
         return redirect()->back()->with('message-success', 'Student status update successfully!');
     }
 
-    public function studentView($id)
-    {
-        return view('pages.student.student-info.student-view', compact('id'));
-    }
-
     public function disabledStudents()
     {
         $students = $students = Student::with([
@@ -839,18 +768,6 @@ class HomeController extends Controller
     public function studentExport()
     {
         return view('pages.student.student-info.student-export');
-    }
-
-
-
-    public function feeGroup() {}
-
-
-
-
-    public function feeType()
-    {
-        return view('pages.student.fees.fee-type');
     }
 
     // public function feeInvoice()
@@ -1075,23 +992,6 @@ class HomeController extends Controller
 //         ->rawColumns(['payment_status', 'action'])
 //         ->make(true);
 // }
-
-
-    public function itemCategory()
-    {
-        return view('pages.account.inventory.item-category');
-    }
-
-
-    public function itemList()
-    {
-        return view('pages.account.inventory.item-list');
-    }
-
-    public function supplier()
-    {
-        return view('pages.account.inventory.supplier');
-    }
 
     public function itemReceive()
     {
@@ -1387,14 +1287,4 @@ class HomeController extends Controller
     //     // itemname get using inventerory items table
     //     return view('pages.account.inventory.item-issue');
     // }
-    public function itemSell()
-    {
-        $items = InventoryItem::all();
-        $classes = Course::all();
-        $sections = Intake::all();
-        $roles = Role::all();
-        $students = Student::all();
-        $users = User::all();
-        return view('pages.account.inventory.item-sell', compact('items', 'classes', 'sections', 'roles', 'students', 'users'));
-    }
 }
