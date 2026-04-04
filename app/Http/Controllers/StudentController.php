@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Student;
+use App\Models\FeeInvoice;
 use App\Models\BloodGroup;
 use App\Models\Branch;
 use App\Models\Course;
