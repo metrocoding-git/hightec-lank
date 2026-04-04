@@ -10,6 +10,7 @@ use App\Models\District;
 use App\Models\FeeInvoices;
 use App\Models\Gender;
 use App\Models\Intake;
+use App\Models\StudentAttendanceImport;
 use App\Models\StudentCategory;
 use App\Models\StudentCourse;
 use App\Models\StudentVerification;
@@ -19,6 +20,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
@@ -223,15 +225,44 @@ class StudentController extends Controller
     {
         $courses = Course::all();
         $intakes = Intake::all();
+        $attendanceStudents = collect();
+        $selectedIntakeId = request('intake_id');
+        $selectedCourseId = request('course_id');
+        $selectedAttendanceDate = request('attendance_date');
 
-        return view('pages.student.student-info.student-attendance', compact('courses', 'intakes'));
+        if ($selectedIntakeId && $selectedCourseId && $selectedAttendanceDate) {
+            $attendanceStudents = Student::with(['branch:id,name'])
+                ->whereHas('courseWithIntake', function ($query) use ($selectedIntakeId, $selectedCourseId) {
+                    $query->where('intake_id', $selectedIntakeId)
+                        ->where('course_id', $selectedCourseId);
+                })
+                ->active()
+                ->orderBy('student_name')
+                ->get(['id', 'admission_number', 'student_name', 'phone_number', 'branch_id']);
+        }
+
+        return view('pages.student.student-info.student-attendance', compact(
+            'courses',
+            'intakes',
+            'attendanceStudents',
+            'selectedIntakeId',
+            'selectedCourseId',
+            'selectedAttendanceDate'
+        ));
     }
 
     public function studentAttendanceImport()
     {
         $intakes = Intake::all();
+        $attendanceImports = collect();
 
-        return view('pages.student.student-info.student-attendance-import', compact('intakes'));
+        if (Schema::hasTable('student_attendance_imports')) {
+            $attendanceImports = StudentAttendanceImport::with(['intake:id,name', 'course:id,name', 'uploader:id,name'])
+                ->latest()
+                ->get();
+        }
+
+        return view('pages.student.student-info.student-attendance-import', compact('intakes', 'attendanceImports'));
     }
 
     public function studentAttendanceImportStore(Request $request)
@@ -247,9 +278,33 @@ class StudentController extends Controller
         $fileName = 'attendance_' . date('Ymd_His') . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
         $storedPath = $file->storeAs('attendance-imports', $fileName, 'public');
 
+        StudentAttendanceImport::create([
+            'intake_id' => $request->intake_id,
+            'course_id' => $request->course_id,
+            'attendance_date' => $request->attendance_date,
+            'file_name' => $file->getClientOriginalName(),
+            'file_path' => $storedPath,
+            'uploaded_by' => Auth::id(),
+        ]);
+
         return redirect()
             ->route('student-attendance-import')
             ->with('message-success', 'Attendance file uploaded successfully: ' . basename($storedPath));
+    }
+
+    public function studentAttendanceImportDownload($id)
+    {
+        if (!Schema::hasTable('student_attendance_imports')) {
+            return redirect()->back()->with('message-danger', 'Attendance import table not found.');
+        }
+
+        $import = StudentAttendanceImport::findOrFail($id);
+
+        if (!Storage::disk('public')->exists($import->file_path)) {
+            return redirect()->back()->with('message-danger', 'File not found.');
+        }
+
+        return response()->download(Storage::disk('public')->path($import->file_path), $import->file_name);
     }
 
     // Student Course Management Methods
@@ -898,7 +953,7 @@ class StudentController extends Controller
                 'old_value'         => $oldValue,
                 'new_value'         => $newValue,
                 'signature_path'    => $signaturePath,
-                'updated_by'        => auth()->id(),
+                'updated_by'        => Auth::id(),
             ]);
         }
 

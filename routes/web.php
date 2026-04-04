@@ -61,6 +61,7 @@ Route::controller(HomeController::class)->group(function () {
         Route::get('student/student-info/student-attendance', [StudentController::class, 'studentAttendance'])->name('student-attendance');
         Route::get('student/student-info/student-attendance-import', [StudentController::class, 'studentAttendanceImport'])->name('student-attendance-import');
         Route::post('student/student-info/student-attendance-import', [StudentController::class, 'studentAttendanceImportStore'])->name('student-attendance-import.store');
+        Route::get('student/student-info/student-attendance-import/download/{id}', [StudentController::class, 'studentAttendanceImportDownload'])->name('student-attendance-import.download');
         Route::get('student/student-info/student-export', [StudentController::class, 'studentExport'])->name('student-export');
         Route::match(['get', 'post'], 'student/student-info/diabled-filter', [StudentController::class, 'filter_disabled_StudentList'])->name('frontend.disabled-student.search');
         Route::match(['get', 'post'], 'student/student-info/filtert', [StudentController::class, 'filterStudentList'])->name('frontend.student.search');

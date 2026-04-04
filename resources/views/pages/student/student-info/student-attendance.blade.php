@@ -63,7 +63,7 @@
                                             id="intake-select">
                                             <option value="">Select Intake</option>
                                             @foreach ($intakes as $intake)
-                                                <option value="{{ $intake->id }}">{{ $intake->name }}</option>
+                                                <option value="{{ $intake->id }}" {{ (string) $intake->id === (string) ($selectedIntakeId ?? '') ? 'selected' : '' }}>{{ $intake->name }}</option>
 
                                             @endforeach
 
@@ -80,7 +80,7 @@
                                             id="course-select">
                                             <option value="">Select Course</option>
                                             @foreach ($courses as $course)
-                                                <option value="{{ $course->id }}">{{ $course->name }}</option>
+                                                <option value="{{ $course->id }}" {{ (string) $course->id === (string) ($selectedCourseId ?? '') ? 'selected' : '' }}>{{ $course->name }}</option>
 
                                             @endforeach
                                         </select>
@@ -100,7 +100,7 @@
                                                             class="primary_input_field  primary_input_field date form-control{{ $errors->has('attendance_date') ? ' is-invalid' : '' }}"
                                                             id="attendance_date" type="text" name="attendance_date"
                                                             autocomplete="off"
-                                                            value="{{ isset($date) ? $date : date('m/d/Y') }}">
+                                                            value="{{ $selectedAttendanceDate ?? (isset($date) ? $date : date('m/d/Y')) }}">
                                                     </div>
                                                 </div>
                                                 <button class="btn-date" data-id="#attendance_date" type="button">
@@ -125,6 +125,45 @@
                     </div>
                 </div>
             </div>
+            @if(request()->filled('intake_id') && request()->filled('course_id') && request()->filled('attendance_date'))
+                <div class="row mt-40">
+                    <div class="col-lg-12">
+                        <div class="white-box">
+                            <div class="main-title mb-20">
+                                <h3>Attendance Student List</h3>
+                            </div>
+                            <x-table>
+                                <table class="table school-table-style" cellspacing="0" width="100%">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Admission No</th>
+                                            <th>Student Name</th>
+                                            <th>Phone</th>
+                                            <th>Branch</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($attendanceStudents as $index => $student)
+                                            <tr>
+                                                <td>{{ $index + 1 }}</td>
+                                                <td>{{ $student->admission_number ?? '-' }}</td>
+                                                <td>{{ $student->student_name ?? '-' }}</td>
+                                                <td>{{ $student->phone_number ?? '-' }}</td>
+                                                <td>{{ $student->branch->name ?? '-' }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="5" class="text-center">No students found for selected intake and course.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </x-table>
+                        </div>
+                    </div>
+                </div>
+            @endif
             @isset($students)
                 <div class="row mt-40">
                     <div class="col-lg-12">

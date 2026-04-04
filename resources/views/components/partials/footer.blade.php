@@ -143,9 +143,13 @@
 <script src="{{ asset('backEnd/')}}/js/main.js"></script>
 
 <script src="{{ asset('backEnd/')}}/js/custom.js"></script>
-<script src="{{ asset('')}}/js/registration_custom.js"></script>
+@if (file_exists(public_path('js/registration_custom.js')))
+<script src="{{ asset('js/registration_custom.js') }}"></script>
+@endif
 <script src="{{ asset('backEnd/')}}/js/developer.js"></script>
-<script src="{{url('Modules\Wallet\Resources\assets\js\wallet.js')}}"></script>
+@if (function_exists('moduleStatusCheck') && moduleStatusCheck('Wallet') && file_exists(public_path('Modules/Wallet/Resources/assets/js/wallet.js')))
+<script src="{{ url('Modules/Wallet/Resources/assets/js/wallet.js') }}"></script>
+@endif
 <script>
     $('.close_modal').on('click', function() {
         $('.custom_notification').removeClass('open_notification');
