@@ -51,7 +51,7 @@ Route::controller(HomeController::class)->group(function () {
     });
 
     // Student Information Management (handled by HomeController)
-    Route::middleware(['permission'])->group(function () {
+    // Route::middleware(['permission'])->group(function () {
         Route::get('student/student-info/student-list', 'studentList')->name('student-list');
         Route::get('/student/student-info/student-list-datatable', 'studentDatatable')->name('student-list.datatable');
         Route::get('student/student-info/verification-history/{id}', 'verificationHistory')->name('student-list.verification-history');
@@ -62,7 +62,7 @@ Route::controller(HomeController::class)->group(function () {
         Route::get('student/student-info/student-export', 'studentExport')->name('student-export');
         Route::post('student/student-info/diabled-filter', 'filter_disabled_StudentList')->name('frontend.disabled-student.search');
         Route::post('student/student-info/filtert', 'filterStudentList')->name('frontend.student.search');
-    });
+    // });
 
     // Dependent Dropdown AJAX Routes (Student Info, Fees, etc.)
     Route::prefix('student')->group(function () {
@@ -88,13 +88,13 @@ Route::controller(HomeController::class)->group(function () {
     })->withoutMiddleware(['permission']);
 
     // Fees & Returns
-    Route::middleware(['permission'])->group(function () {
+    // Route::middleware(['permission'])->group(function () {
         Route::get('student/fees/fee-invoice', 'feeInvoice')->name('fees.fee-invoice');
         Route::get('student/fees/fee-invoice-datatable', 'invoiceDatatable')->name('fee.invoice.datatable')->withoutMiddleware(['csrf', 'permission']);
         Route::get('student/fees/fee-invoice-setting', 'feeInvoiceSetting')->name('fee-invoice-setting');
         Route::get('student/fees/fee-return', 'feeReturn')->name('fee-return');
         Route::post('student/fees/fee-return/search', 'feeReturn')->name('fees.fee-return.search');
-    });
+    // });
 });
 
 // ================= ACADEMIC ROUTES =================
