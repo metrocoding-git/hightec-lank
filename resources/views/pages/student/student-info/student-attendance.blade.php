@@ -45,7 +45,7 @@
                                 <div class="main-title m-0">
                                     <h3 class="mb-15">@lang('common.select_criteria') </h3>
                                 </div>
-                                <a href="/" class="primary-btn small fix-gr-bg pull-right mb-15"><span
+                                <a href="{{ route('student-attendance-import') }}" class="primary-btn small fix-gr-bg pull-right mb-15"><span
                                         class="ti-plus pr-2"></span>@lang('student.import_attendance')</a>
                             </div>
                         </div>

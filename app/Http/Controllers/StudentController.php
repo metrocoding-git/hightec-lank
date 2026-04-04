@@ -217,6 +217,40 @@ class StudentController extends Controller
         $student->update($validatedData);
         return redirect()->route('student-list')->with('success', 'Student edit successfully');
     }
+    //Student Attendence Methods
+
+    public function studentAttendance()
+    {
+        $courses = Course::all();
+        $intakes = Intake::all();
+
+        return view('pages.student.student-info.student-attendance', compact('courses', 'intakes'));
+    }
+
+    public function studentAttendanceImport()
+    {
+        $intakes = Intake::all();
+
+        return view('pages.student.student-info.student-attendance-import', compact('intakes'));
+    }
+
+    public function studentAttendanceImportStore(Request $request)
+    {
+        $request->validate([
+            'intake_id' => 'required|exists:intakes,id',
+            'course_id' => 'required|exists:courses,id',
+            'attendance_date' => 'required|date',
+            'attendance_file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        ]);
+
+        $file = $request->file('attendance_file');
+        $fileName = 'attendance_' . date('Ymd_His') . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+        $storedPath = $file->storeAs('attendance-imports', $fileName, 'public');
+
+        return redirect()
+            ->route('student-attendance-import')
+            ->with('message-success', 'Attendance file uploaded successfully: ' . basename($storedPath));
+    }
 
     // Student Course Management Methods
     public function studentAddCourse()
@@ -1013,5 +1047,138 @@ class StudentController extends Controller
         $intakes = $student->intakes()->with(['branch', 'courses'])->get();
 
         return view('pages.student.student-info.student-view', compact('student', 'payments', 'courses', 'intakes'));
+    }
+
+    public function disabledStudents()
+    {
+        $students = Student::with([
+            'branch',
+            'gender',
+            'studentCategory',
+        ])->select([
+            'id',
+            'admission_number',
+            'branch_id',
+            'student_category_id',
+            'gender_id',
+            'student_name',
+            'date_of_birth',
+            'phone_number',
+        ])->inactive()->orderBy('id', 'desc')->get();
+
+        $branches = Branch::all();
+
+        return view('pages.student.student-info.disabled-students', compact('students', 'branches'));
+    }
+
+    public function filterStudentList(Request $request)
+    {
+        $branchId = $request->input('branch_id');
+        $intakeId = $request->input('intake_id');
+        $courseId = $request->input('course_id');
+
+        $query = Student::with([
+            'branch',
+            'gender',
+            'studentCategory',
+            'verifications',
+            'district',
+            'createUser',
+            'updateUser'
+        ])->select([
+            'id',
+            'admission_number',
+            'branch_id',
+            'student_category_id',
+            'gender_id',
+            'student_name',
+            'date_of_birth',
+            'phone_number',
+            'national_id_number',
+            'permanent_address',
+        ]);
+
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
+
+        if ($intakeId) {
+            $query->whereHas('intakes', function ($q) use ($intakeId) {
+                $q->where('intakes.id', $intakeId);
+            });
+        }
+
+        if ($courseId) {
+            $query->whereHas('courses', function ($q) use ($courseId) {
+                $q->where('courses.id', $courseId);
+            });
+        }
+
+        $branches = Branch::all();
+        $students = $query->active()->orderBy('id', 'desc')->get();
+
+        return view('pages.student.student-info.student-list', compact('students', 'branches'));
+    }
+
+    public function filter_disabled_StudentList(Request $request)
+    {
+        $branchId = $request->input('branch_id');
+        $intakeId = $request->input('intake_id');
+        $courseId = $request->input('course_id');
+
+        $query = Student::with([
+            'branch',
+            'gender',
+            'studentCategory',
+        ])->select([
+            'id',
+            'admission_number',
+            'branch_id',
+            'student_category_id',
+            'gender_id',
+            'student_name',
+            'date_of_birth',
+            'phone_number',
+        ]);
+
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
+
+        if ($intakeId) {
+            $query->whereHas('intakes', function ($q) use ($intakeId) {
+                $q->where('intakes.id', $intakeId);
+            });
+        }
+
+        if ($courseId) {
+            $query->whereHas('courses', function ($q) use ($courseId) {
+                $q->where('courses.id', $courseId);
+            });
+        }
+
+        $branches = Branch::all();
+        $students = $query->inactive()->orderBy('id', 'desc')->get();
+
+        return view('pages.student.student-info.disabled-students', compact('students', 'branches'));
+    }
+
+    public function updateStudetStatus(Request $request)
+    {
+        $request->validate([
+            'student_id' => 'required|exists:students,id',
+        ]);
+
+        $student = Student::findOrFail($request->student_id);
+        $student->update([
+            'is_active' => !$student->is_active
+        ]);
+
+        return redirect()->back()->with('message-success', 'Student status update successfully!');
+    }
+
+    public function studentExport()
+    {
+        return view('pages.student.student-info.student-export');
     }
 }

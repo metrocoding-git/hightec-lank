@@ -341,40 +341,52 @@
 
             ajax: "{{ route('student-list.datatable') }}",
             columns: [{
-                    data: 'admission_number'
+                    data: 'admission_number',
+                    name: 'admission_number'
                 },
                 {
-                    data: 'student_name'
+                    data: 'student_name',
+                    name: 'student_name'
                 },
                 {
-                    data: 'phone_number'
+                    data: 'phone_number',
+                    name: 'phone_number'
                 },
                 {
-                    data: 'phone_number_2'
+                    data: 'phone_number_2',
+                    name: 'phone_number_2'
                 },
                 {
-                    data: 'nic'
+                    data: 'nic',
+                    name: 'national_id_number'
                 },
                 {
-                    data: 'address'
+                    data: 'address',
+                    name: 'permanent_address'
                 },
                 {
-                    data: 'branch'
+                    data: 'branch',
+                    orderable: false
                 },
                 {
-                    data: 'admission_date'
+                    data: 'admission_date',
+                    name: 'admission_date'
                 },
                 {
-                    data: 'category'
+                    data: 'category',
+                    orderable: false
                 },
                 {
-                    data: 'gender'
+                    data: 'gender',
+                    orderable: false
                 },
                 {
-                    data: 'dob'
+                    data: 'dob',
+                    name: 'date_of_birth'
                 },
                 {
-                    data: 'age'
+                    data: 'age',
+                    name: 'stu_age'
                 },
                 {
                     data: 'photo',
@@ -382,39 +394,50 @@
                     searchable: false
                 },
                 {
-                    data: 'email'
+                    data: 'email',
+                    name: 'email_address'
                 },
                 {
-                    data: 'district'
-                },
-
-                {
-                    data: 'full_name_verification'
-                },
-                {
-                    data: 'phone_verification'
-                },
-                {
-                    data: 'phone2_verification'
-                },
-                {
-                    data: 'nic_verification'
-                },
-                {
-                    data: 'address_verification'
+                    data: 'district',
+                    orderable: false
                 },
 
                 {
-                    data: 'notes'
+                    data: 'full_name_verification',
+                    orderable: false
                 },
                 {
-                    data: 'previous_institute'
+                    data: 'phone_verification',
+                    orderable: false
                 },
                 {
-                    data: 'created_by'
+                    data: 'phone2_verification',
+                    orderable: false
                 },
                 {
-                    data: 'updated_by'
+                    data: 'nic_verification',
+                    orderable: false
+                },
+                {
+                    data: 'address_verification',
+                    orderable: false
+                },
+
+                {
+                    data: 'notes',
+                    name: 'additional_notes'
+                },
+                {
+                    data: 'previous_institute',
+                    name: 'previous_institute_details'
+                },
+                {
+                    data: 'created_by',
+                    orderable: false
+                },
+                {
+                    data: 'updated_by',
+                    orderable: false
                 },
                 {
                     data: 'action',
