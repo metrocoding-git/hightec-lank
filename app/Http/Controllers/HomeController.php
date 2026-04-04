@@ -826,12 +826,8 @@ class HomeController extends Controller
     public function feeInvoice()
     {
         $roles = Role::all();
-        $fee_invoices = FeeInvoices::with(['student', 'branch', 'invoice_item.fee_type', 'student.studentCategory'])
-            ->where('payment_status', '!=', 'returned')
-            ->orderBy('created_at', 'desc')
-            ->get();
 
-        return view('pages.student.fees.fee-invoice', compact('fee_invoices', 'roles'));
+        return view('pages.student.fees.fee-invoice', compact('roles'));
     }
 
     public function invoiceDatatable()
@@ -853,10 +849,27 @@ class HomeController extends Controller
                 'branches.name as branch_name',
                 'fee_types.name as fee_type_name',
                 'courses.name as course_name',
-            ]);
+            ])
+            ->orderBy('fee_invoices.id', 'desc');
     
         return DataTables::of($query)
             ->addIndexColumn()
+
+            ->orderColumn('fee_name', function ($query, $order) {
+                $query->orderByRaw("CASE WHEN fee_invoices.invoice_type = 'fee' THEN COALESCE(fee_types.name, '') ELSE CONCAT(COALESCE(fee_invoices.invoice_type, ''), CASE WHEN courses.name IS NOT NULL THEN CONCAT(' - ', courses.name) ELSE '' END) END {$order}");
+            })
+
+            ->orderColumn('balance', function ($query, $order) {
+                $query->orderByRaw("(fee_invoices.total_amount - fee_invoices.paid_amount) {$order}");
+            })
+
+            ->orderColumn('payment_date', function ($query, $order) {
+                $query->orderBy('fee_invoices.create_date', $order);
+            })
+
+            ->orderColumn('due_date', function ($query, $order) {
+                $query->orderBy('fee_invoices.due_date', $order);
+            })
     
             ->editColumn('fee_name', function ($row) {
                 return $row->invoice_type === 'fee'
@@ -916,7 +929,16 @@ class HomeController extends Controller
                            Invoice
                         </a>
 
-                        <a class="dropdown-item" data-toggle="modal" data-target="#returnFeeModal' . $row->id . '"> Return </a>
+                                <a class="dropdown-item"
+                                    data-toggle="modal"
+                                    data-target="#returnFeeModal"
+                                    data-invoice-id="' . $row->id . '"
+                                    data-student-id="' . ($row->student_id ?? '') . '"
+                                    data-student-name="' . e($row->student_name ?? '') . '"
+                                    data-admission-number="' . e($row->admission_number ?? '') . '"
+                                    data-paid-amount="' . ($row->paid_amount ?? 0) . '">
+                                    Return
+                                </a>
             
                         <a class="dropdown-item"
                            href="' . route('fees.invoice-print', $row->id) . '"

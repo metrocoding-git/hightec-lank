@@ -7,227 +7,306 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <style>
-        @media print {
-            @page {
-                /* size: landscape;
-                height: 13.97cm;
-                width: 21.6cm; */
-                margin: 0;
-            }
+        @page {
+            size: A4;
+            margin: 14mm;
+        }
 
-            html,
+        :root {
+            --ink: #1f2937;
+            --muted: #6b7280;
+            --line: #d1d5db;
+            --soft: #f8fafc;
+            --brand: #0f4c81;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #eef2f7;
+            color: var(--ink);
+            font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        .sheet {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 14px auto;
+            background: #fff;
+            padding: 14mm;
+            border: 1px solid #e5e7eb;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            border-bottom: 2px solid var(--line);
+            padding-bottom: 12px;
+        }
+
+        .company h1 {
+            margin: 0;
+            font-size: 20px;
+            color: var(--brand);
+            letter-spacing: 0.4px;
+        }
+
+        .company p {
+            margin: 3px 0 0;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .doc-title {
+            text-align: right;
+        }
+
+        .doc-title h2 {
+            margin: 0;
+            font-size: 24px;
+            letter-spacing: 1px;
+        }
+
+        .doc-title p {
+            margin: 2px 0;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .card {
+            border: 1px solid var(--line);
+            background: var(--soft);
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        .card h3 {
+            margin: 0 0 8px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--muted);
+        }
+
+        .kv {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 4px 0;
+        }
+
+        .kv .k {
+            color: var(--muted);
+        }
+
+        .kv .v {
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 14px;
+        }
+
+        .table th,
+        .table td {
+            border: 1px solid var(--line);
+            padding: 8px 10px;
+            vertical-align: top;
+        }
+
+        .table th {
+            background: #f1f5f9;
+            text-align: left;
+            font-size: 12px;
+            color: #334155;
+        }
+
+        .num {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .summary-wrap {
+            margin-top: 12px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .summary {
+            width: 320px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .summary .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--line);
+            background: #fff;
+        }
+
+        .summary .row:last-child {
+            border-bottom: 0;
+            font-size: 15px;
+            font-weight: 700;
+            background: #ecf5ff;
+        }
+
+        .notice {
+            margin-top: 16px;
+            padding: 10px;
+            border: 1px dashed #9ca3af;
+            border-radius: 6px;
+            color: #374151;
+            font-size: 12px;
+        }
+
+        .footer {
+            margin-top: 20px;
+            border-top: 1px solid var(--line);
+            padding-top: 8px;
+            color: var(--muted);
+            font-size: 11px;
+            text-align: center;
+        }
+
+        @media print {
             body {
-                height: 13.97cm;
-                width: 21.6cm;
-                margin: 0;
-                padding: 0;
                 background: #fff;
             }
 
-            .invoice-report {
-                height: 13.97cm;
-                width: 21.6cm;
-                position: relative;
-                font-family: 'Arial Black', 'Courier New', monospace;
-                font-size: 12px;
-                color: #000;
-            }
-
-            .field {
-                position: absolute;
-                font-family: 'Arial Black', 'Courier New', monospace;
-                font-size: 12px;
-                color: #000;
-                line-height: 1;
-            }
-
-            .field2 {
-                position: absolute;
-                font-family: 'Arial Black', 'Courier New', monospace;
-                font-size: 11.5px;
-                color: #000;
-                line-height: 1;
-            }
-
-            /*
-            .course-name {
-                left: 4cm;
-                top: 4.1cm;
-                font-size: 12.5px;
-            }
-
-            .invoice-date {
-                left: 16.6cm;
-                top: 4.1cm;
-            }
-
-            .invoice-no {
-                left: 16.6cm;
-                top: 4.6cm;
-            }
-
-            .admission-no {
-                left: 16.6cm;
-                top: 5.1cm;
-            }
-
-            .student-name {
-                left:9.0cm;
-                top: 5.6cm;
-            }
-
-            .student-nic {
-                left:9.0cm;
-                top: 6.2cm;
-            }
-
-            .student-address {
-                left:9.0cm;
-                top: 6.8cm;
-            }
-
-            .student-phone {
-                left:9.0cm;
-                top: 7.4cm;
-            }
-
-            .total-amount {
-                left: 6.1cm;
-                top: 8.1cm;
-            }
-
-            .paid-amount {
-                left: 6.1cm;
-                top: 8.7cm;
-            }
-
-            .due-amount {
-                left: 6.1cm;
-                top: 9.4cm;
-            }
-
-            .due-date {
-                left: 6.1cm;
-                top: 10.0cm;
-            } */
-
-
-            .course-name {
-                left: 3.5cm;
-                top: 4.5cm;
-                font-size: 12.5px;
-            }
-
-            .stu-category {
-                left: 3.5cm;
-                top: 5.0cm;
-                font-size: 12.5px;
-            }
-
-
-            .invoice-date {
-                left: 16.1cm;
-                top: 4.5cm;
-            }
-
-            .invoice-no {
-                left: 16.1cm;
-                top: 5.0cm;
-            }
-
-            .admission-no {
-                left: 16.1cm;
-                top: 5.5cm;
-            }
-
-            .student-name {
-                left: 8.4cm;
-                top: 6.0cm;
-            }
-
-            .student-nic {
-                left: 8.4cm;
-                top: 6.6cm;
-            }
-
-            .student-address {
-                left: 8.4cm;
-                top: 7.2cm;
-            }
-
-            .student-phone {
-                left: 8.4cm;
-                top: 7.8cm;
-            }
-
-            .total-amount {
-                left: 5.6cm;
-                top: 8.5cm;
-            }
-
-            .paid-amount {
-                left: 5.6cm;
-                top: 9.1cm;
-            }
-
-            .due-amount {
-                left: 5.6cm;
-                top: 9.8cm;
-            }
-
-            .due-date {
-                left: 5.6cm;
-                top: 10.4cm;
+            .sheet {
+                margin: 0;
+                border: 0;
+                width: auto;
+                min-height: auto;
+                padding: 0;
             }
         }
     </style>
 </head>
 
 <body>
-    <div class="invoice-report">
+    @php
+        $baseInvoice = $invoice->invoice;
+        $student = optional($baseInvoice)->student;
+        $studentCategory = optional(optional($student)->studentCategory)->category_name ?? 'N/A';
 
+        $invoiceType = optional($baseInvoice)->invoice_type;
+        $paidCourseName = optional(optional(optional($baseInvoice)->paidCourses)->course)->name;
+        $feeName = optional(optional(optional($baseInvoice)->invoice_item)->first())->fee_type->name ?? null;
 
-        {{-- Course Name --}}
-        <div class="field course-name">
-            {{-- {{ $invoice->invoice->paidCourses ?? ($invoice->invoice->paidCourses->course->name )?? 'Fee Details' }} --}}
-            {{ $invoice->invoice->invoice_type == 'fee'
-                ? $invoice->invoice->invoice_item[0]->fee_type->name
-                : ($invoice->invoice->invoice_type == 'course'
-                    ? $invoice->invoice->paidCourses->course->name
-                    : ($invoice->invoice->invoice_type == 'nvq'
-                        ? 'NVQ - ' . $invoice->invoice->paidCourses->course->name
-                        : '-')) }}
+        $itemName = $invoiceType === 'fee'
+            ? ($feeName ?? 'Fee')
+            : ($invoiceType === 'course'
+                ? ($paidCourseName ?? 'Course')
+                : ($invoiceType === 'nvq'
+                    ? 'NVQ - ' . ($paidCourseName ?? 'Course')
+                    : ($invoiceType ?? '-')));
+
+        $totalAmount = (float) ($invoice->amount ?? 0);
+        $paidAmount = (float) (optional($baseInvoice)->paid_amount ?? 0);
+        $dueAmount = (float) ((optional($baseInvoice)->total_amount ?? 0) - $paidAmount);
+        $dueDateRaw = optional($baseInvoice)->due_date;
+        $dueDate = $dueDateRaw ? \Carbon\Carbon::parse($dueDateRaw)->format('d M Y') : 'N/A';
+    @endphp
+
+    <div class="sheet">
+        <div class="top-bar">
+            <div class="company">
+                <h1>HIGHTEC LANKA INTERNATIONAL</h1>
+                <p>Vocational and Technical Training Institute</p>
+                <p>Student Fee Receipt</p>
+            </div>
+            <div class="doc-title">
+                <h2>INVOICE</h2>
+                <p>Receipt No: {{ $invoice->receipt_number ?? 'N/A' }}</p>
+                <p>Date: {{ \Carbon\Carbon::parse($invoice->create_date)->format('d M Y') }}</p>
+            </div>
         </div>
-        <div class="field stu-category">
-            {{ $invoice->invoice->student->studentCategory->category_name ?? 'N/A' }}
+
+        <div class="meta-grid">
+            <div class="card">
+                <h3>Student Details</h3>
+                <div class="kv"><span class="k">Student Name</span><span class="v">{{ optional($student)->student_name ?? 'N/A' }}</span></div>
+                <div class="kv"><span class="k">Admission No</span><span class="v">{{ optional($student)->admission_number ?? 'N/A' }}</span></div>
+                <div class="kv"><span class="k">NIC</span><span class="v">{{ optional($student)->national_id_number ?? 'N/A' }}</span></div>
+                <div class="kv"><span class="k">Category</span><span class="v">{{ $studentCategory }}</span></div>
+                <div class="kv"><span class="k">Contact</span><span class="v">{{ optional($student)->phone_number ?? 'N/A' }}</span></div>
+            </div>
+            <div class="card">
+                <h3>Invoice Details</h3>
+                <div class="kv"><span class="k">Invoice Type</span><span class="v">{{ strtoupper($invoiceType ?? 'N/A') }}</span></div>
+                <div class="kv"><span class="k">Description</span><span class="v">{{ $itemName }}</span></div>
+                <div class="kv"><span class="k">Due Date</span><span class="v">{{ $dueDate }}</span></div>
+                <div class="kv"><span class="k">Payment Method</span><span class="v">{{ $invoice->payment_method ?? 'N/A' }}</span></div>
+                <div class="kv"><span class="k">Branch</span><span class="v">{{ optional(optional($baseInvoice)->branch)->name ?? 'N/A' }}</span></div>
+            </div>
         </div>
 
-        {{-- Invoice Info --}}
-        <div class="field2 invoice-date">{{ \Carbon\Carbon::parse($invoice->create_date)->format('F j, Y') }}</div>
-        <div class="field2 invoice-no">{{ $invoice->receipt_number ?? '' }}</div>
-        <div class="field2 admission-no">{{ $invoice->invoice->student->admission_number ?? '' }}</div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th style="width:10%;">Qty</th>
+                    <th>Description</th>
+                    <th style="width:18%;" class="num">Rate (LKR)</th>
+                    <th style="width:18%;" class="num">Amount (LKR)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1.00</td>
+                    <td>{{ $itemName }}</td>
+                    <td class="num">{{ number_format($totalAmount, 2) }}</td>
+                    <td class="num">{{ number_format($totalAmount, 2) }}</td>
+                </tr>
+            </tbody>
+        </table>
 
-        {{-- Student Info --}}
-        <div class="field student-name">{{ $invoice->invoice->student->student_name ?? '' }}</div>
-        <div class="field student-nic">{{ $invoice->invoice->student->national_id_number ?? 'N/A' }}</div>
-        <div class="field student-address">{{ $invoice->invoice->student->permanent_address ?? 'N/A' }}</div>
-        <div class="field student-phone">{{ $invoice->invoice->student->phone_number ?? 'N/A' }}</div>
+        <div class="summary-wrap">
+            <div class="summary">
+                <div class="row"><span>Invoice Amount</span><span>LKR {{ number_format($totalAmount, 2) }}</span></div>
+                <div class="row"><span>Paid So Far</span><span>LKR {{ number_format($paidAmount, 2) }}</span></div>
+                <div class="row"><span>Outstanding</span><span>LKR {{ number_format(max($dueAmount, 0), 2) }}</span></div>
+            </div>
+        </div>
 
-        {{-- Payment Info --}}
-        <div class="field total-amount">{{ number_format($invoice->amount, 2) }}</div>
-        <div class="field paid-amount">--</div>
-        <div class="field due-amount">
-            {{ number_format($invoice->invoice->total_amount - $invoice->invoice->paid_amount, 2) }}</div>
-        <div class="field due-date"> {{ \Carbon\Carbon::parse($invoice->invoice->due_date)->format('Y-m-d') }} </div>
+        @if (!empty($invoice->invoice_payment_note))
+            <div class="notice">
+                <strong>Note:</strong> {{ $invoice->invoice_payment_note }}
+            </div>
+        @endif
 
+        <div class="footer">
+            This is a computer-generated receipt. No signature is required.
+        </div>
     </div>
 
-    {{-- ✅ Auto print on page load --}}
     <script>
         window.onload = function() {
             window.print();
         };
-        window.onafterprint = () => window.close();
+        window.onafterprint = function() {
+            window.close();
+        };
     </script>
 </body>
 
