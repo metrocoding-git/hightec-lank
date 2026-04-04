@@ -27,10 +27,6 @@ class FeeInvoices extends Model
         'main_invoice_number',
         'create_user_id',
         'notes',
-        //retun_user_id
-        //retun_amount
-       //'due_amount',
-
       
     ];
 
