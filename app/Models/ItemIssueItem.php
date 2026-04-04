@@ -26,7 +26,7 @@ class ItemIssueItem extends Model
 
     public function item()
     {
-        return $this->belongsTo('App\Models\Inventory_item', 'item_id', 'id');
+        return $this->belongsTo(InventoryItem::class, 'item_id', 'id');
     }
 
     // Helper methods
