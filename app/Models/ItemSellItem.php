@@ -19,7 +19,7 @@ class ItemSellItem extends Model
     // Define relationships if necessary
     public function itemSellBatch()
     {
-        return $this->belongsTo(ItemSellBatch::class, 'item_sell_batch_id' );
+        return $this->belongsTo(ItemSellBatch::class, 'item_sell_batch_id');
     }
 
     public function item()

@@ -19,6 +19,7 @@ use App\Models\Student;
 use App\Models\Course;
 use App\Models\CourseIntake;
 use App\Models\Intake;
+use App\Models\FeeInvoice;
 use App\Models\FeeInvoices;
 use App\Models\StudentCourse;
 use Carbon\Carbon;
