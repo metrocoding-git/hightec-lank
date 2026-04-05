@@ -540,5 +540,6 @@ Route::controller(ReportController::class)->prefix('reports')
         Route::get('sell-items', 'sellItems')->name('reports.sell-items');
         Route::get('issue-items', 'issueItems')->name('reports.issue-items');
         Route::get('students-paid', 'studentsPaid')->name(name: 'reports.students-paid');
+        Route::get('course-dates-payments', 'studentsDatesPayments')->name(name: 'reports.course-dates-payments');
         Route::get('course-intake-payments', 'courseIntakePayments')->name('reports.course-intake-payments');
     });

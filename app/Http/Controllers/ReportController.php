@@ -113,7 +113,12 @@ class ReportController extends Controller
 
         // ----- PAYMENT TYPE FILTER -----
         if ($request->payment_type) {
-            $query->where('payment_type', $request->payment_type);
+
+            if ($request->payment_type == 'course_fee') {
+                $query->whereIn('payment_type', ['course', 'fee']);
+            } else {
+                $query->where('payment_type', $request->payment_type);
+            }
         }
 
         // Results
@@ -128,6 +133,94 @@ class ReportController extends Controller
     {
         $paidCourses = PaidCourse::with(relations: ['course', 'invoice.student'])->get();
         return view('pages.reports.course-paid', compact('paidCourses'));
+    }
+
+    public function studentsDatesPayments(Request $request)
+    {
+        $branches = Branch::all();
+
+        // Default date range: last 30 days
+        $to = now()->format('Y-m-d');
+        $from = now()->subDays(30)->format('Y-m-d');
+
+        // If user selects date range
+        if ($request->date_range) {
+
+            if (strpos($request->date_range, ' to ') !== false) {
+                // Range
+                $dates = explode(' to ', $request->date_range);
+                $from = $dates[0] ?? null;
+                $to = $dates[1] ?? null;
+            } else {
+                // Single date
+                $from = $request->date_range;
+                $to = $request->date_range;
+            }
+        }
+
+        $subQuery = DB::table('student_courses')
+            ->select(DB::raw('MIN(id) as id'))
+            ->groupBy('student_id', 'course_id');
+
+        $query = DB::table('student_courses')
+            ->joinSub($subQuery, 'sc_min', function ($join) {
+                $join->on('student_courses.id', '=', 'sc_min.id');
+            })
+
+            ->join('intakes', 'student_courses.intake_id', '=', 'intakes.id')
+            ->join('courses', 'student_courses.course_id', '=', 'courses.id')
+            ->join('paid_courses', function ($join) {
+                $join->on('student_courses.course_id', '=', 'paid_courses.course_id');
+            })
+            ->join('fee_invoices', function ($join) use ($request) {
+                $join->on('paid_courses.invoice_id', '=', 'fee_invoices.id')
+                    ->whereColumn('fee_invoices.student_id', 'student_courses.student_id');
+
+                $join->where('fee_invoices.payment_status', 'full');
+            })
+            ->join('branches', 'fee_invoices.branch_id', '=', 'branches.id')
+            ->join('students', 'student_courses.student_id', '=', 'students.id')
+            ->join('student_categories', 'students.student_category_id', '=', 'student_categories.id')
+            ->where(function ($q) use ($from, $to) {
+
+                // Condition 1: Intake starts within range
+                $q->whereBetween('intakes.start_date', [$from, $to])
+
+                    // OR Condition 2: Payment completed within range
+                    ->orWhere(function ($q2) use ($from, $to) {
+                        $q2->where('fee_invoices.payment_status', 'full')
+                            ->whereBetween('fee_invoices.updated_at', [$from, $to]);
+                    });
+            })
+            ->whereIn('student_courses.status', ['start', 'Complete'])
+            ->where('fee_invoices.invoice_type', 'course');
+
+        // Optional branch filter
+        if ($request->branch_id) {
+            $query->where('fee_invoices.branch_id', $request->branch_id);
+        }
+
+        // Select required columns, distinct invoice per student-course
+        $reportData = $query
+            ->select(
+                'fee_invoices.main_invoice_number',
+                'students.admission_number',
+                'student_categories.category_name as student_category_name',
+                'branches.name as branch_name',
+                'courses.name as course_name',
+                'intakes.name as intake_name',
+                'intakes.start_date as intake_start_date',
+                'student_courses.status',
+                'fee_invoices.total_amount',
+                'fee_invoices.paid_amount',
+                'fee_invoices.payment_method',
+                'fee_invoices.create_date as invoice_create_date',
+                'fee_invoices.updated_at as invoice_paid_date'
+            )
+            ->distinct('fee_invoices.id')
+            ->get();
+
+        return view('pages.reports.course-dates-payments', compact('reportData', 'branches'));
     }
 
     public function courseIntakePayments(Request $request)

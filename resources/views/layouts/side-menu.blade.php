@@ -684,6 +684,13 @@
                         </li>
                     @endif
                     {{-- @if (Auth::check() && Auth::user()->hasPermission('fees.course-intake-payments')) --}}
+                     <li>
+                        <a href="/reports/course-dates-payments"
+                            class="{{ request()->is('reports/course-dates-payments') ? 'active a' : '' }}">
+                            Course Dates Payments
+                        </a>
+                    </li>
+
                     <li>
                         <a href="/reports/course-intake-payments"
                             class="{{ request()->is('reports/course-intake-payments') ? 'active a' : '' }}">

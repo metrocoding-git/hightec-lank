@@ -65,11 +65,10 @@
                             <label>Fee Type</label>
                             <select name="payment_type" class="form-control">
                                 <option value="">All</option>
-                                <option value="course" {{ request('payment_type') == 'course' ? 'selected' : '' }}>Course
+                                <option value="course_fee" {{ request('payment_type') == 'course_fee' ? 'selected' : '' }}>
+                                    Course & Fee
                                 </option>
                                 <option value="nvq" {{ request('payment_type') == 'nvq' ? 'selected' : '' }}>NVQ</option>
-                                <option value="fee" {{ request('payment_type') == 'fee' ? 'selected' : '' }}>Fee
-                                </option>
                                 <option value="item_sell" {{ request('payment_type') == 'item_sell' ? 'selected' : '' }}>
                                     Item Sell</option>
                                 <option value="others" {{ request('payment_type') == 'others' ? 'selected' : '' }}>Others
