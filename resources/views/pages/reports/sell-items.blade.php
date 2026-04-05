@@ -96,7 +96,7 @@
                                                         </td>
                                                         <td>
                                                             @if ($value->itemSellBatch->student)
-                                                                {{ $value->itemSellBatch->student->studentCategory->category_name }}
+                                                                {{ $value->itemSellBatch->student->studentCategory?->category_name ?? '-' }}
                                                             @else
                                                                 -
                                                             @endif
