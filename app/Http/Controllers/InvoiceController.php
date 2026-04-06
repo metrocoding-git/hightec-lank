@@ -7,6 +7,7 @@ use App\Models\Invoice;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\FeeInvoices;
+use App\Models\Role;
 use App\Models\FeesGroup;
 use App\Models\FeeType;
 use App\Models\InvoiceItem;
@@ -22,9 +23,122 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Yajra\DataTables\DataTables;
 
 class InvoiceController extends Controller
 {
+    public function feeInvoiceSetting()
+    {
+        return view('pages.student.fees.fee-invoice-setting');
+    }
+
+    public function feeInvoice()
+    {
+        $roles = Role::all();
+        $fee_invoices = FeeInvoices::with(['student', 'branch', 'invoice_item.fee_type', 'student.studentCategory'])
+            ->where('payment_status', '!=', 'returned')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('pages.student.fees.fee-invoice', compact('fee_invoices', 'roles'));
+    }
+
+    public function invoiceDatatable()
+    {
+        $query = DB::table('fee_invoices')
+            ->leftJoin('students', 'students.id', '=', 'fee_invoices.student_id')
+            ->leftJoin('student_categories', 'student_categories.id', '=', 'students.student_category_id')
+            ->leftJoin('branches', 'branches.id', '=', 'fee_invoices.branch_id')
+            ->leftJoin('invoice_items', 'invoice_items.invoice_id', '=', 'fee_invoices.id')
+            ->leftJoin('fee_types', 'fee_types.id', '=', 'invoice_items.fee_type_id')
+            ->leftJoin('paid_courses', 'paid_courses.invoice_id', '=', 'fee_invoices.id')
+            ->leftJoin('courses', 'courses.id', '=', 'paid_courses.course_id')
+            ->select([
+                'fee_invoices.*',
+                'students.student_name',
+                'students.admission_number',
+                'student_categories.category_name',
+                'branches.name as branch_name',
+                'fee_types.name as fee_type_name',
+                'courses.name as course_name',
+            ]);
+
+        return DataTables::of($query)
+            ->addIndexColumn()
+
+            ->editColumn('fee_name', function ($row) {
+                return $row->invoice_type === 'fee'
+                    ? ($row->fee_type_name ?? '-')
+                    : ($row->invoice_type . ($row->course_name ? ' - ' . ($row->course_name ?? '-') : ''));
+            })
+
+            ->addColumn('balance', function ($row) {
+                return number_format($row->total_amount - $row->paid_amount, 2);
+            })
+
+            ->addColumn('payment_date', fn($row) =>
+                \Carbon\Carbon::parse($row->create_date)->format('m/d/Y')
+            )
+
+            ->addColumn('due_date', fn($row) =>
+                \Carbon\Carbon::parse($row->due_date)->format('m/d/Y')
+            )
+
+            ->filter(function ($query) {
+                $keyword = request('search.value');
+
+                if ($keyword) {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->where('fee_invoices.main_invoice_number', 'like', "%{$keyword}%")
+                            ->orWhere('students.student_name', 'like', "%{$keyword}%")
+                            ->orWhere('students.admission_number', 'like', "%{$keyword}%")
+                            ->orWhere('student_categories.category_name', 'like', "%{$keyword}%")
+                            ->orWhere('branches.name', 'like', "%{$keyword}%")
+                            ->orWhere('fee_types.name', 'like', "%{$keyword}%")
+                            ->orWhere('courses.name', 'like', "%{$keyword}%")
+                            ->orWhere('fee_invoices.payment_status', 'like', "%{$keyword}%");
+                    });
+                }
+            })
+            ->addColumn('action', function ($row) {
+
+                return '
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown">
+                        Action
+                    </button>
+                    <div class="dropdown-menu">
+
+                        <a class="dropdown-item"
+                           data-toggle="modal"
+                           data-target="#viewPaymentHistoryModal"
+                           data-invoice-id="' . $row->id . '">
+                           View Payment
+                        </a>
+
+                        <a class="dropdown-item"
+                           data-toggle="modal"
+                           data-target="#makeInvoiceModal"
+                           data-student-id="' . ($row->student_id ?? '') . '"
+                           data-invoice-id="' . $row->id . '">
+                           Invoice
+                        </a>
+
+                        <a class="dropdown-item" data-toggle="modal" data-target="#returnFeeModal' . $row->id . '"> Return </a>
+
+                        <a class="dropdown-item"
+                           href="' . route('fees.invoice-print', $row->id) . '"
+                           target="_blank">
+                           Re-Print
+                        </a>
+
+                    </div>
+                </div>';
+            })
+            ->rawColumns(['payment_status', 'action'])
+            ->make(true);
+    }
+
     /**
      * Display a listing of the resource.
      */

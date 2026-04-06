@@ -93,9 +93,9 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
 
     // Fees & Returns
     // Route::middleware(['permission'])->group(function () {
-        Route::get('student/fees/fee-invoice', 'feeInvoice')->name('fees.fee-invoice');
-        Route::get('student/fees/fee-invoice-datatable', 'invoiceDatatable')->name('fee.invoice.datatable')->withoutMiddleware(['csrf', 'permission']);
-        Route::get('student/fees/fee-invoice-setting', 'feeInvoiceSetting')->name('fee-invoice-setting');
+        Route::get('student/fees/fee-invoice', [InvoiceController::class, 'feeInvoice'])->name('fees.fee-invoice');
+        Route::get('student/fees/fee-invoice-datatable', [InvoiceController::class, 'invoiceDatatable'])->name('fee.invoice.datatable')->withoutMiddleware(['csrf', 'permission']);
+        Route::get('student/fees/fee-invoice-setting', [InvoiceController::class, 'feeInvoiceSetting'])->name('fee-invoice-setting');
         Route::get('student/fees/fee-return', [ReturnFeeController::class, 'feeReturn'])->name('fee-return');
         Route::post('student/fees/fee-return/search', [ReturnFeeController::class, 'feeReturn'])->name('fees.fee-return.search');
     // });
@@ -297,7 +297,7 @@ Route::controller(HomeController::class)->group(callback: function () {
     Route::post('student/student-info/filtert', [StudentController::class, 'filterStudentList'])->name('frontend.student.search');
     // Route::get('student/fees/fee-invoice', 'feeInvoice')->name('fee-invoice');
     // Route::get('student/fees/add-invoice', 'addInvoice')->name('add-invoice');
-    Route::get('student/fees/fee-invoice-setting', 'feeInvoiceSetting')->name('fee-invoice-setting');
+    Route::get('student/fees/fee-invoice-setting', [InvoiceController::class, 'feeInvoiceSetting'])->name('fee-invoice-setting');
     Route::get('student/fees/fee-return', [ReturnFeeController::class, 'feeReturn'])->name('fee-return');
     // Route::get('account/inventory/item-list', 'itemList')->name('item-list');
     // Route::get('account/inventory/supplier', 'supplier')->name('supplier');
@@ -434,8 +434,8 @@ Route::controller(InvoiceController::class)->middleware(['permission'])->group(f
 });
 
 Route::controller(HomeController::class)->middleware(['permission'])->group(function () {
-    Route::get('student/fees/fee-invoice', action: 'feeInvoice')->name('fees.fee-invoice');
-    Route::get('student/fees/fee-invoice-datatable', 'invoiceDatatable')->name('fee.invoice.datatable')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('student/fees/fee-invoice', [InvoiceController::class, 'feeInvoice'])->name('fees.fee-invoice');
+    Route::get('student/fees/fee-invoice-datatable', [InvoiceController::class, 'invoiceDatatable'])->name('fee.invoice.datatable')->withoutMiddleware(['csrf', 'permission']);
 
     Route::post('student/fees/fee-return/search', [ReturnFeeController::class, 'feeReturn'])->name('fees.fee-return.search');
 });
