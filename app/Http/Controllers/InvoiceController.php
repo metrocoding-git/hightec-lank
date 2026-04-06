@@ -61,7 +61,8 @@ class InvoiceController extends Controller
                 'branches.name as branch_name',
                 'fee_types.name as fee_type_name',
                 'courses.name as course_name',
-            ]);
+            ])
+            ->where('fee_invoices.payment_status', '!=', 'returned');
 
         return DataTables::of($query)
             ->addIndexColumn()
@@ -76,11 +77,15 @@ class InvoiceController extends Controller
                 return number_format($row->total_amount - $row->paid_amount, 2);
             })
 
-            ->addColumn('payment_date', fn($row) =>
+            ->addColumn(
+                'payment_date',
+                fn($row) =>
                 \Carbon\Carbon::parse($row->create_date)->format('m/d/Y')
             )
 
-            ->addColumn('due_date', fn($row) =>
+            ->addColumn(
+                'due_date',
+                fn($row) =>
                 \Carbon\Carbon::parse($row->due_date)->format('m/d/Y')
             )
 
@@ -124,8 +129,17 @@ class InvoiceController extends Controller
                            Invoice
                         </a>
 
-                        <a class="dropdown-item" data-toggle="modal" data-target="#returnFeeModal' . $row->id . '"> Return </a>
-
+                        <a class="dropdown-item"
+                        data-toggle="modal"
+                        data-target="#returnFeeModal"
+                        data-invoice-id="' . $row->id . '"
+                        data-student-id="' . ($row->student_id ?? '') . '"
+                        data-student-name="' . ($row->student_name ?? '') . '"
+                        data-admission-number="' . ($row->admission_number ?? '') . '"
+                        data-paid-amount="' . ($row->paid_amount ?? 0) . '">
+                        Return
+                        </a>
+                        
                         <a class="dropdown-item"
                            href="' . route('fees.invoice-print', $row->id) . '"
                            target="_blank">
@@ -372,8 +386,8 @@ class InvoiceController extends Controller
      * Show the form for editing the specified resource.
      */
     public function edit($id)
-        {
-            $invoice = FeeInvoices::with('invoice_item.fee_type', 'student')->findOrFail($id);
+    {
+        $invoice = FeeInvoices::with('invoice_item.fee_type', 'student')->findOrFail($id);
         $branches = Auth::user()->branches;
         $feesgroups = FeesGroup::all();
         $feeTypes = FeeType::all();

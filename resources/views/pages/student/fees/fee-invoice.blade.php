@@ -937,6 +937,7 @@
 
         // Handle return modal with row data from datatable action button
         $('#returnFeeModal').on('show.bs.modal', function(event) {
+            console.log('Return Fee Modal triggered');
             var button = $(event.relatedTarget);
             var invoiceId = button.data('invoice-id') || '';
             var studentId = button.data('student-id') || '';
@@ -944,6 +945,14 @@
             var admissionNumber = button.data('admission-number') || '';
             var paidAmountRaw = parseFloat(button.data('paid-amount')) || 0;
             var paidAmount = paidAmountRaw.toFixed(2);
+
+            console.log('Data extracted for Return Modal:', {
+                invoiceId: invoiceId,
+                studentId: studentId,
+                studentName: studentName,
+                admissionNumber: admissionNumber,
+                paidAmount: paidAmount
+            });
 
             $('#returnFeeModalTitle').html('<i class="fas fa-undo-alt" style="margin-right: 10px; font-size: 1.2rem;"></i>Return Fee - Invoice #' + invoiceId);
             $('#returnInvoiceId').val(invoiceId);

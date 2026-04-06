@@ -181,16 +181,29 @@ class ReportController extends Controller
             ->join('branches', 'fee_invoices.branch_id', '=', 'branches.id')
             ->join('students', 'student_courses.student_id', '=', 'students.id')
             ->join('student_categories', 'students.student_category_id', '=', 'student_categories.id')
+            // ->where(function ($q) use ($from, $to) {
+
+            //     // Condition 1: Intake starts within range
+            //     $q->whereBetween('intakes.start_date', [$from, $to])
+
+            //         // OR Condition 2: Payment completed within range
+            //         ->orWhere(function ($q2) use ($from, $to) {
+            //             $q2->where('fee_invoices.payment_status', 'full')
+            //                 ->whereBetween('fee_invoices.updated_at', [$from, $to]);
+            //         });
+            // })
             ->where(function ($q) use ($from, $to) {
-
-                // Condition 1: Intake starts within range
-                $q->whereBetween('intakes.start_date', [$from, $to])
-
-                    // OR Condition 2: Payment completed within range
-                    ->orWhere(function ($q2) use ($from, $to) {
-                        $q2->where('fee_invoices.payment_status', 'full')
-                            ->whereBetween('fee_invoices.updated_at', [$from, $to]);
-                    });
+                $q->where(function ($q1) use ($from, $to) {
+                    $q1->whereBetween('intakes.start_date', [$from, $to])
+                       ->where('fee_invoices.payment_status', 'full');
+                })
+            
+                ->orWhere(function ($q2) use ($from, $to) {
+                    $q2->whereBetween('fee_invoices.updated_at', [$from, $to])
+                       ->where('fee_invoices.payment_status', 'full')
+                       ->where('intakes.start_date', '<', $from); 
+                });
+            
             })
             ->whereIn('student_courses.status', ['start', 'Complete'])
             ->where('fee_invoices.invoice_type', 'course');
