@@ -72,8 +72,8 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
     Route::prefix('student')->group(function () {
         Route::get('student-info/get-intakes-by-branch/{branchId}', [IntakeController::class, 'getIntakesByBranch'])->name('get-intakes-by-branch');
         Route::get('student-info/get-courses-by-intake/{intakeId}', [IntakeController::class, 'getCoursesByIntake'])->name('get-courses-by-intake');
-        Route::get('student-info/get-courses-by-branch/{branchId}', 'getCoursesByBranch')->name('get-courses-by-branch')->withoutMiddleware(['csrf', 'permission']);
-        Route::get('student-info/get-courses-by-student/{studentId}', 'getCoursesByStudent')->name('get-courses-by-student')->withoutMiddleware(['csrf', 'permission']);
+        Route::get('student-info/get-courses-by-branch/{branchId}', [CourseController::class, 'getCoursesByBranch'])->name('get-courses-by-branch')->withoutMiddleware(['csrf', 'permission']);
+        Route::get('student-info/get-courses-by-student/{studentId}', [CourseController::class, 'getCoursesByStudent'])->name('get-courses-by-student')->withoutMiddleware(['csrf', 'permission']);
         Route::get('student-info/get-intakes/{branchId}', [IntakeController::class, 'getIntakes'])->name('student.get-intakes');
         Route::get('student-info/get-courses/{intakeId}', [IntakeController::class, 'getCourses'])->name('student.get-courses');
         Route::get('student-attendance/get-courses/{intakeId}', [StudentController::class, 'getCoursesByIntake'])->name('student-attendance.get-courses')->withoutMiddleware(['csrf', 'permission']);
@@ -240,8 +240,8 @@ Route::controller(HomeController::class)
         // Dependent dropdown AJAX routes for student info and fees
         Route::get('student/student-info/get-intakes-by-branch/{branchId}', [IntakeController::class, 'getIntakesByBranch'])->name('get-intakes-by-branch');
         Route::get('student/student-info/get-courses-by-intake/{intakeId}', [IntakeController::class, 'getCoursesByIntake'])->name('get-courses-by-intake');
-        Route::get('student/student-info/get-courses-by-branch/{branchId}', 'getCoursesByBranch')->name('get-courses-by-branch')->withoutMiddleware(['csrf', 'permission']);
-        Route::get('student/student-info/get-courses-by-student/{studentId}', 'getCoursesByStudent')->name('get-courses-by-student')->withoutMiddleware(['csrf', 'permission']);
+        Route::get('student/student-info/get-courses-by-branch/{branchId}', [CourseController::class, 'getCoursesByBranch'])->name('get-courses-by-branch')->withoutMiddleware(['csrf', 'permission']);
+        Route::get('student/student-info/get-courses-by-student/{studentId}', [CourseController::class, 'getCoursesByStudent'])->name('get-courses-by-student')->withoutMiddleware(['csrf', 'permission']);
         Route::get('student/student-info/get-intakes/{branchId}', [IntakeController::class, 'getIntakes'])->name('student.get-intakes');
         Route::get('student/student-info/get-courses/{intakeId}', [IntakeController::class, 'getCourses'])->name('student.get-courses');
         Route::get('student/student-attendance/get-courses/{intakeId}', [IntakeController::class, 'getCoursesByIntake'])->name('student-attendance.get-courses')->withoutMiddleware(['csrf', 'permission']);
@@ -282,8 +282,8 @@ Route::controller(HomeController::class)->group(callback: function () {
     // Dependent dropdown AJAX routes for student info and fees
     Route::get('student/student-info/get-intakes-by-branch/{branchId}', [IntakeController::class, 'getIntakesByBranch'])->name('get-intakes-by-branch');
     Route::get('student/student-info/get-courses-by-intake/{intakeId}', [IntakeController::class, 'getCoursesByIntake'])->name('get-courses-by-intake');
-    Route::get('student/student-info/get-courses-by-branch/{branchId}', 'getCoursesByBranch')->name('get-courses-by-branch')->withoutMiddleware(['csrf', 'permission']);
-    Route::get('student/student-info/get-courses-by-student/{studentId}', 'getCoursesByStudent')->name('get-courses-by-student')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('student/student-info/get-courses-by-branch/{branchId}', [CourseController::class, 'getCoursesByBranch'])->name('get-courses-by-branch')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('student/student-info/get-courses-by-student/{studentId}', [CourseController::class, 'getCoursesByStudent'])->name('get-courses-by-student')->withoutMiddleware(['csrf', 'permission']);
 
     // Other existing dependent dropdown AJAX routes
     Route::get('student/student-info/get-intakes/{branchId}', [IntakeController::class, 'getIntakes'])->name('student.get-intakes');
