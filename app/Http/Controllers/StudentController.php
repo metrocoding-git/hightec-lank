@@ -1134,6 +1134,154 @@ class StudentController extends Controller
         return response()->json(['courses' => $courses]);
     }
 
+    public function getStudentsByBranch($branchId)
+    {
+        try {
+            $students = StudentCourse::where('branch_id', $branchId)
+                ->select('student_id')
+                ->distinct()
+                ->with('student')
+                ->get()
+                ->pluck('student');
+
+            $formattedStudents = $students->map(function ($student) {
+                return [
+                    'id' => $student->id,
+                    'admission_number' => $student->admission_number,
+                    'student_name' => $student->student_name,
+                ];
+            });
+
+            return response()->json($formattedStudents);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function getStudentFeeData(Request $request)
+    {
+        try {
+            $student_id = $request->student_id;
+            $branch_id = $request->branch_id;
+            $course_id = $request->course_id;
+
+            $student = Student::find($student_id);
+            if (!$student) {
+                return response()->json([
+                    'student_name' => 'Student not found',
+                    'total_invoices' => 0,
+                    'total_fees' => 0,
+                    'total_paid' => 0,
+                    'total_due' => 0,
+                    'fee_invoices' => []
+                ]);
+            }
+
+            $feeInvoices = FeeInvoices::with(['paidCourses'])
+                ->where('student_id', $student_id)
+                ->where('branch_id', $branch_id)
+                ->whereHas('paidCourses', function ($query) use ($course_id) {
+                    $query->where('course_id', $course_id);
+                })
+                ->get();
+
+            $totalFees = $feeInvoices->sum('total_amount');
+            $totalPaid = $feeInvoices->sum('paid_amount');
+            $totalDue = $totalFees - $totalPaid;
+
+            $formattedInvoices = [];
+            foreach ($feeInvoices as $invoice) {
+                foreach ($invoice->invoice_item as $item) {
+                    $formattedInvoices[] = [
+                        'fee_type_name' => $item->feeType->name ?? 'N/A',
+                        'amount' => $item->amount ?? 0,
+                        'paid_amount' => $item->paid_amount ?? 0,
+                    ];
+                }
+            }
+
+            return response()->json([
+                'total_fees' => $totalFees,
+                'total_paid' => $totalPaid,
+                'total_due' => $totalDue,
+                'fee_invoices' => $formattedInvoices
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to fetch fee data',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getStudentDetails($studentId)
+    {
+        try {
+            $student = Student::find($studentId);
+
+            if (!$student) {
+                return response()->json(['error' => 'Student not found'], 404);
+            }
+
+            $studentCourses = StudentCourse::with(['course', 'intake', 'branch'])
+                ->where('student_id', $studentId)
+                ->get();
+
+            $branches = $studentCourses->pluck('branch')->unique('id')->values();
+            $intakes  = $studentCourses->pluck('intake')->unique('id')->values();
+            $courses  = $studentCourses->pluck('course')->unique('id')->values();
+
+            return response()->json([
+                'branches' => $branches,
+                'branch_id' => $student->branch ? $student->branch->id : null,
+                'intakes' => $intakes,
+                'courses' => $courses,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function checkStudentCourseStatus(Request $request)
+    {
+        try {
+            $student_id = $request->student_id;
+            $course_id = $request->course_id;
+            $intake_id = $request->intake_id;
+
+            $studentCourse = StudentCourse::where('student_id', $student_id)
+                ->where('course_id', $course_id)
+                ->where('intake_id', $intake_id)
+                ->first();
+
+            if ($studentCourse && $studentCourse->status === 'start') {
+                return response()->json([
+                    'can_issue' => true,
+                    'message' => 'Items can be issued.'
+                ]);
+            }
+
+            $intake = Intake::find($intake_id);
+            $course = Course::find($course_id);
+            $expireDate = Carbon::parse($intake->start_date)->addDays((int)$course->expiration_date);
+
+            $canAdd = now()->lte($expireDate);
+            $message = $canAdd
+                ? 'Items can be issued.'
+                : 'Items Cannot be issued. expired';
+
+            return response()->json([
+                'can_issue' => $canAdd,
+                'message' => $message
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'can_issue' => false,
+                'message' => 'Error checking course status.'
+            ], 500);
+        }
+    }
+
     public function verify($id)
     {
         $student = Student::findOrFail($id);

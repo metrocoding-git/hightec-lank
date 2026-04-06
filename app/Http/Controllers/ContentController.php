@@ -17,6 +17,15 @@ use Illuminate\Support\Str;
 
 class ContentController extends Controller
 {
+    public function sharedContentList()
+    {
+        $sharedContents = ShareContentList::with(['role', 'users'])
+            ->orderBy('id')
+            ->get();
+
+        return view('pages.administration.download-center.shared-content-list', compact('sharedContents'));
+    }
+
     /**
      * Display a listing of the resource.
      */

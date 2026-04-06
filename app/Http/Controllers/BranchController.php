@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Branch;
+use App\Models\InventoryItem;
 
 class BranchController extends Controller
 {
@@ -65,5 +66,16 @@ class BranchController extends Controller
         $branch->delete();
 
         return response()->json(['message' => 'Course deleted successfully.']);
+    }
+
+    public function getItemsByCategory($categoryId)
+    {
+        try {
+            $items = InventoryItem::where('item_category_id', $categoryId)->get();
+
+            return response()->json($items);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
+        }
     }
 }

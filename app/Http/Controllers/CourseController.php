@@ -151,4 +151,43 @@ class CourseController extends Controller
             ], 500);
         }
     }
+
+    public function getCoursesByIntake($intakeId)
+    {
+        try {
+            $courses = Course::whereHas('intakes', function ($query) use ($intakeId) {
+                $query->where('intake_id', $intakeId);
+            })->get();
+
+            return response()->json($courses);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function getCoursesByIntakeAndStudent($intakeId, $studentId)
+    {
+        try {
+            $courses = Course::whereHas('intakes', function ($query) use ($intakeId) {
+                $query->where('intake_id', $intakeId);
+            })
+                ->whereHas('students', function ($query) use ($studentId) {
+                    $query->where('student_id', $studentId);
+                })
+                ->get();
+
+            $coursesWithDates = $courses->map(function ($course) {
+                return [
+                    'id' => $course->id,
+                    'name' => $course->name,
+                    'created_at' => $course->created_at ? $course->created_at->toISOString() : null,
+                    'expiration_date' => $course->expiration_date,
+                ];
+            });
+
+            return response()->json($coursesWithDates);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
+        }
+    }
 }

@@ -22,10 +22,14 @@ use App\Http\Controllers\ContentTypeController;
 use App\Http\Controllers\InvoiceItemController;
 use App\Http\Controllers\AssignSubjectController;
 use App\Http\Controllers\InventoryItemController;
+use App\Http\Controllers\ItemReceiveController;
+use App\Http\Controllers\ItemReturnController;
 use App\Http\Controllers\InvoicePaymentController;
 use App\Http\Controllers\TopicOverviewController;
 use App\Http\Controllers\StudentCategoryController;
 use App\Http\Controllers\ItemSellController; // Import the new controller
+use App\Http\Controllers\VideoListController;
+use App\Http\Controllers\BranchController;
 use App\Http\Controllers\ReportController; // Import the new controller
 use App\Http\Controllers\RoleController; // Import the new controller
 use App\Http\Controllers\UserController; // Import the new controller
@@ -44,11 +48,11 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
 
     // Download Center
     Route::middleware(['permission'])->group(function () {
-        Route::get('administration/download-center/shared-content-list', 'sharedContentList')->name('shared-content-list');
-        Route::get('administration/download-center/video-list', 'videoList')->name('video-list');
-        Route::post('administration/download-center/video-list-save', 'videoListStore')->name('download-center.video-list-save');
-        Route::put('administration/download-center/video-list-update/{id}', 'videoListUpdate')->name('download-center.video-list-update');
-        Route::delete('administration/download-center/video-list-destroy/{id}', 'videoListDestroy')->name('download-center.video-list-destroy');
+        Route::get('administration/download-center/shared-content-list', [ContentController::class, 'sharedContentList'])->name('shared-content-list');
+        Route::get('administration/download-center/video-list', [VideoListController::class, 'videoList'])->name('video-list');
+        Route::post('administration/download-center/video-list-save', [VideoListController::class, 'videoListStore'])->name('download-center.video-list-save');
+        Route::put('administration/download-center/video-list-update/{id}', [VideoListController::class, 'videoListUpdate'])->name('download-center.video-list-update');
+        Route::delete('administration/download-center/video-list-destroy/{id}', [VideoListController::class, 'videoListDestroy'])->name('download-center.video-list-destroy');
     });
 
     // Student Information Management (handled by HomeController)
@@ -83,12 +87,12 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
 
     // Inventory Management
     Route::prefix('account/inventory')->group(function () {
-        Route::get('item-receive', 'itemReceive')->name('item-receive');
-        Route::get('item-receive-list', 'itemReceiveList')->name('item-receive-list');
-        Route::get('item-receive/{transactionId}/view', 'viewItemReceive')->name('item-receive.view');
-        Route::delete('item-receive/{transactionId}', 'deleteItemReceive')->name('item-receive.destroy');
-        Route::post('/item-receive/save', 'itemReceivePost')->name('save-item-receive-data');
-        Route::post('/item-receive/save-invoice-number', 'itemReceivesaveInvoiceNumber')->name('item-receive.invoic-save');
+        Route::get('item-receive', [ItemReceiveController::class, 'itemReceive'])->name('item-receive');
+        Route::get('item-receive-list', [ItemReceiveController::class, 'itemReceiveList'])->name('item-receive-list');
+        Route::get('item-receive/{transactionId}/view', [ItemReceiveController::class, 'viewItemReceive'])->name('item-receive.view');
+        Route::delete('item-receive/{transactionId}', [ItemReceiveController::class, 'deleteItemReceive'])->name('item-receive.destroy');
+        Route::post('/item-receive/save', [ItemReceiveController::class, 'itemReceivePost'])->name('save-item-receive-data');
+        Route::post('/item-receive/save-invoice-number', [ItemReceiveController::class, 'itemReceivesaveInvoiceNumber'])->name('item-receive.invoic-save');
     })->withoutMiddleware(['permission']);
 
     // Fees & Returns
@@ -262,11 +266,11 @@ Route::controller(HomeController::class)->group(callback: function () {
     Route::get('administration/study-material/study-material-download', 'studyMaterialDownload')->name('study-material-download');
     Route::get('administration/study-material/other-download', 'otherDownload')->name('other-download');
 
-    Route::get('administration/download-center/shared-content-list', 'sharedContentList')->name('shared-content-list');
-    Route::get('administration/download-center/video-list', 'videoList')->name('video-list');
-    Route::post('administration/download-center/video-list-save', 'videoListStore')->name('download-center.video-list-save');
-    Route::put('administration/download-center/video-list-update/{id}', 'videoListUpdate')->name('download-center.video-list-update');
-    Route::delete('administration/download-center/video-list-destroy/{id}', 'videoListDestroy')->name('download-center.video-list-destroy');
+    Route::get('administration/download-center/shared-content-list', [ContentController::class, 'sharedContentList'])->name('shared-content-list');
+    Route::get('administration/download-center/video-list', [VideoListController::class, 'videoList'])->name('video-list');
+    Route::post('administration/download-center/video-list-save', [VideoListController::class, 'videoListStore'])->name('download-center.video-list-save');
+    Route::put('administration/download-center/video-list-update/{id}', [VideoListController::class, 'videoListUpdate'])->name('download-center.video-list-update');
+    Route::delete('administration/download-center/video-list-destroy/{id}', [VideoListController::class, 'videoListDestroy'])->name('download-center.video-list-destroy');
 
     Route::get('student/student-info/student-list', [StudentController::class, 'studentList'])->name(name: 'student-list');
     Route::get('/student/student-info/student-list-datatable',  [StudentController::class, 'studentDatatable'])->name('student-list.datatable');
@@ -301,15 +305,15 @@ Route::controller(HomeController::class)->group(callback: function () {
     Route::get('student/fees/fee-return', [ReturnFeeController::class, 'feeReturn'])->name('fee-return');
     // Route::get('account/inventory/item-list', 'itemList')->name('item-list');
     // Route::get('account/inventory/supplier', 'supplier')->name('supplier');
-    Route::get('account/inventory/item-receive', 'itemReceive')->name('item-receive')->withoutMiddleware(['permission']);
-    Route::get('account/inventory/item-receive-list', 'itemReceiveList')->name('item-receive-list')->withoutMiddleware(['permission']);
-    Route::get('account/inventory/item-receive/{transactionId}/view', [HomeController::class, 'viewItemReceive'])->name('item-receive.view')->withoutMiddleware(['permission']);
+    Route::get('account/inventory/item-receive', [ItemReceiveController::class, 'itemReceive'])->name('item-receive')->withoutMiddleware(['permission']);
+    Route::get('account/inventory/item-receive-list', [ItemReceiveController::class, 'itemReceiveList'])->name('item-receive-list')->withoutMiddleware(['permission']);
+    Route::get('account/inventory/item-receive/{transactionId}/view', [ItemReceiveController::class, 'viewItemReceive'])->name('item-receive.view')->withoutMiddleware(['permission']);
     // Route::get('account/inventory/item-receive/{transactionId}/edit', [HomeController::class, 'editItemReceive'])->name('item-receive.edit')->withoutMiddleware(['permission']);
     // Route::put('account/inventory/item-receive/{id}', [HomeController::class, 'updateItemReceive'])->name('item-receive.update')->withoutMiddleware(['permission']);
-    Route::delete('account/inventory/item-receive/{transactionId}', [HomeController::class, 'deleteItemReceive'])->name('item-receive.destroy')->withoutMiddleware(['permission']);
-    Route::post('/item-receive/save', [HomeController::class, 'itemReceivePost'])
+    Route::delete('account/inventory/item-receive/{transactionId}', [ItemReceiveController::class, 'deleteItemReceive'])->name('item-receive.destroy')->withoutMiddleware(['permission']);
+    Route::post('/item-receive/save', [ItemReceiveController::class, 'itemReceivePost'])
         ->name('save-item-receive-data')->withoutMiddleware(['permission']);
-    Route::post('/item-receive/save-invoice-number', [HomeController::class, 'itemReceivesaveInvoiceNumber'])
+    Route::post('/item-receive/save-invoice-number', [ItemReceiveController::class, 'itemReceivesaveInvoiceNumber'])
         ->name('item-receive.invoic-save')->withoutMiddleware(['permission']);
 });
 
@@ -347,21 +351,21 @@ Route::controller(ItemIssueController::class)->middleware(['permission'])->group
     // Route::get('account/inventory/item-issue-edit/{id}', 'edit')->name('item-issue-edit');
     // Route::put('account/inventory/item-issue-update/{id}', 'update')->name('item-issue-update');
     Route::get('account/inventory/return-item-view/{id}', 'returnItemView')->name('return-item-view');
-    Route::post('account/inventory/return-item', 'returnItem')->name('return-item');
+    Route::post('account/inventory/return-item', [ItemReturnController::class, 'returnItem'])->name('return-item');
     Route::post('account/inventory/issue-item', 'IssueItem')->name('issue-item');
 
     // AJAX routes for dynamic filtering
-    Route::get('account/inventory/get-students-by-branch/{branchId}', 'getStudentsByBranch')->name('item-issue.get-students-by-branch')->withoutMiddleware(['permission']);
-    Route::get('account/inventory/get-intakes-by-branch/{branchId}', 'getIntakesByBranch')->name('item-issue.get-intakes-by-branch')->withoutMiddleware(['permission']);
-    Route::get('account/inventory/get-courses-by-intake/{intakeId}', 'getCoursesByIntake')->name('item-issue.get-courses-by-intake')->withoutMiddleware(['permission']);
-    Route::get('account/inventory/get-items-by-category/{categoryId}', 'getItemsByCategory')->name('item-issue.get-items-by-category')->withoutMiddleware(['permission']);
-    Route::get('account/inventory/get-student-fee-data', 'getStudentFeeData')->name('item-issue.get-student-fee-data')->withoutMiddleware(['permission']);
-    Route::get('item-issue/get-student-details/{studentId}', 'getStudentDetails')->name('item-issue.get-student-details')->withoutMiddleware(['permission']);
-    Route::get('item-issue/get-courses-by-intake-and-student/{intakeId}/{studentId}', 'getCoursesByIntakeAndStudent')->name('item-issue.get-courses-by-intake-and-student')->withoutMiddleware(['permission']);
-    Route::get('item-issue/get-intake-by-branch-and-student/{branchId}/{studentId}', 'getIntakeByBranchAndStudent')->name('item-issue.get-intakes-by-branch-and-student')->withoutMiddleware(['permission']);
+    Route::get('account/inventory/get-students-by-branch/{branchId}', [StudentController::class, 'getStudentsByBranch'])->name('item-issue.get-students-by-branch')->withoutMiddleware(['permission']);
+    Route::get('account/inventory/get-intakes-by-branch/{branchId}', [IntakeController::class, 'getIntakesByBranch'])->name('item-issue.get-intakes-by-branch')->withoutMiddleware(['permission']);
+    Route::get('account/inventory/get-courses-by-intake/{intakeId}', [CourseController::class, 'getCoursesByIntake'])->name('item-issue.get-courses-by-intake')->withoutMiddleware(['permission']);
+    Route::get('account/inventory/get-items-by-category/{categoryId}', [BranchController::class, 'getItemsByCategory'])->name('item-issue.get-items-by-category')->withoutMiddleware(['permission']);
+    Route::get('account/inventory/get-student-fee-data', [StudentController::class, 'getStudentFeeData'])->name('item-issue.get-student-fee-data')->withoutMiddleware(['permission']);
+    Route::get('item-issue/get-student-details/{studentId}', [StudentController::class, 'getStudentDetails'])->name('item-issue.get-student-details')->withoutMiddleware(['permission']);
+    Route::get('item-issue/get-courses-by-intake-and-student/{intakeId}/{studentId}', [CourseController::class, 'getCoursesByIntakeAndStudent'])->name('item-issue.get-courses-by-intake-and-student')->withoutMiddleware(['permission']);
+    Route::get('item-issue/get-intake-by-branch-and-student/{branchId}/{studentId}', [IntakeController::class, 'getIntakeByBranchAndStudent'])->name('item-issue.get-intakes-by-branch-and-student')->withoutMiddleware(['permission']);
 
     Route::get('item-issue/get-batch-details/{batchId}', 'getBatchDetails')->name('item-issue.get-batch-details')->withoutMiddleware(['permission']);
-    Route::get('item-issue/check-student-course-status', 'checkStudentCourseStatus')->name('item-issue.check-student-course-status')->withoutMiddleware(['permission']);
+    Route::get('item-issue/check-student-course-status', [StudentController::class, 'checkStudentCourseStatus'])->name('item-issue.check-student-course-status')->withoutMiddleware(['permission']);
 });
 Route::controller(LoginController::class)->group(function () {
     Route::get('login', 'index')->name('login'); // For displaying the login form

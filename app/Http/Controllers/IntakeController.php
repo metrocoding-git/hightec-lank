@@ -165,4 +165,27 @@ class IntakeController extends Controller
             ], 500);
         }
     }
+
+    public function getIntakeByBranchAndStudent($branchId, $studentId)
+    {
+        try {
+            $intakes = Intake::where('branch_id', $branchId)
+                ->whereHas('students', function ($query) use ($studentId) {
+                    $query->where('student_id', $studentId);
+                })
+                ->get();
+
+            $formattedIntakes = $intakes->map(function ($intake) {
+                return [
+                    'id' => $intake->id,
+                    'name' => $intake->name,
+                    'created_at' => $intake->created_at ? $intake->created_at->toISOString() : null,
+                ];
+            });
+
+            return response()->json($formattedIntakes);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
+        }
+    }
 }
