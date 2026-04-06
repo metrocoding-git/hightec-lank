@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\ReturnFee;
 use App\Models\FeeInvoices;
+use App\Models\Branch;
+use App\Models\Course;
+use App\Models\Intake;
 use App\Models\InvoicesPayments;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -13,6 +16,44 @@ use Illuminate\Support\Facades\Log;
 
 class ReturnFeeController extends Controller
 {
+    public function feeReturn(Request $request)
+    {
+        $branches = Branch::all();
+        $coursess = Course::all();
+        $intakes = Intake::all();
+
+        $query = ReturnFee::with(['student', 'role', 'invoice']);
+
+        if ($request->filled('branch')) {
+            $branchId = $request->input('branch');
+            $query->whereHas('student', function ($q) use ($branchId) {
+                $q->where('branch_id', $branchId);
+            });
+        }
+
+        if ($request->filled('intake')) {
+            $intakeId = $request->input('intake');
+            $query->whereHas('student.intakes', function ($q) use ($intakeId) {
+                $q->where('intakes.id', $intakeId);
+            });
+        }
+
+        if ($request->filled('course')) {
+            $courseId = $request->input('course');
+            $query->whereHas('student.courses', function ($q) use ($courseId) {
+                $q->where('courses.id', $courseId);
+            });
+        }
+
+        $returnDetails = $query->orderBy('created_at', 'desc')->get();
+
+        $branch_id = $request->input('branch');
+        $intake_id = $request->input('intake');
+        $course_id = $request->input('course');
+
+        return view('pages.student.fees.fee-return', compact('returnDetails', 'coursess', 'intakes', 'branches', 'branch_id', 'intake_id', 'course_id'));
+    }
+
     /**
      * Store a newly created return fee in storage.
      */
