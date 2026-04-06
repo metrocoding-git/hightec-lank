@@ -53,8 +53,8 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
 
     // Student Information Management (handled by HomeController)
     // Route::middleware(['permission'])->group(function () {
-        Route::get('student/student-info/student-list', 'studentList')->name('student-list');
-        Route::get('/student/student-info/student-list-datatable', 'studentDatatable')->name('student-list.datatable');
+        Route::get('student/student-info/student-list', [StudentController::class, 'studentList'])->name('student-list');
+        Route::get('/student/student-info/student-list-datatable', [StudentController::class, 'studentDatatable'])->name('student-list.datatable');
         Route::get('student/student-info/verification-history/{id}', 'verificationHistory')->name('student-list.verification-history');
         Route::put('student/update-status', [StudentController::class, 'updateStudetStatus'])->name('student.update-status');
         Route::get('student/student-info/student-view/{id}', [StudentController::class, 'studentView'])->name('student-details');
@@ -229,8 +229,8 @@ Route::controller(StudentController::class)
 // Student List, Attendance, Export, and AJAX/Dependent Dropdowns
 Route::controller(HomeController::class)
     ->group(function () {
-        Route::get('student/student-info/student-list', 'studentList')->name('student-list');
-        Route::get('/student/student-info/student-list-datatable',  'studentDatatable')->name('student-list.datatable');
+        Route::get('student/student-info/student-list', [StudentController::class, 'studentList'])->name('student-list');
+        Route::get('/student/student-info/student-list-datatable',  [StudentController::class, 'studentDatatable'])->name('student-list.datatable');
         Route::get('student/student-info/verification-history/{id}', 'verificationHistory')->name('student-list.verification-history');
         Route::put('student/update-status', [StudentController::class, 'updateStudetStatus'])->name('student.update-status');
         Route::get('student/student-info/student-view/{id}', [StudentController::class, 'studentView'])->name('student-details');
@@ -268,8 +268,8 @@ Route::controller(HomeController::class)->group(callback: function () {
     Route::put('administration/download-center/video-list-update/{id}', 'videoListUpdate')->name('download-center.video-list-update');
     Route::delete('administration/download-center/video-list-destroy/{id}', 'videoListDestroy')->name('download-center.video-list-destroy');
 
-    Route::get('student/student-info/student-list', 'studentList')->name(name: 'student-list');
-    Route::get('/student/student-info/student-list-datatable',  'studentDatatable')->name('student-list.datatable');
+    Route::get('student/student-info/student-list', [StudentController::class, 'studentList'])->name(name: 'student-list');
+    Route::get('/student/student-info/student-list-datatable',  [StudentController::class, 'studentDatatable'])->name('student-list.datatable');
 
     Route::get('student/student-info/verification-history/{id}', 'verificationHistory')->name('student-list.verification-history');
     Route::put('student/update-status', [StudentController::class, 'updateStudetStatus'])->name('student.update-status');
