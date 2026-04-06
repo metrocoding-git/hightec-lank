@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
+use Yajra\DataTables\DataTables;
 
 class StudentController extends Controller
 {
@@ -39,6 +40,239 @@ class StudentController extends Controller
         $districts = District::all();
 
         return view('pages.student.student-info.add-student', compact('branches',  'genders', 'categories', 'bloodGroups', 'intakes', 'districts'));
+    }
+
+    public function studentCategory()
+    {
+        return view('pages.student.student-info.student-category');
+    }
+
+    public function addStudent()
+    {
+        return view('pages.student.student-info.add-student');
+    }
+
+    public function studentList()
+    {
+        $students = Student::with([
+            'branch',
+            'gender',
+            'studentCategory',
+            'verifications',
+            'district',
+            'createUser',
+            'updateUser'
+        ])->active()->latest()->get();
+        $branches = Branch::all();
+
+        return view('pages.student.student-info.student-list', compact('students', 'branches'));
+    }
+
+    public function studentDatatable()
+    {
+        $query = Student::with([
+            'branch:id,name',
+            'gender:id,name',
+            'studentCategory:id,category_name',
+            'district:id,name',
+            'createUser:id,name',
+            'updateUser:id,name',
+            'verifications'
+        ])->active();
+
+        return DataTables::of($query)
+
+            ->addIndexColumn()
+
+            // ======================
+            // DISPLAY COLUMNS
+            // ======================
+
+            ->editColumn('admission_number', fn($s) => $s->admission_number ?? '-')
+
+            ->editColumn('student_name', function ($s) {
+                $class = $s->isVerified('Full Name Verified') ? 'text-success' : '';
+                return '<span class="' . $class . '">' . $s->student_name . '</span>';
+            })
+
+            ->editColumn('phone_number', function ($s) {
+                $class = $s->isVerified('Mobile Number Verified') ? 'text-success' : '';
+                return '<span class="' . $class . '">' . $s->phone_number . '</span>';
+            })
+
+            ->editColumn('phone_number_2', function ($s) {
+                $class = $s->isVerified('Mobile Number 2 Verified') ? 'text-success' : '';
+                return '<span class="' . $class . '">' . $s->phone_number_2 . '</span>';
+            })
+
+            ->editColumn('nic', function ($s) {
+                $class = $s->isVerified('NIC Verified') ? 'text-success' : '';
+                return '<span class="' . $class . '">' . $s->national_id_number . '</span>';
+            })
+
+            ->editColumn('address', function ($s) {
+                $class = $s->isVerified('Address Verified') ? 'text-success' : '';
+                return '<span class="' . $class . '">' . $s->permanent_address . '</span>';
+            })
+
+            ->editColumn('branch', fn($s) => $s->branch->name ?? '-')
+            ->addColumn('admission_date', fn($s) => $s->admission_date ?? '-')
+            ->editColumn('category', fn($s) => $s->studentCategory->category_name ?? '-')
+            ->addColumn('gender', fn($s) => $s->gender->name ?? '-')
+            ->addColumn('dob', fn($s) => $s->date_of_birth ?? '-')
+            ->addColumn('age', fn($s) => $s->stu_age ?? '-')
+
+            ->addColumn('photo', function ($s) {
+                if (!$s->photo) return '-';
+                $url = asset('storage/' . $s->photo);
+                return '<a href="' . $url . '" target="_blank">
+                            <img src="' . $url . '" width="40">
+                        </a>';
+            })
+
+            ->editColumn('email', fn($s) => $s->email_address ?? '-')
+            ->editColumn('district', fn($s) => $s->district->name ?? '-')
+
+            ->addColumn(
+                'full_name_verification',
+                fn($s) =>
+                $s->isVerified('Full Name Verified')
+                    ? '<span class="text-success">YES</span>'
+                    : 'NO'
+            )
+
+            ->addColumn(
+                'phone_verification',
+                fn($s) =>
+                $s->isVerified('Mobile Number Verified')
+                    ? '<span class="text-success">YES</span>'
+                    : 'NO'
+            )
+
+            ->addColumn(
+                'phone2_verification',
+                fn($s) =>
+                $s->isVerified('Mobile Number 2 Verified')
+                    ? '<span class="text-success">YES</span>'
+                    : 'NO'
+            )
+
+            ->addColumn(
+                'nic_verification',
+                fn($s) =>
+                $s->isVerified('NIC Verified')
+                    ? '<span class="text-success">YES</span>'
+                    : 'NO'
+            )
+
+            ->addColumn(
+                'address_verification',
+                fn($s) =>
+                $s->isVerified('Address Verified')
+                    ? '<span class="text-success">YES</span>'
+                    : 'NO'
+            )
+
+            ->addColumn('notes', fn($s) => $s->additional_notes ?? '-')
+            ->addColumn('previous_institute', fn($s) => $s->previous_institute_details ?? '-')
+            ->editColumn('created_by', fn($s) => $s->createUser->name ?? '-')
+            ->editColumn('updated_by', fn($s) => $s->updateUser->name ?? '-')
+
+            ->addColumn('action', function ($s) {
+                return '
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown">
+                        Action
+                    </button>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" target="_blank" href="' . route('student-details', $s->id) . '">View</a>
+                        <a class="dropdown-item" href="' . route('add-student.edit', $s->id) . '">Edit</a>
+                        <a class="dropdown-item" target="_blank" href="' . route('add-student.verify', $s->id) . '">Verification</a>
+                        <a class="dropdown-item openVerificationModal" href="#" data-id="' . $s->id . '">Verification Check</a>
+                        <a class="dropdown-item" data-toggle="modal"
+                           data-student-id="' . $s->id . '" data-target="#statusUpdateModal">
+                           Disable
+                        </a>
+                    </div>
+                </div>';
+            })
+
+            // ======================
+            // GLOBAL SEARCH (ALL FIELDS)
+            // ======================
+
+            ->filter(function ($query) {
+                if ($keyword = request('search.value')) {
+                    $query->where(function ($q) use ($keyword) {
+
+                        $q->where('student_name', 'like', "%{$keyword}%")
+                            ->orWhere('admission_number', 'like', "%{$keyword}%")
+                            ->orWhere('phone_number', 'like', "%{$keyword}%")
+                            ->orWhere('phone_number_2', 'like', "%{$keyword}%")
+                            ->orWhere('national_id_number', 'like', "%{$keyword}%")
+                            ->orWhere('email_address', 'like', "%{$keyword}%")
+                            ->orWhere('permanent_address', 'like', "%{$keyword}%")
+                            ->orWhere('date_of_birth', 'like', "%{$keyword}%");
+
+                        $q->orWhereHas(
+                            'branch',
+                            fn($b) =>
+                            $b->where('name', 'like', "%{$keyword}%")
+                        );
+
+                        $q->orWhereHas(
+                            'studentCategory',
+                            fn($c) =>
+                            $c->where('category_name', 'like', "%{$keyword}%")
+                        );
+
+                        $q->orWhereHas(
+                            'gender',
+                            fn($g) =>
+                            $g->where('name', 'like', "%{$keyword}%")
+                        );
+
+                        $q->orWhereHas(
+                            'district',
+                            fn($d) =>
+                            $d->where('name', 'like', "%{$keyword}%")
+                        );
+
+                        $q->orWhereHas(
+                            'createUser',
+                            fn($u) =>
+                            $u->where('name', 'like', "%{$keyword}%")
+                        );
+
+                        $q->orWhereHas(
+                            'updateUser',
+                            fn($u) =>
+                            $u->where('name', 'like', "%{$keyword}%")
+                        );
+                    });
+                }
+            })
+
+            // ======================
+            // RAW HTML COLUMNS
+            // ======================
+
+            ->rawColumns([
+                'student_name',
+                'phone_number',
+                'phone_number_2',
+                'nic',
+                'address',
+                'photo',
+                'full_name_verification',
+                'phone_verification',
+                'phone2_verification',
+                'nic_verification',
+                'address_verification',
+                'action'
+            ])
+
+            ->make(true);
     }
 
     public function store(Request $request)
@@ -898,6 +1132,154 @@ class StudentController extends Controller
             ->select('courses.id', 'courses.name', 'courses.code')
             ->get();
         return response()->json(['courses' => $courses]);
+    }
+
+    public function getStudentsByBranch($branchId)
+    {
+        try {
+            $students = StudentCourse::where('branch_id', $branchId)
+                ->select('student_id')
+                ->distinct()
+                ->with('student')
+                ->get()
+                ->pluck('student');
+
+            $formattedStudents = $students->map(function ($student) {
+                return [
+                    'id' => $student->id,
+                    'admission_number' => $student->admission_number,
+                    'student_name' => $student->student_name,
+                ];
+            });
+
+            return response()->json($formattedStudents);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function getStudentFeeData(Request $request)
+    {
+        try {
+            $student_id = $request->student_id;
+            $branch_id = $request->branch_id;
+            $course_id = $request->course_id;
+
+            $student = Student::find($student_id);
+            if (!$student) {
+                return response()->json([
+                    'student_name' => 'Student not found',
+                    'total_invoices' => 0,
+                    'total_fees' => 0,
+                    'total_paid' => 0,
+                    'total_due' => 0,
+                    'fee_invoices' => []
+                ]);
+            }
+
+            $feeInvoices = FeeInvoices::with(['paidCourses'])
+                ->where('student_id', $student_id)
+                ->where('branch_id', $branch_id)
+                ->whereHas('paidCourses', function ($query) use ($course_id) {
+                    $query->where('course_id', $course_id);
+                })
+                ->get();
+
+            $totalFees = $feeInvoices->sum('total_amount');
+            $totalPaid = $feeInvoices->sum('paid_amount');
+            $totalDue = $totalFees - $totalPaid;
+
+            $formattedInvoices = [];
+            foreach ($feeInvoices as $invoice) {
+                foreach ($invoice->invoice_item as $item) {
+                    $formattedInvoices[] = [
+                        'fee_type_name' => $item->feeType->name ?? 'N/A',
+                        'amount' => $item->amount ?? 0,
+                        'paid_amount' => $item->paid_amount ?? 0,
+                    ];
+                }
+            }
+
+            return response()->json([
+                'total_fees' => $totalFees,
+                'total_paid' => $totalPaid,
+                'total_due' => $totalDue,
+                'fee_invoices' => $formattedInvoices
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to fetch fee data',
+                'details' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getStudentDetails($studentId)
+    {
+        try {
+            $student = Student::find($studentId);
+
+            if (!$student) {
+                return response()->json(['error' => 'Student not found'], 404);
+            }
+
+            $studentCourses = StudentCourse::with(['course', 'intake', 'branch'])
+                ->where('student_id', $studentId)
+                ->get();
+
+            $branches = $studentCourses->pluck('branch')->unique('id')->values();
+            $intakes  = $studentCourses->pluck('intake')->unique('id')->values();
+            $courses  = $studentCourses->pluck('course')->unique('id')->values();
+
+            return response()->json([
+                'branches' => $branches,
+                'branch_id' => $student->branch ? $student->branch->id : null,
+                'intakes' => $intakes,
+                'courses' => $courses,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function checkStudentCourseStatus(Request $request)
+    {
+        try {
+            $student_id = $request->student_id;
+            $course_id = $request->course_id;
+            $intake_id = $request->intake_id;
+
+            $studentCourse = StudentCourse::where('student_id', $student_id)
+                ->where('course_id', $course_id)
+                ->where('intake_id', $intake_id)
+                ->first();
+
+            if ($studentCourse && $studentCourse->status === 'start') {
+                return response()->json([
+                    'can_issue' => true,
+                    'message' => 'Items can be issued.'
+                ]);
+            }
+
+            $intake = Intake::find($intake_id);
+            $course = Course::find($course_id);
+            $expireDate = Carbon::parse($intake->start_date)->addDays((int)$course->expiration_date);
+
+            $canAdd = now()->lte($expireDate);
+            $message = $canAdd
+                ? 'Items can be issued.'
+                : 'Items Cannot be issued. expired';
+
+            return response()->json([
+                'can_issue' => $canAdd,
+                'message' => $message
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'can_issue' => false,
+                'message' => 'Error checking course status.'
+            ], 500);
+        }
     }
 
     public function verify($id)
