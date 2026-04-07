@@ -58,8 +58,8 @@
                                                 <th>Branch</th>
                                                 <th>@lang('admin.admission_no')</th>
                                                 <th>@lang('accounts.amount')(Rs)</th>
-                                                {{-- <th>@lang('fees.paid')(Rs)</th> --}}
-                                                <th>@lang('accounts.balance')(Rs)</th>
+                                                <th>Pending Amount (Rs)</th>
+                                                <th>Not Start Amount (Rs)</th>
                                                 <th>Payment Method</th>
                                                 <th>Payment Status</th>
                                                 <th>Payment Date</th>
@@ -899,12 +899,16 @@
                     name: 'students.admission_number'
                 },
                 {
-                    data: 'total_amount',
-                    name: 'fee_invoices.total_amount'
+                    data: 'amount',
+                    name: 'amount'
                 },
                 {
-                    data: 'balance',
-                    name: 'balance'
+                    data: 'pending_amount',
+                    name: 'pending_amount'
+                },
+                {
+                    data: 'not_start_amount',
+                    name: 'not_start_amount'
                 },
                 {
                     data: 'payment_method',

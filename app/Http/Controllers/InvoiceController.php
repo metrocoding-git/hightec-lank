@@ -73,6 +73,24 @@ class InvoiceController extends Controller
                     : ($row->invoice_type . ($row->course_name ? ' - ' . ($row->course_name ?? '-') : ''));
             })
 
+            ->addColumn('amount', function ($row) {
+                return $row->payment_status === 'full'
+                    ? number_format((float) $row->total_amount, 2)
+                    : '-';
+            })
+
+            ->addColumn('pending_amount', function ($row) {
+                return $row->payment_status === 'partial'
+                    ? number_format((float) $row->total_amount, 2)
+                    : '-';
+            })
+
+            ->addColumn('not_start_amount', function ($row) {
+                return in_array($row->payment_status, ['not', null], true)
+                    ? number_format((float) $row->total_amount, 2)
+                    : '-';
+            })
+
             ->addColumn('balance', function ($row) {
                 return number_format($row->total_amount - $row->paid_amount, 2);
             })
