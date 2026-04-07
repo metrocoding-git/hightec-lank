@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
+use App\Models\FeeInvoices;
 use App\Models\InvoicesPayments;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 
@@ -29,7 +31,10 @@ class InvoicePaymentController extends Controller
                     ->orWhereNull('payment_status');
             })
             ->whereHas('invoice', function ($q) {
-                $q->where('payment_status', '!=', 'returned');
+                $q->where(function ($invoiceQ) {
+                    $invoiceQ->where('payment_status', '!=', 'returned')
+                        ->orWhereNull('payment_status');
+                });
             });
         // Optional filters
         if ($request->branch_id) {
@@ -38,11 +43,28 @@ class InvoicePaymentController extends Controller
 
         if ($request->payment_status) {
             if ($request->payment_status == 'not_open') {
-                $query->where('payment_invoice_number', null);
+                $query->whereNull('payment_invoice_number');
             } elseif ($request->payment_status == 'pending') {
-                $query->where('payment_invoice_number', '!=', null)->where('invoice_payment_confirm', null);
+                $query->whereNotNull('payment_invoice_number')
+                    ->whereNull('invoice_payment_confirm')
+                    ->whereHas('invoice', function ($q) {
+                        $q->where(function ($invoiceQ) {
+                            $invoiceQ->where('payment_status', '!=', 'full')
+                                ->orWhereNull('payment_status');
+                        })
+                        ->where(function ($invoiceQ) {
+                            $invoiceQ->where('due_amount', '>', 0)
+                                ->orWhereNull('due_amount');
+                        });
+                    });
             } elseif ($request->payment_status == 'completed') {
-                $query->where('invoice_payment_confirm', true);
+                $query->where(function ($q) {
+                    $q->where('invoice_payment_confirm', true)
+                        ->orWhereHas('invoice', function ($invoiceQ) {
+                            $invoiceQ->where('payment_status', 'full')
+                                ->orWhere('due_amount', '<=', 0);
+                        });
+                });
             }
         }
 
@@ -68,7 +90,11 @@ class InvoicePaymentController extends Controller
 
         return DataTables::of($query)
             ->addColumn('select', function ($row) {
-                if ($row->invoice_payment_confirm) {
+                $isInvoiceSettled = (optional($row->invoice)->payment_status === 'full')
+                    || ((float) (optional($row->invoice)->due_amount ?? 0) <= 0
+                        && (float) (optional($row->invoice)->total_amount ?? 0) > 0);
+
+                if ($row->invoice_payment_confirm || $isInvoiceSettled) {
                     $status = 'completed';
                 } elseif ($row->payment_invoice_number != null) {
                     $status = 'pending';
@@ -102,7 +128,20 @@ class InvoicePaymentController extends Controller
                 return $row->invoice->student->admission_number ?? '-';
             })
             ->addColumn('amount', function ($row) {
-                return number_format($row->amount, 2);
+                $confirmedAmount = (float) ($row->invoice_payment_amount ?? 0);
+                $remaining = max((float) $row->amount - $confirmedAmount, 0);
+                return number_format($remaining, 2);
+            })
+            ->addColumn('invoice_paid_amount', function ($row) {
+                return number_format((float) (optional($row->invoice)->paid_amount ?? 0), 2);
+            })
+            ->addColumn('invoice_pending_amount', function ($row) {
+                $total = (float) (optional($row->invoice)->total_amount ?? 0);
+                $paid = (float) (optional($row->invoice)->paid_amount ?? 0);
+                return number_format(max($total - $paid, 0), 2);
+            })
+            ->addColumn('balance_amount', function ($row) {
+                return number_format((float) $row->amount, 2);
             })
 
             ->addColumn('confirm_cheque_number', function ($row) {
@@ -115,8 +154,14 @@ class InvoicePaymentController extends Controller
                 return $row->invoice_payment_confirm_note ?? '-';
             })
             ->addColumn('status', function ($row) {
-                if ($row->invoice_payment_confirm) {
+                $isInvoiceSettled = (optional($row->invoice)->payment_status === 'full')
+                    || ((float) (optional($row->invoice)->due_amount ?? 0) <= 0
+                        && (float) (optional($row->invoice)->total_amount ?? 0) > 0);
+
+                if ($row->invoice_payment_confirm || $isInvoiceSettled) {
                     return 'Completed';
+                } elseif ((float) ($row->invoice_payment_amount ?? 0) > 0) {
+                    return 'Partial';
                 } elseif ($row->payment_invoice_number != null) {
                     return 'Pending';
                 } else {
@@ -208,20 +253,121 @@ class InvoicePaymentController extends Controller
     }
     public function bulkPending(Request $request)
     {
-        $ids = $request->payment_ids;
-        foreach ($ids as $id) {
-            $payment = InvoicesPayments::find($id);
-            if (!$payment) continue;
-            $payment->invoice_payment_confirm = true;
-            $payment->invoice_payment_cheque_number = $request->cheque_number;
-            $payment->invoice_payment_amount = $request->amount;
-            $payment->invoice_payment_confirm_note = $request->note;
-            $payment->update_user_id = Auth::id();
-            $payment->save();
+        $request->validate([
+            'payment_ids' => 'required|array|min:1',
+            'payment_ids.*' => 'required|integer|exists:invoices_payments,id',
+            'amount' => 'required|numeric|min:0.01',
+            'cheque_number' => 'nullable|string|max:255',
+            'note' => 'nullable|string',
+        ]);
+
+        $paymentIds = $request->payment_ids;
+        $incomingAmount = (float) $request->amount;
+        $remainingAmount = $incomingAmount;
+        $allocatedAmount = 0;
+
+        DB::transaction(function () use ($paymentIds, $request, &$remainingAmount, &$allocatedAmount) {
+            $payments = $this->getPaymentsForBulkProcessing($paymentIds, true);
+
+            foreach ($payments as $payment) {
+                if ($remainingAmount <= 0) {
+                    break;
+                }
+
+                $invoice = FeeInvoices::find($payment->invoice_id);
+                $invoiceOutstanding = $invoice
+                    ? max((float) $invoice->total_amount - (float) $invoice->paid_amount, 0)
+                    : 0;
+
+                $alreadyConfirmed = (float) ($payment->invoice_payment_amount ?? 0);
+                $rowOutstanding = max((float) $payment->amount - $alreadyConfirmed, 0);
+
+                if ($rowOutstanding <= 0) {
+                    $isInvoiceFull = $invoice && (float) $invoice->paid_amount >= (float) $invoice->total_amount;
+                    $payment->invoice_payment_confirm = $isInvoiceFull;
+                    $payment->payment_status = $payment->invoice_payment_confirm ? 'full' : 'partial';
+                    $payment->update_user_id = Auth::id();
+                    $payment->save();
+                    continue;
+                }
+
+                // Never allocate more than invoice due, even if row amount is higher.
+                $applyAmount = min($remainingAmount, $rowOutstanding, $invoiceOutstanding);
+                if ($applyAmount <= 0) {
+                    $isInvoiceFull = $invoice && (float) $invoice->paid_amount >= (float) $invoice->total_amount;
+                    if ($isInvoiceFull) {
+                        $payment->invoice_payment_confirm = true;
+                        $payment->payment_status = 'full';
+                        $payment->update_user_id = Auth::id();
+                        $payment->save();
+                    }
+                    continue;
+                }
+
+                $payment->invoice_payment_cheque_number = $request->cheque_number;
+                $payment->invoice_payment_confirm_note = $request->note;
+                $payment->invoice_payment_amount = $alreadyConfirmed + $applyAmount;
+                if ($invoice) {
+                    $invoiceApplied = min($applyAmount, $invoiceOutstanding);
+
+                    if ($invoiceApplied > 0) {
+                        $invoice->paid_amount = (float) $invoice->paid_amount + $invoiceApplied;
+                        $invoice->due_amount = max((float) $invoice->total_amount - (float) $invoice->paid_amount, 0);
+
+                        if ((float) $invoice->paid_amount <= 0) {
+                            $invoice->payment_status = 'not';
+                        } elseif ((float) $invoice->paid_amount < (float) $invoice->total_amount) {
+                            $invoice->payment_status = 'partial';
+                        } else {
+                            $invoice->payment_status = 'full';
+                        }
+
+                        $invoice->save();
+
+                        $allocatedAmount += $invoiceApplied;
+                        $remainingAmount -= $invoiceApplied;
+                    }
+                }
+
+                $isInvoiceFull = $invoice && (float) $invoice->paid_amount >= (float) $invoice->total_amount;
+                // Completion is finalized by invoice settlement.
+                $payment->invoice_payment_confirm = $isInvoiceFull;
+                $payment->payment_status = $payment->invoice_payment_confirm ? 'full' : 'partial';
+                $payment->update_user_id = Auth::id();
+                $payment->save();
+            }
+
+            // Final consistency pass: sync all selected rows to invoice settlement state.
+            $selectedPayments = InvoicesPayments::with('invoice')
+                ->whereIn('id', $paymentIds)
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($selectedPayments as $selectedPayment) {
+                $invoice = $selectedPayment->invoice;
+                $isInvoiceSettled = $invoice
+                    && (
+                        (float) ($invoice->paid_amount ?? 0) >= (float) ($invoice->total_amount ?? 0)
+                        || (float) ($invoice->due_amount ?? 0) <= 0
+                    );
+
+                $selectedPayment->invoice_payment_confirm = $isInvoiceSettled ? true : null;
+                $selectedPayment->payment_status = $isInvoiceSettled ? 'full' : ((float) ($selectedPayment->invoice_payment_amount ?? 0) > 0 ? 'partial' : null);
+                $selectedPayment->update_user_id = Auth::id();
+                $selectedPayment->save();
+            }
+        });
+
+        $message = 'Payment allocation updated successfully.';
+        if ($remainingAmount > 0) {
+            $message .= ' Unallocated amount: ' . number_format($remainingAmount, 2);
         }
 
-
-        return response()->json(['message' => 'Selected payments confirmed successfully.']);
+        return response()->json([
+            'message' => $message,
+            'allocated_amount' => number_format($allocatedAmount, 2),
+            'remaining_amount' => number_format($remainingAmount, 2),
+        ]);
     }
 
     public function printInvoice($invoice_number)
@@ -255,44 +401,125 @@ class InvoicePaymentController extends Controller
             return response()->json(['message' => 'No payments selected.'], 400);
         }
 
+        $revertedAmount = 0;
+
         if ($status === 'completed') {
-            $payments = InvoicesPayments::whereIn('id', $ids)->get();
+            DB::transaction(function () use ($ids, &$revertedAmount) {
+                $payments = $this->getPaymentsForBulkProcessing($ids, true);
 
-            foreach ($payments as $payment) {
-                // Revert to pending
-                $payment->invoice_payment_confirm = null;
+                foreach ($payments as $payment) {
+                    $appliedAmount = (float) ($payment->invoice_payment_amount ?? 0);
+                    if ($appliedAmount > 0) {
+                        $this->reverseAppliedAmountFromInvoice($payment->invoice_id, $appliedAmount);
+                        $revertedAmount += $appliedAmount;
+                    }
 
-                $payment->cheque_number = null;
-                $payment->amount = null;
-                $payment->invoice_payment_note = null;
+                    // Revert to pending state (keep payment invoice number/customer info)
+                    $payment->invoice_payment_confirm = null;
+                    $payment->invoice_payment_cheque_number = null;
+                    $payment->invoice_payment_amount = null;
+                    $payment->invoice_payment_confirm_note = null;
+                    $payment->payment_status = null;
+                    $payment->update_user_id = Auth::id();
+                    $payment->save();
+                }
+            });
 
-                // Track who reverted
-                $payment->update_user_id = Auth::id();
-
-                $payment->save();
-            }
-
-            return response()->json(['message' => 'Reverted to Pending successfully.']);
+            return response()->json([
+                'message' => 'Reverted to Pending successfully.',
+                'reverted_amount' => number_format($revertedAmount, 2),
+            ]);
         }
 
         if ($status === 'pending') {
-            // Get all selected payments
-            $payments = InvoicesPayments::whereIn('id', $ids)->get();
+            DB::transaction(function () use ($ids, &$revertedAmount) {
+                $payments = $this->getPaymentsForBulkProcessing($ids, true);
 
-            foreach ($payments as $payment) {
-                $payment->payment_invoice_number = null;
-                $payment->customer_name = null;
-                $payment->invoice_payment_note = null;
+                foreach ($payments as $payment) {
+                    $appliedAmount = (float) ($payment->invoice_payment_amount ?? 0);
+                    if ($appliedAmount > 0) {
+                        $this->reverseAppliedAmountFromInvoice($payment->invoice_id, $appliedAmount);
+                        $revertedAmount += $appliedAmount;
+                    }
 
-                // Track the user who reverted
-                $payment->update_user_id = Auth::id();
+                    // Revert to not open state
+                    $payment->payment_invoice_number = null;
+                    $payment->customer_name = null;
+                    $payment->invoice_payment_note = null;
+                    $payment->invoice_payment_confirm = null;
+                    $payment->invoice_payment_cheque_number = null;
+                    $payment->invoice_payment_amount = null;
+                    $payment->invoice_payment_confirm_note = null;
+                    $payment->payment_status = null;
+                    $payment->update_user_id = Auth::id();
+                    $payment->save();
+                }
+            });
 
-                $payment->save();
-            }
-
-            return response()->json(['message' => 'Reverted to Not Open successfully.']);
+            return response()->json([
+                'message' => 'Reverted to Not Open successfully.',
+                'reverted_amount' => number_format($revertedAmount, 2),
+            ]);
         }
 
         return response()->json(['message' => 'Invalid status.'], 400);
+    }
+
+    private function getPaymentsForBulkProcessing(array $paymentIds, bool $lockForUpdate = false)
+    {
+        $query = InvoicesPayments::with('invoice')->whereIn('id', $paymentIds);
+
+        if ($lockForUpdate) {
+            $query->lockForUpdate();
+        }
+
+        return $query->get()
+            ->sortBy(function ($payment) {
+                $invoice = $payment->invoice;
+                $invoiceCreateDate = optional($invoice)->create_date
+                    ? optional($invoice)->create_date->format('Ymd')
+                    : '99991231';
+                $invoiceCreatedAt = optional($invoice)->created_at
+                    ? optional($invoice)->created_at->format('YmdHis')
+                    : '99991231235959';
+
+                return $invoiceCreateDate
+                    . '-'
+                    . $invoiceCreatedAt
+                    . '-'
+                    . str_pad((string) ($payment->invoice_id ?? 0), 10, '0', STR_PAD_LEFT)
+                    . '-'
+                    . str_pad((string) $payment->id, 10, '0', STR_PAD_LEFT);
+            })
+            ->values();
+    }
+
+    private function reverseAppliedAmountFromInvoice($invoiceId, float $appliedAmount): void
+    {
+        if ($appliedAmount <= 0) {
+            return;
+        }
+
+        $invoice = FeeInvoices::where('id', $invoiceId)->lockForUpdate()->first();
+        if (!$invoice) {
+            return;
+        }
+
+        $currentPaid = (float) ($invoice->paid_amount ?? 0);
+        $totalAmount = (float) ($invoice->total_amount ?? 0);
+
+        $newPaidAmount = max($currentPaid - $appliedAmount, 0);
+        $invoice->paid_amount = $newPaidAmount;
+        $invoice->due_amount = max($totalAmount - $newPaidAmount, 0);
+
+        if ($newPaidAmount <= 0) {
+            $invoice->payment_status = 'not';
+        } elseif ($newPaidAmount < $totalAmount) {
+            $invoice->payment_status = 'partial';
+        } else {
+            $invoice->payment_status = 'full';
+        }
+
+        $invoice->save();
     }
 }
