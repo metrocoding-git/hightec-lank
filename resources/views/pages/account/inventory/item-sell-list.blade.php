@@ -34,6 +34,33 @@
             <div class="row mt-20">
                 <div class="col-lg-12">
                     <div class="white-box">
+                        <form method="GET" action="{{ route('item-sell-list') }}" class="mb-20">
+                            <div class="row align-items-end">
+                                <div class="col-lg-6 col-md-7 mb-15">
+                                    <div class="primary_input">
+                                        <label class="primary_input_label">Location (Branch)</label>
+                                        <select id="branch_id_filter" name="branch_id" class="primary_select form-control">
+                                            <option value="">All Branches</option>
+                                            @foreach ($branches ?? [] as $branch)
+                                                <option value="{{ $branch->id }}"
+                                                    {{ request('branch_id') == $branch->id ? 'selected' : '' }}>
+                                                    {{ $branch->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6 col-md-5 mb-15">
+                                    <div class="d-flex justify-content-md-end justify-content-start align-items-center">
+    
+                                        <a href="{{ route('item-sell-list') }}" class="primary-btn small fix-gr-bg d-inline-flex align-items-center">
+                                            <span class="ti-reload pr-2"></span>Reset
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
                         <div class="row">
                             <div class="col-lg-4 no-gutters">
                                 <div class="main-title">
@@ -79,7 +106,7 @@
                                             <tbody>
                                                 @if (isset($allItemSellLists))
                                                     @foreach ($allItemSellLists as $key => $value)
-                                                        <tr>
+                                                        <tr data-branch-id="{{ $value->branch_id }}">
                                                             <td>{{ $key + 1 }}</td>
                                                             <td>{{  $value->invoice_number }}</td>
                                                             <td>{{ $value->reference_no }}</td>
@@ -477,7 +504,7 @@
 
     <script>
         $(document).ready(function() {
-            $('#table_id').DataTable({
+            const itemSellTable = $('#table_id').DataTable({
                 responsive: false,
                 scrollX: true,
                 scrollCollapse: true,
@@ -490,6 +517,30 @@
                 searching: true,
                 ordering: true,
                 info: true,
+            });
+
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                if (settings.nTable.id !== 'table_id') {
+                    return true;
+                }
+
+                const selectedBranchId = $('#branch_id_filter').val();
+                if (!selectedBranchId) {
+                    return true;
+                }
+
+                const rowNode = itemSellTable.row(dataIndex).node();
+                const rowBranchId = $(rowNode).data('branch-id');
+                return String(rowBranchId) === String(selectedBranchId);
+            });
+
+            $('form[action="{{ route('item-sell-list') }}"]').on('submit', function(e) {
+                e.preventDefault();
+                itemSellTable.draw();
+            });
+
+            $('#branch_id_filter').on('change', function() {
+                itemSellTable.draw();
             });
 
             // Show Item Details
