@@ -124,7 +124,39 @@ class ReportController extends Controller
         // Results
         $feeInvoices = $query->orderBy('created_at', 'DESC')
             ->orderByRaw("CAST(SUBSTRING_INDEX(receipt_number, '-', -1) AS UNSIGNED) DESC")
-            ->get();
+            ->get()
+            ->map(function ($payment) {
+                $invoiceStatus = $payment->invoice->payment_status ?? null;
+
+                if (in_array($invoiceStatus, ['full', 'partial', 'not'], true)) {
+                    $statusBucket = $invoiceStatus;
+                } elseif ($payment->payment_method === 'Invoice') {
+                    if (!empty($payment->payment_invoice_number) && (bool) $payment->invoice_payment_confirm) {
+                        $statusBucket = 'completed';
+                    } elseif (!empty($payment->payment_invoice_number)) {
+                        $statusBucket = 'pending';
+                    } else {
+                        $statusBucket = 'not_start';
+                    }
+                } else {
+                    $statusBucket = 'completed';
+                }
+
+                $amountValue = (float) ($payment->amount ?? 0);
+
+                $payment->status_bucket = $statusBucket;
+                $payment->amount_column = in_array($statusBucket, ['full', 'completed'], true)
+                    ? number_format($amountValue, 2, '.', '')
+                    : '-';
+                $payment->pending_amount_column = in_array($statusBucket, ['partial', 'pending'], true)
+                    ? number_format($amountValue, 2, '.', '')
+                    : '-';
+                $payment->not_start_amount_column = in_array($statusBucket, ['not', 'not_open', 'not_start'], true)
+                    ? number_format($amountValue, 2, '.', '')
+                    : '-';
+
+                return $payment;
+            });
 
         return view('pages.reports.students-paid', compact('feeInvoices', 'branches'));
     }
