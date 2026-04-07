@@ -105,7 +105,7 @@
                                                             </td>
                                                             <td>
                                                                 @if ($value->student)
-                                                                    {{ $value->student->studentCategory->category_name }}
+                                                                    {{ $value->student->studentCategory?->category_name ?? 'N/A' }}
                                                                 @else
                                                                     N/A
                                                                 @endif

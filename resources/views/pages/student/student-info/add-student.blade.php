@@ -1447,7 +1447,7 @@
                         <div class="modal-body">
                             <label class="fw-bold">Enter Admission Number</label>
                             <input type="text" class="form-control" id="modalAdmissionNumber"
-                                placeholder="Admission Number">
+                                placeholder="stu-001" value="stu-">
                             <small class="text-danger d-none" id="admissionError">
                                 Admission number not found
                             </small>
@@ -1583,15 +1583,50 @@
             const modalInput = document.getElementById('modalAdmissionNumber');
             const errorText = document.getElementById('admissionError');
             const hiddenAdmission = document.getElementById('hiddenAdmissionNumber');
+            const admissionPrefix = 'stu-';
+
+            function resetAdmissionInput() {
+                modalInput.value = admissionPrefix;
+                setTimeout(() => {
+                    modalInput.setSelectionRange(modalInput.value.length, modalInput.value.length);
+                }, 0);
+            }
+
+            function normalizeAdmissionInput() {
+                let value = modalInput.value.trim();
+
+                if (!value.toLowerCase().startsWith(admissionPrefix)) {
+                    value = admissionPrefix + value.replace(/^stu-/i, '');
+                }
+
+                modalInput.value = admissionPrefix + value.slice(admissionPrefix.length).replace(/\s+/g, '');
+            }
+
+            resetAdmissionInput();
+
+            modalInput.addEventListener('input', function() {
+                normalizeAdmissionInput();
+            });
+
+            modalInput.addEventListener('keydown', function(e) {
+                const start = this.selectionStart ?? 0;
+
+                if ((e.key === 'Backspace' && start <= admissionPrefix.length) ||
+                    (e.key === 'Delete' && start < admissionPrefix.length)) {
+                    e.preventDefault();
+                    this.setSelectionRange(admissionPrefix.length, admissionPrefix.length);
+                }
+            });
 
             // Toggle click → open modal
             toggle.addEventListener('change', function() {
                 if (this.checked) {
+                    resetAdmissionInput();
                     modal.show();
                 } else {
                     toggle.checked = false;
                     hiddenAdmission.value = '';
-                    modalInput.value = '';
+                    resetAdmissionInput();
                     errorText.classList.add('d-none');
                 }
             });
@@ -1600,7 +1635,7 @@
                 modal.hide();
                 toggle.checked = false;
                 hiddenAdmission.value = '';
-                modalInput.value = '';
+                resetAdmissionInput();
                 errorText.classList.add('d-none');
             };
 
@@ -1608,15 +1643,17 @@
                 modal.hide();
                 toggle.checked = false;
                 hiddenAdmission.value = '';
-                modalInput.value = '';
+                resetAdmissionInput();
                 errorText.classList.add('d-none');
             };
             // Verify admission number
             document.getElementById('verifyAdmission').addEventListener('click', function() {
+                normalizeAdmissionInput();
 
                 const admissionNo = modalInput.value.trim();
+                const admissionSuffix = admissionNo.slice(admissionPrefix.length).trim();
 
-                if (!admissionNo) {
+                if (!admissionSuffix) {
                     errorText.textContent = 'Admission number required';
                     errorText.classList.remove('d-none');
                     return;
