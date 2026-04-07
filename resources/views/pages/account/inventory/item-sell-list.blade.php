@@ -46,7 +46,7 @@
                             <div class="col-lg-12">
                                 <div id="itemSellListTable">
                                     <x-table>
-                                        <table id="table_id" class="table" cellspacing="0" width="100%">
+                                        <table id="table_id" class="table nowrap" cellspacing="0" width="100%">
                                             <thead>
 
                                                 <tr>
@@ -61,6 +61,9 @@
                                                     <th>@lang('common.date')</th>
                                                     <th>Sell Price</th>
                                                     <th>@lang('inventory.grand_total')</th>
+                                                    <th>Amount</th>
+                                                    <th>Pending Amount</th>
+                                                    <th>Not Start Amount</th>
                                                     <th>@lang('inventory.total_quantity')</th>
                                                     <th>Payment Method</th>
                                                     <th>Bank Payment Amount</th>
@@ -117,6 +120,18 @@
                                                             </td>
 
                                                             <td>{{ number_format((float) $value->total_paid + $value->total_due, 2, '.', '') }}
+                                                            </td>
+                                                            @php
+                                                                $sellTotal = (float) ($value->total_paid + $value->total_due);
+                                                            @endphp
+                                                            <td>
+                                                                {{ $value->status === 'P' ? number_format($sellTotal, 2, '.', '') : '-' }}
+                                                            </td>
+                                                            <td>
+                                                                {{ $value->status === 'PP' ? number_format($sellTotal, 2, '.', '') : '-' }}
+                                                            </td>
+                                                            <td>
+                                                                {{ $value->status === 'U' ? number_format($sellTotal, 2, '.', '') : '-' }}
                                                             </td>
                                                             <td>{{ $value->total_quantity }}</td>
                                                             <td>{{ $value->payment_method ?? '-' }}</td>
@@ -449,10 +464,24 @@
 @include('components.partials.date_picker_css_js')
 @include('components.partials.data_table_css')
 @push('script')
+    <style>
+        #table_id_wrapper {
+            overflow-x: auto;
+        }
+
+        #table_id th,
+        #table_id td {
+            white-space: nowrap;
+        }
+    </style>
+
     <script>
         $(document).ready(function() {
             $('#table_id').DataTable({
-                responsive: true,
+                responsive: false,
+                scrollX: true,
+                scrollCollapse: true,
+                autoWidth: false,
                 dom: 'Bfrtip',
                 buttons: [
                     'copy', 'csv', 'excel', 'pdf', 'print'
