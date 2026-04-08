@@ -48,7 +48,7 @@
                                         <select class="primary_select form-control" name="payment_status"
                                             id="status-select">
                                             <option value="">Select Status</option>
-                                            <option value="not_open">Not Open</option>
+                                            <option value="not_open" selected>Not Open</option>
                                             <option value="pending">Pending</option>
                                             <option value="completed">Completed</option>
                                         </select>
@@ -102,7 +102,10 @@
                                         <th>Student Category</th>
                                         <th>Admission Number</th>
                                         <th>Fee Name</th>
-                                        <th>amount</th>
+                                        <th>Remaining Amount</th>
+                                        <th>Paid Amount</th>
+                                        <th>Pending Amount</th>
+                                        <th>Original Amount</th>
                                         <th>Cheque Number</th>
                                         <th>Comfirm Amount</th>
                                         <th>Confirm Note</th>
@@ -210,6 +213,10 @@
         $('#select-all').on('click', function() {
             $('.payment-checkbox').prop('checked', this.checked);
         });
+
+        // Default view should show not-open invoices on first load.
+        $('#status-select').val('not_open');
+
         $('#invoice_table').DataTable({
             responsive: true,
             processing: true,
@@ -260,6 +267,15 @@
                 },
                 {
                     data: 'amount'
+                },
+                {
+                    data: 'invoice_paid_amount'
+                },
+                {
+                    data: 'invoice_pending_amount'
+                },
+                {
+                    data: 'balance_amount'
                 },
                 {
                     data: 'confirm_cheque_number'
