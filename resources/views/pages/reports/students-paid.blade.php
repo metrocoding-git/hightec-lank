@@ -110,7 +110,7 @@
                         <div class="row">
                             <div class="col-lg-12">
                                 <x-table>
-                                    <table id="table_id" class="table nowrap" cellspacing="0" width="100%">
+                                    <table id="table_id" class="table" cellspacing="0" width="100%">
                                         <thead>
                                             <tr>
                                                 <th>ID</th>
@@ -120,9 +120,7 @@
                                                 <th>Invoice Number</th>
                                                 <th>Receipt Number</th>
                                                 <th>Payment Name</th>
-                                                <th>Amount</th>
-                                                <th>Pending Amount</th>
-                                                <th>Not Start Amount</th>
+                                                <th>Paid Amount</th>
                                                 <th>Payment Method</th>
                                                 <th>Payment Date</th>
                                                 <th>Payment Invoice Number</th>
@@ -169,13 +167,7 @@
 
 
                                                         <td class="{{ $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
-                                                            {{ $feeInvoice->amount_column ?? '-' }}
-                                                        </td>
-                                                        <td class="{{ $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
-                                                            {{ $feeInvoice->pending_amount_column ?? '-' }}
-                                                        </td>
-                                                        <td class="{{ $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
-                                                            {{ $feeInvoice->not_start_amount_column ?? '-' }}
+                                                            {{ number_format((float) $feeInvoice->amount, 2, '.', '') }}
                                                         </td>
                                                         <td class="{{ $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
                                                             @if ($feeInvoice->payment_method == 'Invoice' && $feeInvoice->invoice_payment_confirm)
@@ -183,7 +175,6 @@
                                                             @endif
 
                                                             {{ $feeInvoice->payment_method }}
-                                                        </td>
 
                                                         <td class="{{ $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
                                                             {{ $feeInvoice->created_at ? \Carbon\Carbon::parse($feeInvoice->created_at)->format('m/d/Y') : 'N/A' }}
@@ -222,18 +213,6 @@
 @include('components.partials.date_picker_css_js')
 @include('components.partials.data_table_css')
 @push('script')
-    <style>
-        /* Keep wide report tables usable on small screens */
-        div#table_id_wrapper {
-            overflow-x: auto;
-        }
-
-        #table_id th,
-        #table_id td {
-            white-space: nowrap;
-        }
-    </style>
-
     <script>
         flatpickr("#date_range", {
             mode: "range",
@@ -244,10 +223,7 @@
 
     <script>
         $('#table_id').DataTable({
-            responsive: false,
-            scrollX: true,
-            scrollCollapse: true,
-            autoWidth: false,
+            responsive: true,
             dom: 'Blfrtip',
             buttons: [
                 'copy', 'csv', 'excel', 'pdf', 'print'

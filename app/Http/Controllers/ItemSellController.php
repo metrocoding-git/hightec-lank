@@ -212,40 +212,10 @@ class ItemSellController extends Controller
     }
 
 
-    public function itemSellList(Request $request)
+    public function itemSellList()
     {
-        $branches = Branch::orderBy('name')->get();
-
-        $query = ItemSellBatch::with(['role', 'student', 'user', 'student.studentCategory', 'createdBy', 'branch'])
-            ->orderBy('created_at', 'desc');
-
-        if ($request->filled('branch_id')) {
-            $query->where('branch_id', $request->branch_id);
-        }
-
-        if ($request->filled('search')) {
-            $search = trim($request->search);
-
-            $query->where(function ($q) use ($search) {
-                $q->where('reference_no', 'like', "%{$search}%")
-                    ->orWhere('invoice_number', 'like', "%{$search}%")
-                    ->orWhere('others_name', 'like', "%{$search}%")
-                    ->orWhereHas('student', function ($studentQuery) use ($search) {
-                        $studentQuery->where('student_name', 'like', "%{$search}%")
-                            ->orWhere('admission_number', 'like', "%{$search}%");
-                    })
-                    ->orWhereHas('user', function ($userQuery) use ($search) {
-                        $userQuery->where('name', 'like', "%{$search}%");
-                    })
-                    ->orWhereHas('createdBy', function ($createdByQuery) use ($search) {
-                        $createdByQuery->where('name', 'like', "%{$search}%");
-                    });
-            });
-        }
-
-        $allItemSellLists = $query->get();
-
-        return view('pages.account.inventory.item-sell-list', compact('allItemSellLists', 'branches'));
+        $allItemSellLists = ItemSellBatch::with(['role', 'student', 'user', 'student.studentCategory', 'createdBy'])->orderBy('created_at', 'desc')->get();
+        return view('pages.account.inventory.item-sell-list', compact('allItemSellLists'));
     }
 
     public function viewItemSell($id)
