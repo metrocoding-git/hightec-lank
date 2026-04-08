@@ -38,9 +38,8 @@
                                                 <th>Student Name</th>
                                                 <th>Course Name</th>
                                                 <th>Course Price</th>
-                                                <th>Amount</th>
-                                                <th>Pending Amount</th>
-                                                <th>Not Start Amount</th>
+                                                <th>Paid Amount</th>
+                                                <th>Due Amount</th>
                                                 <th>Payment Status</th>
                                                 <th>Payment Method</th>
                                             </tr>
@@ -56,14 +55,9 @@
                                                         </td>
                                                         <td>{{ number_format((float) $paidCourse->course_price, 2, '.', '') }}
                                                         </td>
-                                                        <td>
-                                                            {{ in_array($paidCourse->payment_status, ['full', 'completed'], true) ? number_format((float) $paidCourse->paid_amount, 2, '.', '') : '-' }}
+                                                        <td>{{ number_format((float) $paidCourse->paid_amount, 2, '.', '') }}
                                                         </td>
-                                                        <td>
-                                                            {{ in_array($paidCourse->payment_status, ['partial', 'pending'], true) ? number_format((float) $paidCourse->paid_amount, 2, '.', '') : '-' }}
-                                                        </td>
-                                                        <td>
-                                                            {{ in_array($paidCourse->payment_status, ['not', 'not_open', 'not_start'], true) ? number_format((float) $paidCourse->course_price, 2, '.', '') : '-' }}
+                                                        <td>{{ number_format((float) $paidCourse->due_amount, 2, '.', '') }}
                                                         </td>
                                                         <td>{{ $paidCourse->payment_status }}</td>
                                                         <td>{{ $paidCourse->payment_method }}</td>
