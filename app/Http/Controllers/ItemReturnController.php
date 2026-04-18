@@ -37,12 +37,13 @@ class ItemReturnController extends Controller
 
                 // Track inventory changes for each item return (increase inventory).
                 foreach ($batchItems as $batchItem) {
-                    $currentBalance = ItemInventory::getCurrentBalance($batchItem->item_id);
+                    $currentBalance = ItemInventory::getCurrentBalance($batchItem->item_id, $batch->branch_id);
                     $newBalance = $currentBalance + $batchItem->quantity;
 
                     ItemInventory::create([
                         'item_id' => $batchItem->item_id,
                         'transaction_type' => 'issue_return',
+                        'branch_id' => $batch->branch_id,
                         'transaction_id' => $batch->id,
                         'quantity' => $batchItem->quantity,
                         'current_balance' => $newBalance,

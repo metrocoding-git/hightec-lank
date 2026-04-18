@@ -17,6 +17,7 @@ class ItemInventory extends Model
         'reference_no',
         'transaction_date',
         'description',
+        'branch_id',
     ];
 
     protected $casts = [
@@ -84,10 +85,13 @@ class ItemInventory extends Model
     /**
      * Get the current balance for a specific item
      */
-    public static function getCurrentBalance($itemId)
+    public static function getCurrentBalance($itemId, $branchId = null)
     {
-        $latestRecord = static::forItem($itemId)
+        $latestRecord = static::forItem($itemId);
+
+        $latestRecord = $latestRecord
             ->orderBy('transaction_date', 'desc')
+            ->where('branch_id', $branchId)
             ->orderBy('id', 'desc')
             ->first();
 

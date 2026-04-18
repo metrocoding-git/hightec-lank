@@ -105,12 +105,13 @@ class ItemReceiveController extends Controller
                     'created_by' => Auth::id(),
                 ]);
 
-                $currentBalance = ItemInventory::getCurrentBalance($itemId);
+                $currentBalance = ItemInventory::getCurrentBalance($itemId, $request->store_id);
                 $newBalance = $currentBalance + $request->quantity[$index];
 
                 ItemInventory::create([
                     'item_id' => $itemId,
                     'transaction_type' => 'receive',
+                    'branch_id' => $request->store_id,
                     'transaction_id' => $itemReceive->id,
                     'quantity' => $request->quantity[$index],
                     'current_balance' => $newBalance,

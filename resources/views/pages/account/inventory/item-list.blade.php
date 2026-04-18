@@ -181,7 +181,11 @@
                                                     <td>{{ $item->category->name ?? '' }}</td>
                                                     <td>{{ $item->item_price ?? 'N/A' }}</td>
                                                     <td>{{ $item->description }}</td>
-                                                    <td>{{ $item->current_balance ?? 0 }}</td>
+                                                    <td>
+                                                        @foreach ($item->current_balance as $branch => $balance)
+                                                            <p>{{ $branch }}: {{ $balance }}</p>
+                                                        @endforeach
+                                                    </td>
                                                     <td>
                                                         <x-drop-down>
                                                             <a class="dropdown-item view-item-btn" data-toggle="modal"

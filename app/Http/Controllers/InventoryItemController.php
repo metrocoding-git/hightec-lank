@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\InventoryItem;
 use App\Models\ItemInventory;
 use App\Http\Controllers\Controller;
-
+use App\Models\Branch;
 
 class InventoryItemController extends Controller
 {
@@ -16,13 +16,20 @@ class InventoryItemController extends Controller
      */
     public function index()
     {
-        //
-        $itemCategories=Category::all();
-         $items=InventoryItem::with('category')->get();
-         foreach ($items as $item) {
-             $item->current_balance = ItemInventory::getCurrentBalance($item->id);
-         }
-        return view('pages.account.inventory.item-list' , compact('itemCategories','items'));
+        $itemCategories = Category::all();
+        $items = InventoryItem::with('category')->get();
+        $branches = Branch::all();
+        foreach ($items as $item) {
+            $balances = [];
+            foreach ($branches as $branch) {
+                $balances[$branch->name] = ItemInventory::getCurrentBalance(
+                    $item->id,
+                    $branch->id
+                );
+            }
+            $item->current_balance = $balances;
+        }
+        return view('pages.account.inventory.item-list', compact('itemCategories', 'items'));
     }
 
     public function view($id)
@@ -63,24 +70,22 @@ class InventoryItemController extends Controller
         return redirect()->back()->with('success', 'Item added successfully!');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(InventoryItem $inventory_item)
-    {
-        //
-    }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(InventoryItem $inventory_item, $id)
     {
         //
         $editData = InventoryItem::findOrFail($id);
         $items = InventoryItem::with('category')->get();
+        $branches = Branch::all();
         foreach ($items as $item) {
-            $item->current_balance = ItemInventory::getCurrentBalance($item->id);
+            $balances = [];
+            foreach ($branches as $branch) {
+                $balances[$branch->name] = ItemInventory::getCurrentBalance(
+                    $item->id,
+                    $branch->id
+                );
+            }
+            $item->current_balance = $balances;
         }
         $itemCategories = Category::all();
         return view('pages.account.inventory.item-list', compact('editData', 'items', 'itemCategories'));
@@ -120,5 +125,24 @@ class InventoryItemController extends Controller
         $item->delete();
 
         return redirect()->back()->with('success', 'Item deleted successfully!');
+    }
+
+    public function getItemPrice($id, $branchId)
+    {
+        try {
+            $item = InventoryItem::findOrFail($id);
+            
+            $currentBalance = ItemInventory::getCurrentBalance($id, $branchId);
+            return response()->json([
+                'success' => true,
+                'price' => $item->item_price,
+                'available_quantity' => $currentBalance
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Item not found.'
+            ], 404);
+        }
     }
 }

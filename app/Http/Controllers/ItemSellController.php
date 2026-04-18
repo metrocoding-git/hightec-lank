@@ -99,6 +99,7 @@ class ItemSellController extends Controller
                 $bankPaymentDate = Carbon::parse($request->bank_payment_date)->format('Y-m-d');
             }
 
+            
             // Create ItemSellBatch record
             $itemSellBatch = ItemSellBatch::create([
                 'branch_id' => $request->branch_id,
@@ -162,10 +163,11 @@ class ItemSellController extends Controller
                 'updated_at' => now(),
             ]);
 
+            
 
             // Create ItemSellItem records for each item in the batch
             foreach ($request->item_id as $index => $itemId) {
-                $availableQuantity = ItemInventory::getCurrentBalance($itemId);
+                $availableQuantity = ItemInventory::getCurrentBalance($itemId, $request->branch_id);
                 if ($request->quantity[$index] > $availableQuantity) {
                     return response()->json([
                         'success' => false,
@@ -173,6 +175,7 @@ class ItemSellController extends Controller
                     ], 422);
                 }
 
+                
                 ItemSellItem::create([
                     'item_sell_batch_id' => $itemSellBatch->id,
                     'item_id' => $itemId,
@@ -182,13 +185,17 @@ class ItemSellController extends Controller
                 ]);
 
                 // Track inventory changes for this item sell (decrease inventory)
-                $currentBalance = ItemInventory::getCurrentBalance($itemId);
+                $currentBalance = ItemInventory::getCurrentBalance($itemId, $request->branch_id);;
+                        
+
                 $newBalance = $currentBalance - $request->quantity[$index];
 
+                
                 ItemInventory::create([
                     'item_id' => $itemId,
                     'transaction_type' => 'sell',
-                    'transaction_id' => $itemSellBatch->id, // Link to ItemSellBatch
+                    'branch_id' => $request->branch_id,
+                    'transaction_id' => $itemSellBatch->id, 
                     'quantity' => $request->quantity[$index],
                     'current_balance' => $newBalance,
                     'reference_no' => $request->reference_no,
@@ -284,12 +291,13 @@ class ItemSellController extends Controller
 
                 $availableQuantity = $item->quantity;
 
-                $currentBalance = ItemInventory::getCurrentBalance($item->item_id);
+                $currentBalance = ItemInventory::getCurrentBalance($item->item_id, $itemSellBatch->branch_id);
                 $newBalance = $currentBalance + $availableQuantity;
                 ItemInventory::create([
                     'item_id' => $item->item_id,
                     'transaction_type' => 'sell_return',
-                    'transaction_id' => $itemSellBatch->id, // Link to ItemSellBatch
+                    'transaction_id' => $itemSellBatch->id, 
+                    'branch_id' => $itemSellBatch->branch_id, 
                     'quantity' => $item->quantity,
                     'current_balance' => $newBalance,
                     'reference_no' => $itemSellBatch->reference_no,
@@ -399,13 +407,14 @@ class ItemSellController extends Controller
 
             foreach ($itemSellBatch->items as $itemSellItem) {
                 // Update inventory for each item in the batch
-                $currentBalance = ItemInventory::getCurrentBalance($itemSellItem->item_id);
+                $currentBalance = ItemInventory::getCurrentBalance($itemSellItem->item_id, $itemSellBatch->branch_id);
                 $newBalance = $currentBalance + $itemSellItem->quantity;
 
                 ItemInventory::create([
                     'item_id' => $itemSellItem->item_id,
                     'transaction_type' => 'sell_return',
                     'transaction_id' => $itemSellBatch->id,
+                    'branch_id' => $itemSellBatch->branch_id,
                     'quantity' => $itemSellItem->quantity,
                     'current_balance' => $newBalance,
                     'reference_no' => $itemSellBatch->reference_no,
@@ -439,23 +448,7 @@ class ItemSellController extends Controller
         }
     }
 
-    public function getItemPrice($id)
-    {
-        try {
-            $item = InventoryItem::findOrFail($id);
-            $currentBalance = ItemInventory::getCurrentBalance($id);
-            return response()->json([
-                'success' => true,
-                'price' => $item->item_price,
-                'available_quantity' => $currentBalance
-            ]);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Item not found.'
-            ], 404);
-        }
-    }
+
 
     public function itemSellBill($id)
     {

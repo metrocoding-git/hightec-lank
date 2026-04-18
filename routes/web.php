@@ -59,7 +59,7 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
     // Route::middleware(['permission'])->group(function () {
         Route::get('student/student-info/student-list', [StudentController::class, 'studentList'])->name('student-list');
         Route::get('/student/student-info/student-list-datatable', [StudentController::class, 'studentDatatable'])->name('student-list.datatable');
-        Route::get('student/student-info/verification-history/{id}', 'verificationHistory')->name('student-list.verification-history');
+        Route::get('student/student-info/verification-history/{id}', [StudentController::class, 'verificationHistory'])->name('student-list.verification-history');
         Route::put('student/update-status', [StudentController::class, 'updateStudetStatus'])->name('student.update-status');
         Route::get('student/student-info/student-view/{id}', [StudentController::class, 'studentView'])->name('student-details');
         Route::get('student/student-info/disabled-student', [StudentController::class, 'disabledStudents'])->name('disabled-students');
@@ -338,7 +338,6 @@ Route::controller(ItemSellController::class)
         Route::post('account/inventory/item-sell/{id}/update-status', 'updateItemSellStatus')->name('update-item-sell-status');
         Route::post('account/inventory/item-sell/{id}/direct-return', 'directReturnItemSell')->name('direct-return-item-sell');
         Route::get('account/inventory/item-sell/{id}/return-view', action: 'returnItemSellView')->name('return-item-sell-view');
-        Route::get('account/inventory/get-item-price/{id}', 'getItemPrice')->name(name: 'get-item-price')->withoutMiddleware(['csrf', 'permission']);
         Route::post('account/inventory/item-sell/save-invoice-number', 'itemSellSaveInvoiceNumber')
             ->name('item-sell.invoic-save')->withoutMiddleware(['permission']);
         Route::get('account/inventory/item-sell-bill/{id}', 'itemSellBill')->name('inventory.item-sell-bill')->withoutMiddleware(['csrf', 'permission']);
@@ -461,6 +460,7 @@ Route::controller(InventoryItemController::class)->middleware(['permission'])->g
     Route::get('account/inventory/item-edit/{id}', 'edit')->name('item-edit');
     Route::put('account/inventory/item-update/{id}', 'update')->name('item-update');
     Route::delete('account/inventory/item-delete/{id}', 'destroy')->name('item-delete');
+    Route::get('account/inventory/get-item-price/{id}/{branchId}', 'getItemPrice')->name(name: 'get-item-price')->withoutMiddleware(['csrf', 'permission']);
 });
 // Inventory Supplier Management
 Route::controller(SupplierController::class)->middleware(['permission'])->group(function () {

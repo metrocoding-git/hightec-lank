@@ -46,7 +46,8 @@
                                     {{-- Branch Dropdown --}}
                                     <div class="col-lg-12 mb-15">
                                         <label class="primary_input_label">Branch <span class="text-danger">*</span></label>
-                                        <select class="primary_select form-control" name="branch_id" id="branch_select" required>
+                                        <select class="primary_select form-control" name="branch_id" id="branch_select"
+                                            required>
                                             @if (count($branches) > 1)
                                                 <option value="">Select Branch *</option>
                                             @endif
@@ -335,6 +336,13 @@
                     return;
                 }
 
+                let branchId = $('#branch_select').val();
+                if (!branchId) {
+                    toastr.error('Please select a branch first', 'Warning');
+                    $('#branch_select').focus();
+                    return;
+                }
+
                 if (type === 'category') {
                     // Handle category selection - select all items in category
                     let categoryValue = selectedOption.val();
@@ -363,7 +371,8 @@
                             // Only add if not already added
                             if (!addedItemTypes.has(itemId)) {
                                 let itemPrice = $(this).data('item-price') || '0';
-                                addItemRow(itemId, itemName, categoryId, categoryName, itemPrice);
+                                addItemRow(itemId, itemName, categoryId, categoryName, itemPrice,
+                                    branchId);
                                 addedItemTypes.add(itemId);
                                 itemsFound++;
                             }
@@ -397,7 +406,7 @@
                     // Only add if not already added
                     if (!addedItemTypes.has(itemId)) {
                         let itemPrice = selectedOption.data('item-price') || '0';
-                        addItemRow(itemId, itemName, categoryId, categoryName, itemPrice);
+                        addItemRow(itemId, itemName, categoryId, categoryName, itemPrice, branchId);
                         addedItemTypes.add(itemId);
 
                         toastr.success(`Item "${itemName}" has been added to the selection`, '', {
@@ -415,8 +424,8 @@
                 $(this).val('').niceSelect('update');
             });
 
-            function addItemRow(itemId, itemName, categoryId, categoryName, itemPrice = '0') {
-                // Use a global index for array keys to ensure uniqueness
+            function addItemRow(itemId, itemName, categoryId, categoryName, itemPrice = '0', branchId) {
+
                 let currentIndex = itemRowIndex++;
 
                 // Format price for display
@@ -424,7 +433,7 @@
 
                 // Fetch available quantity
                 $.ajax({
-                    url: '{{ url('/') }}/account/inventory/get-item-price/' + itemId,
+                    url: '{{ url('/') }}/account/inventory/get-item-price/' + itemId + '/' + branchId,
                     type: 'GET',
                     success: function(response) {
                         if (response.success) {
@@ -626,7 +635,6 @@
             // Handle branch change - Populate Student dropdown
             $('#branch_select').on('change', function() {
                 var branch_id = $(this).val();
-                console.log('🌳 Branch selected:', branch_id);
 
                 // Reset and disable Student, Intake, Course dropdowns
                 $('#student_select').html('<option value="">Loading students...</option>').prop('disabled',
@@ -639,6 +647,10 @@
                 refreshNiceSelect('#intake_select');
                 refreshNiceSelect('#course_select');
                 $('#student-fee-data').hide();
+                
+                $('.allIssuedItems').empty();
+                addedItemTypes.clear();
+                itemRowIndex = 0;
 
                 if (branch_id && branch_id !== '') {
                     var url = '{{ route('item-issue.get-students-by-branch', ':branchId') }}'.replace(
@@ -646,7 +658,7 @@
                     $.get(url, function(data) {
                         var optionsHtml = '<option value="">Select Student *</option>';
                         if (data && Array.isArray(data) && data.length > 0) {
-                            console.log("ddd",data)
+                            console.log("ddd", data)
                             data.forEach(function(student) {
                                 optionsHtml +=
                                     `<option value="${student.id}">${student.admission_number} - ${student.student_name}</option>`;
@@ -673,7 +685,7 @@
 
             $('#branch_select').trigger('change');
 
-            
+
             // Handle student change - Populate Intake dropdown
             $('#student_select').on('change', function() {
                 var student_id = $(this).val();
@@ -710,7 +722,7 @@
                         refreshNiceSelect('#intake_select');
                     }).fail(function(xhr, status, error) {
                         console.error('❌ AJAX Error fetching intakes by branch and student:',
-                        error);
+                            error);
                         $('#intake_select').html('<option value="">Error loading intakes</option>')
                             .prop('disabled', true);
                         refreshNiceSelect('#intake_select');

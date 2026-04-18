@@ -128,3 +128,8 @@ ALTER TABLE `student_courses` ADD `change_course_id` INT NULL DEFAULT NULL AFTER
 
 ALTER TABLE `invoices_payments` ADD `update_user_id` INT NULL DEFAULT NULL AFTER `create_user_id`;
 ALTER TABLE `invoices_payments` ADD `invoice_payment_cheque_number` VARCHAR(255) NULL DEFAULT NULL AFTER `invoice_payment_note`, ADD `invoice_payment_amount` DECIMAL NULL DEFAULT NULL AFTER `invoice_payment_cheque_number`, ADD `invoice_payment_confirm_note` TEXT NULL DEFAULT NULL AFTER `invoice_payment_amount`;
+
+
+
+-- 04/19
+ALTER TABLE `item_inventory` ADD `branch_id` INT NULL DEFAULT NULL AFTER `item_id`;

@@ -446,6 +446,25 @@
                 $('#branch_id').trigger('change');
             }
 
+            $('#branch_id').on('change', function() {
+
+                let branchId = $(this).val();
+
+                $('tbody').empty();
+                rowCount = 0;
+
+                // reset totals
+                $('#subTotalQuantity').val(0);
+                $('#subTotal').val(0);
+                $('#totalPaid').val(0);
+                $('#totalDue').val(0);
+
+                if (!branchId) return;
+
+                addEmptyRow();
+
+            });
+
             // Configure toastr options
             toastr.options = {
                 "timeOut": "5000",
@@ -453,7 +472,57 @@
             };
             let rowCount = 0;
 
+            function addEmptyRow() {
+                rowCount++;
+
+                let newRow = `
+                    <tr id="row${rowCount}">
+                        <td class="border-top-0">
+                            <div class="primary_input">
+                                <select class="primary_select form-control" name="item_id[]" id="productName${rowCount}" onchange="fetchPrice(this, ${rowCount})">
+                                    <option value="">Select*</option>
+                                    @foreach ($items as $key => $value)
+                                        <option value="{{ $value->id }}">{{ $value->item_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </td>
+
+                        <td>
+                            <input class="primary_input_field form-control" type="text"
+                                id="unit_price${rowCount}" name="unit_price[]" readonly>
+                        </td>
+
+                        <td>
+                            <input class="primary_input_field form-control" type="text"
+                                id="available_quantity${rowCount}" name="available_quantity[]" readonly>
+                        </td>
+
+                        <td>
+                            <input class="primary_input_field form-control" type="text"
+                                id="quantity${rowCount}" name="quantity[]"
+                                onkeyup="validateAndGetTotal(${rowCount});">
+                        </td>
+
+                        <td>
+                            <input class="primary_input_field form-control" type="text"
+                                id="total${rowCount}" name="totalValue[]" value="0.00">
+                        </td>
+
+                        <td class="text-center">
+                            <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(${rowCount})">
+                                <i class="ti-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+
+                $('tbody').append(newRow);
+            }
+
+
             function addRow() {
+
                 rowCount++;
 
                 let newRow = `
@@ -509,10 +578,10 @@
             }
 
             $('#addRowBtn').on('click', function() {
-                addRow();
+                addEmptyRow();
             });
 
-            addRow();
+            addEmptyRow();
         });
 
         // Remove row function
@@ -524,9 +593,18 @@
         // Fetch price for selected item
         function fetchPrice(selectElement, rowNum) {
             const itemId = selectElement.value;
+            let branchId = $('#branch_id').val();
+
+            if (!branchId) {
+                toastr.error('Please select a branch first', 'Warning');
+
+                $('#branch_id').focus();
+                return;
+            }
+
             if (itemId) {
                 $.ajax({
-                    url: '{{ url('/') }}/account/inventory/get-item-price/' + itemId,
+                    url: '{{ url('/') }}/account/inventory/get-item-price/' + itemId + '/' + branchId,
                     type: 'GET',
                     success: function(response) {
                         if (response.success) {

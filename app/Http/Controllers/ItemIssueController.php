@@ -94,27 +94,21 @@ class ItemIssueController extends Controller
 
     public function saveItemIssueData(Request $request)
     {
-        // Debug: Log the request data
-        Log::info('=== saveItemIssueData CALLED ===');
-        Log::info('Request data: ' . json_encode($request->all()));
-
         // Debug: Check what categories exist
         $existingCategories = Category::pluck('id', 'name')->toArray();
-        Log::info('Existing categories: ' . json_encode($existingCategories));
 
         // Debug: Check what items exist
         $existingItems = InventoryItem::pluck('id', 'item_name')->toArray();
-        Log::info('Existing items: ' . json_encode($existingItems));
 
         $request->validate([
             'branch_id' => 'required',
             'issue_date' => 'required|date',
             'due_date' => 'required|date',
-            'student_id' => 'nullable|exists:students,id', // For students
+            'student_id' => 'nullable|exists:students,id',
             'intake_id' => 'nullable|exists:intakes,id',
             'course_id' => 'nullable|exists:courses,id',
-            'staff_id' => 'nullable|exists:users,id', // For staff
-            'items' => 'required|array|min:1', // Ensure at least one item is present
+            'staff_id' => 'nullable|exists:users,id', 
+            'items' => 'required|array|min:1',
             'items.*.item_id' => 'required|exists:inventory_items,id',
             'items.*.item_category_id' => 'required|exists:categories,id',
             'items.*.quantity' => 'required|integer|min:1',
@@ -125,8 +119,6 @@ class ItemIssueController extends Controller
 
         try {
             DB::beginTransaction();
-
-            Log::info('Processing ' . count($request->items) . ' items');
 
             // Create the main batch record
             $batch = new ItemIssueBatch();
@@ -152,8 +144,7 @@ class ItemIssueController extends Controller
             }
 
             $batch->save();
-            Log::info('Batch created with ID: ' . $batch->id);
-
+            
             // Update student_courses status if student, intake, and course are provided
             if ($request->student_id && $request->intake_id && $request->course_id) {
                 $studentCourse = StudentCourse::where('student_id', $request->student_id)
@@ -164,33 +155,26 @@ class ItemIssueController extends Controller
                 if ($studentCourse) {
                     $studentCourse->status = 'start';
                     $studentCourse->save();
-                    Log::info('StudentCourse status updated to "start" for student_id: ' . $request->student_id . ', intake_id: ' . $request->intake_id . ', course_id: ' . $request->course_id);
-                } else {
-                    Log::warning('StudentCourse record not found for student_id: ' . $request->student_id . ', intake_id: ' . $request->intake_id . ', course_id: ' . $request->course_id);
-                }
+                } 
+
             }
 
             $savedItems = [];
             foreach ($request->items as $index => $itemData) {
-                Log::info('Processing item ' . ($index + 1) . ': ' . json_encode($itemData));
 
-                // Validate that category_id and item_id exist and match
                 $category = Category::find($itemData['item_category_id']);
                 $item = InventoryItem::find($itemData['item_id']);
 
                 if (!$category) {
-                    Log::error('Category not found: ' . $itemData['item_category_id']);
                     throw new Exception('Category not found: ' . $itemData['item_category_id']);
                 }
 
                 if (!$item) {
-                    Log::error('Item not found: ' . $itemData['item_id']);
                     throw new Exception('Item not found: ' . $itemData['item_id']);
                 }
 
                 // Verify item belongs to the selected category
                 if ($item->item_category_id != $itemData['item_category_id']) {
-                    Log::error('Item does not belong to selected category. Item: ' . $item->id . ', Category: ' . $item->item_category_id . ', Selected Category: ' . $itemData['item_category_id']);
                     throw new Exception('Item does not belong to the selected category');
                 }
 
@@ -203,14 +187,14 @@ class ItemIssueController extends Controller
                 $batchItem->save();
 
                 $savedItems[] = $batchItem->id;
-                Log::info('Batch item saved with ID: ' . $batchItem->id);
 
-                // Track inventory changes for this item issue (decrease inventory)
-                $currentBalance = ItemInventory::getCurrentBalance($itemData['item_id']);
+                $currentBalance = ItemInventory::getCurrentBalance($itemData['item_id'], $request->branch_id);
+
                 $newBalance = $currentBalance - $itemData['quantity'];
 
                 ItemInventory::create([
                     'item_id' => $itemData['item_id'],
+                    'branch_id' => $request->branch_id,
                     'transaction_type' => 'issue',
                     'transaction_id' => $batch->id,
                     'quantity' => $itemData['quantity'],
@@ -220,15 +204,8 @@ class ItemIssueController extends Controller
                     'description' => $request->description ?? 'Item issued from batch',
                 ]);
             }
-
-            DB::commit();
-            Log::info('All items saved successfully. Batch ID: ' . $batch->id . ', Item IDs: ' . implode(', ', $savedItems));
-
             return redirect()->back()->with('success', 'Items issued successfully. Total items: ' . count($savedItems) . ', Batch ID: ' . $batch->id);
         } catch (Exception $e) {
-            DB::rollBack();
-            Log::error('Error saving item issue: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
             return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
         }
     }
@@ -341,12 +318,13 @@ class ItemIssueController extends Controller
                 $batchItems = ItemIssueItem::where('batch_id', $batch->id)->get();
 
                 foreach ($batchItems as $batchItem) {
-                    $currentBalance = ItemInventory::getCurrentBalance($batchItem->item_id);
+                    $currentBalance = ItemInventory::getCurrentBalance($batchItem->item_id, $batch->branch_id);
                     $newBalance = $currentBalance + $batchItem->quantity;
 
                     ItemInventory::create([
                         'item_id' => $batchItem->item_id,
                         'transaction_type' => 'issue_return',
+                        'branch_id' => $batch->branch_id,
                         'transaction_id' => $batch->id,
                         'quantity' => $batchItem->quantity,
                         'current_balance' => $newBalance,
@@ -363,12 +341,13 @@ class ItemIssueController extends Controller
                 $batchItems = ItemIssueItem::where('batch_id', $batch->id)->get();
 
                 foreach ($batchItems as $batchItem) {
-                    $currentBalance = ItemInventory::getCurrentBalance($batchItem->item_id);
+                    $currentBalance = ItemInventory::getCurrentBalance($batchItem->item_id, $batch->branch_id);
                     $newBalance = $currentBalance - $batchItem->quantity;
 
                     ItemInventory::create([
                         'item_id' => $batchItem->item_id,
                         'transaction_type' => 'issue',
+                        'branch_id' => $batch->branch_id,
                         'transaction_id' => $batch->id,
                         'quantity' => $batchItem->quantity,
                         'current_balance' => $newBalance,
