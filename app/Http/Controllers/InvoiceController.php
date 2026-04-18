@@ -607,12 +607,13 @@ class InvoiceController extends Controller
                 'invoice_id' => $invoice->id,
                 'amount' => $totalPaidNow,
                 'payment_method' => $request->payment_method,
-                'payment_type' => 'fee',
+                'payment_type' => $invoice->invoice_type,
                 'payment_file' => $paymentFile,
                 'receipt_number' => $receipt_number,
                 'create_user_id' => $payment_create_user_id, // Save the authenticated user's ID
                 'bank_payment_date' => $request->bank_payment_date,
                 'bank_payment_amount' => $request->bank_payment_amount,
+                'branch_id' => $invoice->branch_id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
