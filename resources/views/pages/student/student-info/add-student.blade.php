@@ -1447,7 +1447,7 @@
                         <div class="modal-body">
                             <label class="fw-bold">Enter Admission Number</label>
                             <input type="text" class="form-control" id="modalAdmissionNumber"
-                                placeholder="Admission Number">
+                                placeholder="Admission Number" value="stu-">
                             <small class="text-danger d-none" id="admissionError">
                                 Admission number not found
                             </small>
