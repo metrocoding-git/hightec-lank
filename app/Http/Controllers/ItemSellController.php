@@ -284,6 +284,21 @@ class ItemSellController extends Controller
             $itemSellItem = ItemSellItem::where('item_sell_batch_id', $id)->get();
             $itemSellBatch = ItemSellBatch::findOrFail($id);
             $returnDate = Carbon::today()->format('Y-m-d');
+            $fee_invoice = FeeInvoices::where('main_invoice_number', $itemSellBatch->invoice_number)->first();
+            $fee_invoice_payment = InvoicesPayments::where('invoice_id', $fee_invoice->id)->first();
+            InvoicesPayments::create([
+                'invoice_id' => $fee_invoice->id,
+                'amount' => -($fee_invoice_payment->amount),
+                'payment_method' => $fee_invoice_payment->payment_method,
+                'payment_type' => 'item_sell_return',
+                'receipt_number' => 'RET-' . time() . '-' . uniqid(),
+                'create_user_id' => Auth::id(),
+                'branch_id' => $fee_invoice_payment->branch_id,
+                'notes' => 'Return item sell',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
 
 
             foreach ($itemSellItem as $item) {

@@ -490,7 +490,7 @@
 
                         <td>
                             <input class="primary_input_field form-control" type="text"
-                                id="unit_price${rowCount}" name="unit_price[]" readonly>
+                                id="unit_price${rowCount}" name="unit_price[]">
                         </td>
 
                         <td>
@@ -542,7 +542,7 @@
                             <div class="primary_input">
                                 <input oninput="numberCheckWithDot(this)" class="primary_input_field form-control"
                                     type="text" step="0.1" id="unit_price${rowCount}" name="unit_price[]"
-                                    autocomplete="off" value="" readonly="readonly" onkeyup="getTotalByPrice(${rowCount})">
+                                    autocomplete="off" value="" onkeyup="getTotalByPrice(${rowCount})">
                             </div>
                         </td>
                         <td class="border-top-0 available_quantity">
