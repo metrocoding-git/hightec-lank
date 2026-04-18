@@ -155,7 +155,27 @@
             var table = $('#table_id').DataTable({
                 responsive: false,
                 dom: 'Blfrtip',
-                buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
+                buttons: [{
+                        extend: 'copy',
+                        title: getFileName()
+                    },
+                    {
+                        extend: 'csv',
+                        title: getFileName()
+                    },
+                    {
+                        extend: 'excel',
+                        title: getFileName()
+                    },
+                    {
+                        extend: 'pdf',
+                        title: getFileName()
+                    },
+                    {
+                        extend: 'print',
+                        title: getFileName()
+                    }
+                ],
                 paging: true,
                 searching: true,
                 ordering: true,
@@ -180,26 +200,41 @@
                 }
             });
 
+            function getFileName() {
+                let now = new Date();
+
+                let date = now.toISOString().slice(0, 10);
+                let time = now.toTimeString().slice(0, 8).replace(/:/g, '-'); // HH-MM-SS
+
+                return 'Course-Intake-Payments-Report_' + date + '__' + time;
+            }
+
             // ============ SUM FOOTER ============
             function updateFooter() {
-    var totalAmount = 0;
-    var paidAmount = 0;
+                var totalAmount = 0;
+                var paidAmount = 0;
 
-    $('#table_id tbody tr').each(function() {
-        var totalText = $(this).find('td:eq(11)').text().trim(); // column 12
-        var paidText  = $(this).find('td:eq(12)').text().trim(); // column 13
+                $('#table_id tbody tr').each(function() {
+                    var totalText = $(this).find('td:eq(11)').text().trim(); // column 12
+                    var paidText = $(this).find('td:eq(12)').text().trim(); // column 13
 
-        // remove commas
-        totalText = totalText.replace(/,/g, '');
-        paidText  = paidText.replace(/,/g, '');
+                    // remove commas
+                    totalText = totalText.replace(/,/g, '');
+                    paidText = paidText.replace(/,/g, '');
 
-        totalAmount += parseFloat(totalText) || 0;
-        paidAmount  += parseFloat(paidText) || 0;
-    });
+                    totalAmount += parseFloat(totalText) || 0;
+                    paidAmount += parseFloat(paidText) || 0;
+                });
 
-    $('#total_amount_footer').html(totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-    $('#paid_amount_footer').html(paidAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-}
+                $('#total_amount_footer').html(totalAmount.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }));
+                $('#paid_amount_footer').html(paidAmount.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }));
+            }
 
             // initial calculation
             updateFooter();

@@ -225,8 +225,26 @@
         $('#table_id').DataTable({
             responsive: true,
             dom: 'Blfrtip',
-            buttons: [
-                'copy', 'csv', 'excel', 'pdf', 'print'
+            buttons: [{
+                    extend: 'copy',
+                    title: getFileName()
+                },
+                {
+                    extend: 'csv',
+                    title: getFileName()
+                },
+                {
+                    extend: 'excel',
+                    title: getFileName()
+                },
+                {
+                    extend: 'pdf',
+                    title: getFileName()
+                },
+                {
+                    extend: 'print',
+                    title: getFileName()
+                }
             ],
             paging: true,
             searching: true,
@@ -254,5 +272,14 @@
             }
 
         });
+
+        function getFileName() {
+            let now = new Date();
+
+            let date = now.toISOString().slice(0, 10);
+            let time = now.toTimeString().slice(0, 8).replace(/:/g, '-'); // HH-MM-SS
+
+            return 'Students-Payment-Report_' + date + '__' + time;
+        }
     </script>
 @endpush

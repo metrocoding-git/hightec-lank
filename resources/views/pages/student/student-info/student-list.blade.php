@@ -283,6 +283,7 @@
             lengthChange: true,
             buttons: [{
                     extend: 'pdf',
+                    title: getFileName(),
                     text: '<i title="export to pdf" class="fa fa-file-pdf-o"></i>',
                     exportOptions: {
                         columns: ':visible'
@@ -290,6 +291,7 @@
                 },
                 {
                     extend: 'csv',
+                    title: getFileName(),
                     text: '<i title="export to csv" class="fa fa-file-text-o"></i>',
                     exportOptions: {
                         columns: ':visible'
@@ -297,6 +299,7 @@
                 },
                 {
                     extend: 'excel',
+                    title: getFileName(),
                     text: '<i title="export to excel" class="fa fa-file-excel-o"></i>',
                     exportOptions: {
                         columns: ':visible'
@@ -304,6 +307,7 @@
                 },
                 {
                     extend: 'print',
+                    title: getFileName(),
                     text: '<i title="print" class="fa fa-print"></i>',
                     exportOptions: {
                         columns: ':visible'
@@ -311,6 +315,7 @@
                 },
                 {
                     extend: 'colvis',
+                    title: getFileName(),
                     text: '<i title="column visibility" class="fa fa-eye"></i>',
                     columns: ':gt(0)'
                 }
@@ -449,6 +454,15 @@
         });
 
 
+        function getFileName() {
+            let now = new Date();
+
+            let date = now.toISOString().slice(0, 10);
+            let time = now.toTimeString().slice(0, 8).replace(/:/g, '-'); // HH-MM-SS
+
+            return 'Student_List_' + date + '__' + time;
+        }
+
         $('#statusUpdateModal').on('show.bs.modal', function(event) {
             var input = $('#student-id-form');
             var button = $(event.relatedTarget);
@@ -501,9 +515,9 @@
                                <td>
                                     ${row.signature_path 
                                         ? `<a href="/storage/${row.signature_path}" target="_blank">
-                                                                                        <img src="/storage/${row.signature_path}" 
-                                                                                            style="width:80px; border:1px solid #ccc; padding:2px; cursor:pointer;">
-                                                                                </a>`
+                                                                                                <img src="/storage/${row.signature_path}" 
+                                                                                                    style="width:80px; border:1px solid #ccc; padding:2px; cursor:pointer;">
+                                                                                        </a>`
                                         : '-'
                                     }
                                 </td>

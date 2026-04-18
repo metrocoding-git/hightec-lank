@@ -812,6 +812,7 @@
             lengthChange: true,
             buttons: [{
                     extend: 'pdf',
+                    title: getFileName(),
                     text: '<i title="export to pdf" class="fa fa-file-pdf-o"></i>',
                     exportOptions: {
                         columns: ':visible'
@@ -819,6 +820,7 @@
                 },
                 {
                     extend: 'csv',
+                    title: getFileName(),
                     text: '<i title="export to csv" class="fa fa-file-text-o"></i>',
                     exportOptions: {
                         columns: ':visible'
@@ -826,6 +828,7 @@
                 },
                 {
                     extend: 'excel',
+                    title: getFileName(),
                     text: '<i title="export to excel" class="fa fa-file-excel-o"></i>',
                     exportOptions: {
                         columns: ':visible'
@@ -833,6 +836,7 @@
                 },
                 {
                     extend: 'print',
+                    title: getFileName(),
                     text: '<i title="print" class="fa fa-print"></i>',
                     exportOptions: {
                         columns: ':visible'
@@ -840,6 +844,7 @@
                 },
                 {
                     extend: 'colvis',
+                    title: getFileName(),
                     text: '<i title="column visibility" class="fa fa-eye"></i>',
                     columns: ':gt(0)'
                 }
@@ -934,6 +939,15 @@
                 }
             ]
         });
+
+        function getFileName() {
+            let now = new Date();
+
+            let date = now.toISOString().slice(0, 10);
+            let time = now.toTimeString().slice(0, 8).replace(/:/g, '-'); // HH-MM-SS
+
+            return 'Fee-Invoice_' + date + '__' + time;
+        }
 
         // Handle return modal with row data from datatable action button
         $('#returnFeeModal').on('show.bs.modal', function(event) {

@@ -178,13 +178,40 @@
         $('#table_id').DataTable({
             responsive: true,
             dom: 'Bfrtip',
-            buttons: [
-                'copy', 'csv', 'excel', 'pdf', 'print'
+            buttons: [{
+                    extend: 'copy',
+                    title: getFileName()
+                },
+                {
+                    extend: 'csv',
+                    title: getFileName()
+                },
+                {
+                    extend: 'excel',
+                    title: getFileName()
+                },
+                {
+                    extend: 'pdf',
+                    title: getFileName()
+                },
+                {
+                    extend: 'print',
+                    title: getFileName()
+                }
             ],
             paging: true,
             searching: true,
             ordering: true,
             info: true,
         });
+
+        function getFileName() {
+            let now = new Date();
+
+            let date = now.toISOString().slice(0, 10);
+            let time = now.toTimeString().slice(0, 8).replace(/:/g, '-'); // HH-MM-SS
+
+            return 'Item-Sell-Report_' + date + '__' + time;
+        }
     </script>
 @endpush

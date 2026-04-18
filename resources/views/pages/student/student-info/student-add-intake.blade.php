@@ -577,10 +577,10 @@
             processing: true,
             serverSide: true,
             pageLength: 25,
-lengthMenu: [
-    [25, 50, 100, -1],
-    [25, 50, 100, "All"]
-],
+            lengthMenu: [
+                [25, 50, 100, -1],
+                [25, 50, 100, "All"]
+            ],
             ajax: {
                 url: "{{ route('student.add-intake-with-courses.data') }}",
                 data: function(d) {
@@ -658,26 +658,31 @@ lengthMenu: [
             ],
             buttons: [{
                     extend: 'copyHtml5',
+                    title: getFileName(),
                     text: '<i class="fa-regular fa-copy"></i>',
                     titleAttr: 'Copy'
                 },
                 {
                     extend: 'csvHtml5',
+                    title: getFileName(),
                     text: '<i class="fa-solid fa-file-csv"></i>',
                     titleAttr: 'CSV'
                 },
                 {
                     extend: 'excelHtml5',
+                    title: getFileName(),
                     text: '<i class="fa-solid fa-file-excel"></i>',
                     titleAttr: 'Excel'
                 },
                 {
                     extend: 'pdfHtml5',
+                    title: getFileName(),
                     text: '<i class="fa-solid fa-file-pdf"></i>',
                     titleAttr: 'PDF'
                 },
                 {
                     extend: 'print',
+                    title: getFileName(),
                     text: '<i class="fa-solid fa-print"></i>',
                     titleAttr: 'Print'
                 }
@@ -700,6 +705,15 @@ lengthMenu: [
                 }
             }
         });
+
+        function getFileName() {
+            let now = new Date();
+
+            let date = now.toISOString().slice(0, 10);
+            let time = now.toTimeString().slice(0, 8).replace(/:/g, '-'); // HH-MM-SS
+
+            return 'Student_Add_Intake' + date + '__' + time;
+        }
 
 
         $('#filterBtn').on('click', function(e) {

@@ -235,26 +235,31 @@
 
             buttons: [{
                     extend: 'copyHtml5',
+                    title: getFileName(),
                     text: '<i class="fa-regular fa-copy"></i>',
                     titleAttr: 'Copy'
                 },
                 {
                     extend: 'csvHtml5',
+                    title: getFileName(),
                     text: '<i class="fa-solid fa-file-csv"></i>',
                     titleAttr: 'CSV'
                 },
                 {
                     extend: 'excelHtml5',
+                    title: getFileName(),
                     text: '<i class="fa-solid fa-file-excel"></i>',
                     titleAttr: 'Excel'
                 },
                 {
                     extend: 'pdfHtml5',
+                    title: getFileName(),
                     text: '<i class="fa-solid fa-file-pdf"></i>',
                     titleAttr: 'PDF'
                 },
                 {
                     extend: 'print',
+                    title: getFileName(),
                     text: '<i class="fa-solid fa-print"></i>',
                     titleAttr: 'Print'
                 }
@@ -275,6 +280,15 @@
                 }
             }
         });
+
+        function getFileName() {
+            let now = new Date();
+
+            let date = now.toISOString().slice(0, 10);
+            let time = now.toTimeString().slice(0, 8).replace(/:/g, '-'); // HH-MM-SS
+
+            return 'Fee_Return_' + date + '__' + time;
+        }
     </script>
     <script>
         $(document).ready(function() {
