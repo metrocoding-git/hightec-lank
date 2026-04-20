@@ -548,4 +548,8 @@ Route::controller(ReportController::class)->prefix('reports')
         Route::get('students-paid', 'studentsPaid')->name(name: 'reports.students-paid');
         Route::get('course-dates-payments', 'studentsDatesPayments')->name(name: 'reports.course-dates-payments');
         Route::get('course-intake-payments', 'courseIntakePayments')->name('reports.course-intake-payments');
+        Route::get('students-intake-balance', 'studentsIntakeBalance')->name('reports.students-intake-balance');
+
+
+        Route::get('change-course', 'changeCourse')->name('reports.change-course');
     });

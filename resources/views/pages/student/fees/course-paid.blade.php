@@ -483,16 +483,16 @@
                             if (data.success) {
 
                                 console.log(data)
-                                if(isNVQMode){
+                                if (isNVQMode) {
 
-                                    if(data.nvq_amount){
+                                    if (data.nvq_amount) {
                                         coursePrice = parseFloat(data.nvq_amount);
                                     }
-                                }else{
+                                } else {
 
-                                    if(data.course_amount){
+                                    if (data.course_amount) {
 
-                                        coursePrice =  parseFloat(data.course_amount);
+                                        coursePrice = parseFloat(data.course_amount);
 
                                     }
                                 }
@@ -501,7 +501,9 @@
                                 addCourseRow(courseId, courseName, coursePrice);
                                 let historyTable = $('#paymentHistoryTable tbody');
                                 historyTable.empty();
-                                $('.allCourseDetails tr').removeClass('first-payment');
+                                $(`.allCourseDetails tr[data-id="${courseId}"]`)
+                                    .find('.intake_name_cell')
+                                    .text(intakeName);
 
                                 if (data.history.length > 0) {
                                     data.history.forEach(function(payment) {
@@ -573,40 +575,7 @@
 
 
 
-                    // $.ajax({
-                    //     url: '{{ route('fees.get-intakes-by-course', ['courseId' => ':courseId', 'studentId' => ':studentId']) }}'
-                    //         .replace(':courseId', courseId)
-                    //         .replace(':studentId', studentId),
 
-                    //     type: 'GET',
-                    //     success: function(data) {
-                    //         let intakeTableBody = $('#intakeTableBody');
-                    //         intakeTableBody.empty();
-
-                    //         if (data.success && data.intakes) {
-
-                    //             let intake = data.intakes; // object
-
-                    //             intakeTableBody.append(
-                    //                 `<tr><td>${intake.name}</td></tr>`
-                    //             );
-
-                    //             $('#intake_details_section').show();
-
-                    //             $('.allCourseDetails tr')
-                    //                 .find('.intake_name_cell')
-                    //                 .text(intake.name);
-
-                    //         } else {
-                    //             $('#intake_details_section').hide();
-                    //             $('.allCourseDetails tr').find('.intake_name_cell').text('N/A');
-                    //         }
-                    //     },
-                    //     error: function() {
-                    //         $('#intake_details_section').hide();
-                    //         $('.allCourseDetails tr').find('.intake_name_cell').text('N/A');
-                    //     }
-                    // });
                 } else {
                     $('#intake_details_section').hide();
                     $('.allCourseDetails tr').find('.intake_name_cell').text('N/A');
@@ -624,7 +593,7 @@
                 let row = `<tr data-id="${id}">
                     <td class="sl">1</td>
                     <td class="course_name">${name}</td>
-                    <td class="intake_name_cell">N/A</td> <!-- Placeholder for Intake Name -->
+                    <td class="intake_name_cell">N/A</td>
                     <td class="course_price_cell">
                         <div class="input-group input-group-sm" style="max-width: 120px;">
                             <input type="number"

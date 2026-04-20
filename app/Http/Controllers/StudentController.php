@@ -650,6 +650,8 @@ class StudentController extends Controller
         $students = Student::with('verifications')->get();
         $branches = Branch::all();
         $intakes = Intake::with('branch')->get();
+        $studentCategories = StudentCategory::all();
+
         $studentIntakes = DB::table('student_intakes')
             ->join('students', 'student_intakes.student_id', '=', 'students.id')
             ->join('intakes', 'student_intakes.intake_id', '=', 'intakes.id')
@@ -665,7 +667,7 @@ class StudentController extends Controller
             ->orderBy('student_intakes.id', 'desc')
             ->get();
 
-        return view('pages.student.student-info.student-add-intake', compact('students', 'branches', 'intakes', 'studentIntakes'));
+        return view('pages.student.student-info.student-add-intake', compact('students', 'branches', 'intakes','studentCategories', 'studentIntakes'));
     }
 
     public function storeStudentIntake(Request $request)
@@ -766,12 +768,14 @@ class StudentController extends Controller
         $branches = Branch::all();
         $intakes = Intake::with('branch')->get();
         $courses = Course::all();
+        $studentCategories = StudentCategory::all();
 
         return view('pages.student.student-info.student-add-intake', compact(
             'students',
             'branches',
             'intakes',
             'courses',
+            'studentCategories'
         ));
     }
 
@@ -783,7 +787,8 @@ class StudentController extends Controller
             'course',
             'branch',
             'student.studentCategory',
-            'change_course'
+            'change_course',
+            'studentCategory',
         ]);
 
 
@@ -832,7 +837,7 @@ class StudentController extends Controller
                     ? '<span class="text-success">YES</span>' : 'NO';
             })
 
-            ->addColumn('category', fn($row) => $row->student->studentCategory->category_name ?? '-')
+            ->addColumn('category', fn($row) => $row->studentCategory->category_name ?? $row->student->studentCategory->category_name ?? '-')
 
             ->addColumn('admission_no', fn($row) => $row->student->admission_number)
 
@@ -961,7 +966,8 @@ class StudentController extends Controller
             'intake_id' => 'required|exists:intakes,id',
             'course_ids' => 'required|array',
             'course_ids.*' => 'exists:courses,id',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
+            'student_category_id' => 'required|exists:student_categories,id',
         ]);
 
         // Check if student is already enrolled in this intake
@@ -989,6 +995,7 @@ class StudentController extends Controller
                     'status' => 'pending',
                     'notes' => $validatedData['notes'],
                     'user_id' => Auth::id(),
+                    'student_category_id' => $validatedData['student_category_id'],
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);
@@ -1455,6 +1462,7 @@ class StudentController extends Controller
             }
 
             $studentCourse->change_course_id = $request->course_id;
+            $studentCourse->updated_by = Auth::id();
             $studentCourse->save();
 
             return response()->json([

@@ -113,7 +113,7 @@
                                             <td>{{ $key + 1 }}</td>
                                             <td>{{ $data->main_invoice_number }}</td>
                                             <td>{{ $data->admission_number }}</td>
-                                            <td>{{ $data->student_category_name }}</td>
+                                            <td>{{ $data->course_category_name ?? $data->student_category_name ?? '-' }}</td>
                                             <td>{{ $data->branch_name }}</td>
                                             <td>{{ $data->course_name }}</td>
                                             <td>{{ $data->intake_name }}</td>
@@ -208,6 +208,9 @@
 
                 return 'Course-Intake-Payments-Report_' + date + '__' + time;
             }
+            table.on('length.dt page.dt search.dt order.dt draw.dt', function() {
+                updateFooter();
+            });
 
             // ============ SUM FOOTER ============
             function updateFooter() {
@@ -236,7 +239,7 @@
                 }));
             }
 
-            // initial calculation
+          
             updateFooter();
 
             // recalc on search, paging, ordering

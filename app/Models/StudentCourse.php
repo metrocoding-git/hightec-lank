@@ -18,7 +18,9 @@ class StudentCourse extends Model
         'status',
         'notes',
         'user_id',
-        'change_course_id'
+        'change_course_id',
+        'updated_by',
+        'student_category_id'
     ];
 
 
@@ -50,5 +52,10 @@ class StudentCourse extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function studentCategory(): BelongsTo
+    {
+        return $this->belongsTo(StudentCategory::class, 'student_category_id');
     }
 }

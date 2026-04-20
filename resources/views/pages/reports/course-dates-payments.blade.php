@@ -31,14 +31,14 @@
                 <form method="GET" action="" class="mb-20">
                     <div class="row">
                         {{-- Date Range --}}
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label>Date Range</label>
                             <input type="text" id="date_range" name="date_range" class="form-control"
                                 value="{{ $defaultFrom }} to {{ $defaultTo }}">
                         </div>
 
                         {{-- Branch --}}
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label>Branch</label>
                             <select name="branch_id" class="form-control">
                                 <option value="">All Branches</option>
@@ -104,7 +104,7 @@
                                             <td>{{ $key + 1 }}</td>
                                             <td>{{ $data->main_invoice_number }}</td>
                                             <td>{{ $data->admission_number }}</td>
-                                            <td>{{ $data->student_category_name }}</td>
+                                            <td>{{ $data->course_category_name ?? ($data->student_category_name ?? '-') }}</td>
                                             <td>{{ $data->branch_name }}</td>
                                             <td>{{ $data->course_name }}</td>
                                             <td>{{ $data->intake_name }}</td>

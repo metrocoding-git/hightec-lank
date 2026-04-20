@@ -133,3 +133,8 @@ ALTER TABLE `invoices_payments` ADD `invoice_payment_cheque_number` VARCHAR(255)
 
 -- 04/19
 ALTER TABLE `item_inventory` ADD `branch_id` INT NULL DEFAULT NULL AFTER `item_id`;
+
+
+ALTER TABLE `student_courses` ADD `updated_by` INT NULL DEFAULT NULL AFTER `change_course_id`;
+
+ALTER TABLE `student_courses` ADD `student_category_id` INT NULL DEFAULT NULL AFTER `notes`;

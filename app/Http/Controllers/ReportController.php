@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
+use App\Models\Intake;
 use App\Models\PaidCourse;
 use App\Models\InvoicesPayments;
 use App\Models\ItemIssueItem;
@@ -158,14 +159,9 @@ class ReportController extends Controller
             }
         }
 
-        $subQuery = DB::table('student_courses')
-            ->select(DB::raw('MIN(id) as id'))
-            ->groupBy('student_id', 'course_id');
+
 
         $query = DB::table('student_courses')
-            ->joinSub($subQuery, 'sc_min', function ($join) {
-                $join->on('student_courses.id', '=', 'sc_min.id');
-            })
 
             ->join('intakes', 'student_courses.intake_id', '=', 'intakes.id')
             ->join('courses', 'student_courses.course_id', '=', 'courses.id')
@@ -181,6 +177,8 @@ class ReportController extends Controller
             ->join('branches', 'fee_invoices.branch_id', '=', 'branches.id')
             ->join('students', 'student_courses.student_id', '=', 'students.id')
             ->join('student_categories', 'students.student_category_id', '=', 'student_categories.id')
+            ->leftJoin('student_categories as course_categories', 'student_courses.student_category_id', '=', 'course_categories.id')
+
             // ->where(function ($q) use ($from, $to) {
 
             //     // Condition 1: Intake starts within range
@@ -195,15 +193,14 @@ class ReportController extends Controller
             ->where(function ($q) use ($from, $to) {
                 $q->where(function ($q1) use ($from, $to) {
                     $q1->whereBetween('intakes.start_date', [$from, $to])
-                       ->where('fee_invoices.payment_status', 'full');
+                        ->where('fee_invoices.payment_status', 'full');
                 })
-            
-                ->orWhere(function ($q2) use ($from, $to) {
-                    $q2->whereBetween('fee_invoices.updated_at', [$from, $to])
-                       ->where('fee_invoices.payment_status', 'full')
-                       ->where('intakes.start_date', '<', $from); 
-                });
-            
+
+                    ->orWhere(function ($q2) use ($from, $to) {
+                        $q2->whereBetween('fee_invoices.updated_at', [$from, $to])
+                            ->where('fee_invoices.payment_status', 'full')
+                            ->where('intakes.start_date', '<', $from);
+                    });
             })
             ->whereIn('student_courses.status', ['start', 'Complete'])
             ->where('fee_invoices.invoice_type', 'course');
@@ -228,7 +225,9 @@ class ReportController extends Controller
                 'fee_invoices.paid_amount',
                 'fee_invoices.payment_method',
                 'fee_invoices.create_date as invoice_create_date',
-                'fee_invoices.updated_at as invoice_paid_date'
+                'fee_invoices.updated_at as invoice_paid_date',
+                'course_categories.category_name as course_category_name'
+
             )
             ->distinct('fee_invoices.id')
             ->get();
@@ -259,15 +258,9 @@ class ReportController extends Controller
             }
         }
 
-        $subQuery = DB::table('student_courses')
-            ->select(DB::raw('MIN(id) as id'))
-            ->groupBy('student_id', 'course_id');
+
 
         $query = DB::table('student_courses')
-            ->joinSub($subQuery, 'sc_min', function ($join) {
-                $join->on('student_courses.id', '=', 'sc_min.id');
-            })
-
             ->join('intakes', 'student_courses.intake_id', '=', 'intakes.id')
             ->join('courses', 'student_courses.course_id', '=', 'courses.id')
             ->join('paid_courses', function ($join) {
@@ -275,7 +268,7 @@ class ReportController extends Controller
             })
             ->join('fee_invoices', function ($join) use ($request) {
                 $join->on('paid_courses.invoice_id', '=', 'fee_invoices.id')
-                    ->whereColumn('fee_invoices.student_id', 'student_courses.student_id');
+                    ->on('fee_invoices.student_id', 'student_courses.student_id');
 
                 if ($request->payment_status) {
                     $join->where('fee_invoices.payment_status', $request->payment_status);
@@ -286,6 +279,7 @@ class ReportController extends Controller
             ->join('branches', 'fee_invoices.branch_id', '=', 'branches.id')
             ->join('students', 'student_courses.student_id', '=', 'students.id')
             ->join('student_categories', 'students.student_category_id', '=', 'student_categories.id')
+            ->leftJoin('student_categories as course_categories', 'student_courses.student_category_id', '=', 'course_categories.id')
             ->whereBetween('intakes.start_date', [$from, $to])
             ->whereIn('student_courses.status', ['start', 'Complete'])
             ->where('fee_invoices.invoice_type', 'course');
@@ -310,11 +304,165 @@ class ReportController extends Controller
                 'fee_invoices.paid_amount',
                 'fee_invoices.payment_method',
                 'fee_invoices.create_date as invoice_create_date',
-                'fee_invoices.updated_at as invoice_paid_date'
+                'fee_invoices.updated_at as invoice_paid_date',
+                'course_categories.category_name as course_category_name'
             )
             ->distinct('fee_invoices.id')
             ->get();
 
         return view('pages.reports.course-intake-payments', compact('reportData', 'branches'));
+    }
+
+    public function studentsIntakeBalance(Request $request)
+    {
+        $branches = Branch::all();
+        $intakes = Intake::orderBy('start_date', 'DESC')->get();
+
+        // Default date range
+        $to = now()->format('Y-m-d');
+        $from = now()->subDays(30)->format('Y-m-d');
+
+        if ($request->date_range) {
+            if (strpos($request->date_range, ' to ') !== false) {
+                $dates = explode(' to ', $request->date_range);
+                $from = $dates[0] ?? null;
+                $to = $dates[1] ?? null;
+            } else {
+                $from = $request->date_range;
+                $to = $request->date_range;
+            }
+        }
+
+        $paymentSub = DB::table('invoices_payments')
+            ->select(
+                'invoice_id',
+                DB::raw('SUM(amount) as paid_amount')
+            )
+            ->whereDate('created_at', '<=', $to)
+            ->groupBy('invoice_id');
+
+        // $query = DB::table('student_courses')
+        //     ->join('intakes', 'student_courses.intake_id', '=', 'intakes.id')
+        //     ->join('courses', 'student_courses.course_id', '=', 'courses.id')
+        //     ->join('students', 'student_courses.student_id', '=', 'students.id')
+
+        //     ->join('fee_invoices', function ($join) {
+        //         $join->on('students.id', '=', 'fee_invoices.student_id')
+        //             ->where('fee_invoices.payment_status', '!=', 'returned')
+        //             ->where('fee_invoices.invoice_type', 'course');
+        //     })
+
+        //     ->join('paid_courses', function ($join) {
+        //         $join->on('fee_invoices.id', '=', 'paid_courses.invoice_id')
+        //             ->on('paid_courses.course_id', '=', 'student_courses.course_id');
+        //     })
+
+        //     ->join('branches', 'fee_invoices.branch_id', '=', 'branches.id')
+
+        //     ->whereIn('student_courses.status', ['start', 'Complete'])
+        //     ->whereBetween('intakes.start_date', [$from, $to]);
+
+
+        $query = DB::table('student_courses')
+            ->join('intakes', 'student_courses.intake_id', '=', 'intakes.id')
+            ->join('courses', 'student_courses.course_id', '=', 'courses.id')
+            ->join('students', 'student_courses.student_id', '=', 'students.id')
+
+            ->join('fee_invoices', function ($join) {
+                $join->on('students.id', '=', 'fee_invoices.student_id')
+                    ->where('fee_invoices.payment_status', '!=', 'returned');
+            })
+
+            ->join('paid_courses', function ($join) {
+                $join->on('fee_invoices.id', '=', 'paid_courses.invoice_id')
+                    ->on('paid_courses.course_id', '=', 'student_courses.course_id');
+            })
+
+            ->leftJoinSub($paymentSub, 'payments', function ($join) {
+                $join->on('fee_invoices.id', '=', 'payments.invoice_id');
+            })
+
+            ->join('branches', 'fee_invoices.branch_id', '=', 'branches.id')
+
+            ->whereIn('student_courses.status', ['start', 'Complete'])
+            ->whereDate('intakes.start_date', '<=', $to)
+            // ->whereBetween('intakes.start_date', [$from, $to])
+            ->where('fee_invoices.invoice_type', 'course');
+
+        if ($request->intake_id) {
+            $query->where('intakes.id', $request->intake_id);
+        }
+
+        if ($request->branch_id) {
+            $query->where('branches.id', $request->branch_id);
+        }
+
+
+        $reportData = $query
+            ->select(
+                'courses.name as course_name',
+                'intakes.name as intake_name',
+
+                DB::raw('SUM(fee_invoices.total_amount) as total_amount'),
+
+                DB::raw('SUM(COALESCE(payments.paid_amount,0)) as paid_amount'),
+
+                DB::raw('
+            SUM(fee_invoices.total_amount) 
+            - SUM(COALESCE(payments.paid_amount,0)) 
+            as balance_amount
+        ')
+            )
+            ->groupBy('courses.id', 'courses.name', 'intakes.name')
+            ->orderBy('courses.name')
+            ->get();
+
+        // $reportData = $query
+        //     ->select(
+        //         'courses.name as course_name',
+        //         'intakes.name as intake_name',
+
+        //         DB::raw('COUNT(DISTINCT fee_invoices.id) as invoice_count'),
+
+        //         DB::raw('SUM(fee_invoices.total_amount) as total_amount'),
+
+        //         DB::raw('SUM(fee_invoices.paid_amount) as paid_amount'),
+
+        //         DB::raw('SUM(fee_invoices.total_amount - fee_invoices.paid_amount) as balance_amount')
+        //     )
+        //     ->groupBy('courses.id', 'courses.name', 'intakes.name')
+        //     ->orderBy('courses.name')
+        //     ->get();
+
+        return view('pages.reports.students-intake-balance', compact('reportData', 'branches', 'intakes'));
+    }
+
+
+    public function changeCourse(Request $request)
+    {
+        $data = DB::table('student_courses as sc')
+            ->join('students', 'sc.student_id', '=', 'students.id')
+            ->join('courses as old_course', 'sc.course_id', '=', 'old_course.id')
+            ->join('courses as new_course', 'sc.change_course_id', '=', 'new_course.id')
+            ->join('intakes', 'sc.intake_id', '=', 'intakes.id')
+            ->leftJoin('users', 'sc.updated_by', '=', 'users.id')
+            ->leftJoin('branches', 'sc.branch_id', '=', 'branches.id')
+
+            ->whereNotNull('sc.change_course_id')
+
+            ->select(
+                'students.admission_number',
+                'students.student_name as student_name',
+                'old_course.name as old_course_name',
+                'new_course.name as new_course_name',
+                'intakes.name as intake_name',
+                'branches.name as branch_name',
+                'sc.updated_at as changed_date',
+                'users.name as changed_by'
+            )
+            ->orderBy('sc.updated_at', 'desc')
+            ->get();
+
+        return view('pages.reports.change-course', compact('data'));
     }
 }

@@ -697,6 +697,20 @@
                             Course Intake Payments
                         </a>
                     </li>
+
+                    <li>
+                        <a href="/reports/students-intake-balance"
+                            class="{{ request()->is('reports/students-intake-balance') ? 'active a' : '' }}">
+                            Students Intake Balance
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="/reports/change-course"
+                            class="{{ request()->is('reports/change-course') ? 'active a' : '' }}">
+                            Change Course
+                        </a>
+                    </li>
                     {{-- @endif --}}
                 </ul>
             </li>
