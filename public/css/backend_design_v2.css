@@ -432,6 +432,10 @@ h5.notification_time {
   border-bottom: 1px solid var(--border_color) !important;
 }
 
+#table_id {
+    min-height: 300px;
+}
+
 .QA_section .QA_table .table thead th {
   color: var(--base-color);
   font-weight: 400 !important;
