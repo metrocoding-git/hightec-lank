@@ -47,8 +47,7 @@
                                         <label class="primary_input_label" for="payment_status">@lang('finance.payment_status')</label>
                                         <select class="primary_select form-control" name="payment_status"
                                             id="status-select">
-                                            <option value="">Select Status</option>
-                                            <option value="not_open">Not Open</option>
+                                            <option value="not_open" selected>Not Open</option>
                                             <option value="pending">Pending</option>
                                             <option value="completed">Completed</option>
                                         </select>

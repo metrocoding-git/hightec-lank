@@ -138,3 +138,34 @@ ALTER TABLE `item_inventory` ADD `branch_id` INT NULL DEFAULT NULL AFTER `item_i
 ALTER TABLE `student_courses` ADD `updated_by` INT NULL DEFAULT NULL AFTER `change_course_id`;
 
 ALTER TABLE `student_courses` ADD `student_category_id` INT NULL DEFAULT NULL AFTER `notes`;
+
+
+
+-- 05/05
+CREATE TABLE invoice_payment_receipts (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    receipt_number VARCHAR(100) NOT NULL UNIQUE,
+    cheque_number VARCHAR(100) NULL,
+
+    total_amount DECIMAL(12,2) NOT NULL,
+    note TEXT NULL,
+
+    created_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE invoice_payment_receipt_items (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    receipt_id BIGINT UNSIGNED NOT NULL,
+    invoice_payment_id BIGINT UNSIGNED NOT NULL,
+
+    paid_amount DECIMAL(12,2) NOT NULL,
+
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (receipt_id) REFERENCES invoice_payment_receipts(id) ON DELETE CASCADE,
+    FOREIGN KEY (invoice_payment_id) REFERENCES invoices_payments(id) ON DELETE CASCADE
+);

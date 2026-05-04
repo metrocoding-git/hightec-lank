@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
+use App\Models\InvoicePaymentReceipt;
+use App\Models\InvoicePaymentReceiptItem;
 use App\Models\InvoicesPayments;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\DataTables;
 
 
@@ -208,20 +211,72 @@ class InvoicePaymentController extends Controller
     }
     public function bulkPending(Request $request)
     {
-        $ids = $request->payment_ids;
-        foreach ($ids as $id) {
-            $payment = InvoicesPayments::find($id);
-            if (!$payment) continue;
-            $payment->invoice_payment_confirm = true;
-            $payment->invoice_payment_cheque_number = $request->cheque_number;
-            $payment->invoice_payment_amount = $request->amount;
-            $payment->invoice_payment_confirm_note = $request->note;
-            $payment->update_user_id = Auth::id();
-            $payment->save();
+        DB::beginTransaction();
+
+        try {
+            $ids = $request->payment_ids;
+            $remainingAmount = (float) $request->amount;
+
+            $receipt = InvoicePaymentReceipt::create([
+                'receipt_number' => 'RCPT-' . date('YmdHis'),
+                'cheque_number'  => $request->cheque_number,
+                'total_amount'   => $request->amount,
+                'note'           => $request->note,
+                'created_by'     => Auth::id(),
+            ]);
+
+            $payments = InvoicesPayments::whereIn('id', $ids)
+                ->orderBy('id', 'asc')
+                ->get();
+
+            foreach ($payments as $payment) {
+
+                if ($remainingAmount <= 0) break;
+
+                $alreadyPaid = (float) $payment->invoice_payment_amount;
+                $totalAmount = (float) $payment->amount;
+
+                $balance = $totalAmount - $alreadyPaid;
+
+                if ($balance <= 0) continue;
+
+                $paidNow = min($remainingAmount, $balance);
+
+                $payment->invoice_payment_amount = $alreadyPaid + $paidNow;
+
+                if (($alreadyPaid + $paidNow) >= $totalAmount) {
+                    $payment->invoice_payment_confirm = true;
+                }
+
+                $payment->invoice_payment_cheque_number = $request->cheque_number;
+                $payment->invoice_payment_confirm_note = $request->note;
+                $payment->update_user_id = Auth::id();
+                $payment->save();
+
+                InvoicePaymentReceiptItem::create([
+                    'receipt_id' => $receipt->id,
+                    'invoice_payment_id' => $payment->id,
+                    'paid_amount' => $paidNow,
+                ]);
+
+                // 🔹 Reduce remaining
+                $remainingAmount -= $paidNow;
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Payments processed successfully.',
+                'receipt_id' => $receipt->id
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'message' => 'Error processing payments',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-
-        return response()->json(['message' => 'Selected payments confirmed successfully.']);
     }
 
     public function printInvoice($invoice_number)

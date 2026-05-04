@@ -128,6 +128,8 @@
                                                 <th>Bank Payment Date</th>
                                                 <th>Note</th>
                                                 <th>Create User</th>
+                                                <th>Invoice Payment Status</th>
+                                                <th>Invoice Payment Amount</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -190,6 +192,18 @@
                                                             {{ $feeInvoice->notes ?? '-' }}</td>
                                                         <td class="{{ $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
                                                             {{ $feeInvoice->invoice && $feeInvoice->invoice->createUser ? $feeInvoice->invoice->createUser->name : 'N/A' }}
+                                                        </td>
+
+                                                        <td>
+                                                            {{ $feeInvoice->payment_method == 'Invoice'
+                                                                ? ($feeInvoice->invoice_payment_confirm
+                                                                    ? 'Completed'
+                                                                    : ($feeInvoice->payment_invoice_number != null
+                                                                        ? 'Pending'
+                                                                        : 'Not Open'))
+                                                                : '-' }}
+                                                        </td>
+                                                        <td>{{ $feeInvoice->payment_method == 'Invoice' ? $feeInvoice->invoice_payment_amount : '-' }}
                                                         </td>
 
                                                     </tr>
