@@ -17,4 +17,6 @@ class InvoicesPayments extends Model
     {
         return $this->belongsTo(Branch::class);
     }
+
+
 }

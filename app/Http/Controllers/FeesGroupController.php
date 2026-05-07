@@ -173,11 +173,14 @@ class FeesGroupController extends Controller
                 } while (FeeInvoices::where('main_invoice_number', $main_invoice_number)->exists());
                 $create_user_id = Auth::id();
 
+                $student = Student::find($request->student_id);
+
                 // Create a FeeInvoices record
                 $fee_invoice = FeeInvoices::create([
                     'branch_id' => $request->branch_id,
                     'invoice_type' => $paymentType,
                     'student_id' => $request->student_id,
+                    'student_category_id' => $student->student_category_id,
                     'create_date' => Carbon::createFromFormat('m/d/Y', $request->create_date)->format('Y-m-d'),
                     'due_date' => Carbon::createFromFormat('m/d/Y', $request->due_date)->format('Y-m-d'),
                     'payment_status' => $request->payment_status,

@@ -169,3 +169,6 @@ CREATE TABLE invoice_payment_receipt_items (
     FOREIGN KEY (receipt_id) REFERENCES invoice_payment_receipts(id) ON DELETE CASCADE,
     FOREIGN KEY (invoice_payment_id) REFERENCES invoices_payments(id) ON DELETE CASCADE
 );
+
+
+ALTER TABLE `fee_invoices` ADD `student_category_id` INT NULL DEFAULT NULL ;

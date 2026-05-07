@@ -27,7 +27,8 @@ class FeeInvoices extends Model
         'main_invoice_number',
         'create_user_id',
         'notes',
-      
+        'student_category_id'
+
     ];
 
     protected $casts = [
@@ -47,7 +48,7 @@ class FeeInvoices extends Model
 
     public function student()
     {
-        return $this->belongsTo(Student::class,'student_id','id');
+        return $this->belongsTo(Student::class, 'student_id', 'id');
     }
     // Fee_invoices.php
     public function invoice_item()
@@ -68,5 +69,10 @@ class FeeInvoices extends Model
     public function createUser()
     {
         return $this->belongsTo(User::class, 'create_user_id');
+    }
+
+    public function studentCategory()
+    {
+        return $this->belongsTo(StudentCategory::class);
     }
 }

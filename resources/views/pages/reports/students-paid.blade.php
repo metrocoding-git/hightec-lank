@@ -143,7 +143,8 @@
                                                             {{ $feeInvoice->invoice ? $feeInvoice->invoice->student->admission_number : 'N/A' }}
                                                         </td>
                                                         <td class="{{ $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
-                                                            {{ $feeInvoice->invoice ? $feeInvoice->invoice->student->studentCategory?->category_name : 'N/A' }}
+                                                            {{ $feeInvoice->invoice?->studentCategory?->category_name ??
+                                                                ($feeInvoice->invoice?->student?->studentCategory?->category_name ?? 'N/A') }}
                                                         </td>
                                                         <td class="{{ $feeInvoice->amount < 0 ? 'text-danger' : '' }}">
                                                             {{ $feeInvoice->branch ? $feeInvoice->branch->name : 'N/A' }}

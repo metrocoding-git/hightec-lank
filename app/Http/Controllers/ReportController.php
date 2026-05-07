@@ -85,6 +85,7 @@ class ReportController extends Controller
             'invoice.paidCourses',
             'invoice.paidCourses.course',
             'branch',
+            'invoice.studentCategory'
         ]);
 
         // ----- DATE RANGE FILTER -----

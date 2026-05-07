@@ -47,7 +47,13 @@ class InvoiceController extends Controller
     {
         $query = DB::table('fee_invoices')
             ->leftJoin('students', 'students.id', '=', 'fee_invoices.student_id')
-            ->leftJoin('student_categories', 'student_categories.id', '=', 'students.student_category_id')
+            ->leftJoin('student_categories', function ($join) {
+                $join->on(
+                    'student_categories.id',
+                    '=',
+                    DB::raw('COALESCE(fee_invoices.student_category_id, students.student_category_id)')
+                );
+            })
             ->leftJoin('branches', 'branches.id', '=', 'fee_invoices.branch_id')
             ->leftJoin('invoice_items', 'invoice_items.invoice_id', '=', 'fee_invoices.id')
             ->leftJoin('fee_types', 'fee_types.id', '=', 'invoice_items.fee_type_id')
@@ -63,7 +69,7 @@ class InvoiceController extends Controller
                 'courses.name as course_name',
             ])
             ->where('fee_invoices.payment_status', '!=', 'returned');
-
+        // Debug: Check the raw query results before processing with DataTables
         return DataTables::of($query)
             ->addIndexColumn()
 
@@ -88,6 +94,8 @@ class InvoiceController extends Controller
                 fn($row) =>
                 \Carbon\Carbon::parse($row->due_date)->format('m/d/Y')
             )
+
+
 
             ->filter(function ($query) {
                 $keyword = request('search.value');
