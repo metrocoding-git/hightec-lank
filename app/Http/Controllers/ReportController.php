@@ -116,11 +116,14 @@ class ReportController extends Controller
         // ----- PAYMENT TYPE FILTER -----
         if ($request->payment_type) {
 
-            if ($request->payment_type == 'course_fee') {
-                $query->whereIn('payment_type', ['course', 'fee']);
-            } else {
-                $query->where('payment_type', $request->payment_type);
-            }
+            $query->whereHas('invoice', function ($q) use ($request) {
+
+                if ($request->payment_type == 'course_fee') {
+                    $q->whereIn('invoice_type', ['course', 'fee']);
+                } else {
+                    $q->where('invoice_type', $request->payment_type);
+                }
+            });
         }
 
         // Results
