@@ -83,6 +83,7 @@ class FeesGroupController extends Controller
                             SELECT 1
                             FROM fee_invoices fi
                             WHERE fi.student_id = students.id
+                            AND fi.payment_status = 'full'
                         )
                     THEN 1
                     ELSE 0
