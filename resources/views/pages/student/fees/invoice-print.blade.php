@@ -148,7 +148,7 @@
                     <td><strong>Invoice No.</strong></td>
                 </tr>
                 <tr>
-                    <td>{{ \Carbon\Carbon::parse($payment->created_at)->format('d/m/Y') }}</td>
+                    <td>{{ $payment->payment_invoice_open_date ? \Carbon\Carbon::parse($payment->payment_invoice_open_date)->format('d/m/Y') : '-' }}</td>
                     <td>{{ $invoice_number }}</td>
                 </tr>
             </table>

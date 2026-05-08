@@ -78,12 +78,13 @@ class InvoicePaymentController extends Controller
                 } else {
                     $status = 'not_open';
                 }
-                return '<input type="checkbox" class="payment-checkbox" value="' . $row->id . '" data-status="' . $status . '">';
+                return '<input type="checkbox" class="payment-checkbox" value="' . $row->id . '" data-status="' . $status . '"   data-student="' . ($row->invoice->student_id ?? '') . '">';
             })
             ->addColumn('invoice_no', function ($row) {
-                return $row->invoice->single_invoice
-                    ? $row->invoice->main_invoice_number
-                    : 'INV-' . $row->invoice_id;
+                return $row->invoice->main_invoice_number ?? '-';
+            })
+            ->addColumn('invoice_item_no', function ($row) {
+                return $row->receipt_number ?? '-';
             })
             ->addColumn('customer_name', function ($row) {
                 return $row->customer_name ?? '-';
@@ -200,6 +201,8 @@ class InvoicePaymentController extends Controller
             if (!$payment) continue;
 
             $payment->payment_invoice_number = $newInvoiceNumber;
+            $payment->payment_invoice_open_date = now();
+
 
             $payment->customer_name = $request->customer_name;
             $payment->invoice_payment_note = $request->note;

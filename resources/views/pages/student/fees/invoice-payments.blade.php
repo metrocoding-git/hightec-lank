@@ -94,14 +94,15 @@
                                     <tr>
                                         <th>#</th>
                                         <th>Invoice Number</th>
+                                        <th>Invoice Item Number</th>
                                         <th>Invoice Receipt No</th>
+                                        <th>amount</th>
                                         <th>Customer Name</th>
                                         <th>Branch</th>
                                         <th>Student Name</th>
                                         <th>Student Category</th>
                                         <th>Admission Number</th>
                                         <th>Fee Name</th>
-                                        <th>amount</th>
                                         <th>Cheque Number</th>
                                         <th>Comfirm Amount</th>
                                         <th>Confirm Note</th>
@@ -112,6 +113,15 @@
 
                                     </tr>
                                 </thead>
+
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="4" style="text-align:right">Total:</th>
+                                        <th id="total_amount_footer"></th>
+                                        <th colspan="12"></th>
+
+                                    </tr>
+                                </tfoot>
                             </table>
                         </x-table>
                     </div>
@@ -210,7 +220,9 @@
             $('.payment-checkbox').prop('checked', this.checked);
         });
         $('#invoice_table').DataTable({
-            responsive: true,
+            responsive: false,
+            scrollX: true,
+            autoWidth: false,
             processing: true,
             searching: true,
             serverSide: true,
@@ -237,7 +249,13 @@
                     data: 'invoice_no'
                 },
                 {
+                    data: 'invoice_item_no'
+                },
+                {
                     data: 'invoice_receipt_no'
+                },
+                {
+                    data: 'amount'
                 },
                 {
                     data: 'customer_name'
@@ -256,9 +274,6 @@
                 },
                 {
                     data: 'fee_name'
-                },
-                {
-                    data: 'amount'
                 },
                 {
                     data: 'confirm_cheque_number'
@@ -284,10 +299,41 @@
                     searchable: false
                 }
 
-            ]
+            ],
+
         });
 
         let table = $('#invoice_table').DataTable();
+
+
+        // ============ SUM FOOTER ============
+        function updateFooter() {
+            var totalAmount = 0;
+            var paidAmount = 0;
+
+            $('#invoice_table tbody tr').each(function() {
+                var totalText = $(this).find('td:eq(4)').text().trim();
+
+                // remove commas
+                totalText = totalText.replace(/,/g, '');
+
+                totalAmount += parseFloat(totalText) || 0;
+            });
+
+            $('#total_amount_footer').html(totalAmount.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }));
+
+        }
+
+        // initial calculation
+        updateFooter();
+
+        // recalc on search, paging, ordering
+        table.on('search.dt page.dt order.dt', function() {
+            updateFooter();
+        });
 
         $('#invoice_table_filter input')
             .off()
@@ -305,6 +351,7 @@
         })
 
         let currentStatus = null;
+        let currentStudent = null;
 
         $('#bulk-action-btn').on('click', function() {
             let selected = $('.payment-checkbox:checked');
@@ -337,17 +384,26 @@
 
         $(document).on('change', '.payment-checkbox', function() {
             let status = $(this).data('status');
+            let student = $(this).data('student');
             if (this.checked) {
                 if (currentStatus && status !== currentStatus) {
                     showToast('You can only select payments with the same status!', 'warning');
                     this.checked = false;
                     return;
                 }
+
+                if (currentStudent && student != currentStudent) {
+                    showToast('You can only select the same student for Not Open payments!', 'warning');
+                    this.checked = false;
+                    return;
+                }
                 currentStatus = status;
+                currentStudent = student;
             } else {
                 // If unchecked, check if any remain
                 if ($('.payment-checkbox:checked').length === 0) {
                     currentStatus = null;
+                    currentStudent = null;
                 }
             }
         });

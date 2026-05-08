@@ -172,3 +172,6 @@ CREATE TABLE invoice_payment_receipt_items (
 
 
 ALTER TABLE `fee_invoices` ADD `student_category_id` INT NULL DEFAULT NULL ;
+
+
+ALTER TABLE `invoices_payments` ADD `payment_invoice_open_date` TIMESTAMP NULL DEFAULT NULL AFTER `invoice_payment_confirm_note`;
