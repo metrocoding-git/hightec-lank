@@ -57,19 +57,19 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
 
     // Student Information Management (handled by HomeController)
     // Route::middleware(['permission'])->group(function () {
-        Route::get('student/student-info/student-list', [StudentController::class, 'studentList'])->name('student-list');
-        Route::get('/student/student-info/student-list-datatable', [StudentController::class, 'studentDatatable'])->name('student-list.datatable');
-        Route::get('student/student-info/verification-history/{id}', [StudentController::class, 'verificationHistory'])->name('student-list.verification-history');
-        Route::put('student/update-status', [StudentController::class, 'updateStudetStatus'])->name('student.update-status');
-        Route::get('student/student-info/student-view/{id}', [StudentController::class, 'studentView'])->name('student-details');
-        Route::get('student/student-info/disabled-student', [StudentController::class, 'disabledStudents'])->name('disabled-students');
-        Route::get('student/student-info/student-attendance', [StudentController::class, 'studentAttendance'])->name('student-attendance');
-        Route::get('student/student-info/student-attendance-import', [StudentController::class, 'studentAttendanceImport'])->name('student-attendance-import');
-        Route::post('student/student-info/student-attendance-import', [StudentController::class, 'studentAttendanceImportStore'])->name('student-attendance-import.store');
-        Route::get('student/student-info/student-attendance-import/download/{id}', [StudentController::class, 'studentAttendanceImportDownload'])->name('student-attendance-import.download');
-        Route::get('student/student-info/student-export', [StudentController::class, 'studentExport'])->name('student-export');
-        Route::match(['get', 'post'], 'student/student-info/diabled-filter', [StudentController::class, 'filter_disabled_StudentList'])->name('frontend.disabled-student.search');
-        Route::match(['get', 'post'], 'student/student-info/filtert', [StudentController::class, 'filterStudentList'])->name('frontend.student.search');
+    Route::get('student/student-info/student-list', [StudentController::class, 'studentList'])->name('student-list');
+    Route::get('/student/student-info/student-list-datatable', [StudentController::class, 'studentDatatable'])->name('student-list.datatable');
+    Route::get('student/student-info/verification-history/{id}', [StudentController::class, 'verificationHistory'])->name('student-list.verification-history');
+    Route::put('student/update-status', [StudentController::class, 'updateStudetStatus'])->name('student.update-status');
+    Route::get('student/student-info/student-view/{id}', [StudentController::class, 'studentView'])->name('student-details');
+    Route::get('student/student-info/disabled-student', [StudentController::class, 'disabledStudents'])->name('disabled-students');
+    Route::get('student/student-info/student-attendance', [StudentController::class, 'studentAttendance'])->name('student-attendance');
+    Route::get('student/student-info/student-attendance-import', [StudentController::class, 'studentAttendanceImport'])->name('student-attendance-import');
+    Route::post('student/student-info/student-attendance-import', [StudentController::class, 'studentAttendanceImportStore'])->name('student-attendance-import.store');
+    Route::get('student/student-info/student-attendance-import/download/{id}', [StudentController::class, 'studentAttendanceImportDownload'])->name('student-attendance-import.download');
+    Route::get('student/student-info/student-export', [StudentController::class, 'studentExport'])->name('student-export');
+    Route::match(['get', 'post'], 'student/student-info/diabled-filter', [StudentController::class, 'filter_disabled_StudentList'])->name('frontend.disabled-student.search');
+    Route::match(['get', 'post'], 'student/student-info/filtert', [StudentController::class, 'filterStudentList'])->name('frontend.student.search');
     // });
 
     // Dependent Dropdown AJAX Routes (Student Info, Fees, etc.)
@@ -97,11 +97,11 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
 
     // Fees & Returns
     // Route::middleware(['permission'])->group(function () {
-        Route::get('student/fees/fee-invoice', [InvoiceController::class, 'feeInvoice'])->name('fees.fee-invoice');
-        Route::get('student/fees/fee-invoice-datatable', [InvoiceController::class, 'invoiceDatatable'])->name('fee.invoice.datatable')->withoutMiddleware(['csrf', 'permission']);
-        Route::get('student/fees/fee-invoice-setting', [InvoiceController::class, 'feeInvoiceSetting'])->name('fee-invoice-setting');
-        Route::get('student/fees/fee-return', [ReturnFeeController::class, 'feeReturn'])->name('fee-return');
-        Route::post('student/fees/fee-return/search', [ReturnFeeController::class, 'feeReturn'])->name('fees.fee-return.search');
+    Route::get('student/fees/fee-invoice', [InvoiceController::class, 'feeInvoice'])->name('fees.fee-invoice');
+    Route::get('student/fees/fee-invoice-datatable', [InvoiceController::class, 'invoiceDatatable'])->name('fee.invoice.datatable')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('student/fees/fee-invoice-setting', [InvoiceController::class, 'feeInvoiceSetting'])->name('fee-invoice-setting');
+    Route::get('student/fees/fee-return', [ReturnFeeController::class, 'feeReturn'])->name('fee-return');
+    Route::post('student/fees/fee-return/search', [ReturnFeeController::class, 'feeReturn'])->name('fees.fee-return.search');
     // });
 });
 
@@ -320,7 +320,12 @@ Route::controller(HomeController::class)->group(callback: function () {
 Route::prefix('/student/fees/fee-invoice/invoice-payments')->group(function () {
     Route::get('/', [InvoicePaymentController::class, 'index'])->name('invoice-payments.index');
     Route::post('/search', [InvoicePaymentController::class, 'search'])->name('invoice-payments.search');
-    Route::get('/datatable', [InvoicePaymentController::class, 'datatable'])->name('invoice-payments.datatable');
+    Route::get('/not-start-datatable', [InvoicePaymentController::class, 'notStartDatatable'])->name('invoice-payments.not-start-datatable');
+    Route::get('/pending', [InvoicePaymentController::class, 'pendingIndex'])
+        ->name('invoice-payments.pending');
+    Route::get('/pending-datatable', [InvoicePaymentController::class, 'pendingDatatable'])
+        ->name('invoice-payments.pending-datatable');
+
     Route::post('/bulk-not-open', [InvoicePaymentController::class, 'bulkNotOpen'])->name('invoice-payments.bulk-not-open');
     Route::post('/bulk-pending', [InvoicePaymentController::class, 'bulkPending'])->name('invoice-payments.bulk-pending');
     Route::get('/print/{invoice_number}', [InvoicePaymentController::class, 'printInvoice'])->name('invoice-payments.print');

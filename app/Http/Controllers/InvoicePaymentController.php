@@ -21,10 +21,176 @@ class InvoicePaymentController extends Controller
         return view('pages.student.fees.invoice-payments', compact('branches'));
     }
 
-    public function datatable(Request $request)
+    public function pendingIndex()
     {
-        // Base query: only payments where payment_method = 'Invoice'
-        $query = InvoicesPayments::with(['invoice.student', 'invoice.branch', 'branch', 'invoice.paidCourses', 'invoice.student.studentCategory'])
+        $branches = Branch::all();
+        return view('pages.student.fees.invoice-payments-pending', compact('branches'));
+    }
+
+
+
+    // public function datatable(Request $request)
+    // {
+    //     // Base query: only payments where payment_method = 'Invoice'
+    //     $query = InvoicesPayments::with(['invoice.student', 'invoice.branch', 'branch', 'invoice.paidCourses', 'invoice.student.studentCategory'])
+    //         ->where('payment_method', 'Invoice')
+    //         ->where('payment_type', '!=', 'refund')
+    //         ->where(function ($q) {
+    //             $q->where('payment_status', '!=', 'refunded')
+    //                 ->orWhereNull('payment_status');
+    //         })
+    //         ->whereHas('invoice', function ($q) {
+    //             $q->where('payment_status', '!=', 'returned');
+    //         });
+    //     // Optional filters
+    //     if ($request->branch_id) {
+    //         $query->where('branch_id', $request->branch_id);
+    //     }
+
+    //     if ($request->payment_status) {
+    //         if ($request->payment_status == 'not_open') {
+    //             $query->where('payment_invoice_number', null);
+    //         } elseif ($request->payment_status == 'pending') {
+    //             $query->where('payment_invoice_number', '!=', null)->where('invoice_payment_confirm', null);
+    //         } elseif ($request->payment_status == 'completed') {
+    //             $query->where('invoice_payment_confirm', true);
+    //         }
+    //     }
+
+    //     if ($request->has('search') && $request->search['value'] != '') {
+    //         $search = $request->search['value'];
+
+    //         $query->where(function ($q) use ($search) {
+    //             $q->where('customer_name', 'like', "%{$search}%")
+    //                 ->orWhere('payment_invoice_number', 'like', "%{$search}%")
+    //                 ->orWhereHas('invoice.student', function ($q2) use ($search) {
+    //                     $q2->where('student_name', 'like', "%{$search}%")
+    //                         ->orWhere('admission_number', 'like', "%{$search}%");
+    //                 })
+    //                 ->orWhereHas('invoice.branch', function ($q3) use ($search) {
+    //                     $q3->where('name', 'like', "%{$search}%");
+    //                 })
+    //                 ->orWhereHas('invoice.student.studentCategory', function ($q4) use ($search) {
+    //                     $q4->where('category_name', 'like', "%{$search}%");
+    //                 });
+    //         });
+    //     }
+
+
+    //     return DataTables::of($query)
+    //         ->addColumn('select', function ($row) {
+    //             if ($row->invoice_payment_confirm) {
+    //                 $status = 'completed';
+    //             } elseif ($row->payment_invoice_number != null) {
+    //                 $status = 'pending';
+    //             } else {
+    //                 $status = 'not_open';
+    //             }
+    //             return '<input type="checkbox" class="payment-checkbox" value="' . $row->id . '" data-status="' . $status . '"   data-student="' . ($row->invoice->student_id ?? '') . '">';
+    //         })
+    //         ->addColumn('invoice_no', function ($row) {
+    //             return $row->invoice->main_invoice_number ?? '-';
+    //         })
+    //         ->addColumn('invoice_item_no', function ($row) {
+    //             return $row->receipt_number ?? '-';
+    //         })
+    //         ->addColumn('customer_name', function ($row) {
+    //             return $row->customer_name ?? '-';
+    //         })
+    //         ->addColumn('invoice_receipt_no', function ($row) {
+    //             return $row->payment_invoice_number ?? '-';
+    //         })
+    //         ->addColumn('branch', function ($row) {
+    //             return $row->invoice->branch->name ?? '-';
+    //         })
+    //         ->addColumn('student_name', function ($row) {
+    //             return $row->invoice->student->student_name ?? '-';
+    //         })
+    //         ->addColumn('student_category', function ($row) {
+    //             return $row->invoice->student->studentCategory->category_name ?? '-';
+    //         })
+
+    //         ->addColumn('admission_number', function ($row) {
+    //             return $row->invoice->student->admission_number ?? '-';
+    //         })
+    //         ->addColumn('amount', function ($row) {
+    //             return number_format($row->amount, 2);
+    //         })
+
+    //         ->addColumn('confirm_cheque_number', function ($row) {
+    //             return $row->invoice_payment_cheque_number ?? '-';
+    //         })
+    //         ->addColumn('confirm_payment_amount', function ($row) {
+    //             return $row->invoice_payment_amount ? number_format($row->invoice_payment_amount, 2) : '-';
+    //         })
+    //         ->addColumn('confirm_note', function ($row) {
+    //             return $row->invoice_payment_confirm_note ?? '-';
+    //         })
+    //         ->addColumn('status', function ($row) {
+    //             if ($row->invoice_payment_confirm) {
+    //                 return 'Completed';
+    //             } elseif ($row->payment_invoice_number != null) {
+    //                 return 'Pending';
+    //             } else {
+    //                 return 'Not Open';
+    //             }
+    //         })
+    //         ->addColumn('fee_name', function ($row) {
+    //             return $row->payment_method;
+    //         })
+    //         ->editColumn('fee_name', function ($row) {
+    //             if ($row->invoice->invoice_type === 'fee') {
+    //                 return optional($row->invoice->invoice_item->first()?->fee_type)->name ?? '-';
+    //             }
+    //             if ($row->invoice->invoice_type === 'course') {
+    //                 return optional(optional($row->invoice->paidCourses)->course)->name ?? '-';
+    //             }
+    //             if ($row->invoice->invoice_type === 'nvq') {
+    //                 return  'NCQ - ' . (optional(optional($row->invoice->paidCourses)->course)->name) ?? '-';
+    //             }
+    //             if ($row->invoice->invoice_type === 'item_sell') {
+    //                 return  'Item Sell';
+    //             }
+    //             return '-';
+    //         })
+
+
+    //         ->addColumn('date', function ($row) {
+    //             return $row->created_at ? $row->created_at->format('Y-m-d') : '-';
+    //         })
+    //         ->addColumn('note', function ($row) {
+    //             return $row->invoice_payment_note ?? '-';
+    //         })
+    //         ->addColumn('action', function ($row) {
+
+    //             if ($row->payment_invoice_number) {
+    //                 return '<a href="' . route('invoice-payments.print', $row->payment_invoice_number) . '" 
+    //                 target="_blank" 
+    //                 class="primary-btn small btn-primary text-white">
+    //                 Reprint
+    //             </a>';
+    //             }
+
+    //             return '-';
+    //         })
+    //         ->rawColumns(['action', 'select'])
+    //         ->make(true);
+    // }
+
+
+
+    public function notStartDatatable(Request $request)
+    {
+        // =========================
+        // BASE QUERY
+        // =========================
+        $query = InvoicesPayments::with([
+            'invoice.student',
+            'invoice.branch',
+            'invoice.paidCourses.course',
+            'invoice.student.studentCategory',
+            'invoice.invoice_item.fee_type'
+        ])
             ->where('payment_method', 'Invoice')
             ->where('payment_type', '!=', 'refund')
             ->where(function ($q) {
@@ -34,25 +200,42 @@ class InvoicePaymentController extends Controller
             ->whereHas('invoice', function ($q) {
                 $q->where('payment_status', '!=', 'returned');
             });
-        // Optional filters
+
+        // =========================
+        // BRANCH FILTER
+        // =========================
         if ($request->branch_id) {
             $query->where('branch_id', $request->branch_id);
         }
 
+        // =========================
+        // PAYMENT STATUS FILTER (FIXED)
+        // =========================
         if ($request->payment_status) {
+
             if ($request->payment_status == 'not_open') {
-                $query->where('payment_invoice_number', null);
+
+                // ✅ FIX: use whereNull (not '=')
+                $query->whereNull('payment_invoice_number');
             } elseif ($request->payment_status == 'pending') {
-                $query->where('payment_invoice_number', '!=', null)->where('invoice_payment_confirm', null);
+
+                $query->whereNotNull('payment_invoice_number')
+                    ->whereNull('invoice_payment_confirm');
             } elseif ($request->payment_status == 'completed') {
+
                 $query->where('invoice_payment_confirm', true);
             }
         }
 
+        // =========================
+        // SEARCH
+        // =========================
         if ($request->has('search') && $request->search['value'] != '') {
+
             $search = $request->search['value'];
 
             $query->where(function ($q) use ($search) {
+
                 $q->where('customer_name', 'like', "%{$search}%")
                     ->orWhere('payment_invoice_number', 'like', "%{$search}%")
                     ->orWhereHas('invoice.student', function ($q2) use ($search) {
@@ -68,9 +251,14 @@ class InvoicePaymentController extends Controller
             });
         }
 
-
+        // =========================
+        // DATATABLE RESPONSE
+        // =========================
         return DataTables::of($query)
+
+            // CHECKBOX + STATUS
             ->addColumn('select', function ($row) {
+
                 if ($row->invoice_payment_confirm) {
                     $status = 'completed';
                 } elseif ($row->payment_invoice_number != null) {
@@ -78,81 +266,121 @@ class InvoicePaymentController extends Controller
                 } else {
                     $status = 'not_open';
                 }
-                return '<input type="checkbox" class="payment-checkbox" value="' . $row->id . '" data-status="' . $status . '"   data-student="' . ($row->invoice->student_id ?? '') . '">';
+
+                return '<input type="checkbox"
+                class="payment-checkbox"
+                value="' . $row->id . '"
+                data-status="' . $status . '"
+                data-student="' . ($row->invoice->student_id ?? '') . '">';
             })
+
+            // INVOICE NO
             ->addColumn('invoice_no', function ($row) {
                 return $row->invoice->main_invoice_number ?? '-';
             })
+
+            // RECEIPT NO
             ->addColumn('invoice_item_no', function ($row) {
                 return $row->receipt_number ?? '-';
             })
+
+            // CUSTOMER
             ->addColumn('customer_name', function ($row) {
                 return $row->customer_name ?? '-';
             })
+
+            // PAYMENT NO
             ->addColumn('invoice_receipt_no', function ($row) {
                 return $row->payment_invoice_number ?? '-';
             })
+
+            // BRANCH
             ->addColumn('branch', function ($row) {
                 return $row->invoice->branch->name ?? '-';
             })
+
+            // STUDENT
             ->addColumn('student_name', function ($row) {
                 return $row->invoice->student->student_name ?? '-';
             })
+
+            // CATEGORY
             ->addColumn('student_category', function ($row) {
                 return $row->invoice->student->studentCategory->category_name ?? '-';
             })
 
+            // ADMISSION
             ->addColumn('admission_number', function ($row) {
                 return $row->invoice->student->admission_number ?? '-';
             })
+
+            // AMOUNT
             ->addColumn('amount', function ($row) {
-                return number_format($row->amount, 2);
+                return number_format($row->amount ?? 0, 2);
             })
 
+            // CHEQUE
             ->addColumn('confirm_cheque_number', function ($row) {
                 return $row->invoice_payment_cheque_number ?? '-';
             })
+
+            // CONFIRM AMOUNT
             ->addColumn('confirm_payment_amount', function ($row) {
-                return $row->invoice_payment_amount ? number_format($row->invoice_payment_amount, 2) : '-';
+                return number_format($row->invoice_payment_amount ?? 0, 2);
             })
+
+            // NOTE
             ->addColumn('confirm_note', function ($row) {
                 return $row->invoice_payment_confirm_note ?? '-';
             })
+
+            // STATUS (FIXED LOGIC)
             ->addColumn('status', function ($row) {
-                if ($row->invoice_payment_confirm) {
-                    return 'Completed';
-                } elseif ($row->payment_invoice_number != null) {
-                    return 'Pending';
-                } else {
+
+                if (!$row->payment_invoice_number) {
                     return 'Not Open';
                 }
+
+                if ($row->invoice_payment_confirm) {
+                    return 'Completed';
+                }
+
+                return 'Pending';
             })
-            ->addColumn('fee_name', function ($row) {
-                return $row->payment_method;
-            })
+
+            // FEE NAME
             ->editColumn('fee_name', function ($row) {
+
                 if ($row->invoice->invoice_type === 'fee') {
                     return optional($row->invoice->invoice_item->first()?->fee_type)->name ?? '-';
                 }
+
                 if ($row->invoice->invoice_type === 'course') {
-                    return optional(optional($row->invoice->paidCourses)->course)->name ?? '-';
+                    return optional($row->invoice->paidCourses->first()?->course)->name ?? '-';
                 }
+
                 if ($row->invoice->invoice_type === 'nvq') {
-                    return  'NCQ - ' . (optional(optional($row->invoice->paidCourses)->course)->name) ?? '-';
+                    return 'NVQ - ' . (optional($row->invoice->paidCourses->first()?->course)->name ?? '-');
                 }
+
                 if ($row->invoice->invoice_type === 'item_sell') {
-                    return  'Item Sell';
+                    return 'Item Sell';
                 }
+
                 return '-';
             })
 
-
+            // DATE
             ->addColumn('date', function ($row) {
                 return $row->created_at ? $row->created_at->format('Y-m-d') : '-';
             })
+
+            // NOTE
             ->addColumn('note', function ($row) {
                 return $row->invoice_payment_note ?? '-';
             })
+
+            // ACTION
             ->addColumn('action', function ($row) {
 
                 if ($row->payment_invoice_number) {
@@ -165,10 +393,119 @@ class InvoicePaymentController extends Controller
 
                 return '-';
             })
+
             ->rawColumns(['action', 'select'])
             ->make(true);
     }
 
+    public function pendingDatatable(Request $request)
+    {
+        $query = InvoicesPayments::query()
+            ->where('payment_method', 'Invoice')
+            ->whereNotNull('payment_invoice_number')
+            ->selectRaw("
+            payment_invoice_number,
+            MIN(id) as id,
+            MAX(created_at) as created_at,
+
+            SUM(amount) as total_amount,
+            SUM(invoice_payment_amount) as total_confirm_amount,
+
+            COUNT(*) as total_count,
+            SUM(CASE WHEN invoice_payment_confirm = 1 THEN 1 ELSE 0 END) as confirmed_count,
+            SUM(CASE WHEN invoice_payment_confirm IS NULL THEN 1 ELSE 0 END) as pending_count
+        ")
+            ->groupBy('payment_invoice_number');
+
+        // Branch filter
+        if ($request->branch_id) {
+            $query->where('branch_id', $request->branch_id);
+        }
+
+        return DataTables::of($query)
+
+            // checkbox
+            ->addColumn('select', function ($row) {
+
+                $status = $row->pending_count > 0 ? 'pending' : 'completed';
+
+                return '<input type="checkbox"
+                class="payment-checkbox"
+                value="' . $row->payment_invoice_number . '"
+                data-status="' . $status . '">';
+            })
+
+            // invoice number
+            ->addColumn('invoice_no', function ($row) {
+                $payment = InvoicesPayments::with('invoice')
+                    ->where('payment_invoice_number', $row->payment_invoice_number)
+                    ->first();
+
+                return $payment?->invoice?->main_invoice_number ?? '-';
+            })
+
+            // customer
+            ->addColumn('customer_name', function ($row) {
+                return InvoicesPayments::where('payment_invoice_number', $row->payment_invoice_number)
+                    ->value('customer_name') ?? '-';
+            })
+
+            // branch
+            ->addColumn('branch', function ($row) {
+                $payment = InvoicesPayments::with('invoice.branch')
+                    ->where('payment_invoice_number', $row->payment_invoice_number)
+                    ->first();
+
+                return $payment?->invoice?->branch?->name ?? '-';
+            })
+
+            // student
+            ->addColumn('student_name', function ($row) {
+                $payment = InvoicesPayments::with('invoice.student')
+                    ->where('payment_invoice_number', $row->payment_invoice_number)
+                    ->first();
+
+                return $payment?->invoice?->student?->student_name ?? '-';
+            })
+
+            // total amount
+            ->addColumn('amount', function ($row) {
+                return number_format($row->total_amount, 2);
+            })
+
+            // confirm amount
+            ->addColumn('confirm_amount', function ($row) {
+                return number_format($row->total_confirm_amount, 2);
+            })
+
+            // status
+            ->addColumn('status', function ($row) {
+
+                if ($row->pending_count > 0) {
+                    return 'Pending';
+                }
+
+                return 'Completed';
+            })
+
+            // date
+            ->addColumn('date', function ($row) {
+                return $row->created_at ? date('Y-m-d', strtotime($row->created_at)) : '-';
+            })
+
+            // action
+            ->addColumn('action', function ($row) {
+
+                return '<a href="' . route('invoice-payments.print', $row->payment_invoice_number) . '"
+                target="_blank"
+                class="btn btn-primary btn-sm">
+                Print
+            </a>';
+            })
+
+            ->rawColumns(['select', 'action'])
+            ->make(true);
+    }
 
     function getBranchCode($branchName)
     {
@@ -218,53 +555,61 @@ class InvoicePaymentController extends Controller
 
         try {
             $ids = $request->payment_ids;
+
             $remainingAmount = (float) $request->amount;
 
-            $receipt = InvoicePaymentReceipt::create([
-                'receipt_number' => 'RCPT-' . date('YmdHis'),
-                'cheque_number'  => $request->cheque_number,
-                'total_amount'   => $request->amount,
-                'note'           => $request->note,
-                'created_by'     => Auth::id(),
-            ]);
 
-            $payments = InvoicesPayments::whereIn('id', $ids)
+
+            $payments = InvoicesPayments::whereIn('payment_invoice_number', $ids)
                 ->orderBy('id', 'asc')
                 ->get();
 
-            foreach ($payments as $payment) {
-
-                if ($remainingAmount <= 0) break;
-
-                $alreadyPaid = (float) $payment->invoice_payment_amount;
-                $totalAmount = (float) $payment->amount;
-
-                $balance = $totalAmount - $alreadyPaid;
-
-                if ($balance <= 0) continue;
-
-                $paidNow = min($remainingAmount, $balance);
-
-                $payment->invoice_payment_amount = $alreadyPaid + $paidNow;
-
-                if (($alreadyPaid + $paidNow) >= $totalAmount) {
-                    $payment->invoice_payment_confirm = true;
-                }
-
-                $payment->invoice_payment_cheque_number = $request->cheque_number;
-                $payment->invoice_payment_confirm_note = $request->note;
-                $payment->update_user_id = Auth::id();
-                $payment->save();
-
-                InvoicePaymentReceiptItem::create([
-                    'receipt_id' => $receipt->id,
-                    'invoice_payment_id' => $payment->id,
-                    'paid_amount' => $paidNow,
+            if (!$payments->isEmpty()) {
+                $receipt = InvoicePaymentReceipt::create([
+                    'receipt_number' => 'RCPT-' . date('YmdHis'),
+                    'cheque_number'  => $request->cheque_number,
+                    'total_amount'   => $request->amount,
+                    'note'           => $request->note,
+                    'created_by'     => Auth::id(),
                 ]);
 
-                // 🔹 Reduce remaining
-                $remainingAmount -= $paidNow;
+
+                foreach ($payments as $payment) {
+
+                    if ($remainingAmount <= 0) break;
+
+                    $alreadyPaid = (float) $payment->invoice_payment_amount;
+                    $totalAmount = (float) $payment->amount;
+
+                    $balance = $totalAmount - $alreadyPaid;
+
+                    if ($balance <= 0) continue;
+
+                    $paidNow = min($remainingAmount, $balance);
+
+                    $payment->invoice_payment_amount = $alreadyPaid + $paidNow;
+
+                    if (($alreadyPaid + $paidNow) >= $totalAmount) {
+                        $payment->invoice_payment_confirm = true;
+                    }
+
+                    $payment->invoice_payment_cheque_number = $request->cheque_number;
+                    $payment->invoice_payment_confirm_note = $request->note;
+                    $payment->update_user_id = Auth::id();
+                    $payment->save();
+
+                    InvoicePaymentReceiptItem::create([
+                        'receipt_id' => $receipt->id,
+                        'invoice_payment_id' => $payment->id,
+                        'paid_amount' => $paidNow,
+                    ]);
+
+                    // 🔹 Reduce remaining
+                    $remainingAmount -= $paidNow;
+                }
             }
+
+
 
             DB::commit();
 

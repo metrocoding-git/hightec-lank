@@ -376,26 +376,7 @@
                             <!-- Student Selection -->
 
 
-                            <div class="col-lg-12">
-                                <div class="primary_input">
-                                    <label class="primary_input_label" for="modal_student_category_id">
-                                        Select Student Category <span class="text-danger">*</span>
-                                    </label>
-                                    <select
-                                        class="primary_select form-control{{ $errors->has('student_category_id') ? ' is-invalid' : '' }}"
-                                        name="student_category_id" id="modal_student_category_id" required>
-                                        <option value="">Select Student Category</option>
-                                        @foreach ($studentCategories as $category)
-                                            <option value="{{ $category->id }}">
-                                                {{ $category->category_name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('student_id')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
+                            
                             <div class="col-lg-6 mt-4">
                                 <div class="primary_input">
                                     <label class="primary_input_label" for="modal_student_id">

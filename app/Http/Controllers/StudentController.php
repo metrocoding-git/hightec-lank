@@ -967,7 +967,6 @@ class StudentController extends Controller
             'course_ids' => 'required|array',
             'course_ids.*' => 'exists:courses,id',
             'notes' => 'nullable|string',
-            'student_category_id' => 'required|exists:student_categories,id',
         ]);
 
         // Check if student is already enrolled in this intake
@@ -984,6 +983,7 @@ class StudentController extends Controller
         // Start transaction
         DB::beginTransaction();
 
+        $student = Student::find($validatedData['student_id']);
         try {
             // Insert course enrollments
             foreach ($validatedData['course_ids'] as $courseId) {
@@ -995,7 +995,7 @@ class StudentController extends Controller
                     'status' => 'pending',
                     'notes' => $validatedData['notes'],
                     'user_id' => Auth::id(),
-                    'student_category_id' => $validatedData['student_category_id'],
+                    'student_category_id' => $student->student_category_id,
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);

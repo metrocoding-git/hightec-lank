@@ -29,7 +29,7 @@
                             @csrf
                             <div class="row">
                                 {{-- Branch Filter --}}
-                                <div class="col-lg-6 mb-15">
+                                <div class="col-lg-12 mb-15">
                                     <div class="primary_input">
                                         <label class="primary_input_label" for="branch_id">@lang('common.branch')</label>
                                         <select class="primary_select form-control" name="branch_id" id="branch-select">
@@ -42,7 +42,7 @@
                                 </div>
 
                                 {{-- Payment Status Filter --}}
-                                <div class="col-lg-6 mb-15">
+                                {{-- <div class="col-lg-6 mb-15">
                                     <div class="primary_input">
                                         <label class="primary_input_label" for="payment_status">@lang('finance.payment_status')</label>
                                         <select class="primary_select form-control" name="payment_status"
@@ -52,7 +52,7 @@
                                             <option value="completed">Completed</option>
                                         </select>
                                     </div>
-                                </div>
+                                </div> --}}
 
                                 <div class="col-lg-12 mt-1 text-right">
                                     <button type="button" class="primary-btn small fix-gr-bg" id="submit-search">
@@ -77,9 +77,6 @@
                     <div class="white-box">
                         <div class="col-lg-4 col-md-6 text-left text-sm-right mb-4 offset-lg-8 offset-md-6">
                             <button id="bulk-action-btn" class="primary-btn small">Bulk Update</button>
-                            <button id="bulk-back-btn" class="primary-btn small btn-warning">
-                                Bulk Back
-                            </button>
                         </div>
 
                         <div class="main-title mb-3">
@@ -227,7 +224,7 @@
             searching: true,
             serverSide: true,
             ajax: {
-                url: "{{ route('invoice-payments.datatable') }}",
+                url: "{{ route('invoice-payments.not-start-datatable') }}",
                 data: function(d) {
                     d.branch_id = $('#branch-select').val();
                     d.payment_status = $('#status-select').val();
@@ -261,19 +258,23 @@
                     data: 'customer_name'
                 },
                 {
-                    data: 'branch'
+                    data: 'branch',
+                    searchable: false
                 },
                 {
                     data: 'student_name'
                 },
                 {
-                    data: 'student_category'
+                    data: 'student_category',
+                    searchable: false
                 },
                 {
                     data: 'admission_number'
                 },
                 {
-                    data: 'fee_name'
+                    data: 'fee_name',
+                    searchable: false,
+                    orderable: false
                 },
                 {
                     data: 'confirm_cheque_number'
@@ -285,7 +286,8 @@
                     data: 'confirm_note'
                 },
                 {
-                    data: 'status'
+                    data: 'status',
+                    searchable: false
                 },
                 {
                     data: 'date'
@@ -298,9 +300,7 @@
                     orderable: false,
                     searchable: false
                 }
-
             ],
-
         });
 
         let table = $('#invoice_table').DataTable();
@@ -407,6 +407,8 @@
                 }
             }
         });
+        
+        
         $('#bulk-modal-submit').on('click', function(e) {
             e.preventDefault(); // prevent default form submit
 
