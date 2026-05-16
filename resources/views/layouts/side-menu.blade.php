@@ -497,12 +497,21 @@
                         </li>
                     @endif
                     {{-- @if (Auth::check() && Auth::user()->hasPermission('fee-return')) --}}
-                        <li>
-                            <a href="/student/fees/fee-invoice/invoice-payments"
-                                class="{{ request()->is('student/fees/fee-invoice/invoice-payments') ? 'active a' : '' }}">
-                                Fee Invoice Payment
-                            </a>
-                        </li>
+                    <li>
+                        <a href="/student/fees/fee-invoice/invoice-payments/pending"
+                            class="{{ request()->is('student/fees/fee-invoice/invoice-payments/pending') ? 'active a' : '' }}">
+                            Fee Invoice Pending Payment
+                        </a>
+                    </li>
+                    {{-- @endif --}}
+
+                    {{-- @if (Auth::check() && Auth::user()->hasPermission('fee-return')) --}}
+                    <li>
+                        <a href="/student/fees/fee-invoice/invoice-payments/"
+                            class="{{ request()->is('student/fees/fee-invoice/invoice-payments') ? 'active a' : '' }}">
+                            Fee Invoice Payment
+                        </a>
+                    </li>
                     {{-- @endif --}}
                 </ul>
             </li>
@@ -684,7 +693,7 @@
                         </li>
                     @endif
                     {{-- @if (Auth::check() && Auth::user()->hasPermission('fees.course-intake-payments')) --}}
-                     <li>
+                    <li>
                         <a href="/reports/course-dates-payments"
                             class="{{ request()->is('reports/course-dates-payments') ? 'active a' : '' }}">
                             Course Dates Payments

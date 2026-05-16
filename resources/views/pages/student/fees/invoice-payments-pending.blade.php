@@ -95,10 +95,12 @@
                                 <thead>
                                     <tr>
                                         <th>#</th>
-                                        <th>Invoice Number</th>
+                                        <th>Invoice Receipt No</th>
                                         <th>Customer</th>
                                         <th>Branch</th>
-                                        <th>Student</th>
+                                        <th>Student Name</th>
+                                        <th>Student Category</th>
+                                        <th>Admission Number</th>
                                         <th>Total Amount</th>
                                         <th>Confirmed</th>
                                         <th>Status</th>
@@ -176,6 +178,10 @@
     </div>
 @endsection
 
+@include('components.partials.data_table_js')
+@include('components.partials.multi_select_js')
+@include('components.partials.date_picker_css_js')
+@include('components.partials.data_table_css')
 
 @push('script')
     <script>
@@ -212,7 +218,7 @@
                 searching: true,
                 serverSide: true,
                 ajax: {
-                    url: "{{ route('invoice-payments.pending-datatable') }}",
+                    url: "{{ route('invoice-payments-datatable') }}",
                     data: function(d) {
                         d.branch_id = $('#branch-select').val();
                         d.payment_status = $('#status-select').val();
@@ -231,7 +237,7 @@
                         searchable: false
                     },
                     {
-                        data: 'invoice_no'
+                        data: 'invoice_receipt_no'
                     },
                     {
                         data: 'customer_name'
@@ -241,6 +247,12 @@
                     },
                     {
                         data: 'student_name'
+                    },
+                    {
+                        data: 'student_category'
+                    },
+                    {
+                        data: 'admission_number'
                     },
                     {
                         data: 'amount'
@@ -280,7 +292,7 @@
 
                 $('#bulk-payment-ids').val(ids.join(','));
 
-                let status = selected.first().data('status');                   
+                let status = selected.first().data('status');
                 if (status === 'pending') {
                     // Show modal to confirm pending payments
                     $('#customer-name-group, #note-group').hide();
@@ -295,26 +307,54 @@
             $(document).on('change', '.payment-checkbox', function() {
                 let status = $(this).data('status');
                 let student = $(this).data('student');
+                let selected = $('.payment-checkbox:checked');
+
+
                 if (this.checked) {
-                    if (currentStatus && status !== currentStatus) {
-                        showToast('You can only select payments with the same status!', 'warning');
-                        this.checked = false;
-                        return;
+                    if (selected.length == 1) {
+                        if (currentStatus && status !== currentStatus) {
+                            showToast('You can only select payments with the same status!', 'warning');
+                            this.checked = false;
+                            return;
+                        }
+
+                        if (currentStudent && student != currentStudent) {
+                            showToast('You can only select the same student for Not Open payments!',
+                                'warning');
+                            this.checked = false;
+                            return;
+                        }
+                        currentStatus = status;
+                        currentStudent = student;
+                    } else {
+                        showToast('You can only select one payment at a time!', 'warning');
                     }
 
-                    if (currentStudent && student != currentStudent) {
-                        showToast('You can only select the same student for Not Open payments!', 'warning');
-                        this.checked = false;
-                        return;
-                    }
-                    currentStatus = status;
-                    currentStudent = student;
                 } else {
                     // If unchecked, check if any remain
                     if ($('.payment-checkbox:checked').length === 0) {
                         currentStatus = null;
                         currentStudent = null;
                     }
+                }
+            });
+
+            $(document).on('change', '.payment-checkbox', function() {
+
+                // If this checkbox is checked, uncheck all others
+                if (this.checked) {
+                    $('.payment-checkbox').not(this).prop('checked', false);
+                }
+
+                // Reset current tracking
+                let selected = $('.payment-checkbox:checked');
+
+                if (selected.length > 0) {
+                    currentStatus = selected.first().data('status');
+                    currentStudent = selected.first().data('student');
+                } else {
+                    currentStatus = null;
+                    currentStudent = null;
                 }
             });
 
@@ -325,6 +365,22 @@
 
             $('#bulk-modal-submit').on('click', function(e) {
                 e.preventDefault(); // prevent default form submit
+
+                let selected = $('.payment-checkbox:checked').first();
+                let total = parseFloat(selected.data('total')) ;
+                let confirm = parseFloat(selected.data('confirm')) ? parseFloat(selected.data('confirm')) : 0 ;
+                let amount = parseFloat($('#bulk-amount').val());
+
+                let maxAllowed = total - confirm;
+
+                console.log('Total:', total, 'Confirmed:', confirm, 'Max Allowed:', maxAllowed, 'Entered Amount:',
+                    amount);
+
+                if (amount > maxAllowed) {
+                    showToast('Amount cannot be greater than remaining balance: ' + maxAllowed.toFixed(
+                        2), 'warning');
+                    return;
+                }
 
                 // Get all selected payment IDs
                 let paymentIds = $('#bulk-payment-ids').val().split(',');

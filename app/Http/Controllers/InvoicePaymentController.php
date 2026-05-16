@@ -400,22 +400,25 @@ class InvoicePaymentController extends Controller
 
     public function pendingDatatable(Request $request)
     {
+
         $query = InvoicesPayments::query()
             ->where('payment_method', 'Invoice')
             ->whereNotNull('payment_invoice_number')
             ->selectRaw("
-            payment_invoice_number,
-            MIN(id) as id,
-            MAX(created_at) as created_at,
-
-            SUM(amount) as total_amount,
-            SUM(invoice_payment_amount) as total_confirm_amount,
-
-            COUNT(*) as total_count,
-            SUM(CASE WHEN invoice_payment_confirm = 1 THEN 1 ELSE 0 END) as confirmed_count,
-            SUM(CASE WHEN invoice_payment_confirm IS NULL THEN 1 ELSE 0 END) as pending_count
-        ")
-            ->groupBy('payment_invoice_number');
+                payment_invoice_number,
+                MIN(id) as id,
+                MAX(created_at) as created_at,
+        
+                SUM(amount) as total_amount,
+                SUM(invoice_payment_amount) as total_confirm_amount,
+        
+                COUNT(*) as total_count,
+                SUM(CASE WHEN invoice_payment_confirm = 1 THEN 1 ELSE 0 END) as confirmed_count,
+                SUM(CASE WHEN invoice_payment_confirm IS NULL THEN 1 ELSE 0 END) as pending_count
+            ")
+            ->groupBy('payment_invoice_number')
+            ->orderByRaw("pending_count DESC")
+            ->orderBy('created_at', 'desc');
 
         // Branch filter
         if ($request->branch_id) {
@@ -428,21 +431,23 @@ class InvoicePaymentController extends Controller
             ->addColumn('select', function ($row) {
 
                 $status = $row->pending_count > 0 ? 'pending' : 'completed';
-
                 return '<input type="checkbox"
                 class="payment-checkbox"
                 value="' . $row->payment_invoice_number . '"
-                data-status="' . $status . '">';
+                data-status="' . $status . '"
+                data-total="' . $row->total_amount . '"
+                data-confirm="' . $row->total_confirm_amount . '">';
             })
 
             // invoice number
-            ->addColumn('invoice_no', function ($row) {
+            ->addColumn('invoice_receipt_no', function ($row) {
                 $payment = InvoicesPayments::with('invoice')
                     ->where('payment_invoice_number', $row->payment_invoice_number)
                     ->first();
 
-                return $payment?->invoice?->main_invoice_number ?? '-';
+                return $payment?->payment_invoice_number ?? '-';
             })
+
 
             // customer
             ->addColumn('customer_name', function ($row) {
@@ -467,6 +472,24 @@ class InvoicePaymentController extends Controller
 
                 return $payment?->invoice?->student?->student_name ?? '-';
             })
+
+            ->addColumn('student_category', function ($row) {
+                $payment = InvoicesPayments::with('invoice.student')
+                    ->where('payment_invoice_number', $row->payment_invoice_number)
+                    ->first();
+
+                return $payment?->invoice?->student?->studentCategory?->category_name ?? '-';
+            })
+
+            ->addColumn('admission_number', function ($row) {
+                $payment = InvoicesPayments::with('invoice.student')
+                    ->where('payment_invoice_number', $row->payment_invoice_number)
+                    ->first();
+
+                return $payment?->invoice?->student?->admission_number ?? '-';
+            })
+
+
 
             // total amount
             ->addColumn('amount', function ($row) {

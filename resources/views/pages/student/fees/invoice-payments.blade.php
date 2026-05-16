@@ -20,7 +20,6 @@
         <div class="container-fluid p-0">
             <div class="row align-items-center mb-3">
                 <div class="col-lg-12">
-
                     <div class="white-box">
                         <div class="col-lg-8 col-md-6">
                             <h3 class="mb-15">@lang('common.select_criteria')</h3>
@@ -64,9 +63,6 @@
                     </div>
                 </div>
 
-
-
-
             </div>
 
 
@@ -96,9 +92,6 @@
                                         <th>amount</th>
                                         <th>Customer Name</th>
                                         <th>Branch</th>
-                                        <th>Student Name</th>
-                                        <th>Student Category</th>
-                                        <th>Admission Number</th>
                                         <th>Fee Name</th>
                                         <th>Cheque Number</th>
                                         <th>Comfirm Amount</th>

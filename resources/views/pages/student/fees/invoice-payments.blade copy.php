@@ -227,7 +227,7 @@
             searching: true,
             serverSide: true,
             ajax: {
-                url: "{{ route('invoice-payments.pending-datatable') }}",
+                url: "{{ route('invoice-payments-datatable') }}",
                 data: function(d) {
                     d.branch_id = $('#branch-select').val();
                     d.payment_status = $('#status-select').val();

@@ -318,13 +318,14 @@ Route::controller(HomeController::class)->group(callback: function () {
 });
 
 Route::prefix('/student/fees/fee-invoice/invoice-payments')->group(function () {
-    Route::get('/', [InvoicePaymentController::class, 'index'])->name('invoice-payments.index');
+    Route::get('/pending', [InvoicePaymentController::class, 'index'])->name('invoice-pending-payments.index');
     Route::post('/search', [InvoicePaymentController::class, 'search'])->name('invoice-payments.search');
     Route::get('/not-start-datatable', [InvoicePaymentController::class, 'notStartDatatable'])->name('invoice-payments.not-start-datatable');
-    Route::get('/pending', [InvoicePaymentController::class, 'pendingIndex'])
-        ->name('invoice-payments.pending');
+   
+    Route::get('/', [InvoicePaymentController::class, 'pendingIndex'])
+        ->name('invoice-payments');
     Route::get('/pending-datatable', [InvoicePaymentController::class, 'pendingDatatable'])
-        ->name('invoice-payments.pending-datatable');
+        ->name('invoice-payments-datatable');
 
     Route::post('/bulk-not-open', [InvoicePaymentController::class, 'bulkNotOpen'])->name('invoice-payments.bulk-not-open');
     Route::post('/bulk-pending', [InvoicePaymentController::class, 'bulkPending'])->name('invoice-payments.bulk-pending');
