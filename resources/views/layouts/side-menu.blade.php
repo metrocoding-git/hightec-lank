@@ -507,7 +507,7 @@
 
                     {{-- @if (Auth::check() && Auth::user()->hasPermission('fee-return')) --}}
                     <li>
-                        <a href="/student/fees/fee-invoice/invoice-payments/"
+                        <a href="/student/fees/fee-invoice/invoice-payments"
                             class="{{ request()->is('student/fees/fee-invoice/invoice-payments') ? 'active a' : '' }}">
                             Fee Invoice Payment
                         </a>

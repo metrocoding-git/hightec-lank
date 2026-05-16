@@ -18,13 +18,13 @@ class InvoicePaymentController extends Controller
     public function index()
     {
         $branches = Branch::all();
-        return view('pages.student.fees.invoice-payments', compact('branches'));
+        return view('pages.student.fees.invoice-payments-pending', compact('branches'));
     }
 
     public function pendingIndex()
     {
         $branches = Branch::all();
-        return view('pages.student.fees.invoice-payments-pending', compact('branches'));
+        return view('pages.student.fees.invoice-payments', compact('branches'));
     }
 
 
@@ -199,7 +199,7 @@ class InvoicePaymentController extends Controller
             })
             ->whereHas('invoice', function ($q) {
                 $q->where('payment_status', '!=', 'returned');
-            });
+            })->whereNull('payment_invoice_number');;
 
         // =========================
         // BRANCH FILTER
@@ -208,24 +208,6 @@ class InvoicePaymentController extends Controller
             $query->where('branch_id', $request->branch_id);
         }
 
-        // =========================
-        // PAYMENT STATUS FILTER (FIXED)
-        // =========================
-        if ($request->payment_status) {
-
-            if ($request->payment_status == 'not_open') {
-
-                // ✅ FIX: use whereNull (not '=')
-                $query->whereNull('payment_invoice_number');
-            } elseif ($request->payment_status == 'pending') {
-
-                $query->whereNotNull('payment_invoice_number')
-                    ->whereNull('invoice_payment_confirm');
-            } elseif ($request->payment_status == 'completed') {
-
-                $query->where('invoice_payment_confirm', true);
-            }
-        }
 
         // =========================
         // SEARCH
@@ -282,16 +264,6 @@ class InvoicePaymentController extends Controller
             // RECEIPT NO
             ->addColumn('invoice_item_no', function ($row) {
                 return $row->receipt_number ?? '-';
-            })
-
-            // CUSTOMER
-            ->addColumn('customer_name', function ($row) {
-                return $row->customer_name ?? '-';
-            })
-
-            // PAYMENT NO
-            ->addColumn('invoice_receipt_no', function ($row) {
-                return $row->payment_invoice_number ?? '-';
             })
 
             // BRANCH
@@ -424,6 +396,41 @@ class InvoicePaymentController extends Controller
         if ($request->branch_id) {
             $query->where('branch_id', $request->branch_id);
         }
+
+        if ($request->has('search') && $request->search['value'] != '') {
+
+            $search = $request->search['value'];
+
+            $query->where(function ($q) use ($search) {
+
+                $q->where('payment_invoice_number', 'like', "%{$search}%")
+
+                    ->orWhereExists(function ($sub) use ($search) {
+
+                        $sub->select(DB::raw(1))
+                            ->from('invoices_payments as ip')
+                            ->leftJoin('fee_invoices as i', 'i.id', '=', 'ip.invoice_id')
+                            ->leftJoin('students as s', 's.id', '=', 'i.student_id')
+                            ->leftJoin('student_categories as sc', 'sc.id', '=', 's.student_category_id')
+                            ->leftJoin('branches as b', 'b.id', '=', 'i.branch_id')
+
+                            ->whereColumn(
+                                'ip.payment_invoice_number',
+                                'invoices_payments.payment_invoice_number'
+                            )
+
+                            ->where(function ($qq) use ($search) {
+
+                                $qq->where('ip.customer_name', 'like', "%{$search}%")
+                                    ->orWhere('s.student_name', 'like', "%{$search}%")
+                                    ->orWhere('s.admission_number', 'like', "%{$search}%")
+                                    ->orWhere('sc.category_name', 'like', "%{$search}%")
+                                    ->orWhere('b.name', 'like', "%{$search}%");
+                            });
+                    });
+            });
+        }
+
 
         return DataTables::of($query)
 
@@ -674,51 +681,95 @@ class InvoicePaymentController extends Controller
 
     public function bulkBack(Request $request)
     {
-        $ids = $request->payment_ids;
-        $status = $request->status;
+        DB::beginTransaction();
 
-        if (empty($ids)) {
-            return response()->json(['message' => 'No payments selected.'], 400);
-        }
+        try {
 
-        if ($status === 'completed') {
-            $payments = InvoicesPayments::whereIn('id', $ids)->get();
+            $ids = $request->payment_ids;
 
-            foreach ($payments as $payment) {
-                // Revert to pending
-                $payment->invoice_payment_confirm = null;
-
-                $payment->cheque_number = null;
-                $payment->amount = null;
-                $payment->invoice_payment_note = null;
-
-                // Track who reverted
-                $payment->update_user_id = Auth::id();
-
-                $payment->save();
+            if (empty($ids)) {
+                return response()->json(['message' => 'No payments selected.'], 400);
             }
 
-            return response()->json(['message' => 'Reverted to Pending successfully.']);
-        }
+            foreach ($ids as $invoiceNumber) {
 
-        if ($status === 'pending') {
-            // Get all selected payments
-            $payments = InvoicesPayments::whereIn('id', $ids)->get();
+                $payments = InvoicesPayments::where('payment_invoice_number', $invoiceNumber)->get();
 
-            foreach ($payments as $payment) {
-                $payment->payment_invoice_number = null;
-                $payment->customer_name = null;
-                $payment->invoice_payment_note = null;
+                if ($payments->isEmpty()) continue;
 
-                // Track the user who reverted
-                $payment->update_user_id = Auth::id();
+                // =========================
+                // CHECK IF ANY RECEIPT EXISTS
+                // =========================
+                $receiptItem = InvoicePaymentReceiptItem::whereIn(
+                    'invoice_payment_id',
+                    $payments->pluck('id')
+                )->latest('id')->first();
 
-                $payment->save();
+                if ($receiptItem) {
+
+                    // =========================
+                    // ROLLBACK RECEIPT (PARTIAL / FULL PAYMENT DONE)
+                    // =========================
+                    $receiptId = $receiptItem->receipt_id;
+
+                    $items = InvoicePaymentReceiptItem::where('receipt_id', $receiptId)->get();
+
+                    foreach ($items as $item) {
+
+                        $payment = InvoicesPayments::find($item->invoice_payment_id);
+
+                        if (!$payment) continue;
+
+                        // rollback amount
+                        $payment->invoice_payment_amount = max(
+                            0,
+                            (float)$payment->invoice_payment_amount - (float)$item->paid_amount
+                        );
+
+                        // reset confirm
+                        if ($payment->invoice_payment_amount < $payment->amount) {
+                            $payment->invoice_payment_confirm = null;
+                        }
+
+                        $payment->update_user_id = Auth::id();
+                        
+                        $payment->save();
+
+                        $item->delete();
+                    }
+
+                    InvoicePaymentReceipt::where('id', $receiptId)->delete();
+                } else {
+
+                    // =========================
+                    // NO PAYMENT DONE YET (JUST PENDING)
+                    // =========================
+                    foreach ($payments as $payment) {
+
+                        $payment->payment_invoice_number = null;
+                        $payment->invoice_payment_note = null;
+                        $payment->customer_name = null;
+                        $payment->payment_invoice_open_date = null;
+
+                        $payment->update_user_id = Auth::id();
+                        $payment->save();
+                    }
+                }
             }
 
-            return response()->json(['message' => 'Reverted to Not Open successfully.']);
-        }
+            DB::commit();
 
-        return response()->json(['message' => 'Invalid status.'], 400);
+            return response()->json([
+                'message' => 'Successfully moved back to Not Open'
+            ]);
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'message' => 'Error occurred',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
