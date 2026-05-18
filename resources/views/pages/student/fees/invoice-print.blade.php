@@ -8,7 +8,7 @@
     <style>
         @page {
             size: A4;
-            margin-top: 5cm;
+            margin-top: 7cm;
             margin-bottom: 3cm;
             margin-left: 1cm;
             margin-right: 1cm;
@@ -169,14 +169,14 @@
 
             @foreach ($payments as $item)
                 <tr>
-                    <td>1.00</td>
+                    <td style="text-align: center">1</td>
 
 
                     <td>
                         @if ($item->invoice->invoice_type === 'fee')
                             {{ optional($item->invoice->invoice_item->first()?->fee_type)->name }}
                         @else
-                            {{ $item->invoice->invoice_type . ' - ' . optional(optional($item->invoice->paidCourses)->course)->name }}
+                            {{ $item->invoice->invoice_type . ' fee - ' . optional(optional($item->invoice->paidCourses)->course)->name }}
                         @endif
                     </td>
 

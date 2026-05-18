@@ -430,6 +430,24 @@
                 $.post(route, data, function(res) {
                     showToast(res.message, 'success');
                     currentStatus = null;
+                    currentStudent = null;
+
+                    $('#bulk-action-form')[0].reset();
+
+                    $('#bulk-payment-ids').val('');
+
+                    $('.payment-checkbox').prop('checked', false);
+                    $('#select-all').prop('checked', false);
+
+                    $('#bulkActionModal').modal('hide');
+
+                    $('#invoice_table').DataTable().ajax.reload();
+
+
+                    $('#bulkActionModal').modal('hide');
+                    $('#invoice_table').DataTable().ajax.reload();
+
+
                     $('#bulkActionModal').modal('hide');
                     $('#invoice_table').DataTable().ajax.reload();
 

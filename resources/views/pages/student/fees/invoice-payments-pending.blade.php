@@ -225,8 +225,7 @@
             order: [
                 [0, 'desc']
             ],
-            columns: [
-                {
+            columns: [{
                     data: 'select',
                     orderable: false,
                     searchable: false
@@ -375,8 +374,8 @@
                 }
             }
         });
-        
-        
+
+
         $('#bulk-modal-submit').on('click', function(e) {
             e.preventDefault(); // prevent default form submit
 
@@ -423,6 +422,8 @@
             $.post(route, data, function(res) {
                 showToast(res.message, 'success');
                 currentStatus = null;
+                currentStudent = null;
+                $('#bulk-action-form')[0].reset();
                 $('#bulkActionModal').modal('hide');
                 $('#invoice_table').DataTable().ajax.reload();
 
@@ -432,7 +433,5 @@
                 }
             });
         });
-
-
     </script>
 @endpush
