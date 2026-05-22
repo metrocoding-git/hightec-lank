@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -30,6 +31,10 @@ class InvoicePaymentReceiptItem extends Model
      * Item → Invoice Payment
      */
     public function payment()
+    {
+        return $this->belongsTo(InvoicesPayments::class, 'invoice_payment_id');
+    }
+    public function invoicePayment()
     {
         return $this->belongsTo(InvoicesPayments::class, 'invoice_payment_id');
     }

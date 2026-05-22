@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Branch;
 use App\Models\Intake;
+use App\Models\InvoicePaymentReceipt;
 use App\Models\PaidCourse;
 use App\Models\InvoicesPayments;
 use App\Models\ItemIssueItem;
@@ -468,5 +469,57 @@ class ReportController extends Controller
             ->get();
 
         return view('pages.reports.change-course', compact('data'));
+    }
+
+    public function invoicePayments(Request $request)
+    {
+        $branches = Branch::all();
+
+        // Default date range: last 30 days
+        $to = now()->format('Y-m-d');
+        $from = now()->subDays(30)->format('Y-m-d');
+
+        // If user selects date range
+        if ($request->date_range) {
+
+            if (strpos($request->date_range, ' to ') !== false) {
+                // Range
+                $dates = explode(' to ', $request->date_range);
+                $from = $dates[0] ?? null;
+                $to = $dates[1] ?? null;
+            } else {
+                // Single date
+                $from = $request->date_range;
+                $to = $request->date_range;
+            }
+        }
+
+
+
+        // $query = DB::table('invoice_payment_receipts')
+        //     ->join('invoice_payment_receipt_items', 'invoice_payment_receipts.id', '=', 'invoice_payment_receipt_items.receipt_id')
+        //     ->join('invoices_payments', 'invoice_payment_receipt_items.invoice_payment_id', '=', 'invoices_payments.id')
+        //     ->join('users', 'invoice_payment_receipts.created_by', '=', 'users.id')
+        //     ->join('fee_invoices', 'invoices_payments.invoice_id', '=', 'fee_invoices.id')
+        //     ->join('branches', 'fee_invoices.branch_id', '=', 'branches.id')
+        //     ->whereBetween('invoice_payment_receipts.created_at', [$from, $to]);
+
+        $query = InvoicePaymentReceipt::with([
+            'items.payment.invoice.student',
+            'items.payment.invoice.branch',
+            'user',
+        ])->whereBetween(DB::raw('DATE(invoice_payment_receipts.created_at)'), [$from, $to]);
+
+        if ($request->branch_id) {
+            $query->whereHas('items.payment.invoice.branch', function ($q) use ($request) {
+                $q->where('id', $request->branch_id);
+            });
+        }
+
+
+        // Select required columns, distinct invoice per student-course
+        $reportData = $query->get();
+
+        return view('pages.reports.invoice-payments', compact('reportData', 'branches'));
     }
 }

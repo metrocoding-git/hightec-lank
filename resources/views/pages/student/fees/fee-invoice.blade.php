@@ -24,6 +24,64 @@
             </div>
         </div>
     </section>
+    @php
+        $branches = \App\Models\Branch::all();
+        $defaultFrom = \Carbon\Carbon::now()->subDays(30)->format('Y-m-d');
+        $defaultTo = \Carbon\Carbon::now()->format('Y-m-d');
+    @endphp
+
+    <section class="admin-visitor-area up_st_admin_visitor mt-0 mb-4">
+        <div class="container-fluid p-0">
+            <div class="white-box mb-0">
+                <form id="filterForm" class="mb-0">
+                    <div class="row">
+                        {{-- Date Range --}}
+                        <div class="col-md-4">
+                            <label>Date Range</label>
+                            <input type="text" id="filter_date_range" name="date_range" class="form-control"
+                                value="{{ $defaultFrom }} to {{ $defaultTo }}">
+                        </div>
+
+                        {{-- Branch --}}
+                        <div class="col-md-4">
+                            <label>Branch</label>
+                            <select name="branch_id" id="filter_branch" class="form-control">
+                                <option value="">All Branches</option>
+                                @foreach ($branches as $branch)
+                                    <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        {{-- Fee / Payment Type --}}
+                        <div class="col-md-4">
+                            <label>Fee Type</label>
+                            <select name="payment_type" id="filter_payment_type" class="form-control">
+                                <option value="">All</option>
+                                <option value="course_fee">Course & Fee</option>
+                                <option value="nvq">NVQ</option>
+                                <option value="item_sell">Item Sell</option>
+                                <option value="others">Others</option>
+                            </select>
+                        </div>
+
+                        {{-- Buttons --}}
+
+                        <div class="col-lg-12 mt-1 text-right mt-2">
+                            <button type="button" id="applyFilter" class="primary-btn small fix-gr-bg mr-2">
+                                <span class="ti-search pr-2"></span> Search
+                            </button>
+                            <button type="button" id="resetFilter" class="primary-btn small tr-bg">
+                                <span class="ti-reload pr-2"></span> Reset
+                            </button>
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
     <section class="admin-visitor-area up_st_admin_visitor">
         <div class="container-fluid p-0">
             <div class="white-box">
@@ -36,6 +94,8 @@
                         </a>
                     </div>
                 </div>
+
+
 
                 <div class="row mt-40">
 
@@ -65,6 +125,10 @@
                                                 <th>Payment Date</th>
                                                 <th>Due Date</th>
                                                 <th>Notes</th>
+                                                <th>Inv. Pay No</th>
+                                                <th>Invoice Amount</th>
+                                                <th>Paid Amount</th>
+                                                <th>Inv. Pay Status</th>
                                                 <th>@lang('common.action')</th>
                                             </tr>
                                         </thead>
@@ -86,7 +150,8 @@
                                             style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px 25px; border-bottom: none;">
                                             <h4 class="modal-title" id="returnFeeModalTitle"
                                                 style="margin: 0; font-weight: 600; font-size: 1.4rem; display: flex; align-items: center;">
-                                                <i class="fas fa-undo-alt" style="margin-right: 10px; font-size: 1.2rem;"></i>
+                                                <i class="fas fa-undo-alt"
+                                                    style="margin-right: 10px; font-size: 1.2rem;"></i>
                                                 Return Fee - Invoice #
                                             </h4>
                                             <button type="button" class="close" data-dismiss="modal"
@@ -107,8 +172,8 @@
                                                                     style="margin-right: 5px; color: #667eea;"></i>
                                                                 @lang('common.student')
                                                             </label>
-                                                            <input type="text" class="form-control" id="returnStudentName"
-                                                                readonly
+                                                            <input type="text" class="form-control"
+                                                                id="returnStudentName" readonly
                                                                 style="background-color: white; border: 1px solid #e1e5eb; border-radius: 8px; padding: 10px 15px; font-size: 0.95rem; color: #495057; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);">
                                                             <input type="hidden" name="student_id" id="returnStudentId">
                                                         </div>
@@ -172,7 +237,8 @@
                                                             </div>
                                                             <small class="text-muted"
                                                                 style="display: block; margin-top: 8px; font-size: 0.85rem; color: #6c757d;">
-                                                                <i class="fas fa-info-circle" style="margin-right: 5px;"></i>
+                                                                <i class="fas fa-info-circle"
+                                                                    style="margin-right: 5px;"></i>
                                                                 Maximum return amount: <strong style="color: #28a745;"
                                                                     id="returnMaxAmountText">0.00</strong>
                                                             </small>
@@ -492,7 +558,7 @@
                                 </div>
                             </div>
 
-                            
+
 
 
 
@@ -801,19 +867,27 @@
 
 @push('script')
     <script>
-        $('#table_id').DataTable({
+        flatpickr("#filter_date_range", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            allowInput: true,
+            defaultDate: [
+                "{{ \Carbon\Carbon::now()->subDays(30)->format('Y-m-d') }}",
+                "{{ \Carbon\Carbon::now()->format('Y-m-d') }}"
+            ]
+        });
+
+        var table = $('#table_id').DataTable({
             scrollX: true,
             serverSide: true,
-
             dom: "<'d-flex justify-content-between align-items-center mb-2'<'me-2'l><'mx-auto'f><'ms-2'B>>" +
                 "<'row'<'col-sm-12'tr>>" +
                 "<'d-flex justify-content-between align-items-center mt-2'<'mb-0 col-4'i><'mb-0 col-8'p>>",
-
             lengthChange: true,
             buttons: [{
                     extend: 'pdf',
                     title: getFileName(),
-                    text: '<i title="export to pdf" class="fa fa-file-pdf-o"></i>',
+                    text: '<i class="fa fa-file-pdf-o"></i>',
                     exportOptions: {
                         columns: ':visible'
                     }
@@ -821,7 +895,7 @@
                 {
                     extend: 'csv',
                     title: getFileName(),
-                    text: '<i title="export to csv" class="fa fa-file-text-o"></i>',
+                    text: '<i class="fa fa-file-text-o"></i>',
                     exportOptions: {
                         columns: ':visible'
                     }
@@ -829,7 +903,7 @@
                 {
                     extend: 'excel',
                     title: getFileName(),
-                    text: '<i title="export to excel" class="fa fa-file-excel-o"></i>',
+                    text: '<i class="fa fa-file-excel-o"></i>',
                     exportOptions: {
                         columns: ':visible'
                     }
@@ -837,7 +911,7 @@
                 {
                     extend: 'print',
                     title: getFileName(),
-                    text: '<i title="print" class="fa fa-print"></i>',
+                    text: '<i class="fa fa-print"></i>',
                     exportOptions: {
                         columns: ':visible'
                     }
@@ -845,12 +919,10 @@
                 {
                     extend: 'colvis',
                     title: getFileName(),
-                    text: '<i title="column visibility" class="fa fa-eye"></i>',
+                    text: '<i class="fa fa-eye"></i>',
                     columns: ':gt(0)'
                 }
             ],
-            processing: false,
-
             paging: true,
             searching: true,
             ordering: true,
@@ -872,7 +944,16 @@
                 }
             },
 
-            ajax: "{{ route('fee.invoice.datatable') }}",
+            // ── Pass filter values with every ajax request ──────────
+            ajax: {
+                url: "{{ route('fee.invoice.datatable') }}",
+                data: function(d) {
+                    d.date_range = $('#filter_date_range').val();
+                    d.branch_id = $('#filter_branch').val();
+                    d.payment_type = $('#filter_payment_type').val();
+                }
+            },
+
             columns: [{
                     data: 'DT_RowIndex',
                     name: 'DT_RowIndex',
@@ -881,19 +962,24 @@
                 },
                 {
                     data: 'main_invoice_number',
-                    name: 'fee_invoices.main_invoice_number'
+                    name: 'fee_invoices.main_invoice_number',
+                    searchable: true
                 },
                 {
                     data: 'fee_name',
-                    name: 'fee_name'
+                    name: 'fee_name',
+                    orderable: false,
+                    searchable: false
                 },
                 {
                     data: 'student_name',
-                    name: 'students.student_name'
+                    name: 'students.student_name',
+                    searchable: true
                 },
                 {
                     data: 'category_name',
-                    name: 'student_categories.category_name'
+                    name: 'student_categories.category_name',
+                    searchable: true
                 },
                 {
                     data: 'branch_name',
@@ -901,53 +987,108 @@
                 },
                 {
                     data: 'admission_number',
-                    name: 'students.admission_number'
+                    name: 'students.admission_number',
+                    searchable: true
+
                 },
                 {
                     data: 'total_amount',
-                    name: 'fee_invoices.total_amount'
-                },
+                    name: 'fee_invoices.total_amount',
+                    searchable: false
+                }, // ← numeric
                 {
                     data: 'balance',
-                    name: 'balance'
-                },
+                    name: 'balance',
+                    orderable: false,
+                    searchable: false
+                }, // ← computed
                 {
                     data: 'payment_method',
-                    name: 'fee_invoices.payment_method'
+                    name: 'fee_invoices.payment_method',
+                    searchable: false
                 },
                 {
                     data: 'payment_status',
-                    name: 'fee_invoices.payment_status'
+                    name: 'fee_invoices.payment_status',
+                    searchable: false
                 },
                 {
                     data: 'payment_date',
-                    name: 'payment_date'
-                },
+                    name: 'payment_date',
+                    orderable: false,
+                    searchable: false
+                }, // ← computed
                 {
                     data: 'due_date',
-                    name: 'due_date'
-                },
+                    name: 'due_date',
+                    orderable: false,
+                    searchable: false
+                }, // ← computed
                 {
                     data: 'notes',
-                    name: 'fee_invoices.notes'
+                    name: 'fee_invoices.notes',
+                    searchable: false
                 },
+                {
+                    data: 'inv_payment_number',
+                    name: 'inv_payment_number',
+                    orderable: false,
+                    searchable: false
+                }, // ← computed
+                {
+                    data: 'inv_total_amount',
+                    name: 'inv_total_amount',
+                    orderable: false,
+                    searchable: false
+                }, // ← computed
+                {
+                    data: 'inv_paid_amount',
+                    name: 'inv_paid_amount',
+                    orderable: false,
+                    searchable: false
+                }, // ← computed
+                {
+                    data: 'inv_payment_status',
+                    name: 'inv_payment_status',
+                    orderable: false,
+                    searchable: false
+                }, // ← computed
                 {
                     data: 'action',
                     name: 'action',
                     orderable: false,
                     searchable: false
-                }
-            ]
+                },
+            ],
+        });
+
+
+        // ── Filter button ────────────────────────────────────────────
+        $('#applyFilter').on('click', function() {
+            table.ajax.reload();
+        });
+
+        // ── Reset button ─────────────────────────────────────────────
+        $('#resetFilter').on('click', function() {
+            $('#filter_date_range').value = '';
+            // Reset flatpickr to default 30-day range
+            var fp = document.querySelector('#filter_date_range')._flatpickr;
+            fp.setDate([
+                "{{ \Carbon\Carbon::now()->subDays(30)->format('Y-m-d') }}",
+                "{{ \Carbon\Carbon::now()->format('Y-m-d') }}"
+            ]);
+            $('#filter_branch').val('');
+            $('#filter_payment_type').val('');
+            table.ajax.reload();
         });
 
         function getFileName() {
             let now = new Date();
-
             let date = now.toISOString().slice(0, 10);
-            let time = now.toTimeString().slice(0, 8).replace(/:/g, '-'); // HH-MM-SS
-
+            let time = now.toTimeString().slice(0, 8).replace(/:/g, '-');
             return 'Fee-Invoice_' + date + '__' + time;
         }
+
 
         // Handle return modal with row data from datatable action button
         $('#returnFeeModal').on('show.bs.modal', function(event) {
@@ -968,7 +1109,9 @@
                 paidAmount: paidAmount
             });
 
-            $('#returnFeeModalTitle').html('<i class="fas fa-undo-alt" style="margin-right: 10px; font-size: 1.2rem;"></i>Return Fee - Invoice #' + invoiceId);
+            $('#returnFeeModalTitle').html(
+                '<i class="fas fa-undo-alt" style="margin-right: 10px; font-size: 1.2rem;"></i>Return Fee - Invoice #' +
+                invoiceId);
             $('#returnInvoiceId').val(invoiceId);
             $('#returnStudentId').val(studentId);
             $('#returnStudentName').val(studentName);
@@ -1193,7 +1336,7 @@
                             //     actionDropdown +=
                             //         `<a style="padding:4px;margin: 2px; background-color: #28a745; color: #fff; text-align: center;" class="dropdown-item confirm-payment-invoice-btn" href="#" data-payment-id="${payment.id}">Confirm Payment Invoice</a>`;
                             // }
-                            
+
                             if (payment.payment_method === 'Bank Transfer') {
                                 actionDropdown +=
                                     `<a style="padding:4px;margin: 2px; background-color: #28a745; color: #fff; text-align: center;" class="dropdown-item view-bank-details-btn" href="#" data-payment-id="${payment.id}" data-bank-date="${payment.bank_payment_date}" data-bank-amount="${payment.bank_payment_amount}" data-payment-file="${payment.payment_file || ''}">View Bank Details</a>`;
@@ -1221,15 +1364,15 @@
                                     <td style="padding: 12px; text-align: center;">${new Date(payment.created_at).toLocaleDateString()}</td>
                                     <td style="padding: 12px; text-align: center;">
                                         ${actionDropdown ? `
-                                                                                                            <div class="dropdown">
-                                                                                                                <button class="primary-btn small fix-gr-bg dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" style="border-radius: 6px; padding: 6px 12px; font-size: 12px;">
-                                                                                                                    Actions
-                                                                                                                </button>
-                                                                                                                <div class="dropdown-menu" style="min-width: 150px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                                                                                                                    ${actionDropdown}
-                                                                                                                </div>
-                                                                                                            </div>
-                                                                                                        ` : '<span class="text-muted">No actions</span>'}
+                                                                                                                                                            <div class="dropdown">
+                                                                                                                                                                <button class="primary-btn small fix-gr-bg dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" style="border-radius: 6px; padding: 6px 12px; font-size: 12px;">
+                                                                                                                                                                    Actions
+                                                                                                                                                                </button>
+                                                                                                                                                                <div class="dropdown-menu" style="min-width: 150px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                                                                                                                                                    ${actionDropdown}
+                                                                                                                                                                </div>
+                                                                                                                                                            </div>
+                                                                                                                                                        ` : '<span class="text-muted">No actions</span>'}
                                     </td>
                                 </tr>
                             `;

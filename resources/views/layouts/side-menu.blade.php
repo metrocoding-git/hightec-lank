@@ -720,6 +720,13 @@
                             Change Course
                         </a>
                     </li>
+
+                     <li>
+                        <a href="/reports/invoice-payments"
+                            class="{{ request()->is('reports/invoice-payments') ? 'active a' : '' }}">
+                            Invoice Payments
+                        </a>
+                    </li>
                     {{-- @endif --}}
                 </ul>
             </li>

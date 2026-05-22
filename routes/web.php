@@ -555,6 +555,8 @@ Route::controller(ReportController::class)->prefix('reports')
         Route::get('course-dates-payments', 'studentsDatesPayments')->name(name: 'reports.course-dates-payments');
         Route::get('course-intake-payments', 'courseIntakePayments')->name('reports.course-intake-payments');
         Route::get('students-intake-balance', 'studentsIntakeBalance')->name('reports.students-intake-balance');
+        Route::get('invoice-payments', 'invoicePayments')->name('reports.invoice-payments');
+
 
 
         Route::get('change-course', 'changeCourse')->name('reports.change-course');
