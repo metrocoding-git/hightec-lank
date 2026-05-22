@@ -175,3 +175,12 @@ ALTER TABLE `fee_invoices` ADD `student_category_id` INT NULL DEFAULT NULL ;
 
 
 ALTER TABLE `invoices_payments` ADD `payment_invoice_open_date` TIMESTAMP NULL DEFAULT NULL AFTER `invoice_payment_confirm_note`;
+
+
+
+-- 05/23
+ALTER TABLE `courses`
+    ADD COLUMN `has_food_fee` TINYINT(1) NOT NULL DEFAULT 0 AFTER `nvq_amount`,
+    ADD COLUMN `breakfast_amount` DECIMAL(10,2) NULL AFTER `has_food_fee`,
+    ADD COLUMN `lunch_amount` DECIMAL(10,2) NULL AFTER `breakfast_amount`,
+    ADD COLUMN `dinner_amount` DECIMAL(10,2) NULL AFTER `lunch_amount`;

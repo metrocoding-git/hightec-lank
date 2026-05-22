@@ -27,7 +27,11 @@ class CourseController extends Controller
             'description' => 'nullable|string',
             'duration' => 'nullable|string',
             'has_nvq_payment' => 'required|boolean',
-            'nvq_amount' => 'nullable|numeric'
+            'nvq_amount' => 'nullable|numeric',
+            'has_food_fee'       => 'required|boolean',
+            'breakfast_amount'   => 'nullable|numeric|min:0',
+            'lunch_amount'       => 'nullable|numeric|min:0',
+            'dinner_amount'      => 'nullable|numeric|min:0',
         ]);
 
         $data = $request->all();
@@ -49,7 +53,11 @@ class CourseController extends Controller
             'description' => 'nullable|string',
             'duration' => 'nullable|string',
             'has_nvq_payment' => 'required|boolean',
-            'nvq_amount' => 'nullable|numeric'
+            'nvq_amount' => 'nullable|numeric',
+            'has_food_fee'       => 'required|boolean',
+            'breakfast_amount'   => 'nullable|numeric|min:0',
+            'lunch_amount'       => 'nullable|numeric|min:0',
+            'dinner_amount'      => 'nullable|numeric|min:0',
         ]);
 
         $course = Course::findOrFail($id);

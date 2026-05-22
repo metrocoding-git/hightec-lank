@@ -101,7 +101,7 @@
                                                     <input
                                                         class="primary_input_field form-control{{ $errors->has('code') ? ' is-invalid' : '' }}"
                                                         type="text" name="code" id="code"
-                                                        value="{{ old('code', $course->code ?? '') }}" autocomplete="off">
+                                                        value="{{ old('code', $course->code ?? '') }}"  autocomplete="off">
                                                     @if ($errors->has('code'))
                                                         <span class="invalid-feedback" role="alert">
                                                             <strong>{{ $errors->first('code') }}</strong>
@@ -120,7 +120,7 @@
                                                     <input
                                                         class="primary_input_field form-control{{ $errors->has('price') ? ' is-invalid' : '' }}"
                                                         type="number" name="price" id="price"
-                                                        value="{{ old('price', $course->price ?? '') }}"
+                                                        value="{{ old('price', $course->price ?? '') }}" placeholder="0.00"
                                                         autocomplete="off">
                                                     @if ($errors->has('price'))
                                                         <span class="invalid-feedback" role="alert">
@@ -202,11 +202,87 @@
                                                     <label class="primary_input_label">NVQ Amount</label>
                                                     <input type="number" step="0.01" name="nvq_amount"
                                                         class="primary_input_field form-control"
+                                                        placeholder="0.00"
                                                         value="{{ old('nvq_amount', $course->nvq_amount ?? '') }}">
                                                 </div>
                                             </div>
                                         </div>
 
+                                        {{-- Food Fee Toggle --}}
+                                        <div class="row mt-20">
+                                            <div class="col-lg-12">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label">Has Food Fee?</label>
+                                                    <select name="has_food_fee" id="has_food_fee"
+                                                        class="primary_select form-control">
+                                                        <option value="0">No</option>
+                                                        <option value="1"
+                                                            {{ old('has_food_fee', $course->has_food_fee ?? 0) == 1 ? 'selected' : '' }}>
+                                                            Yes
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {{-- Meal Amounts --}}
+                                        <div id="food_fee_box" style="display:none;">
+
+                                            {{-- Breakfast --}}
+                                            <div class="row mt-20">
+                                                <div class="col-lg-12">
+                                                    <div class="primary_input">
+                                                        <label class="primary_input_label">Breakfast Amount</label>
+                                                        <input type="number" step="0.01" name="breakfast_amount"
+                                                            id="breakfast_amount"
+                                                            class="primary_input_field form-control meal-amount"
+                                                            placeholder="0.00"
+                                                            value="{{ old('breakfast_amount', $course->breakfast_amount ?? '') }}">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {{-- Lunch --}}
+                                            <div class="row mt-20">
+                                                <div class="col-lg-12">
+                                                    <div class="primary_input">
+                                                        <label class="primary_input_label">Lunch Amount</label>
+                                                        <input type="number" step="0.01" name="lunch_amount"
+                                                            id="lunch_amount"
+                                                            class="primary_input_field form-control meal-amount"
+                                                            placeholder="0.00"
+                                                            value="{{ old('lunch_amount', $course->lunch_amount ?? '') }}">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {{-- Dinner --}}
+                                            <div class="row mt-20">
+                                                <div class="col-lg-12">
+                                                    <div class="primary_input">
+                                                        <label class="primary_input_label">Dinner Amount</label>
+                                                        <input type="number" step="0.01" name="dinner_amount"
+                                                            id="dinner_amount"
+                                                            class="primary_input_field form-control meal-amount"
+                                                            placeholder="0.00"
+                                                            value="{{ old('dinner_amount', $course->dinner_amount ?? '') }}">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {{-- Auto-calculated Total --}}
+                                            <div class="row mt-20">
+                                                <div class="col-lg-12">
+                                                    <div class="primary_input">
+                                                        <label class="primary_input_label">Total Food Fee </label>
+                                                        <input type="text" id="food_total"
+                                                            class="primary_input_field form-control" placeholder="0.00"
+                                                            readonly style="background:#f5f5f5; font-weight:bold;">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
                                         {{-- Course Description --}}
                                         <div class="row mt-20">
                                             <div class="col-lg-12">
@@ -264,6 +340,10 @@
                                             <th>Valid Dates</th>
                                             <th>NVQ Payment</th>
                                             <th>NVQ Amount</th>
+                                            <th>Food Fee</th>
+                                            <th>Breakfast</th>
+                                            <th>Lunch</th>
+                                            <th>Dinner</th>
                                             <th>Courses description</th>
                                             <th>@lang('common.action')</th>
                                         </tr>
@@ -289,6 +369,15 @@
                                                 <td>
                                                     {{ $course->nvq_amount ? 'Rs.' . number_format($course->nvq_amount, 2) : '-' }}
                                                 </td>
+                                                <td>{{ $course->has_food_fee ? 'Yes' : 'No' }}</td>
+                                                <td>{{ $course->breakfast_amount ? 'Rs.' . number_format($course->breakfast_amount, 2) : '-' }}
+                                                </td>
+                                                <td>{{ $course->lunch_amount ? 'Rs.' . number_format($course->lunch_amount, 2) : '-' }}
+                                                </td>
+                                                <td>{{ $course->dinner_amount ? 'Rs.' . number_format($course->dinner_amount, 2) : '-' }}
+                                                </td>
+
+
                                                 <td>{{ $course->description ?? '-' }}</td>
                                                 <td valign="top">
                                                     @php
@@ -416,6 +505,33 @@
             $('#has_nvq_payment').on('change', function() {
                 toggleNVQ();
             });
+
+
+            function toggleFoodFee() {
+                if ($('#has_food_fee').val() == 1) {
+                    $('#food_fee_box').show();
+                } else {
+                    $('#food_fee_box').hide();
+                }
+            }
+
+            toggleFoodFee();
+            $('#has_food_fee').on('change', toggleFoodFee);
+
+            // Auto-calculate total food fee
+            function calcFoodTotal() {
+                var breakfast = parseFloat($('#breakfast_amount').val()) || 0;
+                var lunch = parseFloat($('#lunch_amount').val()) || 0;
+                var dinner = parseFloat($('#dinner_amount').val()) || 0;
+                var total = breakfast + lunch + dinner;
+
+                $('#food_total').val(total > 0 ? 'Rs. ' + total.toFixed(2) : '');
+            }
+
+            $(document).on('input', '.meal-amount', calcFoodTotal);
+
+            // Run on page load for edit mode
+            calcFoodTotal();
 
         });
     </script>
