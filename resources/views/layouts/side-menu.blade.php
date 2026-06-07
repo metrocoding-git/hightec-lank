@@ -727,6 +727,13 @@
                             Invoice Payments
                         </a>
                     </li>
+
+                    <li>
+                        <a href="/reports/food-payment-report"
+                            class="{{ request()->is('reports/food-payment-report') ? 'active a' : '' }}">
+                            Food Payment Report
+                        </a>
+                    </li>
                     {{-- @endif --}}
                 </ul>
             </li>

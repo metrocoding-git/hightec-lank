@@ -142,7 +142,11 @@ class CourseController extends Controller
                     'has_nvq_payment' => $item->course->has_nvq_payment,
                     'nvq_amount' => $item->course->nvq_amount,
                     'change_course' => $item->change_course?->name ?? '',
-                    'status' => $item->status
+                    'status' => $item->status,
+                    'has_food_fee' => $item->course->has_food_fee,
+                    'breakfast_amount' => $item->course->breakfast_amount,
+                    'lunch_amount' => $item->course->lunch_amount,
+                    'dinner_amount' => $item->course->dinner_amount,
                 ];
             });
 

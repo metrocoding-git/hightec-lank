@@ -30,6 +30,7 @@ use App\Http\Controllers\StudentCategoryController;
 use App\Http\Controllers\ItemSellController; // Import the new controller
 use App\Http\Controllers\VideoListController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\Foodpaymentcontroller;
 use App\Http\Controllers\ReportController; // Import the new controller
 use App\Http\Controllers\RoleController; // Import the new controller
 use App\Http\Controllers\UserController; // Import the new controller
@@ -245,6 +246,8 @@ Route::controller(HomeController::class)
         Route::get('student/student-info/get-intakes-by-branch/{branchId}', [IntakeController::class, 'getIntakesByBranch'])->name('get-intakes-by-branch');
         Route::get('student/student-info/get-courses-by-intake/{intakeId}', [IntakeController::class, 'getCoursesByIntake'])->name('get-courses-by-intake');
         Route::get('student/student-info/get-courses-by-branch/{branchId}', [CourseController::class, 'getCoursesByBranch'])->name('get-courses-by-branch')->withoutMiddleware(['csrf', 'permission']);
+        Route::post('fees/food-payment/store',  [Foodpaymentcontroller::class, 'storeFoodPayment'])
+            ->name('fees.food-payment.store');
         Route::get('student/student-info/get-courses-by-student/{studentId}', [CourseController::class, 'getCoursesByStudent'])->name('get-courses-by-student')->withoutMiddleware(['csrf', 'permission']);
         Route::get('student/student-info/get-intakes/{branchId}', [IntakeController::class, 'getIntakes'])->name('student.get-intakes');
         Route::get('student/student-info/get-courses/{intakeId}', [IntakeController::class, 'getCourses'])->name('student.get-courses');
@@ -321,7 +324,7 @@ Route::prefix('/student/fees/fee-invoice/invoice-payments')->group(function () {
     Route::get('/pending', [InvoicePaymentController::class, 'index'])->name('invoice-pending-payments.index');
     Route::post('/search', [InvoicePaymentController::class, 'search'])->name('invoice-payments.search');
     Route::get('/not-start-datatable', [InvoicePaymentController::class, 'notStartDatatable'])->name('invoice-payments.not-start-datatable');
-   
+
     Route::get('/', [InvoicePaymentController::class, 'pendingIndex'])
         ->name('invoice-payments');
     Route::get('/pending-datatable', [InvoicePaymentController::class, 'pendingDatatable'])
@@ -557,7 +560,6 @@ Route::controller(ReportController::class)->prefix('reports')
         Route::get('students-intake-balance', 'studentsIntakeBalance')->name('reports.students-intake-balance');
         Route::get('invoice-payments', 'invoicePayments')->name('reports.invoice-payments');
 
-
-
+        Route::get('food-payment-report', 'foodPaymentReport')->name('reports.food-payment');
         Route::get('change-course', 'changeCourse')->name('reports.change-course');
     });

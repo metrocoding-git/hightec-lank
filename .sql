@@ -184,3 +184,73 @@ ALTER TABLE `courses`
     ADD COLUMN `breakfast_amount` DECIMAL(10,2) NULL AFTER `has_food_fee`,
     ADD COLUMN `lunch_amount` DECIMAL(10,2) NULL AFTER `breakfast_amount`,
     ADD COLUMN `dinner_amount` DECIMAL(10,2) NULL AFTER `lunch_amount`;
+
+
+-- 06/07
+
+CREATE TABLE `food_payments` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `invoice_id` BIGINT UNSIGNED NOT NULL,
+    `course_id` BIGINT UNSIGNED NOT NULL,
+
+    -- Meal period
+    `from_date` DATE NOT NULL,
+    `to_date` DATE NOT NULL,
+
+    -- Meal selections
+    `has_breakfast` TINYINT(1) NOT NULL DEFAULT 0,
+    `has_lunch` TINYINT(1) NOT NULL DEFAULT 0,
+    `has_dinner` TINYINT(1) NOT NULL DEFAULT 0,
+
+    -- Totals
+    `total_food_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    `paid_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    `due_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+
+    `payment_status` ENUM('not','partial','full') NOT NULL DEFAULT 'not',
+    `payment_method` VARCHAR(50) DEFAULT NULL,
+
+    -- Lunchbox number
+    `lunchbox_number` VARCHAR(20) DEFAULT NULL,
+
+    `created_at` TIMESTAMP NULL DEFAULT NULL,
+    `updated_at` TIMESTAMP NULL DEFAULT NULL,
+
+    PRIMARY KEY (`id`),
+
+    KEY `idx_food_payments_invoice_id` (`invoice_id`),
+    KEY `idx_food_payments_course_id` (`course_id`),
+
+    CONSTRAINT `fk_fp_invoice`
+        FOREIGN KEY (`invoice_id`)
+        REFERENCES `fee_invoices`(`id`)
+        ON DELETE CASCADE,
+
+    CONSTRAINT `fk_fp_course`
+        FOREIGN KEY (`course_id`)
+        REFERENCES `courses`(`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+CREATE TABLE `lunchbox_sequences` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `branch_id` BIGINT UNSIGNED NOT NULL,
+
+    `year` SMALLINT UNSIGNED NOT NULL,
+    `month` TINYINT UNSIGNED NOT NULL,
+
+    `letter` CHAR(1) NOT NULL DEFAULT 'A',
+    `last_number` INT UNSIGNED NOT NULL DEFAULT 0,
+
+    PRIMARY KEY (`id`),
+
+    UNIQUE KEY `uq_branch_ym` (`branch_id`, `year`, `month`),
+
+    CONSTRAINT `fk_ls_branch`
+        FOREIGN KEY (`branch_id`)
+        REFERENCES `branches`(`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+ALTER TABLE `paid_courses` ADD `payment_type` VARCHAR(255) NULL AFTER `payment_file`;

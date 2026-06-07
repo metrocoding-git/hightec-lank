@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use App\Models\FeeInvoices;
 use App\Models\FeesGroup;
+use App\Models\FoodPayment;
 use App\Models\InvoicesPayments;
+use App\Models\LunchboxSequence;
 use App\Models\PaidCourse;
 use App\Models\Student;
 use Illuminate\Http\Request;
@@ -98,6 +100,7 @@ class FeesGroupController extends Controller
 
     public function storeCoursePayment(Request $request)
     {
+
         // Validate request
         $request->validate([
             'branch_id' => 'required',
@@ -113,8 +116,9 @@ class FeesGroupController extends Controller
             'bank_paid_amount' => 'nullable|numeric|min:0',
             'bank_paid_date' => 'nullable|date_format:Y-m-d',
             'notes' => 'nullable|string',
-            'payment_type' => 'required|in:course,nvq',
+            'payment_type' => 'required|in:course,nvq,food',
         ]);
+
 
 
         try {
@@ -165,6 +169,21 @@ class FeesGroupController extends Controller
                 $fee_invoice->payment_status = ($fee_invoice->paid_amount >= $fee_invoice->total_amount) ? 'full' : 'partial';
                 $fee_invoice->payment_method = $paymentMethod;
                 $fee_invoice->save();
+
+
+                if ($paymentType == 'food') {
+                    $foodPayment = FoodPayment::where('invoice_id', $fee_invoice->id)
+                        ->where('course_id', $request->course_id)
+                        ->first();
+                    if ($foodPayment) {
+                        $foodPayment->paid_amount += $paidAmount;
+                        $foodPayment->due_amount -= $paidAmount;
+                        $foodPayment->payment_status = ($foodPayment->paid_amount >= $foodPayment->total_food_amount) ? 'full' : 'partial';
+                        $foodPayment->payment_method = $paymentMethod;
+                        $foodPayment->to_date = date('Y-m-d', strtotime($request->food_to_date));
+                        $foodPayment->save();
+                    }
+                }
             } else {
 
                 // Case 2: No existing invoice/paid course found, create new ones
@@ -203,12 +222,37 @@ class FeesGroupController extends Controller
                     'due_amount' => $dueAmount,
                     'payment_status' => $request->payment_status,
                     'payment_method' => $paymentMethod,
+                    'payment_type' => $paymentType,
                     'bank_paid_amount' => ($paymentMethod === 'Card' || $paymentMethod === 'Bank Transfer') && $request->bank_paid_amount !== null ? $request->bank_paid_amount : null,
                     'bank_paid_date' => ($paymentMethod === 'Card' || $paymentMethod === 'Bank Transfer') && $request->bank_paid_date
                         ? Carbon::createFromFormat('Y-m-d', $request->bank_paid_date)->format('Y-m-d')
                         : null,
                     'payment_file' => null, // Will be handled below if file exists
                 ]);
+
+
+                if ($paymentType == 'food') {
+                    $lunchboxNumber = $this->generateLunchboxNumber($request->branch_id, $request->food_from_date);
+
+                    $has_breakfast = $request->has('has_breakfast') ? $request->has_breakfast : 0;
+                    $has_lunch =  $request->has('has_lunch') ? $request->has_lunch : 0;
+                    $has_dinner = $request->has('has_dinner') ? $request->has_dinner : 0;
+                    FoodPayment::create([
+                        'invoice_id'        => $fee_invoice->id,
+                        'course_id'         => $request->course_id,
+                        'from_date' => date('Y-m-d', strtotime($request->food_from_date)),
+                        'to_date'   => date('Y-m-d', strtotime($request->food_to_date)),
+                        'has_breakfast'     => $has_breakfast,
+                        'has_lunch'         => $has_lunch,
+                        'has_dinner'        => $has_dinner,
+                        'total_food_amount' => $coursePrice,
+                        'paid_amount'       => $paidAmount,
+                        'due_amount'        => $dueAmount,
+                        'payment_status'    => $request->payment_status,
+                        'payment_method'    => $paymentMethod,
+                        'lunchbox_number'   => $lunchboxNumber,
+                    ]);
+                }
             }
 
             $paymentFile = null;
@@ -245,6 +289,8 @@ class FeesGroupController extends Controller
                 'updated_at' => now(),
             ]);
 
+
+
             return response()->json([
                 'success' => true,
                 'message' => 'Course payment saved successfully!',
@@ -261,6 +307,51 @@ class FeesGroupController extends Controller
         }
     }
 
+
+    private function generateLunchboxNumber(int $branchId, string $fromDate): string
+    {
+        $date  = \Carbon\Carbon::parse($fromDate);
+        $year  = (int) $date->format('Y');
+        $month = (int) $date->format('n');
+
+        $seq = \DB::transaction(function () use ($branchId, $year, $month) {
+
+            $seq = LunchboxSequence::lockForUpdate()
+                ->where('branch_id', $branchId)
+                ->where('year', $year)
+                ->where('month', $month)
+                ->first();
+
+            if (!$seq) {
+                // Get the highest letter ever assigned across ALL branches and months
+                $lastGlobal = LunchboxSequence::orderByDesc('letter')
+                    ->orderByDesc('year')
+                    ->orderByDesc('month')
+                    ->first();
+
+                if ($lastGlobal) {
+                    $letter = $lastGlobal->letter === 'Z' ? 'A' : chr(ord($lastGlobal->letter) + 1);
+                } else {
+                    $letter = 'A'; // very first record ever
+                }
+
+                $seq = LunchboxSequence::create([
+                    'branch_id'   => $branchId,
+                    'year'        => $year,
+                    'month'       => $month,
+                    'letter'      => $letter,
+                    'last_number' => 0,
+                ]);
+            }
+
+            $seq->last_number += 1;
+            $seq->save();
+
+            return $seq;
+        });
+
+        return $seq->letter . '-' . $seq->last_number;
+    }
 
     public function indexCoursePayment()
     {
@@ -338,7 +429,7 @@ class FeesGroupController extends Controller
             // Get BOTH invoice types
             $invoices = FeeInvoices::where('student_id', $studentId)
                 ->where('payment_status', '!=', 'returned')
-                ->whereIn('invoice_type', ['course', 'nvq'])
+                ->whereIn('invoice_type', ['course', 'nvq', 'food'])
                 ->whereHas('paidCourses', function ($query) use ($courseId) {
                     $query->where('course_id', $courseId);
                 })
@@ -354,12 +445,16 @@ class FeesGroupController extends Controller
                     'course_due_amount' => $course->price ?? 0,
                     'nvq_total_paid' => 0,
                     'nvq_due_amount' => $course->nvq_amount ?? 0,
+                    'food_total_paid' => 0,
+                    'food_due_amount' => $course->food_amount ?? 0,
                 ]);
             }
 
             // Separate invoice IDs by type
             $courseInvoiceIds = $invoices->where('invoice_type', 'course')->pluck('id');
             $nvqInvoiceIds    = $invoices->where('invoice_type', 'nvq')->pluck('id');
+            $foodInvoiceIds   = $invoices->where('invoice_type', 'food')->pluck('id');
+
 
             // Get payments
             $payments = InvoicesPayments::whereIn('invoice_id', $invoices->pluck('id'))
@@ -369,10 +464,11 @@ class FeesGroupController extends Controller
             // Split payments
             $coursePayments = $payments->whereIn('invoice_id', $courseInvoiceIds);
             $nvqPayments    = $payments->whereIn('invoice_id', $nvqInvoiceIds);
-
+            $foodPayments   = $payments->whereIn('invoice_id', $foodInvoiceIds);
             // Totals
             $courseTotalPaid = $coursePayments->sum('amount');
             $nvqTotalPaid    = $nvqPayments->sum('amount');
+            $foodTotalPaid   = $foodPayments->sum('amount');
 
             // Get prices
             $coursePaidCourse = PaidCourse::whereIn('invoice_id', $courseInvoiceIds)
@@ -382,6 +478,13 @@ class FeesGroupController extends Controller
             $nvqPaidCourse = PaidCourse::whereIn('invoice_id', $nvqInvoiceIds)
                 ->where('course_id', $courseId)
                 ->first();
+
+            $foodPaidCourse = PaidCourse::whereIn('invoice_id', $foodInvoiceIds)
+                ->where('course_id', $courseId)
+                ->first();
+
+
+
             if (!$nvqPaidCourse) {
                 $course = Course::find($courseId);
                 $nvqPrice = $course->nvq_amount;
@@ -389,11 +492,34 @@ class FeesGroupController extends Controller
                 $nvqPrice = $nvqPaidCourse->course_price ?? 0;
             }
 
+            if (!$foodPaidCourse) {
+                $foodPrice = null;
+
+
+                $has_breakfast = false;
+                $has_lunch = false;
+                $has_dinner = false;
+                $from_date = null;
+                $to_date = null;
+            } else {
+                $foodDetails = FoodPayment::whereIn('invoice_id', $foodInvoiceIds)
+                    ->where('course_id', $courseId)
+                    ->first();
+                $has_breakfast = $foodDetails->has_breakfast ?? false;
+                $has_lunch = $foodDetails->has_lunch ?? false;
+                $has_dinner = $foodDetails->has_dinner ?? false;
+                $from_date = $foodDetails->from_date ?? null;
+                $to_date = $foodDetails->to_date ?? null;
+
+                $foodPrice = $foodPaidCourse->course_price ?? 0;
+            }
+
             $coursePrice = $coursePaidCourse->course_price ?? 0;
 
             // Due calculations
             $courseDue = $coursePrice - $courseTotalPaid;
             $nvqDue    = $nvqPrice - $nvqTotalPaid;
+            $foodDue   = $foodPrice - $foodTotalPaid;
 
             return response()->json([
                 'success' => true,
@@ -408,6 +534,16 @@ class FeesGroupController extends Controller
                 'nvq_total_paid' => $nvqTotalPaid,
                 'nvq_due_amount' => $nvqDue,
                 'nvq_amount' => $nvqPrice,
+
+                'food_total_paid' => $foodTotalPaid,
+                'food_due_amount' => $foodDue,
+                'food_amount' => $foodPrice,
+
+                'has_breakfast' => $has_breakfast,
+                'has_lunch' => $has_lunch,
+                'has_dinner' => $has_dinner,
+                'from_date' => $from_date,
+                'to_date' => $to_date,
 
             ]);
         } catch (\Exception $e) {

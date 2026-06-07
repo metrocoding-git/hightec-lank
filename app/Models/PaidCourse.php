@@ -18,6 +18,7 @@ class PaidCourse extends Model
         'bank_paid_amount',
         'bank_paid_date',
         'payment_file',
+        'payment_type'
     ];
 
     /**

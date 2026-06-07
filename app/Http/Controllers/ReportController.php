@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
+use App\Models\Course;
 use App\Models\Intake;
 use App\Models\InvoicePaymentReceipt;
 use App\Models\PaidCourse;
@@ -521,5 +522,86 @@ class ReportController extends Controller
         $reportData = $query->get();
 
         return view('pages.reports.invoice-payments', compact('reportData', 'branches'));
+    }
+
+
+    public function foodPaymentReport(Request $request)
+    {
+        $branches = Branch::all();
+        $courses  = Course::where('has_food_fee', 1)->orderBy('name')->get();
+
+        $query = \App\Models\FoodPayment::with([
+            'invoice',
+            'invoice.student',
+            'invoice.student.studentCategory',
+            'invoice.createUser',
+            'invoice.branch',
+            'course',
+        ]);
+
+        // ----- BRANCH -----
+        if ($request->branch_id) {
+            $query->whereHas('invoice', fn($q) => $q->where('branch_id', $request->branch_id));
+        }
+
+        // ----- COURSE -----
+        if ($request->course_id) {
+            $query->where('course_id', $request->course_id);
+        }
+
+        // ----- LUNCHBOX LETTER (group) -----
+        if ($request->letter) {
+            $query->where('lunchbox_number', 'LIKE', $request->letter . '-%');
+        }
+
+        // ----- MEAL FILTER -----
+        if ($request->meal) {
+            if ($request->meal === 'breakfast') $query->where('has_breakfast', 1);
+            if ($request->meal === 'lunch')     $query->where('has_lunch', 1);
+            if ($request->meal === 'dinner')    $query->where('has_dinner', 1);
+        }
+
+        // ----- DATE RANGE (food from_date) -----
+        if ($request->date_range) {
+            $dates = explode(' to ', $request->date_range);
+            $from  = $dates[0] ?? null;
+            $to    = $dates[1] ?? ($dates[0] ?? null);
+            if ($from) $query->whereDate('from_date', '>=', $from);
+            if ($to)   $query->whereDate('from_date', '<=', $to);
+        }
+
+        // ----- MONTH / YEAR (from lunchbox_sequences via from_date) -----
+        if ($request->month) {
+            $query->whereMonth('from_date', $request->month);
+        }
+        if ($request->year) {
+            $query->whereYear('from_date', $request->year);
+        }
+
+        // ----- PAYMENT STATUS -----
+        if ($request->payment_status) {
+            $query->where('payment_status', $request->payment_status);
+        }
+
+        $foodPayments = $query->orderBy('lunchbox_number')->get();
+
+        // Group by: year → month → branch → letter
+        $grouped = $foodPayments->groupBy([
+            fn($r) => \Carbon\Carbon::parse($r->from_date)->format('Y'),
+            fn($r) => \Carbon\Carbon::parse($r->from_date)->format('m'),
+            fn($r) => optional($r->invoice->branch)->name ?? 'N/A',
+            fn($r) => substr($r->lunchbox_number ?? '-', 0, 1),
+        ]);
+
+        // Available letters for filter dropdown
+        $letters = range('A', 'Z');
+
+        return view('pages.reports.food-payment-report', compact(
+            'foodPayments',
+            'grouped',
+            'branches',
+            'courses',
+            'letters'
+        ));
     }
 }
