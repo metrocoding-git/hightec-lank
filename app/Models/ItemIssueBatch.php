@@ -18,6 +18,7 @@ class ItemIssueBatch extends Model
         'issue_status',
         'active_status',
         'created_by',
+        'student_category_id'
     ];
 
     // Relationships

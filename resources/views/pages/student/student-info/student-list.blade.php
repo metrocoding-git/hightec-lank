@@ -33,11 +33,26 @@
                                 </div>
 
 
+                             
                                 <div class="col-lg-4 col-md-6 col-sm-6 text-left text-sm-right mb-4 mb-sm-0">
-                                    <a href="{{ route('add-student.index') }}" class="primary-btn small fix-gr-bg">
-                                        <span class="ti-plus pr-2"></span>
-                                        @lang('student.add_student')
-                                    </a>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ route('student-list.export-all') }}"
+                                            class="primary-btn small fix-gr-bg me-2" title="Export all students">
+                                            <span class="ti-download pr-2"></span>
+                                            Export All to Excel
+                                        </a>
+
+                                        <button type="button" class="primary-btn small fix-gr-bg me-2"
+                                            id="exportFilteredBtn" style="display: none;">
+                                            <span class="ti-download pr-2"></span>
+                                            Export Filtered
+                                        </button>
+
+                                        <a href="{{ route('add-student.index') }}" class="primary-btn small fix-gr-bg">
+                                            <span class="ti-plus pr-2"></span>
+                                            @lang('student.add_student')
+                                        </a>
+                                    </div>
                                 </div>
 
                             </div>
@@ -331,8 +346,8 @@
             ],
             pageLength: 25,
             lengthMenu: [
-                [25, 50, 100, -1],
-                [25, 50, 100, "All"]
+                [25, 50, 100, 500],
+                [25, 50, 100, 500]
             ],
             language: {
                 search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
@@ -453,6 +468,32 @@
 
         });
 
+        $(document).ready(function() {
+            function checkFilters() {
+                const hasFilters = $('#branch-select').val() ||
+                    $('#intake-select').val() ||
+                    $('#course-select').val();
+                $('#exportFilteredBtn').toggle(!!hasFilters);
+            }
+
+            $('#exportFilteredBtn').on('click', function() {
+                const branchId = $('#branch-select').val();
+                const intakeId = $('#intake-select').val();
+                const courseId = $('#course-select').val();
+
+                let url = '{{ route('student-list.export-filtered') }}?';
+                if (branchId) url += 'branch_id=' + branchId + '&';
+                if (intakeId) url += 'intake_id=' + intakeId + '&';
+                if (courseId) url += 'course_id=' + courseId + '&';
+                url = url.replace(/&$/, '');
+
+                window.location.href = url;
+            });
+
+            checkFilters();
+            $('#branch-select, #intake-select, #course-select').on('change', checkFilters);
+        });
+
 
         function getFileName() {
             let now = new Date();
@@ -515,9 +556,9 @@
                                <td>
                                     ${row.signature_path 
                                         ? `<a href="/storage/${row.signature_path}" target="_blank">
-                                                                                                <img src="/storage/${row.signature_path}" 
-                                                                                                    style="width:80px; border:1px solid #ccc; padding:2px; cursor:pointer;">
-                                                                                        </a>`
+                                                                                                            <img src="/storage/${row.signature_path}" 
+                                                                                                                style="width:80px; border:1px solid #ccc; padding:2px; cursor:pointer;">
+                                                                                                    </a>`
                                         : '-'
                                     }
                                 </td>

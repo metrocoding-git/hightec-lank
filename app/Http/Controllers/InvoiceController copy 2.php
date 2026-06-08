@@ -62,6 +62,7 @@ class InvoiceController extends Controller
             ->select([
                 'fee_invoices.*',
                 'students.student_name',
+                'students.national_id_number as nic_number',
                 'students.admission_number',
                 'student_categories.category_name',
                 'branches.name as branch_name',
@@ -81,6 +82,10 @@ class InvoiceController extends Controller
 
             ->addColumn('balance', function ($row) {
                 return number_format($row->total_amount - $row->paid_amount, 2);
+            })
+
+            ->addColumn('nic_number', function ($row) {
+                return $row->nic_number ?? '-';
             })
 
             ->addColumn(

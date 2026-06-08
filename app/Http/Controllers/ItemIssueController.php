@@ -120,6 +120,8 @@ class ItemIssueController extends Controller
         try {
             DB::beginTransaction();
 
+            $student_category_id = Student::where('id', $request->student_id)->value('student_category_id');
+
             // Create the main batch record
             $batch = new ItemIssueBatch();
             $batch->branch_id = $request->branch_id;
@@ -128,6 +130,7 @@ class ItemIssueController extends Controller
             $batch->description = $request->description;
             $batch->issue_status = 'I'; // Issued
             $batch->active_status = 1;
+            $batch->student_category_id = $student_category_id;
             $batch->created_by = Auth::id();
 
             // Check if student is selected or staff

@@ -74,8 +74,6 @@ class ItemSellController extends Controller
                 'bank_payment_amount' => 'required|numeric|min:0.01',
                 'bank_payment_date' => 'required|date',
             ]);
-
-    
         }
 
         try {
@@ -99,7 +97,9 @@ class ItemSellController extends Controller
                 $bankPaymentDate = Carbon::parse($request->bank_payment_date)->format('Y-m-d');
             }
 
-            
+            $studentCategoryId = Student::where('id', $request->student)->value('student_category_id');
+
+
             // Create ItemSellBatch record
             $itemSellBatch = ItemSellBatch::create([
                 'branch_id' => $request->branch_id,
@@ -120,6 +120,7 @@ class ItemSellController extends Controller
                 'total_due' => $request->totalDue ?? 0,
                 'status' => ($request->totalDue > 0) ? 'PP' : 'P',
                 'created_by' => Auth::id(),
+                'student_category_id' => $studentCategoryId,
                 'invoice_number' => $invoice_number
             ]);
 
@@ -163,7 +164,7 @@ class ItemSellController extends Controller
                 'updated_at' => now(),
             ]);
 
-            
+
 
             // Create ItemSellItem records for each item in the batch
             foreach ($request->item_id as $index => $itemId) {
@@ -175,7 +176,7 @@ class ItemSellController extends Controller
                     ], 422);
                 }
 
-                
+
                 ItemSellItem::create([
                     'item_sell_batch_id' => $itemSellBatch->id,
                     'item_id' => $itemId,
@@ -186,16 +187,16 @@ class ItemSellController extends Controller
 
                 // Track inventory changes for this item sell (decrease inventory)
                 $currentBalance = ItemInventory::getCurrentBalance($itemId, $request->branch_id);;
-                        
+
 
                 $newBalance = $currentBalance - $request->quantity[$index];
 
-                
+
                 ItemInventory::create([
                     'item_id' => $itemId,
                     'transaction_type' => 'sell',
                     'branch_id' => $request->branch_id,
-                    'transaction_id' => $itemSellBatch->id, 
+                    'transaction_id' => $itemSellBatch->id,
                     'quantity' => $request->quantity[$index],
                     'current_balance' => $newBalance,
                     'reference_no' => $request->reference_no,
@@ -274,7 +275,7 @@ class ItemSellController extends Controller
         $ItemReceive->save();
     }
 
-   
+
 
     public function returnItemSell($id)
     {
@@ -286,9 +287,16 @@ class ItemSellController extends Controller
             $returnDate = Carbon::today()->format('Y-m-d');
             $fee_invoice = FeeInvoices::where('main_invoice_number', $itemSellBatch->invoice_number)->first();
             $fee_invoice_payment = InvoicesPayments::where('invoice_id', $fee_invoice->id)->first();
+            $fee_invoice->paid_amount -= $fee_invoice_payment->amount;
+            $fee_invoice->due_amount += $fee_invoice_payment->amount;
+            $fee_invoice->payment_status = 'returned';
+            $fee_invoice->save();
+
+            
+
             InvoicesPayments::create([
                 'invoice_id' => $fee_invoice->id,
-                'amount' => -($fee_invoice_payment->amount),
+                'amount' => - ($fee_invoice_payment->amount),
                 'payment_method' => $fee_invoice_payment->payment_method,
                 'payment_type' => 'item_sell_return',
                 'receipt_number' => 'RET-' . time() . '-' . uniqid(),
@@ -311,8 +319,8 @@ class ItemSellController extends Controller
                 ItemInventory::create([
                     'item_id' => $item->item_id,
                     'transaction_type' => 'sell_return',
-                    'transaction_id' => $itemSellBatch->id, 
-                    'branch_id' => $itemSellBatch->branch_id, 
+                    'transaction_id' => $itemSellBatch->id,
+                    'branch_id' => $itemSellBatch->branch_id,
                     'quantity' => $item->quantity,
                     'current_balance' => $newBalance,
                     'reference_no' => $itemSellBatch->reference_no,

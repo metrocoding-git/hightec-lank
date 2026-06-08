@@ -26,11 +26,12 @@ use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 use Yajra\DataTables\DataTables;
+use App\Exports\StudentExport; 
 
 class StudentController extends Controller
 {
     // ================= AddStudentController methods =================
-      public function index()
+    public function index()
     {
         $branches = Auth::user()->branches;
         $genders = Gender::all();
@@ -275,6 +276,135 @@ class StudentController extends Controller
             ->make(true);
     }
 
+    public function exportAllStudents()
+    {
+        return Excel::download(
+            new StudentExport(),
+            'Students_' . now()->format('Y-m-d_H-i-s') . '.xlsx'
+        );
+    }
+ 
+    public function exportFilteredStudents(Request $request)
+    {
+        $filename = 'Students_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+ 
+        return Excel::download(
+            new StudentExport(
+                $request->get('branch_id'),
+                $request->get('intake_id'),
+                $request->get('course_id')
+            ),
+            $filename
+        );
+    }
+ 
+    public function exportAllStudentsCsv()
+    {
+        $students = Student::with([
+            'branch',
+            'gender',
+            'studentCategory',
+            'district',
+            'createUser',
+            'updateUser'
+        ])->active()->get();
+ 
+        // Headers
+        $headings = [
+            'ID',
+            'Admission Number',
+            'Full Name',
+            'Phone 1',
+            'Phone 2',
+            'NIC',
+            'Address',
+            'Branch',
+            'Admission Date',
+            'Category',
+            'Gender',
+            'Date of Birth',
+            'Age',
+            'Email',
+            'District',
+            'Full Name Verified',
+            'Phone 1 Verified',
+            'Phone 2 Verified',
+            'NIC Verified',
+            'Address Verified',
+            'Notes',
+            'Previous Institute',
+            'Created By',
+            'Updated By',
+            'Created At',
+            'Updated At'
+        ];
+ 
+        // Prepare data
+        $data = [];
+        foreach ($students as $student) {
+            $data[] = [
+                $student->id,
+                $student->admission_number ?? '-',
+                $student->student_name ?? '-',
+                $student->phone_number ?? '-',
+                $student->phone_number_2 ?? '-',
+                $student->national_id_number ?? '-',
+                $student->permanent_address ?? '-',
+                $student->branch->name ?? '-',
+                $student->admission_date ?? '-',
+                $student->studentCategory->category_name ?? '-',
+                $student->gender->name ?? '-',
+                $student->date_of_birth ?? '-',
+                $student->stu_age ?? '-',
+                $student->email_address ?? '-',
+                $student->district->name ?? '-',
+                $student->isVerified('Full Name Verified') ? 'YES' : 'NO',
+                $student->isVerified('Mobile Number Verified') ? 'YES' : 'NO',
+                $student->isVerified('Mobile Number 2 Verified') ? 'YES' : 'NO',
+                $student->isVerified('NIC Verified') ? 'YES' : 'NO',
+                $student->isVerified('Address Verified') ? 'YES' : 'NO',
+                $student->additional_notes ?? '-',
+                $student->previous_institute_details ?? '-',
+                $student->createUser->name ?? '-',
+                $student->updateUser->name ?? '-',
+                $student->created_at ?? '-',
+                $student->updated_at ?? '-'
+            ];
+        }
+ 
+        // Generate filename
+        $filename = "Students_" . now()->format('Y-m-d_H-i-s') . ".csv";
+ 
+        // Create response headers
+        $headers = [
+            "Content-type" => "text/csv; charset=UTF-8",
+            "Content-Disposition" => "attachment; filename={$filename}",
+            "Pragma" => "no-cache",
+            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
+            "Expires" => "0"
+        ];
+ 
+        // Create callback for streaming
+        $callback = function() use ($headings, $data) {
+            $file = fopen('php://output', 'w');
+            
+            // Add BOM for UTF-8 CSV (needed for Excel to display special characters correctly)
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            
+            // Write headers
+            fputcsv($file, $headings);
+            
+            // Write data
+            foreach ($data as $row) {
+                fputcsv($file, $row);
+            }
+            
+            fclose($file);
+        };
+ 
+        return response()->stream($callback, 200, $headers);
+    }
+
     public function store(Request $request)
     {
         // dd($request);
@@ -352,7 +482,7 @@ class StudentController extends Controller
 
         Student::create($validatedData);
 
-   
+
 
         if ($validatedData['is_old_stu'] == 1) {
             return redirect()->route('student.add-intake-with-courses.index')->with('success', 'Student add successfully');
@@ -371,7 +501,7 @@ class StudentController extends Controller
         $intakes = Intake::all();
         $districts = District::all();
         $student = Student::findOrFail($student->id);
-        
+
 
         return view('pages.student.student-info.edit-student', compact([
             'student',
@@ -667,7 +797,7 @@ class StudentController extends Controller
             ->orderBy('student_intakes.id', 'desc')
             ->get();
 
-        return view('pages.student.student-info.student-add-intake', compact('students', 'branches', 'intakes','studentCategories', 'studentIntakes'));
+        return view('pages.student.student-info.student-add-intake', compact('students', 'branches', 'intakes', 'studentCategories', 'studentIntakes'));
     }
 
     public function storeStudentIntake(Request $request)
@@ -892,6 +1022,12 @@ class StudentController extends Controller
                     Action
                 </button>
                 <div class="dropdown-menu">';
+                $buttons .= '
+                    <a class="dropdown-item" href="javascript:void(0);" 
+                    onclick="openEditCategoryModal(' . $row->id . ', ' . $row->student_category_id . '); return false;">
+                        <span class="text-warning">Edit Category</span>
+                    </a>
+                ';
 
                 // PENDING
                 if ($row->status == 'pending') {
@@ -955,6 +1091,30 @@ class StudentController extends Controller
             ])
 
             ->make(true);
+    }
+
+    public function updateStudentCategory(Request $request, $id)
+    {
+        $request->validate([
+            'student_category_id' => 'required|exists:student_categories,id',
+        ]);
+
+        try {
+            $studentCourse = StudentCourse::findOrFail($id);
+            $studentCourse->student_category_id = $request->student_category_id;
+            $studentCourse->updated_by = Auth::id();
+            $studentCourse->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Category updated successfully',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 
 
@@ -1481,7 +1641,7 @@ class StudentController extends Controller
     // ================= StudentViewController methods =================
     public function studentView($id)
     {
-        $student = Student::with(['branch', 'gender', 'studentCategory', 'bloodGroup', 'courses', 'intakes','courseWithIntake'])->findOrFail($id);
+        $student = Student::with(['branch', 'gender', 'studentCategory', 'bloodGroup', 'courses', 'intakes', 'courseWithIntake'])->findOrFail($id);
 
         // Fetch payment history
         $payments = FeeInvoices::where('student_id', $id)->with(['invoice_item.fee_type'])->get();

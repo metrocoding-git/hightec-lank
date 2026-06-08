@@ -376,7 +376,7 @@
                             <!-- Student Selection -->
 
 
-                            
+
                             <div class="col-lg-6 mt-4">
                                 <div class="primary_input">
                                     <label class="primary_input_label" for="modal_student_id">
@@ -527,6 +527,33 @@
                         <button type="submit" id="assignBtn" class="primary-btn fix-gr-bg">Assign</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade admin-query" id="editCategoryModal" role="dialog">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Edit Student Category</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit_student_course_id">
+                    <div class="primary_input">
+                        <label class="primary_input_label">Student Category <span class="text-danger">*</span></label>
+                        <select id="edit_category_id" class="primary_select form-control">
+                            <option value="">Select Category</option>
+                            @foreach (\App\Models\StudentCategory::all() as $cat)
+                                <option value="{{ $cat->id }}">{{ $cat->category_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="primary-btn tr-bg" data-dismiss="modal">Cancel</button>
+                    <button type="button" id="saveCategoryBtn" class="primary-btn fix-gr-bg">Update</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1280,6 +1307,72 @@
                     }
                 },
                 error: function() {
+                    toastr.error('Something went wrong!');
+                }
+            });
+        });
+
+
+        function openEditCategoryModal(studentCourseId, currentCategoryId) {
+            // Set the hidden input value
+            $('#edit_student_course_id').val(studentCourseId);
+
+            // Set the category dropdown value
+            $('#edit_category_id').val(currentCategoryId);
+
+            // Destroy and reinitialize niceSelect
+            if ($('#edit_category_id').hasClass('primary_select')) {
+                try {
+                    // Destroy existing niceSelect instance
+                    $('#edit_category_id').niceSelect('destroy');
+
+                    // Wait a moment then reinitialize
+                    setTimeout(function() {
+                        $('#edit_category_id').niceSelect();
+                        $('#edit_category_id').val(currentCategoryId).niceSelect('update');
+                    }, 100);
+                } catch (e) {
+                    console.log('NiceSelect not initialized yet');
+                    $('#edit_category_id').niceSelect();
+                }
+            }
+
+            // Show the modal
+            $('#editCategoryModal').modal('show');
+
+            return false;
+        }
+
+        $('#saveCategoryBtn').on('click', function() {
+            let id = $('#edit_student_course_id').val();
+            let categoryId = $('#edit_category_id').val();
+
+            if (!categoryId) {
+                toastr.error('Please select a category');
+                return;
+            }
+
+            $.ajax({
+                url: '{{ route('student.add-intake.update-category', ':id') }}'.replace(':id', id),
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    student_category_id: categoryId,
+                },
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success('Category updated successfully!');
+                        $('#editCategoryModal').modal('hide');
+                        // Close the modal and unbind the shown event
+                        $('#editCategoryModal').off('shown.bs.modal');
+                        // Reload table
+                        table.ajax.reload();
+                    } else {
+                        toastr.error(response.message || 'Failed to update');
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Error:', xhr);
                     toastr.error('Something went wrong!');
                 }
             });

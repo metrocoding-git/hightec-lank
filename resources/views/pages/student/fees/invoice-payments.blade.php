@@ -108,6 +108,7 @@
                                         <th>Confirmed</th>
                                         <th>Status</th>
                                         <th>Date</th>
+                                        <th>Note</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
@@ -220,6 +221,12 @@
                 processing: true,
                 searching: true,
                 serverSide: true,
+                lengthMenu: [
+                    [25, 50, 100, -1],
+                    [25, 50, 100, "All"]
+                ],
+
+                pageLength: 25,
                 ajax: {
                     url: "{{ route('invoice-payments-datatable') }}",
                     data: function(d) {
@@ -271,6 +278,9 @@
                     },
                     {
                         data: 'date'
+                    },
+                    {
+                        data: 'note'
                     },
                     {
                         data: 'action',

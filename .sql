@@ -254,3 +254,6 @@ CREATE TABLE `lunchbox_sequences` (
 
 
 ALTER TABLE `paid_courses` ADD `payment_type` VARCHAR(255) NULL AFTER `payment_file`;
+
+ALTER TABLE `item_issue_batches` ADD `student_category_id` INT NULL AFTER `created_by`;
+ALTER TABLE `item_sell_batches` ADD `student_category_id` INT NULL AFTER `created_by`;

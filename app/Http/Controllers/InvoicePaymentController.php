@@ -523,6 +523,14 @@ class InvoicePaymentController extends Controller
                 return $row->created_at ? date('Y-m-d', strtotime($row->created_at)) : '-';
             })
 
+            ->addColumn('note', function ($row) {
+                $payment = InvoicesPayments::with('invoice.student')
+                    ->where('payment_invoice_number', $row->payment_invoice_number)
+                    ->first();
+
+                return $payment?->invoice_payment_note ?? '-';
+            })
+
             // action
             ->addColumn('action', function ($row) {
 
@@ -732,7 +740,7 @@ class InvoicePaymentController extends Controller
                         }
 
                         $payment->update_user_id = Auth::id();
-                        
+
                         $payment->save();
 
                         $item->delete();

@@ -114,6 +114,7 @@
                                                 <th>Main Invoice No.</th>
                                                 <th>Fee Name</th>
                                                 <th>@lang('common.student')</th>
+                                                <th>NIC No.</th>
                                                 <th>Stu Category</th>
                                                 <th>Branch</th>
                                                 <th>@lang('admin.admission_no')</th>
@@ -977,6 +978,11 @@
                     searchable: true
                 },
                 {
+                    data: 'nic_number',
+                    name: 'nic_number',
+                    searchable: true
+                },
+                {
                     data: 'category_name',
                     name: 'student_categories.category_name',
                     searchable: true
@@ -1059,6 +1065,7 @@
                     orderable: false,
                     searchable: false
                 },
+                
             ],
         });
 

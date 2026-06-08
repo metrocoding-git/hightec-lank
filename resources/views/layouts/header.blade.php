@@ -114,6 +114,32 @@
         .toast-warning {
             background-color: #E09079 !important;
         }
+
+        /* Toast container */
+#toast-container > div {
+    width: 450px !important;
+    min-height: 80px !important;
+    padding: 20px 20px 20px 60px !important;
+    font-size: 16px !important;
+    border-radius: 8px !important;
+}
+
+/* Title */
+.toast-title {
+    font-size: 18px !important;
+    font-weight: 600 !important;
+}
+
+/* Message */
+.toast-message {
+    font-size: 20px !important;
+    line-height: 1.8 !important;
+}
+
+/* Icon */
+#toast-container > .toast {
+    background-size: 28px !important;
+}
     </style>
     <style>
         :root {

@@ -59,6 +59,8 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
     // Student Information Management (handled by HomeController)
     // Route::middleware(['permission'])->group(function () {
     Route::get('student/student-info/student-list', [StudentController::class, 'studentList'])->name('student-list');
+    Route::get('/student-list/export-all', [StudentController::class, 'exportAllStudents'])->name('student-list.export-all')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('/student-list/export-filtered', [StudentController::class, 'exportFilteredStudents'])->name('student-list.export-filtered')->withoutMiddleware(['csrf', 'permission']);
     Route::get('/student/student-info/student-list-datatable', [StudentController::class, 'studentDatatable'])->name('student-list.datatable');
     Route::get('student/student-info/verification-history/{id}', [StudentController::class, 'verificationHistory'])->name('student-list.verification-history');
     Route::put('student/update-status', [StudentController::class, 'updateStudetStatus'])->name('student.update-status');
@@ -218,6 +220,7 @@ Route::controller(StudentController::class)
         Route::POST('/change-course/{id}', 'changeCourse')->name('student.add-intake-with-courses.change-course')->withoutMiddleware(['csrf', 'permission']);
         Route::get('student-add-intake', 'studentAddIntakeWithCourses')->name('student.add-intake-with-courses.index')->withoutMiddleware(['csrf', 'permission']);
         Route::get('student-intake-data', 'studentAddIntakeWithCoursesData')->name('student.add-intake-with-courses.data')->withoutMiddleware(['csrf', 'permission']);
+        Route::post('student-intake/{id}/update-category', 'updateStudentCategory')->name('student.add-intake.update-category')->withoutMiddleware(['csrf', 'permission']);
         Route::post('student-add-intake', 'storeStudentIntakeWithCourses')->name('student.add-intake-with-courses.store');
         Route::get('student-add-intake/{id}/edit', 'editStudentIntake')->name('student.add-intake.edit');
         Route::put('student-add-intake/{id}', 'updateStudentIntake')->name('student.add-intake.update');

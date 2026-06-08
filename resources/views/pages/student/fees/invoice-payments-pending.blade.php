@@ -212,6 +212,12 @@
             processing: true,
             searching: true,
             serverSide: true,
+            lengthMenu: [
+                [25, 50, 100, -1],
+                [25, 50, 100, "All"]
+            ],
+
+            pageLength: 25,
             ajax: {
                 url: "{{ route('invoice-payments.not-start-datatable') }}",
                 data: function(d) {

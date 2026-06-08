@@ -25,7 +25,8 @@ class ItemSellBatch extends Model
         'total_paid',
         'total_due',
         'status',
-        'created_by'
+        'created_by',
+        'student_category_id',
     ];
 
     public function role()

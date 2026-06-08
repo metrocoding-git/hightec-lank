@@ -43,149 +43,153 @@ class InvoiceController extends Controller
         return view('pages.student.fees.fee-invoice', compact('fee_invoices', 'roles'));
     }
 
-public function invoiceDatatable(Request $request)
-{
-    $keyword = request('search.value');
+    public function invoiceDatatable(Request $request)
+    {
+        $keyword = request('search.value');
 
-    $query = DB::table('fee_invoices')
-        ->leftJoin('students', 'students.id', '=', 'fee_invoices.student_id')
-        ->leftJoin('student_categories', function ($join) {
-            $join->on(
-                'student_categories.id',
-                '=',
-                DB::raw('COALESCE(fee_invoices.student_category_id, students.student_category_id)')
-            );
-        })
-        ->leftJoin('branches', 'branches.id', '=', 'fee_invoices.branch_id')
-        ->leftJoin('invoice_items', 'invoice_items.invoice_id', '=', 'fee_invoices.id')
-        ->leftJoin('fee_types', 'fee_types.id', '=', 'invoice_items.fee_type_id')
-        ->leftJoin('paid_courses', 'paid_courses.invoice_id', '=', 'fee_invoices.id')
-        ->leftJoin('courses', 'courses.id', '=', 'paid_courses.course_id')
-        ->leftJoin('invoices_payments', function ($join) {
-            $join->on('invoices_payments.invoice_id', '=', 'fee_invoices.id')
-                ->whereRaw('invoices_payments.id = (
+        $query = DB::table('fee_invoices')
+            ->leftJoin('students', 'students.id', '=', 'fee_invoices.student_id')
+            ->leftJoin('student_categories', function ($join) {
+                $join->on(
+                    'student_categories.id',
+                    '=',
+                    DB::raw('COALESCE(fee_invoices.student_category_id, students.student_category_id)')
+                );
+            })
+            ->leftJoin('branches', 'branches.id', '=', 'fee_invoices.branch_id')
+            ->leftJoin('invoice_items', 'invoice_items.invoice_id', '=', 'fee_invoices.id')
+            ->leftJoin('fee_types', 'fee_types.id', '=', 'invoice_items.fee_type_id')
+            ->leftJoin('paid_courses', 'paid_courses.invoice_id', '=', 'fee_invoices.id')
+            ->leftJoin('courses', 'courses.id', '=', 'paid_courses.course_id')
+            ->leftJoin('invoices_payments', function ($join) {
+                $join->on('invoices_payments.invoice_id', '=', 'fee_invoices.id')
+                    ->whereRaw('invoices_payments.id = (
                     SELECT id FROM invoices_payments ip2
                     WHERE ip2.invoice_id = fee_invoices.id
                     ORDER BY ip2.created_at DESC
                     LIMIT 1
                 )');
-        })
-        ->select([
-            'fee_invoices.*',
-            'students.student_name',
-            'students.admission_number',
-            'student_categories.category_name',
-            'branches.name as branch_name',
-            'fee_types.name as fee_type_name',
-            'courses.name as course_name',
-            'invoices_payments.payment_invoice_number',
-            'invoices_payments.amount as invoice_payment_amount',
-            'invoices_payments.invoice_payment_confirm',
-            'invoices_payments.payment_method as inv_payment_method',
-            DB::raw('fee_invoices.total_amount as fee_total_amount'),
-            DB::raw('fee_invoices.paid_amount as fee_paid_amount'),
-        ])
-        ->where('fee_invoices.payment_status', '!=', 'returned');
+            })
+            ->select([
+                'fee_invoices.*',
+                'students.student_name',
+                'students.admission_number',
+                'student_categories.category_name',
+                'branches.name as branch_name',
+                'fee_types.name as fee_type_name',
+                'courses.name as course_name',
+                'invoices_payments.payment_invoice_number',
+                'invoices_payments.amount as invoice_payment_amount',
+                'students.national_id_number as nic_number',
+                'invoices_payments.invoice_payment_confirm',
+                'invoices_payments.payment_method as inv_payment_method',
+                DB::raw('fee_invoices.total_amount as fee_total_amount'),
+                DB::raw('fee_invoices.paid_amount as fee_paid_amount'),
+            ])
+            ->where('fee_invoices.payment_status', '!=', 'returned');
 
-    // ── Only apply filters when NOT searching ──────────────────
-    // When a search keyword is present, skip all filters so the
-    // user gets results from the entire dataset.
-    if (empty($keyword)) {
+        // ── Only apply filters when NOT searching ──────────────────
+        // When a search keyword is present, skip all filters so the
+        // user gets results from the entire dataset.
+        if (empty($keyword)) {
 
-        // Date Range Filter
-        $from = now()->subDays(30)->format('Y-m-d');
-        $to   = now()->format('Y-m-d');
+            // Date Range Filter
+            $from = now()->subDays(30)->format('Y-m-d');
+            $to   = now()->format('Y-m-d');
 
-        if ($request->date_range) {
-            if (str_contains($request->date_range, ' to ')) {
-                [$from, $to] = explode(' to ', $request->date_range);
-            } else {
-                $from = $to = $request->date_range;
+            if ($request->date_range) {
+                if (str_contains($request->date_range, ' to ')) {
+                    [$from, $to] = explode(' to ', $request->date_range);
+                } else {
+                    $from = $to = $request->date_range;
+                }
+            }
+            $query->whereBetween(DB::raw('DATE(fee_invoices.create_date)'), [$from, $to]);
+
+            // Branch Filter
+            if ($request->branch_id) {
+                $query->where('fee_invoices.branch_id', $request->branch_id);
+            }
+
+            // Payment Type / Fee Type Filter
+            if ($request->payment_type) {
+                if ($request->payment_type === 'course_fee') {
+                    $query->whereIn('fee_invoices.invoice_type', ['course', 'fee']);
+                } else {
+                    $query->where('fee_invoices.invoice_type', $request->payment_type);
+                }
             }
         }
-        $query->whereBetween(DB::raw('DATE(fee_invoices.create_date)'), [$from, $to]);
 
-        // Branch Filter
-        if ($request->branch_id) {
-            $query->where('fee_invoices.branch_id', $request->branch_id);
-        }
+        return DataTables::of($query)
+            ->addIndexColumn()
 
-        // Payment Type / Fee Type Filter
-        if ($request->payment_type) {
-            if ($request->payment_type === 'course_fee') {
-                $query->whereIn('fee_invoices.invoice_type', ['course', 'fee']);
-            } else {
-                $query->where('fee_invoices.invoice_type', $request->payment_type);
-            }
-        }
-    }
+            ->editColumn('fee_name', function ($row) {
+                return $row->invoice_type === 'fee'
+                    ? ($row->fee_type_name ?? '-')
+                    : ($row->invoice_type . ($row->course_name ? ' - ' . $row->course_name : ''));
+            })
 
-    return DataTables::of($query)
-        ->addIndexColumn()
+            ->addColumn('balance', function ($row) {
+                return number_format($row->fee_total_amount - $row->fee_paid_amount, 2);
+            })
 
-        ->editColumn('fee_name', function ($row) {
-            return $row->invoice_type === 'fee'
-                ? ($row->fee_type_name ?? '-')
-                : ($row->invoice_type . ($row->course_name ? ' - ' . $row->course_name : ''));
-        })
-
-        ->addColumn('balance', function ($row) {
-            return number_format($row->fee_total_amount - $row->fee_paid_amount, 2);
-        })
-
-        ->addColumn('payment_date', fn($row) =>
+             ->addColumn('nic_number', function ($row) {
+                return $row->nic_number ?? '-';
+            })
+            ->addColumn('payment_date', fn($row) =>
             \Carbon\Carbon::parse($row->create_date)->format('m/d/Y'))
 
-        ->addColumn('due_date', fn($row) =>
+            ->addColumn('due_date', fn($row) =>
             \Carbon\Carbon::parse($row->due_date)->format('m/d/Y'))
 
-        ->addColumn('inv_payment_number', fn($row) =>
+            ->addColumn('inv_payment_number', fn($row) =>
             $row->payment_invoice_number ?? '-')
 
-        ->addColumn('inv_total_amount', fn($row) =>
+            ->addColumn('inv_total_amount', fn($row) =>
             $row->fee_total_amount
                 ? number_format($row->fee_total_amount, 2)
                 : '-')
 
-        ->addColumn('inv_paid_amount', fn($row) =>
+            ->addColumn('inv_paid_amount', fn($row) =>
             $row->fee_paid_amount
                 ? number_format($row->fee_paid_amount, 2)
                 : '-')
 
-        ->addColumn('inv_payment_status', function ($row) {
-            if ($row->inv_payment_method !== 'Invoice') {
-                return '<span class="badge badge-secondary">-</span>';
-            }
-            if ($row->invoice_payment_confirm == 1) {
-                return '<span class="badge badge-success">Completed</span>';
-            }
-            if (!is_null($row->payment_invoice_number)) {
-                return '<span class="badge badge-warning text-dark">Pending</span>';
-            }
-            return '<span class="badge badge-danger">Not Opened</span>';
-        })
+            ->addColumn('inv_payment_status', function ($row) {
+                if ($row->inv_payment_method !== 'Invoice') {
+                    return '<span class="badge badge-secondary">-</span>';
+                }
+                if ($row->invoice_payment_confirm == 1) {
+                    return '<span class="badge badge-success">Completed</span>';
+                }
+                if (!is_null($row->payment_invoice_number)) {
+                    return '<span class="badge badge-warning text-dark">Pending</span>';
+                }
+                return '<span class="badge badge-danger">Not Opened</span>';
+            })
 
-        ->filter(function ($query) {
-            $keyword = request('search.value');
-            if ($keyword) {
-                $query->where(function ($q) use ($keyword) {
-                    $q->where('fee_invoices.main_invoice_number',          'like', "%{$keyword}%")
-                        ->orWhere('fee_invoices.payment_status',           'like', "%{$keyword}%")
-                        ->orWhere('fee_invoices.invoice_type',             'like', "%{$keyword}%")
-                        ->orWhere('fee_invoices.notes',                    'like', "%{$keyword}%")
-                        ->orWhere('students.student_name',                 'like', "%{$keyword}%")
-                        ->orWhere('students.admission_number',             'like', "%{$keyword}%")
-                        ->orWhere('student_categories.category_name',      'like', "%{$keyword}%")
-                        ->orWhere('branches.name',                         'like', "%{$keyword}%")
-                        ->orWhere('fee_types.name',                        'like', "%{$keyword}%")
-                        ->orWhere('courses.name',                          'like', "%{$keyword}%")
-                        ->orWhere('invoices_payments.payment_invoice_number', 'like', "%{$keyword}%");
-                });
-            }
-        }, true)
+            ->filter(function ($query) {
+                $keyword = request('search.value');
+                if ($keyword) {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->where('fee_invoices.main_invoice_number',          'like', "%{$keyword}%")
+                            ->orWhere('fee_invoices.payment_status',           'like', "%{$keyword}%")
+                            ->orWhere('fee_invoices.invoice_type',             'like', "%{$keyword}%")
+                            ->orWhere('fee_invoices.notes',                    'like', "%{$keyword}%")
+                            ->orWhere('students.student_name',                 'like', "%{$keyword}%")
+                            ->orWhere('students.admission_number',             'like', "%{$keyword}%")
+                            ->orWhere('student_categories.category_name',      'like', "%{$keyword}%")
+                            ->orWhere('branches.name',                         'like', "%{$keyword}%")
+                            ->orWhere('fee_types.name',                        'like', "%{$keyword}%")
+                            ->orWhere('courses.name',                          'like', "%{$keyword}%")
+                            ->orWhere('invoices_payments.payment_invoice_number', 'like', "%{$keyword}%");
+                    });
+                }
+            }, true)
 
-        ->addColumn('action', function ($row) {
-            return '
+            ->addColumn('action', function ($row) {
+                return '
             <div class="dropdown">
                 <button class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown">Action</button>
                 <div class="dropdown-menu">
@@ -204,10 +208,10 @@ public function invoiceDatatable(Request $request)
                        target="_blank">Re-Print</a>
                 </div>
             </div>';
-        })
-        ->rawColumns(['payment_status', 'action', 'inv_payment_status'])
-        ->make(true);
-}
+            })
+            ->rawColumns(['payment_status', 'action', 'inv_payment_status'])
+            ->make(true);
+    }
 
     /**
      * Display a listing of the resource.
