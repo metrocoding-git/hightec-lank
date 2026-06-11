@@ -424,8 +424,7 @@ class FeesGroupController extends Controller
 
     public function getCoursePaymentHistory($studentId, $courseId)
     {
-        try {
-
+       
             // Get BOTH invoice types
             $invoices = FeeInvoices::where('student_id', $studentId)
                 ->where('payment_status', '!=', 'returned')
@@ -549,15 +548,7 @@ class FeesGroupController extends Controller
                 'to_date' => $to_date,
 
             ]);
-        } catch (\Exception $e) {
-            Log::error('Error fetching course payment history: ' . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Error fetching course payment history',
-            ], 500);
-        }
-    }
+        
 
     private function generateReceiptNumber($branch_id, $paymentType)
     {
