@@ -257,3 +257,7 @@ ALTER TABLE `paid_courses` ADD `payment_type` VARCHAR(255) NULL AFTER `payment_f
 
 ALTER TABLE `item_issue_batches` ADD `student_category_id` INT NULL AFTER `created_by`;
 ALTER TABLE `item_sell_batches` ADD `student_category_id` INT NULL AFTER `created_by`;
+
+
+-- 06/09
+ALTER TABLE `food_payments` ADD `status` TINYINT NOT NULL DEFAULT '1' AFTER `lunchbox_number`;

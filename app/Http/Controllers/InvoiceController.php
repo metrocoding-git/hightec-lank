@@ -15,6 +15,7 @@ use App\Models\InvoicesPayments;
 use App\Models\PaidCourse; // Import the new PaidCourse model
 use App\Models\Student;
 use App\Models\Course; // Import the Course model
+use App\Models\FoodPayment;
 use App\Models\StudentCourse;
 use App\Models\UserBranch;
 use Illuminate\Http\Request;
@@ -759,14 +760,6 @@ class InvoiceController extends Controller
                 $branch_id = $originalPayment->branch_id;
             }
 
-            Log::debug('refundPayment: Initial invoice state:', [
-                'invoice_id' => $invoice->id,
-                'total_amount' => $invoice->total_amount,
-                'paid_amount' => $invoice->paid_amount,
-                'due_amount' => $invoice->due_amount,
-                'original_payment_id' => $originalPayment->id,
-                'original_payment_amount' => $originalPayment->amount,
-            ]);
 
             // Calculate the maximum possible refund amount based on various constraints
             $requestedRefundAmount = $request->amount;
@@ -781,14 +774,6 @@ class InvoiceController extends Controller
                 $maxRefundFromInvoicePaid,
                 $maxRefundToReachTotalDue
             );
-
-            Log::debug('refundPayment: Calculated refundAmount:', [
-                'requestedRefundAmount' => $requestedRefundAmount,
-                'maxRefundFromOriginalPayment' => $maxRefundFromOriginalPayment,
-                'maxRefundFromInvoicePaid' => $maxRefundFromInvoicePaid,
-                'maxRefundToReachTotalDue' => $maxRefundToReachTotalDue,
-                'final_refundAmount' => $refundAmount,
-            ]);
 
             // Ensure refundAmount is not negative or zero after min calculation
             if ($refundAmount <= 0) {
@@ -860,14 +845,14 @@ class InvoiceController extends Controller
             // IMPORTANT: Do NOT update $invoice->total_amount here. It should remain the original value.
             $invoice->save();
 
-            Log::debug('refundPayment: Final invoice state after refund:', [
-                'invoice_id' => $invoice->id,
-                'total_amount' => $invoice->total_amount, // This is the original total
-                'paid_amount' => $invoice->paid_amount,
-                'due_amount' => $invoice->due_amount,
-                'original_payment_id' => $originalPayment->id,
-                'original_payment_amount' => $originalPayment->amount, // This remains unchanged in the record
-            ]);
+            if($invoice->invoice_type == 'food'){
+                $food_payment = FoodPayment::where('invoice_id', $invoice->id)->first();
+
+                $food_payment->paid_amount = $newNetPaidAmount;
+                $food_payment->due_amount = $food_payment->total_food_amount - $newNetPaidAmount;
+                $food_payment->status = $newNetPaidAmount <= 0 ? 0 : 1;
+                $food_payment->save();  
+            }
 
             return response()->json([
                 'success' => true,
@@ -1102,6 +1087,23 @@ class InvoiceController extends Controller
                             ->format('Y-m-d');
                     }
                 }
+
+                if($invoice->invoice->invoice_type== 'food'){
+
+                    $food_payment = FoodPayment::where('invoice_id', $invoice->invoice_id)->first();
+
+                    $is_food_payment =  true ;
+                    $has_breakfast = $food_payment->has_breakfast ? true : false;
+                    $has_lunch = $food_payment->has_lunch ? true : false;
+                    $has_dinner = $food_payment->has_dinner ? true : false;
+                    $lunchbox_number = $food_payment->lunchbox_number ?? 'N/A';
+                }else{
+                    $is_food_payment = false;
+                    $has_breakfast = false;
+                    $has_lunch = false;
+                    $has_dinner = false;
+                    $lunchbox_number = '-';
+                }
             } catch (\Exception $e) {
                 Log::error('Error calculating due date: ' . $e->getMessage());
             }
@@ -1115,6 +1117,11 @@ class InvoiceController extends Controller
                 'created_at' => $created_at,
                 'expiration_date' => $expiration_date,
                 'created_to_due' => $created_to_due,
+                'is_food_payment' => $is_food_payment,
+                'has_breakfast' => $has_breakfast,
+                'has_lunch' => $has_lunch,
+                'has_dinner' => $has_dinner,
+                'lunchbox_number' => $lunchbox_number,
             ]);
         } catch (\Exception $e) {
             Log::error('Error fetching invoice report: ' . $e->getMessage());

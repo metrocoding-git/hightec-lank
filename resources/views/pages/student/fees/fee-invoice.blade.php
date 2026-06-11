@@ -61,6 +61,8 @@
                                 <option value="course_fee">Course & Fee</option>
                                 <option value="nvq">NVQ</option>
                                 <option value="item_sell">Item Sell</option>
+                                <option value="food">Food</option>
+
                                 <option value="others">Others</option>
                             </select>
                         </div>

@@ -25,6 +25,7 @@ class FoodPayment extends Model
         'payment_status',
         'payment_method',
         'lunchbox_number',
+        'status'
     ];
 
     public function invoice()

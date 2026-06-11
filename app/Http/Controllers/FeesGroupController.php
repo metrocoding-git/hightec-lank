@@ -493,8 +493,8 @@ class FeesGroupController extends Controller
             }
 
             if (!$foodPaidCourse) {
-                $foodPrice = null;
-
+                $foodPrice = $course->breakfast_amount + $course->lunch_amount + $course->dinner_amount;
+                $isNew = true;
 
                 $has_breakfast = false;
                 $has_lunch = false;
@@ -502,6 +502,8 @@ class FeesGroupController extends Controller
                 $from_date = null;
                 $to_date = null;
             } else {
+                $isNew = false;
+
                 $foodDetails = FoodPayment::whereIn('invoice_id', $foodInvoiceIds)
                     ->where('course_id', $courseId)
                     ->first();
@@ -538,6 +540,7 @@ class FeesGroupController extends Controller
                 'food_total_paid' => $foodTotalPaid,
                 'food_due_amount' => $foodDue,
                 'food_amount' => $foodPrice,
+                'is_new_food_payment' => $isNew,
 
                 'has_breakfast' => $has_breakfast,
                 'has_lunch' => $has_lunch,

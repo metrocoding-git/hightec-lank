@@ -286,7 +286,7 @@
                                                 </div>
                                                 <input type="number" class="form-control meal-amount"
                                                     id="breakfast_amount" name="breakfast_amount"
-                                                    placeholder="Breakfast Amount" step="0.01" min="0" disabled
+                                                    placeholder="Breakfast Amount" step="0.01" min="0"
                                                     readonly>
                                             </div>
 
@@ -298,7 +298,7 @@
                                                 </div>
                                                 <input type="number" class="form-control meal-amount" id="lunch_amount"
                                                     name="lunch_amount" placeholder="Lunch Amount" step="0.01"
-                                                    min="0" disabled readonly>
+                                                    min="0" readonly>
                                             </div>
 
                                             <div class="meal-card">
@@ -309,7 +309,7 @@
                                                 </div>
                                                 <input type="number" class="form-control meal-amount" id="dinner_amount"
                                                     name="dinner_amount" placeholder="Dinner Amount" step="0.01"
-                                                    min="0" disabled readonly>
+                                                    min="0" readonly>
                                             </div>
                                         </div>
                                     </div>
@@ -490,9 +490,9 @@
                     'Food Payment Mode Activated'
                 );
 
-                $('#food_from_date').prop('readonly', false);
-                $('#has_breakfast, #has_lunch, #has_dinner').prop('disabled', false);
-                $('#breakfast_amount, #lunch_amount, #dinner_amount').prop('readonly', false);
+                $('#food_from_date').prop('readonly', true);
+                $('#has_breakfast, #has_lunch, #has_dinner').prop('disabled', true);
+                $('#breakfast_amount, #lunch_amount, #dinner_amount').prop('readonly', true);
 
 
                 // Refresh selected course row if one is already added
@@ -656,18 +656,18 @@
                         $(this).val('').niceSelect('update');
                         return;
                     }
-                    // Pre-fill meal amounts from course defaults
-                    if (courseBreakfast > 0) {
-                        $('#breakfast_amount').val(courseBreakfast);
-                    }
-                    if (courseLunch > 0) {
-                        $('#lunch_amount').val(courseLunch);
-                    }
-                    if (courseDinner > 0) {
-                        $('#dinner_amount').val(courseDinner);
-                    }
+                    $('#has_breakfast').prop('checked', courseBreakfast > 0).prop('disabled', false);
+                    $('#breakfast_amount').val(courseBreakfast > 0 ? courseBreakfast : '');
+
+                    $('#has_lunch').prop('checked', courseLunch > 0).prop('disabled', false);
+                    $('#lunch_amount').val(courseLunch > 0 ? courseLunch : '');
+
+                    $('#has_dinner').prop('checked', courseDinner > 0).prop('disabled', false);
+                    $('#dinner_amount').val(courseDinner > 0 ? courseDinner : '');
+
+                    coursePrice = (courseBreakfast + courseLunch + courseDinner);
                     recalcFoodTotal();
-                    coursePrice = parseFloat($('#foodTotalDisplay').val()) || 0;
+                    
                 }
 
                 if (!courseId) {
@@ -700,7 +700,7 @@
                                 } else if (currentMode === 'normal' && data.course_amount) {
                                     effectivePrice = parseFloat(data.course_amount);
                                 } else if (currentMode === 'food') {
-                                    if (data.food_amount && parseFloat(data.food_amount) > 0) {
+                                    if (data.food_amount && parseFloat(data.food_amount) > 0 && !data.is_new_food_payment) {
                                         // Existing food invoice found — pre-fill and lock fields
                                         effectivePrice = parseFloat(data.food_amount);
 
@@ -714,7 +714,7 @@
                                             .has_breakfast == 1).prop('disabled', true);
                                         $('#breakfast_amount')
                                             .val(data.breakfast_amount ?? courseBreakfast)
-                                            .prop('disabled', false)
+                                            .prop('disabled', true)
                                             .prop('readonly', true);
 
                                         // Lunch
@@ -722,7 +722,7 @@
                                             .prop('disabled', true);
                                         $('#lunch_amount')
                                             .val(data.lunch_amount ?? courseLunch)
-                                            .prop('disabled', false)
+                                            .prop('disabled', true)
                                             .prop('readonly', true);
 
                                         // Dinner
@@ -730,29 +730,27 @@
                                             .prop('disabled', true);
                                         $('#dinner_amount')
                                             .val(data.dinner_amount ?? courseDinner)
-                                            .prop('disabled', false)
+                                            .prop('disabled', true)
                                             .prop('readonly', true);
+                                            
 
                                     } else {
-                                        // No existing food invoice — editable, pre-fill from course defaults
                                         $('#food_from_date').prop('readonly', false);
                                         $('#food_to_date').prop('readonly', false);
                                         $('#has_breakfast').prop('disabled', false);
                                         $('#has_lunch').prop('disabled', false);
                                         $('#has_dinner').prop('disabled', false);
-                                        $('#breakfast_amount').prop('readonly', false).val(
-                                            courseBreakfast || '');
-                                        $('#lunch_amount').prop('readonly', false).val(
-                                            courseLunch || '');
-                                        $('#dinner_amount').prop('readonly', false).val(
-                                            courseDinner || '');
-
-                                        effectivePrice = parseFloat($('#foodTotalDisplay')
-                                            .val()) || 0;
+                                        $('#breakfast_amount').prop('readonly', true);
+                                        $('#lunch_amount').prop('readonly', true);
+                                        $('#dinner_amount').prop('readonly', true);
+                                        effectivePrice = courseBreakfast + courseLunch +
+                                            courseDinner;
                                     }
                                 }
 
                                 addCourseRow(courseId, courseName, effectivePrice);
+
+
 
                                 // Intake name
                                 $('.allCourseDetails tr[data-id="' + courseId + '"]')
@@ -806,6 +804,7 @@
                 }
 
                 $(this).val('').niceSelect('update');
+                
             });
 
             // ================================================================
@@ -949,10 +948,6 @@
             // FOOD: meal checkboxes enable/disable amount inputs
             // ================================================================
             $('.meal-checkbox').on('change', function() {
-                let meal = $(this).data('meal');
-                let amtInput = $('#' + meal + '_amount');
-                amtInput.prop('disabled', !this.checked);
-                if (!this.checked) amtInput.val('');
                 recalcFoodTotal();
             });
 
@@ -971,16 +966,17 @@
                 let lunch = $('#has_lunch').is(':checked') ? (parseFloat($('#lunch_amount').val()) || 0) : 0;
                 let dinner = $('#has_dinner').is(':checked') ? (parseFloat($('#dinner_amount').val()) || 0) : 0;
 
+
                 let total = (breakfast + lunch + dinner);
                 $('#foodTotalDisplay').val(total > 0 ? total.toFixed(2) : '0.00');
 
                 // Sync course price row if one is already shown
-                if ($('.course_price_input').length) {
+                // if ($('.course_price_input').length) {
                     $('.course_price_input').val(total.toFixed(2));
                     $('.due_amount_display').val(total.toFixed(2));
                     $('.paid_amount_input').attr('max', total);
                     updatePaymentStatusAndDue();
-                }
+                // }
             }
 
             // ================================================================

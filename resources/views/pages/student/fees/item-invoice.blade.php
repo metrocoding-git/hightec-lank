@@ -160,6 +160,16 @@
                 top: 7.8cm;
             }
 
+            .lunchbo-number {
+                left: 16.1cm;
+                top: 6.6cm;
+            }
+
+            .meals {
+                left: 16.1cm;
+                top: 7.2cm;
+            }
+
             .total-amount {
                 left: 5.6cm;
                 top: 8.5cm;
@@ -190,13 +200,23 @@
         {{-- Course Name --}}
         <div class="field course-name">
             {{-- {{ $invoice->invoice->paidCourses ?? ($invoice->invoice->paidCourses->course->name )?? 'Fee Details' }} --}}
-            {{ $invoice->invoice->invoice_type == 'fee'
-                ? $invoice->invoice->invoice_item[0]->fee_type->name
-                : ($invoice->invoice->invoice_type == 'course'
-                    ? $invoice->invoice->paidCourses->course->name
-                    : ($invoice->invoice->invoice_type == 'nvq'
-                        ? 'NVQ - ' . $invoice->invoice->paidCourses->course->name
-                        : '-')) }}
+            {{
+                $invoice->invoice?->invoice_type == 'fee'
+                    ? ($invoice->invoice?->invoice_item[0]?->fee_type?->name ?? '-')
+                    : (
+                        $invoice->invoice?->invoice_type == 'course'
+                            ? ($invoice->invoice?->paidCourses?->course?->name ?? '-')
+                            : (
+                                $invoice->invoice?->invoice_type == 'nvq'
+                                    ? 'NVQ - ' . ($invoice->invoice?->paidCourses?->course?->name ?? '-')
+                                    : (
+                                        $invoice->invoice?->invoice_type == 'food'
+                                            ? 'FOOD - ' . ($invoice->invoice?->paidCourses?->course?->name ?? '-')
+                                            : '-'
+                                    )
+                            )
+                    )
+            }}
         </div>
         <div class="field stu-category">
             {{ $invoice->invoice->student->studentCategory->category_name ?? 'N/A' }}
@@ -212,6 +232,13 @@
         <div class="field student-nic">{{ $invoice->invoice->student->national_id_number ?? 'N/A' }}</div>
         <div class="field student-address">{{ $invoice->invoice->student->permanent_address ?? 'N/A' }}</div>
         <div class="field student-phone">{{ $invoice->invoice->student->phone_number ?? 'N/A' }}</div>
+
+        @if ($is_food_payment)
+            <div class="field lunchbo-number">BOX :- {{ $lunchbox_number ?? 'N/A' }}</div>
+            <div class="field meals">Meals :- {{ $has_breakfast ? ' B /' : '' }}
+                {{ $has_lunch ? ' L /' : '' }} {{ $has_dinner ? ' D' : '' }}</div>
+        @endif
+
 
         {{-- Payment Info --}}
         <div class="field total-amount">{{ number_format($invoice->amount, 2) }}</div>

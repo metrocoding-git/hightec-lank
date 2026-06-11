@@ -579,8 +579,8 @@ class ReportController extends Controller
         }
 
         // ----- PAYMENT STATUS -----
-        if ($request->payment_status) {
-            $query->where('payment_status', $request->payment_status);
+        if ($request->status !== null) {
+            $query->where('status', $request->status);
         }
 
         $foodPayments = $query->orderBy('lunchbox_number')->get();

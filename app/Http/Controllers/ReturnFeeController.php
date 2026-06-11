@@ -6,6 +6,7 @@ use App\Models\ReturnFee;
 use App\Models\FeeInvoices;
 use App\Models\Branch;
 use App\Models\Course;
+use App\Models\FoodPayment;
 use App\Models\Intake;
 use App\Models\InvoicesPayments;
 use Illuminate\Http\Request;
@@ -109,6 +110,16 @@ class ReturnFeeController extends Controller
                 'created_at'      => now(),
                 'updated_at'      => now(),
             ]);
+
+            
+            if($invoice->invoice_type == 'food'){
+                $food_payment = FoodPayment::where('invoice_id', $validated['invoice_id'])->first();
+
+                $food_payment->paid_amount = 0.00;
+                $food_payment->due_amount = $food_payment->total_food_amount;
+                $food_payment->status = 0;
+                $food_payment->save();  
+            }
             
 
             // Calculate new paid amount
