@@ -492,7 +492,13 @@ class FeesGroupController extends Controller
             }
 
             if (!$foodPaidCourse) {
-                $foodPrice = $course->breakfast_amount + $course->lunch_amount + $course->dinner_amount;
+                $course = Course::find($courseId);
+
+                if($course->has_food_fee) {
+                    $foodPrice = $course->breakfast_amount + $course->lunch_amount + $course->dinner_amount;
+                } else {
+                    $foodPrice = 0;
+                }
                 $isNew = true;
 
                 $has_breakfast = false;
