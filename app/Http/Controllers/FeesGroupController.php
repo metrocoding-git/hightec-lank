@@ -548,7 +548,7 @@ class FeesGroupController extends Controller
                 'to_date' => $to_date,
 
             ]);
-        
+    }
 
     private function generateReceiptNumber($branch_id, $paymentType)
     {
