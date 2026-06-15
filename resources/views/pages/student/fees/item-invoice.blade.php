@@ -211,7 +211,7 @@
                                     ? 'NVQ - ' . ($invoice->invoice?->paidCourses?->course?->name ?? '-')
                                     : (
                                         $invoice->invoice?->invoice_type == 'food'
-                                            ? 'FOOD - ' . ($invoice->invoice?->paidCourses?->course?->name ?? '-')
+                                            ? 'Food - ' . ($invoice->invoice?->paidCourses?->course?->name ?? '-')
                                             : '-'
                                     )
                             )

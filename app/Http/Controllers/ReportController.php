@@ -76,6 +76,17 @@ class ReportController extends Controller
     {
         $branches = Branch::all();
 
+        // Check if this is a DataTable server-side processing request
+        if ($request->ajax() && $request->has('draw')) {
+            return $this->getStudentsPaidData($request);
+        }
+
+        // For initial page load
+        return view('pages.reports.students-paid', compact('branches'));
+    }
+
+    private function getStudentsPaidData(Request $request)
+    {
         $query = InvoicesPayments::with([
             'invoice',
             'invoice.createUser',
@@ -90,10 +101,25 @@ class ReportController extends Controller
             'invoice.studentCategory'
         ]);
 
+        // Check if any FILTER is applied
+        $hasFilters = $request->filled('date_range') ||
+            $request->filled('payment_method') ||
+            $request->filled('branch_id') ||
+            $request->filled('payment_type');
+
+        // Check if user is searching (typing in table search box)
+        $isSearching = $request->filled('search.value');
+
+
+
+        if (!$hasFilters && !$isSearching) {
+            $today = now()->startOfDay();
+            $query->whereDate('created_at', '>=', $today);
+        }
+
         // ----- DATE RANGE FILTER -----
         if ($request->date_range) {
             $dates = explode(' to ', $request->date_range);
-
             $from = $dates[0] ?? null;
             $to = $dates[1] ?? null;
 
@@ -117,9 +143,7 @@ class ReportController extends Controller
 
         // ----- PAYMENT TYPE FILTER -----
         if ($request->payment_type) {
-
             $query->whereHas('invoice', function ($q) use ($request) {
-
                 if ($request->payment_type == 'course_fee') {
                     $q->whereIn('invoice_type', ['course', 'fee']);
                 } else {
@@ -128,12 +152,144 @@ class ReportController extends Controller
             });
         }
 
-        // Results
-        $feeInvoices = $query->orderBy('created_at', 'DESC')
-            ->orderByRaw("CAST(SUBSTRING_INDEX(receipt_number, '-', -1) AS UNSIGNED) DESC")
-            ->get();
+        // Get total records before search
+        $totalRecords = $query->count();
 
-        return view('pages.reports.students-paid', compact('feeInvoices', 'branches'));
+        // ----- SEARCH FILTER -----
+        if ($request->search['value']) {
+            $searchTerm = $request->search['value'];
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('receipt_number', 'like', "%{$searchTerm}%")
+                    ->orWhere('payment_invoice_number', 'like', "%{$searchTerm}%")
+                    ->orWhere('notes', 'like', "%{$searchTerm}%")
+                    ->orWhere('bank_payment_amount', 'like', "%{$searchTerm}%")
+                    ->orWhereHas('invoice', function ($invoiceQ) use ($searchTerm) {
+                        $invoiceQ->where('main_invoice_number', 'like', "%{$searchTerm}%")
+                            ->orWhereHas('student', function ($studentQ) use ($searchTerm) {
+                                $studentQ->where('admission_number', 'like', "%{$searchTerm}%")
+                                    ->orWhere('first_name', 'like', "%{$searchTerm}%")
+                                    ->orWhere('last_name', 'like', "%{$searchTerm}%");
+                            });
+                    });
+            });
+        }
+
+        $filteredRecords = $query->count();
+
+        // Sort
+        $orderCol = $request->order[0]['column'] ?? 0;
+        $orderDir = $request->order[0]['dir'] ?? 'desc';
+
+        if ($orderCol == 0) {
+            $query->orderBy('created_at', $orderDir);
+        } else {
+            $query->orderBy('created_at', 'DESC');
+        }
+
+        // Pagination
+        $start = $request->start ?? 0;
+        $length = $request->length ?? 25;
+        $feeInvoices = $query->offset($start)->limit($length)->get();
+
+        // Format data for DataTable
+        $data = [];
+        foreach ($feeInvoices as $key => $feeInvoice) {
+            $data[] = [
+                'id' => $key + 1,
+                'stu_no' => $feeInvoice->invoice ? $feeInvoice->invoice->student->admission_number : 'N/A',
+                'stu_category' => $feeInvoice->invoice?->studentCategory?->category_name ?? ($feeInvoice->invoice?->student?->studentCategory?->category_name ?? 'N/A'),
+                'paid_branch' => $feeInvoice->branch ? $feeInvoice->branch->name : 'N/A',
+                'invoice_number' => $feeInvoice->invoice ? $feeInvoice->invoice->main_invoice_number : 'N/A',
+                'receipt_number' => $feeInvoice->receipt_number ?? 'N/A',
+                'payment_name' => $this->getPaymentName($feeInvoice),
+                'paid_amount' => number_format((float) $feeInvoice->amount, 2, '.', ''),
+                'payment_method' => $feeInvoice->payment_method,
+                'payment_date' => $feeInvoice->created_at ? \Carbon\Carbon::parse($feeInvoice->created_at)->format('m/d/Y') : 'N/A',
+                'payment_invoice_number' => $feeInvoice->payment_invoice_number ?? '-',
+                'bank_payment_amount' => $feeInvoice->bank_payment_amount ?? '-',
+                'bank_payment_date' => $feeInvoice->bank_payment_date ? \Carbon\Carbon::parse($feeInvoice->bank_payment_date)->format('m/d/Y') : '-',
+                'notes' => $feeInvoice->notes ?? '-',
+                'create_user' => $feeInvoice->invoice && $feeInvoice->invoice->createUser ? $feeInvoice->invoice->createUser->name : 'N/A',
+                'invoice_payment_status' => $this->getInvoicePaymentStatus($feeInvoice),
+                'invoice_payment_amount' => $feeInvoice->payment_method == 'Invoice' ? $feeInvoice->invoice_payment_amount : '-',
+                'amount_is_negative' => $feeInvoice->amount < 0,
+            ];
+        }
+
+        return response()->json([
+            'draw' => intval($request->draw),
+            'recordsTotal' => $totalRecords,
+            'recordsFiltered' => $filteredRecords,
+            'data' => $data
+        ]);
+    }
+
+    private function getPaymentName($feeInvoice)
+    {
+
+        if ($feeInvoice->amount < 0) {
+
+            $originalPayment = InvoicesPayments::whereHas('invoice', function ($q) use ($feeInvoice) {
+                $q->where('main_invoice_number', $feeInvoice->invoice->main_invoice_number);
+            })
+                ->where('amount', '>', 0)
+                ->orderBy('id', 'asc')
+                ->first();
+
+            if ($originalPayment) {
+
+                switch ($originalPayment->payment_type) {
+                    case 'food':
+                        return 'Food Fee - Refund Payment';
+
+                    case 'course':
+                        return 'Course Payment - Refund Payment';
+
+                    case 'nvq':
+                        return 'NVQ Payment - Refund Payment';
+
+                    case 'fee':
+                        $feeName = $originalPayment->invoice->invoice_item[0]->fee_type->name ?? '';
+                        return ($feeName ?: 'Fee') . ' - Refund Payment';
+
+                    case 'item_sell':
+                        return 'Item Sell - Refund Payment';
+
+                    default:
+                        return ucfirst($originalPayment->payment_type) . ' - Refund Payment';
+                }
+            }
+
+            return 'Refund Payment';
+        }
+
+        if ($feeInvoice->payment_type === 'course') {
+            return 'Course Payment - ' . ($feeInvoice->invoice->paidCourses->course->name ?? 'N/A');
+        } elseif ($feeInvoice->payment_type === 'nvq') {
+            return 'NVQ Payment - ' . ($feeInvoice->invoice->paidCourses->course->name ?? 'N/A');
+        } elseif ($feeInvoice->payment_type === 'fee') {
+            return 'Fee Payment - ' . ($feeInvoice->invoice->invoice_item[0]->fee_type->name ?? 'N/A');
+        } elseif ($feeInvoice->payment_type === 'item_sell') {
+            return 'Item Sell';
+        } elseif ($feeInvoice->payment_type === 'food') {
+            return 'Food Fee';
+        }
+
+        return 'N/A';
+    }
+
+    private function getInvoicePaymentStatus($feeInvoice)
+    {
+        if ($feeInvoice->payment_method == 'Invoice') {
+            if ($feeInvoice->invoice_payment_confirm) {
+                return 'Completed';
+            } elseif ($feeInvoice->payment_invoice_number != null) {
+                return 'Pending';
+            } else {
+                return 'Not Open';
+            }
+        }
+        return '-';
     }
 
     public function coursePaid()
@@ -151,17 +307,15 @@ class ReportController extends Controller
         $from = now()->subDays(30)->format('Y-m-d');
 
         // If user selects date range
-        if ($request->date_range) {
+        if ($request->filled('date_range')) {
 
-            if (strpos($request->date_range, ' to ') !== false) {
-                // Range
-                $dates = explode(' to ', $request->date_range);
-                $from = $dates[0] ?? null;
-                $to = $dates[1] ?? null;
-            } else {
-                // Single date
-                $from = $request->date_range;
-                $to = $request->date_range;
+            $dates = explode(' to ', $request->date_range);
+        
+            $from = trim($dates[0]);
+            $to = trim($dates[1] ?? $from);
+        
+            if (empty($to)) {
+                $to = $from;
             }
         }
 
@@ -198,13 +352,22 @@ class ReportController extends Controller
             // })
             ->where(function ($q) use ($from, $to) {
                 $q->where(function ($q1) use ($from, $to) {
-                    $q1->whereBetween('intakes.start_date', [$from, $to])
-                        ->where('fee_invoices.payment_status', 'full');
+
+                    if ($from == $to) {
+                        $q1->whereDate('intakes.start_date', $from);
+                    } else {
+                        $q1->whereBetween('intakes.start_date', [$from, $to]);
+                    }
+                    $q1->where('fee_invoices.payment_status', 'full');
                 })
 
                     ->orWhere(function ($q2) use ($from, $to) {
-                        $q2->whereBetween('fee_invoices.updated_at', [$from, $to])
-                            ->where('fee_invoices.payment_status', 'full')
+                        if ($from == $to) {
+                            $q2->whereDate('fee_invoices.updated_at', $from);
+                        } else {
+                            $q2->whereBetween('fee_invoices.updated_at', [$from, $to]);
+                        }
+                        $q2->where('fee_invoices.payment_status', 'full')
                             ->where('intakes.start_date', '<', $from);
                     });
             })

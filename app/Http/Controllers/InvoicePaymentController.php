@@ -377,17 +377,19 @@ class InvoicePaymentController extends Controller
             ->where('payment_method', 'Invoice')
             ->whereNotNull('payment_invoice_number')
             ->selectRaw("
-                payment_invoice_number,
-                MIN(id) as id,
-                MAX(created_at) as created_at,
-        
-                SUM(amount) as total_amount,
-                SUM(invoice_payment_amount) as total_confirm_amount,
-        
-                COUNT(*) as total_count,
-                SUM(CASE WHEN invoice_payment_confirm = 1 THEN 1 ELSE 0 END) as confirmed_count,
-                SUM(CASE WHEN invoice_payment_confirm IS NULL THEN 1 ELSE 0 END) as pending_count
-            ")
+            payment_invoice_number,
+            MIN(id) as id,
+            MAX(created_at) as created_at,
+            MAX(payment_invoice_open_date) as payment_invoice_open_date,
+
+    
+            SUM(amount) as total_amount,
+            SUM(invoice_payment_amount) as total_confirm_amount,
+    
+            COUNT(*) as total_count,
+            SUM(CASE WHEN invoice_payment_confirm = 1 THEN 1 ELSE 0 END) as confirmed_count,
+            SUM(CASE WHEN invoice_payment_confirm IS NULL THEN 1 ELSE 0 END) as pending_count
+        ")
             ->groupBy('payment_invoice_number')
             ->orderByRaw("pending_count DESC")
             ->orderBy('created_at', 'desc');
@@ -395,6 +397,24 @@ class InvoicePaymentController extends Controller
         // Branch filter
         if ($request->branch_id) {
             $query->where('branch_id', $request->branch_id);
+        }
+
+        // ----- DATE RANGE FILTER -----
+        if ($request->date_range) {
+            $dates = explode(' to ', $request->date_range);
+
+            $from = isset($dates[0]) && !empty($dates[0]) ? $dates[0] : null;
+            $to = isset($dates[1]) && !empty($dates[1]) ? $dates[1] : $from; // If no 'to', use 'from'
+
+            // If both are empty, skip date filter
+            if ($from) {
+                // Convert dates to the correct format
+                $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $from)->startOfDay();
+                $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $to)->endOfDay();
+
+                $query->whereDate('payment_invoice_open_date', '>=', $fromDate)
+                    ->whereDate('payment_invoice_open_date', '<=', $toDate);
+            }
         }
 
         if ($request->has('search') && $request->search['value'] != '') {
@@ -439,11 +459,11 @@ class InvoicePaymentController extends Controller
 
                 $status = $row->pending_count > 0 ? 'pending' : 'completed';
                 return '<input type="checkbox"
-                class="payment-checkbox"
-                value="' . $row->payment_invoice_number . '"
-                data-status="' . $status . '"
-                data-total="' . $row->total_amount . '"
-                data-confirm="' . $row->total_confirm_amount . '">';
+            class="payment-checkbox"
+            value="' . $row->payment_invoice_number . '"
+            data-status="' . $status . '"
+            data-total="' . $row->total_amount . '"
+            data-confirm="' . $row->total_confirm_amount . '">';
             })
 
             // invoice number
@@ -520,7 +540,7 @@ class InvoicePaymentController extends Controller
 
             // date
             ->addColumn('date', function ($row) {
-                return $row->created_at ? date('Y-m-d', strtotime($row->created_at)) : '-';
+                return $row->payment_invoice_open_date ? date('Y-m-d', strtotime($row->payment_invoice_open_date)) : '-';
             })
 
             ->addColumn('note', function ($row) {
@@ -535,16 +555,15 @@ class InvoicePaymentController extends Controller
             ->addColumn('action', function ($row) {
 
                 return '<a href="' . route('invoice-payments.print', $row->payment_invoice_number) . '"
-                target="_blank"
-                class="btn btn-primary btn-sm">
-                Print
-            </a>';
+            target="_blank"
+            class="btn btn-primary btn-sm">
+            Print
+        </a>';
             })
 
             ->rawColumns(['select', 'action'])
             ->make(true);
     }
-
     function getBranchCode($branchName)
     {
         // Take first 2 letters of the branch name in uppercase

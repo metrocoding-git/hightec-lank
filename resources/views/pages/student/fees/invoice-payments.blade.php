@@ -30,8 +30,17 @@
                         <form class="form-horizontal" id="filter-form">
                             @csrf
                             <div class="row">
+                                {{-- Date Range Filter --}}
+                                <div class="col-lg-6 mb-15">
+                                    <div class="primary_input">
+                                        <label class="primary_input_label" for="date_range">Date Range</label>
+                                        <input type="text" class="form-control" id="date_range" name="date_range" 
+                                               placeholder="Select date range">
+                                    </div>
+                                </div>
+
                                 {{-- Branch Filter --}}
-                                <div class="col-lg-12 mb-15">
+                                <div class="col-lg-6 mb-15">
                                     <div class="primary_input">
                                         <label class="primary_input_label" for="branch_id">@lang('common.branch')</label>
                                         <select class="primary_select form-control" name="branch_id" id="branch-select">
@@ -59,6 +68,9 @@
                                 <div class="col-lg-12 mt-1 text-right">
                                     <button type="button" class="primary-btn small fix-gr-bg" id="submit-search">
                                         <span class="ti-search pr-2"></span>@lang('common.search')
+                                    </button>
+                                    <button type="button" class="primary-btn small fix-gr-bg btn-warning" id="reset-filter">
+                                        <span class="ti-reload pr-2"></span>Reset
                                     </button>
                                 </div>
                             </div>
@@ -107,7 +119,7 @@
                                         <th>Total Amount</th>
                                         <th>Confirmed</th>
                                         <th>Status</th>
-                                        <th>Date</th>
+                                        <th>Open Date</th>
                                         <th>Note</th>
                                         <th>Action</th>
                                     </tr>
@@ -191,6 +203,13 @@
     <script>
         $(document).ready(function() {
 
+            // Initialize date range picker
+            flatpickr("#date_range", {
+                mode: "range",
+                dateFormat: "Y-m-d",
+                allowInput: true,
+            });
+
             function showToast(message, type = 'success') {
                 let toastEl = $('#bulk-toast');
                 toastEl.removeClass('text-bg-success text-bg-danger text-bg-warning');
@@ -231,6 +250,7 @@
                     url: "{{ route('invoice-payments-datatable') }}",
                     data: function(d) {
                         d.branch_id = $('#branch-select').val();
+                        d.date_range = $('#date_range').val();
                     }
                 },
                 dom: "<'d-flex justify-content-between align-items-center mb-2'<'me-2'l><'mx-auto'f><'ms-2'B>>" +
@@ -292,9 +312,14 @@
 
             let table = $('#invoice_table').DataTable();
 
-
-
             $('#submit-search').on('click', function() {
+                $('#invoice_table').DataTable().ajax.reload();
+            })
+
+            // Reset filter
+            $('#reset-filter').on('click', function() {
+                $('#date_range').val('');
+                $('#branch-select').val('');
                 $('#invoice_table').DataTable().ajax.reload();
             })
 

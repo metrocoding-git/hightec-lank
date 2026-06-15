@@ -121,16 +121,19 @@
                                                 <th>Branch</th>
                                                 <th>@lang('admin.admission_no')</th>
                                                 <th>@lang('accounts.amount')(Rs)</th>
-                                                {{-- <th>@lang('fees.paid')(Rs)</th> --}}
+                                                <th>@lang('fees.paid')(Rs)</th>
                                                 <th>@lang('accounts.balance')(Rs)</th>
+                                                
                                                 <th>Payment Method</th>
                                                 <th>Payment Status</th>
                                                 <th>Payment Date</th>
+                                                <th>Updated Date</th>
                                                 <th>Due Date</th>
                                                 <th>Notes</th>
                                                 <th>Inv. Pay No</th>
                                                 <th>Invoice Amount</th>
-                                                <th>Paid Amount</th>
+                                                <th>Inv Paid Amount</th>
+
                                                 <th>Inv. Pay Status</th>
                                                 <th>@lang('common.action')</th>
                                             </tr>
@@ -1005,6 +1008,12 @@
                     searchable: false
                 }, // ← numeric
                 {
+                    data: 'paid_amount',
+                    name: 'paid_amount',
+                    orderable: false,
+                    searchable: false
+                }, // ← computed
+                {
                     data: 'balance',
                     name: 'balance',
                     orderable: false,
@@ -1025,7 +1034,13 @@
                     name: 'payment_date',
                     orderable: false,
                     searchable: false
-                }, // ← computed
+                }, 
+                {
+                    data: 'updated_date',
+                    name: 'updated_date',
+                    orderable: false,
+                    searchable: false
+                }, 
                 {
                     data: 'due_date',
                     name: 'due_date',
@@ -1055,6 +1070,7 @@
                     orderable: false,
                     searchable: false
                 }, // ← computed
+                
                 {
                     data: 'inv_payment_status',
                     name: 'inv_payment_status',

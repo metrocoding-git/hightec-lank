@@ -86,6 +86,13 @@ class InvoiceController extends Controller
                 'invoices_payments.payment_method as inv_payment_method',
                 DB::raw('fee_invoices.total_amount as fee_total_amount'),
                 DB::raw('fee_invoices.paid_amount as fee_paid_amount'),
+                DB::raw('(
+                    SELECT COALESCE(SUM(ip.amount), 0)
+                    FROM invoices_payments ip
+                    WHERE ip.invoice_id = fee_invoices.id
+                    AND ip.payment_method = "Invoice"
+                ) as invoice_only_paid_amount'),
+                ('invoices_payments.invoice_payment_amount as invoice_paid_amount'),
             ])
             ->where('fee_invoices.payment_status', '!=', 'returned');
 
@@ -138,6 +145,8 @@ class InvoiceController extends Controller
              ->addColumn('nic_number', function ($row) {
                 return $row->nic_number ?? '-';
             })
+            ->addColumn('updated_date', fn($row) =>
+            \Carbon\Carbon::parse($row->updated_at)->format('m/d/Y'))
             ->addColumn('payment_date', fn($row) =>
             \Carbon\Carbon::parse($row->create_date)->format('m/d/Y'))
 
@@ -148,11 +157,17 @@ class InvoiceController extends Controller
             $row->payment_invoice_number ?? '-')
 
             ->addColumn('inv_total_amount', fn($row) =>
-            $row->fee_total_amount
-                ? number_format($row->fee_total_amount, 2)
+            $row->invoice_only_paid_amount
+                ? number_format($row->invoice_only_paid_amount, 2)
                 : '-')
-
             ->addColumn('inv_paid_amount', fn($row) =>
+                $row->invoice_paid_amount > 0
+                    ? number_format($row->invoice_paid_amount, 2)
+                    : '-')
+            
+        
+
+            ->addColumn('paid_amount', fn($row) =>
             $row->fee_paid_amount
                 ? number_format($row->fee_paid_amount, 2)
                 : '-')
