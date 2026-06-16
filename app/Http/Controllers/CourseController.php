@@ -138,6 +138,8 @@ class CourseController extends Controller
                     'course_name' => $item->course->name,
                     'course_price' => $item->course->price,
                     'intake_id' => $item->intake?->id,
+                    'intake_start_date' => $item->intake?->start_date,
+                    'intake_duration' => $item->course?->duration,
                     'intake_name' => $item->intake?->name,
                     'has_nvq_payment' => $item->course->has_nvq_payment,
                     'nvq_amount' => $item->course->nvq_amount,

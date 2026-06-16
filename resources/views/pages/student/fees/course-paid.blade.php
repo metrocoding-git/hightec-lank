@@ -47,6 +47,25 @@
             color: #fff !important;
         }
 
+        #leftPanelTitle,
+        #rightPanelTitle {
+            transition: color .2s;
+        }
+
+        .title-normal {
+            color: #007bff;
+        }
+
+        .title-nvq {
+            color: #6f42c1;
+        }
+
+        .title-food {
+            color: #28a745;
+        }
+
+
+
         /* ---- Food-specific fields ---- */
         #foodPaymentFields .meal-row {
             display: flex;
@@ -106,11 +125,10 @@
         <div id="toastContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 11"></div>
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1>Course Payment Details</h1>
+                <h1 id="TopPanelTitle">Course Payment Details</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
                     <a href="#">@lang('fees.fees')</a>
-                    <a href="#">course payment details</a>
                 </div>
             </div>
         </div>
@@ -425,7 +443,6 @@
 
             // ================================================================
             // MODE MANAGEMENT
-            // Modes: 'normal' | 'nvq' | 'food'
             // ================================================================
             const MODES = ['normal', 'nvq', 'food'];
             const MODE_LABELS = {
@@ -439,11 +456,13 @@
                 food: 'mode-food'
             };
 
-            let currentMode = 'normal';
+            let currentMode = localStorage.getItem('coursePaymentMode') || 'normal';
             let addedCourseId = null;
 
             function setMode(mode) {
                 currentMode = mode;
+                localStorage.setItem('coursePaymentMode', mode);
+
 
                 // Button label + colour
                 $('#toggleMode')
@@ -451,7 +470,7 @@
                     .removeClass('mode-normal mode-nvq mode-food')
                     .addClass(MODE_CLASSES[mode]);
 
-                // Panel titles
+                // ── FIX 2: Panel title text + color to match button ──────────
                 const titles = {
                     normal: {
                         left: 'Course Payment Details',
@@ -466,8 +485,18 @@
                         right: 'Food Course Details'
                     },
                 };
-                $('#leftPanelTitle').text(titles[mode].left);
-                $('#rightPanelTitle').text(titles[mode].right);
+                const titleColors = {
+                    normal: '#007bff',
+                    nvq: '#6f42c1',
+                    food: '#28a745'
+                };
+
+                $('#leftPanelTitle').text(titles[mode].left).css('color', titleColors[mode]);
+                $('#TopPanelTitle').text(titles[mode].left);
+
+
+                $('#rightPanelTitle').text(titles[mode].right).css('color', titleColors[mode]);
+                // ─────────────────────────────────────────────────────────────
 
                 // Show/hide food-specific fields
                 if (mode === 'food') {
@@ -476,7 +505,6 @@
                     $('#foodPaymentFields').addClass('d-none');
                 }
 
-                // Update form action URL
                 const urls = {
                     normal: '{{ route('fees.course-payment.store') }}',
                     nvq: '{{ route('fees.course-payment.store') }}',
@@ -494,8 +522,6 @@
                 $('#has_breakfast, #has_lunch, #has_dinner').prop('disabled', true);
                 $('#breakfast_amount, #lunch_amount, #dinner_amount').prop('readonly', true);
 
-
-                // Refresh selected course row if one is already added
                 $('#course_id').trigger('change');
             }
 
@@ -503,6 +529,9 @@
                 const nextIndex = (MODES.indexOf(currentMode) + 1) % MODES.length;
                 setMode(MODES[nextIndex]);
             });
+
+            // Initialize title color on load
+            setMode(currentMode);
 
             // ================================================================
             // BRANCH CHANGE → load students
@@ -554,7 +583,6 @@
                     return;
                 }
 
-                // Admission fee check
                 let allStudents = @json($students);
                 let selectedStudent = allStudents.find(s => s.id == studentId);
                 if (selectedStudent && selectedStudent.is_admission == 0) {
@@ -578,7 +606,6 @@
                             data.courses.forEach(function(course) {
                                 let changeCourseText = course.change_course ?
                                     ' (Changed to: ' + course.change_course + ')' : '';
-
                                 $('#course_id').append(
                                     '<option value="' + course.course_id + '"' +
                                     ' data-price="' + course.course_price + '"' +
@@ -595,6 +622,11 @@
                                         0) + '"' +
                                     ' data-dinner-amount="' + (course
                                         .dinner_amount ?? 0) + '"' +
+
+                                    ' data-intake-start="' + (course
+                                        .intake_start_date ?? '') + '"' +
+                                    ' data-intake-duration="' + (course
+                                        .intake_duration ?? '') + '"' +
                                     ' data-status="' + course.status + '">' +
                                     course.course_name + ' - ' + course
                                     .intake_name + changeCourseText +
@@ -625,13 +657,11 @@
                 let status = selectedOption.data('status');
                 let coursePrice = parseFloat(selectedOption.data('price')) || 0;
 
-                // Per-meal defaults from the course
                 let courseBreakfast = parseFloat(selectedOption.data('breakfast-amount')) || 0;
                 let courseLunch = parseFloat(selectedOption.data('lunch-amount')) || 0;
                 let courseDinner = parseFloat(selectedOption.data('dinner-amount')) || 0;
 
-                // --- Mode-specific guards ---
-                if (currentMode === 'nvq') {
+                if (currentMode == 'nvq') {
                     if (!hasNVQ && courseId) {
                         toastr.warning('This course has no NVQ payment', null, {
                             timeOut: 10000
@@ -639,7 +669,7 @@
                         $(this).val('').niceSelect('update');
                         return;
                     }
-                    if (status !== 'start') {
+                    if (status !== 'start' && status) {
                         toastr.warning('This course status: ' + status, null, {
                             timeOut: 20000,
                             extendedTimeOut: 10000
@@ -658,16 +688,15 @@
                     }
                     $('#has_breakfast').prop('checked', courseBreakfast > 0).prop('disabled', false);
                     $('#breakfast_amount').val(courseBreakfast > 0 ? courseBreakfast : '');
-
                     $('#has_lunch').prop('checked', courseLunch > 0).prop('disabled', false);
                     $('#lunch_amount').val(courseLunch > 0 ? courseLunch : '');
-
                     $('#has_dinner').prop('checked', courseDinner > 0).prop('disabled', false);
                     $('#dinner_amount').val(courseDinner > 0 ? courseDinner : '');
+                    coursePrice = courseBreakfast + courseLunch + courseDinner;
 
-                    coursePrice = (courseBreakfast + courseLunch + courseDinner);
+
+
                     recalcFoodTotal();
-                    
                 }
 
                 if (!courseId) {
@@ -686,7 +715,6 @@
                 let studentId = $('#student_id').val();
 
                 if (studentId && courseId) {
-                    // Load payment history
                     $.ajax({
                         url: '{{ route('fees.course-payment-history', [':studentId', ':courseId']) }}'
                             .replace(':studentId', studentId).replace(':courseId', courseId),
@@ -700,39 +728,27 @@
                                 } else if (currentMode === 'normal' && data.course_amount) {
                                     effectivePrice = parseFloat(data.course_amount);
                                 } else if (currentMode === 'food') {
-                                    if (data.food_amount && parseFloat(data.food_amount) > 0 && !data.is_new_food_payment) {
-                                        // Existing food invoice found — pre-fill and lock fields
+                                    if (data.food_amount && parseFloat(data.food_amount) > 0 &&
+                                        !data.is_new_food_payment) {
                                         effectivePrice = parseFloat(data.food_amount);
-
-                                        // Dates — set and lock (readonly)
                                         $('#food_from_date').val(data.from_date).prop(
                                             'readonly', true);
                                         $('#food_to_date').val(data.to_date);
-
-                                        // Breakfast
                                         $('#has_breakfast').prop('checked', data
                                             .has_breakfast == 1).prop('disabled', true);
-                                        $('#breakfast_amount')
-                                            .val(data.breakfast_amount ?? courseBreakfast)
-                                            .prop('disabled', true)
-                                            .prop('readonly', true);
-
-                                        // Lunch
+                                        $('#breakfast_amount').val(data.breakfast_amount ??
+                                            courseBreakfast).prop('disabled', true).prop(
+                                            'readonly', true);
                                         $('#has_lunch').prop('checked', data.has_lunch == 1)
                                             .prop('disabled', true);
-                                        $('#lunch_amount')
-                                            .val(data.lunch_amount ?? courseLunch)
-                                            .prop('disabled', true)
-                                            .prop('readonly', true);
-
-                                        // Dinner
+                                        $('#lunch_amount').val(data.lunch_amount ?? courseLunch)
+                                            .prop('disabled', true).prop('readonly', true);
                                         $('#has_dinner').prop('checked', data.has_dinner == 1)
                                             .prop('disabled', true);
-                                        $('#dinner_amount')
-                                            .val(data.dinner_amount ?? courseDinner)
-                                            .prop('disabled', true)
-                                            .prop('readonly', true);
-                                            
+                                        $('#dinner_amount').val(data.dinner_amount ??
+                                            courseDinner).prop('disabled', true).prop(
+                                            'readonly', true);
+
 
                                     } else {
                                         $('#food_from_date').prop('readonly', false);
@@ -745,18 +761,55 @@
                                         $('#dinner_amount').prop('readonly', true);
                                         effectivePrice = courseBreakfast + courseLunch +
                                             courseDinner;
+
+                                        let intakeStart = selectedOption.data('intake-start');
+                                        let intakeDuration = selectedOption.data(
+                                            'intake-duration');
+
+                                        if (intakeStart && intakeDuration) {
+                                            let today = new Date();
+                                            today.setHours(0, 0, 0, 0);
+                                            let startDate = new Date(intakeStart);
+                                            startDate.setHours(0, 0, 0, 0);
+
+                                            let fromDate = today >= startDate ? today :
+                                                startDate;
+
+                                            let toDate = new Date(startDate);
+                                            if (intakeDuration === '1 week') toDate.setDate(
+                                                toDate.getDate() + 7);
+                                            else if (intakeDuration === '2 weeks') toDate
+                                                .setDate(toDate.getDate() + 14);
+                                            else if (intakeDuration === '1 month') toDate
+                                                .setMonth(toDate.getMonth() + 1);
+                                            else if (intakeDuration === '2 month') toDate
+                                                .setMonth(toDate.getMonth() + 2);
+
+                                            const fmt = d => d.toISOString().split('T')[0];
+
+                                            $('#food_from_date').val(fmt(fromDate));
+                                            $('#food_to_date').val(fmt(toDate));
+
+                                            if (toDate <= today) {
+                                                $('#food_to_date').val(null);
+                                                toastr.warning(
+                                                    'Food To Date (' + fmt(toDate) +
+                                                    ') is not match.',
+                                                    'Date Notice', {
+                                                        timeOut: 8000
+                                                    }
+                                                );
+                                            }
+                                        }
+
                                     }
                                 }
 
                                 addCourseRow(courseId, courseName, effectivePrice);
 
-
-
-                                // Intake name
                                 $('.allCourseDetails tr[data-id="' + courseId + '"]')
                                     .find('.intake_name_cell').text(intakeName);
 
-                                // Payment history table
                                 let historyTable = $('#paymentHistoryTable tbody');
                                 historyTable.empty();
                                 if (data.history.length > 0) {
@@ -780,31 +833,30 @@
                                     $('.allCourseDetails tr').addClass('first-payment');
                                 }
 
-                                // Due amount for the active mode
+                                // ── FIX 3: Set due amount from history response ──
                                 let dueAmount = 0;
                                 if (currentMode === 'nvq') {
                                     dueAmount = parseFloat(data.nvq_due_amount) || 0;
                                 } else if (currentMode === 'food') {
                                     dueAmount = parseFloat(data.food_due_amount) ||
-                                        0;
+                                        effectivePrice;
                                 } else {
                                     dueAmount = parseFloat(data.course_due_amount) || 0;
                                 }
 
-                                $('.allCourseDetails tr').find('.due_amount_display').val(
-                                    dueAmount.toFixed(2));
-                                $('.allCourseDetails tr').find('.due_amount_display').data(
-                                    'initial-due', dueAmount);
+                                // Store the authoritative due from the server and display it
+                                $('.allCourseDetails tr').find('.due_amount_display')
+                                    .val(dueAmount.toFixed(2))
+                                    .data('initial-due', dueAmount);
                                 $('.allCourseDetails tr').find('.paid_amount_input').attr('max',
                                     dueAmount);
+                                // ────────────────────────────────────────────────
                             }
                         }
-
                     });
                 }
 
                 $(this).val('').niceSelect('update');
-                
             });
 
             // ================================================================
@@ -816,41 +868,41 @@
                     'Course Payment';
 
                 let row = `<tr data-id="${id}">
-            <td class="sl">1</td>
-            <td class="course_name">${name}</td>
-            <td class="intake_name_cell">N/A</td>
-            <td class="course_price_cell">
-                <div class="input-group input-group-sm" style="max-width:120px;">
-                    <input type="number" class="form-control course_price_input"
-                        name="course_price[${id}]" value="${price}" step="0.01">
-                    <div class="input-group-append"><span class="input-group-text">.00</span></div>
-                </div>
-            </td>
-            <td class="paid_amount_cell">
-                <div class="input-group input-group-sm" style="max-width:120px;">
-                    <input type="number" class="form-control paid_amount_input"
-                        name="paid_amount[${id}]" value="" step="0.01" max="${price}"
-                        data-original-price="${price}">
-                    <div class="input-group-append"><span class="input-group-text">.00</span></div>
-                </div>
-            </td>
-            <td class="due_amount_cell">
-                <div class="input-group input-group-sm" style="max-width:100px;">
-                    <input type="number" class="form-control due_amount_display"
-                        value="${price.toFixed(2)}" step="0.01" readonly>
-                </div>
-            </td>
-            <td class="course_name">
-                ${name}<br>
-                <small class="text-info">${typeLabel}</small>
-            </td>
-            <td>
-                <button type="button"
-                    class="primary-btn small bg-danger text-white border-0 remove_course_btn">
-                    Delete
-                </button>
-            </td>
-        </tr>`;
+                    <td class="sl">1</td>
+                    <td class="course_name">${name}</td>
+                    <td class="intake_name_cell">N/A</td>
+                    <td class="course_price_cell">
+                        <div class="input-group input-group-sm" style="max-width:120px;">
+                            <input type="number" class="form-control course_price_input"
+                                name="course_price[${id}]" value="${price}" step="0.01">
+                            <div class="input-group-append"><span class="input-group-text">.00</span></div>
+                        </div>
+                    </td>
+                    <td class="paid_amount_cell">
+                        <div class="input-group input-group-sm" style="max-width:120px;">
+                            <input type="number" class="form-control paid_amount_input"
+                                name="paid_amount[${id}]" value="" step="0.01" max="${price}"
+                                data-original-price="${price}">
+                            <div class="input-group-append"><span class="input-group-text">.00</span></div>
+                        </div>
+                    </td>
+                    <td class="due_amount_cell">
+                        <div class="input-group input-group-sm" style="max-width:100px;">
+                            <input type="number" class="form-control due_amount_display"
+                                value="${price.toFixed(2)}" step="0.01" readonly>
+                        </div>
+                    </td>
+                    <td class="course_name">
+                        ${name}<br>
+                        <small class="text-info">${typeLabel}</small>
+                    </td>
+                    <td>
+                        <button type="button"
+                            class="primary-btn small bg-danger text-white border-0 remove_course_btn">
+                            Delete
+                        </button>
+                    </td>
+                </tr>`;
 
                 $('.allCourseDetails').append(row);
                 updatePaymentStatusAndDue();
@@ -864,13 +916,14 @@
                 let paidAmount = parseFloat($('.paid_amount_input').val()) || 0;
                 let paymentMethod = $('#paymentMethodName').val();
                 let bankPaidAmount = parseFloat($('#bank_paid_amount').val()) || 0;
-                let initialDue = $('.allCourseDetails tr').find('.due_amount_display').data('initial-due') ||
-                    coursePrice;
+                let initialDue = parseFloat($('.allCourseDetails tr').find('.due_amount_display').data(
+                    'initial-due'));
 
-                if (coursePrice !== paidAmount) {
-                    let newDue = initialDue - paidAmount;
-                    $('.allCourseDetails tr').find('.due_amount_display').val(newDue.toFixed(2));
-                }
+                if (isNaN(initialDue)) initialDue = coursePrice;
+
+                let newDue = initialDue - paidAmount;
+                if (newDue < 0) newDue = 0;
+                $('.allCourseDetails tr').find('.due_amount_display').val(newDue.toFixed(2));
 
                 let totalPaidAfterThis = (coursePrice - initialDue) + paidAmount;
 
@@ -945,38 +998,42 @@
             });
 
             // ================================================================
-            // FOOD: meal checkboxes enable/disable amount inputs
+            // FOOD: meal checkboxes + recalc
             // ================================================================
             $('.meal-checkbox').on('change', function() {
                 recalcFoodTotal();
             });
 
-            $('#food_from_date, #food_to_date, #breakfast_amount, #lunch_amount, #dinner_amount').on('change input',
-                function() {
+            $('#food_from_date, #food_to_date, #breakfast_amount, #lunch_amount, #dinner_amount')
+                .on('change input', function() {
                     recalcFoodTotal();
                 });
 
             function recalcFoodTotal() {
-                let fromDate = $('#food_from_date').val();
-                let toDate = $('#food_to_date').val();
-
-
                 let breakfast = $('#has_breakfast').is(':checked') ? (parseFloat($('#breakfast_amount').val()) ||
                     0) : 0;
                 let lunch = $('#has_lunch').is(':checked') ? (parseFloat($('#lunch_amount').val()) || 0) : 0;
                 let dinner = $('#has_dinner').is(':checked') ? (parseFloat($('#dinner_amount').val()) || 0) : 0;
 
-
-                let total = (breakfast + lunch + dinner);
+                let total = breakfast + lunch + dinner;
                 $('#foodTotalDisplay').val(total > 0 ? total.toFixed(2) : '0.00');
 
-                // Sync course price row if one is already shown
-                // if ($('.course_price_input').length) {
-                    $('.course_price_input').val(total.toFixed(2));
+                // ── FIX 3: Only overwrite due if no server value has been set yet ──
+                $('.course_price_input').val(total.toFixed(2));
+                $('.paid_amount_input').attr('max', total);
+                let paid = parseFloat($('.paid_amount_input').val()) || 0;
+
+                let initialDue = $('.due_amount_display').data('initial-due');
+                if (paid == 0) {
                     $('.due_amount_display').val(total.toFixed(2));
-                    $('.paid_amount_input').attr('max', total);
-                    updatePaymentStatusAndDue();
-                // }
+                    $('.due_amount_display').data('initial-due', total);
+
+                } else {
+                    let newDue = parseFloat(initialDue) - paid;
+                    if (newDue < 0) newDue = 0;
+                    $('.due_amount_display').val(newDue.toFixed(2));
+                }
+                updatePaymentStatusAndDue();
             }
 
             // ================================================================
@@ -995,6 +1052,11 @@
             $('#invoiceForm').on('submit', function(e) {
                 e.preventDefault();
 
+                // ── FIX 1: Disable button immediately to prevent double submit ──
+                let $submitBtn = $('#submit');
+                $submitBtn.prop('disabled', true).text('Saving...');
+                // ───────────────────────────────────────────────────────────────
+
                 let branch = $('#branch_id').val();
                 let student = $('#student_id').val();
                 let createDate = $('#create_date').val();
@@ -1003,10 +1065,10 @@
                 let paymentMethod = $('#paymentMethodName').val();
                 let notes = $('#modal_notes').val();
 
-                // --- Course row validation ---
                 const courseRow = $('.allCourseDetails tr');
                 if (courseRow.length === 0) {
                     toastr.error('Please select a course');
+                    $submitBtn.prop('disabled', false).text('{{ __('common.save') }}');
                     return;
                 }
 
@@ -1014,84 +1076,44 @@
                 let coursePrice = parseFloat(courseRow.find('.course_price_input').val());
                 let paidAmount = parseFloat(courseRow.find('.paid_amount_input').val());
 
-                if (!courseId) {
-                    toastr.error('Course is required');
-                    return;
-                }
-                if (isNaN(coursePrice) || coursePrice <= 0) {
-                    toastr.error('Course price must be a valid number greater than 0');
-                    return;
-                }
-                if (isNaN(paidAmount) || paidAmount <= 0) {
-                    toastr.error('Paid amount must be a valid number greater than 0');
-                    return;
-                }
-                if (paymentMethod !== 'Bank Transfer' && paidAmount > coursePrice) {
-                    toastr.error('Paid amount cannot exceed the course price');
-                    return;
-                }
-                if (!branch) {
-                    toastr.error('Branch is required');
-                    return;
-                }
-                if (!student) {
-                    toastr.error('Student is required');
-                    return;
-                }
-                if (!createDate) {
-                    toastr.error('Create date is required');
-                    return;
-                }
-                if (!dueDate) {
-                    toastr.error('Due date is required');
-                    return;
-                }
-                if (!status) {
-                    toastr.error('Payment status is required');
-                    return;
-                }
-                if (!paymentMethod) {
-                    toastr.error('Payment method is required');
-                    return;
-                }
+                // Validation — re-enable button on any early return
+                const fail = (msg) => {
+                    toastr.error(msg);
+                    $submitBtn.prop('disabled', false).text('{{ __('common.save') }}');
+                };
 
-                // --- Food mode validation ---
+                if (!courseId) return fail('Course is required');
+                if (isNaN(coursePrice) || coursePrice <= 0) return fail(
+                    'Course price must be a valid number greater than 0');
+                if (isNaN(paidAmount) || paidAmount <= 0) return fail(
+                    'Paid amount must be a valid number greater than 0');
+                if (paymentMethod !== 'Bank Transfer' && paidAmount > coursePrice) return fail(
+                    'Paid amount cannot exceed the course price');
+                if (!branch) return fail('Branch is required');
+                if (!student) return fail('Student is required');
+                if (!createDate) return fail('Create date is required');
+                if (!dueDate) return fail('Due date is required');
+                if (!status) return fail('Payment status is required');
+                if (!paymentMethod) return fail('Payment method is required');
+
                 if (currentMode === 'food') {
-                    if (!$('#food_from_date').val()) {
-                        toastr.error('Food from date is required');
-                        return;
-                    }
-                    if (!$('#food_to_date').val()) {
-                        toastr.error('Food to date is required');
-                        return;
-                    }
+                    if (!$('#food_from_date').val()) return fail('Food from date is required');
+                    if (!$('#food_to_date').val()) return fail('Food to date is required');
                     if (!$('#has_breakfast').is(':checked') &&
                         !$('#has_lunch').is(':checked') &&
-                        !$('#has_dinner').is(':checked')) {
-                        toastr.error('Please select at least one meal');
-                        return;
-                    }
+                        !$('#has_dinner').is(':checked')) return fail('Please select at least one meal');
                 }
 
-                // --- Bank Transfer validation ---
                 if (paymentMethod === 'Bank Transfer') {
                     let bankPaidAmount = parseFloat($('#bank_paid_amount').val());
                     let bankPaidDate = $('#bank_paid_date').val();
-                    if (isNaN(bankPaidAmount) || bankPaidAmount <= 0) {
-                        toastr.error('Bank Paid Amount is required and must be greater than 0');
-                        return;
-                    }
-                    if (bankPaidAmount < paidAmount) {
-                        toastr.error('Bank Paid Amount must be >= Paid Amount');
-                        return;
-                    }
-                    if (!bankPaidDate) {
-                        toastr.error('Bank Paid Date is required');
-                        return;
-                    }
+                    if (isNaN(bankPaidAmount) || bankPaidAmount <= 0) return fail(
+                        'Bank Paid Amount is required and must be greater than 0');
+                    if (bankPaidAmount < paidAmount) return fail('Bank Paid Amount must be >= Paid Amount');
+                    if (!bankPaidDate) return fail('Bank Paid Date is required');
                 }
 
-                // --- Build FormData ---
+                // Build FormData
                 let formData = new FormData();
                 formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
                 formData.append('branch_id', $('#branch_id').val());
@@ -1106,13 +1128,11 @@
                 formData.append('paid_amount', paidAmount);
 
                 if (currentMode === 'food') {
-                    // Food-specific fields
                     formData.append('food_from_date', $('#food_from_date').val());
                     formData.append('food_to_date', $('#food_to_date').val());
                     formData.append('has_breakfast', $('#has_breakfast').is(':checked') ? 1 : 0);
                     formData.append('has_lunch', $('#has_lunch').is(':checked') ? 1 : 0);
                     formData.append('has_dinner', $('#has_dinner').is(':checked') ? 1 : 0);
-
                     formData.append('payment_type', 'food');
                 } else {
                     formData.append('payment_type', currentMode === 'nvq' ? 'nvq' : 'course');
@@ -1127,7 +1147,6 @@
                     formData.append('payment_file', $('#payment_file')[0].files[0]);
                 }
 
-                // --- POST ---
                 let actionUrl = $('#formActionUrl').val();
                 $.ajax({
                     url: actionUrl,
@@ -1137,24 +1156,26 @@
                     processData: false,
                     success: function(response) {
                         if (response.success) {
-                            // Show lunchbox number if food payment
                             if (currentMode === 'food' && response.lunchbox_number) {
                                 toastr.success('Lunchbox number assigned: ' + response
                                     .lunchbox_number, null, {
                                         timeOut: 8000
                                     });
                             }
-
                             const reprintUrl =
                                 `/student/fees/invoice-item-print/${response.invoice_id}/${response.payment_id}`;
                             window.open(reprintUrl, '_blank');
-
                             const message = encodeURIComponent('successfully!');
                             window.location.href = '{{ route('fees.course-payment') }}' +
                                 '?message-success=' + message;
                         }
+                        // Note: button stays disabled on success because page redirects anyway
                     },
                     error: function(xhr) {
+                        // ── FIX 1: Re-enable on error so user can retry ──
+                        $submitBtn.prop('disabled', false).text('{{ __('common.save') }}');
+                        // ─────────────────────────────────────────────────
+
                         let msg = 'An unexpected error occurred';
                         if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
                             Object.values(xhr.responseJSON.errors).forEach(messages => {
