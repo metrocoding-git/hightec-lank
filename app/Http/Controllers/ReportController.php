@@ -76,13 +76,120 @@ class ReportController extends Controller
     {
         $branches = Branch::all();
 
-        // Check if this is a DataTable server-side processing request
+        // Excel export request
+        if ($request->get('export') === 'excel') {
+            return $this->exportStudentsPaidExcel($request);
+        }
+
         if ($request->ajax() && $request->has('draw')) {
             return $this->getStudentsPaidData($request);
         }
 
-        // For initial page load
         return view('pages.reports.students-paid', compact('branches'));
+    }
+
+    private function exportStudentsPaidExcel(Request $request)
+    {
+        $query = InvoicesPayments::with([
+            'invoice',
+            'invoice.createUser',
+            'invoice.branch',
+            'invoice.student',
+            'invoice.student.studentCategory',
+            'invoice.invoice_item',
+            'invoice.invoice_item.fee_type',
+            'invoice.paidCourses',
+            'invoice.paidCourses.course',
+            'branch',
+            'invoice.studentCategory'
+        ]);
+
+        // Apply same filters
+        if ($request->date_range) {
+            $dates = explode(' to ', $request->date_range);
+            if (!empty($dates[0])) $query->whereDate('created_at', '>=', $dates[0]);
+            if (!empty($dates[1])) $query->whereDate('created_at', '<=', $dates[1]);
+        }
+        if ($request->payment_method) {
+            $query->where('payment_method', $request->payment_method);
+        }
+        if ($request->branch_id) {
+            $query->where('branch_id', $request->branch_id);
+        }
+        if ($request->payment_type) {
+            $query->whereHas('invoice', function ($q) use ($request) {
+                if ($request->payment_type == 'course_fee') {
+                    $q->whereIn('invoice_type', ['course', 'fee']);
+                } else {
+                    $q->where('invoice_type', $request->payment_type);
+                }
+            });
+        }
+
+        $records = $query->orderBy('created_at', 'asc')->get();
+
+        // Build CSV in memory and stream as .xlsx-compatible file
+        $filename = 'Students-Payment-Report_' . now()->format('Y-m-d') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $columns = [
+            'No',
+            'Stu No',
+            'Stu Category',
+            'Paid Branch',
+            'Invoice Number',
+            'Receipt Number',
+            'Payment Name',
+            'Paid Amount',
+            'Payment Method',
+            'Payment Date',
+            'Payment Invoice Number',
+            'Bank Payment Amount',
+            'Bank Payment Date',
+            'Note',
+            'Create User',
+            'Invoice Payment Status',
+            'Invoice Payment Amount',
+        ];
+
+        $callback = function () use ($records, $columns) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, $columns);
+
+            foreach ($records as $key => $row) {
+                fputcsv($handle, [
+                    $key + 1,
+                    $row->invoice?->student?->admission_number ?? 'N/A',
+                    $row->invoice?->studentCategory?->category_name
+                        ?? $row->invoice?->student?->studentCategory?->category_name
+                        ?? 'N/A',
+                    $row->branch?->name ?? 'N/A',
+                    $row->invoice?->main_invoice_number ?? 'N/A',
+                    $row->receipt_number ?? 'N/A',
+                    $this->getPaymentName($row),
+                    number_format((float) $row->amount, 2, '.', ''),
+                    $row->payment_method,
+                    $row->created_at ? \Carbon\Carbon::parse($row->created_at)->format('m/d/Y') : 'N/A',
+                    $row->payment_invoice_number ?? '-',
+                    $row->bank_payment_amount ?? '-',
+                    $row->bank_payment_date
+                        ? \Carbon\Carbon::parse($row->bank_payment_date)->format('m/d/Y')
+                        : '-',
+                    $row->notes ?? '-',
+                    $row->invoice?->createUser?->name ?? 'N/A',
+                    $this->getInvoicePaymentStatus($row),
+                    $row->payment_method == 'Invoice' ? $row->invoice_payment_amount : '-',
+                ]);
+            }
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     private function getStudentsPaidData(Request $request)
@@ -189,7 +296,15 @@ class ReportController extends Controller
         // Pagination
         $start = $request->start ?? 0;
         $length = $request->length ?? 25;
-        $feeInvoices = $query->offset($start)->limit($length)->get();
+
+        if ($length == -1) {
+            // "All" selected — fetch everything without limit
+            $feeInvoices = $query->offset($start)->get();
+        } else {
+            $feeInvoices = $query->offset($start)->limit($length)->get();
+        }
+
+
 
         // Format data for DataTable
         $data = [];
@@ -310,10 +425,10 @@ class ReportController extends Controller
         if ($request->filled('date_range')) {
 
             $dates = explode(' to ', $request->date_range);
-        
+
             $from = trim($dates[0]);
             $to = trim($dates[1] ?? $from);
-        
+
             if (empty($to)) {
                 $to = $from;
             }
@@ -692,7 +807,7 @@ class ReportController extends Controller
     {
         $branches = Branch::all();
         $courses  = Course::where('has_food_fee', 1)->orderBy('name')->get();
-
+    
         $query = \App\Models\FoodPayment::with([
             'invoice',
             'invoice.student',
@@ -701,53 +816,77 @@ class ReportController extends Controller
             'invoice.branch',
             'course',
         ]);
-
+    
         // ----- BRANCH -----
         if ($request->branch_id) {
             $query->whereHas('invoice', fn($q) => $q->where('branch_id', $request->branch_id));
         }
-
+    
         // ----- COURSE -----
         if ($request->course_id) {
             $query->where('course_id', $request->course_id);
         }
-
+    
         // ----- LUNCHBOX LETTER (group) -----
         if ($request->letter) {
             $query->where('lunchbox_number', 'LIKE', $request->letter . '-%');
         }
-
+    
         // ----- MEAL FILTER -----
         if ($request->meal) {
             if ($request->meal === 'breakfast') $query->where('has_breakfast', 1);
             if ($request->meal === 'lunch')     $query->where('has_lunch', 1);
             if ($request->meal === 'dinner')    $query->where('has_dinner', 1);
         }
-
-        // ----- DATE RANGE (food from_date) -----
-        if ($request->date_range) {
-            $dates = explode(' to ', $request->date_range);
-            $from  = $dates[0] ?? null;
-            $to    = $dates[1] ?? ($dates[0] ?? null);
-            if ($from) $query->whereDate('from_date', '>=', $from);
-            if ($to)   $query->whereDate('from_date', '<=', $to);
+    
+        // ----- DATE RANGE FILTER (from_date to to_date range overlap) -----
+        $hasFilters = $request->filled('branch_id') ||
+                      $request->filled('course_id') ||
+                      $request->filled('letter') ||
+                      $request->filled('meal') ||
+                      $request->filled('date_range') ||
+                      $request->filled('month') ||
+                      $request->filled('year') ||
+                      $request->has('status');
+    
+        if ($request->filled('date_range')) {
+            // User picked an explicit date range in the filter
+            $dates     = explode(' to ', $request->date_range);
+            $filterFrom = $dates[0] ?? null;
+            $filterTo   = $dates[1] ?? ($dates[0] ?? null);
+    
+            if ($filterFrom && $filterTo) {
+                // Records whose [from_date, to_date] window OVERLAPS the selected range
+                $query->whereDate('from_date', '<=', $filterTo)
+                      ->whereDate('to_date',   '>=', $filterFrom);
+            } elseif ($filterFrom) {
+                $query->whereDate('from_date', '<=', $filterFrom)
+                      ->whereDate('to_date',   '>=', $filterFrom);
+            }
+    
+        } elseif (!$hasFilters) {
+            // Default: show records whose date window includes today
+            $today = today()->toDateString();
+            $query->whereDate('from_date', '<=', $today)
+                  ->whereDate('to_date',   '>=', $today);
         }
-
-        // ----- MONTH / YEAR (from lunchbox_sequences via from_date) -----
+    
+        // ----- MONTH / YEAR -----
         if ($request->month) {
             $query->whereMonth('from_date', $request->month);
         }
         if ($request->year) {
             $query->whereYear('from_date', $request->year);
         }
-
-        // ----- PAYMENT STATUS -----
-        if ($request->status !== null) {
-            $query->where('status', $request->status);
+    
+        // ----- PAYMENT STATUS (default active = 1) -----
+        $status = $request->input('status', '1');
+        if ($status !== '') {
+            $query->where('status', $status);
         }
-
+    
         $foodPayments = $query->orderBy('lunchbox_number')->get();
-
+    
         // Group by: year → month → branch → letter
         $grouped = $foodPayments->groupBy([
             fn($r) => \Carbon\Carbon::parse($r->from_date)->format('Y'),
@@ -755,10 +894,9 @@ class ReportController extends Controller
             fn($r) => optional($r->invoice->branch)->name ?? 'N/A',
             fn($r) => substr($r->lunchbox_number ?? '-', 0, 1),
         ]);
-
-        // Available letters for filter dropdown
+    
         $letters = range('A', 'Z');
-
+    
         return view('pages.reports.food-payment-report', compact(
             'foodPayments',
             'grouped',

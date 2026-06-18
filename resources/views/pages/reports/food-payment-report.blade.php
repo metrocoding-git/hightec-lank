@@ -213,7 +213,8 @@
                             <label>Status</label>
                             <select name="status" class="form-control">
                                 <option value="">All</option>
-                                <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Active</option>
+                                <option value="1" {{ request('status', '1') == '1' ? 'selected' : '' }}>Active
+                                </option>
                                 <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Inactive</option>
 
                             </select>
@@ -289,7 +290,27 @@
                             </div>
 
                             @foreach ($branches as $branchName => $letters)
-                                <div class="group-header-branch">🏢 {{ $branchName }}</div>
+
+                                @php
+                                    $branchRecords = $letters->flatten();
+                                @endphp
+                                <div class="group-header-branch">
+                                    🏢 {{ $branchName }}
+                                    &nbsp;|&nbsp;
+                                    <span style="font-size:12px; font-weight:400;">
+                                        👥 {{ $branchRecords->count() }} students
+                                        &nbsp;&nbsp;
+                                        🍳 Breakfast:
+                                        <strong>{{ $branchRecords->where('has_breakfast', 1)->count() }}</strong>
+                                        &nbsp;
+                                        🍛 Lunch: <strong>{{ $branchRecords->where('has_lunch', 1)->count() }}</strong>
+                                        &nbsp;
+                                        🍽️ Dinner: <strong>{{ $branchRecords->where('has_dinner', 1)->count() }}</strong>
+                                        &nbsp;&nbsp;
+                                       
+                                    </span>
+                                </div>
+
 
                                 @foreach ($letters as $letter => $records)
                                     <div class="group-header-letter">
@@ -309,8 +330,7 @@
                                                     <th>Course</th>
                                                     <th>Food Period</th>
                                                     <th>Meals</th>
-                                                    <th>Total Amount</th>
-                                                    <th>Paid</th>
+                                                    
                                                     <th>Due</th>
                                                     <th>Status</th>
                                                 </tr>
@@ -358,11 +378,12 @@
                                                                 <span class="meal-badge meal-d">🍽 D</span>
                                                             @endif
                                                         </td>
-                                                        <td>{{ number_format($fp->total_food_amount, 2) }}</td>
-                                                        <td>{{ number_format($fp->paid_amount, 2) }}</td>
+                                                        {{-- <td>{{ number_format($fp->total_food_amount, 2) }}</td>
+                                                        <td>{{ number_format($fp->paid_amount, 2) }}</td> --}}
                                                         <td>{{ number_format($fp->due_amount, 2) }}</td>
                                                         <td class="{{ $statusClass }}">
-                                                            <strong>{{ $statusLabel }}</strong></td>
+                                                            <strong>{{ $statusLabel }}</strong>
+                                                        </td>
                                                     </tr>
                                                 @endforeach
                                             </tbody>
@@ -413,15 +434,17 @@
                                 <th>Breakfast</th>
                                 <th>Lunch</th>
                                 <th>Dinner</th>
-                                <th>Breakfast Amt</th>
+                                {{-- <th>Breakfast Amt</th>
                                 <th>Lunch Amt</th>
-                                <th>Dinner Amt</th>
-                                <th>Total Amount</th>
-                                <th>Paid Amount</th>
+                                <th>Dinner Amt</th> --}}
+                                {{-- <th>Total Amount</th>
+                                <th>Paid Amount</th> --}}
                                 <th>Due Amount</th>
                                 <th>Status</th>
-                                <th>Payment Method</th>
                                 <th>Invoice No.</th>
+                                <th>Create Date</th>
+                                <th>Update Date</th>
+
                             </tr>
                         </thead>
                         <tbody>
@@ -443,15 +466,16 @@
                                     <td>{{ $fp->has_breakfast ? '✓' : '-' }}</td>
                                     <td>{{ $fp->has_lunch ? '✓' : '-' }}</td>
                                     <td>{{ $fp->has_dinner ? '✓' : '-' }}</td>
-                                    <td>{{ $fp->has_breakfast ? number_format($fp->breakfast_amount, 2) : '-' }}</td>
+                                    {{-- <td>{{ $fp->has_breakfast ? number_format($fp->breakfast_amount, 2) : '-' }}</td>
                                     <td>{{ $fp->has_lunch ? number_format($fp->lunch_amount, 2) : '-' }}</td>
-                                    <td>{{ $fp->has_dinner ? number_format($fp->dinner_amount, 2) : '-' }}</td>
-                                    <td>{{ number_format($fp->total_food_amount, 2) }}</td>
-                                    <td>{{ number_format($fp->paid_amount, 2) }}</td>
+                                    <td>{{ $fp->has_dinner ? number_format($fp->dinner_amount, 2) : '-' }}</td> --}}
+                                    {{-- <td>{{ number_format($fp->total_food_amount, 2) }}</td>
+                                    <td>{{ number_format($fp->paid_amount, 2) }}</td> --}}
                                     <td>{{ number_format($fp->due_amount, 2) }}</td>
                                     <td>{{ ucfirst($fp->payment_status) }}</td>
-                                    <td>{{ $fp->payment_method ?? '-' }}</td>
                                     <td>{{ $fp->invoice?->main_invoice_number ?? 'N/A' }}</td>
+                                    <td>{{ $fp->invoice?->created_at ?? 'N/A' }}</td>
+                                    <td>{{ $fp->invoice?->updated_at ?? 'N/A' }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

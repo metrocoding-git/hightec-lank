@@ -18,6 +18,11 @@
     <section class="admin-visitor-area up_admin_visitor">
         <div class="container-fluid p-0">
             <div class="white-box">
+                <div class="col-lg-12 text-right">
+                    <a id="downloadExcelBtn" href="#" class="primary-btn small fix-gr-bg">
+                        <span class="ti-download pr-2"></span> Download Excel
+                    </a>
+                </div>
                 <form method="GET" action="" class="mb-20" id="filterForm">
                     <div class="row">
 
@@ -70,7 +75,7 @@
                                 <option value="item_sell" {{ request('payment_type') == 'item_sell' ? 'selected' : '' }}>
                                     Item Sell</option>
                                 <option value="food" {{ request('payment_type') == 'food' ? 'selected' : '' }}>
-                                        Food fee</option>
+                                    Food fee</option>
                                 <option value="others" {{ request('payment_type') == 'others' ? 'selected' : '' }}>Others
                                 </option>
                             </select>
@@ -158,10 +163,23 @@
     </script>
 
     <script>
+        $('#downloadExcelBtn').on('click', function(e) {
+            e.preventDefault();
+
+            let params = new URLSearchParams({
+                date_range: $('#date_range').val(),
+                payment_method: $('#payment_method').val(),
+                branch_id: $('#branch_id').val(),
+                payment_type: $('#payment_type').val(),
+                export: 'excel', // flag so controller knows it's an export
+            });
+
+            window.location.href = "{{ route('reports.students-paid') }}?" + params.toString();
+        });
         let table = $('#table_id').DataTable({
             responsive: true,
             dom: 'Blfrtip',
-            
+
             buttons: [{
                     extend: 'copy',
                     title: getFileName()
@@ -251,7 +269,7 @@
             ],
 
             columnDefs: [{
-                targets: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], // Paid Amount column
+                targets: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], // Paid Amount column
                 render: function(data, type, row) {
                     return row.amount_is_negative ?
                         '<span class="text-danger">' + data + '</span>' :

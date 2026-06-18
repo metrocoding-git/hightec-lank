@@ -564,7 +564,9 @@ class FeesGroupController extends Controller
         // Prefix logic
         if ($paymentType === 'nvq') {
             $prefix = 'nvq-' . $code; // nvq-ku
-        } else {
+        } elseif ($paymentType === 'food'){
+            $prefix = 'food-' . $code; // food-ku
+        }else {
             $prefix = $code; // ku / ka
         }
 
