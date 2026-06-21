@@ -389,9 +389,8 @@
                                             </tbody>
                                             <tfoot>
                                                 <tr class="font-weight-bold" style="background:#f1f8e9;">
-                                                    <td colspan="8" class="text-right">Group Total:</td>
-                                                    <td>{{ number_format($records->sum('total_food_amount'), 2) }}</td>
-                                                    <td>{{ number_format($records->sum('paid_amount'), 2) }}</td>
+                                                    <td colspan="8" class="text-right">Total Due:</td>
+                                                    
                                                     <td>{{ number_format($records->sum('due_amount'), 2) }}</td>
                                                     <td></td>
                                                 </tr>

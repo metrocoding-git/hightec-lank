@@ -775,6 +775,8 @@
                                             let fromDate = today >= startDate ? today :
                                                 startDate;
 
+                                            console.log('ssssd',fromDate, startDate,today )
+
                                             let toDate = new Date(startDate);
                                             if (intakeDuration === '1 week') toDate.setDate(
                                                 toDate.getDate() + 7);
