@@ -134,6 +134,7 @@
                                                 <th>Create User</th>
                                                 <th>Invoice Payment Status</th>
                                                 <th>Invoice Payment Amount</th>
+                                                <th>Lunch Box Number</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -265,6 +266,9 @@
                 },
                 {
                     data: 'invoice_payment_amount'
+                },
+                {
+                    data: 'box_number'
                 }
             ],
 

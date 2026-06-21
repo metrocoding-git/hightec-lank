@@ -756,9 +756,9 @@
                                         $('#has_breakfast').prop('disabled', false);
                                         $('#has_lunch').prop('disabled', false);
                                         $('#has_dinner').prop('disabled', false);
-                                        $('#breakfast_amount').prop('readonly', true);
-                                        $('#lunch_amount').prop('readonly', true);
-                                        $('#dinner_amount').prop('readonly', true);
+                                        $('#breakfast_amount').prop('readonly', false);
+                                        $('#lunch_amount').prop('readonly', false);
+                                        $('#dinner_amount').prop('readonly', false);
                                         effectivePrice = courseBreakfast + courseLunch +
                                             courseDinner;
 
@@ -775,7 +775,7 @@
                                             let fromDate = today >= startDate ? today :
                                                 startDate;
 
-                                            console.log('ssssd',fromDate, startDate,today )
+                                            console.log('ssssd', fromDate, startDate, today)
 
                                             let toDate = new Date(startDate);
                                             if (intakeDuration === '1 week') toDate.setDate(
@@ -787,7 +787,15 @@
                                             else if (intakeDuration === '2 month') toDate
                                                 .setMonth(toDate.getMonth() + 2);
 
-                                            const fmt = d => d.toISOString().split('T')[0];
+                                            const fmt = d => {
+                                                const year = d.getFullYear();
+                                                const month = String(d.getMonth() + 1)
+                                                    .padStart(2, '0');
+                                                const day = String(d.getDate()).padStart(2,
+                                                    '0');
+                                                return `${year}-${month}-${day}`;
+                                            };
+                                            console.log('2323', fromDate, fmt(fromDate))
 
                                             $('#food_from_date').val(fmt(fromDate));
                                             $('#food_to_date').val(fmt(toDate));
@@ -918,6 +926,7 @@
                 let paidAmount = parseFloat($('.paid_amount_input').val()) || 0;
                 let paymentMethod = $('#paymentMethodName').val();
                 let bankPaidAmount = parseFloat($('#bank_paid_amount').val()) || 0;
+                
                 let initialDue = parseFloat($('.allCourseDetails tr').find('.due_amount_display').data(
                     'initial-due'));
 

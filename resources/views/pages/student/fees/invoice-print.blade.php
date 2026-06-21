@@ -17,7 +17,7 @@
         body {
             margin: auto;
             font-family: Arial, sans-serif;
-            font-size: 13px;
+            font-size: 12px;
             color: #000;
             height: 100%;
             /* overflow: hidden; */
@@ -34,7 +34,7 @@
         }
 
         .invoice-title {
-            font-size: 48px;
+            font-size: 40px;
             font-weight: bold;
             text-align: right;
         }
@@ -101,7 +101,7 @@
         }
 
         .payment-section {
-            margin-top: 40px;
+            margin-top: 20px;
         }
 
         .footer {
@@ -112,7 +112,7 @@
 
         .note {
             margin-top: 10px;
-            font-size: 12px;
+            font-size: 11px;
         }
 
         @media print {
@@ -148,7 +148,8 @@
                     <td><strong>Invoice No.</strong></td>
                 </tr>
                 <tr>
-                    <td>{{ $payment->payment_invoice_open_date ? \Carbon\Carbon::parse($payment->payment_invoice_open_date)->format('d/m/Y') : '-' }}</td>
+                    <td>{{ $payment->payment_invoice_open_date ? \Carbon\Carbon::parse($payment->payment_invoice_open_date)->format('d/m/Y') : '-' }}
+                    </td>
                     <td>{{ $invoice_number }}</td>
                 </tr>
             </table>
@@ -175,6 +176,8 @@
                     <td>
                         @if ($item->invoice->invoice_type === 'fee')
                             {{ optional($item->invoice->invoice_item->first()?->fee_type)->name }}
+                        @elseif ($item->invoice->invoice_type === 'item_sell')
+                            Uniform Fee
                         @else
                             {{ $item->invoice->invoice_type . ' fee - ' . optional(optional($item->invoice->paidCourses)->course)->name }}
                         @endif
@@ -195,7 +198,7 @@
                 <td colspan="3" style="padding:0;">
                     <table style="width:100%; border-collapse: collapse;">
 
-               
+
 
                         <tr>
                             <td style="padding:6px;">Register Number</td>

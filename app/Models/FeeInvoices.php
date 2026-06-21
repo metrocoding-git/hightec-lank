@@ -75,4 +75,8 @@ class FeeInvoices extends Model
     {
         return $this->belongsTo(StudentCategory::class);
     }
+    public function foodPayment()
+    {
+        return $this->hasOne(\App\Models\FoodPayment::class, 'invoice_id');
+    }
 }

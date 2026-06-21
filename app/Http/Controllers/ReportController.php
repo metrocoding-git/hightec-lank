@@ -100,6 +100,7 @@ class ReportController extends Controller
             'invoice.invoice_item.fee_type',
             'invoice.paidCourses',
             'invoice.paidCourses.course',
+            'invoice.foodPayment',
             'branch',
             'invoice.studentCategory'
         ]);
@@ -154,6 +155,7 @@ class ReportController extends Controller
             'Create User',
             'Invoice Payment Status',
             'Invoice Payment Amount',
+            'Lunch Box Number',
         ];
 
         $callback = function () use ($records, $columns) {
@@ -183,6 +185,9 @@ class ReportController extends Controller
                     $row->invoice?->createUser?->name ?? 'N/A',
                     $this->getInvoicePaymentStatus($row),
                     $row->payment_method == 'Invoice' ? $row->invoice_payment_amount : '-',
+                    $row->payment_type === 'food'
+                        ? ($row->invoice?->foodPayment?->lunchbox_number ?? '-')
+                        : '-',
                 ]);
             }
 
@@ -204,6 +209,7 @@ class ReportController extends Controller
             'invoice.invoice_item.fee_type',
             'invoice.paidCourses',
             'invoice.paidCourses.course',
+            'invoice.foodPayment',
             'branch',
             'invoice.studentCategory'
         ]);
@@ -327,6 +333,9 @@ class ReportController extends Controller
                 'create_user' => $feeInvoice->invoice && $feeInvoice->invoice->createUser ? $feeInvoice->invoice->createUser->name : 'N/A',
                 'invoice_payment_status' => $this->getInvoicePaymentStatus($feeInvoice),
                 'invoice_payment_amount' => $feeInvoice->payment_method == 'Invoice' ? $feeInvoice->invoice_payment_amount : '-',
+                'box_number' => $feeInvoice->payment_type === 'food'
+                    ? ($feeInvoice->invoice?->foodPayment?->lunchbox_number ?? '-')
+                    : '-',
                 'amount_is_negative' => $feeInvoice->amount < 0,
             ];
         }
@@ -387,7 +396,7 @@ class ReportController extends Controller
         } elseif ($feeInvoice->payment_type === 'item_sell') {
             return 'Item Sell';
         } elseif ($feeInvoice->payment_type === 'food') {
-            return 'Food Fee';
+            return 'Food Fee - ' . ($feeInvoice->invoice->paidCourses->course->name ?? 'N/A');
         }
 
         return 'N/A';
@@ -807,7 +816,7 @@ class ReportController extends Controller
     {
         $branches = Branch::all();
         $courses  = Course::where('has_food_fee', 1)->orderBy('name')->get();
-    
+
         $query = \App\Models\FoodPayment::with([
             'invoice',
             'invoice.student',
@@ -816,61 +825,60 @@ class ReportController extends Controller
             'invoice.branch',
             'course',
         ]);
-    
+
         // ----- BRANCH -----
         if ($request->branch_id) {
             $query->whereHas('invoice', fn($q) => $q->where('branch_id', $request->branch_id));
         }
-    
+
         // ----- COURSE -----
         if ($request->course_id) {
             $query->where('course_id', $request->course_id);
         }
-    
+
         // ----- LUNCHBOX LETTER (group) -----
         if ($request->letter) {
             $query->where('lunchbox_number', 'LIKE', $request->letter . '-%');
         }
-    
+
         // ----- MEAL FILTER -----
         if ($request->meal) {
             if ($request->meal === 'breakfast') $query->where('has_breakfast', 1);
             if ($request->meal === 'lunch')     $query->where('has_lunch', 1);
             if ($request->meal === 'dinner')    $query->where('has_dinner', 1);
         }
-    
+
         // ----- DATE RANGE FILTER (from_date to to_date range overlap) -----
         $hasFilters = $request->filled('branch_id') ||
-                      $request->filled('course_id') ||
-                      $request->filled('letter') ||
-                      $request->filled('meal') ||
-                      $request->filled('date_range') ||
-                      $request->filled('month') ||
-                      $request->filled('year') ||
-                      $request->has('status');
-    
+            $request->filled('course_id') ||
+            $request->filled('letter') ||
+            $request->filled('meal') ||
+            $request->filled('date_range') ||
+            $request->filled('month') ||
+            $request->filled('year') ||
+            $request->has('status');
+
         if ($request->filled('date_range')) {
             // User picked an explicit date range in the filter
             $dates     = explode(' to ', $request->date_range);
             $filterFrom = $dates[0] ?? null;
             $filterTo   = $dates[1] ?? ($dates[0] ?? null);
-    
+
             if ($filterFrom && $filterTo) {
                 // Records whose [from_date, to_date] window OVERLAPS the selected range
                 $query->whereDate('from_date', '<=', $filterTo)
-                      ->whereDate('to_date',   '>=', $filterFrom);
+                    ->whereDate('to_date',   '>=', $filterFrom);
             } elseif ($filterFrom) {
                 $query->whereDate('from_date', '<=', $filterFrom)
-                      ->whereDate('to_date',   '>=', $filterFrom);
+                    ->whereDate('to_date',   '>=', $filterFrom);
             }
-    
         } elseif (!$hasFilters) {
             // Default: show records whose date window includes today
             $today = today()->toDateString();
             $query->whereDate('from_date', '<=', $today)
-                  ->whereDate('to_date',   '>=', $today);
+                ->whereDate('to_date',   '>=', $today);
         }
-    
+
         // ----- MONTH / YEAR -----
         if ($request->month) {
             $query->whereMonth('from_date', $request->month);
@@ -878,15 +886,15 @@ class ReportController extends Controller
         if ($request->year) {
             $query->whereYear('from_date', $request->year);
         }
-    
+
         // ----- PAYMENT STATUS (default active = 1) -----
         $status = $request->input('status', '1');
         if ($status !== '') {
             $query->where('status', $status);
         }
-    
+
         $foodPayments = $query->orderBy('lunchbox_number')->get();
-    
+
         // Group by: year → month → branch → letter
         $grouped = $foodPayments->groupBy([
             fn($r) => \Carbon\Carbon::parse($r->from_date)->format('Y'),
@@ -894,9 +902,9 @@ class ReportController extends Controller
             fn($r) => optional($r->invoice->branch)->name ?? 'N/A',
             fn($r) => substr($r->lunchbox_number ?? '-', 0, 1),
         ]);
-    
+
         $letters = range('A', 'Z');
-    
+
         return view('pages.reports.food-payment-report', compact(
             'foodPayments',
             'grouped',
