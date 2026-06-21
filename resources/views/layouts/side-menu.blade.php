@@ -444,7 +444,7 @@
                         <li>
                             <a href="/student/fees/fee-group"
                                 class="{{ request()->is('student/fees/fee-group') ? 'active a' : '' }}">
-                                Fee Group
+                                Invoice Item Group
                             </a>
                         </li>
                     @endif
@@ -452,7 +452,7 @@
                         <li>
                             <a href="/student/fees/fee-type"
                                 class="{{ request()->is('student/fees/fee-type') ? 'active a' : '' }}">
-                                Fee Type
+                                Invoice Type
                             </a>
                         </li>
                     @endif
@@ -460,7 +460,7 @@
                         <li>
                             <a href="/student/fees/add-invoice"
                                 class="{{ request()->is('student/fees/add-invoice') ? 'active a' : '' }}">
-                                Add Invoice
+                                Registration & Other Payments
                             </a>
                         </li>
                     @endif
@@ -468,7 +468,7 @@
                         <li>
                             <a href="/student/fees/course-paid"
                                 class="{{ request()->is('student/fees/course-paid') ? 'active a' : '' }}">
-                                Course Paid
+                                Course, NVQ & Food Payment
                             </a>
                         </li>
                     @endif
@@ -476,23 +476,16 @@
                         <li>
                             <a href="/student/fees/fee-invoice"
                                 class="{{ request()->is('student/fees/fee-invoice') ? 'active a' : '' }}">
-                                Fee Invoice
+                                Invoice List
                             </a>
                         </li>
                     @endif
-                    @if (Auth::check() && Auth::user()->hasPermission('fee-invoice-setting'))
-                        <li>
-                            <a href="/student/fees/fee-invoice-setting"
-                                class="{{ request()->is('student/fees/fee-invoice-setting') ? 'active a' : '' }}">
-                                Fee Invoice Setting
-                            </a>
-                        </li>
-                    @endif
+
                     @if (Auth::check() && Auth::user()->hasPermission('fee-return'))
                         <li>
                             <a href="/student/fees/fee-return"
                                 class="{{ request()->is('student/fees/fee-return') ? 'active a' : '' }}">
-                                Fee Return
+                                Cancelled Invoice
                             </a>
                         </li>
                     @endif
@@ -500,7 +493,7 @@
                     <li>
                         <a href="/student/fees/fee-invoice/invoice-payments/pending"
                             class="{{ request()->is('student/fees/fee-invoice/invoice-payments/pending') ? 'active a' : '' }}">
-                            Fee Invoice Pending Payment
+                            Credit Invoice
                         </a>
                     </li>
                     {{-- @endif --}}
@@ -509,7 +502,7 @@
                     <li>
                         <a href="/student/fees/fee-invoice/invoice-payments"
                             class="{{ request()->is('student/fees/fee-invoice/invoice-payments') ? 'active a' : '' }}">
-                            Fee Invoice Payment
+                            Payment for Credit Invoice 
                         </a>
                     </li>
                     {{-- @endif --}}
@@ -680,7 +673,7 @@
                         <li>
                             <a href="/reports/students-paid"
                                 class="{{ request()->is('reports/students-paid') ? 'active a' : '' }}">
-                                Payments List
+                               Collection Report
                             </a>
                         </li>
                     @endif
@@ -696,21 +689,21 @@
                     <li>
                         <a href="/reports/course-dates-payments"
                             class="{{ request()->is('reports/course-dates-payments') ? 'active a' : '' }}">
-                            Course Dates Payments
+                           Course Started & Course Completed
                         </a>
                     </li>
 
                     <li>
                         <a href="/reports/course-intake-payments"
                             class="{{ request()->is('reports/course-intake-payments') ? 'active a' : '' }}">
-                            Course Intake Payments
+                            Course Started & Course Payment Status
                         </a>
                     </li>
 
                     <li>
                         <a href="/reports/students-intake-balance"
                             class="{{ request()->is('reports/students-intake-balance') ? 'active a' : '' }}">
-                            Students Intake Balance
+                            Course Fee Balances as Intake Wise
                         </a>
                     </li>
 
@@ -721,17 +714,17 @@
                         </a>
                     </li>
 
-                     <li>
+                    <li>
                         <a href="/reports/invoice-payments"
                             class="{{ request()->is('reports/invoice-payments') ? 'active a' : '' }}">
-                            Invoice Payments
+                            Credit Invoice Payments
                         </a>
                     </li>
 
                     <li>
                         <a href="/reports/food-payment-report"
                             class="{{ request()->is('reports/food-payment-report') ? 'active a' : '' }}">
-                            Food Payment Report
+                            All Food Fee Details
                         </a>
                     </li>
                     {{-- @endif --}}

@@ -19,7 +19,6 @@
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
                     <a href="#">@lang('fees.fees')</a>
-                    <a href="#">@lang('fees::feesModule.fees_invoice')</a>
                 </div>
             </div>
         </div>
@@ -124,7 +123,6 @@
                                                 <th>@lang('fees.paid')(Rs)</th>
                                                 <th>@lang('accounts.balance')(Rs)</th>
                                                 
-                                                <th>Payment Method</th>
                                                 <th>Payment Status</th>
                                                 <th>Payment Date</th>
                                                 <th>Updated Date</th>
@@ -1019,11 +1017,6 @@
                     orderable: false,
                     searchable: false
                 }, // ← computed
-                {
-                    data: 'payment_method',
-                    name: 'fee_invoices.payment_method',
-                    searchable: false
-                },
                 {
                     data: 'payment_status',
                     name: 'fee_invoices.payment_status',
