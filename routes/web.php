@@ -33,6 +33,7 @@ use App\Http\Controllers\BranchController;
 use App\Http\Controllers\Foodpaymentcontroller;
 use App\Http\Controllers\ReportController; // Import the new controller
 use App\Http\Controllers\RoleController; // Import the new controller
+use App\Http\Controllers\StudentCardController;
 use App\Http\Controllers\UserController; // Import the new controller
 
 Route::controller(HomeController::class)->middleware(['permission'])->group(callback: function () {
@@ -62,6 +63,12 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
     Route::get('/student-list/export-all', [StudentController::class, 'exportAllStudents'])->name('student-list.export-all')->withoutMiddleware(['csrf', 'permission']);
     Route::get('/student-list/export-filtered', [StudentController::class, 'exportFilteredStudents'])->name('student-list.export-filtered')->withoutMiddleware(['csrf', 'permission']);
     Route::get('/student/student-info/student-list-datatable', [StudentController::class, 'studentDatatable'])->name('student-list.datatable');
+
+    Route::get('/student/card/{id}', [StudentCardController::class, 'show'])->name('student-card.show')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('/student/card/{id}/pdf', [StudentCardController::class, 'downloadPdf'])->name('student-card.pdf')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('/student/card/bulk/preview', [StudentCardController::class, 'bulkPreview'])->name('student-card.bulk-preview')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('/student/card/bulk/pdf', [StudentCardController::class, 'bulkPdf'])->name('student-card.bulk-pdf')->withoutMiddleware(['csrf', 'permission']);
+
     Route::get('student/student-info/verification-history/{id}', [StudentController::class, 'verificationHistory'])->name('student-list.verification-history');
     Route::put('student/update-status', [StudentController::class, 'updateStudetStatus'])->name('student.update-status');
     Route::get('student/student-info/student-view/{id}', [StudentController::class, 'studentView'])->name('student-details');

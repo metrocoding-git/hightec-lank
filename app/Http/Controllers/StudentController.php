@@ -186,6 +186,7 @@ class StudentController extends Controller
                         Action
                     </button>
                     <div class="dropdown-menu">
+                        <a class="dropdown-item" target="_blank" href="' . route('student-card.show', $s->id) . '">Generate Card</a>
                         <a class="dropdown-item" target="_blank" href="' . route('student-details', $s->id) . '">View</a>
                         <a class="dropdown-item" href="' . route('add-student.edit', $s->id) . '">Edit</a>
                         <a class="dropdown-item" target="_blank" href="' . route('add-student.verify', $s->id) . '">Verification</a>

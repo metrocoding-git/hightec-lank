@@ -178,6 +178,12 @@
                             {{ optional($item->invoice->invoice_item->first()?->fee_type)->name }}
                         @elseif ($item->invoice->invoice_type === 'item_sell')
                             Uniform Fee
+                        @elseif ($item->invoice->invoice_type === 'course')
+                            {{ 'Course fee - ' . optional(optional($item->invoice->paidCourses)->course)->name }}
+                        @elseif ($item->invoice->invoice_type === 'nvq')
+                            {{ 'NVQ fee - ' . optional(optional($item->invoice->paidCourses)->course)->name }}
+                        @elseif ($item->invoice->invoice_type === 'food')
+                            {{ 'Food fee - ' . optional(optional($item->invoice->paidCourses)->course)->name }}
                         @else
                             {{ $item->invoice->invoice_type . ' fee - ' . optional(optional($item->invoice->paidCourses)->course)->name }}
                         @endif

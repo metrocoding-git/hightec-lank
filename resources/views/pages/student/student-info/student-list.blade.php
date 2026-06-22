@@ -33,7 +33,7 @@
                                 </div>
 
 
-                             
+
                                 <div class="col-lg-4 col-md-6 col-sm-6 text-left text-sm-right mb-4 mb-sm-0">
                                     <div class="btn-group" role="group">
                                         <a href="{{ route('student-list.export-all') }}"
@@ -47,6 +47,13 @@
                                             <span class="ti-download pr-2"></span>
                                             Export Filtered
                                         </button>
+
+                                        {{-- <button type="button" class="primary-btn small fix-gr-bg me-2" id="bulkCardBtn">
+                                            <span class="ti-download pr-2"></span>
+                                            Generate Cards (Bulk)
+                                        </button> --}}
+
+
 
                                         <a href="{{ route('add-student.index') }}" class="primary-btn small fix-gr-bg">
                                             <span class="ti-plus pr-2"></span>
@@ -468,6 +475,18 @@
 
         });
 
+        $('#bulkCardBtn').on('click', function() {
+            const branchId = $('#branch-select').val();
+            const intakeId = $('#intake-select').val();
+            const courseId = $('#course-select').val();
+
+            let url = '{{ route('student-card.bulk-pdf') }}?';
+            if (branchId) url += 'branch_id=' + branchId + '&';
+            if (intakeId) url += 'intake_id=' + intakeId + '&';
+            if (courseId) url += 'course_id=' + courseId + '&';
+            window.location.href = url.replace(/&$/, '');
+        });
+
         $(document).ready(function() {
             function checkFilters() {
                 const hasFilters = $('#branch-select').val() ||
@@ -556,9 +575,9 @@
                                <td>
                                     ${row.signature_path 
                                         ? `<a href="/storage/${row.signature_path}" target="_blank">
-                                                                                                            <img src="/storage/${row.signature_path}" 
-                                                                                                                style="width:80px; border:1px solid #ccc; padding:2px; cursor:pointer;">
-                                                                                                    </a>`
+                                                                                                                <img src="/storage/${row.signature_path}" 
+                                                                                                                    style="width:80px; border:1px solid #ccc; padding:2px; cursor:pointer;">
+                                                                                                        </a>`
                                         : '-'
                                     }
                                 </td>
