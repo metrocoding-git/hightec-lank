@@ -28,19 +28,28 @@
     <section class="admin-visitor-area up_admin_visitor">
         <div class="container-fluid p-0">
             <div class="white-box">
-                <form method="GET" action="" class="mb-20">
+                <form method="GET" action="" class="mb-20" id="filter-form">
                     <div class="row">
-                        {{-- Date Range --}}
-                        <div class="col-md-4">
-                            <label>Date Range</label>
-                            <input type="text" id="date_range" name="date_range" class="form-control"
-                                value="{{ $defaultFrom }} to {{ $defaultTo }}">
+                        {{-- Notice --}}
+                        <div class="col-md-12 mt-2">
+                            <small class="text-danger">
+                                <i class="ti-info-alt"></i>
+                                <strong>Group A</strong> (To Date + Branch) and <strong>Group B</strong> (Intake) cannot be
+                                used together.
+                                Selecting one group clears the other.
+                            </small>
                         </div>
 
-                        {{-- Branch --}}
+                        {{-- GROUP A: To Date + Branch --}}
                         <div class="col-md-4">
-                            <label>Branch</label>
-                            <select name="branch_id" class="form-control">
+                            <label>To Date <small class="text-muted">(Group A)</small></label>
+                            <input type="text" id="to_date" name="to_date" class="form-control group-a"
+                                value="{{ request('to_date') }}" placeholder="Select to date">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label>Branch <small class="text-muted">(Group A)</small></label>
+                            <select name="branch_id" class="form-control group-a">
                                 <option value="">All Branches</option>
                                 @foreach ($branches as $branch)
                                     <option value="{{ $branch->id }}"
@@ -51,32 +60,32 @@
                             </select>
                         </div>
 
+                        {{-- GROUP B: Intake --}}
                         <div class="col-md-4">
-                            <div class="primary_input">
-                                <label class="primary_input_label" for="search_intake_id">Intake <span
-                                        class="text-danger">*</span></label>
-                                <select class="primary_select form-control ajax_select" name="intake_id"
-                                    id="search_intake_id">
-                                    <option value="">Select Intake</option>
-                                    @foreach ($intakes as $intake)
-                                        <option value="{{ $intake->id }}"
-                                            {{ request('intake_id') == $intake->id ? 'selected' : '' }}>
-                                            {{ $intake->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
+                            <label>Intake <small class="text-muted">(Group B)</small></label>
+                            <select class="primary_select form-control group-b" name="intake_id" id="search_intake_id">
+                                <option value="">Select Intake</option>
+                                @foreach ($intakes as $intake)
+                                    <option value="{{ $intake->id }}"
+                                        {{ request('intake_id') == $intake->id ? 'selected' : '' }}>
+                                        {{ $intake->name }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
+
+
 
                         <div class="col-lg-12 mt-20 text-right">
                             <button type="submit" class="primary-btn small fix-gr-bg">
                                 <span class="ti-search pr-2"></span> Search
                             </button>
                             <button class="primary-btn small fix-gr-bg">
-                                <a href="{{ route('reports.course-intake-payments') }}" class="text-white">
+                                <a href="{{ route('reports.students-intake-balance') }}" class="text-white">
                                     Reset
                                 </a>
                             </button>
+
                         </div>
                     </div>
                 </form>
@@ -138,12 +147,49 @@
 
 @push('script')
     <script>
-        flatpickr("#date_range", {
-            mode: "range",
+        flatpickr("#to_date", {
+            mode: "single",
             dateFormat: "Y-m-d",
             allowInput: true,
-            defaultDate: ["{{ $defaultFrom }}", "{{ $defaultTo }}"]
+            defaultDate: "{{ request('to_date') }}" 
         });
+
+        // Mutual exclusivity between Group A and Group B
+        $('.group-a').on('change input', function() {
+            var hasGroupA = $('#to_date').val() !== '' || $('[name="branch_id"]').val() !== '';
+            if (hasGroupA) {
+                $('#search_intake_id').val('').trigger('change').prop('disabled', true);
+            } else {
+                $('#search_intake_id').prop('disabled', false);
+            }
+        });
+
+        $('.group-b').on('change', function() {
+            var hasGroupB = $(this).val() !== '';
+            if (hasGroupB) {
+                $('#to_date').val('');
+                $('[name="branch_id"]').val('');
+                $('.group-a').prop('disabled', true);
+            } else {
+                $('.group-a').prop('disabled', false);
+            }
+        });
+
+        // On page load, restore disabled state based on which group has a value
+        $(document).ready(function() {
+            var hasIntake = $('#search_intake_id').val() !== '';
+            var hasGroupA = $('#to_date').val() !== '' || $('[name="branch_id"]').val() !== '';
+
+            if (hasIntake) {
+                $('.group-a').prop('disabled', true);
+            } else if (hasGroupA) {
+                $('#search_intake_id').prop('disabled', true);
+            }
+        });
+
+
+
+
 
         $(document).ready(function() {
             var table = $('#table_id').DataTable({
@@ -251,7 +297,5 @@
                 updateFooter();
             });
         });
-    
-    
     </script>
 @endpush

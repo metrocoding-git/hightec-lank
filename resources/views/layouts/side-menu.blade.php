@@ -696,7 +696,7 @@
                     <li>
                         <a href="/reports/course-intake-payments"
                             class="{{ request()->is('reports/course-intake-payments') ? 'active a' : '' }}">
-                            Course Started & Course Payment Status
+                            Course Started & Course blance Status
                         </a>
                     </li>
 

@@ -610,122 +610,83 @@ class ReportController extends Controller
     {
         $branches = Branch::all();
         $intakes = Intake::orderBy('start_date', 'DESC')->get();
+        $reportData = collect();
 
-        // Default date range
-        $to = now()->format('Y-m-d');
-        $from = now()->subDays(30)->format('Y-m-d');
+        $selectClause = [
+            'courses.name as course_name',
+            'intakes.name as intake_name',
+            DB::raw('SUM(fee_invoices.total_amount) as total_amount'),
+            DB::raw('SUM(COALESCE(payments.paid_amount, 0)) as paid_amount'),
+            DB::raw('SUM(fee_invoices.total_amount) - SUM(COALESCE(payments.paid_amount, 0)) as balance_amount'),
+        ];
 
-        if ($request->date_range) {
-            if (strpos($request->date_range, ' to ') !== false) {
-                $dates = explode(' to ', $request->date_range);
-                $from = $dates[0] ?? null;
-                $to = $dates[1] ?? null;
-            } else {
-                $from = $request->date_range;
-                $to = $request->date_range;
+        // ── MODE 1: Intake filter (ignores date & branch) ──────────────
+        if ($request->filled('intake_id')) {
+
+            $paymentSub = DB::table('invoices_payments')
+                ->select('invoice_id', DB::raw('SUM(amount) as paid_amount'))
+                ->groupBy('invoice_id');
+
+            $reportData = DB::table('student_courses')
+                ->join('intakes', 'student_courses.intake_id', '=', 'intakes.id')
+                ->join('courses', 'student_courses.course_id', '=', 'courses.id')
+                ->join('students', 'student_courses.student_id', '=', 'students.id')
+                ->join('fee_invoices', function ($join) {
+                    $join->on('students.id', '=', 'fee_invoices.student_id')
+                        ->where('fee_invoices.payment_status', '!=', 'returned');
+                })
+                ->join('paid_courses', function ($join) {
+                    $join->on('fee_invoices.id', '=', 'paid_courses.invoice_id')
+                        ->on('paid_courses.course_id', '=', 'student_courses.course_id');
+                })
+                ->leftJoinSub($paymentSub, 'payments', fn($j) => $j->on('fee_invoices.id', '=', 'payments.invoice_id'))
+                ->join('branches', 'fee_invoices.branch_id', '=', 'branches.id')
+                ->whereIn('student_courses.status', ['start', 'Complete'])
+                ->where('fee_invoices.invoice_type', 'course')
+                ->where('intakes.id', $request->intake_id)
+                ->select($selectClause)
+                ->groupBy('courses.id', 'courses.name', 'intakes.name')
+                ->orderBy('courses.name')
+                ->get();
+
+            // ── MODE 2: To Date + Branch filter (ignores intake) ───────────
+        } else {
+
+            $to = $request->filled('to_date') ? $request->to_date : now()->format('Y-m-d');
+
+            $paymentSub = DB::table('invoices_payments')
+                ->select('invoice_id', DB::raw('SUM(amount) as paid_amount'))
+                ->whereDate('created_at', '<=', $to)
+                ->groupBy('invoice_id');
+
+            $query = DB::table('student_courses')
+                ->join('intakes', 'student_courses.intake_id', '=', 'intakes.id')
+                ->join('courses', 'student_courses.course_id', '=', 'courses.id')
+                ->join('students', 'student_courses.student_id', '=', 'students.id')
+                ->join('fee_invoices', function ($join) {
+                    $join->on('students.id', '=', 'fee_invoices.student_id')
+                        ->where('fee_invoices.payment_status', '!=', 'returned');
+                })
+                ->join('paid_courses', function ($join) {
+                    $join->on('fee_invoices.id', '=', 'paid_courses.invoice_id')
+                        ->on('paid_courses.course_id', '=', 'student_courses.course_id');
+                })
+                ->leftJoinSub($paymentSub, 'payments', fn($j) => $j->on('fee_invoices.id', '=', 'payments.invoice_id'))
+                ->join('branches', 'fee_invoices.branch_id', '=', 'branches.id')
+                ->whereIn('student_courses.status', ['start', 'Complete'])
+                ->whereDate('intakes.start_date', '<=', $to)
+                ->where('fee_invoices.invoice_type', 'course');
+
+            if ($request->filled('branch_id')) {
+                $query->where('branches.id', $request->branch_id);
             }
+
+            $reportData = $query
+                ->select($selectClause)
+                ->groupBy('courses.id', 'courses.name', 'intakes.name')
+                ->orderBy('courses.name')
+                ->get();
         }
-
-        $paymentSub = DB::table('invoices_payments')
-            ->select(
-                'invoice_id',
-                DB::raw('SUM(amount) as paid_amount')
-            )
-            ->whereDate('created_at', '<=', $to)
-            ->groupBy('invoice_id');
-
-        // $query = DB::table('student_courses')
-        //     ->join('intakes', 'student_courses.intake_id', '=', 'intakes.id')
-        //     ->join('courses', 'student_courses.course_id', '=', 'courses.id')
-        //     ->join('students', 'student_courses.student_id', '=', 'students.id')
-
-        //     ->join('fee_invoices', function ($join) {
-        //         $join->on('students.id', '=', 'fee_invoices.student_id')
-        //             ->where('fee_invoices.payment_status', '!=', 'returned')
-        //             ->where('fee_invoices.invoice_type', 'course');
-        //     })
-
-        //     ->join('paid_courses', function ($join) {
-        //         $join->on('fee_invoices.id', '=', 'paid_courses.invoice_id')
-        //             ->on('paid_courses.course_id', '=', 'student_courses.course_id');
-        //     })
-
-        //     ->join('branches', 'fee_invoices.branch_id', '=', 'branches.id')
-
-        //     ->whereIn('student_courses.status', ['start', 'Complete'])
-        //     ->whereBetween('intakes.start_date', [$from, $to]);
-
-
-        $query = DB::table('student_courses')
-            ->join('intakes', 'student_courses.intake_id', '=', 'intakes.id')
-            ->join('courses', 'student_courses.course_id', '=', 'courses.id')
-            ->join('students', 'student_courses.student_id', '=', 'students.id')
-
-            ->join('fee_invoices', function ($join) {
-                $join->on('students.id', '=', 'fee_invoices.student_id')
-                    ->where('fee_invoices.payment_status', '!=', 'returned');
-            })
-
-            ->join('paid_courses', function ($join) {
-                $join->on('fee_invoices.id', '=', 'paid_courses.invoice_id')
-                    ->on('paid_courses.course_id', '=', 'student_courses.course_id');
-            })
-
-            ->leftJoinSub($paymentSub, 'payments', function ($join) {
-                $join->on('fee_invoices.id', '=', 'payments.invoice_id');
-            })
-
-            ->join('branches', 'fee_invoices.branch_id', '=', 'branches.id')
-
-            ->whereIn('student_courses.status', ['start', 'Complete'])
-            ->whereDate('intakes.start_date', '<=', $to)
-            // ->whereBetween('intakes.start_date', [$from, $to])
-            ->where('fee_invoices.invoice_type', 'course');
-
-        if ($request->intake_id) {
-            $query->where('intakes.id', $request->intake_id);
-        }
-
-        if ($request->branch_id) {
-            $query->where('branches.id', $request->branch_id);
-        }
-
-
-        $reportData = $query
-            ->select(
-                'courses.name as course_name',
-                'intakes.name as intake_name',
-
-                DB::raw('SUM(fee_invoices.total_amount) as total_amount'),
-
-                DB::raw('SUM(COALESCE(payments.paid_amount,0)) as paid_amount'),
-
-                DB::raw('
-            SUM(fee_invoices.total_amount) 
-            - SUM(COALESCE(payments.paid_amount,0)) 
-            as balance_amount
-        ')
-            )
-            ->groupBy('courses.id', 'courses.name', 'intakes.name')
-            ->orderBy('courses.name')
-            ->get();
-
-        // $reportData = $query
-        //     ->select(
-        //         'courses.name as course_name',
-        //         'intakes.name as intake_name',
-
-        //         DB::raw('COUNT(DISTINCT fee_invoices.id) as invoice_count'),
-
-        //         DB::raw('SUM(fee_invoices.total_amount) as total_amount'),
-
-        //         DB::raw('SUM(fee_invoices.paid_amount) as paid_amount'),
-
-        //         DB::raw('SUM(fee_invoices.total_amount - fee_invoices.paid_amount) as balance_amount')
-        //     )
-        //     ->groupBy('courses.id', 'courses.name', 'intakes.name')
-        //     ->orderBy('courses.name')
-        //     ->get();
 
         return view('pages.reports.students-intake-balance', compact('reportData', 'branches', 'intakes'));
     }

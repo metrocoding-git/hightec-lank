@@ -31,16 +31,16 @@
                             @csrf
                             <div class="row">
                                 {{-- Date Range Filter --}}
-                                <div class="col-lg-6 mb-15">
+                                <div class="col-lg-4 mb-15">
                                     <div class="primary_input">
                                         <label class="primary_input_label" for="date_range">Date Range</label>
-                                        <input type="text" class="form-control" id="date_range" name="date_range" 
-                                               placeholder="Select date range">
+                                        <input type="text" class="form-control" id="date_range" name="date_range"
+                                            placeholder="Select date range">
                                     </div>
                                 </div>
 
                                 {{-- Branch Filter --}}
-                                <div class="col-lg-6 mb-15">
+                                <div class="col-lg-4 mb-15">
                                     <div class="primary_input">
                                         <label class="primary_input_label" for="branch_id">@lang('common.branch')</label>
                                         <select class="primary_select form-control" name="branch_id" id="branch-select">
@@ -51,6 +51,20 @@
                                         </select>
                                     </div>
                                 </div>
+
+                                {{-- Payment Status Filter --}}
+                                <div class="col-lg-4 mb-15">
+                                    <div class="primary_input">
+                                        <label class="primary_input_label" for="payment_status">@lang('finance.payment_status')</label>
+                                        <select class="primary_select form-control" name="payment_status"
+                                            id="status-select">
+                                            <option value="all" selected>All</option>
+                                            <option value="pending">Pending</option>
+                                            <option value="completed">Completed</option>
+                                        </select>
+                                    </div>
+                                </div>
+
 
                                 {{-- Payment Status Filter --}}
                                 {{-- <div class="col-lg-6 mb-15">
@@ -69,7 +83,8 @@
                                     <button type="button" class="primary-btn small fix-gr-bg" id="submit-search">
                                         <span class="ti-search pr-2"></span>@lang('common.search')
                                     </button>
-                                    <button type="button" class="primary-btn small fix-gr-bg btn-warning" id="reset-filter">
+                                    <button type="button" class="primary-btn small fix-gr-bg btn-warning"
+                                        id="reset-filter">
                                         <span class="ti-reload pr-2"></span>Reset
                                     </button>
                                 </div>
@@ -119,7 +134,9 @@
                                         <th>Total Amount</th>
                                         <th>Confirmed</th>
                                         <th>Status</th>
-                                        <th>Open Date</th>
+                                        <th>Create Date</th>
+                                        <th>Complete date</th>
+
                                         <th>Note</th>
                                         <th>Action</th>
                                     </tr>
@@ -162,7 +179,8 @@
 
                             <div class="form-group">
                                 <label>Amount</label>
-                                <input type="number" class="form-control" id="bulk-amount" name="amount" step="0.01">
+                                <input type="number" class="form-control" id="bulk-amount" name="amount"
+                                    step="0.01">
                             </div>
 
                             <div class="form-group">
@@ -251,6 +269,7 @@
                     data: function(d) {
                         d.branch_id = $('#branch-select').val();
                         d.date_range = $('#date_range').val();
+                        d.payment_status = $('#status-select').val();
                     }
                 },
                 dom: "<'d-flex justify-content-between align-items-center mb-2'<'me-2'l><'mx-auto'f><'ms-2'B>>" +
@@ -297,7 +316,10 @@
                         data: 'status'
                     },
                     {
-                        data: 'date'
+                        data: 'create_date'
+                    },
+                    {
+                        data: 'complete_date'
                     },
                     {
                         data: 'note'
@@ -320,6 +342,7 @@
             $('#reset-filter').on('click', function() {
                 $('#date_range').val('');
                 $('#branch-select').val('');
+                $('#status-select').val('all');
                 $('#invoice_table').DataTable().ajax.reload();
             })
 

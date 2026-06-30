@@ -142,7 +142,7 @@ class InvoiceController extends Controller
                 return number_format($row->fee_total_amount - $row->fee_paid_amount, 2);
             })
 
-             ->addColumn('nic_number', function ($row) {
+            ->addColumn('nic_number', function ($row) {
                 return $row->nic_number ?? '-';
             })
             ->addColumn('updated_date', fn($row) =>
@@ -161,11 +161,11 @@ class InvoiceController extends Controller
                 ? number_format($row->invoice_only_paid_amount, 2)
                 : '-')
             ->addColumn('inv_paid_amount', fn($row) =>
-                $row->invoice_paid_amount > 0
-                    ? number_format($row->invoice_paid_amount, 2)
-                    : '-')
-            
-        
+            $row->invoice_paid_amount > 0
+                ? number_format($row->invoice_paid_amount, 2)
+                : '-')
+
+
 
             ->addColumn('paid_amount', fn($row) =>
             $row->fee_paid_amount
@@ -205,6 +205,16 @@ class InvoiceController extends Controller
             }, true)
 
             ->addColumn('action', function ($row) {
+                $returnButton = '';
+                if ($row->invoice_type !== 'item_sell') {
+                    $returnButton = '<a class="dropdown-item" data-toggle="modal" data-target="#returnFeeModal"
+                       data-invoice-id="' . $row->id . '"
+                       data-student-id="' . ($row->student_id ?? '') . '"
+                       data-student-name="' . ($row->student_name ?? '') . '"
+                       data-admission-number="' . ($row->admission_number ?? '') . '"
+                       data-paid-amount="' . ($row->paid_amount ?? 0) . '">Return</a>';
+                }
+
                 return '
             <div class="dropdown">
                 <button class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown">Action</button>
@@ -214,12 +224,7 @@ class InvoiceController extends Controller
                     <a class="dropdown-item" data-toggle="modal" data-target="#makeInvoiceModal"
                        data-student-id="' . ($row->student_id ?? '') . '"
                        data-invoice-id="' . $row->id . '">Invoice</a>
-                    <a class="dropdown-item" data-toggle="modal" data-target="#returnFeeModal"
-                       data-invoice-id="' . $row->id . '"
-                       data-student-id="' . ($row->student_id ?? '') . '"
-                       data-student-name="' . ($row->student_name ?? '') . '"
-                       data-admission-number="' . ($row->admission_number ?? '') . '"
-                       data-paid-amount="' . ($row->paid_amount ?? 0) . '">Return</a>
+                    ' . $returnButton . '
                     <a class="dropdown-item" href="' . route('fees.invoice-print', $row->id) . '"
                        target="_blank">Re-Print</a>
                 </div>
@@ -739,9 +744,10 @@ class InvoiceController extends Controller
 
         return response()->json([
             'total_amount' => $invoice->total_amount,
-            'paid_amount_sum' => $totalPaidAmount, // Sum of all payments
+            'paid_amount_sum' => $totalPaidAmount, 
             'due_amount' => $dueAmount,
-            'main_invoice_number' => $invoice->main_invoice_number, // Add main_invoice_number
+            'main_invoice_number' => $invoice->main_invoice_number, 
+            'invoice_type' => $invoice->invoice_type,
             'payments' => $payments,
         ]);
     }
@@ -860,13 +866,13 @@ class InvoiceController extends Controller
             // IMPORTANT: Do NOT update $invoice->total_amount here. It should remain the original value.
             $invoice->save();
 
-            if($invoice->invoice_type == 'food'){
+            if ($invoice->invoice_type == 'food') {
                 $food_payment = FoodPayment::where('invoice_id', $invoice->id)->first();
 
                 $food_payment->paid_amount = $newNetPaidAmount;
                 $food_payment->due_amount = $food_payment->total_food_amount - $newNetPaidAmount;
                 $food_payment->status = $newNetPaidAmount <= 0 ? 0 : 1;
-                $food_payment->save();  
+                $food_payment->save();
             }
 
             return response()->json([
@@ -1103,16 +1109,16 @@ class InvoiceController extends Controller
                     }
                 }
 
-                if($invoice->invoice->invoice_type== 'food'){
+                if ($invoice->invoice->invoice_type == 'food') {
 
                     $food_payment = FoodPayment::where('invoice_id', $invoice->invoice_id)->first();
 
-                    $is_food_payment =  true ;
+                    $is_food_payment =  true;
                     $has_breakfast = $food_payment->has_breakfast ? true : false;
                     $has_lunch = $food_payment->has_lunch ? true : false;
                     $has_dinner = $food_payment->has_dinner ? true : false;
                     $lunchbox_number = $food_payment->lunchbox_number ?? 'N/A';
-                }else{
+                } else {
                     $is_food_payment = false;
                     $has_breakfast = false;
                     $has_lunch = false;

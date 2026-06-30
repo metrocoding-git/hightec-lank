@@ -388,8 +388,10 @@ class InvoicePaymentController extends Controller
     
             COUNT(*) as total_count,
             SUM(CASE WHEN invoice_payment_confirm = 1 THEN 1 ELSE 0 END) as confirmed_count,
-            SUM(CASE WHEN invoice_payment_confirm IS NULL THEN 1 ELSE 0 END) as pending_count
+            SUM(CASE WHEN invoice_payment_confirm IS NULL THEN 1 ELSE 0 END) as pending_count,
+            MAX(CASE WHEN invoice_payment_confirm = 1 THEN updated_at END) as last_confirm_date
         ")
+
             ->groupBy('payment_invoice_number')
             ->orderByRaw("pending_count DESC")
             ->orderBy('created_at', 'desc');
@@ -404,16 +406,29 @@ class InvoicePaymentController extends Controller
             $dates = explode(' to ', $request->date_range);
 
             $from = isset($dates[0]) && !empty($dates[0]) ? $dates[0] : null;
-            $to = isset($dates[1]) && !empty($dates[1]) ? $dates[1] : $from; // If no 'to', use 'from'
+            $to = isset($dates[1]) && !empty($dates[1]) ? $dates[1] : $from; 
 
-            // If both are empty, skip date filter
             if ($from) {
-                // Convert dates to the correct format
                 $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $from)->startOfDay();
                 $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $to)->endOfDay();
 
-                $query->whereDate('payment_invoice_open_date', '>=', $fromDate)
-                    ->whereDate('payment_invoice_open_date', '<=', $toDate);
+                if ($request->payment_status === 'completed') {
+                    $query->havingRaw('last_confirm_date >= ?', [$fromDate])
+                        ->havingRaw('last_confirm_date <= ?', [$toDate]);
+                } else {
+                    $query->whereDate('payment_invoice_open_date', '>=', $fromDate)
+                        ->whereDate('payment_invoice_open_date', '<=', $toDate);
+                }
+            }
+        }
+
+        // ----- STATUS FILTER -----
+        if ($request->payment_status && $request->payment_status !== 'all') {
+
+            if ($request->payment_status === 'pending') {
+                $query->having('pending_count', '>', 0);
+            } elseif ($request->payment_status === 'completed') {
+                $query->having('pending_count', '=', 0);
             }
         }
 
@@ -539,7 +554,7 @@ class InvoicePaymentController extends Controller
             })
 
             // date
-            ->addColumn('date', function ($row) {
+            ->addColumn('create_date', function ($row) {
                 return $row->payment_invoice_open_date ? date('Y-m-d', strtotime($row->payment_invoice_open_date)) : '-';
             })
 
@@ -549,6 +564,21 @@ class InvoicePaymentController extends Controller
                     ->first();
 
                 return $payment?->invoice_payment_note ?? '-';
+            })
+
+            ->addColumn('complete_date', function ($row) {
+
+                if ($row->pending_count == 0) {
+                    // Completed - get last confirmed payment's updated date
+                    $lastPayment = InvoicesPayments::where('payment_invoice_number', $row->payment_invoice_number)
+                        ->where('invoice_payment_confirm', 1)
+                        ->orderBy('updated_at', 'desc')
+                        ->first();
+
+                    return $lastPayment?->updated_at ? date('Y-m-d', strtotime($lastPayment->updated_at)) : '-';
+                }
+
+                return '-';
             })
 
             // action

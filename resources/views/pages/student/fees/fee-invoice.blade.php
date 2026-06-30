@@ -122,7 +122,7 @@
                                                 <th>@lang('accounts.amount')(Rs)</th>
                                                 <th>@lang('fees.paid')(Rs)</th>
                                                 <th>@lang('accounts.balance')(Rs)</th>
-                                                
+
                                                 <th>Payment Status</th>
                                                 <th>Payment Date</th>
                                                 <th>Updated Date</th>
@@ -1027,13 +1027,13 @@
                     name: 'payment_date',
                     orderable: false,
                     searchable: false
-                }, 
+                },
                 {
                     data: 'updated_date',
                     name: 'updated_date',
                     orderable: false,
                     searchable: false
-                }, 
+                },
                 {
                     data: 'due_date',
                     name: 'due_date',
@@ -1063,7 +1063,7 @@
                     orderable: false,
                     searchable: false
                 }, // ← computed
-                
+
                 {
                     data: 'inv_payment_status',
                     name: 'inv_payment_status',
@@ -1076,7 +1076,7 @@
                     orderable: false,
                     searchable: false
                 },
-                
+
             ],
         });
 
@@ -1310,6 +1310,7 @@
             modal.find('#paymentHistoryCourseName').text(courseName || 'N/A'); // Display course name
             modal.find('#addPaymentInvoiceId').val(invoiceId); // Set invoice ID for add payment form
 
+
             // Fetch payment history and invoice details via AJAX
             $.ajax({
                 url: `/fees/payment-history/${invoiceId}`, // New route for fetching payment history
@@ -1335,6 +1336,10 @@
                     // Set the max attribute for the payment amount input
                     modal.find('#paymentAmountInput').attr('max', response.due_amount);
 
+
+                    modal.find('#paymentAmountInput').attr('max', response.due_amount);
+                    var isItemSell = response.invoice_type === 'item_sell';
+
                     let historyHtml =
                         '<table class="table table-bordered" style="text-align: center; width: 100%;"><thead style="background-color: #f8f9fa;"><tr><th style="text-align: center; padding: 12px;">Invoice Number</th><th style="text-align: center; padding: 12px;">Course Name</th><th style="text-align: center; padding: 12px;">Amount</th><th style="text-align: center; padding: 12px;">Method</th><th style="text-align: center; padding: 12px;">Type</th><th style="text-align: center; padding: 12px;">Receipt No.</th><th style="text-align: center; padding: 12px;">Date</th><th style="text-align: center; padding: 12px;">Action</th></tr></thead><tbody>';
                     if (response.payments.length > 0) {
@@ -1359,7 +1364,9 @@
                                 actionDropdown +=
                                     `<a style="padding:4px;margin: 2px; background-color: #28a745; color: #fff; text-align: center;" class="dropdown-item view-bank-details-btn" href="#" data-payment-id="${payment.id}" data-bank-date="${payment.bank_payment_date}" data-bank-amount="${payment.bank_payment_amount}" data-payment-file="${payment.payment_file || ''}">View Bank Details</a>`;
                             }
-                            if (payment.payment_invoice_number == null) {
+
+                            if (!isItemSell && payment.payment_invoice_number ==
+                                null) { // added !isFood check
                                 if (payment.payment_status !== 'refunded' && payment.amount >
                                     0) {
                                     actionDropdown +=
@@ -1382,15 +1389,15 @@
                                     <td style="padding: 12px; text-align: center;">${new Date(payment.created_at).toLocaleDateString()}</td>
                                     <td style="padding: 12px; text-align: center;">
                                         ${actionDropdown ? `
-                                                                                                                                                            <div class="dropdown">
-                                                                                                                                                                <button class="primary-btn small fix-gr-bg dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" style="border-radius: 6px; padding: 6px 12px; font-size: 12px;">
-                                                                                                                                                                    Actions
-                                                                                                                                                                </button>
-                                                                                                                                                                <div class="dropdown-menu" style="min-width: 150px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                                                                                                                                                                    ${actionDropdown}
+                                                                                                                                                                <div class="dropdown">
+                                                                                                                                                                    <button class="primary-btn small fix-gr-bg dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" style="border-radius: 6px; padding: 6px 12px; font-size: 12px;">
+                                                                                                                                                                        Actions
+                                                                                                                                                                    </button>
+                                                                                                                                                                    <div class="dropdown-menu" style="min-width: 150px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                                                                                                                                                        ${actionDropdown}
+                                                                                                                                                                    </div>
                                                                                                                                                                 </div>
-                                                                                                                                                            </div>
-                                                                                                                                                        ` : '<span class="text-muted">No actions</span>'}
+                                                                                                                                                            ` : '<span class="text-muted">No actions</span>'}
                                     </td>
                                 </tr>
                             `;
@@ -1759,6 +1766,8 @@
                     modal.find('#dueAmountDisplay').text(response.due_amount);
                     modal.find('#paymentAmountInput').attr('max', response.due_amount);
 
+                    var isItemSell = response.invoice_type === 'item_sell';
+
                     // Build the history table HTML (reuse your existing code)
                     let historyHtml =
                         '<table class="table table-bordered" style="text-align: center; width: 100%;"><thead style="background-color: #f8f9fa;"><tr><th>Invoice Number</th><th>Course Name</th><th>Amount</th><th>Method</th><th>Type</th><th>Receipt No.</th><th>Date</th><th>Action</th></tr></thead><tbody>';
@@ -1778,7 +1787,8 @@
                                 actionDropdown +=
                                     `<a class="dropdown-item view-bank-details-btn" href="#" data-payment-id="${payment.id}" data-bank-date="${payment.bank_payment_date}" data-bank-amount="${payment.bank_payment_amount}" data-payment-file="${payment.payment_file || ''}" style="padding:4px;margin:2px;background-color:#28a745;color:#fff;text-align:center;">View Bank Details</a>`;
                             }
-                            if (payment.payment_status !== 'refunded' && payment.amount > 0) {
+                            if (!isItemSell && payment.payment_status !== 'refunded' && payment.amount >
+                                0) { // added !isItemSell check
                                 actionDropdown +=
                                     `<a class="dropdown-item refund-btn" href="#" data-payment-id="${payment.id}" data-amount="${payment.amount}" style="padding:4px;margin:2px;background-color:#dc3545;color:#fff;text-align:center;">Refund</a>`;
                             }
