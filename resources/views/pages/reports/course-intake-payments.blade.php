@@ -15,7 +15,7 @@
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1>Course Intake Payments Report</h1>
+                <h1>Course Started & Course blance Status Report</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">Dashboard</a>
                     <a href="#">Reports</a>
@@ -30,17 +30,25 @@
             <div class="white-box">
                 <form method="GET" action="" class="mb-20">
                     <div class="row">
-                        {{-- Date Range --}}
-                        <div class="col-md-4">
-                            <label>Date Range</label>
-                            <input type="text" id="date_range" name="date_range" class="form-control"
-                                value="{{ $defaultFrom }} to {{ $defaultTo }}">
+
+                        <div class="col-md-12 mb-2">
+                            <small class="text-danger">
+                                <i class="ti-info-alt"></i>
+                                <strong>Group A</strong> (To Date + Branch) and <strong>Group B</strong> (Intake)
+                                cannot be used together. Selecting one group clears the other.
+                            </small>
                         </div>
 
-                        {{-- Branch --}}
+                        {{-- GROUP A --}}
                         <div class="col-md-4">
-                            <label>Branch</label>
-                            <select name="branch_id" class="form-control">
+                            <label>To Date <small class="text-muted">(Group A)</small></label>
+                            <input type="text" id="to_date" name="to_date" class="form-control group-a"
+                                value="{{ request('to_date') }}" placeholder="Select to date">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label>Branch <small class="text-muted">(Group A)</small></label>
+                            <select name="branch_id" class="form-control group-a">
                                 <option value="">All Branches</option>
                                 @foreach ($branches as $branch)
                                     <option value="{{ $branch->id }}"
@@ -50,14 +58,18 @@
                                 @endforeach
                             </select>
                         </div>
+
+                        {{-- GROUP B --}}
                         <div class="col-md-4">
-                            <label>Payment Status</label>
-                            <select name="payment_status" class="form-control">
-                                <option value="">All</option>
-                                <option value="full" {{ request('payment_status') == 'full' ? 'selected' : '' }}>Paid
-                                    Completed</option>
-                                <option value="partial" {{ request('payment_status') == 'partial' ? 'selected' : '' }}>Paid
-                                    Not Completed</option>
+                            <label>Intake <small class="text-muted">(Group B)</small></label>
+                            <select class="primary_select form-control group-b" name="intake_id" id="intake_id">
+                                <option value="">Select Intake</option>
+                                @foreach ($intakes as $intake)
+                                    <option value="{{ $intake->id }}"
+                                        {{ request('intake_id') == $intake->id ? 'selected' : '' }}>
+                                        {{ $intake->name }}
+                                    </option>
+                                @endforeach
                             </select>
                         </div>
 
@@ -70,6 +82,7 @@
                                     Reset
                                 </a>
                             </button>
+
                         </div>
                     </div>
                 </form>
@@ -81,55 +94,72 @@
                         <div class="main-title mb-15">
                             <h3>Payments Report</h3>
                         </div>
-                        <x-table>
-                            <table id="table_id" class="table" cellspacing="0" width="100%">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Invoice No</th>
-                                        <th>Student No</th>
-                                        <th>Student Category</th>
-                                        <th>Branch</th>
-                                        <th>Course</th>
-                                        <th>Intake</th>
-                                        <th>Last Payment Date</th>
-                                        <th>Invoice Create Date</th>
-                                        <th>Intake Date</th>
-                                        <th>Status</th>
-                                        <th>Total Amount</th>
-                                        <th>Paid Amount</th>
-                                    </tr>
-                                </thead>
-                                <tfoot>
-                                    <tr>
-                                        <th colspan="11" style="text-align:right">Total:</th>
-                                        <th id="total_amount_footer"></th>
-                                        <th id="paid_amount_footer"></th>
-                                    </tr>
-                                </tfoot>
-                                <tbody>
-                                    @foreach ($reportData as $key => $data)
+                        <div style="overflow-x: auto; width: 100%;">
+
+                            <x-table>
+                                <table id="table_id" class="table" cellspacing="0" width="100%">
+                                    <thead>
                                         <tr>
-                                            <td>{{ $key + 1 }}</td>
-                                            <td>{{ $data->main_invoice_number }}</td>
-                                            <td>{{ $data->admission_number }}</td>
-                                            <td>{{ $data->course_category_name ?? $data->student_category_name ?? '-' }}</td>
-                                            <td>{{ $data->branch_name }}</td>
-                                            <td>{{ $data->course_name }}</td>
-                                            <td>{{ $data->intake_name }}</td>
-                                            <td>{{ $data->invoice_paid_date ? \Carbon\Carbon::parse($data->invoice_paid_date)->format('Y-m-d') : '-' }}
-                                            </td>
-                                            <td>{{ $data->invoice_create_date ? \Carbon\Carbon::parse($data->invoice_create_date)->format('Y-m-d') : '-' }}
-                                            </td>
-                                            <td>{{ $data->intake_start_date }}</td>
-                                            <td>{{ ucfirst($data->status) }}</td>
-                                            <td>{{ number_format($data->total_amount, 2) }}</td>
-                                            <td>{{ number_format($data->paid_amount, 2) }}</td>
+                                            <th>#</th>
+                                            <th>Invoice No</th>
+                                            <th>Student No</th>
+                                            <th>Student Category</th>
+                                            <th>Branch</th>
+                                            <th>Course</th>
+                                            <th>Intake</th>
+                                            <th>Last Payment Date</th>
+                                            <th>Invoice Create Date</th>
+                                            <th>Intake Date</th>
+                                            <th>Status</th>
+                                            <th>Total Amount</th>
+                                            <th>Paid Amount</th>
+                                            <th>Due Amount</th>
+                                            <th>Cash</th>
+                                            <th>Bank Transfer</th>
+                                            <th>Invoice</th>
                                         </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </x-table>
+                                    </thead>
+                                    <tfoot>
+                                        <tr>
+                                            <th colspan="11" style="text-align:right">Total:</th>
+                                            <th id="total_amount_footer"></th>
+                                            <th id="paid_amount_footer"></th>
+                                            <th id="cash_footer"></th>
+                                            <th id="bank_footer"></th>
+                                            <th id="invoice_footer"></th>
+
+                                        </tr>
+                                    </tfoot>
+                                    <tbody>
+                                        @foreach ($reportData as $key => $data)
+                                            <tr>
+                                                <td>{{ $key + 1 }}</td>
+                                                <td>{{ $data->main_invoice_number }}</td>
+                                                <td>{{ $data->admission_number }}</td>
+                                                <td>{{ $data->course_category_name ?? ($data->student_category_name ?? '-') }}
+                                                </td>
+                                                <td>{{ $data->branch_name }}</td>
+                                                <td>{{ $data->course_name }}</td>
+                                                <td>{{ $data->intake_name }}</td>
+                                                <td>{{ $data->invoice_paid_date ? \Carbon\Carbon::parse($data->invoice_paid_date)->format('Y-m-d') : '-' }}
+                                                </td>
+                                                <td>{{ $data->invoice_create_date ? \Carbon\Carbon::parse($data->invoice_create_date)->format('Y-m-d') : '-' }}
+                                                </td>
+                                                <td>{{ $data->intake_start_date }}</td>
+                                                <td>{{ ucfirst($data->status) }}</td>
+                                                <td>{{ number_format($data->total_amount, 2) }}</td>
+                                                <td>{{ number_format($data->paid_amount, 2) }}</td>
+                                                <td>{{ number_format($data->due_amount, 2) }}</td>
+                                                <td>{{ number_format($data->cash_amount, 2) }}</td>
+                                                <td>{{ number_format($data->bank_amount, 2) }}</td>
+                                                <td>{{ number_format($data->invoice_amount, 2) }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </x-table>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -144,107 +174,151 @@
 
 @push('script')
     <script>
-        flatpickr("#date_range", {
-            mode: "range",
+        flatpickr("#to_date", {
+            mode: "single",
             dateFormat: "Y-m-d",
             allowInput: true,
-            defaultDate: ["{{ $defaultFrom }}", "{{ $defaultTo }}"]
+            defaultDate: "{{ request('to_date') }}" || null
         });
 
-        $(document).ready(function() {
-            var table = $('#table_id').DataTable({
-                responsive: false,
-                dom: 'Blfrtip',
-                buttons: [{
-                        extend: 'copy',
-                        title: getFileName()
-                    },
-                    {
-                        extend: 'csv',
-                        title: getFileName()
-                    },
-                    {
-                        extend: 'excel',
-                        title: getFileName()
-                    },
-                    {
-                        extend: 'pdf',
-                        title: getFileName()
-                    },
-                    {
-                        extend: 'print',
-                        title: getFileName()
-                    }
-                ],
-                paging: true,
-                searching: true,
-                ordering: true,
-                info: true,
-                scrollX: true,
-                lengthChange: true,
-                order: [
-                    [0, 'asc']
-                ],
-                lengthMenu: [
-                    [10, 25, 50, 100, -1],
-                    [10, 25, 50, 100, "All"]
-                ],
-                pageLength: 25,
-                language: {
-                    search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
-                    searchPlaceholder: 'Search...',
-                    paginate: {
-                        previous: '<i class="fa-solid fa-angle-left"></i>',
-                        next: '<i class="fa-solid fa-angle-right"></i>'
-                    }
-                }
-            });
-
-            function getFileName() {
-                let now = new Date();
-
-                let date = now.toISOString().slice(0, 10);
-                let time = now.toTimeString().slice(0, 8).replace(/:/g, '-'); // HH-MM-SS
-
-                return 'Course-Intake-Payments-Report_' + date + '__' + time;
+        // Mutual exclusivity
+        $('.group-a').on('change input', function() {
+            var hasGroupA = $('#to_date').val() !== '' || $('[name="branch_id"]').val() !== '';
+            if (hasGroupA) {
+                $('#intake_id').val('').prop('disabled', true);
+            } else {
+                $('#intake_id').prop('disabled', false);
             }
-            table.on('length.dt page.dt search.dt order.dt draw.dt', function() {
-                updateFooter();
-            });
+        });
 
-            // ============ SUM FOOTER ============
-            function updateFooter() {
-                var totalAmount = 0;
-                var paidAmount = 0;
+        $('.group-b').on('change', function() {
+            var hasGroupB = $(this).val() !== '';
+            if (hasGroupB) {
+                $('#to_date').val('');
+                $('[name="branch_id"]').val('');
+                $('.group-a').prop('disabled', true);
+            } else {
+                $('.group-a').prop('disabled', false);
+            }
+        });
 
-                $('#table_id tbody tr').each(function() {
-                    var totalText = $(this).find('td:eq(11)').text().trim(); // column 12
-                    var paidText = $(this).find('td:eq(12)').text().trim(); // column 13
 
-                    // remove commas
-                    totalText = totalText.replace(/,/g, '');
-                    paidText = paidText.replace(/,/g, '');
 
-                    totalAmount += parseFloat(totalText) || 0;
-                    paidAmount += parseFloat(paidText) || 0;
+        // Restore state on page load
+        $(document).ready(function() {
+            var hasIntake = $('#intake_id').val() !== '';
+            var hasGroupA = $('#to_date').val() !== '' || $('[name="branch_id"]').val() !== '';
+
+            if (hasIntake) {
+                $('.group-a').prop('disabled', true);
+            } else if (hasGroupA) {
+                $('#intake_id').prop('disabled', true);
+            }
+
+            $(document).ready(function() {
+                var table = $('#table_id').DataTable({
+                    responsive: false,
+                    autoWidth: false,
+                    dom: 'Blfrtip',
+                    buttons: [{
+                            extend: 'copy',
+                            title: getFileName()
+                        },
+                        {
+                            extend: 'csv',
+                            title: getFileName()
+                        },
+                        {
+                            extend: 'excel',
+                            title: getFileName()
+                        },
+                        {
+                            extend: 'pdf',
+                            title: getFileName()
+                        },
+                        {
+                            extend: 'print',
+                            title: getFileName()
+                        }
+                    ],
+                    paging: true,
+                    searching: true,
+                    ordering: true,
+                    info: true,
+                    scrollX: true,
+                    lengthChange: true,
+                    order: [
+                        [0, 'asc']
+                    ],
+                    lengthMenu: [
+                        [10, 25, 50, 100, -1],
+                        [10, 25, 50, 100, "All"]
+                    ],
+                    pageLength: 25,
+                    language: {
+                        search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
+                        searchPlaceholder: 'Search...',
+                        paginate: {
+                            previous: '<i class="fa-solid fa-angle-left"></i>',
+                            next: '<i class="fa-solid fa-angle-right"></i>'
+                        }
+                    }
                 });
 
-                $('#total_amount_footer').html(totalAmount.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                }));
-                $('#paid_amount_footer').html(paidAmount.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                }));
-            }
+                function getFileName() {
+                    let now = new Date();
 
-          
-            updateFooter();
+                    let date = now.toISOString().slice(0, 10);
+                    let time = now.toTimeString().slice(0, 8).replace(/:/g, '-'); // HH-MM-SS
 
-            // recalc on search, paging, ordering
-            table.on('search.dt page.dt order.dt', function() {
+                    return 'Course-Intake-Payments-Report_' + date + '__' + time;
+                }
+                table.on('length.dt page.dt search.dt order.dt draw.dt', function() {
+                    updateFooter();
+                });
+
+                // ============ SUM FOOTER ============
+                function updateFooter() {
+                    var totalAmount = 0,
+                        paidAmount = 0,
+                        dueAmount = 0;
+                    var cashAmount = 0,
+                        bankAmount = 0,
+                        invoiceAmount = 0;
+
+                    $('#table_id tbody tr').each(function() {
+                        totalAmount += parseFloat($(this).find('td:eq(11)').text().replace(/,/g,
+                            '')) || 0;
+                        paidAmount += parseFloat($(this).find('td:eq(12)').text().replace(/,/g,
+                            '')) || 0;
+                        dueAmount += parseFloat($(this).find('td:eq(13)').text().replace(/,/g,
+                            '')) || 0;
+                        cashAmount += parseFloat($(this).find('td:eq(14)').text().replace(/,/g,
+                            '')) || 0;
+                        bankAmount += parseFloat($(this).find('td:eq(15)').text().replace(/,/g,
+                            '')) || 0;
+                        invoiceAmount += parseFloat($(this).find('td:eq(16)').text().replace(/,/g,
+                            '')) || 0;
+                    });
+
+                    const fmt = v => v.toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                    $('#total_amount_footer').html(fmt(totalAmount));
+                    $('#paid_amount_footer').html(fmt(paidAmount));
+                    $('#due_footer').html(fmt(dueAmount));
+                    $('#cash_footer').html(fmt(cashAmount));
+                    $('#bank_footer').html(fmt(bankAmount));
+                    $('#invoice_footer').html(fmt(invoiceAmount));
+                }
+
                 updateFooter();
+
+                // recalc on search, paging, ordering
+                table.on('search.dt page.dt order.dt', function() {
+                    updateFooter();
+                });
             });
         });
     </script>

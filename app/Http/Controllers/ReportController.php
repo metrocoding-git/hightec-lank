@@ -519,7 +519,10 @@ class ReportController extends Controller
                 'fee_invoices.payment_method',
                 'fee_invoices.create_date as invoice_create_date',
                 'fee_invoices.updated_at as invoice_paid_date',
-                'course_categories.category_name as course_category_name'
+                'course_categories.category_name as course_category_name',
+                DB::raw('(SELECT COALESCE(SUM(ip.amount),0) FROM invoices_payments ip WHERE ip.invoice_id = fee_invoices.id AND ip.payment_method = "Cash") as cash_amount'),
+                DB::raw('(SELECT COALESCE(SUM(ip.amount),0) FROM invoices_payments ip WHERE ip.invoice_id = fee_invoices.id AND ip.payment_method = "Bank Transfer") as bank_amount'),
+                DB::raw('(SELECT COALESCE(SUM(ip.amount),0) FROM invoices_payments ip WHERE ip.invoice_id = fee_invoices.id AND ip.payment_method = "Invoice") as invoice_amount')
 
             )
             ->distinct('fee_invoices.id')
@@ -531,79 +534,78 @@ class ReportController extends Controller
     public function courseIntakePayments(Request $request)
     {
         $branches = Branch::all();
+        $intakes = Intake::orderBy('start_date', 'DESC')->get();
+        $reportData = collect();
 
-        // Default date range: last 30 days
-        $to = now()->format('Y-m-d');
-        $from = now()->subDays(30)->format('Y-m-d');
+        $paymentStatus = 'partial';
 
-        // If user selects date range
-        if ($request->date_range) {
-
-            if (strpos($request->date_range, ' to ') !== false) {
-                // Range
-                $dates = explode(' to ', $request->date_range);
-                $from = $dates[0] ?? null;
-                $to = $dates[1] ?? null;
-            } else {
-                // Single date
-                $from = $request->date_range;
-                $to = $request->date_range;
-            }
-        }
-
-
-
-        $query = DB::table('student_courses')
+        $baseQuery = fn() => DB::table('student_courses')
             ->join('intakes', 'student_courses.intake_id', '=', 'intakes.id')
             ->join('courses', 'student_courses.course_id', '=', 'courses.id')
             ->join('paid_courses', function ($join) {
                 $join->on('student_courses.course_id', '=', 'paid_courses.course_id');
             })
-            ->join('fee_invoices', function ($join) use ($request) {
+            ->join('fee_invoices', function ($join) use ($paymentStatus) {
                 $join->on('paid_courses.invoice_id', '=', 'fee_invoices.id')
-                    ->on('fee_invoices.student_id', 'student_courses.student_id');
-
-                if ($request->payment_status) {
-                    $join->where('fee_invoices.payment_status', $request->payment_status);
-                } else {
-                    $join->whereIn('fee_invoices.payment_status', ['full', 'partial']);
-                }
+                    ->on('fee_invoices.student_id', 'student_courses.student_id')
+                    ->where('fee_invoices.payment_status', $paymentStatus);
             })
             ->join('branches', 'fee_invoices.branch_id', '=', 'branches.id')
             ->join('students', 'student_courses.student_id', '=', 'students.id')
             ->join('student_categories', 'students.student_category_id', '=', 'student_categories.id')
             ->leftJoin('student_categories as course_categories', 'student_courses.student_category_id', '=', 'course_categories.id')
-            ->whereBetween('intakes.start_date', [$from, $to])
             ->whereIn('student_courses.status', ['start', 'Complete'])
             ->where('fee_invoices.invoice_type', 'course');
 
-        // Optional branch filter
-        if ($request->branch_id) {
-            $query->where('fee_invoices.branch_id', $request->branch_id);
+        $selectClause = [
+            'fee_invoices.main_invoice_number',
+            'students.admission_number',
+            'student_categories.category_name as student_category_name',
+            'branches.name as branch_name',
+            'courses.name as course_name',
+            'intakes.name as intake_name',
+            'intakes.start_date as intake_start_date',
+            'student_courses.status',
+            'fee_invoices.total_amount',
+            'fee_invoices.paid_amount',
+                DB::raw('(fee_invoices.total_amount - fee_invoices.paid_amount) as due_amount'), // ← add this
+
+            'fee_invoices.create_date as invoice_create_date',
+            'fee_invoices.updated_at as invoice_paid_date',
+            'course_categories.category_name as course_category_name',
+            DB::raw('(SELECT COALESCE(SUM(ip.amount),0) FROM invoices_payments ip WHERE ip.invoice_id = fee_invoices.id AND ip.payment_method = "Cash") as cash_amount'),
+            DB::raw('(SELECT COALESCE(SUM(ip.amount),0) FROM invoices_payments ip WHERE ip.invoice_id = fee_invoices.id AND ip.payment_method = "Bank Transfer") as bank_amount'),
+            DB::raw('(SELECT COALESCE(SUM(ip.amount),0) FROM invoices_payments ip WHERE ip.invoice_id = fee_invoices.id AND ip.payment_method = "Invoice") as invoice_amount'),
+        ];
+
+        // ── MODE B: Intake only ─────────────────────────────────────────
+        if ($request->filled('intake_id')) {
+
+            $reportData = $baseQuery()
+                ->where('intakes.id', $request->intake_id)
+                ->select($selectClause)
+                ->distinct('fee_invoices.id')
+                ->get();
+
+            // ── MODE A: To Date + Branch ────────────────────────────────────
+        } else {
+
+            $to = $request->filled('to_date') ? $request->to_date : now()->format('Y-m-d');
+
+            $query = $baseQuery()
+                ->whereDate('intakes.start_date', '<=', $to);
+
+            if ($request->filled('branch_id')) {
+                $query->where('fee_invoices.branch_id', $request->branch_id);
+            }
+
+            $reportData = $query
+                ->select($selectClause)
+                ->distinct('fee_invoices.id')
+                ->get();
         }
 
-        // Select required columns, distinct invoice per student-course
-        $reportData = $query
-            ->select(
-                'fee_invoices.main_invoice_number',
-                'students.admission_number',
-                'student_categories.category_name as student_category_name',
-                'branches.name as branch_name',
-                'courses.name as course_name',
-                'intakes.name as intake_name',
-                'intakes.start_date as intake_start_date',
-                'student_courses.status',
-                'fee_invoices.total_amount',
-                'fee_invoices.paid_amount',
-                'fee_invoices.payment_method',
-                'fee_invoices.create_date as invoice_create_date',
-                'fee_invoices.updated_at as invoice_paid_date',
-                'course_categories.category_name as course_category_name'
-            )
-            ->distinct('fee_invoices.id')
-            ->get();
-
-        return view('pages.reports.course-intake-payments', compact('reportData', 'branches'));
+        return view('pages.reports.course-intake-payments', compact('reportData', 'branches', 'intakes'));
     }
 
     public function studentsIntakeBalance(Request $request)

@@ -15,7 +15,7 @@
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1>Course Intake Payments Report</h1>
+                <h1>Course Started & Course Completed Report</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">Dashboard</a>
                     <a href="#">Reports</a>
@@ -89,6 +89,9 @@
                                         <th>Status</th>
                                         <th>Total Amount</th>
                                         <th>Paid Amount</th>
+                                        <th>Cash</th>
+                                        <th>Bank Transfer</th>
+                                        <th>Invoice</th>
                                     </tr>
                                 </thead>
                                 <tfoot>
@@ -96,6 +99,9 @@
                                         <th colspan="11" style="text-align:right">Total:</th>
                                         <th id="total_amount_footer"></th>
                                         <th id="paid_amount_footer"></th>
+                                        <th id="cash_footer"></th>
+<th id="bank_footer"></th>
+<th id="invoice_footer"></th>
                                     </tr>
                                 </tfoot>
                                 <tbody>
@@ -104,7 +110,8 @@
                                             <td>{{ $key + 1 }}</td>
                                             <td>{{ $data->main_invoice_number }}</td>
                                             <td>{{ $data->admission_number }}</td>
-                                            <td>{{ $data->course_category_name ?? ($data->student_category_name ?? '-') }}</td>
+                                            <td>{{ $data->course_category_name ?? ($data->student_category_name ?? '-') }}
+                                            </td>
                                             <td>{{ $data->branch_name }}</td>
                                             <td>{{ $data->course_name }}</td>
                                             <td>{{ $data->intake_name }}</td>
@@ -116,6 +123,9 @@
                                             <td>{{ ucfirst($data->status) }}</td>
                                             <td>{{ number_format($data->total_amount, 2) }}</td>
                                             <td>{{ number_format($data->paid_amount, 2) }}</td>
+                                            <td>{{ number_format($data->cash_amount, 2) }}</td>
+                                            <td>{{ number_format($data->bank_amount, 2) }}</td>
+                                            <td>{{ number_format($data->invoice_amount, 2) }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>

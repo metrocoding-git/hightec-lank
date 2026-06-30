@@ -15,7 +15,7 @@
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1>Students Intake Balance Report</h1>
+                <h1>Course Fee Balances as Intake Wise Report</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">Dashboard</a>
                     <a href="#">Reports</a>
