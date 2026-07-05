@@ -521,6 +521,7 @@
                 $('#food_from_date').prop('readonly', true);
                 $('#has_breakfast, #has_lunch, #has_dinner').prop('disabled', true);
                 $('#breakfast_amount, #lunch_amount, #dinner_amount').prop('readonly', true);
+                applyPriceLockState($('.allCourseDetails tr'));
 
                 $('#course_id').trigger('change');
             }
@@ -679,6 +680,7 @@
                 }
 
                 if (currentMode === 'food') {
+                    $('.course_price_input').data('manually-edited', false);
                     if (!hasFood && courseId) {
                         toastr.warning('This course does not have food fee enabled.', null, {
                             timeOut: 10000
@@ -728,6 +730,7 @@
                                 } else if (currentMode === 'normal' && data.course_amount) {
                                     effectivePrice = parseFloat(data.course_amount);
                                 } else if (currentMode === 'food') {
+                                    var foodHasExisting = !data.is_new_food_payment;
                                     if (data.food_amount && parseFloat(data.food_amount) > 0 &&
                                         !data.is_new_food_payment) {
                                         effectivePrice = parseFloat(data.food_amount);
@@ -816,6 +819,11 @@
                                 }
 
                                 addCourseRow(courseId, courseName, effectivePrice);
+                                if (currentMode === 'food') {
+                                    $('.allCourseDetails tr').data('has-existing-payment',
+                                        foodHasExisting);
+                                }
+                                applyPriceLockState($('.allCourseDetails tr'));
 
                                 $('.allCourseDetails tr[data-id="' + courseId + '"]')
                                     .find('.intake_name_cell').text(intakeName);
@@ -915,7 +923,18 @@
                 </tr>`;
 
                 $('.allCourseDetails').append(row);
+                $('.course_price_input').data('manually-edited', false);
+                applyPriceLockState($('.allCourseDetails tr'));
                 updatePaymentStatusAndDue();
+            }
+
+
+            function applyPriceLockState($row) {
+                if (!$row || !$row.length) return;
+                let hasExisting = $row.data('has-existing-payment');
+                console.log('applyPriceLockState', currentMode, hasExisting);
+                let editable = (currentMode === 'food' && !hasExisting);
+                $row.find('.course_price_input').prop('readonly', !editable);
             }
 
             // ================================================================
@@ -926,7 +945,7 @@
                 let paidAmount = parseFloat($('.paid_amount_input').val()) || 0;
                 let paymentMethod = $('#paymentMethodName').val();
                 let bankPaidAmount = parseFloat($('#bank_paid_amount').val()) || 0;
-                
+
                 let initialDue = parseFloat($('.allCourseDetails tr').find('.due_amount_display').data(
                     'initial-due'));
 
@@ -951,6 +970,25 @@
                     else $('#status').val('not').niceSelect('update');
                 }
             }
+
+            // mark price as manually edited when user types directly into it
+            $(document).on('input', '.course_price_input', function() {
+                $(this).data('manually-edited', true);
+
+                let $row = $(this).closest('tr');
+                let $dueDisplay = $row.find('.due_amount_display');
+                let newPrice = parseFloat($(this).val()) || 0;
+                let hasExistingPayment = $row.data('has-existing-payment');
+
+                console.log('course_price_input changed', newPrice, hasExistingPayment);
+
+                if (!hasExistingPayment) {
+                    $dueDisplay.data('initial-due', newPrice);
+                    $row.find('.paid_amount_input').attr('max', newPrice);
+                }
+
+                updatePaymentStatusAndDue();
+            });
 
             $(document).on('input', '.course_price_input, .paid_amount_input', function() {
                 updatePaymentStatusAndDue();
@@ -1020,30 +1058,28 @@
                     recalcFoodTotal();
                 });
 
+
+
             function recalcFoodTotal() {
                 let breakfast = $('#has_breakfast').is(':checked') ? (parseFloat($('#breakfast_amount').val()) ||
                     0) : 0;
                 let lunch = $('#has_lunch').is(':checked') ? (parseFloat($('#lunch_amount').val()) || 0) : 0;
                 let dinner = $('#has_dinner').is(':checked') ? (parseFloat($('#dinner_amount').val()) || 0) : 0;
-
                 let total = breakfast + lunch + dinner;
+
                 $('#foodTotalDisplay').val(total > 0 ? total.toFixed(2) : '0.00');
 
-                // ── FIX 3: Only overwrite due if no server value has been set yet ──
-                $('.course_price_input').val(total.toFixed(2));
-                $('.paid_amount_input').attr('max', total);
-                let paid = parseFloat($('.paid_amount_input').val()) || 0;
+                let $row = $('.allCourseDetails tr');
+                let hasExisting = $row.data('has-existing-payment');
+                let manuallyEdited = $('.course_price_input').data('manually-edited');
 
-                let initialDue = $('.due_amount_display').data('initial-due');
-                if (paid == 0) {
-                    $('.due_amount_display').val(total.toFixed(2));
-                    $('.due_amount_display').data('initial-due', total);
-
-                } else {
-                    let newDue = parseFloat(initialDue) - paid;
-                    if (newDue < 0) newDue = 0;
-                    $('.due_amount_display').val(newDue.toFixed(2));
+                if (!hasExisting && !manuallyEdited) {
+                    $('.course_price_input').val(total.toFixed(2));
+                    $('.paid_amount_input').attr('max', total);
+                    $('.due_amount_display').val(total.toFixed(2)).data('initial-due', total);
                 }
+                // if hasExisting OR manuallyEdited, leave price/due alone
+
                 updatePaymentStatusAndDue();
             }
 
