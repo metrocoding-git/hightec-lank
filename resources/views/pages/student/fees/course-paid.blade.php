@@ -856,8 +856,7 @@
                                 if (currentMode === 'nvq') {
                                     dueAmount = parseFloat(data.nvq_due_amount) || 0;
                                 } else if (currentMode === 'food') {
-                                    dueAmount = parseFloat(data.food_due_amount) ||
-                                        effectivePrice;
+                                    dueAmount = parseFloat(data.food_due_amount) || 0;
                                 } else {
                                     dueAmount = parseFloat(data.course_due_amount) || 0;
                                 }

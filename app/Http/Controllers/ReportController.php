@@ -856,7 +856,7 @@ class ReportController extends Controller
             $query->where('status', $status);
         }
 
-        $foodPayments = $query->orderBy('lunchbox_number')->get();
+        $foodPayments = $query->orderBy('created_at')->get();
 
         // Group by: year → month → branch → letter
         $grouped = $foodPayments->groupBy([
