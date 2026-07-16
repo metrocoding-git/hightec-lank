@@ -214,6 +214,20 @@ class ReportController extends Controller
             'invoice.studentCategory'
         ]);
 
+        // ----- DATE RANGE FILTER -----
+        if ($request->date_range) {
+            $dates = explode(' to ', $request->date_range);
+            $from = $dates[0] ?? null;
+            $to = $dates[1] ?? $from; // ← if no "to" part, use same date as "from"
+
+            if ($from) {
+                $query->whereDate('created_at', '>=', $from);
+            }
+            if ($to) {
+                $query->whereDate('created_at', '<=', $to);
+            }
+        }
+
         // Check if any FILTER is applied
         $hasFilters = $request->filled('date_range') ||
             $request->filled('payment_method') ||
@@ -537,26 +551,26 @@ class ReportController extends Controller
         $intakes = Intake::orderBy('start_date', 'DESC')->get();
         $reportData = collect();
 
-        $paymentStatus = 'partial';
+        // $paymentStatus = 'partial';
 
         $baseQuery = fn() => DB::table('student_courses')
             ->join('intakes', 'student_courses.intake_id', '=', 'intakes.id')
             ->join('courses', 'student_courses.course_id', '=', 'courses.id')
-            ->join('paid_courses', function ($join) {
-                $join->on('student_courses.course_id', '=', 'paid_courses.course_id');
+            ->join('students', 'student_courses.student_id', '=', 'students.id')
+            ->join('fee_invoices', function ($join) {
+                $join->on('students.id', '=', 'fee_invoices.student_id')
+                    ->where('fee_invoices.payment_status', '!=', 'returned');
             })
-            ->join('fee_invoices', function ($join) use ($paymentStatus) {
-                $join->on('paid_courses.invoice_id', '=', 'fee_invoices.id')
-                    ->on('fee_invoices.student_id', 'student_courses.student_id')
-                    ->where('fee_invoices.payment_status', $paymentStatus);
+            ->join('paid_courses', function ($join) {
+                $join->on('fee_invoices.id', '=', 'paid_courses.invoice_id')
+                    ->on('paid_courses.course_id', '=', 'student_courses.course_id');
             })
             ->join('branches', 'fee_invoices.branch_id', '=', 'branches.id')
-            ->join('students', 'student_courses.student_id', '=', 'students.id')
             ->join('student_categories', 'students.student_category_id', '=', 'student_categories.id')
             ->leftJoin('student_categories as course_categories', 'student_courses.student_category_id', '=', 'course_categories.id')
             ->whereIn('student_courses.status', ['start', 'Complete'])
-            ->where('fee_invoices.invoice_type', 'course');
-
+            ->where('fee_invoices.invoice_type', 'course')
+            ->whereRaw('(fee_invoices.total_amount - (SELECT COALESCE(SUM(ip.amount),0) FROM invoices_payments ip WHERE ip.invoice_id = fee_invoices.id)) > 0');
         $selectClause = [
             'fee_invoices.main_invoice_number',
             'students.admission_number',
@@ -568,7 +582,7 @@ class ReportController extends Controller
             'student_courses.status',
             'fee_invoices.total_amount',
             'fee_invoices.paid_amount',
-                DB::raw('(fee_invoices.total_amount - fee_invoices.paid_amount) as due_amount'), // ← add this
+            DB::raw('(fee_invoices.total_amount - fee_invoices.paid_amount) as due_amount'), // ← add this
 
             'fee_invoices.create_date as invoice_create_date',
             'fee_invoices.updated_at as invoice_paid_date',
