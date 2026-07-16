@@ -28,18 +28,19 @@
     <section class="admin-visitor-area up_admin_visitor">
         <div class="container-fluid p-0">
             <div class="white-box">
-                <form method="GET" action="" class="mb-20">
+                <form method="GET" action="" class="mb-20" id="filter-form">
                     <div class="row">
-
-                        <div class="col-md-12 mb-2">
+                        {{-- Notice --}}
+                        <div class="col-md-12 mt-2">
                             <small class="text-danger">
                                 <i class="ti-info-alt"></i>
-                                <strong>Group A</strong> (To Date + Branch) and <strong>Group B</strong> (Intake)
-                                cannot be used together. Selecting one group clears the other.
+                                <strong>Group A</strong> (To Date + Branch) and <strong>Group B</strong> (Intake) cannot be
+                                used together.
+                                Selecting one group clears the other.
                             </small>
                         </div>
 
-                        {{-- GROUP A --}}
+                        {{-- GROUP A: To Date + Branch --}}
                         <div class="col-md-4">
                             <label>To Date <small class="text-muted">(Group A)</small></label>
                             <input type="text" id="to_date" name="to_date" class="form-control group-a"
@@ -59,10 +60,10 @@
                             </select>
                         </div>
 
-                        {{-- GROUP B --}}
+                        {{-- GROUP B: Intake --}}
                         <div class="col-md-4">
                             <label>Intake <small class="text-muted">(Group B)</small></label>
-                            <select class="primary_select form-control group-b" name="intake_id" id="intake_id">
+                            <select class="primary_select form-control group-b" name="intake_id" id="search_intake_id">
                                 <option value="">Select Intake</option>
                                 @foreach ($intakes as $intake)
                                     <option value="{{ $intake->id }}"
@@ -73,12 +74,14 @@
                             </select>
                         </div>
 
+
+
                         <div class="col-lg-12 mt-20 text-right">
                             <button type="submit" class="primary-btn small fix-gr-bg">
                                 <span class="ti-search pr-2"></span> Search
                             </button>
                             <button class="primary-btn small fix-gr-bg">
-                                <a href="{{ route('reports.course-intake-payments') }}" class="text-white">
+                                <a href="{{ route('reports.students-intake-balance') }}" class="text-white">
                                     Reset
                                 </a>
                             </button>
@@ -88,13 +91,13 @@
                 </form>
             </div>
 
+
             <div class="row mt-20">
                 <div class="col-lg-12">
                     <div class="white-box">
                         <div class="main-title mb-15">
                             <h3>Payments Report</h3>
                         </div>
-                        <div style="overflow-x: auto; width: 100%;">
 
                             <x-table>
                                 <table id="table_id" class="table" cellspacing="0" width="100%">
@@ -124,6 +127,7 @@
                                             <th colspan="11" style="text-align:right">Total:</th>
                                             <th id="total_amount_footer"></th>
                                             <th id="paid_amount_footer"></th>
+                                            <th id="due_footer"></th>
                                             <th id="cash_footer"></th>
                                             <th id="bank_footer"></th>
                                             <th id="invoice_footer"></th>
@@ -158,9 +162,7 @@
                                     </tbody>
                                 </table>
                             </x-table>
-                        </div>
-
-                    </div>
+                           </div>
                 </div>
             </div>
         </div>
@@ -178,16 +180,16 @@
             mode: "single",
             dateFormat: "Y-m-d",
             allowInput: true,
-            defaultDate: "{{ request('to_date') }}" || null
+            defaultDate: "{{ request('to_date') }}" 
         });
 
-        // Mutual exclusivity
+        // Mutual exclusivity between Group A and Group B
         $('.group-a').on('change input', function() {
             var hasGroupA = $('#to_date').val() !== '' || $('[name="branch_id"]').val() !== '';
             if (hasGroupA) {
-                $('#intake_id').val('').prop('disabled', true);
+                $('#search_intake_id').val('').trigger('change').prop('disabled', true);
             } else {
-                $('#intake_id').prop('disabled', false);
+                $('#search_intake_id').prop('disabled', false);
             }
         });
 
@@ -202,83 +204,86 @@
             }
         });
 
-
-
-        // Restore state on page load
+        // On page load, restore disabled state based on which group has a value
         $(document).ready(function() {
-            var hasIntake = $('#intake_id').val() !== '';
+            var hasIntake = $('#search_intake_id').val() !== '';
             var hasGroupA = $('#to_date').val() !== '' || $('[name="branch_id"]').val() !== '';
 
             if (hasIntake) {
                 $('.group-a').prop('disabled', true);
             } else if (hasGroupA) {
-                $('#intake_id').prop('disabled', true);
+                $('#search_intake_id').prop('disabled', true);
+            }
+        });
+
+
+
+
+
+        $(document).ready(function() {
+            var table = $('#table_id').DataTable({
+                responsive: false,
+                dom: 'Blfrtip',
+                buttons: [{
+                        extend: 'copy',
+                        title: getFileName()
+                    },
+                    {
+                        extend: 'csv',
+                        title: getFileName()
+                    },
+                    {
+                        extend: 'excel',
+                        title: getFileName()
+                    },
+                    {
+                        extend: 'pdf',
+                        title: getFileName()
+                    },
+                    {
+                        extend: 'print',
+                        title: getFileName()
+                    }
+                ],
+                paging: true,
+                searching: true,
+                ordering: true,
+                info: true,
+                scrollX: true,
+                lengthChange: true,
+                order: [
+                    [0, 'asc']
+                ],
+                lengthMenu: [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                pageLength: 25,
+                language: {
+                    search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
+                    searchPlaceholder: 'Search...',
+                    paginate: {
+                        previous: '<i class="fa-solid fa-angle-left"></i>',
+                        next: '<i class="fa-solid fa-angle-right"></i>'
+                    }
+                }
+            });
+
+            function getFileName() {
+                let now = new Date();
+
+                let date = now.toISOString().slice(0, 10);
+                let time = now.toTimeString().slice(0, 8).replace(/:/g, '-'); // HH-MM-SS
+
+                return 'Students-Intake-Balance-Report_' + date + '__' + time;
             }
 
-            $(document).ready(function() {
-                var table = $('#table_id').DataTable({
-                    responsive: false,
-                    autoWidth: false,
-                    dom: 'Blfrtip',
-                    buttons: [{
-                            extend: 'copy',
-                            title: getFileName()
-                        },
-                        {
-                            extend: 'csv',
-                            title: getFileName()
-                        },
-                        {
-                            extend: 'excel',
-                            title: getFileName()
-                        },
-                        {
-                            extend: 'pdf',
-                            title: getFileName()
-                        },
-                        {
-                            extend: 'print',
-                            title: getFileName()
-                        }
-                    ],
-                    paging: true,
-                    searching: true,
-                    ordering: true,
-                    info: true,
-                    scrollX: true,
-                    lengthChange: true,
-                    order: [
-                        [0, 'asc']
-                    ],
-                    lengthMenu: [
-                        [10, 25, 50, 100, -1],
-                        [10, 25, 50, 100, "All"]
-                    ],
-                    pageLength: 25,
-                    language: {
-                        search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
-                        searchPlaceholder: 'Search...',
-                        paginate: {
-                            previous: '<i class="fa-solid fa-angle-left"></i>',
-                            next: '<i class="fa-solid fa-angle-right"></i>'
-                        }
-                    }
-                });
+            table.on('length.dt page.dt search.dt order.dt draw.dt', function() {
+                updateFooter();
+            });
 
-                function getFileName() {
-                    let now = new Date();
-
-                    let date = now.toISOString().slice(0, 10);
-                    let time = now.toTimeString().slice(0, 8).replace(/:/g, '-'); // HH-MM-SS
-
-                    return 'Course-Intake-Payments-Report_' + date + '__' + time;
-                }
-                table.on('length.dt page.dt search.dt order.dt draw.dt', function() {
-                    updateFooter();
-                });
-
-                // ============ SUM FOOTER ============
-                function updateFooter() {
+            // ============ SUM FOOTER ============
+            function updateFooter() {
                     var totalAmount = 0,
                         paidAmount = 0,
                         dueAmount = 0;
@@ -313,12 +318,12 @@
                     $('#invoice_footer').html(fmt(invoiceAmount));
                 }
 
-                updateFooter();
+            // initial calculation
+            updateFooter();
 
-                // recalc on search, paging, ordering
-                table.on('search.dt page.dt order.dt', function() {
-                    updateFooter();
-                });
+            // recalc on search, paging, ordering
+            table.on('search.dt page.dt order.dt', function() {
+                updateFooter();
             });
         });
     </script>
