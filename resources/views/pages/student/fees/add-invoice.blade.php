@@ -84,7 +84,8 @@
                                         <select class="primary_select form-control" id="student_id" name="student_id">
                                             <option value="">@lang('common.select_student')</option>
                                             @foreach ($students as $student)
-                                                <option value="{{ $student->id }}">{{ $student->admission_number }} - {{ $student->student_name }}</option>
+                                                <option value="{{ $student->id }}">{{ $student->admission_number }} -
+                                                    {{ $student->student_name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -117,7 +118,7 @@
                                             name="payment_method">
                                             <option value="not">@lang('fees.payment_method')</option>
                                             <option value="Cash" selected>Cash</option>
-                                            <option value="Invoice" >Invoice</option>
+                                            <option value="Invoice">Invoice</option>
                                             <option value="Bank Transfer">Bank Transfer</option>
                                         </select>
                                     </div>
@@ -133,7 +134,8 @@
                                     <div class="col-lg-12 mt-15" id="bankPaidDateRow">
                                         <label>Bank Paid Date <span class="text-danger">*</span></label>
                                         <input type="date" class="primary_input_field date form-control"
-                                            id="bank_paid_date" name="bank_paid_date" value="{{ date('Y-m-d') }}">
+                                            id="bank_paid_date" name="bank_paid_date" value="{{ date('Y-m-d') }}"
+                                            max="{{ date('Y-m-d') }}">
                                     </div>
                                     <div class="col-lg-12 mt-15" id="uploadDocumentRow">
                                         <label>Upload Document</label>
@@ -447,7 +449,9 @@
                 // Only validate for Cash and Invoice payment methods
                 if ((paymentMethod === 'Cash' || paymentMethod === 'Invoice') && paymentPrice > amount) {
                     $(this).addClass('is-invalid');
-                    $(this).after('<div class="invalid-feedback">Payment price cannot be larger than amount</div>');
+                    $(this).after(
+                        '<div class="invalid-feedback">Payment price cannot be larger than amount</div>'
+                        );
                 }
             });
 
@@ -593,10 +597,18 @@
                         totalAmount += parseFloat($(this).val()) || 0;
                     });
 
-                    if (bankPaidAmount < totalAmount) {
+                    if (bankPaidAmount < paidAmount) {
                         toastr.error('Bank Paid Amount must be greater than the Total Amount');
                         return;
                     }
+
+
+                    const today = new Date().toISOString().split('T')[0];
+
+                    if (bankPaidDate > today) {
+                        return fail('Bank Paid Date cannot be greater than today');
+                    }
+
                 }
 
                 const feeRows = $('.allFeesTypes tr');
@@ -703,7 +715,8 @@
 
                             // Redirect with flash message in the URL (encoded)
                             const message = encodeURIComponent('successfully!');
-                            window.location.href = '{{ route('student.add-intake-with-courses.index') }}' +
+                            window.location.href =
+                                '{{ route('student.add-intake-with-courses.index') }}' +
                                 '?message-success=' + message;
                         }
                     },

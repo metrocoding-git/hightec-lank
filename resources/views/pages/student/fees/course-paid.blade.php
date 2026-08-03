@@ -251,7 +251,8 @@
                                     <div class="col-lg-12 mt-15" id="bankPaidDateRow">
                                         <label>Bank Paid Date <span class="text-danger">*</span></label>
                                         <input type="date" class="primary_input_field date form-control"
-                                            id="bank_paid_date" name="bank_paid_date" value="{{ date('Y-m-d') }}">
+                                            id="bank_paid_date" name="bank_paid_date" value="{{ date('Y-m-d') }}"
+                                            max="{{ date('Y-m-d') }}">
                                     </div>
 
                                     <div class="col-lg-12 mt-15" id="uploadDocumentRow">
@@ -1157,6 +1158,12 @@
                         'Bank Paid Amount is required and must be greater than 0');
                     if (bankPaidAmount < paidAmount) return fail('Bank Paid Amount must be >= Paid Amount');
                     if (!bankPaidDate) return fail('Bank Paid Date is required');
+                    const today = new Date().toISOString().split('T')[0];
+
+                    if (bankPaidDate > today) {
+                        return fail('Bank Paid Date cannot be greater than today');
+                    }
+
                 }
 
                 // Build FormData

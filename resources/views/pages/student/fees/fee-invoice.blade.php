@@ -1365,12 +1365,34 @@
                                     `<a style="padding:4px;margin: 2px; background-color: #28a745; color: #fff; text-align: center;" class="dropdown-item view-bank-details-btn" href="#" data-payment-id="${payment.id}" data-bank-date="${payment.bank_payment_date}" data-bank-amount="${payment.bank_payment_amount}" data-payment-file="${payment.payment_file || ''}">View Bank Details</a>`;
                             }
 
-                            if (!isItemSell && payment.payment_invoice_number ==
-                                null) { // added !isFood check
-                                if (payment.payment_status !== 'refunded' && payment.amount >
-                                    0) {
-                                    actionDropdown +=
-                                        `<a style="padding:4px;margin: 2px; background-color: #dc3545; color: #fff; text-align: center;" class="dropdown-item refund-btn" href="#" data-payment-id="${payment.id}" data-amount="${payment.amount}">Refund</a>`;
+                            const paymentDate = new Date(payment.bank_payment_date || payment.created_at);
+                            const today = new Date();
+                            const isBankTransfer = payment.payment_method === 'Bank Transfer';
+
+                            const isCurrentMonth =
+                                paymentDate.getFullYear() === today.getFullYear() &&
+                                paymentDate.getMonth() === today.getMonth();
+
+                            const isRefundable = (isBankTransfer && isCurrentMonth && !isItemSell) || (!isBankTransfer && !isItemSell)
+
+                            console.log('Payment ID:', payment.id, isRefundable, isBankTransfer, isCurrentMonth , isItemSell);
+
+                            if (
+                                isRefundable &&
+                                payment.payment_invoice_number == null
+                            ) {
+                                if (
+                                    payment.payment_status !== 'refunded' &&
+                                    payment.amount > 0
+                                ) {
+                                    actionDropdown += `
+                                    <a style="padding:4px;margin:2px;background-color:#dc3545;color:#fff;text-align:center;"
+                                    class="dropdown-item refund-btn"
+                                    href="#"
+                                    data-payment-id="${payment.id}"
+                                    data-amount="${payment.amount}">
+                                    Refund
+                                    </a>`;
                                 }
                             }
 
@@ -1389,15 +1411,15 @@
                                     <td style="padding: 12px; text-align: center;">${new Date(payment.created_at).toLocaleDateString()}</td>
                                     <td style="padding: 12px; text-align: center;">
                                         ${actionDropdown ? `
-                                                                                                                                                                <div class="dropdown">
-                                                                                                                                                                    <button class="primary-btn small fix-gr-bg dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" style="border-radius: 6px; padding: 6px 12px; font-size: 12px;">
-                                                                                                                                                                        Actions
-                                                                                                                                                                    </button>
-                                                                                                                                                                    <div class="dropdown-menu" style="min-width: 150px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                                                                                                                                                                        ${actionDropdown}
+                                                                                                                                                                    <div class="dropdown">
+                                                                                                                                                                        <button class="primary-btn small fix-gr-bg dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" style="border-radius: 6px; padding: 6px 12px; font-size: 12px;">
+                                                                                                                                                                            Actions
+                                                                                                                                                                        </button>
+                                                                                                                                                                        <div class="dropdown-menu" style="min-width: 150px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                                                                                                                                                            ${actionDropdown}
+                                                                                                                                                                        </div>
                                                                                                                                                                     </div>
-                                                                                                                                                                </div>
-                                                                                                                                                            ` : '<span class="text-muted">No actions</span>'}
+                                                                                                                                                                ` : '<span class="text-muted">No actions</span>'}
                                     </td>
                                 </tr>
                             `;
