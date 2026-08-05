@@ -521,7 +521,14 @@ class FeesGroupController extends Controller
                 $foodPrice = $foodPaidCourse->course_price ?? 0;
             }
 
-            $coursePrice = $coursePaidCourse->course_price ?? 0;
+
+            if (!$coursePaidCourse) {
+                $course = Course::find($courseId);
+                $coursePrice = $course->price;
+            } else {
+                $coursePrice = $coursePaidCourse->course_price ?? 0;
+            }
+
 
             // Due calculations
             $courseDue = $coursePrice - $courseTotalPaid;
