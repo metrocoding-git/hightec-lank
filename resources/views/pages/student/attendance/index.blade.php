@@ -147,7 +147,7 @@
 
                         {{-- Section 1: course only --}}
                         <div id="section_course" class="section-panel row">
-                            <div class="col-lg-12 mb-15">
+                            <div class="col-lg- mb-15">
                                 <div class="primary_input">
                                     <label class="primary_input_label" for="course_id">Course <span class="text-danger">*</span></label>
                                     <select class="primary_select form-control" id="course_id">
