@@ -261,3 +261,78 @@ ALTER TABLE `item_sell_batches` ADD `student_category_id` INT NULL AFTER `create
 
 -- 06/09
 ALTER TABLE `food_payments` ADD `status` TINYINT NOT NULL DEFAULT '1' AFTER `lunchbox_number`;
+
+
+-- 08/05
+CREATE TABLE `training_vehicles` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(255) NOT NULL,
+    `vehicle_number` VARCHAR(255) NULL,
+    `type` VARCHAR(255) NULL,
+    `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+    `created_at` TIMESTAMP NULL DEFAULT NULL,
+    `updated_at` TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `subject_attendance_sessions` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+
+    `student_id` BIGINT UNSIGNED NOT NULL,
+    `intake_id` BIGINT UNSIGNED NOT NULL,
+    `course_id` BIGINT UNSIGNED NOT NULL,
+    `subject_id` BIGINT UNSIGNED NULL,
+
+    `attendance_date` DATE NOT NULL,
+    `time_in` DATETIME NOT NULL,
+    `time_out` DATETIME NULL,
+
+    `vehicle_id` BIGINT UNSIGNED NULL,
+    `note` TEXT NULL,
+
+    `marked_in_by` BIGINT UNSIGNED NULL,
+    `marked_out_by` BIGINT UNSIGNED NULL,
+
+    `created_at` TIMESTAMP NULL DEFAULT NULL,
+    `updated_at` TIMESTAMP NULL DEFAULT NULL,
+
+    PRIMARY KEY (`id`),
+
+    INDEX `idx_student_date` (`student_id`, `attendance_date`),
+    INDEX `idx_attendance` (`intake_id`, `course_id`, `subject_id`, `attendance_date`),
+
+    CONSTRAINT `fk_sas_student`
+        FOREIGN KEY (`student_id`)
+        REFERENCES `students`(`id`)
+        ON DELETE CASCADE,
+
+    CONSTRAINT `fk_sas_intake`
+        FOREIGN KEY (`intake_id`)
+        REFERENCES `intakes`(`id`)
+        ON DELETE CASCADE,
+
+    CONSTRAINT `fk_sas_course`
+        FOREIGN KEY (`course_id`)
+        REFERENCES `courses`(`id`)
+        ON DELETE CASCADE,
+
+    CONSTRAINT `fk_sas_subject`
+        FOREIGN KEY (`subject_id`)
+        REFERENCES `subjects`(`id`)
+        ON DELETE SET NULL,
+
+    CONSTRAINT `fk_sas_vehicle`
+        FOREIGN KEY (`vehicle_id`)
+        REFERENCES `training_vehicles`(`id`)
+        ON DELETE SET NULL,
+
+    CONSTRAINT `fk_sas_marked_in`
+        FOREIGN KEY (`marked_in_by`)
+        REFERENCES `users`(`id`)
+        ON DELETE SET NULL,
+
+    CONSTRAINT `fk_sas_marked_out`
+        FOREIGN KEY (`marked_out_by`)
+        REFERENCES `users`(`id`)
+        ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

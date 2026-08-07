@@ -10,7 +10,12 @@ use App\Models\PaidCourse;
 use App\Models\InvoicesPayments;
 use App\Models\ItemIssueItem;
 use App\Models\ItemSellItem;
+use App\Models\Subject;
+use App\Models\SubjectAttendanceSession;
+use App\Models\TrainingVehicle;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -889,5 +894,162 @@ class ReportController extends Controller
             'courses',
             'letters'
         ));
+    }
+
+
+
+
+    private function studentAttendanceQuery(Request $request): Builder
+    {
+        $query = SubjectAttendanceSession::with([
+            'student',
+            'subject',
+            'course',
+            'intake',
+            'vehicle',
+            'markedInBy',
+            'markedOutBy',
+        ]);
+
+        if ($request->filled('intake_id')) {
+            $query->where('intake_id', $request->intake_id);
+        }
+        if ($request->filled('course_id')) {
+            $query->where('course_id', $request->course_id);
+        }
+        if ($request->filled('subject_id')) {
+            $query->where('subject_id', $request->subject_id);
+        }
+        if ($request->filled('vehicle_id')) {
+            $query->where('vehicle_id', $request->vehicle_id);
+        }
+        if ($request->filled('marked_in_by')) {
+            $query->where('marked_in_by', $request->marked_in_by);
+        }
+        if ($request->filled('marked_out_by')) {
+            $query->where('marked_out_by', $request->marked_out_by);
+        }
+        if ($request->filled('status')) {
+            if ($request->status === 'completed') {
+                $query->whereNotNull('time_out');
+            } elseif ($request->status === 'in_progress') {
+                $query->whereNull('time_out');
+            }
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('attendance_date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('attendance_date', '<=', $request->date_to);
+        }
+        if ($request->filled('admission_number')) {
+            $admissionNumber = $request->admission_number;
+            $query->whereHas('student', function ($q) use ($admissionNumber) {
+                $q->where('admission_number', 'like', "%{$admissionNumber}%");
+            });
+        }
+        if ($request->filled('student_name')) {
+            $studentName = $request->student_name;
+            $query->whereHas('student', function ($q) use ($studentName) {
+                $q->where('student_name', 'like', "%{$studentName}%");
+            });
+        }
+
+        return $query;
+    }
+
+
+    public function studentAttendance(Request $request)
+    {
+        $intakes = Intake::all();
+        $courses = Course::all();
+        $subjects = Subject::all();
+        $vehicles = TrainingVehicle::orderBy('name')->get(['id', 'name']);
+
+        // ADJUST: 'name' is assumed to be the display-name column on your User
+        // model — swap for 'first_name' or similar if that's not right.
+        $users = User::orderBy('name')->get(['id', 'name']);
+
+        $query = $this->studentAttendanceQuery($request);
+
+        // Summary over the whole filtered set, computed before pagination cuts
+        // it down to one page.
+        $totalCount = (clone $query)->count();
+        $inProgressCount = (clone $query)->whereNull('time_out')->count();
+        $totalMinutes = (clone $query)->whereNotNull('time_out')
+            ->selectRaw('SUM(TIMESTAMPDIFF(MINUTE, time_in, time_out)) as total')
+            ->value('total') ?? 0;
+
+        $sessions = $query->orderByDesc('attendance_date')->orderByDesc('time_in')->paginate(50)->appends($request->query());
+
+        return view('pages.reports.student-attendance', compact(
+            'intakes',
+            'courses',
+            'subjects',
+            'vehicles',
+            'users',
+            'sessions',
+            'totalCount',
+            'inProgressCount',
+            'totalMinutes'
+        ));
+    }
+
+
+    public function exportCsv(Request $request)
+    {
+        $query = $this->studentAttendanceQuery($request)
+            ->orderByDesc('attendance_date')
+            ->orderByDesc('time_in');
+
+        $filename = 'attendance-' . now()->format('Y-m-d_His') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        return response()->streamDownload(function () use ($query) {
+            $out = fopen('php://output', 'w');
+
+            // Excel needs a UTF-8 BOM to display non-ASCII names correctly.
+            fwrite($out, "\xEF\xBB\xBF");
+
+            fputcsv($out, [
+                'Date',
+                'Register No.',
+                'Student',
+                'Intake',
+                'Course',
+                'Subject',
+                'Time In',
+                'In By',
+                'Time Out',
+                'Out By',
+                'Duration',
+                'Vehicle',
+                'Note',
+            ]);
+
+            foreach ($query->cursor() as $session) {
+                fputcsv($out, [
+                    optional($session->attendance_date)->format('Y-m-d'),
+                    $session->student->admission_number ?? '',
+                    $session->student->student_name ?? '',
+                    $session->intake->name ?? '',
+                    $session->course->name ?? '',
+                    $session->subject->name ?? 'Course-wise',
+                    optional($session->time_in)->format('h:i A'),
+                    $session->markedInBy->name ?? '',
+                    $session->time_out ? $session->time_out->format('h:i A') : 'Still in',
+                    $session->markedOutBy->name ?? '',
+                    $session->duration_label,
+                    $session->vehicle->name ?? '',
+                    $session->note ?? '',
+                ]);
+            }
+
+            fclose($out);
+        }, $filename, $headers);
     }
 }
