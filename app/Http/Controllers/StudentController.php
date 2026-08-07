@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 use Yajra\DataTables\DataTables;
-use App\Exports\StudentExport; 
+use App\Exports\StudentExport;
 
 class StudentController extends Controller
 {
@@ -284,11 +284,11 @@ class StudentController extends Controller
             'Students_' . now()->format('Y-m-d_H-i-s') . '.xlsx'
         );
     }
- 
+
     public function exportFilteredStudents(Request $request)
     {
         $filename = 'Students_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
- 
+
         return Excel::download(
             new StudentExport(
                 $request->get('branch_id'),
@@ -298,7 +298,7 @@ class StudentController extends Controller
             $filename
         );
     }
- 
+
     public function exportAllStudentsCsv()
     {
         $students = Student::with([
@@ -309,7 +309,7 @@ class StudentController extends Controller
             'createUser',
             'updateUser'
         ])->active()->get();
- 
+
         // Headers
         $headings = [
             'ID',
@@ -339,7 +339,7 @@ class StudentController extends Controller
             'Created At',
             'Updated At'
         ];
- 
+
         // Prepare data
         $data = [];
         foreach ($students as $student) {
@@ -372,10 +372,10 @@ class StudentController extends Controller
                 $student->updated_at ?? '-'
             ];
         }
- 
+
         // Generate filename
         $filename = "Students_" . now()->format('Y-m-d_H-i-s') . ".csv";
- 
+
         // Create response headers
         $headers = [
             "Content-type" => "text/csv; charset=UTF-8",
@@ -384,25 +384,25 @@ class StudentController extends Controller
             "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
             "Expires" => "0"
         ];
- 
+
         // Create callback for streaming
-        $callback = function() use ($headings, $data) {
+        $callback = function () use ($headings, $data) {
             $file = fopen('php://output', 'w');
-            
+
             // Add BOM for UTF-8 CSV (needed for Excel to display special characters correctly)
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-            
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
             // Write headers
             fputcsv($file, $headings);
-            
+
             // Write data
             foreach ($data as $row) {
                 fputcsv($file, $row);
             }
-            
+
             fclose($file);
         };
- 
+
         return response()->stream($callback, 200, $headers);
     }
 
@@ -587,91 +587,9 @@ class StudentController extends Controller
     }
     //Student Attendence Methods
 
-    public function studentAttendance()
-    {
-        $courses = Course::all();
-        $intakes = Intake::all();
-        $attendanceStudents = collect();
-        $selectedIntakeId = request('intake_id');
-        $selectedCourseId = request('course_id');
-        $selectedAttendanceDate = request('attendance_date');
 
-        if ($selectedIntakeId && $selectedCourseId && $selectedAttendanceDate) {
-            $attendanceStudents = Student::with(['branch:id,name'])
-                ->whereHas('courseWithIntake', function ($query) use ($selectedIntakeId, $selectedCourseId) {
-                    $query->where('intake_id', $selectedIntakeId)
-                        ->where('course_id', $selectedCourseId);
-                })
-                ->active()
-                ->orderBy('student_name')
-                ->get(['id', 'admission_number', 'student_name', 'phone_number', 'branch_id']);
-        }
 
-        return view('pages.student.student-info.student-attendance', compact(
-            'courses',
-            'intakes',
-            'attendanceStudents',
-            'selectedIntakeId',
-            'selectedCourseId',
-            'selectedAttendanceDate'
-        ));
-    }
 
-    public function studentAttendanceImport()
-    {
-        $intakes = Intake::all();
-        $attendanceImports = collect();
-
-        if (Schema::hasTable('student_attendance_imports')) {
-            $attendanceImports = StudentAttendanceImport::with(['intake:id,name', 'course:id,name', 'uploader:id,name'])
-                ->latest()
-                ->get();
-        }
-
-        return view('pages.student.student-info.student-attendance-import', compact('intakes', 'attendanceImports'));
-    }
-
-    public function studentAttendanceImportStore(Request $request)
-    {
-        $request->validate([
-            'intake_id' => 'required|exists:intakes,id',
-            'course_id' => 'required|exists:courses,id',
-            'attendance_date' => 'required|date',
-            'attendance_file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
-        ]);
-
-        $file = $request->file('attendance_file');
-        $fileName = 'attendance_' . date('Ymd_His') . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-        $storedPath = $file->storeAs('attendance-imports', $fileName, 'public');
-
-        StudentAttendanceImport::create([
-            'intake_id' => $request->intake_id,
-            'course_id' => $request->course_id,
-            'attendance_date' => $request->attendance_date,
-            'file_name' => $file->getClientOriginalName(),
-            'file_path' => $storedPath,
-            'uploaded_by' => Auth::id(),
-        ]);
-
-        return redirect()
-            ->route('student-attendance-import')
-            ->with('message-success', 'Attendance file uploaded successfully: ' . basename($storedPath));
-    }
-
-    public function studentAttendanceImportDownload($id)
-    {
-        if (!Schema::hasTable('student_attendance_imports')) {
-            return redirect()->back()->with('message-danger', 'Attendance import table not found.');
-        }
-
-        $import = StudentAttendanceImport::findOrFail($id);
-
-        if (!Storage::disk('public')->exists($import->file_path)) {
-            return redirect()->back()->with('message-danger', 'File not found.');
-        }
-
-        return response()->download(Storage::disk('public')->path($import->file_path), $import->file_name);
-    }
 
     // Student Course Management Methods
     public function studentAddCourse()

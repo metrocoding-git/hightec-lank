@@ -344,7 +344,7 @@
                     Auth::user()->hasPermission('student-attendance') ||
                     Auth::user()->hasPermission('student.add-intake-with-courses.index')))
             <li
-                class="studentInfo_section {{ request()->is('student-info') || request()->is('student/student-info/*') ? 'mm-active' : '' }}">
+                class="studentInfo_section {{ request()->is('student-info') || request()->is('student/student-info/*') || request()->is('student-attendance/scan-attendance') ? 'mm-active' : '' }}">
                 <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
                     <div class="nav_icon_small">
                         <span class="fas fa-user"></span>
@@ -389,8 +389,8 @@
                     @endif
                     @if (Auth::check() && Auth::user()->hasPermission('student-attendance'))
                         <li>
-                            <a href="/student/student-info/student-attendance"
-                                class="{{ request()->is('student/student-info/student-attendance') ? 'active a' : '' }}">
+                            <a href="/student-attendance/scan-attendance"
+                                class="{{ request()->is('student-attendance/scan-attendance') ? 'active a' : '' }}">
                                 Student Attendance
                             </a>
                         </li>
@@ -502,7 +502,7 @@
                     <li>
                         <a href="/student/fees/fee-invoice/invoice-payments"
                             class="{{ request()->is('student/fees/fee-invoice/invoice-payments') ? 'active a' : '' }}">
-                            Payment for Credit Invoice 
+                            Payment for Credit Invoice
                         </a>
                     </li>
                     {{-- @endif --}}
@@ -673,7 +673,7 @@
                         <li>
                             <a href="/reports/students-paid"
                                 class="{{ request()->is('reports/students-paid') ? 'active a' : '' }}">
-                               Collection Report
+                                Collection Report
                             </a>
                         </li>
                     @endif
@@ -689,7 +689,7 @@
                     <li>
                         <a href="/reports/course-dates-payments"
                             class="{{ request()->is('reports/course-dates-payments') ? 'active a' : '' }}">
-                           Course Started & Course Completed
+                            Course Started & Course Completed
                         </a>
                     </li>
 
@@ -725,6 +725,13 @@
                         <a href="/reports/food-payment-report"
                             class="{{ request()->is('reports/food-payment-report') ? 'active a' : '' }}">
                             All Food Fee Details
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="/reports/student-attendance"
+                            class="{{ request()->is('reports/student-attendance') ? 'active a' : '' }}">
+                            Student Attendance
                         </a>
                     </li>
                     {{-- @endif --}}
