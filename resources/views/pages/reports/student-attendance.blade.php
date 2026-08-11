@@ -71,6 +71,17 @@
                                 </div>
                                 <div class="col-lg-3 mb-15">
                                     <div class="primary_input">
+                                        <label class="primary_input_label">Branch</label>
+                                        <select name="branch_id" class="primary_select form-control">
+                                            <option value="">All Branches</option>
+                                            @foreach ($branches as $branch)
+                                                <option value="{{ $branch->id }}" {{ request('branch_id') == $branch->id ? 'selected' : '' }}>{{ $branch->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 mb-15">
+                                    <div class="primary_input">
                                         <label class="primary_input_label">Intake</label>
                                         <select name="intake_id" class="primary_select form-control">
                                             <option value="">All Intakes</option>
@@ -187,8 +198,10 @@
                                         <th>Date</th>
                                         <th>Register No.</th>
                                         <th>Student</th>
+                                        <th>Branch</th>
                                         <th>Intake</th>
                                         <th>Course</th>
+                                        <th>Type</th>
                                         <th>Subject</th>
                                         <th>Time In</th>
                                         <th>In By</th>
@@ -205,9 +218,17 @@
                                             <td>{{ $session->attendance_date->format('Y-m-d') }}</td>
                                             <td>{{ $session->student->admission_number ?? '-' }}</td>
                                             <td>{{ $session->student->student_name ?? '-' }}</td>
+                                            <td>{{ $session->student->branch->name ?? '-' }}</td>
                                             <td>{{ $session->intake->name ?? '-' }}</td>
                                             <td>{{ $session->course->name ?? '-' }}</td>
-                                            <td>{{ $session->subject->name ?? 'Course-wise' }}</td>
+                                            <td>
+                                                @if ($session->checkpoint_type)
+                                                    <span class="badge badge-secondary">{{ $session->type_label }}</span>
+                                                @else
+                                                    {{ $session->type_label }}
+                                                @endif
+                                            </td>
+                                            <td>{{ $session->checkpoint_type ? '—' : ($session->subject->name ?? 'Course-wise') }}</td>
                                             <td>{{ $session->time_in ? $session->time_in->format('h:i A') : '-' }}</td>
                                             <td>{{ $session->markedInBy->name ?? '-' }}</td>
                                             <td>
@@ -224,7 +245,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="13" class="text-center">No records found.</td>
+                                            <td colspan="15" class="text-center">No records found.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>

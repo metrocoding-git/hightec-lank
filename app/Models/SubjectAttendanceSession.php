@@ -15,6 +15,7 @@ class SubjectAttendanceSession extends Model
         'intake_id',
         'course_id',
         'subject_id',
+        'checkpoint_type',
         'attendance_date',
         'time_in',
         'time_out',
@@ -73,6 +74,50 @@ class SubjectAttendanceSession extends Model
     public function scopeToday($query)
     {
         return $query->whereDate('attendance_date', now()->toDateString());
+    }
+
+    /** Ordinary course/subject/practical rows only — excludes before/after checking rows. */
+    public function scopeNotCheckpoint($query)
+    {
+        return $query->whereNull('checkpoint_type');
+    }
+
+    public function scopeBeforeChecking($query)
+    {
+        return $query->where('checkpoint_type', 'before_checking');
+    }
+
+    public function scopeAfterChecking($query)
+    {
+        return $query->where('checkpoint_type', 'after_checking');
+    }
+
+    /** True for the two auto-created checkpoint rows (before/after checking) — false for real course/subject/practical scans. */
+    public function isCheckpoint(): bool
+    {
+        return !is_null($this->checkpoint_type);
+    }
+
+    /**
+     * 'Course' / 'Subject' / 'Practical' / 'Before Checking' / 'After
+     * Checking' — lets the report and CSV export tell rows apart even
+     * though checkpoint rows share subject_id = null with real course rows.
+     */
+    public function getTypeLabelAttribute(): string
+    {
+        if ($this->checkpoint_type === 'before_checking') {
+            return 'Before Checking';
+        }
+
+        if ($this->checkpoint_type === 'after_checking') {
+            return 'After Checking';
+        }
+
+        if (is_null($this->subject_id)) {
+            return 'Course';
+        }
+
+        return optional($this->subject)->type === 'P' ? 'Practical' : 'Subject';
     }
 
     /** Duration in minutes, null while still open (no time_out yet). */

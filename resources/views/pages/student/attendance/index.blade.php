@@ -49,6 +49,7 @@
         .scanner-input { font-size: 1.15rem; letter-spacing: .3px; padding-left: 44px !important; height: 52px; }
         .scanner-input:focus { border-color: var(--tp-theme-primary, #5150e9); box-shadow: 0 0 0 3px rgba(81,80,233,.12); }
         #qr-reader { width: 100%; max-width: 420px; margin: 14px auto 0; border-radius: 10px; overflow: hidden; }
+        #camera_toggle_btn { margin-top: 10px; }
 
         /* ---- Subject search + checklist ---- */
         .subject-search { margin-bottom: 8px; }
@@ -133,7 +134,7 @@
                                 <div class="method-icon"><span class="ti-agenda"></span></div>
                                 <div>
                                     <div class="method-title">Subject</div>
-                                    <div class="method-desc">Pick one or more subjects, then scan any student.</div>
+                                    <div class="method-desc">Pick one or more theory subjects, then scan any student.</div>
                                 </div>
                             </div>
                             <div class="method-card" data-section="practical">
@@ -147,7 +148,7 @@
 
                         {{-- Section 1: course only --}}
                         <div id="section_course" class="section-panel row">
-                            <div class="col-lg- mb-15">
+                            <div class="col-lg-5 mb-15">
                                 <div class="primary_input">
                                     <label class="primary_input_label" for="course_id">Course <span class="text-danger">*</span></label>
                                     <select class="primary_select form-control" id="course_id">
@@ -158,10 +159,12 @@
                                     </select>
                                 </div>
                             </div>
-                            
+                            <div class="col-lg-7 mb-15 d-flex align-items-center">
+                                <small class="text-muted">The intake is detected automatically from the scanned student's own enrolment — you'll see it appear next to their name once scanned. Ending an open course session requires that any practical attendance today has finished, plus a short buffer afterwards.</small>
+                            </div>
                         </div>
 
-                        {{-- Section 2: any number of subjects, no course/intake picked up front --}}
+                        {{-- Section 2: any number of theory subjects, no course/intake picked up front --}}
                         <div id="section_subject" class="section-panel row" style="display:none;">
                             <div class="col-lg-12 mb-15">
                                 <label class="primary_input_label">Subjects <span class="text-danger">*</span> (select one or more)</label>
@@ -188,7 +191,9 @@
                             <div class="alert alert-info mb-0 d-flex align-items-center">
                                 <span class="ti-info-alt pr-2"></span>
                                 Scan or enter the student's register number below. Only their active <strong>practical</strong>
-                                subjects will be offered — pick exactly one, then optionally a vehicle and note.
+                                subjects will be offered — but only once that student's course attendance has been started
+                                today (and hasn't ended yet). Pick exactly one subject, then optionally a vehicle and note.
+                                Practical attendance can be repeated more than once a day.
                             </div>
                         </div>
                     </div>
@@ -213,9 +218,13 @@
                             </div>
                         </div>
 
-                        {{-- Camera QR is always on — no button needed, it starts as soon as the page loads. --}}
+                        {{-- Camera QR only opens once "Scan with Camera" is clicked — auto-fill of the
+                             decoded value into #scan_input and auto-submit still happen on decode. --}}
+                        <button type="button" id="camera_toggle_btn" class="btn btn-outline-secondary btn-sm">
+                            <span class="ti-camera pr-1"></span> Scan with Camera
+                        </button>
                         <div id="qr_camera_status" class="text-muted mb-10" style="font-size:12px;"></div>
-                        <div id="qr-reader"></div>
+                        <div id="qr-reader" style="display:none;"></div>
                         <div id="scan_feedback"></div>
                     </div>
                 </div>
@@ -235,10 +244,8 @@
                                     <label class="primary_input_label" for="practical_vehicle_id">Vehicle (optional)</label>
                                     <select class="primary_select form-control" id="practical_vehicle_id">
                                         <option value="">No vehicle</option>
-                                        @foreach ($vehicles as $vehicle)
-                                            <option value="{{ $vehicle->id }}">{{ $vehicle->name }}{{ $vehicle->vehicle_number ? ' - ' . $vehicle->vehicle_number : '' }}</option>
-                                        @endforeach
                                     </select>
+                                    <small class="text-muted">Only vehicles available at this student's branch are listed.</small>
                                 </div>
                             </div>
                             <div class="col-lg-4 mb-15">
@@ -260,7 +267,8 @@
                 <div class="col-lg-12">
                     <div class="white-box">
                         <div class="main-title mb-15"><h3>Today's Scans</h3></div>
-                        <div class="table-responsive">
+                        <small class="text-muted">Shared across everyone signed in — reflects all scans made today, by anyone.</small>
+                        <div class="table-responsive mt-10">
                             <table class="table school-table-style" id="scan_log">
                                 <thead>
                                     <tr>
@@ -294,6 +302,7 @@ $(function () {
     const practicalResolveUrl = "{{ route('scan-attendance.practical.resolve') }}";
     const practicalScanUrl = "{{ route('scan-attendance.practical.scan') }}";
     const undoUrl = "{{ route('scan-attendance.undo') }}";
+    const todayLogUrl = "{{ route('scan-attendance.today-log') }}";
     const csrfToken = "{{ csrf_token() }}";
     const STORAGE_KEY = 'scan_attendance_active_section';
 
@@ -429,10 +438,15 @@ $(function () {
             not_enrolled: "Hasn't started this course",
             no_practical_subjects: 'No practical subjects assigned',
             not_assigned: 'Subject not assigned',
+            course_not_open: 'Course attendance not open',
+            practical_not_started: 'Course attendance not started',
+            before_checking_wait: 'Please wait a moment',
+            after_checking_wait: 'Please wait a moment',
+            after_checking_open: 'Close practical session first',
         };
         const label = statusLabels[res.status] || 'Error';
         const name = res.student ? res.student.name : identifier;
-        addLogRow(new Date(), name, '-', '-', label, 'action-error', 'pill-error', null);
+        addLogRow(new Date(), name, '-', '-', label, 'action-error', 'pill-error', null, false);
         showFeedback('danger', res.message || 'Something went wrong.');
     }
 
@@ -443,7 +457,8 @@ $(function () {
             else if (r.action === 'out') { cls = 'action-out'; pill = 'pill-out'; label = 'Time Out'; }
             else if (r.action === 'not_assigned') { cls = 'action-error'; pill = 'pill-error'; label = 'Subject not assigned'; }
 
-            addLogRow(r.time || new Date(), res.student.name, subjectLabel(r.subject_id), label, 'OK', cls, pill, r.session_id || null);
+            const undoable = (r.action === 'in' || r.action === 'out') && !!r.session_id;
+            addLogRow(r.time || new Date(), res.student.name, subjectLabel(r.subject_id), label, 'OK', cls, pill, r.session_id || null, undoable);
         });
 
         const intakeNote = res.intake_name ? ` (Intake: ${res.intake_name})` : '';
@@ -464,7 +479,15 @@ $(function () {
             </div>`;
         });
         $('#practical_subject_list').html(html);
-        $('#practical_vehicle_id').val('');
+
+        // Vehicle list is scoped server-side to the student's enrolment branch(es).
+        let vehicleOptions = '<option value="">No vehicle</option>';
+        (res.vehicles || []).forEach(v => {
+            const label = v.name + (v.vehicle_number ? (' - ' + v.vehicle_number) : '');
+            vehicleOptions += `<option value="${v.id}">${label}</option>`;
+        });
+        $('#practical_vehicle_id').html(vehicleOptions).val('');
+
         $('#practical_note').val('');
         $('#practical_confirm_box').show();
     }
@@ -496,13 +519,17 @@ $(function () {
         });
     });
 
-    // ---- Camera QR — always on, no button. Starts as soon as the page
-    // loads and keeps running between scans so it can pick up the next one
-    // right away. Manual entry + Submit still works alongside it.
+    // ---- Camera QR — only starts once the "Scan with Camera" button is
+    // clicked (not automatically on page load). Auto-fill of the decoded
+    // value into #scan_input and auto-submit still happen on every decode.
     let qrScanner = null;
+    let qrScannerRunning = false;
     let qrScanCooldown = false; // brief pause after a decode so one QR code isn't submitted twice in a row
 
     function startCamera() {
+        if (qrScannerRunning) return;
+
+        $('#qr-reader').show();
         qrScanner = new Html5Qrcode('qr-reader');
         qrScanner.start(
             { facingMode: 'environment' },
@@ -516,23 +543,40 @@ $(function () {
             },
             () => {}
         ).then(() => {
+            qrScannerRunning = true;
             $('#qr_camera_status').text('Camera QR is on — hold a code up to scan.');
+            $('#camera_toggle_btn').html('<span class="ti-close pr-1"></span> Stop Camera');
         }).catch(err => {
             $('#qr_camera_status').text('Camera unavailable — manual entry still works.');
         });
     }
 
-    startCamera();
+    function stopCamera() {
+        if (!qrScannerRunning || !qrScanner) return;
+
+        qrScanner.stop().then(() => {
+            qrScanner.clear();
+        }).finally(() => {
+            qrScannerRunning = false;
+            $('#qr-reader').hide();
+            $('#qr_camera_status').text('');
+            $('#camera_toggle_btn').html('<span class="ti-camera pr-1"></span> Scan with Camera');
+        });
+    }
+
+    $('#camera_toggle_btn').on('click', function () {
+        qrScannerRunning ? stopCamera() : startCamera();
+    });
 
     // ---- Scan log + undo ----
     let rowSeq = 0;
 
-    function addLogRow(time, student, subject, action, status, cls, pill, sessionId) {
+    function addLogRow(time, student, subject, action, status, cls, pill, sessionId, undoable) {
         $('#scan_log_empty').hide();
 
         const t = (time instanceof Date) ? time.toLocaleTimeString() : time;
         const rowId = 'scan_row_' + (++rowSeq);
-        const undoCell = sessionId
+        const undoCell = (sessionId && undoable)
             ? `<button type="button" class="btn btn-sm btn-outline-danger btn-undo" data-session-id="${sessionId}" data-row-id="${rowId}">Undo</button>`
             : '';
         const statusHtml = `<span class="status-pill ${pill}">${status}</span>`;
@@ -545,8 +589,9 @@ $(function () {
         setTimeout(() => $row.removeClass('row-flash'), 700);
     }
 
-    // Undo is same-day, same-user only — enforced server-side; this button
-    // just calls the endpoint and reflects the result.
+    // Undo is same-day, same-user only, and (for course/practical sessions)
+    // strict LIFO relative to each other — all enforced server-side; this
+    // button just calls the endpoint and reflects the result.
     $('#scan_log').on('click', '.btn-undo', function () {
         const $btn = $(this);
         const sessionId = $btn.data('session-id');
@@ -576,6 +621,21 @@ $(function () {
         $('#scan_feedback').html(`<div class="alert alert-${type} mt-15">${message}</div>`);
         setTimeout(() => $('#scan_feedback').empty(), 4000);
     }
+
+    // ---- Today's Scans — loaded from the server on page load so it
+    // reflects everyone's scans today, not just this browser session.
+    // Rendered oldest-first through addLogRow() (which prepends), so the
+    // final order on screen ends up newest-first, same as live scans.
+    $.ajax({
+        url: todayLogUrl,
+        method: 'GET',
+        success: function (res) {
+            (res.rows || []).forEach(row => {
+                let cls = row.cls, pill = row.pill;
+                addLogRow(row.time, row.student, row.subject, row.action, row.status, cls, pill, row.session_id, row.undoable);
+            });
+        }
+    });
 });
 </script>
 @endpush

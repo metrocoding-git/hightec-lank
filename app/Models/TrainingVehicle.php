@@ -14,6 +14,7 @@ class TrainingVehicle extends Model
         'vehicle_number',
         'type',
         'is_active',
+        'branch_id'
     ];
 
     protected $casts = [
@@ -28,5 +29,13 @@ class TrainingVehicle extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+
+    public function scopeForBranches($query, array $branchIds)
+    {
+        return $query->where(function ($q) use ($branchIds) {
+            $q->whereIn('branch_id', $branchIds)->orWhereNull('branch_id');
+        });
     }
 }

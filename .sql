@@ -336,3 +336,14 @@ CREATE TABLE `subject_attendance_sessions` (
         REFERENCES `users`(`id`)
         ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 08/11
+ALTER TABLE `training_vehicles` ADD `branch_id` INT NOT NULL AFTER `type`;
+
+
+ALTER TABLE `subject_attendance_sessions`
+ADD COLUMN `checkpoint_type` VARCHAR(255) NULL AFTER `subject_id`;
+
+ALTER TABLE `subject_attendance_sessions`
+ADD INDEX `sas_checkpoint_lookup_idx`
+(`student_id`, `course_id`, `attendance_date`, `checkpoint_type`);
