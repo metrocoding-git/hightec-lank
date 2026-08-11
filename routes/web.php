@@ -611,6 +611,14 @@ Route::controller(ReportController::class)->prefix('reports')
         Route::get('students-intake-balance', 'studentsIntakeBalance')->name('reports.students-intake-balance');
         Route::get('invoice-payments', 'invoicePayments')->name('reports.invoice-payments');
 
+        Route::get('invoice-payments/data', 'getInvoicePaymentsData')->name('reports.invoice-payments.data');
+
+        Route::get('invoice-payments/export', 'exportInvoicePayments')->name('reports.invoice-payments.export');
+
+        Route::get('invoice-payments/{id}/items', 'getReceiptItemsData')->name('reports.invoice-payments.items');
+
+
+
         Route::get('food-payment-report', 'foodPaymentReport')->name('reports.food-payment');
         Route::get('change-course', 'changeCourse')->name('reports.change-course');
 
