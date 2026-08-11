@@ -27,6 +27,12 @@
             max-height: 300px;
             min-height: 300px;
         }
+
+        .action-disabled {
+            opacity: 0.45;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
     </style>
 @endpush
 
@@ -120,19 +126,44 @@
                                         </div>
                                     </div>
 
-                                    {{-- Subject Code --}}
+                                   
+
+                                    {{-- Demonstrator Time --}}
                                     <div class="row mt-20">
                                         <div class="col-lg-12">
                                             <div class="primary_input">
-                                                <label class="primary_input_label" for="code">@lang('academics.subject_code')
-                                                    <span>*</span></label>
+                                                <label class="primary_input_label" for="demonstrator_time">
+                                                    @lang('academics.demonstrator_time') ({{ __('common.minutes') }})
+                                                </label>
                                                 <input
-                                                    class="primary_input_field form-control{{ $errors->has('code') ? ' is-invalid' : '' }}"
-                                                    type="text" name="code" id="code" autocomplete="off"
-                                                    value="{{ old('code', $subject->code ?? '') }}">
-                                                @if ($errors->has('code'))
+                                                    class="primary_input_field form-control{{ $errors->has('demonstrator_time') ? ' is-invalid' : '' }}"
+                                                    type="number" min="0" name="demonstrator_time" id="demonstrator_time"
+                                                    autocomplete="off"
+                                                    value="{{ old('demonstrator_time', $subject->demonstrator_time ?? '') }}">
+                                                @if ($errors->has('demonstrator_time'))
                                                     <span class="invalid-feedback" role="alert">
-                                                        <strong>{{ $errors->first('code') }}</strong>
+                                                        <strong>{{ $errors->first('demonstrator_time') }}</strong>
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {{-- Student Practical --}}
+                                    <div class="row mt-20">
+                                        <div class="col-lg-12">
+                                            <div class="primary_input">
+                                                <label class="primary_input_label" for="practical_time">
+                                                    @lang('academics.practical_time') ({{ __('common.minutes') }})
+                                                </label>
+                                                <input
+                                                    class="primary_input_field form-control{{ $errors->has('practical_time') ? ' is-invalid' : '' }}"
+                                                    type="number" min="0" name="practical_time" id="practical_time"
+                                                    autocomplete="off"
+                                                    value="{{ old('practical_time', $subject->practical_time ?? '') }}">
+                                                @if ($errors->has('practical_time'))
+                                                    <span class="invalid-feedback" role="alert">
+                                                        <strong>{{ $errors->first('practical_time') }}</strong>
                                                     </span>
                                                 @endif
                                             </div>
@@ -176,11 +207,18 @@
                                             <th> @lang('academics.subject')</th>
                                             <th> @lang('academics.subject_type')</th>
                                             <th>@lang('academics.subject_code')</th>
+                                            <th>@lang('academics.demonstrator_time')</th>
+                                            <th>@lang('academics.practical_time')</th>
                                             <th>@lang('common.action')</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($subjects as $key => $subject)
+                                            @php
+                                                // withCount('assignSubjects') on the query gives us this attribute.
+                                                // Falls back to false if not eager-loaded, so the view never fatals.
+                                                $isAssigned = ($subject->assign_subjects_count ?? 0) > 0;
+                                            @endphp
                                             <tr>
                                                 <td>{{ $key + 1 }}</td>
                                                 <td>{{ $subject->name }}</td>
@@ -190,52 +228,64 @@
                                                 <td>
                                                     <a href="#">{{ $subject->code }}</a>
                                                 </td>
+                                                <td>{{ $subject->demonstrator_time ?? '-' }}</td>
+                                                <td>{{ $subject->practical_time ?? '-' }}</td>
                                                 <td valign="top">
-                                                    @php
-                                                        $routeList = [
-                                                            '<a class="dropdown-item" href="' .
-                                                            route('subject.edit', $subject->id) .
-                                                            '">' .
-                                                            __('common.edit') .
-                                                            '</a>',
-                                                            '<a class="dropdown-item" data-toggle="modal" data-target="#deleteClassModal' .
-                                                            $subject->id .
-                                                            '" href="#">' .
-                                                            __('common.delete') .
-                                                            '</a>',
-                                                        ];
-                                                    @endphp
-                                                    <x-drop-down-action-component :routeList="$routeList" />
+                                                    @if ($isAssigned)
+                                                        <span class="badge badge-secondary"
+                                                            title="@lang('academics.subject_in_use_cannot_edit_delete')">
+                                                            @lang('common.in_use')
+                                                        </span>
+                                                    @else
+                                                        @php
+                                                            $routeList = [
+                                                                '<a class="dropdown-item" href="' .
+                                                                route('subject.edit', $subject->id) .
+                                                                '">' .
+                                                                __('common.edit') .
+                                                                '</a>',
+                                                                '<a class="dropdown-item" data-toggle="modal" data-target="#deleteClassModal' .
+                                                                $subject->id .
+                                                                '" href="#">' .
+                                                                __('common.delete') .
+                                                                '</a>',
+                                                            ];
+                                                        @endphp
+                                                        <x-drop-down-action-component :routeList="$routeList" />
+                                                    @endif
                                                 </td>
                                             </tr>
 
                                             {{-- Delete Modal --}}
-                                            <div class="modal fade admin-query" id="deleteClassModal{{ $subject->id }}">
-                                                <div class="modal-dialog modal-dialog-centered">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header">
-                                                            <h4 class="modal-title">@lang('academics.delete_class')</h4>
-                                                            <button type="button" class="close"
-                                                                data-dismiss="modal">&times;</button>
-                                                        </div>
+                                            @unless ($isAssigned)
+                                                <div class="modal fade admin-query" id="deleteClassModal{{ $subject->id }}">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h4 class="modal-title">@lang('academics.delete_class')</h4>
+                                                                <button type="button" class="close"
+                                                                    data-dismiss="modal">&times;</button>
+                                                            </div>
 
-                                                        <div class="modal-body text-center">
-                                                            <h4>@lang('common.are_you_sure_to_delete')</h4>
-                                                            <div class="mt-40 d-flex justify-content-between">
-                                                                <button type="button" class="primary-btn tr-bg"
-                                                                    data-dismiss="modal">@lang('common.cancel')</button>
-                                                                <form action="{{ route('subject.destroy', $subject->id) }}"
-                                                                    method="POST">
-                                                                    @csrf
-                                                                    @method('DELETE')
-                                                                    <button class="primary-btn fix-gr-bg"
-                                                                        type="submit">@lang('common.delete')</button>
-                                                                </form>
+                                                            <div class="modal-body text-center">
+                                                                <h4>@lang('common.are_you_sure_to_delete')</h4>
+                                                                <div class="mt-40 d-flex justify-content-between">
+                                                                    <button type="button" class="primary-btn tr-bg"
+                                                                        data-dismiss="modal">@lang('common.cancel')</button>
+                                                                    <form
+                                                                        action="{{ route('subject.destroy', $subject->id) }}"
+                                                                        method="POST">
+                                                                        @csrf
+                                                                        @method('DELETE')
+                                                                        <button class="primary-btn fix-gr-bg"
+                                                                            type="submit">@lang('common.delete')</button>
+                                                                    </form>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            @endunless
                                         @endforeach
                                     </tbody>
                                 </table>
@@ -312,7 +362,7 @@
                 success:function(data){
                     $('#classSectionWiseSubjects_'+ data.class_id).html(data.html);
                     $('#classSectionWiseStudyMat_'+ data.class_id).html(data.html2);
-                    
+
                 },
                 error:function(error){
                     console.log(error);
@@ -328,7 +378,7 @@
      }
 
 
-     $(document).on('click', '.saveAssignedSubject', function(event) 
+     $(document).on('click', '.saveAssignedSubject', function(event)
         {
                 var submit_btn = $(this).find("button[type=submit]");
                 event.preventDefault();
@@ -337,8 +387,8 @@
                 var formData = $("#form_"+class_id).serialize();
                 console.log(formData);
                     $.ajax({
-                        type: "POST",                   
-                        data:formData, 
+                        type: "POST",
+                        data:formData,
                         dataType: "json",
                         url: "{{route('saveAssignedSubject')}}" ,
                         beforeSend: function() {
@@ -346,13 +396,13 @@
                         },
                         success: function(data) {
                             if (data.status == true) {
-                                toastr.success(data.message, 'Success');                           
+                                toastr.success(data.message, 'Success');
                             } else {
-                                toastr.error(data.message, 'Error'); 
+                                toastr.error(data.message, 'Error');
                             }
                             submit_btn.button('reset');
                         },
-                        error: function(xhr) { 
+                        error: function(xhr) {
                             toastr.error("Error occured. please try again", "Error");
                         },
                         complete: function() {

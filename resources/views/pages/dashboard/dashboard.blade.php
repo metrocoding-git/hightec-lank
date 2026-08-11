@@ -1,16 +1,15 @@
 @extends('layouts.app')
 @section('mainContent')
- <section class="mb-40">
+    {{-- <section class="mb-40">
         <div class="container-fluid p-0">
             <div class="row">
                 <div class="col-lg-12">
                     <div class="main-title">
-                        <h3 class="mb-30">Welcome   
+                        <h3 class="mb-30">Welcome
                             @if (Auth::user())
-                                
-                            {{Auth::user()->name}} {{Auth::user()->last_name}} 
+                                {{ Auth::user()->name }} {{ Auth::user()->last_name }}
                             @else
-                            Test User
+                                Test User
                             @endif
                         </h3>
                     </div>
@@ -88,15 +87,16 @@
                 @endphp
                 @forelse($branches as $index => $branch)
                     <div class="col-lg-4 col-md-6 mb-30">
-                        <div class="white-box d-flex flex-column" style="background-color: {{ $colors[$index % count($colors)] }}; min-height: 400px;">
+                        <div class="white-box d-flex flex-column"
+                            style="background-color: {{ $colors[$index % count($colors)] }}; min-height: 400px;">
                             <h4 class="mb-20">{{ $branch->name }}</h4>
-                            @if($branch->intakes->count() > 0)
-                                @foreach($branch->intakes as $intake)
+                            @if ($branch->intakes->count() > 0)
+                                @foreach ($branch->intakes as $intake)
                                     <div class="mb-15">
                                         <h5 class="mb-10">Intake: {{ $intake->name }}</h5>
-                                        @if($intake->courses->count() > 0)
+                                        @if ($intake->courses->count() > 0)
                                             <ul class="list-unstyled">
-                                                @foreach($intake->courses as $course)
+                                                @foreach ($intake->courses as $course)
                                                     <li class="d-flex justify-content-between py-2 border-bottom">
                                                         <span>{{ $course->name }}</span>
                                                         <strong>${{ number_format($course->price, 2) }}</strong>
@@ -176,7 +176,15 @@
                 </div>
             </div>
         </div>
-    </section>
+    </section> --}}
 
-    
+<section class="min-h-screen bg-amber-300 flex items-center justify-center">
+    <div class="text-center">
+        <h1 class="text-4xl font-bold mb-4">Temporarily closed</h1>
+    </div>
+</section>
+
+
+
+
 @endsection

@@ -20,8 +20,6 @@ class ScanAttendanceController extends Controller
     {
         $courses = Course::all();
 
-        // Section 2 (subject attendance) only ever offers theory subjects —
-        // practical-type subjects live exclusively under Section 3.
         $subjects = Subject::where('type', 'T')->orderBy('name')->get(['id', 'name', 'code', 'type']);
 
         return view('pages.student.attendance.index', compact('courses', 'subjects'));
@@ -31,7 +29,6 @@ class ScanAttendanceController extends Controller
     // Section 1 — Course attendance
     // =====================================================================
 
-   
     public function scanCourse(Request $request)
     {
         $request->validate([
@@ -49,7 +46,7 @@ class ScanAttendanceController extends Controller
 
         $courseId = $request->input('course_id');
 
-        $studentCourse = StudentCourse::with('intake:id,name')
+        $studentCourse = StudentCourse::with(['intake:id,name', 'course:id,name'])
             ->where('student_id', $student->id)
             ->where('course_id', $courseId)
             ->where('status', 'start')
@@ -64,8 +61,6 @@ class ScanAttendanceController extends Controller
             ], 422);
         }
 
-        // If this scan is about to CLOSE an open course session, enforce the
-        // "after checking" gate first.
         $openCourse = $this->openCourseSession($student, $courseId);
 
         if ($openCourse) {
@@ -76,7 +71,7 @@ class ScanAttendanceController extends Controller
             }
         }
 
-        $result = DB::transaction(fn () => $this->markSession(
+        $result = DB::transaction(fn() => $this->markSession(
             $student,
             $studentCourse->intake_id,
             $courseId,
@@ -84,6 +79,7 @@ class ScanAttendanceController extends Controller
             $request->input('vehicle_id'),
             $request->input('note')
         ));
+        $result['course_id'] = $courseId;
 
         $response = [
             'status' => 'ok',
@@ -92,8 +88,6 @@ class ScanAttendanceController extends Controller
             'results' => [$result],
         ];
 
-       
-        // the next page load.
         if ($result['action'] === 'in') {
             $checkpoint = $this->stampBeforeChecking(
                 $student->id,
@@ -107,7 +101,15 @@ class ScanAttendanceController extends Controller
                 'starts_at' => $checkpoint->time_in->format('h:i A'),
                 'ends_at' => $checkpoint->time_out->format('h:i A'),
                 'by' => optional(Auth::user())->name,
+                'course' => $studentCourse->course->name ?? null,
             ];
+        }
+
+        // Fee balance check — advisory only, never blocks the scan.
+        $balanceAlert = $this->courseBalanceAlert($student, $courseId);
+
+        if ($balanceAlert) {
+            $response['balance_alert'] = $balanceAlert;
         }
 
         return response()->json($response);
@@ -185,14 +187,13 @@ class ScanAttendanceController extends Controller
             'status' => 'ok',
             'student' => $this->studentPayload($student),
             'results' => $results,
+            'balance_alerts' => $this->courseBalanceAlerts($student, $results),
         ]);
     }
 
     // =====================================================================
     // Section 3 — Student-first, practical subjects only
     // =====================================================================
-
-    
     public function resolvePracticalSubjects(Request $request)
     {
         $request->validate([
@@ -220,9 +221,12 @@ class ScanAttendanceController extends Controller
                 ->where('course_id', $enrolment->course_id)
                 ->pluck('subject_id');
 
+
             if ($subjectIds->isEmpty()) {
                 continue;
             }
+
+
 
             $practicalSubjects = Subject::whereIn('id', $subjectIds)
                 ->where('type', 'P')
@@ -234,14 +238,12 @@ class ScanAttendanceController extends Controller
 
             $hadAssignedPractical = true;
 
-            // Practical attendance only opens up once this enrolment's
-            // course attendance has been started (and hasn't ended yet)
             // today — otherwise skip this enrolment's subjects entirely.
             if (!$this->openCourseSession($student, $enrolment->course_id)) {
                 continue;
             }
 
-            $practicalSubjects->each(fn ($s) => $subjects->put($s->id, $s->name));
+            $practicalSubjects->each(fn($s) => $subjects->put($s->id, $s->name));
 
             if (!is_null($enrolment->branch_id)) {
                 $branchIds[] = $enrolment->branch_id;
@@ -264,15 +266,16 @@ class ScanAttendanceController extends Controller
             ], 422);
         }
 
+        // student's own enrolment branch(es).
         $vehicles = TrainingVehicle::active()
-            ->forBranches(array_values(array_unique($branchIds)))
+            ->forBranches($this->resolveVehicleBranchIds(array_values(array_unique($branchIds))))
             ->orderBy('name')
             ->get(['id', 'name', 'vehicle_number']);
 
         return response()->json([
             'status' => 'select_subject',
             'student' => $this->studentPayload($student),
-            'subjects' => $subjects->map(fn ($name, $id) => ['id' => $id, 'name' => $name])->values(),
+            'subjects' => $subjects->map(fn($name, $id) => ['id' => $id, 'name' => $name])->values(),
             'vehicles' => $vehicles,
         ]);
     }
@@ -309,8 +312,6 @@ class ScanAttendanceController extends Controller
             ], 422);
         }
 
-        // Narrow down to enrolments whose course attendance is currently
-        // open — practical attendance can't be started/continued otherwise.
         $eligible = [];
 
         foreach ($matches as $enrolment) {
@@ -329,8 +330,6 @@ class ScanAttendanceController extends Controller
             ], 422);
         }
 
-        // "Before checking" gate — only bites on the first practical scan of
-        // the day for a given course; see practicalGateError().
         foreach ($eligible as $item) {
             $gateError = $this->practicalGateError($student, $item['enrolment']->course_id);
 
@@ -357,18 +356,12 @@ class ScanAttendanceController extends Controller
                     $subjectId,
                     $vehicleId,
                     $note,
-                    true // allowRepeat — practical can be done multiple times a day
+                    true 
                 );
                 $result['subject_id'] = $subjectId;
                 $result['course_id'] = $enrolment->course_id;
                 $results[] = $result;
 
-                // Closing a practical session (re)stamps the "after
-                // checking" attendance row for this course — a real,
-                // visible entry (marked by whoever just closed this
-                // practical session), always reflecting only the LATEST
-                // practical close for this course (max one row per
-                // student/course/day, updated in place each time).
                 if ($result['action'] === 'out') {
                     $checkpoint = $this->stampAfterChecking(
                         $student->id,
@@ -382,6 +375,7 @@ class ScanAttendanceController extends Controller
                         'starts_at' => $checkpoint->time_in->format('h:i A'),
                         'ends_at' => $checkpoint->time_out->format('h:i A'),
                         'by' => optional(Auth::user())->name,
+                        'course' => $enrolment->course->name ?? null,
                     ];
                 }
             }
@@ -392,6 +386,7 @@ class ScanAttendanceController extends Controller
             'student' => $this->studentPayload($student),
             'results' => $results,
             'after_checking' => $afterCheckingEvents,
+            'balance_alerts' => $this->courseBalanceAlerts($student, $results),
         ]);
     }
 
@@ -401,12 +396,12 @@ class ScanAttendanceController extends Controller
     public function todayLog()
     {
         $sessions = SubjectAttendanceSession::with([
-                'student:id,student_name,admission_number',
-                'subject:id,name,type',
-                'course:id,name',
-                'markedInBy:id,name',
-                'markedOutBy:id,name',
-            ])
+            'student:id,student_name,admission_number',
+            'subject:id,name,type',
+            'course:id,name',
+            'markedInBy:id,name',
+            'markedOutBy:id,name',
+        ])
             ->whereDate('attendance_date', now()->toDateString())
             ->orderBy('id')
             ->get();
@@ -420,6 +415,7 @@ class ScanAttendanceController extends Controller
             }
 
             $studentName = $session->student->student_name ?? '-';
+            $courseName = $session->course->name ?? '-';
             $subjectLabel = $session->subject->name ?? 'Course-wise';
 
             if ($session->time_in) {
@@ -428,6 +424,7 @@ class ScanAttendanceController extends Controller
                     'sort' => $session->time_in->timestamp,
                     'time' => $session->time_in->format('h:i A'),
                     'student' => $studentName,
+                    'course' => $courseName,
                     'subject' => $subjectLabel,
                     'action' => 'Time In',
                     'status' => 'OK',
@@ -443,6 +440,7 @@ class ScanAttendanceController extends Controller
                     'sort' => $session->time_out->timestamp,
                     'time' => $session->time_out->format('h:i A'),
                     'student' => $studentName,
+                    'course' => $courseName,
                     'subject' => $subjectLabel,
                     'action' => 'Time Out',
                     'status' => 'OK',
@@ -453,7 +451,7 @@ class ScanAttendanceController extends Controller
             }
         }
 
-        usort($rows, fn ($a, $b) => $a['sort'] <=> $b['sort']);
+        usort($rows, fn($a, $b) => $a['sort'] <=> $b['sort']);
 
         return response()->json(['rows' => $rows]);
     }
@@ -462,7 +460,6 @@ class ScanAttendanceController extends Controller
     private function checkpointLogRow(SubjectAttendanceSession $session): array
     {
         $label = $session->checkpoint_type === 'before_checking' ? 'Before Checking' : 'After Checking';
-        $courseName = $session->course->name ?? 'Course';
         $timeRange = $session->time_in->format('h:i A') . ($session->time_out ? ' – ' . $session->time_out->format('h:i A') : '');
         $isActive = $session->time_out && now()->lt($session->time_out);
 
@@ -471,7 +468,8 @@ class ScanAttendanceController extends Controller
             'sort' => $session->time_in->timestamp,
             'time' => $timeRange,
             'student' => $session->student->student_name ?? '-',
-            'subject' => "{$label} ({$courseName})",
+            'course' => $session->course->name ?? '-',
+            'subject' => $label,
             'action' => 'By ' . ($session->markedInBy->name ?? '-'),
             'status' => $isActive ? 'Active' : 'Expired',
             'cls' => 'action-already',
@@ -484,8 +482,6 @@ class ScanAttendanceController extends Controller
     // Undo — same-day, same-user, and (for course/practical) in strict LIFO
     // order relative to each other.
     // =====================================================================
-
-    
     public function undoScan(Request $request)
     {
         $request->validate([
@@ -503,9 +499,6 @@ class ScanAttendanceController extends Controller
 
         $kind = $this->sessionKind($session);
 
-        // Checkpoint rows (before/after checking) are system-managed, not
-        // manually markable — they stay in sync automatically with the
-        // course/practical row that spawned them (see below).
         if ($kind === 'checkpoint') {
             return response()->json([
                 'status' => 'error',
@@ -520,12 +513,12 @@ class ScanAttendanceController extends Controller
                 ->notCheckpoint()
                 ->where(function ($q) {
                     $q->whereNull('subject_id')
-                        ->orWhereHas('subject', fn ($sq) => $sq->where('type', 'P'));
+                        ->orWhereHas('subject', fn($sq) => $sq->where('type', 'P'));
                 })
                 ->get();
 
             $targetTime = $this->lastActionAt($session)->getTimestamp();
-            $latestTime = $siblings->max(fn ($s) => $this->lastActionAt($s)->getTimestamp());
+            $latestTime = $siblings->max(fn($s) => $this->lastActionAt($s)->getTimestamp());
 
             if ($targetTime < $latestTime) {
                 return response()->json([
@@ -554,7 +547,7 @@ class ScanAttendanceController extends Controller
                 'marked_out_by' => null,
             ]);
 
-            
+
             if ($kind === 'practical') {
                 $this->recomputeAfterChecking($session->student_id, $courseId, $date, $session->id);
             }
@@ -572,8 +565,6 @@ class ScanAttendanceController extends Controller
         $studentId = $session->student_id;
         $session->delete();
 
-        // Undoing a course's opening means that day's course attendance
-        // never happened anymore — its "before checking" row goes with it.
         if ($kind === 'course') {
             $this->deleteBeforeChecking($studentId, $courseId, $date);
         }
@@ -581,9 +572,7 @@ class ScanAttendanceController extends Controller
         return response()->json(['status' => 'ok', 'message' => 'Time in undone.']);
     }
 
-    /**
-     * AJAX: edit vehicle/note on a session after the fact (optional convenience).
-     */
+
     public function confirmOut(Request $request)
     {
         $request->validate([
@@ -606,7 +595,6 @@ class ScanAttendanceController extends Controller
     // =====================================================================
     // Shared helpers
     // =====================================================================
-
     private function findStudent(string $identifier): ?Student
     {
         return Student::with('branch')
@@ -676,7 +664,7 @@ class ScanAttendanceController extends Controller
         return SubjectAttendanceSession::where('student_id', $student->id)
             ->where('course_id', $courseId)
             ->whereDate('attendance_date', now()->toDateString())
-            ->whereHas('subject', fn ($q) => $q->where('type', 'P'))
+            ->whereHas('subject', fn($q) => $q->where('type', 'P'))
             ->exists();
     }
 
@@ -709,7 +697,7 @@ class ScanAttendanceController extends Controller
         $openPractical = SubjectAttendanceSession::where('student_id', $student->id)
             ->where('course_id', $courseId)
             ->whereDate('attendance_date', now()->toDateString())
-            ->whereHas('subject', fn ($q) => $q->where('type', 'P'))
+            ->whereHas('subject', fn($q) => $q->where('type', 'P'))
             ->open()
             ->exists();
 
@@ -831,7 +819,7 @@ class ScanAttendanceController extends Controller
             ->where('course_id', $courseId)
             ->whereDate('attendance_date', $date)
             ->notCheckpoint()
-            ->whereHas('subject', fn ($q) => $q->where('type', 'P'))
+            ->whereHas('subject', fn($q) => $q->where('type', 'P'))
             ->whereNotNull('time_out')
             ->where('id', '!=', $excludeSessionId)
             ->orderByDesc('time_out')
@@ -925,5 +913,71 @@ class ScanAttendanceController extends Controller
             'action' => 'in',
             'time' => $session->time_in->format('h:i A'),
         ];
+    }
+
+    /**
+     * Outstanding balance for this student on this course, checked at
+     * attendance time — purely advisory (never blocks the scan). Sums
+     * paid_courses.course_price / paid_amount for every paid_courses row
+     * belonging to this student (via fee_invoice.student_id) for this
+     * course_id. Null if there's no payment record at all, or no balance.
+     *
+     * ADJUST: rename the table/column names below if yours differ from
+     * fee_invoice(id, student_id, total_amount, paid_amount) and
+     * paid_courses(invoice_id, course_id, course_price, paid_amount).
+     */
+    private function courseBalanceAlert(Student $student, int $courseId): ?array
+    {
+        $totals = DB::table('paid_courses')
+            ->join('fee_invoices', 'fee_invoices.id', '=', 'paid_courses.invoice_id')
+            ->where('fee_invoices.student_id', $student->id)
+            ->where('paid_courses.course_id', $courseId)
+            ->selectRaw('SUM(paid_courses.course_price) as total_price, SUM(paid_courses.paid_amount) as total_paid')
+            ->first();
+
+        if (!$totals || is_null($totals->total_price)) {
+            return null; // no payment record for this course
+        }
+
+        $balance = round((float) $totals->total_price - (float) $totals->total_paid, 2);
+
+        if ($balance <= 0) {
+            return null;
+        }
+
+        return [
+            'course_price' => (float) $totals->total_price,
+            'paid_amount' => (float) $totals->total_paid,
+            'balance' => $balance,
+        ];
+    }
+
+    /** courseBalanceAlert() for every distinct course_id present in a set of markSession() results — keyed by course_id. */
+    private function courseBalanceAlerts(Student $student, array $results): array
+    {
+        $alerts = [];
+
+        foreach (array_unique(array_filter(array_column($results, 'course_id'))) as $courseId) {
+            $alert = $this->courseBalanceAlert($student, (int) $courseId);
+
+            if ($alert) {
+                $alerts[$courseId] = $alert;
+            }
+        }
+
+        return $alerts;
+    }
+
+
+    private function resolveVehicleBranchIds(array $fallbackBranchIds): array
+    {
+        $user = Auth::user();
+        $userBranchId = $user->branch_id ?? null;
+
+        if (!is_null($userBranchId)) {
+            return [$userBranchId];
+        }
+
+        return $fallbackBranchIds;
     }
 }
