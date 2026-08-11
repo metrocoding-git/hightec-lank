@@ -105,23 +105,29 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
         Route::get('/student-attendance-import/download/{id}', [StudentController::class, 'studentAttendanceImportDownload'])->name('student-attendance-import.download');
 
         Route::prefix('scan-attendance')->group(function () {
-            Route::get('/', [ScanAttendanceController::class, 'index'])->withoutMiddleware(['permission'])->name('scan-attendance');
+            Route::get('/', [ScanAttendanceController::class, 'index'])->name('scan-attendance')->withoutMiddleware(['permission']);
 
-            Route::post('/course/scan', [ScanAttendanceController::class, 'scanCourse'])->name('scan-attendance.course.scan')->withoutMiddleware(['csrf', 'permission']);
+            // Section 1 — course attendance (intake resolved per-student after scan).
+            Route::post('/course/scan', [ScanAttendanceController::class, 'scanCourse'])->name('scan-attendance.course.scan')->withoutMiddleware(['permission']);
 
             // Section 2 — subject attendance (one or more subjects, any student).
-            Route::get('/subjects', [ScanAttendanceController::class, 'allSubjects'])
-                ->name('scan-attendance.subjects')
-                ->withoutMiddleware(['csrf', 'permission']);
-            Route::post('/subject/scan', [ScanAttendanceController::class, 'scanSubject'])->name('scan-attendance.subject.scan')->withoutMiddleware(['csrf', 'permission']);
+            Route::get('/subjects', [ScanAttendanceController::class, 'allSubjects'])->name('scan-attendance.subjects')->withoutMiddleware(['permission']);
+            Route::post('/subject/scan', [ScanAttendanceController::class, 'scanSubject'])->name('scan-attendance.subject.scan')->withoutMiddleware(['permission']);
 
             // Section 3 — student-first, practical subjects only.
-            Route::post('/practical/resolve', [ScanAttendanceController::class, 'resolvePracticalSubjects'])->name('scan-attendance.practical.resolve')->withoutMiddleware(['csrf', 'permission']);;
-            Route::post('/practical/scan', [ScanAttendanceController::class, 'scanPractical'])->name('scan-attendance.practical.scan')->withoutMiddleware(['csrf', 'permission']);;
+            Route::post('/practical/resolve', [ScanAttendanceController::class, 'resolvePracticalSubjects'])->name('scan-attendance.practical.resolve')->withoutMiddleware(['permission']);
+            Route::post('/practical/scan', [ScanAttendanceController::class, 'scanPractical'])->name('scan-attendance.practical.scan')->withoutMiddleware(['permission']);
 
-            Route::post('/undo', [ScanAttendanceController::class, 'undoScan'])->name('scan-attendance.undo')->withoutMiddleware(['csrf', 'permission']);;
-            Route::post('/confirm-out', [ScanAttendanceController::class, 'confirmOut'])->name('scan-attendance.confirm-out')->withoutMiddleware(['csrf', 'permission']);;
+            Route::post('/undo', [ScanAttendanceController::class, 'undoScan'])->name('scan-attendance.undo')->withoutMiddleware(['permission']);
+            Route::post('/confirm-out', [ScanAttendanceController::class, 'confirmOut'])->name('scan-attendance.confirm-out')->withoutMiddleware(['permission']);
 
+            // Today's Scans — server-persisted, shared across all authenticated users.
+            Route::get('/today-log', [ScanAttendanceController::class, 'todayLog'])
+                ->name('scan-attendance.today-log')
+                ->withoutMiddleware(['csrf', 'permission']);
+
+            // Reporting lives in your own ReportsController now
+            // (route: reports.student-attendance) — not duplicated here.
         });
     })->withoutMiddleware(['permission']);
 
@@ -610,5 +616,4 @@ Route::controller(ReportController::class)->prefix('reports')
 
         Route::get('/student-attendance', 'studentAttendance')->name('reports.student-attendance');
         Route::get('/reports/student-attendance/export', 'exportCsv')->name('reports.student-attendance.export');
-
     });

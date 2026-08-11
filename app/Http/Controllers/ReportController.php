@@ -897,12 +897,16 @@ class ReportController extends Controller
     }
 
 
-
-
     private function studentAttendanceQuery(Request $request): Builder
     {
+        // "Before checking" / "after checking" rows are included here — they're
+        // real attendance rows just like course/subject/practical scans. Each
+        // carries $session->type_label ('Course' / 'Subject' / 'Practical' /
+        // 'Before Checking' / 'After Checking') so the view/export can tell them
+        // apart even though checkpoint rows share subject_id = null with real
+        // course rows.
         $query = SubjectAttendanceSession::with([
-            'student',
+            'student.branch',
             'subject',
             'course',
             'intake',
@@ -911,6 +915,14 @@ class ReportController extends Controller
             'markedOutBy',
         ]);
 
+        if ($request->filled('branch_id')) {
+            // Filters by the student's own (home) branch — Student::branch —
+            // not the per-enrolment branch used to scope practical vehicles.
+            $branchId = $request->branch_id;
+            $query->whereHas('student', function ($q) use ($branchId) {
+                $q->where('branch_id', $branchId);
+            });
+        }
         if ($request->filled('intake_id')) {
             $query->where('intake_id', $request->intake_id);
         }
@@ -958,13 +970,13 @@ class ReportController extends Controller
         return $query;
     }
 
-
     public function studentAttendance(Request $request)
     {
         $intakes = Intake::all();
         $courses = Course::all();
         $subjects = Subject::all();
         $vehicles = TrainingVehicle::orderBy('name')->get(['id', 'name']);
+        $branches = Branch::orderBy('name')->get(['id', 'name']);
 
         // ADJUST: 'name' is assumed to be the display-name column on your User
         // model — swap for 'first_name' or similar if that's not right.
@@ -987,6 +999,7 @@ class ReportController extends Controller
             'courses',
             'subjects',
             'vehicles',
+            'branches',
             'users',
             'sessions',
             'totalCount',
@@ -994,7 +1007,6 @@ class ReportController extends Controller
             'totalMinutes'
         ));
     }
-
 
     public function exportCsv(Request $request)
     {
@@ -1019,8 +1031,10 @@ class ReportController extends Controller
                 'Date',
                 'Register No.',
                 'Student',
+                'Branch',
                 'Intake',
                 'Course',
+                'Type',
                 'Subject',
                 'Time In',
                 'In By',
@@ -1036,9 +1050,11 @@ class ReportController extends Controller
                     optional($session->attendance_date)->format('Y-m-d'),
                     $session->student->admission_number ?? '',
                     $session->student->student_name ?? '',
+                    $session->student->branch->name ?? '',
                     $session->intake->name ?? '',
                     $session->course->name ?? '',
-                    $session->subject->name ?? 'Course-wise',
+                    $session->type_label,
+                    $session->checkpoint_type ? '—' : ($session->subject->name ?? 'Course-wise'),
                     optional($session->time_in)->format('h:i A'),
                     $session->markedInBy->name ?? '',
                     $session->time_out ? $session->time_out->format('h:i A') : 'Still in',
