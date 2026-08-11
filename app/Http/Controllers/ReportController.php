@@ -743,55 +743,257 @@ class ReportController extends Controller
 
     public function invoicePayments(Request $request)
     {
-        $branches = Branch::all();
+        $branches = Branch::orderBy('name')->get();
 
-        // Default date range: last 30 days
-        $to = now()->format('Y-m-d');
-        $from = now()->subDays(30)->format('Y-m-d');
+        $paymentMethods = InvoicesPayments::whereNotNull('payment_method')
+            ->where('payment_method', '!=', '')
+            ->distinct()
+            ->orderBy('payment_method')
+            ->pluck('payment_method');
 
-        // If user selects date range
-        if ($request->date_range) {
+        return view('pages.reports.invoice-payments', compact('branches', 'paymentMethods'));
+    }
 
-            if (strpos($request->date_range, ' to ') !== false) {
-                // Range
-                $dates = explode(' to ', $request->date_range);
-                $from = $dates[0] ?? null;
-                $to = $dates[1] ?? null;
-            } else {
-                // Single date
-                $from = $request->date_range;
-                $to = $request->date_range;
+    private function applyInvoicePaymentFilters($query, Request $request)
+    {
+        // ----- DATE RANGE (on receipt created_at) -----
+        if ($request->filled('date_range')) {
+            $dates = explode(' to ', $request->date_range);
+            $from = trim($dates[0] ?? '');
+            $to   = trim($dates[1] ?? $from);
+
+            if ($from) {
+                $query->whereDate('invoice_payment_receipts.created_at', '>=', $from);
             }
+            if ($to) {
+                $query->whereDate('invoice_payment_receipts.created_at', '<=', $to);
+            }
+        } else {
+            // Default to last 30 days when no filter is supplied at all
+            $query->whereDate('invoice_payment_receipts.created_at', '>=', now()->subDays(30)->startOfDay());
         }
 
+        // ----- BRANCH (receipt has no branch_id column itself; it hangs off the invoice) -----
+        if ($request->filled('branch_id')) {
+            $branchId = $request->branch_id;
+            $query->whereHas('items.payment.invoice.branch', function ($q) use ($branchId) {
+                $q->where('id', $branchId);
+            });
+        }
 
+        // ----- PAYMENT METHOD (matches if ANY item on the receipt used this method) -----
+        if ($request->filled('payment_method')) {
+            $method = $request->payment_method;
+            $query->whereHas('items.payment', function ($q) use ($method) {
+                $q->where('payment_method', $method);
+            });
+        }
 
-        // $query = DB::table('invoice_payment_receipts')
-        //     ->join('invoice_payment_receipt_items', 'invoice_payment_receipts.id', '=', 'invoice_payment_receipt_items.receipt_id')
-        //     ->join('invoices_payments', 'invoice_payment_receipt_items.invoice_payment_id', '=', 'invoices_payments.id')
-        //     ->join('users', 'invoice_payment_receipts.created_by', '=', 'users.id')
-        //     ->join('fee_invoices', 'invoices_payments.invoice_id', '=', 'fee_invoices.id')
-        //     ->join('branches', 'fee_invoices.branch_id', '=', 'branches.id')
-        //     ->whereBetween('invoice_payment_receipts.created_at', [$from, $to]);
+        // ----- FREE-TEXT SEARCH: receipt no / cheque no / note / invoice no / student -----
+        if ($request->filled('search_text')) {
+            $term = $request->search_text;
 
+            $query->where(function ($q) use ($term) {
+                $q->where('invoice_payment_receipts.receipt_number', 'like', "%{$term}%")
+                    ->orWhere('invoice_payment_receipts.cheque_number', 'like', "%{$term}%")
+                    ->orWhere('invoice_payment_receipts.note', 'like', "%{$term}%")
+                    ->orWhereHas('items.payment', function ($pq) use ($term) {
+                        $pq->where('payment_invoice_number', 'like', "%{$term}%");
+                    })
+                    ->orWhereHas('items.payment.invoice', function ($iq) use ($term) {
+                        $iq->where('main_invoice_number', 'like', "%{$term}%");
+                    })
+                    ->orWhereHas('items.payment.invoice.student', function ($sq) use ($term) {
+                        $sq->where('admission_number', 'like', "%{$term}%")
+                            ->orWhere('student_name', 'like', "%{$term}%");
+                    });
+            });
+        }
+
+        return $query;
+    }
+
+    public function getInvoicePaymentsData(Request $request)
+    {
+        $baseQuery = fn() => InvoicePaymentReceipt::with([
+            'items.payment.invoice.student',
+            'items.payment.invoice.branch',
+            'user',
+        ])->withCount('items');
+
+        $totalRecords = $this->applyInvoicePaymentFilters($baseQuery(), $request)->count();
+
+        $query = $this->applyInvoicePaymentFilters($baseQuery(), $request);
+        $filteredRecords = (clone $query)->count();
+
+        // Sortable columns -> real DB columns
+        $orderColMap = [
+            1 => 'invoice_payment_receipts.receipt_number',
+            2 => 'invoice_payment_receipts.created_at',
+            4 => 'invoice_payment_receipts.total_amount',
+        ];
+        $orderCol = (int) $request->input('order.0.column', 2);
+        $orderDir = $request->input('order.0.dir', 'desc') === 'asc' ? 'asc' : 'desc';
+        $orderBy  = $orderColMap[$orderCol] ?? 'invoice_payment_receipts.created_at';
+        $query->orderBy($orderBy, $orderDir);
+
+        $start  = (int) $request->input('start', 0);
+        $length = (int) $request->input('length', 25);
+
+        $receipts = $length === -1
+            ? $query->get()
+            : $query->offset($start)->limit($length)->get();
+
+        $data = [];
+        foreach ($receipts as $key => $receipt) {
+            $firstPayment = $receipt->items->first()?->payment;
+            $invoice      = $firstPayment?->invoice;
+            $student      = $invoice?->student;
+            $branch       = $invoice?->branch;
+            $methods      = $receipt->items
+                ->pluck('payment.payment_method')
+                ->filter()
+                ->unique()
+                ->values()
+                ->implode(', ');
+
+            $data[] = [
+                'id'                     => $start + $key + 1,
+                'receipt_id'             => $receipt->id,
+                'receipt_number'         => $receipt->receipt_number,
+                'created_date'           => optional($receipt->created_at)->format('Y-m-d h:i A'),
+                'cheque_number'          => $receipt->cheque_number ?? '-',
+                'total_amount'           => number_format((float) $receipt->total_amount, 2),
+                'payment_methods'        => $methods ?: '-',
+                'note'                   => $receipt->note ?? '-',
+                'created_by'             => trim(($receipt->user->first_name ?? '') . ' ' . ($receipt->user->last_name ?? '')) ?: 'N/A',
+                'payment_invoice_number' => $firstPayment->payment_invoice_number ?? '-',
+                'student_name'           => $student->student_name ?? '-',
+                'admission_number'       => $student->admission_number ?? '-',
+                'branch_name'            => $branch->name ?? '-',
+                'item_count'             => $receipt->items_count,
+            ];
+        }
+
+        return response()->json([
+            'draw'            => intval($request->draw),
+            'recordsTotal'    => $totalRecords,
+            'recordsFiltered' => $filteredRecords,
+            'data'            => $data,
+        ]);
+    }
+
+    public function getReceiptItemsData($id)
+    {
+        $receipt = InvoicePaymentReceipt::with(['items.payment.invoice'])->findOrFail($id);
+
+        $items = $receipt->items->values()->map(function ($item, $idx) {
+            return [
+                'item_no'         => $idx + 1,
+                'receipt_no'      => $item->payment->receipt_number ?? '-',
+                'main_invoice_no' => $item->payment->invoice->main_invoice_number ?? '-',
+                'paid_amount'     => number_format((float) $item->paid_amount, 2),
+                'inv_payment_no'  => $item->payment->payment_invoice_number ?? '-',
+                'payment_method'  => $item->payment->payment_method ?? '-',
+            ];
+        });
+
+        return response()->json(['items' => $items]);
+    }
+
+    public function exportInvoicePayments(Request $request)
+    {
         $query = InvoicePaymentReceipt::with([
             'items.payment.invoice.student',
             'items.payment.invoice.branch',
             'user',
-        ])->whereBetween(DB::raw('DATE(invoice_payment_receipts.created_at)'), [$from, $to]);
+        ]);
 
-        if ($request->branch_id) {
-            $query->whereHas('items.payment.invoice.branch', function ($q) use ($request) {
-                $q->where('id', $request->branch_id);
-            });
-        }
+        $receipts = $this->applyInvoicePaymentFilters($query, $request)
+            ->orderBy('invoice_payment_receipts.created_at', 'asc')
+            ->get();
 
+        $filename = 'Invoice-Payments-Report_' . now()->format('Y-m-d_His') . '.csv';
 
-        // Select required columns, distinct invoice per student-course
-        $reportData = $query->get();
+        $headers = [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
 
-        return view('pages.reports.invoice-payments', compact('reportData', 'branches'));
+        $columns = [
+            'No',
+            'Receipt No',
+            'Created Date',
+            'Cheque No',
+            'Total Amount',
+            'Payment Method(s)',
+            'Note',
+            'Created By',
+            'Inv. Payment No',
+            'Student Name',
+            'Reg. No',
+            'Branch',
+            'Item No',
+            'Item Receipt No',
+            'Item Main Invoice No',
+            'Item Paid Amount',
+            'Item Inv. Payment No',
+        ];
+
+        return response()->stream(function () use ($receipts, $columns) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF"); // UTF-8 BOM so Excel renders names correctly
+            fputcsv($out, $columns);
+
+            $rowNo = 0;
+            foreach ($receipts as $receipt) {
+                $rowNo++;
+                $firstPayment = $receipt->items->first()?->payment;
+                $invoice      = $firstPayment?->invoice;
+                $student      = $invoice?->student;
+                $branch       = $invoice?->branch;
+                $methods      = $receipt->items
+                    ->pluck('payment.payment_method')
+                    ->filter()
+                    ->unique()
+                    ->values()
+                    ->implode(', ');
+
+                $base = [
+                    $rowNo,
+                    $receipt->receipt_number,
+                    optional($receipt->created_at)->format('Y-m-d h:i A'),
+                    $receipt->cheque_number ?? '-',
+                    number_format((float) $receipt->total_amount, 2, '.', ''),
+                    $methods ?: '-',
+                    $receipt->note ?? '-',
+                    trim(($receipt->user->first_name ?? '') . ' ' . ($receipt->user->last_name ?? '')) ?: 'N/A',
+                    $firstPayment->payment_invoice_number ?? '-',
+                    $student->student_name ?? '-',
+                    $student->admission_number ?? '-',
+                    $branch->name ?? '-',
+                ];
+
+                if ($receipt->items->isEmpty()) {
+                    fputcsv($out, array_merge($base, ['-', '-', '-', '-', '-']));
+                    continue;
+                }
+
+                foreach ($receipt->items as $idx => $item) {
+                    fputcsv($out, array_merge($base, [
+                        $idx + 1,
+                        $item->payment->receipt_number ?? '-',
+                        $item->payment->invoice->main_invoice_number ?? '-',
+                        number_format((float) $item->paid_amount, 2, '.', ''),
+                        $item->payment->payment_invoice_number ?? '-',
+                    ]));
+                }
+            }
+
+            fclose($out);
+        }, 200, $headers);
     }
+
 
 
     public function foodPaymentReport(Request $request)
