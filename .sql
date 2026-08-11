@@ -347,3 +347,9 @@ ADD COLUMN `checkpoint_type` VARCHAR(255) NULL AFTER `subject_id`;
 ALTER TABLE `subject_attendance_sessions`
 ADD INDEX `sas_checkpoint_lookup_idx`
 (`student_id`, `course_id`, `attendance_date`, `checkpoint_type`);
+
+
+-- 08/12
+ALTER TABLE `subjects`
+    ADD `demonstrator_time` INT UNSIGNED NULL AFTER `type`,
+    ADD `practical_time` INT UNSIGNED NULL AFTER `demonstrator_time`;

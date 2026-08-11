@@ -112,4 +112,7 @@ return[
     'select_section' => 'Select Section',
     'select_subject' => 'Select Subject',
     'reference' => 'Reference',
+    'demonstrator_time' => 'Demonstrator Time',
+    'practical_time' => 'Practical Time',
+    'subject_in_use_cannot_edit_delete' => 'This subject is assigned to a class/teacher and cannot be edited or deleted.',
 ];
