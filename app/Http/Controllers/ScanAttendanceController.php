@@ -61,6 +61,8 @@ class ScanAttendanceController extends Controller
             ], 422);
         }
 
+        // If this scan is about to CLOSE an open course session, enforce the
+        // "after checking" gate first.
         $openCourse = $this->openCourseSession($student, $courseId);
 
         if ($openCourse) {
@@ -69,6 +71,13 @@ class ScanAttendanceController extends Controller
             if ($gateError) {
                 return response()->json($gateError, 422);
             }
+        } elseif (!$this->hasCoursePayment($student, $courseId)) {
+
+            return response()->json([
+                'status' => 'no_payment',
+                'message' => "{$student->student_name} has no payment recorded for this course yet — attendance can't be started until a payment is made.",
+                'student' => $this->studentPayload($student),
+            ], 422);
         }
 
         $result = DB::transaction(fn() => $this->markSession(
@@ -88,6 +97,10 @@ class ScanAttendanceController extends Controller
             'results' => [$result],
         ];
 
+        // Opening a course session auto-creates its own "before checking"
+        // attendance row (max one per student/course/day) — surfaced here
+        // too, so it shows up in Today's Scans immediately, not just after
+        // the next page load.
         if ($result['action'] === 'in') {
             $checkpoint = $this->stampBeforeChecking(
                 $student->id,
@@ -106,6 +119,7 @@ class ScanAttendanceController extends Controller
         }
 
         // Fee balance check — advisory only, never blocks the scan.
+        // fee_invoice.student_id -> paid_courses.invoice_id -> course_id.
         $balanceAlert = $this->courseBalanceAlert($student, $courseId);
 
         if ($balanceAlert) {
@@ -194,6 +208,8 @@ class ScanAttendanceController extends Controller
     // =====================================================================
     // Section 3 — Student-first, practical subjects only
     // =====================================================================
+
+
     public function resolvePracticalSubjects(Request $request)
     {
         $request->validate([
@@ -221,12 +237,9 @@ class ScanAttendanceController extends Controller
                 ->where('course_id', $enrolment->course_id)
                 ->pluck('subject_id');
 
-
             if ($subjectIds->isEmpty()) {
                 continue;
             }
-
-
 
             $practicalSubjects = Subject::whereIn('id', $subjectIds)
                 ->where('type', 'P')
@@ -238,6 +251,8 @@ class ScanAttendanceController extends Controller
 
             $hadAssignedPractical = true;
 
+            // Practical attendance only opens up once this enrolment's
+            // course attendance has been started (and hasn't ended yet)
             // today — otherwise skip this enrolment's subjects entirely.
             if (!$this->openCourseSession($student, $enrolment->course_id)) {
                 continue;
@@ -266,6 +281,8 @@ class ScanAttendanceController extends Controller
             ], 422);
         }
 
+        // Vehicle branch priority: prefer the logged-in staff user's own
+        // branch (if they have exactly one) — otherwise fall back to the
         // student's own enrolment branch(es).
         $vehicles = TrainingVehicle::active()
             ->forBranches($this->resolveVehicleBranchIds(array_values(array_unique($branchIds))))
@@ -312,6 +329,8 @@ class ScanAttendanceController extends Controller
             ], 422);
         }
 
+        // Narrow down to enrolments whose course attendance is currently
+        // open — practical attendance can't be started/continued otherwise.
         $eligible = [];
 
         foreach ($matches as $enrolment) {
@@ -330,11 +349,24 @@ class ScanAttendanceController extends Controller
             ], 422);
         }
 
+        // "Before checking" gate — only bites on the first practical scan of
+        // the day for a given course; see practicalGateError(). Also: only
+        // one practical subject can be open (time_in without time_out) per
+        // course at a time — starting a second one while another is still
+        // running is blocked here.
         foreach ($eligible as $item) {
             $gateError = $this->practicalGateError($student, $item['enrolment']->course_id);
 
             if ($gateError) {
                 return response()->json(array_merge($gateError, [
+                    'student' => $this->studentPayload($student),
+                ]), 422);
+            }
+
+            $concurrencyError = $this->practicalConcurrencyError($student, $item['enrolment']->course_id, $subjectId);
+
+            if ($concurrencyError) {
+                return response()->json(array_merge($concurrencyError, [
                     'student' => $this->studentPayload($student),
                 ]), 422);
             }
@@ -356,12 +388,18 @@ class ScanAttendanceController extends Controller
                     $subjectId,
                     $vehicleId,
                     $note,
-                    true 
+                    true // allowRepeat — practical can be done multiple times a day
                 );
                 $result['subject_id'] = $subjectId;
                 $result['course_id'] = $enrolment->course_id;
                 $results[] = $result;
 
+                // Closing a practical session (re)stamps the "after
+                // checking" attendance row for this course — a real,
+                // visible entry (marked by whoever just closed this
+                // practical session), always reflecting only the LATEST
+                // practical close for this course (max one row per
+                // student/course/day, updated in place each time).
                 if ($result['action'] === 'out') {
                     $checkpoint = $this->stampAfterChecking(
                         $student->id,
@@ -415,6 +453,7 @@ class ScanAttendanceController extends Controller
             }
 
             $studentName = $session->student->student_name ?? '-';
+            $regNo = $session->student->admission_number ?? '-';
             $courseName = $session->course->name ?? '-';
             $subjectLabel = $session->subject->name ?? 'Course-wise';
 
@@ -424,6 +463,7 @@ class ScanAttendanceController extends Controller
                     'sort' => $session->time_in->timestamp,
                     'time' => $session->time_in->format('h:i A'),
                     'student' => $studentName,
+                    'reg_no' => $regNo,
                     'course' => $courseName,
                     'subject' => $subjectLabel,
                     'action' => 'Time In',
@@ -440,6 +480,7 @@ class ScanAttendanceController extends Controller
                     'sort' => $session->time_out->timestamp,
                     'time' => $session->time_out->format('h:i A'),
                     'student' => $studentName,
+                    'reg_no' => $regNo,
                     'course' => $courseName,
                     'subject' => $subjectLabel,
                     'action' => 'Time Out',
@@ -468,6 +509,7 @@ class ScanAttendanceController extends Controller
             'sort' => $session->time_in->timestamp,
             'time' => $timeRange,
             'student' => $session->student->student_name ?? '-',
+            'reg_no' => $session->student->admission_number ?? '-',
             'course' => $session->course->name ?? '-',
             'subject' => $label,
             'action' => 'By ' . ($session->markedInBy->name ?? '-'),
@@ -482,6 +524,7 @@ class ScanAttendanceController extends Controller
     // Undo — same-day, same-user, and (for course/practical) in strict LIFO
     // order relative to each other.
     // =====================================================================
+
     public function undoScan(Request $request)
     {
         $request->validate([
@@ -565,6 +608,8 @@ class ScanAttendanceController extends Controller
         $studentId = $session->student_id;
         $session->delete();
 
+        // Undoing a course's opening means that day's course attendance
+        // never happened anymore — its "before checking" row goes with it.
         if ($kind === 'course') {
             $this->deleteBeforeChecking($studentId, $courseId, $date);
         }
@@ -572,7 +617,9 @@ class ScanAttendanceController extends Controller
         return response()->json(['status' => 'ok', 'message' => 'Time in undone.']);
     }
 
-
+    /**
+     * AJAX: edit vehicle/note on a session after the fact (optional convenience).
+     */
     public function confirmOut(Request $request)
     {
         $request->validate([
@@ -595,6 +642,7 @@ class ScanAttendanceController extends Controller
     // =====================================================================
     // Shared helpers
     // =====================================================================
+
     private function findStudent(string $identifier): ?Student
     {
         return Student::with('branch')
@@ -742,7 +790,6 @@ class ScanAttendanceController extends Controller
         return optional($session->subject)->type === 'P' ? 'practical' : 'subject';
     }
 
-    /** Today's "before checking" row for this student+course, if any (max one). */
     private function beforeCheckingCheckpoint(int $studentId, int $courseId, string $date): ?SubjectAttendanceSession
     {
         return SubjectAttendanceSession::where('student_id', $studentId)
@@ -775,7 +822,7 @@ class ScanAttendanceController extends Controller
                 'intake_id' => $intakeId,
                 'subject_id' => null,
                 'time_in' => $startedAt,
-                'time_out' => $startedAt->copy()->addMinutes(2),
+                'time_out' => $startedAt->copy()->addMinutes(20),
                 'marked_in_by' => $markedBy,
                 'marked_out_by' => $markedBy,
             ]
@@ -796,14 +843,13 @@ class ScanAttendanceController extends Controller
                 'intake_id' => $intakeId,
                 'subject_id' => null,
                 'time_in' => $endedAt,
-                'time_out' => $endedAt->copy()->addMinutes(4),
+                'time_out' => $endedAt->copy()->addMinutes(10),
                 'marked_in_by' => $markedBy,
                 'marked_out_by' => $markedBy,
             ]
         );
     }
 
-    /** Removes today's "before checking" row — used when the course open it belongs to is undone. */
     private function deleteBeforeChecking(int $studentId, int $courseId, string $date): void
     {
         SubjectAttendanceSession::where('student_id', $studentId)
@@ -844,7 +890,6 @@ class ScanAttendanceController extends Controller
             ->delete();
     }
 
-    /** The timestamp of whichever happened last on this session — its close if closed, else its open. */
     private function lastActionAt(SubjectAttendanceSession $session): \Illuminate\Support\Carbon
     {
         return $session->time_out ?? $session->time_in;
@@ -915,17 +960,6 @@ class ScanAttendanceController extends Controller
         ];
     }
 
-    /**
-     * Outstanding balance for this student on this course, checked at
-     * attendance time — purely advisory (never blocks the scan). Sums
-     * paid_courses.course_price / paid_amount for every paid_courses row
-     * belonging to this student (via fee_invoice.student_id) for this
-     * course_id. Null if there's no payment record at all, or no balance.
-     *
-     * ADJUST: rename the table/column names below if yours differ from
-     * fee_invoice(id, student_id, total_amount, paid_amount) and
-     * paid_courses(invoice_id, course_id, course_price, paid_amount).
-     */
     private function courseBalanceAlert(Student $student, int $courseId): ?array
     {
         $totals = DB::table('paid_courses')
@@ -952,7 +986,6 @@ class ScanAttendanceController extends Controller
         ];
     }
 
-    /** courseBalanceAlert() for every distinct course_id present in a set of markSession() results — keyed by course_id. */
     private function courseBalanceAlerts(Student $student, array $results): array
     {
         $alerts = [];
@@ -968,6 +1001,38 @@ class ScanAttendanceController extends Controller
         return $alerts;
     }
 
+    private function hasCoursePayment(Student $student, int $courseId): bool
+    {
+        $totalPaid = DB::table('paid_courses')
+            ->join('fee_invoices', 'fee_invoices.id', '=', 'paid_courses.invoice_id')
+            ->where('fee_invoices.student_id', $student->id)
+            ->where('paid_courses.course_id', $courseId)
+            ->sum('paid_courses.paid_amount');
+
+        return $totalPaid > 0;
+    }
+
+    private function practicalConcurrencyError(Student $student, int $courseId, int $subjectId): ?array
+    {
+        $openOther = SubjectAttendanceSession::with('subject')
+            ->where('student_id', $student->id)
+            ->where('course_id', $courseId)
+            ->where('subject_id', '!=', $subjectId)
+            ->whereDate('attendance_date', now()->toDateString())
+            ->notCheckpoint()
+            ->whereHas('subject', fn($q) => $q->where('type', 'P'))
+            ->open()
+            ->first();
+
+        if (!$openOther) {
+            return null;
+        }
+
+        return [
+            'status' => 'practical_already_open',
+            'message' => 'Only one practical subject can be open at a time for this course — close "' . ($openOther->subject->name ?? 'the current subject') . '" before starting another.',
+        ];
+    }
 
     private function resolveVehicleBranchIds(array $fallbackBranchIds): array
     {

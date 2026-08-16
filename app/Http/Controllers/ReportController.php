@@ -1134,6 +1134,28 @@ class ReportController extends Controller
         if ($request->filled('subject_id')) {
             $query->where('subject_id', $request->subject_id);
         }
+        if ($request->filled('type')) {
+
+            switch ($request->type) {
+                case 'course':
+                    $query->whereNull('checkpoint_type')->whereNull('subject_id');
+                    break;
+                case 'subject':
+                    $query->whereNull('checkpoint_type')
+                        ->whereHas('subject', fn($q) => $q->where('type', 'T'));
+                    break;
+                case 'practical':
+                    $query->whereNull('checkpoint_type')
+                        ->whereHas('subject', fn($q) => $q->where('type', 'P'));
+                    break;
+                case 'before_checking':
+                    $query->where('checkpoint_type', 'before_checking');
+                    break;
+                case 'after_checking':
+                    $query->where('checkpoint_type', 'after_checking');
+                    break;
+            }
+        }
         if ($request->filled('vehicle_id')) {
             $query->where('vehicle_id', $request->vehicle_id);
         }

@@ -92,7 +92,6 @@ class SubjectAttendanceSession extends Model
         return $query->where('checkpoint_type', 'after_checking');
     }
 
-    /** True for the two auto-created checkpoint rows (before/after checking) — false for real course/subject/practical scans. */
     public function isCheckpoint(): bool
     {
         return !is_null($this->checkpoint_type);
@@ -117,7 +116,11 @@ class SubjectAttendanceSession extends Model
             return 'Course';
         }
 
-        return optional($this->subject)->type === 'P' ? 'Practical' : 'Subject';
+        return match (optional($this->subject)->type) {
+            'P' => 'Practical',
+            'T' => 'Theory',
+            default => '-',
+        };
     }
 
     /** Duration in minutes, null while still open (no time_out yet). */
