@@ -74,14 +74,12 @@
                 </div>
 
                 <div class="back-sig">
-                    <img src="data:image/svg+xml;base64,{{ $qr_base64 }}" class="back-qr">
                     <div class="sig-box">
                         <div class="sig-line"></div>
                         <div class="sig-label">SIGNATURE OF CARD HOLDER</div>
                     </div>
                 </div>
 
-                <div class="back-tagline">*** This card is a reflection of original certificate ***</div>
             </div>
         </div>
     </div>
@@ -150,10 +148,10 @@
     gap: 8px;
 }
 .id-card-header .company-logo {
-    height: 22px;
+    height: 20px;
     background: #fff;
     border-radius: 4px;
-    padding: 2px;
+    padding: 1px;
     flex-shrink: 0;
 }
 .org-name {
@@ -200,7 +198,7 @@
     font-weight: 700;
 }
 .details p {
-    font-size: 12px;
+    font-size: 11px;
     line-height: 1.3;
     margin: 1.5px 0;
     color: #333;
@@ -225,7 +223,7 @@
     /* background: #f3f6fb; */
     padding: 11px 10px;
     /* border-top: 1px solid #e3d9ae; */
-    margin-top: 20px;
+    margin-top: 10px;
 }
 .id-card-codes .qr { width: 36px; height: 36px; }
 .code-divider { width: 1px; height: 24px; background: #d3dbe8; }
@@ -262,7 +260,7 @@
 }
 .back-contact .sep { color: #999; margin-right: 1px; }
 .back-sig {
-    margin-top: 10px;
+    margin-top: 40px;
     display: flex;
     align-items: flex-end;
     justify-content: center;
