@@ -4,7 +4,6 @@
 <head>
 
     <style>
-
         /*
         |--------------------------------------------------------------------------
         | RESET
@@ -223,9 +222,9 @@
 
             width: 100%;
 
-            padding-top: 0.07in;
+            padding-top: 0.03in;
             padding-right: 0.08in;
-            padding-bottom: 0;
+            padding-bottom: 0in;
             padding-left: 0.11in;
 
             text-align: left;
@@ -290,7 +289,7 @@
 
             font-size: 0.118in;
 
-            line-height: 1.15;
+            line-height: 0.90;
 
             margin: 0 0 0.04in 0;
 
@@ -298,7 +297,7 @@
 
             font-weight: bold;
 
-            max-height: 0.28in;
+            /* max-height: 0.28in; */
 
             overflow: hidden;
         }
@@ -308,7 +307,7 @@
 
             font-size: 0.095in;
 
-            line-height: 1.15;
+            line-height: 1.0;
 
             margin: 0 0 0.02in 0;
 
@@ -346,9 +345,9 @@
 
             /* border-top: 0.01in solid #e3d9ae; */
 
-            padding: 0.062in 0.1in;
+            padding: 0.06in 0.1in;
 
-            margin-top: 0.068in;
+            margin-top: 0.078in;
 
             text-align: center;
 
@@ -407,10 +406,9 @@
         .id-card-back {
 
             position: relative;
-
+            height: 100%;
 
             margin: 0;
-            padding: 0.125in 0.15in;
 
 
 
@@ -419,6 +417,9 @@
             text-align: center;
         }
 
+        .id-card-back-section{
+            padding: 0.2in;
+        }
 
         /*
         |--------------------------------------------------------------------------
@@ -427,9 +428,9 @@
         */
 
         .back-statement {
+            
 
             font-size: 0.083in;
-
             line-height: 1.3;
 
             color: #333333;
@@ -460,7 +461,7 @@
 
             color: #333333;
 
-            margin-top: 0.07in;
+            
         }
 
 
@@ -517,12 +518,12 @@
 
 
         .sig-line {
+            margin: 0.3in auto 0.03in auto;
 
             border-top: 0.01in solid #999999;
 
             width: 1.53in;
 
-            margin: 0 auto 0.03in auto;
         }
 
 
@@ -552,7 +553,6 @@
 
             color: #999999;
         }
-
     </style>
 
 </head>
@@ -610,11 +610,7 @@
                 <div class="photo-box">
 
                     @if ($photo_b64)
-
-                        <img
-                            src="data:image/png;base64,{{ $photo_b64 }}"
-                        >
-
+                        <img src="data:image/png;base64,{{ $photo_b64 }}">
                     @endif
 
                 </div>
@@ -658,10 +654,7 @@
                             DOB:
                         </span>
 
-                        {{ $student->date_of_birth
-                            ? \Carbon\Carbon::parse($student->date_of_birth)->format('d-M-Y')
-                            : '-'
-                        }}
+                        {{ $student->date_of_birth ? \Carbon\Carbon::parse($student->date_of_birth)->format('d-M-Y') : '-' }}
 
                     </p>
 
@@ -687,19 +680,13 @@
             <div class="codes">
 
 
-                <img
-                    class="qr"
-                    src="data:image/svg+xml;base64,{{ $qr_base64 }}"
-                >
+                <img class="qr" src="data:image/svg+xml;base64,{{ $qr_base64 }}">
 
 
                 <span class="divider"></span>
 
 
-                <img
-                    class="barcode"
-                    src="data:image/png;base64,{{ $barcode_b64 }}"
-                >
+                <img class="barcode" src="data:image/png;base64,{{ $barcode_b64 }}">
 
 
             </div>
@@ -721,6 +708,7 @@
         <div class="id-card-back">
 
 
+            <div class="id-card-back-section">
             {{-- Statement --}}
 
             <div class="back-statement">
@@ -798,19 +786,9 @@
             <div class="back-sig">
 
 
-                <span class="qr-cell">
-
-                    <img
-                        src="data:image/svg+xml;base64,{{ $qr_base64 }}"
-                    >
-
-                </span>
-
-
                 <span class="sig-cell">
 
                     <div class="sig-line"></div>
-
                     <div class="sig-label">
                         SIGNATURE OF CARD HOLDER
                     </div>
@@ -823,10 +801,6 @@
 
             {{-- Bottom tagline --}}
 
-            <div class="back-tagline">
-
-                *** This card is a reflection of original certificate ***
-
             </div>
 
 
@@ -838,4 +812,3 @@
 </body>
 
 </html>
-

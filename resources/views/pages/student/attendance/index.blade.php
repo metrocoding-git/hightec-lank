@@ -138,8 +138,8 @@
         }
 
         /* Checkbox/radio box itself is hidden — the whole row highlight is
-               the selection indicator (still fully functional: label clicks and
-               our row click-handler both toggle the underlying input). */
+           the selection indicator (still fully functional: label clicks and
+           our row click-handler both toggle the underlying input). */
         .subject-check-list .form-check-input {
             position: absolute;
             opacity: 0;
@@ -165,9 +165,11 @@
             vertical-align: 1px;
         }
 
-        /* ---- Fee balance alert ---- */
+        /* ---- Fee balance alert: deliberately a stronger/different color
+           (red) than the generic feedback alerts, so an outstanding balance
+           stands out at a glance. ---- */
         .balance-alert-box {
-            border-left: 4px solid #e0a800;
+            border-left: 4px solid #dc3545;
         }
 
         /* ---- Scan log ---- */
@@ -423,6 +425,7 @@
                         <div id="qr_camera_status" class="text-muted mb-10" style="font-size:12px;"></div>
                         <div id="qr-reader" style="display:none;"></div>
                         <div id="scan_feedback"></div>
+                        <div id="balance_alert_box"></div>
                     </div>
                 </div>
             </div>
@@ -479,6 +482,7 @@
                                 <thead>
                                     <tr>
                                         <th>Time</th>
+                                        <th>Reg No.</th>
                                         <th>Student</th>
                                         <th>Course</th>
                                         <th>Subject</th>
@@ -625,6 +629,7 @@
                 const identifier = $('#scan_input').val().trim();
                 if (!identifier) return;
                 $('#scan_input').val('');
+                clearBalanceAlert();
 
                 const $btn = $('#scan_submit_btn');
                 setButtonLoading($btn, true);
@@ -705,14 +710,17 @@
                     no_practical_subjects: 'No practical subjects assigned',
                     not_assigned: 'Subject not assigned',
                     course_not_open: 'Course attendance not open',
-                    practical_not_started: 'Course attendance not started',
+                    practical_not_started: 'Start the course attendance firstly',
                     before_checking_wait: 'Please wait a moment',
                     after_checking_wait: 'Please wait a moment',
                     after_checking_open: 'Close practical session first',
+                    no_payment: 'No payment for this course',
+                    practical_already_open: 'Another practical subject is open',
                 };
                 const label = statusLabels[res.status] || 'Error';
                 const name = res.student ? res.student.name : identifier;
-                addLogRow(new Date(), name, '-', '-', '-', label, 'action-error', 'pill-error', null, false);
+                const regNo = res.student ? (res.student.admission_number || '-') : identifier;
+                addLogRow(new Date(), name, regNo, '-', '-', '-', label, 'action-error', 'pill-error', null, false);
                 showFeedback('danger', res.message || 'Something went wrong.');
             }
 
@@ -736,9 +744,9 @@
                     }
 
                     const undoable = (r.action === 'in' || r.action === 'out') && !!r.session_id;
-                    addLogRow(r.time || new Date(), res.student.name, courseLabel(r.course_id),
-                        subjectLabel(r.subject_id), label, 'OK', cls, pill, r.session_id || null,
-                        undoable);
+                    addLogRow(r.time || new Date(), res.student.name, res.student.admission_number,
+                        courseLabel(r.course_id), subjectLabel(r.subject_id), label, 'OK', cls, pill,
+                        r.session_id || null, undoable);
                 });
 
                 // "Before checking" (course just opened) / "after checking" (a
@@ -746,14 +754,15 @@
                 // just silent timers. Rendered the same way todayLog() shows
                 // them on page load.
                 if (res.before_checking) {
-                    addLogRow(res.before_checking.starts_at, res.student.name, res.before_checking
-                        .course || '-', 'Before Checking', 'By ' + (res.before_checking.by || '-'),
-                        'Active', 'action-already', 'pill-already', null, false);
+                    addLogRow(res.before_checking.starts_at, res.student.name, res.student
+                        .admission_number, res.before_checking.course || '-', 'Before Checking',
+                        'By ' + (res.before_checking.by || '-'), 'Active', 'action-already',
+                        'pill-already', null, false);
                 }
                 (res.after_checking || []).forEach(evt => {
-                    addLogRow(evt.starts_at, res.student.name, evt.course || '-', 'After Checking',
-                        'By ' + (evt.by || '-'), 'Active', 'action-already', 'pill-already', null,
-                        false);
+                    addLogRow(evt.starts_at, res.student.name, res.student.admission_number, evt
+                        .course || '-', 'After Checking', 'By ' + (evt.by || '-'), 'Active',
+                        'action-already', 'pill-already', null, false);
                 });
 
                 const intakeNote = res.intake_name ? ` (Intake: ${res.intake_name})` : '';
@@ -766,8 +775,17 @@
                 $('#scan_input').focus();
             }
 
+            let balanceAlertTimer = null;
+
+            function clearBalanceAlert() {
+                clearTimeout(balanceAlertTimer);
+                $('#balance_alert_box').empty();
+            }
+
             function showBalanceAlerts(alerts) {
-                if (!alerts.length) return;
+                if (!alerts.length) {
+                    return;
+                }
 
                 const money = n => Number(n).toLocaleString(undefined, {
                     minimumFractionDigits: 2,
@@ -776,9 +794,17 @@
                 const lines = alerts.map(a =>
                     `Outstanding balance: ${money(a.balance)} (course price ${money(a.course_price)}, paid ${money(a.paid_amount)})`
                 );
-                $('#scan_feedback').append(
-                    `<div class="alert alert-warning balance-alert-box mt-10">${lines.join('<br>')}</div>`
+
+                clearTimeout(balanceAlertTimer);
+                $('#balance_alert_box').html(
+                    `<div class="alert alert-danger balance-alert-box mt-10 alert-dismissible fade show" role="alert">
+                ${lines.join('<br>')}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close" onclick="$(this).closest('.alert').remove();">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>`
                 );
+                balanceAlertTimer = setTimeout(() => $('#balance_alert_box').empty(), 60000);
             }
 
             // ---- Section 3 step 2: pick the practical subject ----
@@ -810,7 +836,6 @@
                     }
                     $('#practical_vehicle_id').niceSelect();
                 }
-
 
                 $('#practical_note').val('');
                 $('#practical_confirm_box').show();
@@ -906,8 +931,8 @@
             // ---- Scan log + undo ----
             let rowSeq = 0;
 
-            function addLogRow(time, student, course, subject, action, status, cls, pill, sessionId,
-                undoable) {
+            function addLogRow(time, student, regNo, course, subject, action, status, cls, pill,
+                sessionId, undoable) {
                 $('#scan_log_empty').hide();
 
                 const t = (time instanceof Date) ? time.toLocaleTimeString() : time;
@@ -917,7 +942,7 @@
                     '';
                 const statusHtml = `<span class="status-pill ${pill}">${status}</span>`;
                 const row =
-                    `<tr id="${rowId}" class="${cls || ''}"><td>${t}</td><td>${student}</td><td>${course || '-'}</td><td>${subject}</td><td>${action}</td><td>${statusHtml}</td><td>${undoCell}</td></tr>`;
+                    `<tr id="${rowId}" class="${cls || ''}"><td>${t}</td><td>${regNo || '-'}</td><td>${student}</td><td>${course || '-'}</td><td>${subject}</td><td>${action}</td><td>${statusHtml}</td><td>${undoCell}</td></tr>`;
                 $('#scan_log tbody').prepend(row);
 
                 // Brief flash so the newest row is easy to spot.
@@ -973,9 +998,8 @@
                     (res.rows || []).forEach(row => {
                         let cls = row.cls,
                             pill = row.pill;
-                        addLogRow(row.time, row.student, row.course, row.subject, row.action,
-                            row
-                            .status, cls, pill, row.session_id, row.undoable);
+                        addLogRow(row.time, row.student, row.reg_no, row.course, row.subject, row
+                            .action, row.status, cls, pill, row.session_id, row.undoable);
                     });
                 }
             });

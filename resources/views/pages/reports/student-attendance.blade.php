@@ -116,6 +116,19 @@
                                 </div>
                                 <div class="col-lg-3 mb-15">
                                     <div class="primary_input">
+                                        <label class="primary_input_label">Type</label>
+                                        <select name="type" class="primary_select form-control">
+                                            <option value="">All Types</option>
+                                            <option value="course" {{ request('type') == 'course' ? 'selected' : '' }}>Course</option>
+                                            <option value="subject" {{ request('type') == 'subject' ? 'selected' : '' }}>Subject</option>
+                                            <option value="practical" {{ request('type') == 'practical' ? 'selected' : '' }}>Practical</option>
+                                            <option value="before_checking" {{ request('type') == 'before_checking' ? 'selected' : '' }}>Before Checking</option>
+                                            <option value="after_checking" {{ request('type') == 'after_checking' ? 'selected' : '' }}>After Checking</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 mb-15">
+                                    <div class="primary_input">
                                         <label class="primary_input_label">Vehicle</label>
                                         <select name="vehicle_id" class="primary_select form-control">
                                             <option value="">All Vehicles</option>
