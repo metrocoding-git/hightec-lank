@@ -11,7 +11,7 @@ class AssignSubject extends Model
     //
     protected $table = 'assign_subjects';
 
-    protected $fillable = ['intake_id', 'subject_id', 'course_id'];
+    protected $fillable = ['intake_id', 'subject_id', 'course_id', 'demonstrator_time', 'practical_time'];
 
     public function subject()
     {

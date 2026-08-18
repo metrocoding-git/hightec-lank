@@ -36,7 +36,7 @@ class AssignSubjectController extends Controller
             'course_id' => 'required|exists:courses,id',
             'subjects' => 'required|array|min:1',
             'subjects.*' => 'exists:subjects,id',
-
+            'times' => 'nullable|array',
         ]);
 
         foreach ($request->subjects as $subjectId) {
@@ -45,67 +45,74 @@ class AssignSubjectController extends Controller
                 ->where('subject_id', $subjectId)
                 ->exists();
 
-            if (!$exists) {
-                AssignSubject::create([
-                    'intake_id' => $request->intake_id,
-                    'course_id' => $request->course_id,
-                    'subject_id' => $subjectId,
-                ]);
-            } else {
+            if ($exists) {
                 return redirect()->back()->with('message-danger', 'Subject already assigned.');
             }
-        }
 
+            $subject = Subject::find($subjectId);
+
+            AssignSubject::create([
+                'intake_id' => $request->intake_id,
+                'course_id' => $request->course_id,
+                'subject_id' => $subjectId,
+                'demonstrator_time' => $request->input("times.$subjectId.demonstrator_time", $subject->demonstrator_time),
+                'practical_time' => $request->input("times.$subjectId.practical_time", $subject->practical_time),
+            ]);
+        }
 
         return redirect()->route('assign-subject.index')->with('message-success', 'Subject assigned successfully.');
     }
 
-
     public function update(Request $request, $id)
     {
-
         $request->validate([
-            'intake_id' => 'required',
-            'course_id' => 'required',
+            'intake_id' => 'required|exists:intakes,id',
+            'course_id' => 'required|exists:courses,id',
             'subjects' => 'required|array|min:1',
             'subjects.*' => 'exists:subjects,id',
+            'times' => 'nullable|array',
         ]);
 
-        // Fetch the original lesson just to validate it exists
         $assignSubject = AssignSubject::findOrFail($id);
+        $intakeId = $assignSubject->intake_id;
+        $courseId = $assignSubject->course_id;
 
-        // Get all existing lessons for the same course + intake + subject
-        $existingSubjects = AssignSubject::where('course_id', $assignSubject->course_id)
-            ->where('intake_id', $assignSubject->intake_id)
-            ->get();
+        $existingRows = AssignSubject::where('intake_id', $intakeId)
+            ->where('course_id', $courseId)
+            ->get()
+            ->keyBy('subject_id');
 
+        $existingSubjectIds = $existingRows->keys()->toArray();
+        $newSubjectIds = $request->subjects;
 
-        $newTitles = $request->subjects;
-        $existingCount = $existingSubjects->count();
-        $newCount = count($newTitles);
-
-
-        // Update existing lessons
-        foreach ($existingSubjects as $index => $existingSubject) {
-            if (isset($newTitles[$index])) {
-                $existingSubject->update([
-                    'name' => $newTitles[$index],
-                    'course_id' => $request->course_id,
-                    'intake_id' => $request->intake_id
-                ]);
-            } else {
-                // Remove extra old lessons not in new list
-                $existingSubject->delete();
-            }
+        // Unchecked -> remove
+        $toRemove = array_diff($existingSubjectIds, $newSubjectIds);
+        if (!empty($toRemove)) {
+            AssignSubject::where('intake_id', $intakeId)
+                ->where('course_id', $courseId)
+                ->whereIn('subject_id', $toRemove)
+                ->delete();
         }
 
-        // Add any new lesson titles if more than existing
-        if ($newCount > $existingCount) {
-            for ($i = $existingCount; $i < $newCount; $i++) {
+        foreach ($newSubjectIds as $subjectId) {
+            $demonstratorTime = $request->input("times.$subjectId.demonstrator_time");
+            $practicalTime = $request->input("times.$subjectId.practical_time");
+
+            if ($existingRows->has($subjectId)) {
+                // Still checked -> just update this row's own times
+                $existingRows[$subjectId]->update([
+                    'demonstrator_time' => $demonstratorTime,
+                    'practical_time' => $practicalTime,
+                ]);
+            } else {
+                // Newly checked -> create, falling back to Subject's current values if nothing typed
+                $subject = Subject::find($subjectId);
                 AssignSubject::create([
-                    'course_id' => $request->course_id,
-                    'intake_id' => $request->intake_id,
-                    'subject_id' => $newTitles[$i],
+                    'intake_id' => $intakeId,
+                    'course_id' => $courseId,
+                    'subject_id' => $subjectId,
+                    'demonstrator_time' => $demonstratorTime ?? $subject->demonstrator_time,
+                    'practical_time' => $practicalTime ?? $subject->practical_time,
                 ]);
             }
         }
@@ -128,14 +135,30 @@ class AssignSubjectController extends Controller
         $selectedIntake = $assignSubject->intake_id;
         $selectedCourse = $assignSubject->course_id;
 
-        // Get all subject ids assigned to this intake + course
-        $selectedSubjects = AssignSubject::where('intake_id', $selectedIntake)
+        $existingRows = AssignSubject::where('intake_id', $selectedIntake)
             ->where('course_id', $selectedCourse)
-            ->pluck('subject_id')
-            ->toArray();
+            ->get();
 
+        $selectedSubjects = $existingRows->pluck('subject_id')->toArray();
 
-        return view('pages.administration.academic.assign-subject', ['selectedIntake' => $selectedIntake, 'selectedCourse' => $selectedCourse, 'selectedSubjects' => $selectedSubjects, 'assign_subjects' => $assign_subjects, 'subjects' => $subjects, 'courses' => $courses, 'intakes' => $intakes, 'assignSubjectId' => $id,]);
+        $selectedTimes = $existingRows->keyBy('subject_id')->map(function ($row) {
+            return [
+                'demonstrator_time' => $row->demonstrator_time,
+                'practical_time' => $row->practical_time,
+            ];
+        })->toArray();
+
+        return view('pages.administration.academic.assign-subject', [
+            'selectedIntake' => $selectedIntake,
+            'selectedCourse' => $selectedCourse,
+            'selectedSubjects' => $selectedSubjects,
+            'selectedTimes' => $selectedTimes,
+            'assign_subjects' => $assign_subjects,
+            'subjects' => $subjects,
+            'courses' => $courses,
+            'intakes' => $intakes,
+            'assignSubjectId' => $id,
+        ]);
     }
 
 

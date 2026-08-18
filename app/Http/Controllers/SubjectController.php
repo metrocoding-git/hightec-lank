@@ -53,11 +53,6 @@ class SubjectController extends Controller
     {
         $subject = Subject::findOrFail($id);
 
-        if ($subject->isAssigned()) {
-            return redirect()->route('subject.index')
-                ->with('message-error', 'This subject is assigned to a class/teacher and cannot be edited.');
-        }
-
         $request->validate([
             'name' => 'required|string|max:255',
             'type' => 'required|in:T,P',
@@ -73,11 +68,6 @@ class SubjectController extends Controller
     public function edit($id)
     {
         $subject = Subject::withCount('assignSubjects')->findOrFail($id);
-
-        if ($subject->isAssigned()) {
-            return redirect()->route('subject.index')
-                ->with('message-error', 'This subject is assigned to a class/teacher and cannot be edited.');
-        }
 
         $subjects = Subject::withCount('assignSubjects')->get();
 

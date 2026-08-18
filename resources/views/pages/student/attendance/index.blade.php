@@ -231,6 +231,20 @@
             color: #a3272c;
         }
 
+        /* ---- Repeat-scan badge (Today's Scans): front-end only marker for
+           when the same subject/practical has already been marked earlier
+           today for the same student + course, so staff can spot "this is
+           a repeat" at a glance. ---- */
+        .repeat-badge {
+            font-size: 10px;
+            margin-left: 6px;
+            vertical-align: 1px;
+        }
+
+        #scan_log tbody tr.row-repeat td:first-child {
+            box-shadow: inset 3px 0 0 #e0a800;
+        }
+
         #scan_log_empty {
             text-align: center;
             color: #9aa0b4;
@@ -710,7 +724,7 @@
                     no_practical_subjects: 'No practical subjects assigned',
                     not_assigned: 'Subject not assigned',
                     course_not_open: 'Course attendance not open',
-                    practical_not_started: 'Start the course attendance firstly',
+                    practical_not_started: 'Course attendance not started',
                     before_checking_wait: 'Please wait a moment',
                     after_checking_wait: 'Please wait a moment',
                     after_checking_open: 'Close practical session first',
@@ -884,6 +898,7 @@
             function startCamera() {
                 if (qrScannerRunning) return;
 
+                qrScanCooldown = false;
                 $('#qr-reader').show();
                 qrScanner = new Html5Qrcode('qr-reader');
                 qrScanner.start({
@@ -897,9 +912,10 @@
                         qrScanCooldown = true;
                         $('#scan_input').val(decodedText);
                         submitScan();
-                        setTimeout(() => {
-                            qrScanCooldown = false;
-                        }, 2000);
+                        // Auto-close the camera after every successful scan —
+                        // scan one code, camera shuts off; click "Scan with
+                        // Camera" again to scan another.
+                        stopCamera('Scan captured — click "Scan with Camera" to scan again.');
                     },
                     () => {}
                 ).then(() => {
@@ -911,7 +927,7 @@
                 });
             }
 
-            function stopCamera() {
+            function stopCamera(statusMessage) {
                 if (!qrScannerRunning || !qrScanner) return;
 
                 qrScanner.stop().then(() => {
@@ -919,7 +935,7 @@
                 }).finally(() => {
                     qrScannerRunning = false;
                     $('#qr-reader').hide();
-                    $('#qr_camera_status').text('');
+                    $('#qr_camera_status').text(statusMessage || '');
                     $('#camera_toggle_btn').html('<span class="ti-camera pr-1"></span> Scan with Camera');
                 });
             }
@@ -931,6 +947,21 @@
             // ---- Scan log + undo ----
             let rowSeq = 0;
 
+            const subjectOccurrenceCounts = {};
+
+            function trackSubjectOccurrence(regNo, course, subject, action) {
+                if (action !== 'Time In') return null;
+                if (!subject || subject === 'Course-wise' || subject === 'Before Checking' || subject ===
+                    'After Checking') {
+                    return null;
+                }
+
+                const key = (regNo || '-') + '||' + (course || '-') + '||' + subject;
+                const count = (subjectOccurrenceCounts[key] || 0) + 1;
+                subjectOccurrenceCounts[key] = count;
+                return count > 1 ? count : null;
+            }
+
             function addLogRow(time, student, regNo, course, subject, action, status, cls, pill,
                 sessionId, undoable) {
                 $('#scan_log_empty').hide();
@@ -941,8 +972,16 @@
                     `<button type="button" class="btn btn-sm btn-outline-danger btn-undo" data-session-id="${sessionId}" data-row-id="${rowId}">Undo</button>` :
                     '';
                 const statusHtml = `<span class="status-pill ${pill}">${status}</span>`;
+
+                const repeatCount = trackSubjectOccurrence(regNo, course, subject, action);
+                const ordinal = repeatCount === 2 ? '2nd' : (repeatCount ? repeatCount + 'th' : '');
+                const subjectHtml = repeatCount ?
+                    `${subject} <span class="badge badge-warning repeat-badge" title="Marked ${repeatCount} times today for this subject/course">${ordinal} time</span>` :
+                    subject;
+                const rowCls = (cls || '') + (repeatCount ? ' row-repeat' : '');
+
                 const row =
-                    `<tr id="${rowId}" class="${cls || ''}"><td>${t}</td><td>${regNo || '-'}</td><td>${student}</td><td>${course || '-'}</td><td>${subject}</td><td>${action}</td><td>${statusHtml}</td><td>${undoCell}</td></tr>`;
+                    `<tr id="${rowId}" class="${rowCls}"><td>${t}</td><td>${regNo || '-'}</td><td>${student}</td><td>${course || '-'}</td><td>${subjectHtml}</td><td>${action}</td><td>${statusHtml}</td><td>${undoCell}</td></tr>`;
                 $('#scan_log tbody').prepend(row);
 
                 // Brief flash so the newest row is easy to spot.

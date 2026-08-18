@@ -79,7 +79,8 @@
                                                     <label class="primary_input_label">Intake <span>*</span></label>
                                                     @if (isset($assignSubjectId))
                                                         <select name="intake_id" id="intake-select"
-                                                            class="primary_select form-control {{ $errors->has('intake_id') ? ' is-invalid' : '' }}" readonly>
+                                                            class="primary_select form-control {{ $errors->has('intake_id') ? ' is-invalid' : '' }}"
+                                                            readonly>
                                                             <option
                                                                 value="{{ $intakes->firstWhere('id', $selectedIntake)?->id }}"
                                                                 selected>
@@ -112,13 +113,13 @@
                                                     <label class="primary_input_label">Course <span>*</span></label>
 
                                                     @if (isset($assignSubjectId))
-
-                                                         <select name="course_id" id="course-select"
-                                                            class="primary_select form-control {{ $errors->has('course_id') ? ' is-invalid' : '' }}" readonly>
+                                                        <select name="course_id" id="course-select"
+                                                            class="primary_select form-control {{ $errors->has('course_id') ? ' is-invalid' : '' }}"
+                                                            readonly>
                                                             <option
                                                                 value="{{ $courses->firstWhere('id', $selectedCourse)?->id }}"
                                                                 selected>
-                                                               {{ $courses->firstWhere('id', $selectedCourse)?->name }}
+                                                                {{ $courses->firstWhere('id', $selectedCourse)?->name }}
                                                             </option>
 
                                                         </select>
@@ -148,15 +149,43 @@
                                         <div class="row mt-20">
                                             <div class="col-lg-12">
                                                 <label class="primary_input_label">@lang('academics.subject') <span>*</span></label>
-                                                <div class="d-block radio-btn-flex">
+                                                <div class="d-block">
                                                     @foreach ($subjects as $subject)
-                                                        <div class="ml-30 mt-1">
-                                                            <input type="checkbox" id="sub{{ $subject->id }}"
-                                                                value="{{ $subject->id }}" name="subjects[]"
-                                                                class="common-checkbox"
-                                                                {{ in_array($subject->id, old('subjects', $selectedSubjects ?? [])) ? 'checked' : '' }}>
-                                                            <label
-                                                                for="sub{{ $subject->id }}">{{ $subject->name }}</label>
+                                                        <div class="ml-30 mt-3 pb-3"
+                                                            style="border-bottom: 1px solid var(--border_color);">
+                                                            <div>
+                                                                <input type="checkbox" id="sub{{ $subject->id }}"
+                                                                    value="{{ $subject->id }}" name="subjects[]"
+                                                                    class="common-checkbox"
+                                                                    {{ in_array($subject->id, old('subjects', $selectedSubjects ?? [])) ? 'checked' : '' }}>
+                                                                <label
+                                                                    for="sub{{ $subject->id }}"><strong>{{ $subject->name }}</strong></label>
+                                                            </div>
+
+                                                            <div class="mt-1 d-flex align-items-center">
+                                                                <label class="mr-2 mb-0" style="min-width:140px"
+                                                                    for="demo_time_{{ $subject->id }}">
+                                                                    Demonstrator Time
+                                                                </label>
+                                                                <input type="text" id="demo_time_{{ $subject->id }}"
+                                                                    name="times[{{ $subject->id }}][demonstrator_time]"
+                                                                    class="form-control form-control-sm" style="width:150px"
+                                                                    placeholder="Demonstrator time"
+                                                                    value="{{ old('times.' . $subject->id . '.demonstrator_time', $selectedTimes[$subject->id]['demonstrator_time'] ?? $subject->demonstrator_time) }}">
+                                                            </div>
+
+                                                            <div class="mt-1 d-flex align-items-center">
+                                                                <label class="mr-2 mb-0" style="min-width:140px"
+                                                                    for="practical_time_{{ $subject->id }}">
+                                                                    Practical Time
+                                                                </label>
+                                                                <input type="text"
+                                                                    id="practical_time_{{ $subject->id }}"
+                                                                    name="times[{{ $subject->id }}][practical_time]"
+                                                                    class="form-control form-control-sm" style="width:150px"
+                                                                    placeholder="Practical time"
+                                                                    value="{{ old('times.' . $subject->id . '.practical_time', $selectedTimes[$subject->id]['practical_time'] ?? $subject->practical_time) }}">
+                                                            </div>
                                                         </div>
                                                     @endforeach
                                                     @if ($errors->has('subjects'))
@@ -240,7 +269,15 @@
                                                             '">' .
                                                             __('common.delete') .
                                                             '</a>',
-                                                            '<a class="dropdown-item copy-btn" href="#" data-intake-id="' . ($assign[0]->intake->id ?? '') . '" data-course-id="' . ($assign[0]->course->id ?? '') . '" data-subject-ids="' . htmlspecialchars(json_encode($assign->pluck('subject.id')->toArray())) . '">' .
+                                                            '<a class="dropdown-item copy-btn" href="#" data-intake-id="' .
+                                                            ($assign[0]->intake->id ?? '') .
+                                                            '" data-course-id="' .
+                                                            ($assign[0]->course->id ?? '') .
+                                                            '" data-subject-ids="' .
+                                                            htmlspecialchars(
+                                                                json_encode($assign->pluck('subject.id')->toArray()),
+                                                            ) .
+                                                            '">' .
                                                             __('common.copy') .
                                                             '</a>',
                                                         ];
@@ -298,8 +335,8 @@
 @include('components.partials.data_table_css')
 @include('components.partials.data_table_js')
 @push('script')
- <script>
-       $('#table_id').DataTable({
+    <script>
+        $('#table_id').DataTable({
             responsive: true,
             dom: 'Bfrtip',
 
@@ -356,7 +393,8 @@
 
                 // Make AJAX request to get courses for selected intake
                 $.ajax({
-                    url: '{{ route("assign-subject.get-courses", ":intakeId") }}'.replace(':intakeId', intakeId),
+                    url: '{{ route('assign-subject.get-courses', ':intakeId') }}'.replace(':intakeId',
+                        intakeId),
                     type: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
@@ -368,7 +406,8 @@
 
                         if (data.courses && data.courses.length > 0) {
                             data.courses.forEach(function(course) {
-                                options += '<option value="' + course.id + '">' + course.name + '</option>';
+                                options += '<option value="' + course.id + '">' + course.name +
+                                    '</option>';
                             });
                         } else {
                             options = '<option value="">No courses available for this intake</option>';
@@ -437,7 +476,6 @@
                 }
             }, 500); // Adjust delay as needed
         });
-
     </script>
     {{-- <script>
     $(document).on("change", ".assignedClassSection", function() {

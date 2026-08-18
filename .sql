@@ -353,3 +353,9 @@ ADD INDEX `sas_checkpoint_lookup_idx`
 ALTER TABLE `subjects`
     ADD `demonstrator_time` INT UNSIGNED NULL AFTER `type`,
     ADD `practical_time` INT UNSIGNED NULL AFTER `demonstrator_time`;
+
+
+-- 08/19
+ALTER TABLE assign_subjects
+ADD COLUMN demonstrator_time VARCHAR(255) NULL AFTER subject_id,
+ADD COLUMN practical_time VARCHAR(255) NULL AFTER demonstrator_time;
