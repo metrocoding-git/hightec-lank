@@ -78,7 +78,7 @@
                                                     @foreach ($allItemSellLists as $key => $value)
                                                         <tr>
                                                             <td>{{ $key + 1 }}</td>
-                                                            <td>{{  $value->invoice_number }}</td>
+                                                            <td>{{ $value->invoice_number }}</td>
                                                             <td>{{ $value->reference_no }}</td>
                                                             <td>{{ $value->role ? $value->role->role_name : 'Others' }}</td>
                                                             <td>
@@ -105,7 +105,7 @@
                                                             </td>
                                                             <td>
                                                                 @if ($value->student)
-                                                                    {{ $value->student->studentCategory->category_name }}
+                                                                    {{ $value->student?->studentCategory?->category_name ?? '-' }}
                                                                 @else
                                                                     N/A
                                                                 @endif
@@ -167,7 +167,7 @@
                                                                         data-id="{{ $value->id }}"
                                                                         href="#">@lang('common.view')</a>
 
-                                                                     <a class="dropdown-item item-sell-bill"
+                                                                    <a class="dropdown-item item-sell-bill"
                                                                         title="Re-Print Invoice" target="_blank"
                                                                         href="{{ route('inventory.item-sell-bill', $value->id) }}">Re-Print</a>
 
@@ -277,15 +277,18 @@
                                                 </div>
                                             </div>
 
-                                            <div class="info-card bg-light p-3 rounded mb-3 d-none" id="invoiceAddBlock">
+                                            <div class="info-card bg-light p-3 rounded mb-3 d-none"
+                                                id="invoiceAddBlock">
                                                 <label class="mb-1">Add Invoice Number</label>
-                                            
+
                                                 <div class="d-flex gap-2">
-                                                    <input type="text" id="newInvoiceNumber" class="form-control" placeholder="Enter invoice number">
-                                                    <button class="btn btn-primary btn-sm" id="saveInvoiceNumberBtn" data-id="">Save</button>
+                                                    <input type="text" id="newInvoiceNumber" class="form-control"
+                                                        placeholder="Enter invoice number">
+                                                    <button class="btn btn-primary btn-sm" id="saveInvoiceNumberBtn"
+                                                        data-id="">Save</button>
                                                 </div>
                                             </div>
-                                            
+
                                         </div>
                                     </div>
                                 </div>
@@ -473,7 +476,7 @@
                     url: '{{ url('account/inventory/item-sell') }}/' + id,
                     method: 'GET',
                     success: function(data) {
-                        console.log('dd',data);
+                        console.log('dd', data);
                         if (data.itemSell) {
                             $('#itemSellReferenceNo').text(data.itemSell.reference_no);
                             $('#itemSellBuyerName').text(data.itemSell.buyer_name);
@@ -680,7 +683,7 @@
                 let id = $(this).data('id');
                 let invoiceNumber = $('#newInvoiceNumber').val();
 
-                console.log('ddd', id,invoiceNumber);
+                console.log('ddd', id, invoiceNumber);
                 if (invoiceNumber === "") {
                     toastr.error("Invoice number cannot be empty.");
                     return;
@@ -707,7 +710,7 @@
                     }
                 });
 
-                
+
             });
 
         });
