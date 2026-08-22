@@ -257,8 +257,21 @@ class ScanAttendanceController extends Controller
             if (!$this->openCourseSession($student, $enrolment->course_id)) {
                 continue;
             }
+            foreach ($practicalSubjects as $s) {
+                $doneCount = SubjectAttendanceSession::where('student_id', $student->id)
+                    ->where('course_id', $enrolment->course_id)
+                    ->where('subject_id', $s->id)
+                    // ->whereDate('attendance_date', now()->toDateString())
+                    ->notCheckpoint()
+                    ->whereNotNull('time_in')
+                    ->count();
 
-            $practicalSubjects->each(fn($s) => $subjects->put($s->id, $s->name));
+                $existing = $subjects->get($s->id);
+                $subjects->put($s->id, [
+                    'name' => $s->name,
+                    'done_count' => max($existing['done_count'] ?? 0, $doneCount),
+                ]);
+            }
 
             if (!is_null($enrolment->branch_id)) {
                 $branchIds[] = $enrolment->branch_id;
@@ -292,7 +305,11 @@ class ScanAttendanceController extends Controller
         return response()->json([
             'status' => 'select_subject',
             'student' => $this->studentPayload($student),
-            'subjects' => $subjects->map(fn($name, $id) => ['id' => $id, 'name' => $name])->values(),
+            'subjects' => $subjects->map(fn($data, $id) => [
+                'id' => $id,
+                'name' => $data['name'],
+                'done_count' => $data['done_count'],
+            ])->values(),
             'vehicles' => $vehicles,
         ]);
     }
@@ -962,11 +979,12 @@ class ScanAttendanceController extends Controller
 
     private function courseBalanceAlert(Student $student, int $courseId): ?array
     {
-        $totals = DB::table('paid_courses')
-            ->join('fee_invoices', 'fee_invoices.id', '=', 'paid_courses.invoice_id')
+        $totals = DB::table('fee_invoices')
+            ->join('paid_courses', 'paid_courses.invoice_id', '=', 'fee_invoices.id')
             ->where('fee_invoices.student_id', $student->id)
+            ->where('fee_invoices.invoice_type', 'course')
             ->where('paid_courses.course_id', $courseId)
-            ->selectRaw('SUM(paid_courses.course_price) as total_price, SUM(paid_courses.paid_amount) as total_paid')
+            ->selectRaw('SUM(fee_invoices.total_amount) as total_price, SUM(fee_invoices.paid_amount) as total_paid')
             ->first();
 
         if (!$totals || is_null($totals->total_price)) {

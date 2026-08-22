@@ -245,6 +245,11 @@
             box-shadow: inset 3px 0 0 #e0a800;
         }
 
+        .subject-check-list .form-check.subject-already-done {
+            /* background: #fff8e6; */
+            box-shadow: inset 3px 0 0 #e0a800;
+        }
+
         #scan_log_empty {
             text-align: center;
             color: #9aa0b4;
@@ -828,9 +833,19 @@
                 let html = '';
                 (res.subjects || []).forEach((s, i) => {
                     subjectNameById[s.id] = s.name;
-                    html += `<div class="form-check ${i === 0 ? 'row-checked' : ''}">
+
+                    // Already done for this student's course today? Flag it
+                    // right here in the picker — before it's picked again —
+                    // not just after, in Today's Scans.
+                    const doneCount = s.done_count || 0;
+                    const doneCls = doneCount ? ' subject-already-done' : '';
+                    const doneBadge = doneCount ?
+                        ` <span class="badge badge-warning repeat-badge" title="Already marked ${doneCount} time(s) today for this course">Done ${doneCount}x today</span>` :
+                        '';
+
+                    html += `<div class="form-check ${i === 0 ? 'row-checked' : ''}${doneCls}">
                 <input class="form-check-input" type="radio" name="practical_subject" value="${s.id}" id="psubj_${s.id}" ${i === 0 ? 'checked' : ''}>
-                <label class="form-check-label" for="psubj_${s.id}">${s.name}</label>
+                <label class="form-check-label" for="psubj_${s.id}">${s.name}${doneBadge}</label>
             </div>`;
                 });
                 $('#practical_subject_list').html(html);
