@@ -251,9 +251,6 @@ class ScanAttendanceController extends Controller
 
             $hadAssignedPractical = true;
 
-            // Practical attendance only opens up once this enrolment's
-            // course attendance has been started (and hasn't ended yet)
-            // today — otherwise skip this enrolment's subjects entirely.
             if (!$this->openCourseSession($student, $enrolment->course_id)) {
                 continue;
             }
@@ -261,15 +258,34 @@ class ScanAttendanceController extends Controller
                 $doneCount = SubjectAttendanceSession::where('student_id', $student->id)
                     ->where('course_id', $enrolment->course_id)
                     ->where('subject_id', $s->id)
-                    // ->whereDate('attendance_date', now()->toDateString())
                     ->notCheckpoint()
                     ->whereNotNull('time_in')
                     ->count();
+
+                // TODAY-only count — drives the "Done Nx today" badge.
+                $doneToday = SubjectAttendanceSession::where('student_id', $student->id)
+                    ->where('course_id', $enrolment->course_id)
+                    ->where('subject_id', $s->id)
+                    ->whereDate('attendance_date', now()->toDateString())
+                    ->notCheckpoint()
+                    ->whereNotNull('time_in')
+                    ->count();
+
+
+                $isOpen = SubjectAttendanceSession::where('student_id', $student->id)
+                    ->where('course_id', $enrolment->course_id)
+                    ->where('subject_id', $s->id)
+                    ->whereDate('attendance_date', now()->toDateString())
+                    ->notCheckpoint()
+                    ->open()
+                    ->exists();
 
                 $existing = $subjects->get($s->id);
                 $subjects->put($s->id, [
                     'name' => $s->name,
                     'done_count' => max($existing['done_count'] ?? 0, $doneCount),
+                    'done_today' => max($existing['done_today'] ?? 0, $doneToday),
+                    'is_open' => ($existing['is_open'] ?? false) || $isOpen,
                 ]);
             }
 
@@ -294,9 +310,7 @@ class ScanAttendanceController extends Controller
             ], 422);
         }
 
-        // Vehicle branch priority: prefer the logged-in staff user's own
-        // branch (if they have exactly one) — otherwise fall back to the
-        // student's own enrolment branch(es).
+
         $vehicles = TrainingVehicle::active()
             ->forBranches($this->resolveVehicleBranchIds(array_values(array_unique($branchIds))))
             ->orderBy('name')
@@ -309,6 +323,8 @@ class ScanAttendanceController extends Controller
                 'id' => $id,
                 'name' => $data['name'],
                 'done_count' => $data['done_count'],
+                'done_today' => $data['done_today'],
+                'is_open' => $data['is_open'],
             ])->values(),
             'vehicles' => $vehicles,
         ]);
@@ -336,6 +352,8 @@ class ScanAttendanceController extends Controller
         }
 
         $subjectId = $request->input('subject_id');
+        $vehicleId = $request->input('vehicle_id');
+        $note = $request->input('note');
         $matches = $this->enrolmentsAssignedSubject($enrolments, $subjectId);
 
         if ($matches->isEmpty()) {
@@ -366,11 +384,6 @@ class ScanAttendanceController extends Controller
             ], 422);
         }
 
-        // "Before checking" gate — only bites on the first practical scan of
-        // the day for a given course; see practicalGateError(). Also: only
-        // one practical subject can be open (time_in without time_out) per
-        // course at a time — starting a second one while another is still
-        // running is blocked here.
         foreach ($eligible as $item) {
             $gateError = $this->practicalGateError($student, $item['enrolment']->course_id);
 
@@ -387,10 +400,16 @@ class ScanAttendanceController extends Controller
                     'student' => $this->studentPayload($student),
                 ]), 422);
             }
+
+            $vehicleError = $this->practicalVehicleError($student, $item['enrolment']->course_id, $subjectId, $vehicleId);
+
+            if ($vehicleError) {
+                return response()->json(array_merge($vehicleError, [
+                    'student' => $this->studentPayload($student),
+                ]), 422);
+            }
         }
 
-        $vehicleId = $request->input('vehicle_id');
-        $note = $request->input('note');
         $results = [];
         $afterCheckingEvents = [];
 
@@ -445,11 +464,49 @@ class ScanAttendanceController extends Controller
         ]);
     }
 
+    private function practicalVehicleError(Student $student, int $courseId, int $subjectId, ?int $vehicleId): ?array
+    {
+        $open = SubjectAttendanceSession::with('vehicle')
+            ->where('student_id', $student->id)
+            ->where('course_id', $courseId)
+            ->where('subject_id', $subjectId)
+            ->whereDate('attendance_date', now()->toDateString())
+            ->notCheckpoint()
+            ->open()
+            ->first();
+
+        if (!$open) {
+            if (is_null($vehicleId)) {
+                return [
+                    'status' => 'vehicle_required',
+                    'message' => 'Select a vehicle before starting practical attendance.',
+                ];
+            }
+            return null;
+        }
+
+        if (!is_null($vehicleId) && (int) $vehicleId !== (int) $open->vehicle_id) {
+            $startedWith = $open->vehicle->name ?? null;
+            return [
+                'status' => 'vehicle_mismatch',
+                'message' => $startedWith
+                    ? "Selected vehicle doesn't match the vehicle this session was started with ({$startedWith}) — select that vehicle, or leave it blank."
+                    : "Selected vehicle doesn't match the vehicle this session was started with — select the original vehicle, or leave it blank.",
+            ];
+        }
+
+        return null;
+    }
+
+
     // =====================================================================
     // Today's scans (server-persisted, shared across all authenticated users)
     // =====================================================================
     public function todayLog()
     {
+        $userId = Auth::id();
+
+
         $sessions = SubjectAttendanceSession::with([
             'student:id,student_name,admission_number',
             'subject:id,name,type',
@@ -458,6 +515,10 @@ class ScanAttendanceController extends Controller
             'markedOutBy:id,name',
         ])
             ->whereDate('attendance_date', now()->toDateString())
+            ->where(function ($q) use ($userId) {
+                $q->where('marked_in_by', $userId)
+                    ->orWhere('marked_out_by', $userId);
+            })
             ->orderBy('id')
             ->get();
 
@@ -839,7 +900,7 @@ class ScanAttendanceController extends Controller
                 'intake_id' => $intakeId,
                 'subject_id' => null,
                 'time_in' => $startedAt,
-                'time_out' => $startedAt->copy()->addMinutes(20),
+                'time_out' => $startedAt->copy()->addMinutes(1),
                 'marked_in_by' => $markedBy,
                 'marked_out_by' => $markedBy,
             ]
@@ -860,7 +921,7 @@ class ScanAttendanceController extends Controller
                 'intake_id' => $intakeId,
                 'subject_id' => null,
                 'time_in' => $endedAt,
-                'time_out' => $endedAt->copy()->addMinutes(10),
+                'time_out' => $endedAt->copy()->addMinutes(1),
                 'marked_in_by' => $markedBy,
                 'marked_out_by' => $markedBy,
             ]
@@ -934,7 +995,6 @@ class ScanAttendanceController extends Controller
         if ($open) {
             $open->update([
                 'time_out' => now(),
-                'vehicle_id' => $vehicleId,
                 'note' => $note,
                 'marked_out_by' => Auth::id(),
             ]);
@@ -968,6 +1028,7 @@ class ScanAttendanceController extends Controller
             'attendance_date' => $today,
             'time_in' => now(),
             'marked_in_by' => Auth::id(),
+            'vehicle_id' => $vehicleId,
         ]);
 
         return [
@@ -1052,15 +1113,22 @@ class ScanAttendanceController extends Controller
         ];
     }
 
-    private function resolveVehicleBranchIds(array $fallbackBranchIds): array
+     private function resolveVehicleBranchIds(array $fallbackBranchIds): array
     {
         $user = Auth::user();
-        $userBranchId = $user->branch_id ?? null;
-
-        if (!is_null($userBranchId)) {
-            return [$userBranchId];
+ 
+        if (!$user) {
+            return $fallbackBranchIds;
         }
 
+        $userBranchIds = DB::table('user_branches')
+            ->where('user_id', $user->id)
+            ->pluck('branch_id');
+ 
+        if ($userBranchIds->count() === 1) {
+            return [$userBranchIds->first()];
+        }
+ 
         return $fallbackBranchIds;
     }
 }

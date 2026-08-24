@@ -250,6 +250,11 @@
             box-shadow: inset 3px 0 0 #e0a800;
         }
 
+        .subject-check-list .form-check.subject-done-before {
+            outline: 1px dashed #8a8fa3;
+            outline-offset: -1px;
+        }
+
         #scan_log_empty {
             text-align: center;
             color: #9aa0b4;
@@ -735,6 +740,8 @@
                     after_checking_open: 'Close practical session first',
                     no_payment: 'No payment for this course',
                     practical_already_open: 'Another practical subject is open',
+                    vehicle_required: 'Vehicle required to start',
+                    vehicle_mismatch: 'Vehicle does not match',
                 };
                 const label = statusLabels[res.status] || 'Error';
                 const name = res.student ? res.student.name : identifier;
@@ -834,18 +841,30 @@
                 (res.subjects || []).forEach((s, i) => {
                     subjectNameById[s.id] = s.name;
 
-                    // Already done for this student's course today? Flag it
-                    // right here in the picker — before it's picked again —
-                    // not just after, in Today's Scans.
-                    const doneCount = s.done_count || 0;
-                    const doneCls = doneCount ? ' subject-already-done' : '';
-                    const doneBadge = doneCount ?
-                        ` <span class="badge badge-warning repeat-badge" title="Already marked ${doneCount} time(s) today for this course">Done ${doneCount}x today</span>` :
-                        '';
+                    const doneToday = s.done_today || 0;
+                    const doneBefore = Math.max((s.done_count || 0) - doneToday, 0);
+                    const isOpen = !!s.is_open;
 
-                    html += `<div class="form-check ${i === 0 ? 'row-checked' : ''}${doneCls}">
+                    let stateCls = '';
+                    let badgeHtml = '';
+                    if (isOpen) {
+                        stateCls = ' subject-open';
+                        badgeHtml =
+                            ` <span class="badge badge-info repeat-badge" title="Started, not yet closed — picking this will CLOSE it, not start a new one">In Progress</span>`;
+                    } else if (doneToday > 0) {
+                        stateCls = ' subject-already-done';
+                        badgeHtml =
+                            ` <span class="badge badge-warning repeat-badge" title="Already marked ${doneToday} time(s) today for this course">Done ${doneToday}x today</span>`;
+                    }
+                    if (doneBefore > 0) {
+                        stateCls += ' subject-done-before';
+                        badgeHtml +=
+                            ` <span class="badge badge-secondary repeat-badge" title="Marked ${doneBefore} time(s) on earlier day(s) for this course">Before ${doneBefore}x</span>`;
+                    }
+
+                    html += `<div class="form-check ${i === 0 ? 'row-checked' : ''}${stateCls}">
                 <input class="form-check-input" type="radio" name="practical_subject" value="${s.id}" id="psubj_${s.id}" ${i === 0 ? 'checked' : ''}>
-                <label class="form-check-label" for="psubj_${s.id}">${s.name}${doneBadge}</label>
+                <label class="form-check-label" for="psubj_${s.id}">${s.name}${badgeHtml}</label>
             </div>`;
                 });
                 $('#practical_subject_list').html(html);
@@ -859,6 +878,7 @@
                     vehicleOptions += `<option value="${v.id}">${label}</option>`;
                 });
                 $('#practical_vehicle_id').html(vehicleOptions).val('');
+
                 if (typeof $.fn.niceSelect === 'function') {
                     if ($('#practical_vehicle_id').next('.nice-select').length) {
                         $('#practical_vehicle_id').niceSelect('destroy');
