@@ -27,6 +27,13 @@
             max-height: 300px;
             min-height: 300px;
         }
+
+        /* Same as the courses page: keeps horizontal scroll on the table
+           from also dragging the left-side form sideways on large screens. */
+        .intake-table-scroll {
+            overflow-x: auto;
+            max-width: 100%;
+        }
     </style>
 @endpush
 
@@ -57,6 +64,8 @@
                             <form method="POST"
                                 action="{{ isset($intakeId) ? route('intake.update', $intake->id) : route('intake.store') }}">
                                 @csrf
+                                <input type="hidden" name="dt_page" class="dt-page-field"
+                                    value="{{ (int) request('dt_page', 0) }}">
                                 <div class="white-box">
                                     <div class="main-title">
                                         <h3 class="mb-20">{{ isset($intakeId) ? 'Edit Intake' : 'Add Intake' }}</h3>
@@ -118,7 +127,7 @@
                                                             value="{{ $course->id }}"
                                                             {{ isset($intakeId) && in_array($course->id, old('courses', $intake->courses->pluck('id')->toArray() ?? [])) ? 'checked' : '' }}>
                                                         <label for="course_{{ $course->id }}" class="font-weight-bold">
-                                                            {{ $course->name }} 
+                                                            {{ $course->name }}
                                                         </label>
                                                     </div>
                                                 @endforeach
@@ -153,85 +162,98 @@
                                 <h3 class="mb-20">Intake List</h3>
                             </div>
 
-                            <x-table>
-                                <table id="table_id" class="table Crm_table_active3" cellspacing="0" width="100%">
+                            <div class="intake-table-scroll">
+                                <x-table>
+                                    <table id="table_id" class="table Crm_table_active3" cellspacing="0" width="100%">
 
-                                    <thead>
+                                        <thead>
 
-                                        <tr>
-                                            <th>Intake</th>
-                                            <th>Branch</th>
-                                            <th>Courses</th>
-                                            <th>Start Date</th>
-                                            {{-- <th>Student Count</th> --}}
-                                            <th>@lang('common.action')</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($intakes as $index => $intake)
                                             <tr>
-                                                <td valign="top">{{ $intake->name }}</td>
-                                                <td>{{ $intake->branch->name }}</td>
-                                                <td>
-                                                    @foreach ($intake->courses as $index => $course)
-                                                        {{ $course->name }} 
-                                                        @if (!$loop->last)
-                                                            /
-                                                        @endif
-                                                    @endforeach
-                                                </td>
-                                                <td>{{ $intake->start_date }}</td>
-                                                {{-- <td><a href="/count">{{ $intake->student_count }}</a></td> --}}
-                                                <td valign="top">
-
-                                                    @php
-                                                        $routeList = [
-                                                            '<a class="dropdown-item" href="' .
-                                                            route('intake.edit', $intake->id) .
-                                                            '">' .
-                                                            __('common.edit') .
-                                                            '</a>',
-                                                            '<a class="dropdown-item" data-toggle="modal" data-target="#deleteClassModal' .
-                                                            $intake->id .
-                                                            '" href="#">' .
-                                                            __('common.delete') .
-                                                            '</a>',
-                                                        ];
-                                                    @endphp
-                                                    <x-drop-down-action-component :routeList="$routeList" />
-                                                </td>
+                                                <th>Intake</th>
+                                                <th>Branch</th>
+                                                <th>Courses</th>
+                                                <th>Start Date</th>
+                                                <th>Status</th>
+                                                <th>@lang('common.action')</th>
                                             </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($intakes as $index => $intake)
+                                                <tr>
+                                                    <td valign="top">{{ $intake->name }}</td>
+                                                    <td>{{ $intake->branch->name }}</td>
+                                                    <td>
+                                                        @foreach ($intake->courses as $index => $course)
+                                                            {{ $course->name }}
+                                                            @if (!$loop->last)
+                                                                /
+                                                            @endif
+                                                        @endforeach
+                                                    </td>
+                                                    <td>{{ $intake->start_date }}</td>
+                                                    <td>{{  $intake->is_active ? 'Activate' : 'Deactivate'}}</td>
+                                                    <td valign="top">
 
-                                            {{-- Delete Modal --}}
-                                            <div class="modal fade admin-query" id="deleteClassModal{{ $intake->id }}">
-                                                <div class="modal-dialog modal-dialog-centered">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header">
-                                                            <h4 class="modal-title">@lang('academics.delete_class')</h4>
-                                                            <button type="button" class="close"
-                                                                data-dismiss="modal">&times;</button>
-                                                        </div>
-                                                        <div class="modal-body text-center">
-                                                            <h4>@lang('common.are_you_sure_to_delete')</h4>
-                                                            <div class="mt-40 d-flex justify-content-between">
-                                                                <button type="button" class="primary-btn tr-bg"
-                                                                    data-dismiss="modal">@lang(key: 'common.cancel')</button>
-                                                                <form action="{{ route('intake.destroy', $intake->id) }}"
-                                                                    method="POST">
-                                                                    @csrf
-                                                                    @method('DELETE')
-                                                                    <button class="primary-btn fix-gr-bg"
-                                                                        type="submit">@lang('common.delete')</button>
-                                                                </form>
+                                                        @php
+                                                            $routeList = [
+                                                                '<a class="dropdown-item intake-edit-link" href="' .
+                                                                route('intake.edit', $intake->id) .
+                                                                '">' .
+                                                                __('common.edit') .
+                                                                '</a>',
+                                                                '<a class="dropdown-item" data-toggle="modal" data-target="#toggleStatusModal' .
+                                                                $intake->id .
+                                                                '" href="#">' .
+                                                                ($intake->is_active ? 'Deactivate' : 'Activate') .
+                                                                '</a>',
+                                                            ];
+                                                        @endphp
+                                                        <x-drop-down-action-component :routeList="$routeList" />
+                                                    </td>
+                                                </tr>
+
+                                                <div class="modal fade admin-query" id="toggleStatusModal{{ $intake->id }}">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h4 class="modal-title">
+                                                                    {{ $intake->is_active ? 'Deactivate Intake' : 'Activate Intake' }}
+                                                                </h4>
+                                                                <button type="button" class="close"
+                                                                    data-dismiss="modal">&times;</button>
+                                                            </div>
+                                                            <div class="modal-body text-center">
+                                                                <h4>
+                                                                    @if ($intake->is_active)
+                                                                        Are you sure you want to deactivate "{{ $intake->name }}"?
+                                                                    @else
+                                                                        Are you sure you want to activate "{{ $intake->name }}"?
+                                                                    @endif
+                                                                </h4>
+                                                                <div class="mt-40 d-flex justify-content-between">
+                                                                    <button type="button" class="primary-btn tr-bg"
+                                                                        data-dismiss="modal">@lang(key: 'common.cancel')</button>
+                                                                    <form action="{{ route('intake.toggle-status', $intake->id) }}"
+                                                                        method="POST">
+                                                                        @csrf
+
+                                                                        <input type="hidden" name="dt_page"
+                                                                            class="dt-page-field" value="0">
+                                                                        <button class="primary-btn fix-gr-bg"
+                                                                            type="submit">
+                                                                            {{ $intake->is_active ? 'Deactivate' : 'Activate' }}
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </x-table>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </x-table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -245,9 +267,10 @@
 
 @push('script')
     <script>
-       $('#table_id').DataTable({
+        var table = $('#table_id').DataTable({
             responsive: true,
             dom: 'Bfrtip',
+            stateSave: true,
 
             buttons: [{
                     extend: 'copyHtml5',
@@ -290,6 +313,22 @@
                     next: '<i class="fa-solid fa-angle-right"></i>'
                 }
             }
+        });
+
+        var initialDtPage = parseInt('{{ (int) request('dt_page', 0) }}', 10);
+        if (initialDtPage > 0) {
+            table.page(initialDtPage).draw(false);
+        }
+
+        $(document).on('click', '.intake-edit-link', function(e) {
+            e.preventDefault();
+            var href = $(this).attr('href');
+            var sep = href.indexOf('?') === -1 ? '?' : '&';
+            window.location.href = href + sep + 'dt_page=' + table.page();
+        });
+
+        $(document).on('submit', 'form', function() {
+            $(this).find('.dt-page-field').val(table.page());
         });
     </script>
 

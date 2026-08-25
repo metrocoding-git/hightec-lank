@@ -73,6 +73,12 @@
                             @endif
 
                             @csrf
+                            {{-- FIX (pagination — same mechanism as the Courses/Intake pages):
+                                 carries the DataTable page you were on through the
+                                 Add/Edit round trip. See the script at the bottom of
+                                 this file for how the pieces fit together. --}}
+                            <input type="hidden" name="dt_page" class="dt-page-field"
+                                value="{{ (int) request('dt_page', 0) }}">
 
                             <div class="white-box">
                                 <div class="main-title">
@@ -126,7 +132,7 @@
                                         </div>
                                     </div>
 
-                                   
+
 
                                     {{-- Demonstrator Time --}}
                                     <div class="row mt-20">
@@ -137,8 +143,8 @@
                                                 </label>
                                                 <input
                                                     class="primary_input_field form-control{{ $errors->has('demonstrator_time') ? ' is-invalid' : '' }}"
-                                                    type="number" min="0" name="demonstrator_time" id="demonstrator_time"
-                                                    autocomplete="off"
+                                                    type="number" min="0" name="demonstrator_time"
+                                                    id="demonstrator_time" autocomplete="off"
                                                     value="{{ old('demonstrator_time', $subject->demonstrator_time ?? '') }}">
                                                 @if ($errors->has('demonstrator_time'))
                                                     <span class="invalid-feedback" role="alert">
@@ -209,14 +215,13 @@
                                             <th>@lang('academics.subject_code')</th>
                                             <th>@lang('academics.demonstrator_time')</th>
                                             <th>@lang('academics.practical_time')</th>
+                                            <th>Status</th>
                                             <th>@lang('common.action')</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($subjects as $key => $subject)
                                             @php
-                                                // withCount('assignSubjects') on the query gives us this attribute.
-                                                // Falls back to false if not eager-loaded, so the view never fatals.
                                                 $isAssigned = ($subject->assign_subjects_count ?? 0) > 0;
                                             @endphp
                                             <tr>
@@ -230,24 +235,26 @@
                                                 </td>
                                                 <td>{{ $subject->demonstrator_time ?? '-' }}</td>
                                                 <td>{{ $subject->practical_time ?? '-' }}</td>
+                                                <td>{{ $subject->is_active ? 'Activate' : 'Deactivate' }}</td>
                                                 <td valign="top">
                                                     @if ($isAssigned)
-                                                        <span class="badge badge-secondary"
-                                                            title="@lang('academics.subject_in_use_cannot_edit_delete')">
+                                                        <span class="badge badge-secondary" title="@lang('academics.subject_in_use_cannot_edit_delete')">
                                                             @lang('common.in_use')
                                                         </span>
                                                     @else
                                                         @php
                                                             $routeList = [
-                                                                '<a class="dropdown-item" href="' .
+                                                                '<a class="dropdown-item subject-edit-link" href="' .
                                                                 route('subject.edit', $subject->id) .
                                                                 '">' .
                                                                 __('common.edit') .
                                                                 '</a>',
-                                                                '<a class="dropdown-item" data-toggle="modal" data-target="#deleteClassModal' .
+                                                                '<a class="dropdown-item" data-toggle="modal" data-target="#toggleStatusModal' .
                                                                 $subject->id .
                                                                 '" href="#">' .
-                                                                __('common.delete') .
+                                                                ($subject->is_active ?? true
+                                                                    ? 'Deactivate'
+                                                                    : 'Activate') .
                                                                 '</a>',
                                                             ];
                                                         @endphp
@@ -256,29 +263,41 @@
                                                 </td>
                                             </tr>
 
-                                            {{-- Delete Modal --}}
                                             @unless ($isAssigned)
-                                                <div class="modal fade admin-query" id="deleteClassModal{{ $subject->id }}">
+                                                <div class="modal fade admin-query"
+                                                    id="toggleStatusModal{{ $subject->id }}">
                                                     <div class="modal-dialog modal-dialog-centered">
                                                         <div class="modal-content">
                                                             <div class="modal-header">
-                                                                <h4 class="modal-title">@lang('academics.delete_class')</h4>
+                                                                <h4 class="modal-title">
+                                                                    {{ $subject->is_active ?? true ? 'Deactivate Subject' : 'Activate Subject' }}
+                                                                </h4>
                                                                 <button type="button" class="close"
                                                                     data-dismiss="modal">&times;</button>
                                                             </div>
 
                                                             <div class="modal-body text-center">
-                                                                <h4>@lang('common.are_you_sure_to_delete')</h4>
+                                                                <h4>
+                                                                    @if ($subject->is_active ?? true)
+                                                                        Are you sure you want to deactivate
+                                                                        "{{ $subject->name }}"?
+                                                                    @else
+                                                                        Are you sure you want to activate
+                                                                        "{{ $subject->name }}"?
+                                                                    @endif
+                                                                </h4>
                                                                 <div class="mt-40 d-flex justify-content-between">
                                                                     <button type="button" class="primary-btn tr-bg"
                                                                         data-dismiss="modal">@lang('common.cancel')</button>
                                                                     <form
-                                                                        action="{{ route('subject.destroy', $subject->id) }}"
+                                                                        action="{{ route('subject.toggle-status', $subject->id) }}"
                                                                         method="POST">
                                                                         @csrf
-                                                                        @method('DELETE')
-                                                                        <button class="primary-btn fix-gr-bg"
-                                                                            type="submit">@lang('common.delete')</button>
+                                                                        <input type="hidden" name="dt_page"
+                                                                            class="dt-page-field" value="0">
+                                                                        <button class="primary-btn fix-gr-bg" type="submit">
+                                                                            {{ $subject->is_active ?? true ? 'Deactivate' : 'Activate' }}
+                                                                        </button>
                                                                     </form>
                                                                 </div>
                                                             </div>
@@ -300,10 +319,11 @@
 @include('components.partials.data_table_css')
 @include('components.partials.data_table_js')
 @push('script')
- <script>
-       $('#table_id').DataTable({
+    <script>
+        var table = $('#table_id').DataTable({
             responsive: true,
             dom: 'Bfrtip',
+            stateSave: true,
 
             buttons: [{
                     extend: 'copyHtml5',
@@ -337,7 +357,6 @@
             ordering: true,
             info: true,
 
-            // 👇 This part adds the search and pagination icons
             language: {
                 search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
                 searchPlaceholder: 'Search...',
@@ -346,170 +365,22 @@
                     next: '<i class="fa-solid fa-angle-right"></i>'
                 }
             }
-        });    </script>
-    {{-- <script>
-    $(document).on("change", ".assignedClassSection", function() {
-        var id = $(this).val();
-        var url = '{{url('/')}}';
-        var formData = {
-            assignedClass: $(this).val(),
-        };
-        $.ajax({
-                type:'GET',
-                data: formData,
-                dataType:"json",
-                url: "{{route('loadAssignedSubject')}}",
-                success:function(data){
-                    $('#classSectionWiseSubjects_'+ data.class_id).html(data.html);
-                    $('#classSectionWiseStudyMat_'+ data.class_id).html(data.html2);
-
-                },
-                error:function(error){
-                    console.log(error);
-                }
-            });
-    });
-
-    $('.primary_select').niceSelect('update');
-
-     function deleteSubject(id){
-        alert(id);
-        $(".assignedSubject"+id).remove();
-     }
-
-
-     $(document).on('click', '.saveAssignedSubject', function(event)
-        {
-                var submit_btn = $(this).find("button[type=submit]");
-                event.preventDefault();
-                var url = $("#url").val();
-                var class_id = $(this).data('class_id');
-                var formData = $("#form_"+class_id).serialize();
-                console.log(formData);
-                    $.ajax({
-                        type: "POST",
-                        data:formData,
-                        dataType: "json",
-                        url: "{{route('saveAssignedSubject')}}" ,
-                        beforeSend: function() {
-                            submit_btn.button('loading');
-                        },
-                        success: function(data) {
-                            if (data.status == true) {
-                                toastr.success(data.message, 'Success');
-                            } else {
-                                toastr.error(data.message, 'Error');
-                            }
-                            submit_btn.button('reset');
-                        },
-                        error: function(xhr) {
-                            toastr.error("Error occured. please try again", "Error");
-                        },
-                        complete: function() {
-                            submit_btn.button('reset');
-                        }
-                    });
         });
 
-        function addMoreGlobalSubject(id){
-            var url = $("#url").val();
-            var count = $("#assign-subject").children().length;
-            var divCount = count + 1;
-
-            // get section for student
-            $.ajax({
-                type: "GET",
-                dataType: "json",
-                url: url + "/" + "global-assign-subject-get-by-ajax",
-                success: function(data) {
-                    var subject_teacher = "";
-                    subject_teacher +=
-                        "<div class='assignedSubject" +id + "' id='assign-subject-" +
-                        divCount +
-                        "'>";
-                    subject_teacher += "<div class='row'>";
-                    subject_teacher += "<div class='col-lg-5 mt-30-md'>";
-                    subject_teacher +=
-                        "<select class='primary_select' name='subjects[]' style='display:none'>";
-                    subject_teacher +=
-                        "<option data-display='"+window.jsLang('select_subject')+"'  value=''>"+window.jsLang('select_subject')+"</option>";
-                    $.each(data[0], function(key, subject) {
-                        subject_teacher +=
-                            "<option value=" +
-                            subject.id +
-                            ">" +
-                            subject.subject_name +
-                            "</option>";
-                    });
-                    subject_teacher += "</select>";
-
-                    subject_teacher +=
-                        "<div class='nice-select primary_select form-control' tabindex='0'>";
-                    subject_teacher += "<span class='current'>"+window.jsLang('select_subject')+"</span>";
-                    subject_teacher +=
-                        "<div class='nice-select-search-box'><input type='text' class='nice-select-search' placeholder='Search...'></div>";
-                    subject_teacher += "<ul class='list'>";
-                    subject_teacher +=
-                        "<li data-value='' data-display='"+window.jsLang('select_subject')+"' class='option selected'>"+window.jsLang('select_subject')+"</li>";
-                    $.each(data[0], function(key, subject) {
-                        subject_teacher +=
-                            "<li data-value=" +
-                            subject.id +
-                            " class='option'>" +
-                            subject.subject_name +
-                            "</li>";
-                    });
-                    subject_teacher += "</ul>";
-                    subject_teacher += "</div>";
-                    subject_teacher += "</div>";
-                    subject_teacher += "<div class='col-lg-5 mt-30-md'>";
-                    subject_teacher +=
-                        "<select class='primary_select form-control' name='teachers[]' style='display:none'>";
-                    subject_teacher +=
-                        "<option data-display='"+window.jsLang('select_teacher')+"' value=''>"+window.jsLang('select_teacher')+"</option>";
-                    $.each(data[1], function(key, teacher) {
-                        subject_teacher +=
-                            "<option value=" +
-                            teacher.id +
-                            ">" +
-                            teacher.full_name +
-                            "</option>";
-                    });
-                    subject_teacher += "</select>";
-                    subject_teacher +=
-                        "<div class='nice-select primary_select form-control' tabindex='0'>";
-                    subject_teacher += "<span class='current'>"+window.jsLang('select_teacher')+"</span>";
-                    subject_teacher +=
-                        "<div class='nice-select-search-box'><input type='text' class='nice-select-search' placeholder='Search...'></div>";
-                    subject_teacher += "<ul class='list'>";
-                    subject_teacher +=
-                        "<li data-value='' data-display='"+window.jsLang('select_teacher')+"' class='option selected'>"+window.jsLang('select_teacher')+"</li>";
-                    $.each(data[1], function(key, teacher) {
-                        subject_teacher +=
-                            "<li data-value=" +
-                            teacher.id +
-                            " class='option'>" +
-                            teacher.full_name +
-                            "</li>";
-                    });
-                    subject_teacher += "</ul>";
-                    subject_teacher += "</div>";
-                    subject_teacher += "</div>";
-                    subject_teacher += "<div class='col-lg-2'>";
-                    subject_teacher +=
-                        "<button class='primary-btn icon-only fix-gr-bg id='removeSubject' onclick='deleteSubject(" +id + ")' type='button'>";
-                    subject_teacher += "<span class='ti-trash' ></span>";
-                    subject_teacher += "</button>";
-                    subject_teacher += "</div>";
-                    subject_teacher += "</div>";
-                    subject_teacher += "</div>";
-                    $("#assign-subject_"+id).append(subject_teacher);
-                },
-                error: function(data) {
-                    // console.log("Error:", data);
-                },
-            });
+        var initialDtPage = parseInt('{{ (int) request('dt_page', 0) }}', 10);
+        if (initialDtPage > 0) {
+            table.page(initialDtPage).draw(false);
         }
 
-</script> --}}
+        $(document).on('click', '.subject-edit-link', function(e) {
+            e.preventDefault();
+            var href = $(this).attr('href');
+            var sep = href.indexOf('?') === -1 ? '?' : '&';
+            window.location.href = href + sep + 'dt_page=' + table.page();
+        });
+
+        $(document).on('submit', 'form', function() {
+            $(this).find('.dt-page-field').val(table.page());
+        });
+    </script>
 @endpush

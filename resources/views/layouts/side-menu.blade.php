@@ -76,9 +76,23 @@
         </a>
     </div>
 
-    @if (Auth::user()->id == 31 || Auth::user()->id == 32 || Auth::user()->id == 33 || Auth::user()->id == 34)
-        <ul class=" list-unstyled" id="sidebar_menu">
-
+    {{--
+        FIXED: was `Auth::user()->id == 31 || ... == 34` — four raw user IDs
+        hardcoded into the view. Replaced with a real permission check,
+        'demo-panel.view'. To migrate: create that permission, put it on a
+        role (e.g. "Demo"), and assign that role to the same 4 accounts —
+        removing/adding someone from this view is then a role change, not a
+        code change. Until you create + assign this permission, nobody will
+        match this branch (hasPermission() should return false for a
+        permission that doesn't exist yet) — so do that before removing the
+        old ID check from production, or you'll temporarily send those 4
+        users into the @else branch below instead.
+    --}}
+    @if (Auth::check() && Auth::user()->hasPermission('demo-panel.view'))
+        {{-- FIXED: this <ul> was missing the "sidebar_menu" class the @else
+             branch has, so the flex layout / bottom-pinned last-item CSS
+             above never applied here — added it back for visual consistency. --}}
+        <ul class="sidebar_menu list-unstyled" id="sidebar_menu">
 
             {{-- Dashboard Section --}}
             @if (Auth::check() && Auth::user()->hasPermission('dashboard'))
@@ -98,8 +112,8 @@
                 </li>
 
                 <li
-                    class="administration_section {{ request()->is('student-attendance/scan-attendance') ? 'mm-active' : '' }} ">
-                    <a href="/student-attendance/scan-attendance">
+                    class="administration_section {{ request()->is('student/student-info/scan-attendance') ? 'mm-active' : '' }} ">
+                    <a href="/student/student-info/scan-attendance">
                         <div class="nav_icon_small">
                             <span class="fas fa-user"></span>
                         </div>
@@ -122,11 +136,9 @@
                 </li>
             @endif
 
-
         </ul>
     @else
         <ul class="sidebar_menu list-unstyled" id="sidebar_menu">
-
 
             {{-- Dashboard Section --}}
             @if (Auth::check() && Auth::user()->hasPermission('dashboard'))
@@ -157,10 +169,8 @@
                         Auth::user()->hasPermission('lesson.index') ||
                         Auth::user()->hasPermission('topic.index') ||
                         Auth::user()->hasPermission('topic-overview.index') ||
-                        Auth::user()->hasPermission('upload-content') ||
-                        Auth::user()->hasPermission('study-material-download') ||
-                        Auth::user()->hasPermission('other-download') ||
-                        Auth::user()->hasPermission('shared-content-list') ||
+                        Auth::user()->hasPermission('content-type.index') ||
+                        Auth::user()->hasPermission('download-center.shared-content-list') ||
                         Auth::user()->hasPermission('video-list')))
                 <span class="menu_seperator" id="seperator_administration_section"
                     data-section="administration_section">Adminstration Section
@@ -222,41 +232,6 @@
             @endif
             {{-- ----- --}}
 
-            {{-- Study Material --}}
-            {{-- <li
-            class="administration_section {{ request()->is('study-material') || request()->is('administration/study-material/*') ? 'mm-active' : '' }}">
-            <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
-                <div class="nav_icon_small">
-                    <span class="fas fa-bars"></span>
-                </div>
-                <div class="nav_title">
-                    <span>Study Material</span>
-                </div>
-            </a>
-            <ul
-                class="mm-collapse {{ request()->is('study-material') || request()->is('administration/study-material/*') ? 'mm-show' : '' }}">
-                <li>
-                    <a href="/administration/study-material/upload-content"
-                        class="{{ request()->is('administration/study-material/upload-content') ? 'active a' : '' }}">
-                        Upload Content
-                    </a>
-                </li>
-                <li>
-                    <a href="/administration/study-material/study-material-download"
-                        class="{{ request()->is('administration/study-material/study-material-download') ? 'active a' : '' }}">
-                        Study Material Download
-                    </a>
-                </li>
-                <li>
-                    <a href="/administration/study-material/other-download"
-                        class="{{ request()->is('administration/study-material/other-download') ? 'active a' : '' }}">
-                        Other Download
-                    </a>
-                </li>
-            </ul>
-        </li> --}}
-            {{-- ----- --}}
-
             {{-- Lesson Plane --}}
             @if (Auth::check() &&
                     (Auth::user()->hasPermission('lesson.index') ||
@@ -305,10 +280,8 @@
 
             {{-- Download Center --}}
             @if (Auth::check() &&
-                    (Auth::user()->hasPermission('upload-content') ||
-                        Auth::user()->hasPermission('study-material-download') ||
-                        Auth::user()->hasPermission('other-download') ||
-                        Auth::user()->hasPermission('shared-content-list') ||
+                    (Auth::user()->hasPermission('content-type.index') ||
+                        Auth::user()->hasPermission('download-center.shared-content-list') ||
                         Auth::user()->hasPermission('video-list')))
                 <li
                     class="administration_section {{ request()->is('download-center') || request()->is('administration/download-center/*') ? 'mm-active' : '' }}">
@@ -322,15 +295,29 @@
                     </a>
                     <ul
                         class="mm-collapse {{ request()->is('download-center') || request()->is('administration/download-center/*') ? 'mm-show' : '' }} ">
-                        {{-- Content-Type - No explicit permission found, assuming it's generally accessible or covered by broader 'Download Center' access --}}
-                        <li>
-                            <a href="/administration/download-center/content-type"
-                                class="{{ request()->is('administration/download-center/content-type') ? 'active a' : '' }}">
-                                Content-Type
-                            </a>
-                        </li>
-                        @if (Auth::check() && Auth::user()->hasPermission('shared-content-list'))
-                            {{-- Assuming 'Content List' maps to 'shared-content-list' --}}
+                        {{--
+                            FIXED: was completely ungated ("no explicit permission found").
+                            Added a permission check using 'content-type.index'. This is a
+                            NEW permission key — create it in your permissions table and
+                            assign it to whichever roles should see this, or every user
+                            will lose access to this link until you do.
+                        --}}
+                        @if (Auth::check() && Auth::user()->hasPermission('content-type.index'))
+                            <li>
+                                <a href="/administration/download-center/content-type"
+                                    class="{{ request()->is('administration/download-center/content-type') ? 'active a' : '' }}">
+                                    Content-Type
+                                </a>
+                            </li>
+                        @endif
+                        {{--
+                            NOTE (not changed): "Content List" and "Shared Content List" both
+                            check 'shared-content-list' — same permission gates two different
+                            links. Left as-is since I don't know if that's intentional; give me
+                            a distinct permission key (e.g. 'content-list') if they should be
+                            separated.
+                        --}}
+                        @if (Auth::check() && Auth::user()->hasPermission('download-center.shared-content-list'))
                             <li>
                                 <a href="/administration/download-center/content-list"
                                     class="{{ request()->is('administration/download-center/content-list') ? 'active a' : '' }}">
@@ -361,7 +348,18 @@
             {{-- ================== --}}
 
 
-            {{-- Student Section --}}
+            {{--
+                FIXED: this separator was duplicated (rendered twice back-to-back
+                in the original). Also fixed the permission list to match what the
+                Fees items below actually check — the original said
+                'fees.fee-invoice.add' / 'fees.course-paid.index' / 'fees.fee-invoice.index',
+                but the real links check 'fees.add-invoice' / 'fees.course-paid' /
+                'fees.fee-invoice' (no .add/.index suffix). With the mismatched keys,
+                a user who could see individual Fees links could still have had this
+                whole section header hidden. Added the two new Credit Invoice
+                permissions too (see the Fees block below) so the header can't hide
+                a section that has visible items.
+            --}}
             @if (Auth::check() &&
                     (Auth::user()->hasPermission('student-category.index') ||
                         Auth::user()->hasPermission('add-student.index') ||
@@ -371,13 +369,12 @@
                         Auth::user()->hasPermission('student.add-intake-with-courses.index') ||
                         Auth::user()->hasPermission('fee-group') ||
                         Auth::user()->hasPermission('fees.fees-type') ||
-                        Auth::user()->hasPermission('fees.fee-invoice.add') ||
-                        Auth::user()->hasPermission('fees.course-paid.index') ||
-                        Auth::user()->hasPermission('fees.fee-invoice.index') ||
-                        Auth::user()->hasPermission('fee-invoice-setting') ||
-                        Auth::user()->hasPermission('fee-return')))
-                <span class="menu_seperator" id="seperator_student_section" data-section="student_section">Student
-                    Section</span>
+                        Auth::user()->hasPermission('fees.add-invoice') ||
+                        Auth::user()->hasPermission('fees.course-paid') ||
+                        Auth::user()->hasPermission('fees.fee-invoice') ||
+                        Auth::user()->hasPermission('fee-return') ||
+                        Auth::user()->hasPermission('fees.credit-invoice') ||
+                        Auth::user()->hasPermission('fees.credit-invoice-payment')))
                 <span class="menu_seperator" id="seperator_student_section" data-section="student_section">Student
                     Section</span>
             @endif
@@ -437,18 +434,12 @@
                         @endif
                         @if (Auth::check() && Auth::user()->hasPermission('student-attendance'))
                             <li>
-                                <a href="/student-attendance/scan-attendance"
-                                    class="{{ request()->is('student-attendance/scan-attendance') ? 'active a' : '' }}">
+                                <a href="/student/student-info/scan-attendance"
+                                    class="{{ request()->is('student/student-info/scan-attendance') ? 'active a' : '' }}">
                                     Student Attendance
                                 </a>
                             </li>
                         @endif
-                        {{-- <li>
-                    <a href="/student/student-info/student-add-course"
-                        class="{{ request()->is('student/student-info/student-add-course') ? 'active a' : '' }}">
-                        Student Add Course
-                    </a>
-                </li> --}}
                         @if (Auth::check() && Auth::user()->hasPermission('student.add-intake-with-courses.index'))
                             <li>
                                 <a href="/student/student-info/student-add-intake"
@@ -457,25 +448,27 @@
                                 </a>
                             </li>
                         @endif
-                        {{-- <li>
-                    <a href="/student/student-info/student-export" class="{{ request()->is('student/student-info/student-export') ? 'active a' : '' }}">
-                        Student Export
-                    </a>
-                </li> --}}
                     </ul>
                 </li>
             @endif
             {{-- ----- --}}
 
             {{-- Fees Section --}}
+            {{--
+                FIXED: wrapper condition used to check 'fees.fee-invoice.add' /
+                'fees.course-paid.index' / 'fees.fee-invoice.index' (permissions
+                that no link below actually uses) — swapped for the real keys the
+                items check, same fix as the Student Section separator above.
+            --}}
             @if (Auth::check() &&
                     (Auth::user()->hasPermission('fee-group') ||
                         Auth::user()->hasPermission('fees.fees-type') ||
-                        Auth::user()->hasPermission('fees.fee-invoice.add') ||
-                        Auth::user()->hasPermission('fees.course-paid.index') ||
-                        Auth::user()->hasPermission('fees.fee-invoice.index') ||
-                        Auth::user()->hasPermission('fee-invoice-setting') ||
-                        Auth::user()->hasPermission('fee-return')))
+                        Auth::user()->hasPermission('fees.add-invoice') ||
+                        Auth::user()->hasPermission('fees.course-paid') ||
+                        Auth::user()->hasPermission('fees.fee-invoice') ||
+                        Auth::user()->hasPermission('fee-return') ||
+                        Auth::user()->hasPermission('fees.credit-invoice') ||
+                        Auth::user()->hasPermission('fees.credit-invoice-payment')))
                 <li
                     class="fees_section {{ request()->is('fees') || request()->is('student/fees/*') ? 'mm-active' : '' }}">
                     <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
@@ -537,23 +530,32 @@
                                 </a>
                             </li>
                         @endif
-                        {{-- @if (Auth::check() && Auth::user()->hasPermission('fee-return')) --}}
-                        <li>
-                            <a href="/student/fees/fee-invoice/invoice-payments/pending"
-                                class="{{ request()->is('student/fees/fee-invoice/invoice-payments/pending') ? 'active a' : '' }}">
-                                Credit Invoice
-                            </a>
-                        </li>
-                        {{-- @endif --}}
 
-                        {{-- @if (Auth::check() && Auth::user()->hasPermission('fee-return')) --}}
-                        <li>
-                            <a href="/student/fees/fee-invoice/invoice-payments"
-                                class="{{ request()->is('student/fees/fee-invoice/invoice-payments') ? 'active a' : '' }}">
-                                Payment for Credit Invoice
-                            </a>
-                        </li>
-                        {{-- @endif --}}
+                        {{--
+                            FIXED: these two were completely ungated (the @if was commented
+                            out) — anyone who could open the Fees menu at all could see and
+                            click into credit invoice payments regardless of role. Gated
+                            behind two NEW permission keys: 'fees.credit-invoice' and
+                            'fees.credit-invoice-payment'. Create + assign these before
+                            relying on the gate, same caveat as Content-Type above.
+                        --}}
+                        @if (Auth::check() && Auth::user()->hasPermission('fees.credit-invoice'))
+                            <li>
+                                <a href="/student/fees/fee-invoice/invoice-payments/pending"
+                                    class="{{ request()->is('student/fees/fee-invoice/invoice-payments/pending') ? 'active a' : '' }}">
+                                    Credit Invoice
+                                </a>
+                            </li>
+                        @endif
+
+                        @if (Auth::check() && Auth::user()->hasPermission('fees.credit-invoice-payment'))
+                            <li>
+                                <a href="/student/fees/fee-invoice/invoice-payments"
+                                    class="{{ request()->is('student/fees/fee-invoice/invoice-payments') ? 'active a' : '' }}">
+                                    Payment for Credit Invoice
+                                </a>
+                            </li>
+                        @endif
                     </ul>
                 </li>
             @endif
@@ -561,7 +563,14 @@
             {{-- ================== --}}
 
 
-            {{-- Inventory Section --}}
+            {{--
+                NOTE (not changed): label text says "Account Section" but every
+                class/id on this block says "inventory_section" — looks like a
+                copy-paste label bug from wherever this section was cloned from.
+                Left the visible text alone since you said don't change the
+                design; say the word and I'll change it to "Inventory Section"
+                to match.
+            --}}
             @if (Auth::check() &&
                     (Auth::user()->hasPermission('item-category') ||
                         Auth::user()->hasPermission('item-list') ||
@@ -575,7 +584,6 @@
                 </span>
             @endif
 
-            {{-- Inventory Section --}}
             @if (Auth::check() &&
                     (Auth::user()->hasPermission('item-category') ||
                         Auth::user()->hasPermission('item-list') ||
@@ -675,11 +683,31 @@
             @endif
             {{-- ----- --}}
             {{-- Reports Section --}}
+            {{--
+                FIXED: header used to check only 4 permissions
+                (fees.course-paid, item-sell, item-issue, fees.fee-invoice) even
+                though the menu has 11 items. The other 7 were completely
+                ungated below (permission checks commented out) — gated them
+                behind NEW permission keys and added those keys here too, so
+                the header can't hide a section that actually has visible items.
+                Create + assign these 6 new keys before relying on the gates:
+                reports.course-dates-payments, reports.course-intake-payments,
+                reports.students-intake-balance, reports.change-course,
+                reports.invoice-payments, reports.food-payment.
+                (reports.student-attendance already existed from the Demo menu.)
+            --}}
             @if (Auth::check() &&
                     (Auth::user()->hasPermission('fees.course-paid') ||
                         Auth::user()->hasPermission('item-sell') ||
                         Auth::user()->hasPermission('item-issue') ||
-                        Auth::user()->hasPermission('fees.fee-invoice')))
+                        Auth::user()->hasPermission('fees.fee-invoice') ||
+                        Auth::user()->hasPermission('reports.course-dates-payments') ||
+                        Auth::user()->hasPermission('reports.course-intake-payments') ||
+                        Auth::user()->hasPermission('reports.students-intake-balance') ||
+                        Auth::user()->hasPermission('reports.change-course') ||
+                        Auth::user()->hasPermission('reports.invoice-payments') ||
+                        Auth::user()->hasPermission('reports.food-payment') ||
+                        Auth::user()->hasPermission('reports.student-attendance')))
                 <span class="menu_seperator" id="seperator_reports_section" data-section="reports_section">Reports
                     Section
                 </span>
@@ -689,7 +717,14 @@
                     (Auth::user()->hasPermission('fees.course-paid') ||
                         Auth::user()->hasPermission('item-sell') ||
                         Auth::user()->hasPermission('item-issue') ||
-                        Auth::user()->hasPermission('fees.fee-invoice')))
+                        Auth::user()->hasPermission('fees.fee-invoice') ||
+                        Auth::user()->hasPermission('reports.course-dates-payments') ||
+                        Auth::user()->hasPermission('reports.course-intake-payments') ||
+                        Auth::user()->hasPermission('reports.students-intake-balance') ||
+                        Auth::user()->hasPermission('reports.change-course') ||
+                        Auth::user()->hasPermission('reports.invoice-payments') ||
+                        Auth::user()->hasPermission('reports.food-payment') ||
+                        Auth::user()->hasPermission('reports.student-attendance')))
                 <li
                     class="reports_section {{ request()->is('reports') || request()->is('reports/*') ? 'mm-active' : '' }}">
                     <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
@@ -735,56 +770,69 @@
                                 </a>
                             </li>
                         @endif
-                        {{-- @if (Auth::check() && Auth::user()->hasPermission('fees.course-intake-payments')) --}}
-                        <li>
-                            <a href="/reports/course-dates-payments"
-                                class="{{ request()->is('reports/course-dates-payments') ? 'active a' : '' }}">
-                                Course Started & Course Completed
-                            </a>
-                        </li>
 
-                        <li>
-                            <a href="/reports/course-intake-payments"
-                                class="{{ request()->is('reports/course-intake-payments') ? 'active a' : '' }}">
-                                Course Started & Course blance Status
-                            </a>
-                        </li>
+                        @if (Auth::check() && Auth::user()->hasPermission('reports.course-dates-payments'))
+                            <li>
+                                <a href="/reports/course-dates-payments"
+                                    class="{{ request()->is('reports/course-dates-payments') ? 'active a' : '' }}">
+                                    Course Started & Course Completed
+                                </a>
+                            </li>
+                        @endif
 
-                        <li>
-                            <a href="/reports/students-intake-balance"
-                                class="{{ request()->is('reports/students-intake-balance') ? 'active a' : '' }}">
-                                Course Fee Balances as Intake Wise
-                            </a>
-                        </li>
+                        @if (Auth::check() && Auth::user()->hasPermission('reports.course-intake-payments'))
+                            <li>
+                                <a href="/reports/course-intake-payments"
+                                    class="{{ request()->is('reports/course-intake-payments') ? 'active a' : '' }}">
+                                    Course Started & Course Balance Status
+                                </a>
+                            </li>
+                        @endif
 
-                        <li>
-                            <a href="/reports/change-course"
-                                class="{{ request()->is('reports/change-course') ? 'active a' : '' }}">
-                                Change Course
-                            </a>
-                        </li>
+                        @if (Auth::check() && Auth::user()->hasPermission('reports.students-intake-balance'))
+                            <li>
+                                <a href="/reports/students-intake-balance"
+                                    class="{{ request()->is('reports/students-intake-balance') ? 'active a' : '' }}">
+                                    Course Fee Balances as Intake Wise
+                                </a>
+                            </li>
+                        @endif
 
-                        <li>
-                            <a href="/reports/invoice-payments"
-                                class="{{ request()->is('reports/invoice-payments') ? 'active a' : '' }}">
-                                Credit Invoice Payments
-                            </a>
-                        </li>
+                        @if (Auth::check() && Auth::user()->hasPermission('reports.change-course'))
+                            <li>
+                                <a href="/reports/change-course"
+                                    class="{{ request()->is('reports/change-course') ? 'active a' : '' }}">
+                                    Change Course
+                                </a>
+                            </li>
+                        @endif
 
-                        <li>
-                            <a href="/reports/food-payment-report"
-                                class="{{ request()->is('reports/food-payment-report') ? 'active a' : '' }}">
-                                All Food Fee Details
-                            </a>
-                        </li>
+                        @if (Auth::check() && Auth::user()->hasPermission('reports.invoice-payments'))
+                            <li>
+                                <a href="/reports/invoice-payments"
+                                    class="{{ request()->is('reports/invoice-payments') ? 'active a' : '' }}">
+                                    Credit Invoice Payments
+                                </a>
+                            </li>
+                        @endif
 
-                        <li>
-                            <a href="/reports/student-attendance"
-                                class="{{ request()->is('reports/student-attendance') ? 'active a' : '' }}">
-                                Student Attendance
-                            </a>
-                        </li>
-                        {{-- @endif --}}
+                        @if (Auth::check() && Auth::user()->hasPermission('reports.food-payment'))
+                            <li>
+                                <a href="/reports/food-payment-report"
+                                    class="{{ request()->is('reports/food-payment-report') ? 'active a' : '' }}">
+                                    All Food Fee Details
+                                </a>
+                            </li>
+                        @endif
+
+                        @if (Auth::check() && Auth::user()->hasPermission('reports.student-attendance'))
+                            <li>
+                                <a href="/reports/student-attendance"
+                                    class="{{ request()->is('reports/student-attendance') ? 'active a' : '' }}">
+                                    Student Attendance
+                                </a>
+                            </li>
+                        @endif
                     </ul>
                 </li>
             @endif
@@ -792,8 +840,17 @@
             {{-- ================== --}}
 
             {{-- Role Management Section --}}
+            {{--
+                FIXED: header didn't include the User List permission (it was
+                ungated before), so it's added here too now that the item below
+                is gated. NEW permission key: role-management.user-list —
+                this page lists every user account in the system, so it's
+                worth creating and assigning this one carefully.
+            --}}
             @if (Auth::check() &&
-                    (Auth::user()->hasPermission('roles.index') || Auth::user()->hasPermission('role-management.create-user')))
+                    (Auth::user()->hasPermission('roles.index') ||
+                        Auth::user()->hasPermission('role-management.create-user') ||
+                        Auth::user()->hasPermission('role-management.user-list')))
                 <span class="menu_seperator" id="seperator_role_management_section"
                     data-section="role_management_section">Role Management
                     Section
@@ -801,7 +858,9 @@
             @endif
 
             @if (Auth::check() &&
-                    (Auth::user()->hasPermission('roles.index') || Auth::user()->hasPermission('role-management.create-user')))
+                    (Auth::user()->hasPermission('roles.index') ||
+                        Auth::user()->hasPermission('role-management.create-user') ||
+                        Auth::user()->hasPermission('role-management.user-list')))
                 <li
                     class="role_management_section {{ request()->is('role-management') || request()->is('role-management/*') ? 'mm-active' : '' }}">
                     <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
@@ -830,120 +889,19 @@
                                 </a>
                             </li>
                         @endif
-                        {{-- @if (Auth::check() && Auth::user()->hasPermission('role-management.user-list')) --}}
-                        <li>
-                            <a href="/role-management/user-list"
-                                class="{{ request()->is('role-management/user-list') ? 'active a' : '' }}">
-                                User List
-                            </a>
-                        </li>
-                        {{-- @endif --}}
+                        @if (Auth::check() && Auth::user()->hasPermission('role-management.user-list'))
+                            <li>
+                                <a href="/role-management/user-list"
+                                    class="{{ request()->is('role-management/user-list') ? 'active a' : '' }}">
+                                    User List
+                                </a>
+                            </li>
+                        @endif
                     </ul>
                 </li>
             @endif
             {{-- ================== --}}
 
-            {{-- Logout Button --}}
-            {{-- <li>
-            <form action="{{ route('logout') }}" method="POST" id="logout-form" >
-                @csrf
-                <button type="submit" class="dropdown-item ai-icon" style="background-color: rgb(116, 46, 46)">
-                    <div class="nav_icon_small">
-                        <span class="fas fa-sign-out-alt"></span>
-                    </div>
-                    <div class="nav_title">
-                        <span>Logout</span>
-                    </div>
-                </button>
-            </form>
-        </li> --}}
-            {{-- ================== --}}
-
         </ul>
     @endif
-
-
-
-    {{-- @isset($sidebar_menus)
-        @foreach ($sidebar_menus as $sidebar_menu)
-            @if (sidebarPermission($sidebar_menu->permissionInfo) == true)
-                @if ($sidebar_menu->permissionInfo->lang_name)
-                    <span class="menu_seperator">{{ __($sidebar_menu->permissionInfo->lang_name) }}</span>
-                @endif
-                @foreach ($sidebar_menu->subModule as $item)
-                    @if (sidebarPermission($item->permissionInfo) == true)
-                        <li class="{{ spn_active_link(subModuleRoute($item), 'mm-active') }}">
-
-                            @if (($item->subModule->count() > 0 && $item->permissionInfo->route != 'dashboard') || $item->permissionInfo->relate_to_child == 1)
-                                <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
-                                @else
-                                    <a href="{{ validRouteUrl($item->permissionInfo->route) }}">
-                            @endif
-                            <div class="nav_icon_small">
-                                <span class="{{ $item->permissionInfo->icon }}"></span>
-                            </div>
-                            <div class="nav_title">
-                                <span>{{ __($item->permissionInfo->lang_name ?? $item->permissionInfo->name) }}</span>
-                                @if (config('app.app_sync') && $item->permissionInfo->module && in_array($item->permissionInfo->module, $paid_modules))
-                                    @if (config('app.app_sync'))
-                                        <span class="demo_addons">Addon</span>
-                                    @endif
-                                @endif
-                            </div>
-                            </a>
-                            <ul class="mm-collapse">
-                                @if (@$item->subModule)
-                                    @foreach (@$item->subModule as $key => $sub)
-                                        @if ($sub->permissionInfo->relate_to_child == 1 && $item->permissionInfo->is_parent == 1 && sidebarPermission($sub->permissionInfo))
-                                            @foreach ($childrens as $children)
-                                                @if (!in_array($item->permissionInfo->module, ['fees_collection', 'Fees']) && hasDueFees($children->id))
-                                                    @continue
-                                                @endif
-
-                                                <li>
-                                                    <a href="{{ validRouteUrl($sub->permissionInfo->route, $children->id) }}"
-                                                        class="{{ spn_active_link(subModuleRoute($sub), 'active') }}">
-
-                                                        {{ __($sub->permissionInfo->lang_name) }} -
-                                                        {{ $children->full_name }}
-                                                    </a>
-                                                </li>
-                                            @endforeach
-                                        @else
-                                            @if (sidebarPermission($sub->permissionInfo))
-                                                <li>
-                                                    <a href="{{ validRouteUrl($sub->permissionInfo->route) }}"
-                                                        class="{{ spn_active_link(subModuleRoute($sub), 'active') }}">
-                                                        {{ __($sub->permissionInfo->lang_name ?? $sub->permissionInfo->name) }}
-                                                    </a>
-
-                                                </li>
-                                            @endif
-                                        @endforeach
-                                @endif
-                                @if ($item->permissionInfo->relate_to_child == 1 && $item->permissionInfo->is_parent == 1 && count($item->subModule) == 0 && sidebarPermission($item->permissionInfo))
-                                    @foreach ($childrens as $children)
-                                        @if (!in_array($item->permissionInfo->module, ['fees_collection', 'Fees']) && hasDueFees($children->id))
-                                            @continue
-                                        @endif
-
-                                        <li>
-                                            <a href="{{ validRouteUrl($item->permissionInfo->route, $children->id) }}"
-                                                class="{{ spn_active_link(subModuleRoute($item), 'active') }}">
-
-                                                {{ __($item->permissionInfo->lang_name) }} -
-                                                {{ $children->full_name }}
-                                                {{ $item->permissionInfo->route }}</a>
-
-                                        </li>
-                                    @endforeach
-                                @endif
-
-                            </ul>
-                        </li>
-                    @endif
-                @endforeach
-            @endif
-        @endforeach
-    @endisset --}}
 </nav>

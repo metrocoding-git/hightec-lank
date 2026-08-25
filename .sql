@@ -359,3 +359,19 @@ ALTER TABLE `subjects`
 ALTER TABLE assign_subjects
 ADD COLUMN demonstrator_time VARCHAR(255) NULL AFTER subject_id,
 ADD COLUMN practical_time VARCHAR(255) NULL AFTER demonstrator_time;
+
+
+-- 08/26
+ALTER TABLE `courses`
+    ADD COLUMN `is_active` TINYINT(1) NOT NULL DEFAULT 1;
+ 
+
+ALTER TABLE `intakes`
+    ADD COLUMN `is_active` TINYINT(1) NOT NULL DEFAULT 1;
+
+ALTER TABLE `subjects`
+    ADD COLUMN `is_active` TINYINT(1) NOT NULL DEFAULT 1;
+
+ALTER TABLE `assign_subjects`
+    ADD COLUMN `is_active` TINYINT(1) NOT NULL DEFAULT 1;
+ 

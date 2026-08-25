@@ -27,6 +27,13 @@
             max-height: 300px;
             min-height: 300px;
         }
+
+        /* Keeps horizontal scroll on the wide courses table from also
+               dragging the left-side Add/Edit form sideways on large screens. */
+        .course-table-scroll {
+            overflow-x: auto;
+            max-width: 100%;
+        }
     </style>
 @endpush
 
@@ -55,18 +62,12 @@
                 <div class="col-lg-3">
                     <div class="row">
                         <div class="col-lg-12">
-
-                            {{-- @if (isset($sectionId))
-                                {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'global_class_update', 'method' => 'POST']) }}
-                            @else
-                                @if (userPermission(266))
-                                    {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'global_class_store', 'method' => 'POST']) }}
-                                @endif
-                            @endif --}}
                             <form
                                 action="{{ isset($courseId) ? route('course.update', $courseId) : route('course.store') }}"
                                 method="POST" enctype="multipart/form-data" class="form-horizontal">
                                 @csrf
+                                <input type="hidden" name="dt_page" class="dt-page-field"
+                                    value="{{ (int) request('dt_page', 0) }}">
                                 <div class="white-box">
                                     <div class="main-title">
                                         <h3 class="mb-20">{{ isset($courseId) ? 'Edit Course' : 'Add Course' }}</h3>
@@ -101,7 +102,7 @@
                                                     <input
                                                         class="primary_input_field form-control{{ $errors->has('code') ? ' is-invalid' : '' }}"
                                                         type="text" name="code" id="code"
-                                                        value="{{ old('code', $course->code ?? '') }}"  autocomplete="off">
+                                                        value="{{ old('code', $course->code ?? '') }}" autocomplete="off">
                                                     @if ($errors->has('code'))
                                                         <span class="invalid-feedback" role="alert">
                                                             <strong>{{ $errors->first('code') }}</strong>
@@ -201,8 +202,7 @@
                                                 <div class="primary_input">
                                                     <label class="primary_input_label">NVQ Amount</label>
                                                     <input type="number" step="0.01" name="nvq_amount"
-                                                        class="primary_input_field form-control"
-                                                        placeholder="0.00"
+                                                        class="primary_input_field form-control" placeholder="0.00"
                                                         value="{{ old('nvq_amount', $course->nvq_amount ?? '') }}">
                                                 </div>
                                             </div>
@@ -325,110 +325,130 @@
                                 <h3 class="mb-20">Courses List</h3>
                             </div>
 
-                            <x-table>
-                                <table id="table_id" class="table Crm_table_active3" cellspacing="0" width="100%">
+                            <div class="course-table-scroll">
+                                <x-table>
+                                    <table id="table_id" class="table Crm_table_active3" cellspacing="0"
+                                        width="100%">
 
-                                    <thead>
+                                        <thead>
 
-                                        <tr>
-                                            <th> @lang('common.sl')</th>
-                                            <th> Courses </th>
-                                            {{-- <th>Courses Code</th> --}}
-                                            <th>Courses Price</th>
-                                            <th>Courses durations</th>
-                                            <th>Start Date</th>
-                                            <th>Valid Dates</th>
-                                            <th>NVQ Payment</th>
-                                            <th>NVQ Amount</th>
-                                            <th>Food Fee</th>
-                                            <th>Breakfast</th>
-                                            <th>Lunch</th>
-                                            <th>Dinner</th>
-                                            <th>Courses description</th>
-                                            <th>@lang('common.action')</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($courses as $key => $course)
                                             <tr>
-                                                <td>{{ $key + 1 }}</td>
-                                                <td>{{ $course->name }}</td>
-                                                {{-- <td><a href="#">{{ $course->code }}</a></td> --}}
-                                                <td>Rs.{{ number_format($course->price, 2) }}</td>
-                                                <td>{{ $course->duration ?? '-' }}</td>
-                                                <td>{{ $course->created_at ? $course->created_at->format('Y-m-d') : '-' }}
-                                                </td>
-                                                <td>{{ $course->expiration_date ?? '-' }}</td>
-                                                <td>
-                                                    @if ($course->has_nvq_payment)
-                                                        Yes
-                                                    @else
-                                                        No
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    {{ $course->nvq_amount ? 'Rs.' . number_format($course->nvq_amount, 2) : '-' }}
-                                                </td>
-                                                <td>{{ $course->has_food_fee ? 'Yes' : 'No' }}</td>
-                                                <td>{{ $course->breakfast_amount ? 'Rs.' . number_format($course->breakfast_amount, 2) : '-' }}
-                                                </td>
-                                                <td>{{ $course->lunch_amount ? 'Rs.' . number_format($course->lunch_amount, 2) : '-' }}
-                                                </td>
-                                                <td>{{ $course->dinner_amount ? 'Rs.' . number_format($course->dinner_amount, 2) : '-' }}
-                                                </td>
-
-
-                                                <td>{{ $course->description ?? '-' }}</td>
-                                                <td valign="top">
-                                                    @php
-                                                        $routeList = [
-                                                            '<a class="dropdown-item" href="' .
-                                                            route('course.edit', $course->id) .
-                                                            '">' .
-                                                            __('common.edit') .
-                                                            '</a>',
-                                                            '<a class="dropdown-item" data-toggle="modal" data-target="#deleteClassModal' .
-                                                            $course->id .
-                                                            '" href="#">' .
-                                                            __('common.delete') .
-                                                            '</a>',
-                                                        ];
-                                                    @endphp
-                                                    <x-drop-down-action-component :routeList="$routeList" />
-                                                </td>
+                                                <th> @lang('common.sl')</th>
+                                                <th> Courses </th>
+                                                {{-- <th>Courses Code</th> --}}
+                                                <th>Courses Price</th>
+                                                <th>Courses durations</th>
+                                                <th>Start Date</th>
+                                                <th>Valid Dates</th>
+                                                <th>NVQ Payment</th>
+                                                <th>NVQ Amount</th>
+                                                <th>Food Fee</th>
+                                                <th>Breakfast</th>
+                                                <th>Lunch</th>
+                                                <th>Dinner</th>
+                                                <th>Courses description</th>
+                                                <th>Status</th>
+                                                <th>@lang('common.action')</th>
                                             </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($courses as $key => $course)
+                                                <tr>
+                                                    <td>{{ $key + 1 }}</td>
+                                                    <td>{{ $course->name }}</td>
+                                                    {{-- <td><a href="#">{{ $course->code }}</a></td> --}}
+                                                    <td>Rs.{{ number_format($course->price, 2) }}</td>
+                                                    <td>{{ $course->duration ?? '-' }}</td>
+                                                    <td>{{ $course->created_at ? $course->created_at->format('Y-m-d') : '-' }}
+                                                    </td>
+                                                    <td>{{ $course->expiration_date ?? '-' }}</td>
+                                                    <td>
+                                                        @if ($course->has_nvq_payment)
+                                                            Yes
+                                                        @else
+                                                            No
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        {{ $course->nvq_amount ? 'Rs.' . number_format($course->nvq_amount, 2) : '-' }}
+                                                    </td>
+                                                    <td>{{ $course->has_food_fee ? 'Yes' : 'No' }}</td>
+                                                    <td>{{ $course->breakfast_amount ? 'Rs.' . number_format($course->breakfast_amount, 2) : '-' }}
+                                                    </td>
+                                                    <td>{{ $course->lunch_amount ? 'Rs.' . number_format($course->lunch_amount, 2) : '-' }}
+                                                    </td>
+                                                    <td>{{ $course->dinner_amount ? 'Rs.' . number_format($course->dinner_amount, 2) : '-' }}
+                                                    </td>
 
-                                            {{-- Delete Modal --}}
-                                            <div class="modal fade admin-query" id="deleteClassModal{{ $course->id }}">
-                                                <div class="modal-dialog modal-dialog-centered">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header">
-                                                            <h4 class="modal-title">@lang('academics.delete_class')</h4>
-                                                            <button type="button" class="close"
-                                                                data-dismiss="modal">&times;</button>
-                                                        </div>
-                                                        <div class="modal-body text-center">
-                                                            <h4>@lang('common.are_you_sure_to_delete')</h4>
-                                                            <div class="mt-40 d-flex justify-content-between">
-                                                                <button type="button" class="primary-btn tr-bg"
-                                                                    data-dismiss="modal">@lang('common.cancel')</button>
-                                                                <form action="{{ route('course.destroy', $course->id) }}"
-                                                                    method="POST">
-                                                                    @csrf
-                                                                    @method('DELETE')
-                                                                    <button class="primary-btn fix-gr-bg"
-                                                                        type="submit">@lang('common.delete')</button>
-                                                                </form>
+
+                                                    <td>{{ $course->description ?? '-' }}</td>
+                                                    <td>{{  $course->is_active ? 'Activate' : 'Deactivate'}}</td>
+                                                    <td valign="top">
+                                                        @php
+                                                            $routeList = [
+                                                                '<a class="dropdown-item course-edit-link" href="' .
+                                                                route('course.edit', $course->id) .
+                                                                '">' .
+                                                                __('common.edit') .
+                                                                '</a>',
+                                                                '<a class="dropdown-item" data-toggle="modal" data-target="#toggleStatusModal' .
+                                                                $course->id .
+                                                                '" href="#">' .
+                                                                ($course->is_active ? 'Deactivate' : 'Activate') .
+                                                                '</a>',
+                                                            ];
+                                                        @endphp
+                                                        <x-drop-down-action-component :routeList="$routeList" />
+                                                    </td>
+                                                </tr>
+
+                                                <div class="modal fade admin-query"
+                                                    id="toggleStatusModal{{ $course->id }}">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h4 class="modal-title">
+                                                                    {{ $course->is_active ? 'Deactivate Course' : 'Activate Course' }}
+                                                                </h4>
+                                                                <button type="button" class="close"
+                                                                    data-dismiss="modal">&times;</button>
+                                                            </div>
+                                                            <div class="modal-body text-center">
+                                                                <h4>
+                                                                    @if ($course->is_active)
+                                                                        Are you sure you want to deactivate
+                                                                        "{{ $course->name }}"?
+                                                                    @else
+                                                                        Are you sure you want to activate
+                                                                        "{{ $course->name }}"?
+                                                                    @endif
+                                                                </h4>
+                                                                <div class="mt-40 d-flex justify-content-between">
+                                                                    <button type="button" class="primary-btn tr-bg"
+                                                                        data-dismiss="modal">@lang('common.cancel')</button>
+                                                                    <form
+                                                                        action="{{ route('course.toggle-status', $course->id) }}"
+                                                                        method="POST">
+                                                                        @csrf
+
+                                                                        <input type="hidden" name="dt_page"
+                                                                            class="dt-page-field" value="0">
+                                                                        <button class="primary-btn fix-gr-bg"
+                                                                            type="submit">
+                                                                            {{ $course->is_active ? 'Deactivate' : 'Activate' }}
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        @endforeach
-                                    </tbody>
+                                            @endforeach
+                                        </tbody>
 
-                                </table>
-                            </x-table>
+                                    </table>
+                                </x-table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -442,9 +462,10 @@
 
 @push('script')
     <script>
-        $('#table_id').DataTable({
+        var table = $('#table_id').DataTable({
             responsive: true,
             dom: 'Bfrtip',
+            stateSave: true,
 
             buttons: [{
                     extend: 'copyHtml5',
@@ -487,6 +508,25 @@
                     next: '<i class="fa-solid fa-angle-right"></i>'
                 }
             }
+        });
+
+        // Land on the right page if the URL says so (see the big comment above).
+        var initialDtPage = parseInt('{{ (int) request('dt_page', 0) }}', 10);
+        if (initialDtPage > 0) {
+            table.page(initialDtPage).draw(false);
+        }
+
+        // Intercept Edit clicks purely to stamp the current page onto the URL.
+        $(document).on('click', '.course-edit-link', function(e) {
+            e.preventDefault();
+            var href = $(this).attr('href');
+            var sep = href.indexOf('?') === -1 ? '?' : '&';
+            window.location.href = href + sep + 'dt_page=' + table.page();
+        });
+
+
+        $(document).on('submit', 'form', function() {
+            $(this).find('.dt-page-field').val(table.page());
         });
 
         $(document).ready(function() {
