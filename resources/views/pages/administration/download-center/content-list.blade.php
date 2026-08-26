@@ -162,7 +162,7 @@
                                 {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'download-center.content-list-save', 'method' => 'POST', 'enctype' => 'multipart/form-data']) }}
                             @endif --}}
                             <form class="form-horizontal"
-                                action="{{ isset($editContent) ? route('content-update', $editContent->id) : route('content-store') }}"
+                                action="{{ isset($editContent) ? route('download-center.content-update', $editContent->id) : route('download-center.content-store') }}"
                                 method="POST" enctype="multipart/form-data">
                                 @csrf
                                 @if (isset($editContent))
@@ -361,7 +361,7 @@
                                                             <td>
                                                                 <x-drop-down>
                                                                     <a class="dropdown-item"
-                                                                        href="{{ route('content-edit', $content->id) }}">@lang('common.edit')</a>
+                                                                        href="{{ route('download-center.content-edit', $content->id) }}">@lang('common.edit')</a>
                                                                     <a class="dropdown-item" data-toggle="modal"
                                                                         data-target="#deleteContentModal{{ @$content->id }}"
                                                                         href="#">@lang('common.delete')</a>
@@ -391,7 +391,7 @@
                                                                                 @lang('common.cancel')
                                                                             </button>
                                                                             <form
-                                                                                action="{{ route('content-delete', $content->id) }}"
+                                                                                action="{{ route('download-center.content-delete', $content->id) }}"
                                                                                 method="POST" enctype="multipart/form-data">
                                                                                 @csrf
                                                                                 @method('DELETE')
@@ -428,8 +428,8 @@
                     <h4 class="modal-title">@lang('downloadCenter.share_content')</h4>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
-                {{-- {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'download-center.content-share-list-save', 'method' => 'POST', 'enctype' => 'multipart/form-data', 'id' => 'share-content-form']) }} --}}
-                <form class="form-horizontal" id="share-content-form" action="{{ route('content-share-list-save') }}"
+                {{-- {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'download-center.download-center.content-share-list-save', 'method' => 'POST', 'enctype' => 'multipart/form-data', 'id' => 'share-content-form']) }} --}}
+                <form class="form-horizontal" id="share-content-form" action="{{ route('download-center.content-share-list-save') }}"
                     method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="modal-body">

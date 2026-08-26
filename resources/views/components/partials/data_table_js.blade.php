@@ -14,7 +14,7 @@
     <script src="{{ asset('backEnd/') }}/vendors/js/dataTables.responsive.min.js"></script>
     <script src="{{ asset('backEnd/') }}/vendors/js/buttons.colVis.min.js"></script>
 
-    <script type="text/javascript">
+    {{-- <script type="text/javascript">
         if ($("#table_id").length) {
             window.table = $("#table_id").DataTable({
                 bLengthChange: false,
@@ -299,5 +299,5 @@
                 bolditalics: 'DejaVuSans-BoldOblique.ttf'
             }
         };
-    </script>
+    </script> --}}
 @endpush

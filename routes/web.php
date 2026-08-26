@@ -7,7 +7,7 @@ use App\Http\Controllers\TopicController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\IntakeController;
 use App\Http\Controllers\LessonController;
-use App\Http\Controllers\ContentController;
+use App\Http\Controllers\ContentListController;
 use App\Http\Controllers\FeeTypeController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\StudentController;
@@ -39,6 +39,205 @@ use App\Http\Controllers\ScanAttendanceController;
 use App\Http\Controllers\TrainingVehicleController;
 
 
+// ================= ACADEMIC MANAGEMENT COURSE ROUTES ================= //
+Route::controller(CourseController::class)->prefix('administration/academic/courses')->group(callback: function () {
+    Route::get('/', 'index')->name('course.index');
+    Route::post('store', 'store')->name('course.store');
+    Route::post('update/{id}', 'update')->name('course.update');
+    Route::get('edit/{id}', 'edit')->name('course.edit');
+    Route::delete('destroy/{id}', 'destroy')->name('course.destroy');
+    Route::post('toggle-status/{id}', 'toggleStatus')->name('course.toggle-status');
+});
+
+// ================= ACADEMIC MANAGEMENT INTAKE ROUTES ================= //
+Route::controller(IntakeController::class)->prefix('administration/academic/intake')->group(callback: function () {
+    Route::get('/', 'index')->name('intake.index');
+    Route::post('store', 'store')->name('intake.store');
+    Route::post('update/{id}', 'update')->name(name: 'intake.update');
+    Route::get('edit/{id}', 'edit')->name('intake.edit');
+    Route::delete('destroy/{id}', 'destroy')->name('intake.destroy');
+    Route::post('toggle-status/{id}', 'toggleStatus')->name('intake.toggle-status');
+});
+
+// ================= ACADEMIC MANAGEMENT SUBJECT ROUTES ================= //
+Route::controller(SubjectController::class)->prefix('administration/academic/subjects')->middleware(['permission'])->group(callback: function () {
+    Route::get('/', 'index')->name('subject.index');
+    Route::post('store', 'store')->name('subject.store');
+    Route::post('update/{id}', 'update')->name('subject.update');
+    Route::get('edit/{id}', 'edit')->name('subject.edit');
+    Route::delete('destroy/{id}', 'destroy')->name('subject.destroy');
+    Route::post('toggle-status/{id}', 'toggleStatus')->name('subject.toggle-status');
+});
+
+// ================= ACADEMIC MANAGEMENT ASSIGN SUBJECT ROUTES ================= //
+Route::controller(AssignSubjectController::class)->prefix('administration/academic/assign-subject')->middleware(['permission'])->group(callback: function () {
+    Route::get('/', 'index')->name('assign-subject.index');
+    Route::post('store', 'store')->name('assign-subject.store');
+    Route::post('update/{id}', 'update')->name('assign-subject.update');
+    Route::get('edit/{id}', 'edit')->name('assign-subject.edit');
+    Route::delete('destroy/{id}', 'destroy')->name('assign-subject.destroy');
+        Route::post('toggle-status/{id}', 'toggleStatus')->name('assign-subject.toggle-status');
+    Route::get('get-courses/{intakeId}', 'getCoursesByIntake')->name('assign-subject.get-courses')->withoutMiddleware(['csrf', 'permission']);
+});
+
+// ================= LESSON PLAN MANAGEMENT LESSON ROUTES ================= //
+Route::controller(LessonController::class)->prefix('administration/lesson-plan/lesson')->middleware(['permission'])->group(callback: function () {
+    Route::get('/', 'index')->name('lesson.index');
+    Route::post('store', 'store')->name('lesson.store');
+    Route::post('update/{id}', 'update')->name('lesson.update');
+    Route::get('edit/{id}', 'edit')->name('lesson.edit');
+    Route::delete('destroy/{id}', 'destroy')->name('lesson.destroy');
+    Route::get('get-intakes/{courseId}', 'getIntakesByCourse')->name('lesson.get-intakes')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('get-subjects/{intakeId}', 'getSubjectsByIntake')->name('lesson.get-subjects')->withoutMiddleware(['csrf', 'permission']);
+});
+
+// ================= LESSON PLAN MANAGEMENT TOPIC ROUTES ================= //
+Route::controller(TopicController::class)->prefix('administration/lesson-plan/topic')->middleware(['permission'])->group(callback: function () {
+    Route::get('/', 'index')->name('topic.index');
+    Route::post('store', 'store')->name('topic.store');
+    Route::put('update/{id}', 'update')->name('topic.update');
+    Route::get('edit/{id}', 'edit')->name('topic.edit');
+    Route::delete('destroy/{id}', 'destroy')->name('topic.destroy');
+    Route::get('get-intakes/{courseId}', 'getIntakesByCourse')->name('topic.get-intakes')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('get-subjects/{intakeId}', 'getSubjectsByIntake')->name('topic.get-subjects')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('get-lessons/{subjectId}', 'getLessonsBySubject')->name('topic.get-lessons')->withoutMiddleware(['csrf', 'permission']);
+});
+
+// ================= LESSON PLAN MANAGEMENT TOPIC OVERVIEW ROUTES ================= //
+Route::controller(TopicOverviewController::class)->prefix('administration/lesson-plan/topic-overview')->middleware(['permission'])->group(callback: function () {
+    Route::get('/', 'index')->name('topic-overview.index');
+    Route::post('store', 'store')->name('topic-overview.store');
+    Route::get('get-intakes/{courseId}', 'getIntakesByCourse')->name('topic-overview.get-intakes')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('get-subjects/{intakeId}', 'getSubjectsByIntake')->name('topic-overview.get-subjects')->withoutMiddleware(['csrf', 'permission']);
+});
+
+// ================= DOWNLOAD CENTER MANAGEMENT CONTENT LIST ROUTES ================= //
+Route::controller(ContentListController::class)->middleware(['permission'])->group(function () {
+    Route::get('administration/download-center/content-list', 'index')->name('download-center.content-list');
+    Route::post('administration/download-center/content-store', 'store')->name('download-center.content-store');
+    Route::get('administration/download-center/content-edit/{id}', 'edit')->name('download-center.content-edit');
+    Route::put('administration/download-center/content-update/{id}', 'update')->name('download-center.content-update');
+    Route::delete('administration/download-center/content-delete/{id}', 'destroy')->name('download-center.content-delete');
+    Route::post('administration/download-center/content-share-list-save', 'shareListSave')->name('download-center.content-share-list-save');
+    Route::post('administration/download-center/content-generate-url-save', 'generateUrlSave')->name('download-center.content-generate-url-save');
+    Route::get('administration/download-center/get-courses/{intakeId}', 'getCoursesByIntake')->name('download-center.get-courses-by-intake')->withoutMiddleware(['csrf', 'permission']);
+    Route::post('administration/download-center/save-generated-url-data', 'saveGeneratedUrlData')->name('download-center.save-generated-url-data');
+    Route::get('administration/download-center/shared-content-view/{id}', 'viewSharedContent')->name('download-center.shared-content-view');
+    Route::delete('administration/download-center/shared-content-delete/{id}', 'destroySharedContent')->name('download-center.shared-content-delete');
+    Route::get('administration/download-center/shared-content-list', 'sharedContentList')->name('download-center.shared-content-list');
+});
+
+
+// ================= DOWNLOAD CENTER MANAGEMENT VIDEO LIST ROUTES ================= //
+Route::middleware(['permission'])->group(function () {
+    Route::get('administration/download-center/video-list', [VideoListController::class, 'videoList'])->name('download-center.video-list');
+    Route::post('administration/download-center/video-list-save', [VideoListController::class, 'videoListStore'])->name('download-center.video-list-save');
+    Route::put('administration/download-center/video-list-update/{id}', [VideoListController::class, 'videoListUpdate'])->name('download-center.video-list-update');
+    Route::delete('administration/download-center/video-list-destroy/{id}', [VideoListController::class, 'videoListDestroy'])->name('download-center.video-list-destroy');
+});
+
+// ================= STUDENT INFO MANAGEMENT STUDENT CATEGORY ROUTES ================= //
+Route::controller(StudentCategoryController::class)
+    ->prefix('student/student-info/student-category')
+    ->middleware(['permission'])
+    ->group(function () {
+        Route::get('/', 'index')->name('student-category.index');
+        Route::post('store', 'store')->name('student-category.store');
+        Route::put('update/{id}', 'update')->name('student-category.update');
+        Route::get('edit/{id}', 'edit')->name('student-category.edit');
+        Route::delete('destroy/{id}', 'destroy')->name('student-category.destroy');
+    });
+
+// ================= STUDENT INFO MANAGEMENT ROUTES ================= //
+Route::controller(StudentController::class)->prefix('student/student-info')->group(function () {
+
+    // ================= ADD STUDENT ROUTES ================= //
+    Route::get('add-student/', 'index')->name('add-student.index');
+    Route::post('add-student/check-admission-number', 'checkAdmission')->name('check-admission-number');
+    Route::post('add-student/store', 'store')->name('add-student.store');
+    Route::put('add-student/update/{student}', 'update')->name('add-student.update');
+    Route::get('add-student/edit/{student}', 'edit')->name('add-student.edit');
+    Route::delete('add-student/destroy/{id}', 'destroy')->name('add-student.destroy');
+    Route::get('add-student/verify/{id}', 'verify')->name('add-student.verify');
+    Route::post('add-student/verify/{id}', 'verifySubmit')->name('add-student.verify.submit');
+    Route::post('/student-import',  'studentImport')->name('students.import')->withoutMiddleware(['csrf', 'permission']);
+    Route::post('/students/check-nic', 'checkNic')->name('students.check-nic')->withoutMiddleware(['csrf', 'permission']);
+
+
+
+    // ================= STUDENT LIST ROUTES ================= //
+    Route::get('student-list', [StudentController::class, 'studentList'])->name('student-list');
+    Route::get('student-list-datatable', [StudentController::class, 'studentDatatable'])->name('student-list.datatable');
+    Route::get('student-list/export-all', [StudentController::class, 'exportAllStudents'])->name('student-list.export-all')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('student-list/export-filtered', [StudentController::class, 'exportFilteredStudents'])->name('student-list.export-filtered')->withoutMiddleware(['csrf', 'permission']);
+
+
+    // ================= DISABLED STUDENTS ROUTES ================= //
+    Route::get('student/student-info/disabled-student', [StudentController::class, 'disabledStudents'])->name('disabled-students');
+
+
+    // ================= STUDENT ADD INTAKE ROUTES ================= //
+    Route::POST('student-add-intake/change-course/{id}', 'changeCourse')->name('student.add-intake-with-courses.change-course')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('student-add-intake', 'studentAddIntakeWithCourses')->name('student.add-intake-with-courses.index')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('student-add-intake/datatable', 'studentAddIntakeWithCoursesData')->name('student.add-intake-with-courses.data')->withoutMiddleware(['csrf', 'permission']);
+    Route::post('student-add-intake/{id}/update-category', 'updateStudentCategory')->name('student.add-intake.update-category')->withoutMiddleware(['csrf', 'permission']);
+    Route::post('student-add-intake/store', 'storeStudentIntakeWithCourses')->name('student.add-intake-with-courses.store');
+    Route::get('student-add-intake/{id}/edit', 'editStudentIntake')->name('student.add-intake.edit');
+    Route::put('student-add-intake/{id}', 'updateStudentIntake')->name('student.add-intake.update');
+    Route::delete('student-add-intake/{id}', 'destroyStudentAddIntakeWithCourses')->name('student.add-intake.destroy');
+    // Search functionality for Student Add Intake
+    Route::post('student-add-intake/search', 'searchStudentIntake')->name('student.add-intake.search');
+    Route::get('student-add-intake/get-intakes/{branchId}', 'getSearchIntakesByBranch')->name('student.add-intake.get-intakes')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('student-add-intake/get-courses/{intakeId}', 'getSearchCoursesByIntake')->name('student.add-intake.get-courses')->withoutMiddleware(['csrf', 'permission']);
+    Route::get('intake-course-search', 'intakeCourseSearch')->name('student.intake-course.search')->withoutMiddleware(['csrf', 'permission']);
+    // Status update for Student Intake
+    Route::post('student-add-intake/{id}/update-status', 'updateStatus')->name('student.add-intake.update-status');
+});
+
+// ================= SCAN ATTENDANCE ROUTES ================= //
+Route::prefix('student/student-info/scan-attendance')->group(function () {
+    Route::get('/', [ScanAttendanceController::class, 'index'])->name('scan-attendance')->withoutMiddleware(['permission']);
+
+    Route::post('/course/scan', [ScanAttendanceController::class, 'scanCourse'])->name('scan-attendance.course.scan')->withoutMiddleware(['permission']);
+
+    Route::get('/subjects', [ScanAttendanceController::class, 'allSubjects'])->name('scan-attendance.subjects')->withoutMiddleware(['permission']);
+    Route::post('/subject/scan', [ScanAttendanceController::class, 'scanSubject'])->name('scan-attendance.subject.scan')->withoutMiddleware(['permission']);
+
+    Route::post('/practical/resolve', [ScanAttendanceController::class, 'resolvePracticalSubjects'])->name('scan-attendance.practical.resolve')->withoutMiddleware(['permission']);
+    Route::post('/practical/scan', [ScanAttendanceController::class, 'scanPractical'])->name('scan-attendance.practical.scan')->withoutMiddleware(['permission']);
+
+    Route::post('/undo', [ScanAttendanceController::class, 'undoScan'])->name('scan-attendance.undo')->withoutMiddleware(['permission']);
+    Route::post('/confirm-out', [ScanAttendanceController::class, 'confirmOut'])->name('scan-attendance.confirm-out')->withoutMiddleware(['permission']);
+
+    Route::get('/today-log', [ScanAttendanceController::class, 'todayLog'])
+        ->name('scan-attendance.today-log')
+        ->withoutMiddleware(['csrf', 'permission']);
+});
+
+// ================= STUDENT ATTENDANCE MANAGEMENT ROUTES ================= //
+Route::prefix('student-attendance')->group(function () {
+    Route::get('/', [StudentAttendanceController::class, 'index'])->name('student-attendance');
+    Route::get('/student-attendance/get-courses/{intakeId}', [IntakeController::class, 'getCoursesByIntake'])->name('student-attendance.get-courses')->withoutMiddleware(['csrf', 'permission']);
+
+    Route::get('/student-attendance-import', [StudentAttendanceController::class, 'studentAttendanceImport'])->name('student-attendance-import');
+    Route::post('/student-attendance-import', [StudentAttendanceController::class, 'studentAttendanceImportStore'])->name('student-attendance-import.store');
+    Route::get('/student-attendance-import/download/{id}', [StudentController::class, 'studentAttendanceImportDownload'])->name('student-attendance-import.download');
+})->withoutMiddleware(['permission']);
+
+
+Route::get('/student/card/{id}', [StudentCardController::class, 'show'])->name('student-card.show')->withoutMiddleware(['csrf', 'permission']);
+Route::get('/student/card/{id}/pdf', [StudentCardController::class, 'downloadPdf'])->name('student-card.pdf')->withoutMiddleware(['csrf', 'permission']);
+Route::get('/student/card/bulk/preview', [StudentCardController::class, 'bulkPreview'])->name('student-card.bulk-preview')->withoutMiddleware(['csrf', 'permission']);
+Route::get('/student/card/bulk/pdf', [StudentCardController::class, 'bulkPdf'])->name('student-card.bulk-pdf')->withoutMiddleware(['csrf', 'permission']);
+
+Route::get('student/student-info/verification-history/{id}', [StudentController::class, 'verificationHistory'])->name('student-list.verification-history');
+Route::put('student/update-status', [StudentController::class, 'updateStudetStatus'])->name('student.update-status');
+Route::get('student/student-info/student-view/{id}', [StudentController::class, 'studentView'])->name('student-details');
+
+Route::get('student/student-info/student-export', [StudentController::class, 'studentExport'])->name('student-export');
+Route::match(['get', 'post'], 'student/student-info/diabled-filter', [StudentController::class, 'filter_disabled_StudentList'])->name('frontend.disabled-student.search');
+Route::match(['get', 'post'], 'student/student-info/filtert', [StudentController::class, 'filterStudentList'])->name('frontend.student.search');
+
 
 Route::controller(HomeController::class)->middleware(['permission'])->group(callback: function () {
     Route::get('dashboard', 'dashboard')->name('dashboard');
@@ -52,35 +251,9 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
         Route::get('administration/study-material/other-download', 'otherDownload')->name('other-download');
     });
 
-    // Download Center
-    Route::middleware(['permission'])->group(function () {
-        Route::get('administration/download-center/shared-content-list', [ContentController::class, 'sharedContentList'])->name('shared-content-list');
-        Route::get('administration/download-center/video-list', [VideoListController::class, 'videoList'])->name('video-list');
-        Route::post('administration/download-center/video-list-save', [VideoListController::class, 'videoListStore'])->name('download-center.video-list-save');
-        Route::put('administration/download-center/video-list-update/{id}', [VideoListController::class, 'videoListUpdate'])->name('download-center.video-list-update');
-        Route::delete('administration/download-center/video-list-destroy/{id}', [VideoListController::class, 'videoListDestroy'])->name('download-center.video-list-destroy');
-    });
 
     // Student Information Management (handled by HomeController)
     // Route::middleware(['permission'])->group(function () {
-    Route::get('student/student-info/student-list', [StudentController::class, 'studentList'])->name('student-list');
-    Route::get('/student-list/export-all', [StudentController::class, 'exportAllStudents'])->name('student-list.export-all')->withoutMiddleware(['csrf', 'permission']);
-    Route::get('/student-list/export-filtered', [StudentController::class, 'exportFilteredStudents'])->name('student-list.export-filtered')->withoutMiddleware(['csrf', 'permission']);
-    Route::get('/student/student-info/student-list-datatable', [StudentController::class, 'studentDatatable'])->name('student-list.datatable');
-
-    Route::get('/student/card/{id}', [StudentCardController::class, 'show'])->name('student-card.show')->withoutMiddleware(['csrf', 'permission']);
-    Route::get('/student/card/{id}/pdf', [StudentCardController::class, 'downloadPdf'])->name('student-card.pdf')->withoutMiddleware(['csrf', 'permission']);
-    Route::get('/student/card/bulk/preview', [StudentCardController::class, 'bulkPreview'])->name('student-card.bulk-preview')->withoutMiddleware(['csrf', 'permission']);
-    Route::get('/student/card/bulk/pdf', [StudentCardController::class, 'bulkPdf'])->name('student-card.bulk-pdf')->withoutMiddleware(['csrf', 'permission']);
-
-    Route::get('student/student-info/verification-history/{id}', [StudentController::class, 'verificationHistory'])->name('student-list.verification-history');
-    Route::put('student/update-status', [StudentController::class, 'updateStudetStatus'])->name('student.update-status');
-    Route::get('student/student-info/student-view/{id}', [StudentController::class, 'studentView'])->name('student-details');
-    Route::get('student/student-info/disabled-student', [StudentController::class, 'disabledStudents'])->name('disabled-students');
-
-    Route::get('student/student-info/student-export', [StudentController::class, 'studentExport'])->name('student-export');
-    Route::match(['get', 'post'], 'student/student-info/diabled-filter', [StudentController::class, 'filter_disabled_StudentList'])->name('frontend.disabled-student.search');
-    Route::match(['get', 'post'], 'student/student-info/filtert', [StudentController::class, 'filterStudentList'])->name('frontend.student.search');
     // });
 
     // Dependent Dropdown AJAX Routes (Student Info, Fees, etc.)
@@ -95,41 +268,6 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
         Route::get('student-list/get-intakes/{branchId}', [IntakeController::class, 'getIntakesByBranch'])->name('student-list.get-intakes')->withoutMiddleware(['csrf', 'permission']);
         Route::get('student-list/get-courses/{intakeId}', [IntakeController::class, 'getCoursesByIntake'])->name('student-list.get-courses')->withoutMiddleware(['csrf', 'permission']);
     });
-
-    Route::prefix('student-attendance')->group(function () {
-        Route::get('/', [StudentAttendanceController::class, 'index'])->name('student-attendance');
-        Route::get('/student-attendance/get-courses/{intakeId}', [IntakeController::class, 'getCoursesByIntake'])->name('student-attendance.get-courses')->withoutMiddleware(['csrf', 'permission']);
-
-        Route::get('/student-attendance-import', [StudentAttendanceController::class, 'studentAttendanceImport'])->name('student-attendance-import');
-        Route::post('/student-attendance-import', [StudentAttendanceController::class, 'studentAttendanceImportStore'])->name('student-attendance-import.store');
-        Route::get('/student-attendance-import/download/{id}', [StudentController::class, 'studentAttendanceImportDownload'])->name('student-attendance-import.download');
-
-        Route::prefix('scan-attendance')->group(function () {
-            Route::get('/', [ScanAttendanceController::class, 'index'])->name('scan-attendance')->withoutMiddleware(['permission']);
-
-            // Section 1 — course attendance (intake resolved per-student after scan).
-            Route::post('/course/scan', [ScanAttendanceController::class, 'scanCourse'])->name('scan-attendance.course.scan')->withoutMiddleware(['permission']);
-
-            // Section 2 — subject attendance (one or more subjects, any student).
-            Route::get('/subjects', [ScanAttendanceController::class, 'allSubjects'])->name('scan-attendance.subjects')->withoutMiddleware(['permission']);
-            Route::post('/subject/scan', [ScanAttendanceController::class, 'scanSubject'])->name('scan-attendance.subject.scan')->withoutMiddleware(['permission']);
-
-            // Section 3 — student-first, practical subjects only.
-            Route::post('/practical/resolve', [ScanAttendanceController::class, 'resolvePracticalSubjects'])->name('scan-attendance.practical.resolve')->withoutMiddleware(['permission']);
-            Route::post('/practical/scan', [ScanAttendanceController::class, 'scanPractical'])->name('scan-attendance.practical.scan')->withoutMiddleware(['permission']);
-
-            Route::post('/undo', [ScanAttendanceController::class, 'undoScan'])->name('scan-attendance.undo')->withoutMiddleware(['permission']);
-            Route::post('/confirm-out', [ScanAttendanceController::class, 'confirmOut'])->name('scan-attendance.confirm-out')->withoutMiddleware(['permission']);
-
-            // Today's Scans — server-persisted, shared across all authenticated users.
-            Route::get('/today-log', [ScanAttendanceController::class, 'todayLog'])
-                ->name('scan-attendance.today-log')
-                ->withoutMiddleware(['csrf', 'permission']);
-
-            // Reporting lives in your own ReportsController now
-            // (route: reports.student-attendance) — not duplicated here.
-        });
-    })->withoutMiddleware(['permission']);
 
 
 
@@ -160,141 +298,17 @@ Route::controller(HomeController::class)->middleware(['permission'])->group(call
     // });
 });
 
-Route::controller(CourseController::class)->prefix('administration/academic/courses')->middleware(['permission'])->group(callback: function () {
-    Route::get('/', 'index')->name('course.index');
-    Route::post('store', 'store')->name('course.store');
-    Route::post('update/{id}', 'update')->name('course.update');
-    Route::get('edit/{id}', 'edit')->name('course.edit');
-    Route::delete('destroy/{id}', 'destroy')->name('course.destroy');
-});
-
-Route::controller(IntakeController::class)->prefix('administration/academic/intake')->middleware(['permission'])->group(callback: function () {
-    Route::get('/', 'index')->name('intake.index');
-    Route::post('store', 'store')->name('intake.store');
-    Route::post('update/{id}', 'update')->name(name: 'intake.update');
-    Route::get('edit/{id}', 'edit')->name('intake.edit');
-    Route::delete('destroy/{id}', 'destroy')->name('intake.destroy');
-});
-
-Route::controller(SubjectController::class)->prefix('administration/academic/subjects')->middleware(['permission'])->group(callback: function () {
-    Route::get('/', 'index')->name('subject.index');
-    Route::post('store', 'store')->name('subject.store');
-    Route::post('update/{id}', 'update')->name('subject.update');
-    Route::get('edit/{id}', 'edit')->name('subject.edit');
-    Route::delete('destroy/{id}', 'destroy')->name('subject.destroy');
-});
-
-Route::controller(AssignSubjectController::class)->prefix('administration/academic/assign-subject')->middleware(['permission'])->group(callback: function () {
-    Route::get('/', 'index')->name('assign-subject.index');
-    Route::post('store', 'store')->name('assign-subject.store');
-    Route::post('update/{id}', 'update')->name('assign-subject.update');
-    Route::get('edit/{id}', 'edit')->name('assign-subject.edit');
-    Route::delete('destroy/{id}', 'destroy')->name('assign-subject.destroy');
-    Route::get('get-courses/{intakeId}', 'getCoursesByIntake')->name('assign-subject.get-courses')->withoutMiddleware(['csrf', 'permission']);
-});
-
-Route::controller(LessonController::class)->prefix('administration/lesson-plan/lesson')->middleware(['permission'])->group(callback: function () {
-    Route::get('/', 'index')->name('lesson.index');
-    Route::post('store', 'store')->name('lesson.store');
-    Route::post('update/{id}', 'update')->name('lesson.update');
-    Route::get('edit/{id}', 'edit')->name('lesson.edit');
-    Route::delete('destroy/{id}', 'destroy')->name('lesson.destroy');
-    Route::get('get-intakes/{courseId}', 'getIntakesByCourse')->name('lesson.get-intakes')->withoutMiddleware(['csrf', 'permission']);
-    Route::get('get-subjects/{intakeId}', 'getSubjectsByIntake')->name('lesson.get-subjects')->withoutMiddleware(['csrf', 'permission']);
-});
-
-Route::controller(TopicController::class)->prefix('administration/lesson-plan/topic')->middleware(['permission'])->group(callback: function () {
-    Route::get('/', 'index')->name('topic.index');
-    Route::post('store', 'store')->name('topic.store');
-    Route::put('update/{id}', 'update')->name('topic.update');
-    Route::get('edit/{id}', 'edit')->name('topic.edit');
-    Route::delete('destroy/{id}', 'destroy')->name('topic.destroy');
-    Route::get('get-intakes/{courseId}', 'getIntakesByCourse')->name('topic.get-intakes')->withoutMiddleware(['csrf', 'permission']);
-    Route::get('get-subjects/{intakeId}', 'getSubjectsByIntake')->name('topic.get-subjects')->withoutMiddleware(['csrf', 'permission']);
-    Route::get('get-lessons/{subjectId}', 'getLessonsBySubject')->name('topic.get-lessons')->withoutMiddleware(['csrf', 'permission']);
-});
-
-Route::controller(TopicOverviewController::class)->prefix('administration/lesson-plan/topic-overview')->middleware(['permission'])->group(callback: function () {
-    Route::get('/', 'index')->name('topic-overview.index');
-    Route::post('store', 'store')->name('topic-overview.store');
-    Route::get('get-intakes/{courseId}', 'getIntakesByCourse')->name('topic-overview.get-intakes')->withoutMiddleware(['csrf', 'permission']);
-    Route::get('get-subjects/{intakeId}', 'getSubjectsByIntake')->name('topic-overview.get-subjects')->withoutMiddleware(['csrf', 'permission']);
-});
 
 
-// ================= STUDENT ROUTES =================
 
-// Student Category Management
-Route::controller(StudentCategoryController::class)
-    ->prefix('student/student-info/student-category')
-    ->middleware(['permission'])
-    ->group(function () {
-        Route::get('/', 'index')->name('student-category.index');
-        Route::post('store', 'store')->name('student-category.store');
-        Route::put('update/{id}', 'update')->name('student-category.update');
-        Route::get('edit/{id}', 'edit')->name('student-category.edit');
-        Route::delete('destroy/{id}', 'destroy')->name('student-category.destroy');
-    });
 
-// Add Student Management
-Route::controller(StudentController::class)
-    ->prefix('student/student-info/add-student')
-    ->group(function () {
-        Route::get('/', 'index')->name('add-student.index');
-        Route::post('/check-admission-number', 'checkAdmission')->name('check-admission-number');
-        Route::post('store', 'store')->name('add-student.store');
-        Route::put('update/{student}', 'update')->name('add-student.update');
-        Route::get('edit/{student}', 'edit')->name('add-student.edit');
-        Route::delete('destroy/{id}', 'destroy')->name('add-student.destroy');
-        Route::get('verify/{id}', 'verify')->name('add-student.verify');
-        Route::post('verify/{id}', 'verifySubmit')->name('add-student.verify.submit');
-    });
-
-// Student Course Management
-Route::controller(StudentController::class)
-    ->prefix('student/student-info')
-    ->middleware(['permission'])
-    ->group(function () {
-        Route::get('student-add-course', 'studentAddCourse')->name('student.add-course.index');
-        Route::post('student-add-course', 'storeStudentCourse')->name('student.add-course.store');
-        Route::get('student-add-course/{id}/edit', 'editStudentCourse')->name('student.add-course.edit');
-        Route::put('student-add-course/{id}', 'updateStudentCourse')->name('student.add-course.update');
-        Route::delete('student-add-course/{id}', 'destroyStudentCourse')->name('student.add-course.destroy');
-    });
-
-// Student Intake Management
-Route::controller(StudentController::class)
-    ->prefix('student/student-info')
-    ->middleware(['permission'])
-    ->group(function () {
-        Route::post('/student-import',  'studentImport')->name('students.import')->withoutMiddleware(['csrf', 'permission']);
-        Route::post('/students/check-nic', 'checkNic')->name('students.check-nic')->withoutMiddleware(['csrf', 'permission']);
-        Route::POST('/change-course/{id}', 'changeCourse')->name('student.add-intake-with-courses.change-course')->withoutMiddleware(['csrf', 'permission']);
-        Route::get('student-add-intake', 'studentAddIntakeWithCourses')->name('student.add-intake-with-courses.index')->withoutMiddleware(['csrf', 'permission']);
-        Route::get('student-intake-data', 'studentAddIntakeWithCoursesData')->name('student.add-intake-with-courses.data')->withoutMiddleware(['csrf', 'permission']);
-        Route::post('student-intake/{id}/update-category', 'updateStudentCategory')->name('student.add-intake.update-category')->withoutMiddleware(['csrf', 'permission']);
-        Route::post('student-add-intake', 'storeStudentIntakeWithCourses')->name('student.add-intake-with-courses.store');
-        Route::get('student-add-intake/{id}/edit', 'editStudentIntake')->name('student.add-intake.edit');
-        Route::put('student-add-intake/{id}', 'updateStudentIntake')->name('student.add-intake.update');
-        Route::delete('student-add-intake/{id}', 'destroyStudentAddIntakeWithCourses')->name('student.add-intake.destroy');
-        // Search functionality for Student Add Intake
-        Route::post('student-add-intake/search', 'searchStudentIntake')->name('student.add-intake.search');
-        Route::get('student-add-intake/get-intakes/{branchId}', 'getSearchIntakesByBranch')->name('student.add-intake.get-intakes')->withoutMiddleware(['csrf', 'permission']);
-        Route::get('student-add-intake/get-courses/{intakeId}', 'getSearchCoursesByIntake')->name('student.add-intake.get-courses')->withoutMiddleware(['csrf', 'permission']);
-        Route::get('intake-course-search', 'intakeCourseSearch')->name('student.intake-course.search')->withoutMiddleware(['csrf', 'permission']);
-        // Status update for Student Intake
-        Route::post('student-add-intake/{id}/update-status', 'updateStatus')->name('student.add-intake.update-status');
-    });
 
 // Student List, Attendance, Export, and AJAX/Dependent Dropdowns
 Route::controller(HomeController::class)
     ->group(function () {
-        Route::get('student/student-info/student-list', [StudentController::class, 'studentList'])->name('student-list');
-        Route::get('/student/student-info/student-list-datatable',  [StudentController::class, 'studentDatatable'])->name('student-list.datatable');
         Route::get('student/student-info/verification-history/{id}', 'verificationHistory')->name('student-list.verification-history');
         Route::put('student/update-status', [StudentController::class, 'updateStudetStatus'])->name('student.update-status');
         Route::get('student/student-info/student-view/{id}', [StudentController::class, 'studentView'])->name('student-details');
-        Route::get('student/student-info/disabled-student', [StudentController::class, 'disabledStudents'])->name('disabled-students');
         Route::get('student/student-info/student-export', [StudentController::class, 'studentExport'])->name('student-export');
         // Dependent dropdown AJAX routes for student info and fees
         Route::get('student/student-info/get-intakes-by-branch/{branchId}', [IntakeController::class, 'getIntakesByBranch'])->name('get-intakes-by-branch');
@@ -308,7 +322,6 @@ Route::controller(HomeController::class)
         Route::get('student/student-list/get-intakes/{branchId}', [IntakeController::class, 'getIntakesByBranch'])->name('student-list.get-intakes')->withoutMiddleware(['csrf', 'permission']);
         Route::get('student/student-list/get-courses/{intakeId}', [IntakeController::class, 'getCoursesByIntake'])->name('student-list.get-courses')->withoutMiddleware(['csrf', 'permission']);
         // Filter student list
-        Route::post('student/student-info/diabled-filter', [StudentController::class, 'filter_disabled_StudentList'])->name('frontend.disabled-student.search');
         Route::post('student/student-info/filtert', [StudentController::class, 'filterStudentList'])->name('frontend.student.search');
     });
 // ================= END STUDENT ROUTES =================
@@ -322,20 +335,12 @@ Route::controller(HomeController::class)->group(callback: function () {
     Route::get('administration/study-material/study-material-download', 'studyMaterialDownload')->name('study-material-download');
     Route::get('administration/study-material/other-download', 'otherDownload')->name('other-download');
 
-    Route::get('administration/download-center/shared-content-list', [ContentController::class, 'sharedContentList'])->name('shared-content-list');
-    Route::get('administration/download-center/video-list', [VideoListController::class, 'videoList'])->name('video-list');
-    Route::post('administration/download-center/video-list-save', [VideoListController::class, 'videoListStore'])->name('download-center.video-list-save');
-    Route::put('administration/download-center/video-list-update/{id}', [VideoListController::class, 'videoListUpdate'])->name('download-center.video-list-update');
-    Route::delete('administration/download-center/video-list-destroy/{id}', [VideoListController::class, 'videoListDestroy'])->name('download-center.video-list-destroy');
 
-    Route::get('student/student-info/student-list', [StudentController::class, 'studentList'])->name(name: 'student-list');
-    Route::get('/student/student-info/student-list-datatable',  [StudentController::class, 'studentDatatable'])->name('student-list.datatable');
 
     Route::get('student/student-info/verification-history/{id}', 'verificationHistory')->name('student-list.verification-history');
     Route::put('student/update-status', [StudentController::class, 'updateStudetStatus'])->name('student.update-status');
     Route::get('student/student-info/student-view/{id}', [StudentController::class, 'studentView'])->name('student-details');
 
-    Route::get('student/student-info/disabled-student', [StudentController::class, 'disabledStudents'])->name('disabled-students');
     Route::get('student/student-info/student-export', [StudentController::class, 'studentExport'])->name('student-export');
 
     // Dependent dropdown AJAX routes for student info and fees
@@ -351,7 +356,6 @@ Route::controller(HomeController::class)->group(callback: function () {
     Route::get('student/student-list/get-courses/{intakeId}', [IntakeController::class, 'getCoursesByIntake'])->name('student-list.get-courses')->withoutMiddleware(['csrf', 'permission']);
 
     //filter student list by branch
-    Route::post('student/student-info/diabled-filter', [StudentController::class, 'filter_disabled_StudentList'])->name('frontend.disabled-student.search');
     Route::post('student/student-info/filtert', [StudentController::class, 'filterStudentList'])->name('frontend.student.search');
     // Route::get('student/fees/fee-invoice', 'feeInvoice')->name('fee-invoice');
     // Route::get('student/fees/add-invoice', 'addInvoice')->name('add-invoice');
@@ -531,6 +535,8 @@ Route::controller(SupplierController::class)->middleware(['permission'])->group(
     Route::delete('account/inventory/supplier-delete/{id}', 'destroy')->name('supplier-delete');
 });
 
+
+
 Route::controller(ContentTypeController::class)->middleware(['permission'])->group(function () {
     Route::get('administration/download-center/content-type', 'index')->name('content-type');
     Route::post('account/content-type-store', 'store')->name('content-type-store');
@@ -539,24 +545,7 @@ Route::controller(ContentTypeController::class)->middleware(['permission'])->gro
     Route::delete('account/content-type-delete/{id}', 'destroy')->name('content-type-delete');
 });
 
-Route::controller(ContentController::class)->middleware(['permission'])->group(function () {
-    Route::get('administration/download-center/content-list', 'index')->name('content-list');
-    Route::post('account/content-store', 'store')->name('content-store');
-    Route::get('account/content-edit/{id}', 'edit')->name('content-edit');
-    Route::put('account/content-update/{id}', 'update')->name('content-update');
-    Route::delete('account/content-delete/{id}', 'destroy')->name('content-delete');
-    // Save shared content list (Share modal)
-    Route::post('administration/download-center/content-share-list-save', 'shareListSave')->name('content-share-list-save');
-    // Generate URL for selected contents (Generate URL modal)
-    Route::post('administration/download-center/content-generate-url-save', 'generateUrlSave')->name('download-center.content-generate-url-save');
-    // Dependent dropdown: get courses for a given intake (used in Share/Generate URL modals)
-    Route::get('administration/download-center/get-courses/{intakeId}', 'getCoursesByIntake')->name('download-center.get-courses-by-intake')->withoutMiddleware(['csrf', 'permission']);
-    // Save generated URL data
-    Route::post('administration/download-center/save-generated-url-data', 'saveGeneratedUrlData')->name('download-center.save-generated-url-data');
-    // View shared content details
-    Route::get('administration/download-center/shared-content-view/{id}', 'viewSharedContent')->name('download-center.shared-content-view');
-    Route::delete('administration/download-center/shared-content-delete/{id}', 'destroySharedContent')->name('download-center.shared-content-delete');
-});
+
 
 // Return Fee Routes
 

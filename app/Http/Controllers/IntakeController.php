@@ -39,7 +39,11 @@ class IntakeController extends Controller
             $intake->courses()->sync($request->courses);
         }
 
-        return redirect()->route('intake.index')->with('message-success', 'Intake added successfully!');
+        // FIX (pagination — same pattern as the Courses page): carry the
+        // dt_page value through to the redirect so the list lands back on
+        // whatever page you were on instead of always resetting to page 1.
+        return redirect()->route('intake.index', ['dt_page' => $request->input('dt_page', 0)])
+            ->with('message-success', 'Intake added successfully!');
     }
 
     public function edit($id)
@@ -83,7 +87,9 @@ class IntakeController extends Controller
             $intake->courses()->detach();
         }
 
-        return redirect()->route('intake.index')->with('message-success', 'Intake updated successfully!');
+        // FIX (pagination): same as store() above.
+        return redirect()->route('intake.index', ['dt_page' => $request->input('dt_page', 0)])
+            ->with('message-success', 'Intake updated successfully!');
     }
 
 
@@ -95,6 +101,28 @@ class IntakeController extends Controller
         $intake->delete();
 
         return redirect()->route('intake.index')->with('message-success-delete', 'Intake deleted successfully!');
+    }
+
+    /**
+     * Replaces Delete in the UI, same reasoning as CourseController's
+     * toggleStatus(): intakes are linked to courses (and, via students,
+     * to enrollment/payment history), so an actual delete risks breaking
+     * historical records. This flips is_active instead of removing the
+     * row or detaching its courses.
+     *
+     * Uses direct property assignment + save() rather than update(), so it
+     * doesn't depend on 'is_active' being in the Intake model's $fillable
+     * (haven't seen that model) — mass-assignment guarding is bypassed
+     * entirely for this one explicit, controller-owned field flip.
+     */
+    public function toggleStatus(Request $request, $id)
+    {
+        $intake = Intake::findOrFail($id);
+        $intake->is_active = ! $intake->is_active;
+        $intake->save();
+
+        return redirect()->route('intake.index', ['dt_page' => $request->input('dt_page', 0)])
+            ->with('message-success', $intake->is_active ? 'Intake activated.' : 'Intake deactivated.');
     }
 
     public function getIntakes($branchId)

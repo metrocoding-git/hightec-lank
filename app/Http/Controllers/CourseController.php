@@ -41,7 +41,13 @@ class CourseController extends Controller
 
         Course::create($data);
 
-        return redirect()->back()->with('message-success', 'Course added successfully!');
+        // FIX (pagination): was redirect()->back(). Switched to an explicit
+        // route so the page you were on (carried in the hidden "dt_page"
+        // field — see course.blade.php) survives the round trip. This also
+        // sidesteps a pre-existing minor flakiness in ->back(): it depends
+        // on the browser sending a Referer header, which isn't always sent.
+        return redirect()->route('course.index', ['dt_page' => $request->input('dt_page', 0)])
+            ->with('message-success', 'Course added successfully!');
     }
 
     public function update(Request $request, $id)
@@ -67,7 +73,12 @@ class CourseController extends Controller
         }
         $course->update($data);
 
-        return redirect()->route('course.index')->with('message-success', 'Course updated successfully!');
+        // FIX (pagination): carry dt_page through to the redirect — this is
+        // the second half of the fix in course.blade.php. Without this, the
+        // list always lands back on page 1 after Update no matter what the
+        // table itself does.
+        return redirect()->route('course.index', ['dt_page' => $request->input('dt_page', 0)])
+            ->with('message-success', 'Course updated successfully!');
     }
 
     public function edit($id)
@@ -82,6 +93,16 @@ class CourseController extends Controller
     {
         Course::findOrFail($id)->delete();
         return redirect()->route('course.index')->with('message-success-delete', 'Course deleted successfully.');
+    }
+
+    public function toggleStatus(Request $request, $id)
+    {
+        $course = Course::findOrFail($id);
+        $course->is_active = ! $course->is_active;
+        $course->save();
+
+        return redirect()->route('course.index', ['dt_page' => $request->input('dt_page', 0)])
+            ->with('message-success', $course->is_active ? 'Course activated.' : 'Course deactivated.');
     }
 
     public function getCoursesByBranch($branchId)

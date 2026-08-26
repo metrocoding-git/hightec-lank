@@ -47,35 +47,35 @@
     }
 </style>
 <script>
-    window.jsLang = function(key, replace) {
-        let translation = true
+    // window.jsLang = function(key, replace) {
+    //     let translation = true
 
-        let json_file = $.parseJSON(window._translations[window._locale]['json'])
-        translation = json_file[key] ?
-            json_file[key] :
-            key
-
-
-        $.each(replace, (value, key) => {
-            translation = translation.replace(':' + key, value)
-        })
-
-        return translation
-    }
-    window.trans = function(key, replace) {
-        let translation = true
-
-        let json_file = $.parseJSON(window._translations[window._locale]['json'])
-        translation = json_file[key] ?
-            json_file[key] :
-            key
+    //     let json_file = $.parseJSON(window._translations[window._locale]['json'])
+    //     translation = json_file[key] ?
+    //         json_file[key] :
+    //         key
 
 
-        $.each(replace, (value, key) => {
-            translation = translation.replace(':' + key, value)
-        })
-        return translation
-    }
+    //     $.each(replace, (value, key) => {
+    //         translation = translation.replace(':' + key, value)
+    //     })
+
+    //     return translation
+    // }
+    // window.trans = function(key, replace) {
+    //     let translation = true
+
+    //     let json_file = $.parseJSON(window._translations[window._locale]['json'])
+    //     translation = json_file[key] ?
+    //         json_file[key] :
+    //         key
+
+
+    //     $.each(replace, (value, key) => {
+    //         translation = translation.replace(':' + key, value)
+    //     })
+    //     return translation
+    // }
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>

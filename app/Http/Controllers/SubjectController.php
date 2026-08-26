@@ -33,7 +33,11 @@ class SubjectController extends Controller
         $subject->practical_time = $request->practical_time;
         $subject->save();
 
-        return redirect()->route('subject.index')->with('message-success', 'Subject added successfully.');
+        // FIX (pagination — same pattern as Courses/Intake): carry the
+        // dt_page value through to the redirect so the list lands back on
+        // whatever page you were on instead of always resetting to page 1.
+        return redirect()->route('subject.index', ['dt_page' => $request->input('dt_page', 0)])
+            ->with('message-success', 'Subject added successfully.');
     }
 
     private function generateSubjectCode(): string
@@ -62,7 +66,9 @@ class SubjectController extends Controller
 
         $subject->update($request->only(['name', 'code', 'type', 'demonstrator_time', 'practical_time']));
 
-        return redirect()->route('subject.index')->with('message-success', 'Subject updated successfully!');
+        // FIX (pagination): same as store() above.
+        return redirect()->route('subject.index', ['dt_page' => $request->input('dt_page', 0)])
+            ->with('message-success', 'Subject updated successfully!');
     }
 
     public function edit($id)
@@ -91,5 +97,36 @@ class SubjectController extends Controller
         $subject->delete();
 
         return redirect()->route('subject.index')->with('message-success-delete', 'Subject deleted successfully.');
+    }
+
+    /**
+     * Replaces Delete in the UI, same reasoning as CourseController /
+     * IntakeController's toggleStatus(): flips is_active instead of
+     * removing the row. The view only ever shows this action for subjects
+     * that are NOT currently assigned (isAssigned() == false) — the
+     * existing "In Use" badge/gating for assigned subjects is left exactly
+     * as it was, so this method is unreachable for an assigned subject
+     * through the normal UI. Guarded here too in case the route is hit
+     * directly.
+     *
+     * Uses direct property assignment + save() rather than update(), so it
+     * doesn't depend on 'is_active' being in the Subject model's
+     * $fillable (haven't seen that model) — mass-assignment guarding is
+     * bypassed entirely for this one explicit, controller-owned field flip.
+     */
+    public function toggleStatus(Request $request, $id)
+    {
+        $subject = Subject::findOrFail($id);
+
+        if ($subject->isAssigned()) {
+            return redirect()->route('subject.index', ['dt_page' => $request->input('dt_page', 0)])
+                ->with('message-error', 'This subject is assigned to a class/teacher and cannot be deactivated.');
+        }
+
+        $subject->is_active = ! $subject->is_active;
+        $subject->save();
+
+        return redirect()->route('subject.index', ['dt_page' => $request->input('dt_page', 0)])
+            ->with('message-success', $subject->is_active ? 'Subject activated.' : 'Subject deactivated.');
     }
 }
