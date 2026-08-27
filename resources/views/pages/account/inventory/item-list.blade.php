@@ -383,7 +383,7 @@
 
             // Fetch item details and history
             $.ajax({
-                url: '{{ url('/') }}/account/inventory/item-history/' + itemId,
+                url: '{{ url('/') }}/account/inventory/item-list/item-history/' + itemId,
                 type: 'GET',
                 success: function(response) {
                     // Get the first history record to find the item details

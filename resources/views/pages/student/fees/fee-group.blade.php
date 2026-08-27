@@ -22,7 +22,7 @@
                 {{-- Form Column --}}
                 <div class="col-lg-3">
                     <form
-    action="{{ isset($feesGroup) ? route('fee-group-update', $feesGroup->id) : route('fee-group-create') }}"
+    action="{{ isset($feesGroup) ? route('fee-group/update', $feesGroup->id) : route('fee-group/create') }}"
     method="POST">
     @csrf
     @if(isset($feesGroup))
@@ -90,10 +90,10 @@
                                             <td>
                                                 <x-drop-down>
                                                 <a class="dropdown-item"
-                                                    href="{{ route('fee-group-edit', $group->id) }}"
+                                                    href="{{ route('fee-group/edit', $group->id) }}"
                                                     >
                                                     @lang('common.edit')</a>
-                                                    <form action="{{ route('fee-group-delete', $group->id) }}"
+                                                    <form action="{{ route('fee-group/delete', $group->id) }}"
                                                         method="POST" style="display:inline;">
                                                         @method('DELETE')
                                                         @csrf

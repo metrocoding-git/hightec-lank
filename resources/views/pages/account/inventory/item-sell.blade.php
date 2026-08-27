@@ -820,7 +820,7 @@
                         toastr.success(response.message, 'Success');
 
                         // OPEN PRINT PAGE
-                        let printUrl = "/account/inventory/item-sell-bill/" + response.id;
+                        let printUrl = "/account/inventory/item-sell/bill/" + response.id;
                         window.open(printUrl, '_blank');
 
                         setTimeout(function() {

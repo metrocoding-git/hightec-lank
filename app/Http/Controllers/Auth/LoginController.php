@@ -11,28 +11,8 @@ use Str; // Assuming Str is still needed for other parts of the controller
 
 class LoginController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Login Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller handles authenticating users for the application and
-    | redirecting them to your home screen. The controller uses a trait
-    | to conveniently provide its functionality to your applications.
-    |
-     */
-
-    /**
-     * Get the post register / login redirect path.
-     *
-     * @return string
-     */
     public function redirectPath()
     {
-        // This method is typically used by the AuthenticatesUsers trait.
-        // Since we are implementing custom login, we will handle redirection in the login method.
-        // However, if other parts of the application rely on this, it can be kept.
-        // For now, we'll keep a basic version.
         return '/home';
     }
 
@@ -41,24 +21,7 @@ class LoginController extends Controller
         return view('auth.login');
     }
 
-    public function recoveryPassword()
-    {
-        return view('auth.recoverypassword');
-    }
 
-    public function register()
-    {
-        return view('template.auth.register');
-    }
-
-    /**
-     * Handle a login request to the application.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\Response|\Illuminate\Http\JsonResponse
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
     public function login(Request $request)
     {
         $request->validate([
@@ -95,12 +58,6 @@ class LoginController extends Controller
         ]);
     }
 
-    /**
-     * Log the user out of the application.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
-     */
     public function logout(Request $request)
     {
         Auth::logout();

@@ -143,7 +143,7 @@
                                                                     </form>
                                                                 @endif
                                                             @else
-                                                                <form action="{{ route('issue-item') }}" method="POST"
+                                                                <form action="{{ route('return-back-item') }}" method="POST"
                                                                     class="m-0">
                                                                     @csrf
                                                                     <input type="hidden" name="id"

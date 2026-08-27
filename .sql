@@ -374,4 +374,6 @@ ALTER TABLE `subjects`
 
 ALTER TABLE `assign_subjects`
     ADD COLUMN `is_active` TINYINT(1) NOT NULL DEFAULT 1;
- 
+
+ALTER TABLE `student_categories`
+    ADD COLUMN `is_active` TINYINT(1) NOT NULL DEFAULT 1;

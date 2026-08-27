@@ -20,7 +20,7 @@
         <div class="container-fluid p-0">
 
             {{-- {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'disabled_student_search', 'method' => 'POST', 'enctype' => 'multipart/form-data']) }} --}}
-            <form class="form-horizontal" action="{{ route('frontend.disabled-student.search') }}" method="post">
+            <form class="form-horizontal" action="{{ route('disabled-students.search') }}" method="post">
                 @csrf
                 <input type="hidden" id="class_id" value="{{ @$class_id }}">
                 <input type="hidden" id="section_id" value="{{ @$section_id }}">
@@ -250,7 +250,7 @@
 
                 // Make AJAX request to get intakes for selected branch
                 $.ajax({
-                    url: '{{ route("student-list.get-intakes", ":branchId") }}'.replace(':branchId', branchId),
+                    url: '{{ route("get-intakes-by-branch", ":branchId") }}'.replace(':branchId', branchId),
                     type: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
@@ -316,7 +316,7 @@
 
                 // Make AJAX request to get courses for selected intake
                 $.ajax({
-                    url: '{{ route("student-list.get-courses", ":intakeId") }}'.replace(':intakeId', intakeId),
+                    url: '{{ route("get-courses-by-intake", ":intakeId") }}'.replace(':intakeId', intakeId),
                     type: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',

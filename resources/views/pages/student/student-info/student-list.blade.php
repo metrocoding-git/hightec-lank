@@ -20,7 +20,7 @@
     <section class="admin-visitor-area up_admin_visitor">
         <div class="container-fluid p-0">
             {{-- {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'student-list-search', 'method' => 'POST', 'enctype' => 'multipart/form-data', 'id' => 'infix_form']) }} --}}
-            <form class="form-horizontal" action="{{ route('frontend.student.search') }}" method="post">
+            <form class="form-horizontal" action="{{ route('student-list.search') }}" method="post">
                 @csrf
                 <div class="row">
                     <div class="col-lg-12">
@@ -47,12 +47,6 @@
                                             <span class="ti-download pr-2"></span>
                                             Export Filtered
                                         </button>
-
-                                        {{-- <button type="button" class="primary-btn small fix-gr-bg me-2" id="bulkCardBtn">
-                                            <span class="ti-download pr-2"></span>
-                                            Generate Cards (Bulk)
-                                        </button> --}}
-
 
 
                                         <a href="{{ route('add-student.index') }}" class="primary-btn small fix-gr-bg">
@@ -268,7 +262,7 @@
     @php
         if (isset($academic_year) || isset($class_id)) {
             $ajax_url = url(
-                'student-list-datatable?academic_year=' .
+                'student/student-info/student-list/datatable?academic_year=' .
                     $academic_year .
                     '&class=' .
                     $class_id .
@@ -280,7 +274,7 @@
                     $name,
             );
         } else {
-            $ajax_url = url('student-list-datatable');
+            $ajax_url = url('student/student-info/student-list/datatable');
         }
     @endphp
 @endsection
@@ -295,7 +289,6 @@
         $('#table_id').DataTable({
             processing: true,
             serverSide: true,
-
             scrollX: true,
 
             dom: "<'d-flex justify-content-between align-items-center mb-2'<'me-2'l><'mx-auto'f><'ms-2'B>>" +
@@ -342,8 +335,6 @@
                     columns: ':gt(0)'
                 }
             ],
-
-
             paging: true,
             searching: true,
             ordering: true,
@@ -538,7 +529,7 @@
             $('#verificationCheckModal').modal('show');
 
             $.ajax({
-                url: "/student/student-info/verification-history/" + studentId,
+                url: "/student/student-info/student-list/verification-history/" + studentId,
                 method: "GET",
                 success: function(data) {
 
@@ -622,7 +613,7 @@
 
                 // Make AJAX request to get intakes for selected branch
                 $.ajax({
-                    url: '{{ route('student-list.get-intakes', ':branchId') }}'.replace(':branchId',
+                    url: '{{ route('get-intakes-by-branch', ':branchId') }}'.replace(':branchId',
                         branchId),
                     type: 'GET',
                     headers: {
@@ -690,7 +681,7 @@
 
                 // Make AJAX request to get courses for selected intake
                 $.ajax({
-                    url: '{{ route('student-list.get-courses', ':intakeId') }}'.replace(':intakeId',
+                    url: '{{ route('get-courses-by-intake', ':intakeId') }}'.replace(':intakeId',
                         intakeId),
                     type: 'GET',
                     headers: {

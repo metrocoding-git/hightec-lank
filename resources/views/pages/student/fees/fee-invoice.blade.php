@@ -1278,7 +1278,7 @@
             // Here you would typically make an AJAX call to save the paid amount and date
             // For now, we'll just log it and close the modal
             $.ajax({
-                url: '/fees/mark-as-paid', // Replace with your actual route
+                url: '/student/fees/invoice-list/mark-as-paid', // Replace with your actual route
                 type: 'POST',
                 data: {
                     _token: token,
@@ -1313,7 +1313,7 @@
 
             // Fetch payment history and invoice details via AJAX
             $.ajax({
-                url: `/fees/payment-history/${invoiceId}`, // New route for fetching payment history
+                url: `/student/fees/invoice-list/payment-history/${invoiceId}`, // New route for fetching payment history
                 type: 'GET',
                 beforeSend: function() {
                     modal.find('#paymentHistoryContent').html(`
@@ -1450,7 +1450,7 @@
             if (!confirm('Are you sure you want to confirm this payment invoice?')) return;
 
             $.ajax({
-                url: `/fees/confirm-invoice-payment/${paymentId}`, // Your route
+                url: `/student/fees/invoice-list/confirm-invoice-payment/${paymentId}`, // Your route
                 type: 'GET', // or 'POST' if you prefer
                 success: function(response) {
                     console.log('Invoice payment confirmed:', response);
@@ -1481,7 +1481,7 @@
 
             // Fetch both payment history and return fee data
             $.ajax({
-                url: `/fees/payment-history/${invoiceId}`,
+                url: `/student/fees/invoice-list/payment-history/${invoiceId}`,
                 type: 'GET',
                 beforeSend: function() {
                     modal.find('#paymentDetailsContent').html(`
@@ -1502,7 +1502,7 @@
 
                     // Fetch return fee data from return_fees table
                     $.ajax({
-                        url: `/fees/return-fee-data/${invoiceId}`,
+                        url: `/student/fees/invoice-list/return-fee-data/${invoiceId}`,
                         type: 'GET',
                         success: function(returnResponse) {
                             console.log('Return fee data:', returnResponse);
@@ -1700,7 +1700,7 @@
             submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Adding Payment...');
 
             $.ajax({
-                url: `/fees/add-payment/${invoiceId}`, // Existing route for adding payments
+                url: `/student/fees/invoice-list/add-payment/${invoiceId}`, // Existing route for adding payments
                 type: 'POST',
                 data: formData,
                 processData: false,
@@ -1769,7 +1769,7 @@
             modal.find('#addPaymentInvoiceId').val(invoiceId); // set invoice ID for add payment form
 
             $.ajax({
-                url: `/fees/payment-history/${invoiceId}`,
+                url: `/student/fees/invoice-list/payment-history/${invoiceId}`,
                 type: 'GET',
                 beforeSend: function() {
                     modal.find('#paymentHistoryContent').html(`
@@ -1889,7 +1889,7 @@
 
             if (confirm(`Are you sure you want to refund ${amount}?`)) {
                 $.ajax({
-                    url: `/fees/refund-payment/${paymentId}`, // New route for refunding payments
+                    url: `/student/fees/invoice-list/refund-payment/${paymentId}`, // New route for refunding payments
                     type: 'POST',
                     data: {
                         _token: $('input[name="_token"]').val(),

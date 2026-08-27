@@ -186,9 +186,9 @@
 
 @include('components.partials.data_table_css')
 @push('script')
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     @include('components.partials.data_table_js')
     @include('components.partials.server_side_datatable')
+    @include('components.partials.data_table_css')
     <script>
         $('#table_id').DataTable({
             responsive: true,

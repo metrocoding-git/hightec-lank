@@ -389,7 +389,7 @@
                         Auth::user()->hasPermission('student-attendance') ||
                         Auth::user()->hasPermission('student.add-intake-with-courses.index')))
                 <li
-                    class="studentInfo_section {{ request()->is('student-info') || request()->is('student/student-info/*') || request()->is('student-attendance/scan-attendance') ? 'mm-active' : '' }}">
+                    class="studentInfo_section {{ request()->is('student-info') || request()->is('student/student-info/*') ? 'mm-active' : '' }}">
                     <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
                         <div class="nav_icon_small">
                             <span class="fas fa-user"></span>
@@ -499,24 +499,24 @@
                         @endif
                         @if (Auth::check() && Auth::user()->hasPermission('fees.add-invoice'))
                             <li>
-                                <a href="/student/fees/add-invoice"
-                                    class="{{ request()->is('student/fees/add-invoice') ? 'active a' : '' }}">
+                                <a href="/student/fees/other-payment"
+                                    class="{{ request()->is('student/fees/other-payment') ? 'active a' : '' }}">
                                     Registration & Other Payments
                                 </a>
                             </li>
                         @endif
                         @if (Auth::check() && Auth::user()->hasPermission('fees.course-paid'))
                             <li>
-                                <a href="/student/fees/course-paid"
-                                    class="{{ request()->is('student/fees/course-paid') ? 'active a' : '' }}">
+                                <a href="/student/fees/course-payment"
+                                    class="{{ request()->is('student/fees/course-payment') ? 'active a' : '' }}">
                                     Course, NVQ & Food Payment
                                 </a>
                             </li>
                         @endif
                         @if (Auth::check() && Auth::user()->hasPermission('fees.fee-invoice'))
                             <li>
-                                <a href="/student/fees/fee-invoice"
-                                    class="{{ request()->is('student/fees/fee-invoice') ? 'active a' : '' }}">
+                                <a href="/student/fees/invoice-list"
+                                    class="{{ request()->is('student/fees/invoice-list') ? 'active a' : '' }}">
                                     Invoice List
                                 </a>
                             </li>
@@ -531,14 +531,7 @@
                             </li>
                         @endif
 
-                        {{--
-                            FIXED: these two were completely ungated (the @if was commented
-                            out) — anyone who could open the Fees menu at all could see and
-                            click into credit invoice payments regardless of role. Gated
-                            behind two NEW permission keys: 'fees.credit-invoice' and
-                            'fees.credit-invoice-payment'. Create + assign these before
-                            relying on the gate, same caveat as Content-Type above.
-                        --}}
+
                         @if (Auth::check() && Auth::user()->hasPermission('fees.credit-invoice'))
                             <li>
                                 <a href="/student/fees/fee-invoice/invoice-payments/pending"
@@ -638,8 +631,8 @@
                         @if (Auth::check() && Auth::user()->hasPermission('item-receive'))
                             {{-- Using item-receive for Item Receive List --}}
                             <li>
-                                <a href="/account/inventory/item-receive-list"
-                                    class="{{ request()->is('account/inventory/item-receive-list') ? 'active a' : '' }}">
+                                <a href="/account/inventory/item-receive/list"
+                                    class="{{ request()->is('account/inventory/item-receive/list') ? 'active a' : '' }}">
                                     Item Receive List
                                 </a>
                             </li>
@@ -655,8 +648,8 @@
                         @if (Auth::check() && Auth::user()->hasPermission('item-issue'))
                             {{-- Using item-issue for Item Issue List --}}
                             <li>
-                                <a href="/account/inventory/item-issue-list"
-                                    class="{{ request()->is('account/inventory/item-issue-list') ? 'active a' : '' }}">
+                                <a href="/account/inventory/item-issue/list"
+                                    class="{{ request()->is('account/inventory/item-issue/list') ? 'active a' : '' }}">
                                     Item Issue List
                                 </a>
                             </li>
@@ -672,8 +665,8 @@
                         @if (Auth::check() && Auth::user()->hasPermission('item-sell'))
                             {{-- Using item-sell for Item Sell List --}}
                             <li>
-                                <a href="/account/inventory/item-sell-list"
-                                    class="{{ request()->is('account/inventory/item-sell-list') ? 'active a' : '' }}">
+                                <a href="/account/inventory/item-sell/list"
+                                    class="{{ request()->is('account/inventory/item-sell/list') ? 'active a' : '' }}">
                                     Item Sell List
                                 </a>
                             </li>

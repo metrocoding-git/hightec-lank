@@ -249,7 +249,7 @@
 
                 if (branchId) {
                     $.ajax({
-                        url: "{{ url('student/invoice/get-student') }}/" + branchId,
+                        url: "{{ url('student/fees/other-payment/get-student') }}/" + branchId,
                         type: 'GET',
                         success: function(data) {
                             console.log('AJAX response:', data);
@@ -518,7 +518,7 @@
                 $('#selectStudentLoader').show();
                 $('#student_id').html('<option>Loading...</option>');
                 if (branchId) {
-                    $.get("{{ url('student/invoice/get-student') }}/" + branchId, function(data) {
+                    $.get("{{ url('student/fees/other-payment/get-student') }}/" + branchId, function(data) {
                         $('#selectStudentLoader').hide();
                         $('#student_id').empty().append('<option value="">Select Student</option>');
                         $.each(data, function(i, student) {

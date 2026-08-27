@@ -1224,45 +1224,7 @@ class StudentController extends Controller
         }
     }
 
-    public function checkStudentCourseStatus(Request $request)
-    {
-        try {
-            $student_id = $request->student_id;
-            $course_id = $request->course_id;
-            $intake_id = $request->intake_id;
 
-            $studentCourse = StudentCourse::where('student_id', $student_id)
-                ->where('course_id', $course_id)
-                ->where('intake_id', $intake_id)
-                ->first();
-
-            if ($studentCourse && $studentCourse->status === 'start') {
-                return response()->json([
-                    'can_issue' => true,
-                    'message' => 'Items can be issued.'
-                ]);
-            }
-
-            $intake = Intake::find($intake_id);
-            $course = Course::find($course_id);
-            $expireDate = Carbon::parse($intake->start_date)->addDays((int)$course->expiration_date);
-
-            $canAdd = now()->lte($expireDate);
-            $message = $canAdd
-                ? 'Items can be issued.'
-                : 'Items Cannot be issued. expired';
-
-            return response()->json([
-                'can_issue' => $canAdd,
-                'message' => $message
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'can_issue' => false,
-                'message' => 'Error checking course status.'
-            ], 500);
-        }
-    }
 
     public function verify($id)
     {
@@ -1598,8 +1560,14 @@ class StudentController extends Controller
         return redirect()->back()->with('message-success', 'Student status update successfully!');
     }
 
-    public function studentExport()
+
+    public function verificationHistory($id)
     {
-        return view('pages.student.student-info.student-export');
+        $verifications = StudentVerification::with('user')
+            ->where('student_id', $id)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        return response()->json($verifications);
     }
 }
