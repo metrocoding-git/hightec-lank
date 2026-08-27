@@ -37,7 +37,10 @@ use App\Http\Controllers\ScanAttendanceController;
 use App\Http\Controllers\TrainingVehicleController;
 
 
+// ================= ADMINISTRATION ROUTES ================= //
 Route::prefix('administration')->group(callback: function () {
+
+    // ================= ACADEMIC MANAGEMENT ROUTES ================= //
     Route::prefix('academic')->group(callback: function () {
 
         // ================= ACADEMIC MANAGEMENT COURSE ROUTES ================= //
@@ -59,7 +62,6 @@ Route::prefix('administration')->group(callback: function () {
             Route::delete('destroy/{id}', [IntakeController::class, 'destroy'])->name('intake.destroy');
             Route::post('toggle-status/{id}', [IntakeController::class, 'toggleStatus'])->name('intake.toggle-status');
         });
-
 
         // ================= ACADEMIC MANAGEMENT SUBJECT ROUTES ================= //
         Route::prefix('subjects')->group(callback: function () {
@@ -84,7 +86,9 @@ Route::prefix('administration')->group(callback: function () {
     });
 
 
+    // ================= ACADEMIC MANAGEMENT LESSON PLAN ROUTES ================= //
     Route::prefix('lesson-plan')->group(callback: function () {
+
         // ================= LESSON PLAN MANAGEMENT LESSON ROUTES ================= //
         Route::prefix('lesson')->group(callback: function () {
             Route::get('/', [LessonController::class, 'index'])->name('lesson.index');
@@ -115,47 +119,46 @@ Route::prefix('administration')->group(callback: function () {
             Route::get('get-intakes/{courseId}', [TopicOverviewController::class, 'getIntakesByCourse'])->name('topic-overview.get-intakes');
             Route::get('get-subjects/{intakeId}', [TopicOverviewController::class, 'getSubjectsByIntake'])->name('topic-overview.get-subjects');
         });
+    });
 
-        Route::prefix('download-center')->group(callback: function () {
-            // ================= DOWNLOAD CENTER CONTENT TYPE ROUTES ================= //
-            Route::prefix('content-type')->group(callback: function () {
-                Route::get('/', [ContentTypeController::class, 'index'])->name('content-type');
-                Route::post('account/content-type-store', [ContentTypeController::class, 'store'])->name('content-type-store');
-                Route::get('account/content-type-edit/{id}', [ContentTypeController::class, 'edit'])->name('content-type-edit');
-                Route::put('account/content-type-update/{id}', [ContentTypeController::class, 'update'])->name('content-type-update');
-                Route::delete('account/content-type-delete/{id}', [ContentTypeController::class, 'destroy'])->name('content-type-delete');
-            });
 
-            // ================= DOWNLOAD CENTER CONTENT ROUTES ================= //
-            Route::prefix('')->group(function () {
-                Route::get('content-list', [ContentListController::class, 'index'])->name('download-center.content-list');
-                Route::post('content-store', [ContentListController::class, 'store'])->name('download-center.content-store');
-                Route::get('content-edit/{id}', [ContentListController::class, 'edit'])->name('download-center.content-edit');
-                Route::put('content-update/{id}', [ContentListController::class, 'update'])->name('download-center.content-update');
-                Route::delete('content-delete/{id}', [ContentListController::class, 'destroy'])->name('download-center.content-delete');
-                Route::post('content-share-list-save', [ContentListController::class, 'shareListSave'])->name('download-center.content-share-list-save');
-                Route::post('content-generate-url-save', [ContentListController::class, 'generateUrlSave'])->name('download-center.content-generate-url-save');
-                Route::get('get-courses/{intakeId}', [ContentListController::class, 'getCoursesByIntake'])->name('download-center.get-courses-by-intake');
-                Route::post('save-generated-url-data', [ContentListController::class, 'saveGeneratedUrlData'])->name('download-center.save-generated-url-data');
-                Route::get('shared-content-view/{id}', [ContentListController::class, 'viewSharedContent'])->name('download-center.shared-content-view');
-                Route::delete('shared-content-delete/{id}', [ContentListController::class, 'destroySharedContent'])->name('download-center.shared-content-delete');
-                Route::get('shared-content-list', [ContentListController::class, 'sharedContentList'])->name('download-center.shared-content-list');
-            });
+    // ================= DOWNLOAD CENTER ROUTES =================
+    Route::prefix('download-center')->group(callback: function () {
 
-            // ================= DOWNLOAD CENTER VIDEO LIST ROUTES ================= //
-            Route::prefix('video-list')->group(function () {
-                Route::get('/', [VideoListController::class, 'videoList'])->name('download-center.video-list');
-                Route::post('save', [VideoListController::class, 'videoListStore'])->name('download-center.video-list-save');
-                Route::put('update/{id}', [VideoListController::class, 'videoListUpdate'])->name('download-center.video-list-update');
-                Route::delete('destroy/{id}', [VideoListController::class, 'videoListDestroy'])->name('download-center.video-list-destroy');
-            });
+        // ================= DOWNLOAD CENTER CONTENT TYPE ROUTES ================= //
+        Route::prefix('content-type')->group(callback: function () {
+            Route::get('/', [ContentTypeController::class, 'index'])->name('content-type');
+            Route::post('account/content-type-store', [ContentTypeController::class, 'store'])->name('content-type-store');
+            Route::get('account/content-type-edit/{id}', [ContentTypeController::class, 'edit'])->name('content-type-edit');
+            Route::put('account/content-type-update/{id}', [ContentTypeController::class, 'update'])->name('content-type-update');
+            Route::delete('account/content-type-delete/{id}', [ContentTypeController::class, 'destroy'])->name('content-type-delete');
+        });
+
+        // ================= DOWNLOAD CENTER CONTENT ROUTES ================= //
+        Route::prefix('')->group(function () {
+            Route::get('content-list', [ContentListController::class, 'index'])->name('download-center.content-list');
+            Route::post('content-store', [ContentListController::class, 'store'])->name('download-center.content-store');
+            Route::get('content-edit/{id}', [ContentListController::class, 'edit'])->name('download-center.content-edit');
+            Route::put('content-update/{id}', [ContentListController::class, 'update'])->name('download-center.content-update');
+            Route::delete('content-delete/{id}', [ContentListController::class, 'destroy'])->name('download-center.content-delete');
+            Route::post('content-share-list-save', [ContentListController::class, 'shareListSave'])->name('download-center.content-share-list-save');
+            Route::post('content-generate-url-save', [ContentListController::class, 'generateUrlSave'])->name('download-center.content-generate-url-save');
+            Route::get('get-courses/{intakeId}', [ContentListController::class, 'getCoursesByIntake'])->name('download-center.get-courses-by-intake');
+            Route::post('save-generated-url-data', [ContentListController::class, 'saveGeneratedUrlData'])->name('download-center.save-generated-url-data');
+            Route::get('shared-content-view/{id}', [ContentListController::class, 'viewSharedContent'])->name('download-center.shared-content-view');
+            Route::delete('shared-content-delete/{id}', [ContentListController::class, 'destroySharedContent'])->name('download-center.shared-content-delete');
+            Route::get('shared-content-list', [ContentListController::class, 'sharedContentList'])->name('download-center.shared-content-list');
+        });
+
+        // ================= DOWNLOAD CENTER VIDEO LIST ROUTES ================= //
+        Route::prefix('video-list')->group(function () {
+            Route::get('/', [VideoListController::class, 'videoList'])->name('download-center.video-list');
+            Route::post('save', [VideoListController::class, 'videoListStore'])->name('download-center.video-list-save');
+            Route::put('update/{id}', [VideoListController::class, 'videoListUpdate'])->name('download-center.video-list-update');
+            Route::delete('destroy/{id}', [VideoListController::class, 'videoListDestroy'])->name('download-center.video-list-destroy');
         });
     });
 });
-
-
-
-
 
 
 // ================= STUDENT INFO MANAGEMENT ROUTES ================= //
@@ -188,7 +191,6 @@ Route::prefix('student/student-info')->group(function () {
     // ================= STUDENT VIEW ROUTES ================= //
     Route::get('student-view/{id}', [StudentController::class, 'studentView'])->name('student-details');
 
-
     // ================= STUDENT LIST ROUTES ================= //
     Route::prefix('student-list')->group(function () {
         Route::get('/', [StudentController::class, 'studentList'])->name('student-list');
@@ -209,7 +211,6 @@ Route::prefix('student/student-info')->group(function () {
 
     // ================= STUDENT STATUS UPDATE ROUTES ================= //
     Route::put('update-status', [StudentController::class, 'updateStudetStatus'])->name('student.update-status');
-
 
     // ================= DISABLED STUDENTS ROUTES ================= //
     Route::prefix('disabled-student')->group(function () {
@@ -270,7 +271,6 @@ Route::prefix('student/fees')->group(function () {
         Route::delete('delete/{id}', [FeeTypeController::class, 'destroy'])->name('fees.fees-type-delete');
     });
 
-
     // ================= COURSE. NVQ, FOOD PAYMENT ROUTES ================= //
     Route::prefix('course-payment')->group(function () {
         Route::get('/', [CoursePaymentController::class, 'coursePaidView'])->name('fees.course-payment');
@@ -278,14 +278,12 @@ Route::prefix('student/fees')->group(function () {
         Route::get('history/{studentId}/{courseId}', [CoursePaymentController::class, 'getCoursePaymentHistory'])->name('fees.course-payment-history')->withoutMiddleware(['csrf', 'permission']);
     });
 
-
     // ================= OTHER PAYMENT ROUTES ================= //
     Route::prefix('other-payment')->group(function () {
         Route::get('/', [OtherPaymentController::class, 'create'])->name('fees.add-invoice');
         Route::post('fee-store', [OtherPaymentController::class, 'store'])->name('fees.invoice.store');
         Route::get('student/invoice/get-student/{branchId}', [OtherPaymentController::class, 'show'])->name('fees.get-student');
     });
-
 
     // ================= INVOICE ITEM PRINT ROUTES ================= //
     Route::get('invoice-item-print/{invoiceId}/{paymentId}', [InvoiceController::class, 'invoiceItemPrint'])->name('fees.invoice-item-print');
@@ -304,7 +302,6 @@ Route::prefix('student/fees')->group(function () {
         Route::post('add-payment/{invoiceId}', [InvoiceController::class, 'addPayment'])->name('fees.add-payment');
         Route::post('refund-payment/{paymentId}', [InvoiceController::class, 'refundPayment'])->name('fees.refund-payment');
     });
-
 
     // ================= FEE RETURN ROUTES ================= //
     Route::prefix('fee-return')->group(function () {
@@ -351,7 +348,6 @@ Route::prefix('account/inventory')->group(function () {
         Route::put('item-update/{id}', [InventoryItemController::class, 'update'])->name('item-update');
         Route::delete('item-delete/{id}', [InventoryItemController::class, 'destroy'])->name('item-delete');
     });
-
 
     // ================= SUPPLIER ROUTES ================= //
     Route::prefix('supplier')->group(function () {
@@ -418,42 +414,36 @@ Route::controller(ReportController::class)->prefix('reports')->group(function ()
     Route::get('/reports/student-attendance/export', [HomeController::class, 'exportCsv'])->name('reports.student-attendance.export');
 });
 
-
 Route::get('dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
-
-
 
 // ================= LOGIN ROUTES =================
 Route::prefix('')->group(function () {
-    Route::get('login', [LoginController::class,'index'])->name('login');
-    Route::post('login', [LoginController::class,'login'])->name('login.post');
-    Route::post('logout', [LoginController::class,'logout'])->name('logout'); // Add logout route
+    Route::get('login', [LoginController::class, 'index'])->name('login');
+    Route::post('login', [LoginController::class, 'login'])->name('login.post');
+    Route::post('logout', [LoginController::class, 'logout'])->name('logout'); // Add logout route
 });
-
 
 // ================= ROLE MANAGEMENT ROUTES =================
 Route::prefix('role-management')->group(function () {
-    Route::get('roles', [RoleController::class,'index'])->name('roles.index');
-    Route::post('roles', [RoleController::class,'store'])->name('roles.store');
-    Route::put('roles/{id}', [RoleController::class,'update'])->name('roles.update');
-    Route::delete('roles/{id}', [RoleController::class,'destroy'])->name('roles.destroy');
-    Route::get('roles/{id}/edit', [RoleController::class,'edit'])->name('roles.edit');
-    Route::get('roles/{id}/grant-permissions', [RoleController::class,'grantPermission'])->name('roles.grantPermission');
-    Route::post('roles/{id}/save-permissions', [RoleController::class,'savePermissions'])->name('roles.savePermissions');
+    Route::get('roles', [RoleController::class, 'index'])->name('roles.index');
+    Route::post('roles', [RoleController::class, 'store'])->name('roles.store');
+    Route::put('roles/{id}', [RoleController::class, 'update'])->name('roles.update');
+    Route::delete('roles/{id}', [RoleController::class, 'destroy'])->name('roles.destroy');
+    Route::get('roles/{id}/edit', [RoleController::class, 'edit'])->name('roles.edit');
+    Route::get('roles/{id}/grant-permissions', [RoleController::class, 'grantPermission'])->name('roles.grantPermission');
+    Route::post('roles/{id}/save-permissions', [RoleController::class, 'savePermissions'])->name('roles.savePermissions');
 });
 
 // ================ USER MANAGEMENT ROUTES =================
 Route::prefix('role-management')->group(function () {
-    Route::get('create-user', [UserController::class,'createUser'])->name('role-management.create-user');
-    Route::post('store-user', [UserController::class,'storeUser'])->name('role-management.store-user');
-    Route::get('user-list', [UserController::class,'userList'])->name('role-management.user-list');
-    Route::get('user-details/{id}', [UserController::class,'getUserDetails'])->name('role-management.user-details');
-    Route::put('user-update/{id}', [UserController::class,'updateUser'])->name('role-management.user-update');
-    Route::post('user-change-password/{id}', [UserController::class,'changePassword'])->name('role-management.user-change-password');
-    Route::get('get-student-details/{id}', [UserController::class,'getStudentDetails'])->name('role-management.get-student-details');
+    Route::get('create-user', [UserController::class, 'createUser'])->name('role-management.create-user');
+    Route::post('store-user', [UserController::class, 'storeUser'])->name('role-management.store-user');
+    Route::get('user-list', [UserController::class, 'userList'])->name('role-management.user-list');
+    Route::get('user-details/{id}', [UserController::class, 'getUserDetails'])->name('role-management.user-details');
+    Route::put('user-update/{id}', [UserController::class, 'updateUser'])->name('role-management.user-update');
+    Route::post('user-change-password/{id}', [UserController::class, 'changePassword'])->name('role-management.user-change-password');
+    Route::get('get-student-details/{id}', [UserController::class, 'getStudentDetails'])->name('role-management.get-student-details');
 });
-
-
 
 
 // ================= COMMON USED ROUTES ================= //
@@ -465,6 +455,7 @@ Route::prefix('student/student-info')->group(function () {
     Route::get('get-intakes/{branchId}', [IntakeController::class, 'getIntakes'])->name('student.get-intakes');
     Route::get('get-courses/{intakeId}', [IntakeController::class, 'getCourses'])->name('student.get-courses');
 });
+
 Route::prefix('account/inventory')->group(function () {
     Route::get('get-students-by-branch/{branchId}', [StudentController::class, 'getStudentsByBranch'])->name('item-issue.get-students-by-branch');
     Route::get('get-intakes-by-branch/{branchId}', [IntakeController::class, 'getIntakesByBranch'])->name('item-issue.get-intakes-by-branch');
@@ -473,19 +464,12 @@ Route::prefix('account/inventory')->group(function () {
     Route::get('get-student-fee-data', [StudentController::class, 'getStudentFeeData'])->name('item-issue.get-student-fee-data');
     Route::get('get-item-price/{id}/{branchId}', [InventoryItemController::class, 'getItemPrice'])->name(name: 'get-item-price');
 });
+
 Route::prefix('item-issue')->group(function () {
     Route::get('get-student-details/{studentId}', [StudentController::class, 'getStudentDetails'])->name('item-issue.get-student-details');
     Route::get('get-courses-by-intake-and-student/{intakeId}/{studentId}', [CourseController::class, 'getCoursesByIntakeAndStudent'])->name('item-issue.get-courses-by-intake-and-student');
     Route::get('get-intake-by-branch-and-student/{branchId}/{studentId}', [IntakeController::class, 'getIntakeByBranchAndStudent'])->name('item-issue.get-intakes-by-branch-and-student');
 });
-
-
-
-
-
-
-
-
 
 
 
