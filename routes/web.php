@@ -282,7 +282,7 @@ Route::prefix('student/fees')->group(function () {
     Route::prefix('other-payment')->group(function () {
         Route::get('/', [OtherPaymentController::class, 'create'])->name('fees.add-invoice');
         Route::post('fee-store', [OtherPaymentController::class, 'store'])->name('fees.invoice.store');
-        Route::get('student/invoice/get-student/{branchId}', [OtherPaymentController::class, 'show'])->name('fees.get-student');
+        Route::get('get-student/{branchId}', [OtherPaymentController::class, 'show'])->name('fees.get-student');
     });
 
     // ================= INVOICE ITEM PRINT ROUTES ================= //
@@ -396,22 +396,22 @@ Route::prefix('account/inventory')->group(function () {
 
 
 // ================= REPORT ROUTES ================= //
-Route::controller(ReportController::class)->prefix('reports')->group(function () {
-    Route::get('course-paid', [HomeController::class, 'coursePaid'])->name('reports.course-paid');
-    Route::get('sell-items', [HomeController::class, 'sellItems'])->name('reports.sell-items');
-    Route::get('issue-items', [HomeController::class, 'issueItems'])->name('reports.issue-items');
-    Route::get('students-paid', [HomeController::class, 'studentsPaid'])->name(name: 'reports.students-paid');
-    Route::get('course-dates-payments', [HomeController::class, 'studentsDatesPayments'])->name(name: 'reports.course-dates-payments');
-    Route::get('course-intake-payments', [HomeController::class, 'courseIntakePayments'])->name('reports.course-intake-payments');
-    Route::get('students-intake-balance', [HomeController::class, 'studentsIntakeBalance'])->name('reports.students-intake-balance');
-    Route::get('invoice-payments', [HomeController::class, 'invoicePayments'])->name('reports.invoice-payments');
-    Route::get('invoice-payments/data', [HomeController::class, 'getInvoicePaymentsData'])->name('reports.invoice-payments.data');
-    Route::get('invoice-payments/export', [HomeController::class, 'exportInvoicePayments'])->name('reports.invoice-payments.export');
-    Route::get('invoice-payments/{id}/items', [HomeController::class, 'getReceiptItemsData'])->name('reports.invoice-payments.items');
-    Route::get('food-payment-report', [HomeController::class, 'foodPaymentReport'])->name('reports.food-payment');
-    Route::get('change-course', [HomeController::class, 'changeCourse'])->name('reports.change-course');
-    Route::get('/student-attendance', [HomeController::class, 'studentAttendance'])->name('reports.student-attendance');
-    Route::get('/reports/student-attendance/export', [HomeController::class, 'exportCsv'])->name('reports.student-attendance.export');
+Route::prefix('reports')->group(function () {
+    Route::get('course-paid', [ReportController::class, 'coursePaid'])->name('reports.course-paid');
+    Route::get('sell-items', [ReportController::class, 'sellItems'])->name('reports.sell-items');
+    Route::get('issue-items', [ReportController::class, 'issueItems'])->name('reports.issue-items');
+    Route::get('students-paid', [ReportController::class, 'studentsPaid'])->name(name: 'reports.students-paid');
+    Route::get('course-dates-payments', [ReportController::class, 'studentsDatesPayments'])->name(name: 'reports.course-dates-payments');
+    Route::get('course-intake-payments', [ReportController::class, 'courseIntakePayments'])->name('reports.course-intake-payments');
+    Route::get('students-intake-balance', [ReportController::class, 'studentsIntakeBalance'])->name('reports.students-intake-balance');
+    Route::get('invoice-payments', [ReportController::class, 'invoicePayments'])->name('reports.invoice-payments');
+    Route::get('invoice-payments/data', [ReportController::class, 'getInvoicePaymentsData'])->name('reports.invoice-payments.data');
+    Route::get('invoice-payments/export', [ReportController::class, 'exportInvoicePayments'])->name('reports.invoice-payments.export');
+    Route::get('invoice-payments/{id}/items', [ReportController::class, 'getReceiptItemsData'])->name('reports.invoice-payments.items');
+    Route::get('food-payment-report', [ReportController::class, 'foodPaymentReport'])->name('reports.food-payment');
+    Route::get('change-course', [ReportController::class, 'changeCourse'])->name('reports.change-course');
+    Route::get('/student-attendance', [ReportController::class, 'studentAttendance'])->name('reports.student-attendance');
+    Route::get('/reports/student-attendance/export', [ReportController::class, 'exportCsv'])->name('reports.student-attendance.export');
 });
 
 Route::get('dashboard', [HomeController::class, 'dashboard'])->name('dashboard');

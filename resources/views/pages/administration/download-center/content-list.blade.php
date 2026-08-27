@@ -120,7 +120,7 @@
                             </div>
                         </div>
                         {{-- {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'download-center.content-list-search', 'method' => 'GET', 'enctype' => 'multipart/form-data']) }} --}}
-                        <form class="form-horizontal" action="{{ route('content-list') }}" method="GET">
+                        <form class="form-horizontal" action="{{ route('download-center.content-list') }}" method="GET">
                             <div class="col-lg-12">
                                 <div class="primary_input sm_mb_20 ">
                                     <label class="primary_input_label" for="">

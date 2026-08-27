@@ -450,9 +450,9 @@ $css = 'background: url(' . url('backEnd/img/login-bg.png') . ')  no-repeat cent
                            {{ old('remember') ? 'checked' : '' }}>
                     <label for="rememberMe" class="remember-text">Remember me</label>
                 </div>
-                <a href="{{ route('recoveryPassword') }}" class="forgot-password">
+                {{-- <a href="{{ route('recoveryPassword') }}" class="forgot-password">
                     <i class="fas fa-key"></i> Forgot Password?
-                </a>
+                </a> --}}
             </div>
 
             <!-- Submit Button -->

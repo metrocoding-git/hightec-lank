@@ -281,7 +281,7 @@
                                                             data-dismiss="modal">
                                                             @lang('common.cancel')
                                                         </button>
-                                                        <form action="{{ route('download-center.video/list-destroy', $video->id) }}" method="POST">
+                                                        <form action="{{ route('download-center.video-list-destroy', $video->id) }}" method="POST">
                                                             @csrf
                                                             @method('DELETE')
                                                             <button class="primary-btn fix-gr-bg" type="submit">
