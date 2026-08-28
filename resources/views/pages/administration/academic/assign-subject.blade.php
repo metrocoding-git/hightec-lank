@@ -27,6 +27,79 @@
             max-height: 300px;
             min-height: 300px;
         }
+
+        /* ---- Modern refresh: cards, table, status badges (Section 20) ---- */
+        .white-box {
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+        }
+
+        .white-box .main-title h3 {
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .white-box .main-title h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 42px;
+            height: 3px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .primary_input_field, select.primary_select {
+            border-radius: 8px !important;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        table.Crm_table_active3 thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            border: none;
+        }
+
+        table.Crm_table_active3 tbody tr {
+            transition: background-color .12s ease;
+        }
+
+        table.Crm_table_active3 tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.025);
+        }
+
+        table.Crm_table_active3 tbody td {
+            vertical-align: middle;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: .3px;
+            white-space: nowrap;
+        }
+
+        .status-badge.status-active {
+            background: #e6f7ec;
+            color: #1e8e4f;
+        }
+
+        .status-badge.status-inactive {
+            background: #fdecec;
+            color: #d64545;
+        }
+
+        .dropdown-item.text-danger:hover {
+            background-color: #fdecec;
+        }
     </style>
 @endpush
 
@@ -49,7 +122,19 @@
     <section class="admin-visitor-area up_st_admin_visitor">
         <div class="container-fluid p-0">
 
+            @php
+                // Button-level permissions (Section 21). The "Copy" row action
+                // is treated as an Add-shortcut (it just pre-fills this same
+                // form via JS, no route of its own) so it's gated on the same
+                // 'assign-subject.store' permission as the Add form itself.
+                $canAddAssignSubject = Auth::user()->hasPermission('assign-subject.store');
+                $canEditAssignSubject = Auth::user()->hasPermission('assign-subject.update');
+                $canDeleteAssignSubject = Auth::user()->hasPermission('assign-subject.destroy');
+                $showAssignSubjectForm = isset($assignSubjectId) ? $canEditAssignSubject : $canAddAssignSubject;
+            @endphp
+
             <div class="row">
+                @if ($showAssignSubjectForm)
                 <div class="col-lg-3">
                     <div class="row">
                         <div class="col-lg-12">
@@ -213,8 +298,9 @@
 
                     </div>
                 </div>
+                @endif
 
-                <div class="col-lg-9">
+                <div class="col-lg-{{ $showAssignSubjectForm ? '9' : '12' }}">
 
                     <div class="row white-box">
                         <div class="col-lg-12">
@@ -231,7 +317,6 @@
                                             <th>Intake</th>
                                             <th>Course</th>
                                             <th>Subjects</th>
-                                            <th>Status</th>
                                             <th>@lang('common.action')</th>
                                         </tr>
                                     </thead>
@@ -258,50 +343,47 @@
                                                         @endif
                                                     @endforeach
                                                 </td>
-                                                <td>{{ $subject->is_active ? 'Activate' : 'Deactivate' }}</td>
-
+                                               
 
                                                 <td valign="top">
                                                     @php
-                                                        $routeList = [
-                                                            '<a class="dropdown-item assign-subject-edit-link" href="' .
-                                                            route('assign-subject.edit', $assign[0]->id) .
-                                                            '">' .
-                                                            __('common.edit') .
-                                                            '</a>',
-
-                                                            '<a class="dropdown-item" data-toggle="modal" data-target="#toggleStatusModal' .
-                                                            $assign[0]->id .
-                                                            '" href="#">' .
-                                                            ($assign[0]->is_active ?? true
-                                                                ? 'Deactivate'
-                                                                : 'Activate') .
-                                                            '</a>',
-                                                            '<a class="dropdown-item copy-btn" href="#" data-intake-id="' .
-                                                            ($assign[0]->intake->id ?? '') .
-                                                            '" data-course-id="' .
-                                                            ($assign[0]->course->id ?? '') .
-                                                            '" data-subject-ids="' .
-                                                            htmlspecialchars(
-                                                                json_encode($assign->pluck('subject.id')->toArray()),
-                                                            ) .
-                                                            '">' .
-                                                            __('common.copy') .
-                                                            '</a>',
-                                                        ];
+                                                        $routeList = [];
+                                                        if ($canEditAssignSubject) {
+                                                            $routeList[] = '<a class="dropdown-item assign-subject-edit-link" href="' .
+                                                                route('assign-subject.edit', $assign[0]->id) .
+                                                                '">' . __('common.edit') . '</a>';
+                                                        }
+                                                        if ($canDeleteAssignSubject) {
+                                                            $routeList[] = '<a class="dropdown-item text-danger" data-toggle="modal" data-target="#deleteModal' .
+                                                                $assign[0]->id . '" href="#">Delete</a>';
+                                                        }
+                                                        if ($canAddAssignSubject) {
+                                                            $routeList[] = '<a class="dropdown-item copy-btn" href="#" data-intake-id="' .
+                                                                ($assign[0]->intake->id ?? '') .
+                                                                '" data-course-id="' .
+                                                                ($assign[0]->course->id ?? '') .
+                                                                '" data-subject-ids="' .
+                                                                htmlspecialchars(
+                                                                    json_encode($assign->pluck('subject.id')->toArray()),
+                                                                ) .
+                                                                '">' . __('common.copy') . '</a>';
+                                                        }
                                                     @endphp
-                                                    <x-drop-down-action-component :routeList="$routeList" />
+                                                    @if (count($routeList) > 0)
+                                                        <x-drop-down-action-component :routeList="$routeList" />
+                                                    @else
+                                                        <span class="text-muted">—</span>
+                                                    @endif
                                                 </td>
                                             </tr>
 
+                                            @if ($canDeleteAssignSubject)
                                             <div class="modal fade admin-query"
-                                                id="toggleStatusModal{{ $assign[0]->id }}">
+                                                id="deleteModal{{ $assign[0]->id }}">
                                                 <div class="modal-dialog modal-dialog-centered">
                                                     <div class="modal-content">
                                                         <div class="modal-header">
-                                                            <h4 class="modal-title">
-                                                                {{ $assign[0]->is_active ?? true ? 'Deactivate Assignment' : 'Activate Assignment' }}
-                                                            </h4>
+                                                            <h4 class="modal-title">Delete Assignment</h4>
                                                             <button type="button" class="close"
                                                                 data-dismiss="modal">&times;</button>
                                                         </div>
@@ -309,13 +391,8 @@
                                                         <div class="modal-body">
                                                             <div class="text-center">
                                                                 <h4>
-                                                                    @if ($assign[0]->is_active ?? true)
-                                                                        Are you sure you want to deactivate this subject
-                                                                        assignment?
-                                                                    @else
-                                                                        Are you sure you want to activate this subject
-                                                                        assignment?
-                                                                    @endif
+                                                                    Are you sure you want to delete this subject
+                                                                    assignment? This cannot be undone.
                                                                 </h4>
                                                             </div>
 
@@ -325,16 +402,17 @@
                                                                     @lang('common.cancel')
                                                                 </button>
                                                                 <form
-                                                                    action="{{ route('assign-subject.toggle-status', $assign[0]->id) }}"
+                                                                    action="{{ route('assign-subject.destroy', $assign[0]->id) }}"
                                                                     method="POST">
                                                                     @csrf
+                                                                    @method('DELETE')
                                                                     {{-- Same page-position mechanism as the
                                                                          Add/Edit form, synced to the live table
                                                                          page right before submit. --}}
                                                                     <input type="hidden" name="dt_page"
                                                                         class="dt-page-field" value="0">
                                                                     <button class="primary-btn fix-gr-bg" type="submit">
-                                                                        {{ $assign[0]->is_active ?? true ? 'Deactivate' : 'Activate' }}
+                                                                        Delete
                                                                     </button>
                                                                 </form>
                                                             </div>
@@ -343,6 +421,7 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            @endif
                                         @endforeach
                                     </tbody>
                                 </table>

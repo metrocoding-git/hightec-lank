@@ -34,6 +34,87 @@
             overflow-x: auto;
             max-width: 100%;
         }
+
+        /* ---- Modern refresh: cards, table, status badges (Section 20) ---- */
+        .white-box {
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+        }
+
+        .white-box .main-title h3 {
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .white-box .main-title h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 42px;
+            height: 3px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .primary_input_field, select.primary_select {
+            border-radius: 8px !important;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        .intake-table-scroll table.Crm_table_active3 thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            border: none;
+        }
+
+        .intake-table-scroll table.Crm_table_active3 tbody tr {
+            transition: background-color .12s ease;
+        }
+
+        .intake-table-scroll table.Crm_table_active3 tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.025);
+        }
+
+        .intake-table-scroll table.Crm_table_active3 tbody td {
+            vertical-align: middle;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: .3px;
+            white-space: nowrap;
+        }
+
+        .status-badge.status-active {
+            background: #e6f7ec;
+            color: #1e8e4f;
+        }
+
+        .status-badge.status-inactive {
+            background: #fdecec;
+            color: #d64545;
+        }
+
+        .dropdown-item.text-danger:hover {
+            background-color: #fdecec;
+        }
+
+        .course-selection-container {
+            border: 1px solid var(--border_color);
+            border-radius: 8px;
+            padding: 12px 14px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
     </style>
 @endpush
 
@@ -56,7 +137,16 @@
     <section class="admin-visitor-area up_st_admin_visitor">
         <div class="container-fluid p-0">
 
+            @php
+                // Button-level permissions (Section 21).
+                $canAddIntake = Auth::user()->hasPermission('intake.store');
+                $canEditIntake = Auth::user()->hasPermission('intake.update');
+                $canDeleteIntake = Auth::user()->hasPermission('intake.destroy');
+                $showIntakeForm = isset($intakeId) ? $canEditIntake : $canAddIntake;
+            @endphp
+
             <div class="row">
+                @if ($showIntakeForm)
                 <div class="col-lg-3">
                     <div class="row">
                         <div class="col-lg-12">
@@ -152,8 +242,9 @@
                         </div>
                     </div>
                 </div>
+                @endif
 
-                <div class="col-lg-9">
+                <div class="col-lg-{{ $showIntakeForm ? '9' : '12' }}">
 
                     <div class="row white-box">
                         <div class="col-lg-12">
@@ -173,7 +264,6 @@
                                                 <th>Branch</th>
                                                 <th>Courses</th>
                                                 <th>Start Date</th>
-                                                <th>Status</th>
                                                 <th>@lang('common.action')</th>
                                             </tr>
                                         </thead>
@@ -191,57 +281,56 @@
                                                         @endforeach
                                                     </td>
                                                     <td>{{ $intake->start_date }}</td>
-                                                    <td>{{  $intake->is_active ? 'Activate' : 'Deactivate'}}</td>
+
                                                     <td valign="top">
 
                                                         @php
-                                                            $routeList = [
-                                                                '<a class="dropdown-item intake-edit-link" href="' .
-                                                                route('intake.edit', $intake->id) .
-                                                                '">' .
-                                                                __('common.edit') .
-                                                                '</a>',
-                                                                '<a class="dropdown-item" data-toggle="modal" data-target="#toggleStatusModal' .
-                                                                $intake->id .
-                                                                '" href="#">' .
-                                                                ($intake->is_active ? 'Deactivate' : 'Activate') .
-                                                                '</a>',
-                                                            ];
+                                                            $routeList = [];
+                                                            if ($canEditIntake) {
+                                                                $routeList[] = '<a class="dropdown-item intake-edit-link" href="' .
+                                                                    route('intake.edit', $intake->id) .
+                                                                    '">' . __('common.edit') . '</a>';
+                                                            }
+                                                            if ($canDeleteIntake) {
+                                                                $routeList[] = '<a class="dropdown-item text-danger" data-toggle="modal" data-target="#deleteModal' .
+                                                                    $intake->id . '" href="#">Delete</a>';
+                                                            }
                                                         @endphp
-                                                        <x-drop-down-action-component :routeList="$routeList" />
+                                                        @if (count($routeList) > 0)
+                                                            <x-drop-down-action-component :routeList="$routeList" />
+                                                        @else
+                                                            <span class="text-muted">—</span>
+                                                        @endif
                                                     </td>
                                                 </tr>
 
-                                                <div class="modal fade admin-query" id="toggleStatusModal{{ $intake->id }}">
+                                                @if ($canDeleteIntake)
+                                                <div class="modal fade admin-query" id="deleteModal{{ $intake->id }}">
                                                     <div class="modal-dialog modal-dialog-centered">
                                                         <div class="modal-content">
                                                             <div class="modal-header">
-                                                                <h4 class="modal-title">
-                                                                    {{ $intake->is_active ? 'Deactivate Intake' : 'Activate Intake' }}
-                                                                </h4>
+                                                                <h4 class="modal-title">Delete Intake</h4>
                                                                 <button type="button" class="close"
                                                                     data-dismiss="modal">&times;</button>
                                                             </div>
                                                             <div class="modal-body text-center">
                                                                 <h4>
-                                                                    @if ($intake->is_active)
-                                                                        Are you sure you want to deactivate "{{ $intake->name }}"?
-                                                                    @else
-                                                                        Are you sure you want to activate "{{ $intake->name }}"?
-                                                                    @endif
+                                                                    Are you sure you want to delete "{{ $intake->name }}"?
+                                                                    This cannot be undone.
                                                                 </h4>
                                                                 <div class="mt-40 d-flex justify-content-between">
                                                                     <button type="button" class="primary-btn tr-bg"
                                                                         data-dismiss="modal">@lang(key: 'common.cancel')</button>
-                                                                    <form action="{{ route('intake.toggle-status', $intake->id) }}"
+                                                                    <form action="{{ route('intake.destroy', $intake->id) }}"
                                                                         method="POST">
                                                                         @csrf
+                                                                        @method('DELETE')
 
                                                                         <input type="hidden" name="dt_page"
                                                                             class="dt-page-field" value="0">
                                                                         <button class="primary-btn fix-gr-bg"
                                                                             type="submit">
-                                                                            {{ $intake->is_active ? 'Deactivate' : 'Activate' }}
+                                                                            Delete
                                                                         </button>
                                                                     </form>
                                                                 </div>
@@ -249,6 +338,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                @endif
                                             @endforeach
                                         </tbody>
                                     </table>

@@ -349,7 +349,7 @@ class ReportController extends Controller
                 'bank_payment_amount' => $feeInvoice->bank_payment_amount ?? '-',
                 'bank_payment_date' => $feeInvoice->bank_payment_date ? \Carbon\Carbon::parse($feeInvoice->bank_payment_date)->format('m/d/Y') : '-',
                 'notes' => $feeInvoice->notes ?? '-',
-                'create_user' => $feeInvoice->invoice && $feeInvoice->invoice->createUser ? $feeInvoice->invoice->createUser->name : 'N/A',
+                'create_user' => $feeInvoice && $feeInvoice->createUser ? $feeInvoice->createUser->name : 'N/A',
                 'invoice_payment_status' => $this->getInvoicePaymentStatus($feeInvoice),
                 'invoice_payment_amount' => $feeInvoice->payment_method == 'Invoice' ? $feeInvoice->invoice_payment_amount : '-',
                 'box_number' => $feeInvoice->payment_type === 'food'

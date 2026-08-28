@@ -79,7 +79,7 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+
 
 
     @include('components.partials.css')
@@ -116,30 +116,30 @@
         }
 
         /* Toast container */
-#toast-container > div {
-    width: 450px !important;
-    min-height: 80px !important;
-    padding: 20px 20px 20px 60px !important;
-    font-size: 16px !important;
-    border-radius: 8px !important;
-}
+        #toast-container>div {
+            width: 450px !important;
+            min-height: 80px !important;
+            padding: 20px 20px 20px 60px !important;
+            font-size: 16px !important;
+            border-radius: 8px !important;
+        }
 
-/* Title */
-.toast-title {
-    font-size: 18px !important;
-    font-weight: 600 !important;
-}
+        /* Title */
+        .toast-title {
+            font-size: 18px !important;
+            font-weight: 600 !important;
+        }
 
-/* Message */
-.toast-message {
-    font-size: 20px !important;
-    line-height: 1.8 !important;
-}
+        /* Message */
+        .toast-message {
+            font-size: 20px !important;
+            line-height: 1.8 !important;
+        }
 
-/* Icon */
-#toast-container > .toast {
-    background-size: 28px !important;
-}
+        /* Icon */
+        #toast-container>.toast {
+            background-size: 28px !important;
+        }
     </style>
     <style>
         :root {
@@ -187,6 +187,8 @@
             --box_shadow: rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px !important;
         }
     </style>
+
+    @stack('css')
     <script>
         window._locale = '{{ App::getLocale() }}';
         window._translations = {!! json_encode(
