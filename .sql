@@ -377,3 +377,5 @@ ALTER TABLE `assign_subjects`
 
 ALTER TABLE `student_categories`
     ADD COLUMN `is_active` TINYINT(1) NOT NULL DEFAULT 1;
+
+ALTER TABLE `permissions` ADD `label` VARCHAR(255) NULL AFTER `permission_name`;

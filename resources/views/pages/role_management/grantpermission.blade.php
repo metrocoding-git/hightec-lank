@@ -1,176 +1,339 @@
 @extends('layouts.app')
 
-@push('css')
+
+@php
+    // Fallback label for any permission that doesn't carry its own `label`.
+// 'course.toggle-status' -> "Toggle Status", 'fee-group-delete' -> "Delete".
+if (!function_exists('permissionLabel')) {
+    function permissionLabel(array $permission): string
+    {
+        if (!empty($permission['label'])) {
+            return $permission['label'];
+        }
+        $tail = collect(explode('.', $permission['name']))->last();
+        $words = preg_split('/[-_]/', $tail);
+        return collect($words)->map(fn($w) => ucfirst($w))->implode(' ');
+    }
+}
+
+// Small icon + accent per common action word, purely cosmetic — falls
+// back to a plain tag icon for anything custom (Share, Generate URL, etc).
+if (!function_exists('permissionIcon')) {
+    function permissionIcon(string $label): string
+    {
+        $key = strtolower($label);
+        return match (true) {
+            str_contains($key, 'view') => 'fa-eye',
+            str_contains($key, 'add') => 'fa-plus',
+            str_contains($key, 'edit') => 'fa-pen',
+            str_contains($key, 'delete') => 'fa-trash',
+            str_contains($key, 'status') => 'fa-toggle-on',
+            str_contains($key, 'print') => 'fa-print',
+            str_contains($key, 'share') => 'fa-share-alt',
+            str_contains($key, 'bulk') => 'fa-layer-group',
+            default => 'fa-tag',
+            };
+        }
+    }
+@endphp
+
+
+@section('mainContent')
     <style>
         :root {
-            --purple-primary: #800080;
-            --purple-dark: #6a006a;
-            --purple-light: #f3e6f8;
-            --gray-light: #f8f9fa;
-            --gray-border: #e3e6f0;
-
-            /* New Blue Colors */
-            --blue-primary: #4682B4;
-            /* SteelBlue */
-            --blue-dark: #36648B;
-            /* Darker SteelBlue */
-            --blue-light: #E0FFFF;
-            /* LightCyan */
+            --gp-blue: #4682B4;
+            --gp-blue-dark: #36648B;
+            --gp-blue-light: #E9F3FA;
+            --gp-border: #e3e6f0;
+            --gp-bg: #f8f9fb;
+            --gp-text: #2c3e50;
+            --gp-muted: #8a94a6;
         }
 
-        /* Breadcrumb */
-        .sms-breadcrumb {
-            background-color: var(--blue-primary);
-            color: #fff;
-        }
-
-        .sms-breadcrumb a {
-            color: #fff;
-        }
-
-        .sms-breadcrumb a:hover {
-            color: #e6e6e6;
-        }
-
-        /* Titles & Buttons */
-        .main-title h3 {
-            color: var(--blue-primary);
-        }
-
-        .primary-btn.fix-gr-bg {
-            background: var(--blue-primary);
-            border-color: var(--blue-primary);
-        }
-
-        .primary-btn.fix-gr-bg:hover {
-            background: var(--blue-dark);
-            border-color: var(--blue-dark);
-        }
-
-        /* Accordion Header */
-        .card-header button {
+        .gp-shell {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            padding: .75rem 1.25rem;
-            background-color: var(--gray-light);
-            border: 1px solid rgba(0, 0, 0, .125);
-            border-radius: .25rem;
-            color: #495057;
-            font-weight: 500;
-            transition: all 0.3s ease;
+            flex-direction: column;
+            gap: 20px;
         }
 
-        .card-header button:hover {
-            background-color: var(--blue-primary);
-            color: #fff;
-        }
-
-        .card-header button[aria-expanded="true"] {
-            background-color: var(--blue-primary);
-            color: #fff;
-        }
-
-        .card-header .ti-plus,
-        .card-header .ti-minus {
-            font-size: 1rem;
-            transition: transform 0.3s ease, color 0.3s ease;
-        }
-
-        .card-header button[aria-expanded="true"] .ti-plus {
-            transform: rotate(45deg);
-            color: #fff;
-        }
-
-        /* Main Category Toggle Active State */
-        .main-category-toggle.active {
-            background-color: var(--blue-primary);
-            color: #fff;
-        }
-
-        /* Submenu Items */
-        .list-group-item {
-            cursor: pointer;
-            padding: .75rem 1.25rem;
-            transition: background-color 0.25s, color 0.25s;
+        .gp-toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: #fff;
+            border: 1px solid var(--gp-border);
+            border-radius: 10px;
+            padding: 16px 20px;
             display: flex;
-            justify-content: space-between;
+            flex-wrap: wrap;
             align-items: center;
+            gap: 14px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
         }
 
-        .list-group-item:hover,
-        .list-group-item.active {
-            background-color: var(--blue-light);
-            color: var(--blue-primary);
-            font-weight: 500;
+        .gp-toolbar h3 {
+            margin: 0;
+            color: var(--gp-blue);
+            font-size: 18px;
+            white-space: nowrap;
         }
 
-        /* Custom Checkboxes (Blue) */
-        .primary_checkbox {
+        .gp-search {
+            flex: 1 1 240px;
             position: relative;
+        }
+
+        .gp-search input {
+            width: 100%;
+            padding: 9px 14px 9px 36px;
+            border: 1px solid var(--gp-border);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color .2s;
+        }
+
+        .gp-search input:focus {
+            outline: none;
+            border-color: var(--gp-blue);
+        }
+
+        .gp-search .fa-search {
+            position: absolute;
+            left: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gp-muted);
+            font-size: 13px;
+        }
+
+        .gp-toolbar-actions {
             display: flex;
-            justify-content: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .gp-btn {
+            border: 1px solid var(--gp-border);
+            background: #fff;
+            color: var(--gp-text);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+        .gp-btn:hover {
+            background: var(--gp-blue-light);
+            border-color: var(--gp-blue);
+            color: var(--gp-blue-dark);
+        }
+
+        .gp-total-badge {
+            background: var(--gp-blue);
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .gp-category {
+            background: #fff;
+            border: 1px solid var(--gp-border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .gp-category-header {
+            display: flex;
             align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 20px;
+            background: var(--gp-bg);
+            border-bottom: 1px solid var(--gp-border);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .gp-category-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: var(--gp-text);
+            font-size: 15px;
+        }
+
+        .gp-category-title .fa-chevron-down {
+            font-size: 11px;
+            color: var(--gp-muted);
+            transition: transform .2s;
+        }
+
+        .gp-category.is-collapsed .fa-chevron-down {
+            transform: rotate(-90deg);
+        }
+
+        .gp-category-count {
+            font-size: 12px;
+            color: var(--gp-muted);
+            font-weight: 500;
+        }
+
+        .gp-category-count.has-selection {
+            color: var(--gp-blue-dark);
+        }
+
+        .gp-select-all-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--gp-muted);
             cursor: pointer;
         }
 
-        .primary_checkbox input {
-            position: absolute;
-            opacity: 0;
-            cursor: pointer;
-            height: 0;
-            width: 0;
+        .gp-windows {
+            padding: 4px 20px 14px;
         }
 
-        .checkmark {
-            height: 18px;
-            width: 18px;
-            background-color: #eee;
-            border-radius: 50%;
-            border: 1px solid #ccc;
-            transition: all 0.25s ease;
-            display: inline-block;
-            /* Ensure it's a block/inline-block to have dimensions */
-        }
-
-        .primary_checkbox:hover .checkmark {
-            background-color: var(--blue-light);
-        }
-
-        /* Use adjacent sibling combinator for more specificity */
-        .primary_checkbox input:checked+.checkmark {
-            background-color: var(--blue-primary);
-            border-color: var(--blue-primary);
-        }
-
-        .checkmark::after {
-            content: "";
-            position: absolute;
+        .gp-category.is-collapsed .gp-windows {
             display: none;
         }
 
-        /* Style the inner dot when checked */
-        .primary_checkbox input:checked+.checkmark::after {
-            display: block;
-            top: 5px;
-            left: 5px;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
+        .gp-window-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px 16px;
+            padding: 12px 0;
+            border-bottom: 1px dashed var(--gp-border);
+        }
+
+        .gp-window-row:last-child {
+            border-bottom: none;
+        }
+
+        .gp-window-name {
+            flex: 0 0 200px;
+            font-weight: 500;
+            color: var(--gp-text);
+            font-size: 13.5px;
+        }
+
+        .gp-chips {
+            flex: 1 1 auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .gp-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border: 1px solid var(--gp-border);
+            border-radius: 999px;
+            font-size: 12.5px;
+            color: var(--gp-muted);
+            cursor: pointer;
+            transition: all .15s;
             background: #fff;
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .permission-table {
-                font-size: 0.875rem;
+        .gp-chip input {
+            display: none;
+        }
+
+        .gp-chip .fa {
+            font-size: 11px;
+        }
+
+        .gp-chip:hover {
+            border-color: var(--gp-blue);
+            color: var(--gp-blue-dark);
+        }
+
+        .gp-chip.is-checked {
+            background: var(--gp-blue);
+            border-color: var(--gp-blue);
+            color: #fff;
+        }
+
+        .gp-empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gp-muted);
+            font-size: 14px;
+        }
+
+        .gp-savebar {
+            position: sticky;
+            bottom: 0;
+            z-index: 20;
+            background: #fff;
+            border: 1px solid var(--gp-border);
+            border-radius: 10px;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, .05);
+        }
+
+        .gp-savebar-count {
+            font-size: 13px;
+            color: var(--gp-muted);
+        }
+
+        .gp-savebar-count strong {
+            color: var(--gp-blue-dark);
+        }
+
+        .gp-save-btn {
+            background: var(--gp-blue);
+            border: none;
+            color: #fff;
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background .2s;
+        }
+
+        .gp-save-btn:hover {
+            background: var(--gp-blue-dark);
+        }
+
+        [data-gp-hidden="true"] {
+            display: none !important;
+        }
+
+        @media (max-width: 767px) {
+            .gp-window-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .gp-window-name {
+                flex-basis: auto;
+            }
+
+            .gp-savebar {
+                flex-direction: column;
+                align-items: stretch;
             }
         }
     </style>
-@endpush
-
-@section('mainContent')
     <section class="sms-breadcrumb mb-40 white-box">
         <div class="container-fluid">
             <div class="row justify-content-between">
@@ -186,261 +349,183 @@
 
     <section class="admin-visitor-area up_st_admin_visitor">
         <div class="container-fluid p-0">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="white-box">
-                        <div class="main-title">
-                            <h3 class="mb-20">Grant Permissions for Role: {{ $role->role_name }}</h3>
+            <form action="{{ route('roles.savePermissions', $role->id) }}" method="POST" id="grantPermissionsForm">
+                @csrf
+
+                <div class="gp-shell">
+                    <div class="gp-toolbar">
+                        <h3>{{ $role->role_name }}</h3>
+
+                        <div class="gp-search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="gpSearch" placeholder="Search a section or permission…"
+                                autocomplete="off">
                         </div>
 
-                        <form action="{{ route('roles.savePermissions', $role->id) }}" method="POST">
-                            @csrf
-                            <div class="row">
-                                <!-- LEFT SIDE: MAIN CATEGORIES -->
-                                <div class="col-lg-4">
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h4 class="mb-0">Main Categories</h4>
-                                        </div>
-                                        <div class="accordion main-category-accordion" id="mainCategoryAccordion">
-                                            @foreach ($menuStructure as $category)
-                                                <div class="card">
-                                                    <div class="card-header" id="heading{{ Str::slug($category['name']) }}">
-                                                        <h5 class="mb-0">
-                                                            <button
-                                                                class="btn btn-link btn-block text-left d-flex justify-content-between align-items-center main-category-toggle {{ $loop->first ? '' : 'collapsed' }}"
-                                                                type="button" data-toggle="collapse"
-                                                                data-target="#collapse{{ Str::slug($category['name']) }}"
-                                                                aria-expanded="{{ $loop->first ? 'true' : 'false' }}"
-                                                                aria-controls="collapse{{ Str::slug($category['name']) }}">
-                                                                {{ $category['name'] }}
-                                                                <i class="ti-plus"></i>
-                                                            </button>
-                                                        </h5>
-                                                    </div>
+                        <div class="gp-toolbar-actions">
+                            <button type="button" class="gp-btn" id="gpSelectAll">Select All</button>
+                            <button type="button" class="gp-btn" id="gpClearAll">Clear All</button>
+                        </div>
 
-                                                    <div id="collapse{{ Str::slug($category['name']) }}"
-                                                        class="collapse {{ $loop->first ? 'show' : '' }}"
-                                                        aria-labelledby="heading{{ Str::slug($category['name']) }}"
-                                                        data-parent="#mainCategoryAccordion">
-                                                        <div class="card-body p-0">
-                                                            <div class="list-group list-group-flush">
-                                                                @foreach ($category['items'] as $item)
-                                                                    <a href="#"
-                                                                        class="list-group-item list-group-item-action item-item"
-                                                                        data-category-name="{{ $category['name'] }}"
-                                                                        data-item-name="{{ $item['name'] }}">
-                                                                        {{ $item['name'] }}
-                                                                    </a>
-                                                                @endforeach
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                        <span class="gp-total-badge" id="gpTotalBadge">0 selected</span>
+                    </div>
+
+                    @foreach ($menuStructure as $category)
+                        @php
+                            $categoryPermissionIds = collect($category['items'] ?? [])->flatMap(
+                                fn($item) => collect($item['permissions'] ?? [])->pluck('id'),
+                            );
+                            $categoryTotal = $categoryPermissionIds->count();
+                            $categorySelected = $categoryPermissionIds
+                                ->filter(fn($id) => in_array($id, $rolePermissions))
+                                ->count();
+                        @endphp
+                        <div class="gp-category" data-gp-category>
+                            <div class="gp-category-header" data-gp-category-toggle>
+                                <label class="gp-select-all-label" onclick="event.stopPropagation()">
+                                    <input type="checkbox" class="gp-category-checkbox" data-gp-category-select
+                                        {{ $categoryTotal > 0 && $categorySelected === $categoryTotal ? 'checked' : '' }}>
+                                </label>
+                                <div class="gp-category-title" style="flex:1">
+                                    <i class="fas fa-chevron-down"></i>
+                                    <span>{{ $category['name'] }}</span>
+                                </div>
+                                <span class="gp-category-count" data-gp-category-count>{{ $categorySelected }} /
+                                    {{ $categoryTotal }}</span>
+                            </div>
+
+                            <div class="gp-windows">
+                                @foreach ($category['items'] ?? [] as $item)
+                                    <div class="gp-window-row" data-gp-window
+                                        data-gp-search-text="{{ strtolower($category['name'] . ' ' . $item['name']) }}">
+                                        <div class="gp-window-name">{{ $item['name'] }}</div>
+                                        <div class="gp-chips">
+                                            @foreach ($item['permissions'] ?? [] as $permission)
+                                                @php $label = permissionLabel($permission); @endphp
+                                                <label
+                                                    class="gp-chip {{ in_array($permission['id'], $rolePermissions) ? 'is-checked' : '' }}"
+                                                    data-gp-search-text="{{ strtolower($category['name'] . ' ' . $item['name'] . ' ' . $label . ' ' . $permission['name']) }}">
+                                                    <input type="checkbox" class="permission-checkbox" name="permissions[]"
+                                                        value="{{ $permission['id'] }}"
+                                                        {{ in_array($permission['id'], $rolePermissions) ? 'checked' : '' }}>
+                                                    <i class="fas {{ permissionIcon($label) }}"></i>
+                                                    <span>{{ $label }}</span>
+                                                </label>
                                             @endforeach
                                         </div>
                                     </div>
-                                </div>
-
-                                <!-- RIGHT SIDE: PERMISSIONS FOR SELECTED CATEGORY -->
-                                <div class="col-lg-8">
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h4 class="mb-0" id="permission-panel-title">
-                                                Select a category from the left to manage permissions
-                                            </h4>
-                                        </div>
-                                        <div class="card-body" id="permission-checkboxes-container">
-                                            <p>Click on a main category from the left to view and manage its permissions.
-                                            </p>
-                                            {{-- <div class="d-flex justify-content-end mb-3">
-                                                <button type="button" class="primary-btn fix-gr-bg small mr-2" id="selectAllPermissions">
-                                                    <span class="ti-check-box"></span> Select All
-                                                </button>
-                                                <button type="button" class="primary-btn fix-gr-bg small" id="unselectAllPermissions">
-                                                    <span class="ti-close"></span> Unselect All
-                                                </button>
-                                            </div> --}}
-                                        </div>
-                                    </div>
-                                </div>
+                                @endforeach
                             </div>
+                        </div>
+                    @endforeach
 
-                            <div class="row mt-40">
-                                <div class="col-lg-12 text-center">
-                                    <button class="primary-btn fix-gr-bg" type="submit">
-                                        <span class="ti-check"></span>
-                                        Save Permissions
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
+                    <div class="gp-empty-state" id="gpEmptyState" style="display:none">
+                        No sections match your search.
+                    </div>
 
+                    <div class="gp-savebar">
+                        <span class="gp-savebar-count" id="gpSavebarCount"></span>
+                        <button type="submit" class="gp-save-btn">
+                            <i class="fas fa-check"></i> Save Permissions
+                        </button>
                     </div>
                 </div>
-            </div>
+            </form>
         </div>
     </section>
 @endsection
 
 @push('script')
     <script>
-        $(document).ready(function() {
-            const menuStructure = @json($menuStructure);
-            let selectedPermissionIds = @json($rolePermissions);
-            console.log('Initial selectedPermissionIds:', selectedPermissionIds);
+        $(function() {
+            const $categories = $('[data-gp-category]');
+            const $totalBadge = $('#gpTotalBadge');
+            const $savebarCount = $('#gpSavebarCount');
+            const $emptyState = $('#gpEmptyState');
 
-            function renderPermissionsForCategory(categoryName, itemName) {
-                const container = $('#permission-checkboxes-container');
-                const title = $('#permission-panel-title');
-                container.empty();
-                title.text('Permissions for ' + itemName);
+            function updateCounts() {
+                let grandTotal = 0;
+                let grandChecked = 0;
 
-                const category = menuStructure.find(item => item.name === categoryName);
+                $categories.each(function() {
+                    const $cat = $(this);
+                    const $boxes = $cat.find('.permission-checkbox');
+                    const total = $boxes.length;
+                    const checked = $boxes.filter(':checked').length;
 
-                if (category) {
-                    const item = category.items.find(i => i.name === itemName);
+                    $cat.find('[data-gp-category-count]').text(checked + ' / ' + total)
+                        .toggleClass('has-selection', checked > 0);
 
-                    if (item && item.permissions.length > 0) {
-                        console.log(`Rendering permissions for ${itemName}. Current selectedPermissionIds:`,
-                            selectedPermissionIds);
+                    const $catToggle = $cat.find('[data-gp-category-select]');
+                    $catToggle.prop('checked', total > 0 && checked === total);
+                    $catToggle.prop('indeterminate', checked > 0 && checked < total);
 
-                        let html = `<div class="table-responsive table-responsive-scroll">
-                        <table class="table permission-table">
-                            <thead>
-                                <tr>
-                                    <th>Permission Name</th>
-                                    <th>Access</th>
-                                </tr>
-                            </thead>
-                            <tbody>`;
-                        item.permissions.forEach(permission => {
-                            const isChecked = selectedPermissionIds.includes(parseInt(permission.id));
-                            console.log(
-                                `  - Permission: ${permission.name} (ID: ${permission.id}), Is Checked: ${isChecked}`
-                                );
-                            html += `
-                        <tr>
-                            <td>${permission.name}</td>
-                            <td>
-                                <label class="primary_checkbox">
-                                    <input type="checkbox" class="permission-checkbox" value="${permission.id}" ${isChecked ? 'checked' : ''}>
-                                    <span class="checkmark"></span>
-                                </label>
-                            </td>
-                        </tr>`;
-                        });
-                        html += `   </tbody>
-                    </table>
-                </div>`;
-                        container.append(html);
-                    } else {
-                        container.append('<p>No permissions found for this item.</p>');
-                    }
-                } else {
-                    container.append('<p>Category not found.</p>');
-                }
+                    grandTotal += total;
+                    grandChecked += checked;
+                });
+
+                $totalBadge.text(grandChecked + ' selected');
+                $savebarCount.html(grandChecked ?
+                    '<strong>' + grandChecked + '</strong> of ' + grandTotal + ' permissions selected' :
+                    'No permissions selected yet');
             }
 
-            // Event listener for checkbox changes - FIXED VERSION
+            // Chip <-> checkbox sync
             $(document).on('change', '.permission-checkbox', function() {
-                const permissionId = parseInt($(this).val());
-                const isChecked = $(this).is(':checked');
-
-                console.log(`Checkbox changed - ID: ${permissionId}, Checked: ${isChecked}`);
-
-                if (isChecked) {
-                    // Add to selected permissions if not already present
-                    if (!selectedPermissionIds.includes(permissionId)) {
-                        selectedPermissionIds.push(permissionId);
-                        console.log(`Added permission ${permissionId} to selectedPermissions`);
-                    }
-                } else {
-                    // Remove from selected permissions
-                    selectedPermissionIds = selectedPermissionIds.filter(id => id !== permissionId);
-                    console.log(`Removed permission ${permissionId} from selectedPermissions`);
-                }
-
-                console.log('Updated selectedPermissionIds:', selectedPermissionIds);
+                $(this).closest('.gp-chip').toggleClass('is-checked', this.checked);
+                updateCounts();
             });
 
-            // Event listener for item clicks (sub-sub-category)
-            $(document).on('click', '.item-item', function(e) {
-                e.preventDefault();
-                $('.item-item').removeClass('active');
-                $(this).addClass('active');
-                const categoryName = $(this).data('category-name');
-                const itemName = $(this).data('item-name');
-                renderPermissionsForCategory(categoryName, itemName);
+            // Category header checkbox: select/clear every permission in that category
+            $(document).on('change', '[data-gp-category-select]', function() {
+                const checked = this.checked;
+                $(this).closest('[data-gp-category]').find('.permission-checkbox')
+                    .prop('checked', checked)
+                    .closest('.gp-chip').toggleClass('is-checked', checked);
+                updateCounts();
             });
 
-            // Event listener for main category toggles
-            $(document).on('click', '.main-category-toggle', function() {
-                $('.main-category-toggle').removeClass('active');
-                if (!$(this).hasClass('collapsed')) {
-                    $(this).addClass('active');
-                }
+            // Collapse/expand a category by clicking its header (not the checkbox)
+            $(document).on('click', '[data-gp-category-toggle]', function() {
+                $(this).closest('[data-gp-category]').toggleClass('is-collapsed');
             });
 
-            // Handle form submission to include all selected permissions
-            $('form').on('submit', function() {
-                // Clear any existing hidden inputs for permissions to avoid duplicates
-                $(this).find('input[name="permissions[]"]').remove();
+            // Toolbar Select All / Clear All (respects current search filter)
+            $('#gpSelectAll').on('click', function() {
+                $('[data-gp-window]:visible, [data-gp-window]:not([data-gp-hidden])').find(
+                        '.permission-checkbox')
+                    .prop('checked', true).closest('.gp-chip').addClass('is-checked');
+                updateCounts();
+            });
+            $('#gpClearAll').on('click', function() {
+                $('.permission-checkbox').prop('checked', false).closest('.gp-chip').removeClass(
+                    'is-checked');
+                updateCounts();
+            });
 
-                console.log('Form submitting with permissions:', selectedPermissionIds);
+            // Live search across category / window / permission names
+            $('#gpSearch').on('input', function() {
+                const term = $(this).val().trim().toLowerCase();
+                let anyVisible = false;
 
-                // Add hidden inputs for all selected permissions
-                selectedPermissionIds.forEach(id => {
-                    $('<input>').attr({
-                        type: 'hidden',
-                        name: 'permissions[]',
-                        value: id
-                    }).appendTo(this);
+                $('[data-gp-window]').each(function() {
+                    const haystack = $(this).data('gp-search-text') + '';
+                    const matches = term === '' || haystack.includes(term);
+                    $(this).attr('data-gp-hidden', matches ? null : 'true');
+                    if (matches) anyVisible = true;
                 });
-            });
 
-            // Select All functionality - UPDATED
-            $(document).on('click', '#selectAllPermissions', function() {
-                console.log('Select All clicked');
-                $('.permission-checkbox').each(function() {
-                    const permissionId = parseInt($(this).val());
-                    if (!$(this).is(':checked')) {
-                        $(this).prop('checked', true);
-                        if (!selectedPermissionIds.includes(permissionId)) {
-                            selectedPermissionIds.push(permissionId);
-                        }
-                    }
+                $categories.each(function() {
+                    const $cat = $(this);
+                    const hasVisibleWindow = $cat.find('[data-gp-window]:not([data-gp-hidden])')
+                        .length > 0;
+                    $cat.attr('data-gp-hidden', hasVisibleWindow ? null : 'true');
                 });
-                console.log('Selected Permissions after Select All:', selectedPermissionIds);
+
+                $emptyState.toggle(!anyVisible);
             });
 
-            // Unselect All functionality - UPDATED
-            $(document).on('click', '#unselectAllPermissions', function() {
-                console.log('Unselect All clicked');
-                $('.permission-checkbox').each(function() {
-                    const permissionId = parseInt($(this).val());
-                    $(this).prop('checked', false);
-                    selectedPermissionIds = selectedPermissionIds.filter(id => id !== permissionId);
-                });
-                console.log('Selected Permissions after Unselect All:', selectedPermissionIds);
-            });
-
-            // Load permissions for the first item on page load
-            if (menuStructure.length > 0) {
-                const firstItemItem = $('.item-item').first();
-                if (firstItemItem.length > 0) {
-                    firstItemItem.addClass('active');
-                    const categoryName = firstItemItem.data('category-name');
-                    const itemName = firstItemItem.data('item-name');
-                    renderPermissionsForCategory(categoryName, itemName);
-
-                    const firstMainCategoryToggle = firstItemItem.closest('.collapse').prev('.card-header').find(
-                        '.main-category-toggle');
-                    if (firstMainCategoryToggle.length > 0) {
-                        firstMainCategoryToggle.addClass('active');
-                    }
-                }
-            }
+            updateCounts();
         });
     </script>
 @endpush
