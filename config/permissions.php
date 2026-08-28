@@ -1,5 +1,6 @@
 <?php
 
+
 return [
 
     'categories' => [
@@ -174,8 +175,13 @@ return [
                 ],
                 [
                     'name' => 'Scan Attendance',
-                    'window' => ['key' => 'student-attendance', 'label' => 'View', 'flag' => 'Route group is withoutMiddleware(permission) by your explicit Section 7 choice — this key only controls whether the sidebar link shows, not whether the route itself is protected. All 8 scan-attendance.* sub-routes (course.scan, subjects, subject.scan, practical.resolve, practical.scan, undo, confirm-out, today-log) are excluded the same way — none need their own key unless you revisit that decision.'],
-                    'buttons' => [],
+                    'window' => ['key' => 'scan-attendance', 'label' => 'View', 'flag' => "RENAMED (Section 19) from 'student-attendance' to 'scan-attendance' — this key must equal the real route name for the plain (unparameterized) 'permission' middleware to match it, and the real route is named 'scan-attendance', not 'student-attendance'. This is what actually fixed the 403-for-everyone bug from Section 18; back to the same route-name-matching convention every other window/button in this file already uses, no more shared-permission-with-a-parameter trick needed here."],
+                    'buttons' => [
+                        ['key' => 'scan-attendance.course.scan', 'label' => 'Course Scan'],
+                        ['key' => 'scan-attendance.subject.scan', 'label' => 'Subject Scan'],
+                        ['key' => 'scan-attendance.practical.scan', 'label' => 'Practical Scan'],
+                        ['key' => 'scan-attendance.undo', 'label' => 'Undo', 'flag' => 'Undo the last scan.'],
+                    ],
                 ],
                 [
                     'name' => 'Student Add Intake & Courses',
@@ -347,9 +353,9 @@ return [
                         ['key' => 'inventory.item-sell-bill', 'label' => 'Re-print'],
                         ['key' => 'view-item-sell', 'label' => 'View One Sale', 'flag' => 'Part of the 5-route Item Sell ambiguity — see the Item Sell window\'s flag above.'],
                         ['key' => 'return-item-sell', 'label' => 'Return'],
-                        ['key' => 'update-item-sell-status', 'label' => 'Update Status'],
-                        ['key' => 'direct-return-item-sell', 'label' => 'Direct Return'],
-                        ['key' => 'return-item-sell-view', 'label' => 'Return View'],
+                        // ['key' => 'update-item-sell-status', 'label' => 'Update Status'],
+                        // ['key' => 'direct-return-item-sell', 'label' => 'Direct Return'],
+                        // ['key' => 'return-item-sell-view', 'label' => 'Return View'],
                     ],
                 ],
             ],
