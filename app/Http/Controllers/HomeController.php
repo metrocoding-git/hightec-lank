@@ -51,6 +51,7 @@ use App\Models\StudentVerification;
 use App\Models\Category;
 use App\Models\ItemSellBatch;
 use App\Models\ItemIssueBatch;
+use App\Models\SubjectAttendanceSession;
 
 class HomeController extends Controller
 {
@@ -97,6 +98,14 @@ class HomeController extends Controller
             || Auth::user()->hasPermission('reports.invoice-payments')
             || Auth::user()->hasPermission('reports.food-payment')
             || Auth::user()->hasPermission('reports.student-attendance');
+        // New — Student Attendance dashboard widget: reuses the same keys
+        // already used elsewhere for attendance access (scan-attendance
+        // gates the live scanner page; reports.student-attendance /
+        // reports.scan-attendance gate the report). Counts, not amounts, so
+        // this is intentionally NOT folded into $canViewAmounts above.
+        $canViewAttendance = Auth::user()->hasPermission('scan-attendance')
+            || Auth::user()->hasPermission('reports.student-attendance')
+            || Auth::user()->hasPermission('reports.scan-attendance');
 
         // Fetch counts
         $studentsCount = Student::count();
@@ -239,6 +248,72 @@ class HomeController extends Controller
             ];
         })->values();
 
+        // Student Attendance snapshot (new): built directly against
+        // SubjectAttendanceSession — the confirmed model behind
+        // ReportController::studentAttendanceQuery() (its Course/Subject/
+        // Practical split and notCheckpoint()/open() scopes are proven
+        // working there already) — scoped to "today" and "last 7 days"
+        // rather than a user-chosen filter range, so nothing here is a new
+        // guess about schema.
+        $attendanceTodayCount = 0;
+        $attendanceOpenCount = 0;
+        $attendanceCompletedTodayCount = 0;
+        $attendanceTypeBreakdown = collect();
+        $attendanceTrend = collect();
+
+        if ($canViewAttendance) {
+            $today = now()->toDateString();
+
+            $attendanceTodayCount = SubjectAttendanceSession::whereDate('attendance_date', $today)
+                ->notCheckpoint()
+                ->count();
+
+            $attendanceOpenCount = SubjectAttendanceSession::whereDate('attendance_date', $today)
+                ->notCheckpoint()
+                ->open()
+                ->count();
+
+            $attendanceCompletedTodayCount = max($attendanceTodayCount - $attendanceOpenCount, 0);
+
+            $attendanceTypeBreakdown = collect([
+                [
+                    'label' => 'Course',
+                    'value' => SubjectAttendanceSession::whereDate('attendance_date', $today)
+                        ->whereNull('checkpoint_type')
+                        ->whereNull('subject_id')
+                        ->count(),
+                ],
+                [
+                    'label' => 'Subject',
+                    'value' => SubjectAttendanceSession::whereDate('attendance_date', $today)
+                        ->whereNull('checkpoint_type')
+                        ->whereHas('subject', fn($q) => $q->where('type', 'T'))
+                        ->count(),
+                ],
+                [
+                    'label' => 'Practical',
+                    'value' => SubjectAttendanceSession::whereDate('attendance_date', $today)
+                        ->whereNull('checkpoint_type')
+                        ->whereHas('subject', fn($q) => $q->where('type', 'P'))
+                        ->count(),
+                ],
+            ])->filter(fn($row) => $row['value'] > 0)->values();
+
+            // 7-day trend — one COUNT query per day (7 total) rather than a
+            // single GROUP BY, so it works the same whether attendance_date
+            // is a date or datetime column, and stays cheap either way.
+            $attendanceTrend = collect();
+            for ($i = 6; $i >= 0; $i--) {
+                $day = now()->subDays($i);
+                $attendanceTrend->push([
+                    'day' => $day->format('D'),
+                    'count' => SubjectAttendanceSession::whereDate('attendance_date', $day->toDateString())
+                        ->notCheckpoint()
+                        ->count(),
+                ]);
+            }
+        }
+
         return view('pages.dashboard.dashboard', compact(
             'user',
             'canViewStudents',
@@ -247,6 +322,7 @@ class HomeController extends Controller
             'canViewAcademic',
             'canViewInventory',
             'canViewAmounts',
+            'canViewAttendance',
             'studentsCount',
             'teachersCount',
             'labourCount',
@@ -269,7 +345,12 @@ class HomeController extends Controller
             'totalItemCategories',
             'itemSellCountThisMonth',
             'itemIssueCountThisMonth',
-            'itemSellTrend'
+            'itemSellTrend',
+            'attendanceTodayCount',
+            'attendanceOpenCount',
+            'attendanceCompletedTodayCount',
+            'attendanceTypeBreakdown',
+            'attendanceTrend'
         ));
     }
 

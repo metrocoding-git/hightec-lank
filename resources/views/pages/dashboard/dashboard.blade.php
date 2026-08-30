@@ -342,7 +342,7 @@
         <p>Here's what's happening across your branches today.</p>
     </div>
 
-    @if (!$canViewStudents && !$canViewStaff && !$canViewFinance && !$canViewAcademic && !$canViewInventory)
+    @if (!$canViewStudents && !$canViewStaff && !$canViewFinance && !$canViewAcademic && !$canViewInventory && !$canViewAttendance)
         <div class="white-box no-access-card">
             <i class="fas fa-lock"></i>
             You don't have permission to view any dashboard widgets yet. Contact an administrator if you believe this is a mistake.
@@ -660,7 +660,95 @@
         </section>
     @endif
 
-    @if ($canViewFinance || $canViewStudents || $canViewStaff || $canViewInventory)
+    {{-- Student Attendance (new): reuses the confirmed SubjectAttendanceSession
+         model behind ReportController::studentAttendanceQuery() — the same
+         model, the same notCheckpoint()/open()/type-T-P scopes/filters already
+         proven working on the Student Attendance report page, just scoped to
+         "today" and "last 7 days" instead of a user-chosen filter range, so
+         nothing here is a new guess about schema. --}}
+    @if ($canViewAttendance)
+        <section class="mb-30">
+            <div class="dash-section-header">
+                <span class="dsh-icon"><i class="fas fa-user-check"></i></span>
+                <div>
+                    <h3>Student Attendance</h3>
+                    <span class="dsh-sub">Today's scan activity across Course / Subject / Practical sessions</span>
+                </div>
+            </div>
+
+            <div class="row row-gap-24 mb-30">
+                <div class="col-lg-4 col-sm-6">
+                    <div class="white-box mini-stat-card">
+                        <span class="mini-stat-icon"><i class="fas fa-clipboard-list"></i></span>
+                        <div>
+                            <div class="mini-stat-value">{{ number_format($attendanceTodayCount) }}</div>
+                            <p class="mini-stat-label">Sessions Today</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-sm-6">
+                    <div class="white-box mini-stat-card">
+                        <span class="mini-stat-icon"><i class="fas fa-door-open"></i></span>
+                        <div>
+                            <div class="mini-stat-value">{{ number_format($attendanceOpenCount) }}</div>
+                            <p class="mini-stat-label">Currently Checked In</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-sm-6">
+                    <div class="white-box mini-stat-card">
+                        <span class="mini-stat-icon"><i class="fas fa-check-circle"></i></span>
+                        <div>
+                            <div class="mini-stat-value">{{ number_format($attendanceCompletedTodayCount) }}</div>
+                            <p class="mini-stat-label">Completed Today</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row row-gap-24">
+                <div class="col-lg-5">
+                    <div class="white-box chart-card">
+                        <div class="dash-section-header">
+                            <span class="dsh-icon"><i class="fas fa-chart-pie"></i></span>
+                            <div>
+                                <h3>Today's Sessions by Type</h3>
+                            </div>
+                        </div>
+                        @if ($attendanceTypeBreakdown->sum('value') > 0)
+                            <div id="attendanceTypeChart" style="height:220px;"></div>
+                            <div class="chart-legend">
+                                @php $atColors = ['var(--gradient_1)', 'var(--gradient_2)', '#c9cdd6']; @endphp
+                                @foreach ($attendanceTypeBreakdown as $i => $row)
+                                    <span class="legend-item"><span class="legend-dot" style="background:{{ $atColors[$i] ?? '#c9cdd6' }};"></span> {{ $row['label'] }} <strong>{{ $row['value'] }}</strong></span>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="chart-empty">No attendance scans recorded yet today.</div>
+                        @endif
+                    </div>
+                </div>
+                <div class="col-lg-7">
+                    <div class="white-box chart-card">
+                        <div class="dash-section-header">
+                            <span class="dsh-icon"><i class="fas fa-chart-line"></i></span>
+                            <div>
+                                <h3>Attendance Trend</h3>
+                                <span class="dsh-sub">Last 7 days</span>
+                            </div>
+                        </div>
+                        @if ($attendanceTrend->sum('count') > 0)
+                            <div id="attendanceTrendChart" style="height:220px;"></div>
+                        @else
+                            <div class="chart-empty">No attendance scans in the last 7 days.</div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </section>
+    @endif
+
+    @if ($canViewFinance || $canViewStudents || $canViewStaff || $canViewInventory || $canViewAttendance)
         <script>
             $(document).ready(function() {
                 var gradient1 = getComputedStyle(document.documentElement).getPropertyValue('--gradient_1').trim() || '#6a5af9';
@@ -734,6 +822,33 @@
                             data: @json($invoiceStatusBreakdown),
                             colors: [gradient1, gradient2, '#c9cdd6', '#e0653f'],
                             resize: true
+                        });
+                    }
+                @endif
+
+                {{-- Student Attendance charts (new) --}}
+                @if ($canViewAttendance && $attendanceTypeBreakdown->sum('value') > 0)
+                    if ($('#attendanceTypeChart').length) {
+                        Morris.Donut({
+                            element: 'attendanceTypeChart',
+                            data: @json($attendanceTypeBreakdown),
+                            colors: [gradient1, gradient2, '#c9cdd6'],
+                            resize: true
+                        });
+                    }
+                @endif
+
+                @if ($canViewAttendance && $attendanceTrend->sum('count') > 0)
+                    if ($('#attendanceTrendChart').length) {
+                        Morris.Line({
+                            element: 'attendanceTrendChart',
+                            data: @json($attendanceTrend),
+                            xkey: 'day',
+                            ykeys: ['count'],
+                            labels: ['Sessions'],
+                            lineColors: [gradient1],
+                            resize: true,
+                            hideHover: 'auto'
                         });
                     }
                 @endif

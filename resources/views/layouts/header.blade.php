@@ -312,6 +312,11 @@
 
 
         /* new */
+        #table_id_wrapper {
+            width: 100%;
+            border-radius: 12px;
+        }
+        
         .rp-table-wrapper {
             width: 100%;
             overflow-x: auto;
