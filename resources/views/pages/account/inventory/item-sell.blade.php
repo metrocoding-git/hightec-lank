@@ -1,10 +1,148 @@
 @extends('layouts.app')
+{{-- BUG FIX (Section 34): browser-tab title called @lang('academics.About') --
+     the same leftover Academics-template placeholder found and fixed on many
+     other pages across this project -- instead of naming this page. Reused
+     the 'item_sell' key already used correctly elsewhere on this
+     same page. --}}
 @section('title')
-    @lang('academics.About')
+    @lang('inventory.item_sell')
 @endsection
 @section('mainContent')
     @push('css')
         <style type="text/css">
+            /* ---- Modern refresh: cards, table, breadcrumb (Section 34) ----
+                                             BUG FIX: this page already used the sms-breadcrumb markup and
+                                             .white-box/#table_id markup, but never defined any CSS for them
+                                             anywhere in the Inventory module, so the banner and cards
+                                             rendered completely unstyled. Adding the same breadcrumb/card/
+                                             table CSS used across the rest of the app. ---- */
+            .sms-breadcrumb {
+                background: #fff;
+                border-radius: 12px;
+                box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+                border: 1px solid var(--border_color);
+                padding: 18px 24px;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .sms-breadcrumb::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                width: 4px;
+                background: linear-gradient(180deg, var(--gradient_1), var(--gradient_2));
+            }
+
+            .sms-breadcrumb .row {
+                align-items: center;
+            }
+
+            .sms-breadcrumb h1 {
+                font-size: 20px;
+                font-weight: 700;
+                margin: 0;
+            }
+
+            .sms-breadcrumb .bc-pages {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+
+            .sms-breadcrumb .bc-pages a {
+                font-size: 13px;
+                font-weight: 500;
+                color: #8a90a2;
+                text-decoration: none;
+                transition: color .15s ease;
+            }
+
+            .sms-breadcrumb .bc-pages a:hover {
+                color: var(--gradient_1);
+            }
+
+            .sms-breadcrumb .bc-pages a:not(:last-child)::after {
+                content: '\203A';
+                margin: 0 8px;
+                color: #c7cbd6;
+                font-weight: 400;
+            }
+
+            .sms-breadcrumb .bc-pages a:last-child {
+                color: var(--gradient_1);
+                font-weight: 700;
+                pointer-events: none;
+            }
+
+            .white-box {
+                border-radius: 12px;
+                box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+                border: 1px solid var(--border_color);
+            }
+
+            .white-box .main-title h3,
+            .white-box .main-title h4,
+            .white-box .main-title h5 {
+                font-weight: 700;
+                position: relative;
+                padding-bottom: 10px;
+            }
+
+            .white-box .main-title h3::after {
+                content: '';
+                position: absolute;
+                left: 0;
+                bottom: 0;
+                width: 42px;
+                height: 3px;
+                border-radius: 3px;
+                background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+            }
+
+            .primary_input_field,
+            select.primary_select {
+                border-radius: 8px !important;
+                transition: border-color .15s ease, box-shadow .15s ease;
+            }
+
+            #table_id thead tr th {
+                background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+                color: #fff;
+                font-weight: 600;
+                white-space: nowrap;
+                border: none;
+            }
+
+            #table_id tbody tr {
+                transition: background-color .12s ease;
+            }
+
+            #table_id tbody tr:hover {
+                background-color: rgba(0, 0, 0, 0.025);
+            }
+
+            #table_id tbody td {
+                vertical-align: middle;
+            }
+
+            .text-muted {
+                color: #9aa1ac !important;
+            }
+
+            .status-badge {
+                display: inline-flex;
+                align-items: center;
+                padding: 4px 14px;
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: 600;
+                border: none;
+                color: #fff;
+            }
+
             #productTable tbody tr {
                 border-bottom: 1px solid #FFFFFF !important;
             }
@@ -19,6 +157,10 @@
             }
         </style>
     @endpush
+    @php
+        // Button-level permission (Section 34).
+        $canSaveItemSell = Auth::user()->hasPermission('save-item-sell-data');
+    @endphp
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
             <div class="row justify-content-between">
@@ -259,32 +401,6 @@
                                                 </div>
                                             </div>
 
-                                            {{-- <div class="col-lg-12 mb-30 d-none" id="add_item_sell_bankAccount">
-                                                <div class="primary_input">
-                                                    <label class="primary_input_label" for="">hh
-                                                        <span></span> </label>
-                                                    <select
-                                                        class="primary_select  form-control{{ $errors->has('bank_id') ? ' is-invalid' : '' }}"
-                                                        name="bank_id" id="account_id">
-                                                        @if (isset($account_id))
-                                                            @foreach ($account_id as $key => $value)
-                                                                <option value="{{ $value->id }}">
-                                                                    {{ $value->account_name }}
-                                                                    ({{ $value->bank_name }})
-                                                                </option>
-                                                            @endforeach
-                                                        @endif
-                                                    </select>
-                                                    <div class="text-danger" id="accountError"></div>
-
-                                                    @if ($errors->has('bank_id'))
-                                                        <span class="text-danger invalid-select" role="alert">
-                                                            <strong>{{ $errors->first('bank_id') }}</strong>
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            </div> --}}
-
                                             <div class="col-lg-12 mb-20">
                                                 <div class="primary_input">
                                                     <label class="primary_input_label" for="">@lang('common.description')
@@ -306,6 +422,15 @@
                     </div>
 
                     <div class="col-lg-9">
+                        <div class="white-box mb-10">
+                            <div class="col-lg-12 text-right p-0">
+                                <button type="button" class="primary-btn small fix-gr-bg col-12 p-2" id="addRowBtn">
+                                    <span class="ti-plus pr-2"></span>
+                                    @lang('common.add')
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="white-box">
                             <div class="row xm_3 aling-tiems-center">
                                 <div class="col-lg-6 no-gutters col-6 xs_mt_0">
@@ -314,12 +439,6 @@
                                     </div>
                                 </div>
 
-                                <div class="col-lg-6 col-6 text-right col-md-6 col-5">
-                                    <button type="button" class="primary-btn small fix-gr-bg" id="addRowBtn">
-                                        <span class="ti-plus pr-2"></span>
-                                        @lang('common.add')
-                                    </button>
-                                </div>
                             </div>
 
                             <div class="row">
@@ -385,55 +504,48 @@
                                 </div>
                             </div>
 
-                            <div class="row mt-2">
-                                <div class="col-lg-12">
 
-                                    <div class="white-box">
-                                        <div class="d-none">
-                                            <input type="checkbox" id="full_paid"
-                                                class="common-checkbox form-control{{ $errors->has('full_paid') ? ' is-invalid' : '' }}"
-                                                name="full_paid" value="1" checked>
-                                            <label for="full_paid">@lang('inventory.full_paid')</label>
+                        </div>
 
-
-                                            <div class="primary_input md_mb_20">
-                                                <label class="primary_input_label"
-                                                    for="">@lang('inventory.total_paid')</label>
-                                                <input class="primary_input_field" type="number" step="0.1"
-                                                    value="0" name="totalPaid" id="totalPaid"
-                                                    onkeyup="paidAmount();">
-                                                <input type="hidden" id="totalPaidValue" name="totalPaidValue">
+                        @if ($canSaveItemSell)
+                            <div class="white-box mt-10">
+                                <div class="d-none">
+                                    <input type="checkbox" id="full_paid"
+                                        class="common-checkbox form-control{{ $errors->has('full_paid') ? ' is-invalid' : '' }}"
+                                        name="full_paid" value="1" checked>
+                                    <label for="full_paid">@lang('inventory.full_paid')</label>
 
 
-                                            </div>
+                                    <div class="primary_input md_mb_20">
+                                        <label class="primary_input_label" for="">@lang('inventory.total_paid')</label>
+                                        <input class="primary_input_field" type="number" step="0.1" value="0"
+                                            name="totalPaid" id="totalPaid" onkeyup="paidAmount();">
+                                        <input type="hidden" id="totalPaidValue" name="totalPaidValue">
 
 
-                                            <div class="primary_input md_mb_10">
-                                                <label class="primary_input_label"
-                                                    for="">@lang('inventory.total_due')</label>
-                                                <input class="primary_input_field" type="text" name="totalDue"
-                                                    value="0.00" id="totalDue" readonly>
-                                                <input type="hidden" id="totalDueValue" name="totalDueValue">
+                                    </div>
 
 
-                                            </div>
-                                        </div>
-
-
-                                        <div class="row">
-                                            <div class="col-12  text-center">
-                                                <button class="primary-btn fix-gr-bg w-100" data-toggle="tooltip">
-                                                    <span class="ti-check"></span>
-                                                    @lang('inventory.sell')
-                                                </button>
-                                            </div>
-                                        </div>
+                                    <div class="primary_input md_mb_10">
+                                        <label class="primary_input_label" for="">@lang('inventory.total_due')</label>
+                                        <input class="primary_input_field" type="text" name="totalDue" value="0.00"
+                                            id="totalDue" readonly>
+                                        <input type="hidden" id="totalDueValue" name="totalDueValue">
 
 
                                     </div>
                                 </div>
+                                <div class="row">
+                                    <div class="col-12  text-center">
+                                        <button class="primary-btn fix-gr-bg w-100" data-toggle="tooltip">
+                                            <span class="ti-check"></span>
+                                            @lang('inventory.sell')
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        @endif
+
                     </div>
                 </div>
             </form>
@@ -565,7 +677,7 @@
                             </div>
                             <input type="hidden" name="totalValue[]" id="totalValue${rowCount}" autocomplete="off" class="form-control" />
                         </td>
-                
+
                         <td class="text-center align-middle p-1">
                             <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(${rowCount})">
                                 <i class="ti-trash"></i>

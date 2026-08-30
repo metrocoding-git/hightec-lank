@@ -1,13 +1,81 @@
 @extends('layouts.app')
 @section('title')
-    @lang('academics.About')
+    Fees Invoice List
 @endsection
 @section('mainContent')
+    @php
+
+        $canAddFeesInvoice = Auth::user()->hasPermission('fees.invoice.store');
+        $canAddFeesPayment = Auth::user()->hasPermission('fees.add-payment');
+        $canRefundFeesPayment = Auth::user()->hasPermission('fees.refund-payment');
+        $canPrintFeesInvoiceItem = Auth::user()->hasPermission('fees.invoice-item-print');
+    @endphp
     @push('css')
-        <link rel="stylesheet" href="{{ url('Modules\Fees\Resources\assets\css\feesStyle.css') }}" />
         <style>
-            div#table_id_wrapper {
-                margin-top: 40px;
+            .white-box {
+                border-radius: 12px;
+                box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+                border: 1px solid var(--border_color);
+            }
+
+            .white-box .main-title h3 {
+                font-weight: 700;
+                position: relative;
+                padding-bottom: 10px;
+            }
+
+            .white-box .main-title h3::after {
+                content: '';
+                position: absolute;
+                left: 0;
+                bottom: 0;
+                width: 42px;
+                height: 3px;
+                border-radius: 3px;
+                background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+            }
+
+            .primary_input_field,
+            select.primary_select {
+                border-radius: 8px !important;
+                transition: border-color .15s ease, box-shadow .15s ease;
+            }
+
+            #table_id thead tr th {
+                background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+                color: #fff;
+                font-weight: 600;
+                white-space: nowrap;
+                border: none;
+            }
+
+            #table_id tbody tr {
+                transition: background-color .12s ease;
+            }
+
+            #table_id tbody tr:hover {
+                background-color: rgba(0, 0, 0, 0.025);
+            }
+
+            #table_id tbody td {
+                vertical-align: middle;
+            }
+
+            .text-muted {
+                color: #9aa1ac !important;
+            }
+
+            .modern-row-actions .btn-row-action {
+                width: 32px;
+                height: 32px;
+                border-radius: 8px;
+                border: 1px solid var(--border_color);
+                background: #fff;
+                color: #8a90a2;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                transition: background-color .15s ease, color .15s ease, border-color .15s ease;
             }
         </style>
     @endpush
@@ -29,21 +97,43 @@
         $defaultTo = \Carbon\Carbon::now()->format('Y-m-d');
     @endphp
 
-    <section class="admin-visitor-area up_st_admin_visitor mt-0 mb-4">
+    <section class="admin-visitor-area up_admin_visitor">
         <div class="container-fluid p-0">
+            <div class="white-box mb-10">
+                @if ($canAddFeesInvoice)
+                    <div class="row">
+                        <div class="col-lg-12 text-left col-md-12">
+                            <a href="{{ route('fees.add-invoice') }}" class="primary-btn small fix-gr-bg col-12 p-2">
+                                <span class="ti-plus pr-2"></span>
+                                @lang('common.add') Registration & Other Payments
+                            </a>
+                        </div>
+                    </div>
+                @endif
+            </div>
+            <div class="white-box mb-10">
+                @if ($canAddFeesInvoice)
+                    <div class="row">
+                        <div class="col-lg-12 text-left col-md-12">
+                            <a href="{{ route('fees.add-invoice') }}" class="primary-btn small fix-gr-bg col-12 p-2">
+                                <span class="ti-plus pr-2"></span>
+                                @lang('common.add') Course, NVQ & Food Payments
+                            </a>
+                        </div>
+                    </div>
+                @endif
+            </div>
             <div class="white-box mb-0">
                 <form id="filterForm" class="mb-0">
                     <div class="row">
                         {{-- Date Range --}}
                         <div class="col-md-4">
-                            <label>Date Range</label>
                             <input type="text" id="filter_date_range" name="date_range" class="form-control"
                                 value="{{ $defaultFrom }} to {{ $defaultTo }}">
                         </div>
 
                         {{-- Branch --}}
                         <div class="col-md-4">
-                            <label>Branch</label>
                             <select name="branch_id" id="filter_branch" class="form-control">
                                 <option value="">All Branches</option>
                                 @foreach ($branches as $branch)
@@ -54,7 +144,6 @@
 
                         {{-- Fee / Payment Type --}}
                         <div class="col-md-4">
-                            <label>Fee Type</label>
                             <select name="payment_type" id="filter_payment_type" class="form-control">
                                 <option value="">All</option>
                                 <option value="course_fee">Course & Fee</option>
@@ -68,46 +157,33 @@
 
                         {{-- Buttons --}}
 
-                        <div class="col-lg-12 mt-1 text-right mt-2">
-                            <button type="button" id="applyFilter" class="primary-btn small fix-gr-bg mr-2">
+                        <div class="col-lg-12 mt-10 text-right">
+                            <button type="button" id="applyFilter" class="primary-btn small fix-gr-bg col-12 p-2">
                                 <span class="ti-search pr-2"></span> Search
-                            </button>
-                            <button type="button" id="resetFilter" class="primary-btn small tr-bg">
-                                <span class="ti-reload pr-2"></span> Reset
                             </button>
                         </div>
 
                     </div>
                 </form>
             </div>
-        </div>
-    </section>
 
-    <section class="admin-visitor-area up_st_admin_visitor">
-        <div class="container-fluid p-0">
-            <div class="white-box">
+            <div class="row mt-20 full_wide_table">
+                <div class="col-lg-12">
+                    <div class="white-box">
+                        <div class="row">
+                            <div class="col-lg-4 no-gutters">
+                                <div class="main-title">
+                                    <h3 class="mb-15">Fee Invoice List</h3>
+                                </div>
+                            </div>
+                        </div>
 
-                <div class="row">
-                    <div class="col-lg-12 text-left col-md-12">
-                        <a href="{{ route('fees.add-invoice') }}" class="primary-btn small fix-gr-bg">
-                            <span class="ti-plus pr-2"></span>
-                            @lang('common.add')
-                        </a>
-                    </div>
-                </div>
-
-
-
-                <div class="row mt-40">
-
-
-                    <div class="col-lg-12 student-details up_admin_visitor mt-0">
-
-                        <div class="tab-content">
-                            {{-- @foreach ($records as $key => $record) --}}
-                            <div role="tabpanel">
+                        <div class="row">
+                            <div class="col-lg-12">
                                 <x-table>
-                                    <table id="table_id" class="table" cellspacing="0" width="100%">
+                                    <table id="table_id"
+                                        class="table data-table Crm_table_active3 no-footer dtr-inline collapsed"
+                                        cellspacing="0" width="100%">
 
                                         <thead>
                                             <tr>
@@ -226,7 +302,7 @@
                                                                 Return Amount <span style="color: #dc3545;">*</span>
                                                             </label>
                                                             <div class="input-group"
-                                                                style="box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); border-radius: 8px; overflow: hidden;">
+                                                                style="box-shadow: 0 2px 5px rgba(0, 0, 0, .1); border-radius: 8px; overflow: hidden;">
                                                                 <input type="number" name="return_amount"
                                                                     id="returnAmountInput" class="form-control"
                                                                     min="0.00" step="0.01" required
@@ -258,7 +334,7 @@
                                                         @lang('fees.short_note')
                                                     </label>
                                                     <textarea name="short_note" class="form-control" rows="3" placeholder="Enter reason for return..."
-                                                        style="border: 1px solid #e1e5eb; border-radius: 8px; padding: 12px 15px; font-size: 0.95rem; color: #495057; resize: vertical; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); transition: border-color 0.3s ease;"></textarea>
+                                                        style="border: 1px solid #e1e5eb; border-radius: 8px; padding: 12px 15px; font-size: 0.95rem; color: #495057; resize: vertical; box-shadow: inset 0 1px 3px rgba(0, 0, 0, .1); transition: border-color 0.3s ease;"></textarea>
                                                 </div>
 
                                                 <input type="hidden" name="invoice_id" id="returnInvoiceId">
@@ -267,12 +343,12 @@
                                             <div class="modal-footer"
                                                 style="background-color: white; padding: 20px 25px; border-top: 1px solid #e1e5eb; border-radius: 0 0 12px 12px;">
                                                 <button type="button" class="primary-btn tr-bg" data-dismiss="modal"
-                                                    style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);">
+                                                    style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0, 0, 0, .2);">
                                                     <i class="fas fa-times" style="margin-right: 8px;"></i>
                                                     @lang('common.cancel')
                                                 </button>
                                                 <button type="submit" class="primary-btn fix-gr-bg"
-                                                    style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 12px 30px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);">
+                                                    style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 12px 30px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(40, 167, 69, .3);">
                                                     <i class="fas fa-undo-alt" style="margin-right: 8px;"></i>
                                                     Process Return
                                                 </button>
@@ -434,7 +510,8 @@
                                             <button type="button" class="primary-btn tr-bg"
                                                 data-dismiss="modal">Close</button>
                                             <button type="button" class="primary-btn fix-gr-bg"
-                                                onclick="printInvoice()">Print Invoice</button>
+                                                onclick="printInvoice()">Print
+                                                Invoice</button>
                                         </div>
                                     </div>
                                 </div>
@@ -475,41 +552,6 @@
                                     </div>
                                 </div>
                             </div>
-
-                            {{-- <!-- Add Invoice Number Modal -->
-                            <div class="modal fade admin-query" id="addInvoiceNumberModal" tabindex="-1" role="dialog"
-                                aria-labelledby="addInvoiceNumberModalLabel" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered" role="document">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h4 class="modal-title" id="addInvoiceNumberModalLabel">Add Invoice Number
-                                            </h4>
-                                            <button type="button" class="close" data-dismiss="modal"
-                                                aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-                                        <form action="#" method="POST" id="addInvoiceNumberForm">
-                                            @csrf
-                                            <div class="modal-body">
-                                                <input type="hidden" name="invoice_id" id="addInvoiceNumberInvoiceId">
-                                                <div class="form-group">
-                                                    <label for="invoiceNumberInput">Invoice Number <span
-                                                            class="text-danger">*</span></label>
-                                                    <input type="text" class="form-control" id="invoiceNumberInput"
-                                                        name="invoice_number" required>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="primary-btn tr-bg"
-                                                    data-dismiss="modal">@lang('common.cancel')</button>
-                                                <button type="submit" class="primary-btn fix-gr-bg">Save Invoice
-                                                    Number</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div> --}}
 
                             <!-- Mark as Paid Modal -->
                             <div class="modal fade admin-query" id="markAsPaidModal" tabindex="-1" role="dialog"
@@ -562,11 +604,6 @@
                                 </div>
                             </div>
 
-
-
-
-
-
                             <!-- View Payment History Modal (Full Featured) -->
                             <div class="modal fade admin-query" id="viewPaymentHistoryModal" tabindex="-1"
                                 role="dialog" aria-labelledby="viewPaymentHistoryModalLabel" aria-hidden="true">
@@ -581,7 +618,20 @@
                                             </button>
                                         </div>
                                         <div class="modal-body">
-                                            <h5>Payment History</h5> <span id="mainInvoiceNumber"></span>
+                                            {{-- VISUAL POLISH (Section 30): swapped the plain "Payment History"
+                                                 <h5> + bare invoice-number span for the same
+                                                 invoice-history-card header pattern used elsewhere
+                                                 (course-paid.blade.php, invoice-payments*.blade.php) —
+                                                 icon badge + a pill on the right, here showing the main
+                                                 invoice number instead of a record count. --}}
+                                            <div class="main-title mb-3 invoice-history-card">
+                                                <div class="title-group">
+                                                    <span class="title-icon"><i
+                                                            class="fa-solid fa-clock-rotate-left"></i></span>
+                                                    <h3 class="mb-0">Payment History</h3>
+                                                </div>
+                                                <span class="record-count-badge" id="mainInvoiceNumber">&nbsp;</span>
+                                            </div>
                                             <div id="paymentHistoryContent">
                                                 <!-- Payment history will be loaded here via AJAX -->
                                                 <div class="text-center">
@@ -592,87 +642,113 @@
                                                 </div>
                                             </div>
 
-                                            <hr class="mt-4 mb-4">
-                                            <div class="row mb-4">
-                                                <div class="col-md-4">
-                                                    <h5>Total Amount: <span id="totalAmountDisplay"></span></h5>
+                                            <div class="payment-summary-stats">
+                                                <div class="stat-chip stat-total">
+                                                    <span class="stat-icon"><i
+                                                            class="fa-solid fa-file-invoice-dollar"></i></span>
+                                                    <span>
+                                                        <span class="stat-label">Total Amount</span>
+                                                        <span class="stat-value" id="totalAmountDisplay"></span>
+                                                    </span>
                                                 </div>
-                                                <div class="col-md-4">
-                                                    <h5>Paid Amount: <span id="paidAmountDisplay"></span></h5>
+                                                <div class="stat-chip stat-paid">
+                                                    <span class="stat-icon"><i
+                                                            class="fa-solid fa-circle-check"></i></span>
+                                                    <span>
+                                                        <span class="stat-label">Paid Amount</span>
+                                                        <span class="stat-value" id="paidAmountDisplay"></span>
+                                                    </span>
                                                 </div>
-                                                <div class="col-md-4">
-                                                    <h5>Due Amount: <span id="dueAmountDisplay"></span></h5>
+                                                <div class="stat-chip stat-due">
+                                                    <span class="stat-icon"><i
+                                                            class="fa-solid fa-triangle-exclamation"></i></span>
+                                                    <span>
+                                                        <span class="stat-label">Due Amount</span>
+                                                        <span class="stat-value" id="dueAmountDisplay"></span>
+                                                    </span>
                                                 </div>
                                             </div>
 
-                                            <div id="addPaymentSection">
-                                                <h5>Add New Payment</h5>
-                                                <form action="#" method="POST" id="addPaymentForm"
-                                                    enctype="multipart/form-data">
-                                                    @csrf
-                                                    <input type="hidden" name="invoice_id" id="addPaymentInvoiceId">
-                                                    <input type="hidden" name="create_user_id"
-                                                        value="{{ Auth::id() }}">
-                                                    <div class="row">
-                                                        <div class="col-md-6">
-                                                            <div class="form-group">
-                                                                <label for="paymentAmountInput">Amount <span
-                                                                        class="text-danger">*</span></label>
-                                                                <input type="number" class="form-control"
-                                                                    id="paymentAmountInput" name="pay_amount"
-                                                                    step="0.01" required min="0.01">
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <div class="form-group">
-                                                                <label for="paymentMethodInput">Payment Method <span
-                                                                        class="text-danger">*</span></label>
-                                                                <select class="form-control" id="paymentMethodInput"
-                                                                    name="payment_method" required>
-                                                                    <option value="">Select Method</option>
-                                                                    <option value="Cash">Cash</option>
-                                                                    <option value="Invoice">Invoice</option>
-                                                                    <option value="Bank Transfer">Bank Transfer</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Bank Payment Fields -->
-                                                    <div id="bankPaymentFields" style="display: none;">
+                                            {{-- PERMISSION GATE (Section 28): fees.add-payment. This form is
+                                                 the real "Add Payment" action — separate from
+                                                 "fees.payment-history" (the View Payment link that opens this
+                                                 whole modal), so a role can view history without being able
+                                                 to add a new payment. --}}
+                                            @if ($canAddFeesPayment)
+                                                <div id="addPaymentSection">
+                                                    <h5>Add New Payment</h5>
+                                                    <form action="#" method="POST" id="addPaymentForm"
+                                                        enctype="multipart/form-data">
+                                                        @csrf
+                                                        <input type="hidden" name="invoice_id" id="addPaymentInvoiceId">
+                                                        <input type="hidden" name="create_user_id"
+                                                            value="{{ Auth::id() }}">
                                                         <div class="row">
                                                             <div class="col-md-6">
                                                                 <div class="form-group">
-                                                                    <label for="bankPaymentDateInput">Bank Payment
-                                                                        Date</label>
-                                                                    <input type="date" class="form-control"
-                                                                        id="bankPaymentDateInput"
-                                                                        name="bank_payment_date">
+                                                                    <label for="paymentAmountInput">Amount <span
+                                                                            class="text-danger">*</span></label>
+                                                                    <input type="number" class="form-control"
+                                                                        id="paymentAmountInput" name="pay_amount"
+                                                                        step="0.01" required min="0.01">
                                                                 </div>
                                                             </div>
                                                             <div class="col-md-6">
                                                                 <div class="form-group">
-                                                                    <label for="bankPaymentAmountInput">Bank Payment
-                                                                        Amount</label>
-                                                                    <input type="number" class="form-control"
-                                                                        id="bankPaymentAmountInput"
-                                                                        name="bank_payment_amount" step="0.01">
+                                                                    <label for="paymentMethodInput">Payment Method <span
+                                                                            class="text-danger">*</span></label>
+                                                                    <select class="form-control" id="paymentMethodInput"
+                                                                        name="payment_method" required>
+                                                                        <option value="">Select Method</option>
+                                                                        <option value="Cash">Cash</option>
+                                                                        <option value="Invoice">Invoice</option>
+                                                                        <option value="Bank Transfer">Bank Transfer
+                                                                        </option>
+                                                                    </select>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                    </div>
 
-                                                    <div class="form-group" id="paymentFileInputGroup"
-                                                        style="display: none;">
-                                                        <label for="paymentFileInput">Payment File (Optional)</label>
-                                                        <input type="file" class="form-control-file"
-                                                            id="paymentFileInput" name="payment_file">
-                                                    </div>
-                                                    <button type="submit" class="primary-btn fix-gr-bg mt-3"
-                                                        style="width: 100%; padding: 12px; font-size: 16px; font-weight: 600;">Add
-                                                        Payment</button>
-                                                </form>
-                                            </div>
+                                                        <!-- Bank Payment Fields -->
+                                                        <div id="bankPaymentFields" style="display: none;">
+                                                            <div class="row">
+                                                                <div class="col-md-6">
+                                                                    <div class="form-group">
+                                                                        <label for="bankPaymentDateInput">Bank Payment
+                                                                            Date</label>
+                                                                        <input type="date" class="form-control"
+                                                                            id="bankPaymentDateInput"
+                                                                            name="bank_payment_date">
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <div class="form-group">
+                                                                        <label for="bankPaymentAmountInput">Bank Payment
+                                                                            Amount</label>
+                                                                        <input type="number" class="form-control"
+                                                                            id="bankPaymentAmountInput"
+                                                                            name="bank_payment_amount" step="0.01">
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="form-group" id="paymentFileInputGroup"
+                                                            style="display: none;">
+                                                            <label for="paymentFileInput">Payment File (Optional)</label>
+                                                            <input type="file" class="form-control-file"
+                                                                id="paymentFileInput" name="payment_file">
+                                                        </div>
+                                                        <button type="submit" class="primary-btn fix-gr-bg mt-3"
+                                                            style="width: 100%; padding: 12px; font-size: 16px; font-weight: 600;">Add
+                                                            Payment</button>
+                                                    </form>
+                                                </div>
+                                            @else
+                                                <div class="text-center text-muted py-2">
+                                                    You do not have permission to add payments to this invoice.
+                                                </div>
+                                            @endif
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="primary-btn tr-bg"
@@ -714,7 +790,8 @@
                                                         </div>
                                                         <div class="col-md-6">
                                                             <p><strong>Return Date:</strong> <span
-                                                                    id="returnDateDisplay"></span></p>
+                                                                    id="returnDateDisplay"></span>
+                                                            </p>
                                                         </div>
                                                     </div>
                                                     <div class="row">
@@ -726,7 +803,8 @@
                                                     <div class="row">
                                                         <div class="col-md-6">
                                                             <p><strong>Returned By:</strong> <span
-                                                                    id="returnedByDisplay"></span></p>
+                                                                    id="returnedByDisplay"></span>
+                                                            </p>
                                                         </div>
                                                         <div class="col-md-6">
                                                             <p><strong>Original Paid Amount:</strong> <span
@@ -823,44 +901,47 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
 
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
 
-    <!-- Invoice Report Modal -->
-    <div class="modal fade admin-query" id="invoiceReportModal" tabindex="-1" role="dialog"
-        aria-labelledby="invoiceReportModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="invoiceReportModalLabel">Invoice Report for Invoice #<span
-                            id="reportInvoiceId"></span></h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="report-container" id="invoiceReportContent">
-                        <!-- Report content will be loaded here via AJAX -->
-                        <div class="text-center">
-                            <div class="spinner-border" role="status">
-                                <span class="sr-only">Loading...</span>
+
+            <!-- Invoice Report Modal -->
+            <div class="modal fade admin-query" id="invoiceReportModal" tabindex="-1" role="dialog"
+                aria-labelledby="invoiceReportModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title" id="invoiceReportModalLabel">Invoice Report for Invoice #<span
+                                    id="reportInvoiceId"></span></h4>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="report-container" id="invoiceReportContent">
+                                <!-- Report content will be loaded here via AJAX -->
+                                <div class="text-center">
+                                    <div class="spinner-border" role="status">
+                                        <span class="sr-only">Loading...</span>
+                                    </div>
+                                    <p>Loading invoice report...</p>
+                                </div>
                             </div>
-                            <p>Loading invoice report...</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="primary-btn tr-bg"
+                                data-dismiss="modal">@lang('common.close')</button>
+                            <button type="button" class="primary-btn fix-gr-bg" onclick="printReport()">Print
+                                Report</button>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="primary-btn tr-bg" data-dismiss="modal">@lang('common.close')</button>
-                    <button type="button" class="primary-btn fix-gr-bg" onclick="printReport()">Print Report</button>
-                </div>
             </div>
-        </div>
-    </div>
 
+        </div>
+    </section>
     {{-- View Fees Modal End --}}
 @endsection
 
@@ -871,6 +952,18 @@
 
 @push('script')
     <script>
+
+        const canRefundFeesPayment = {{ $canRefundFeesPayment ? 'true' : 'false' }};
+
+        const canPrintFeesInvoiceItem = {{ $canPrintFeesInvoiceItem ? 'true' : 'false' }};
+
+        function paymentMethodBadge(method) {
+            var key = String(method || '').toLowerCase().trim().replace(/\s+/g, '_');
+            var known = ['cash', 'invoice', 'bank_transfer'];
+            var cls = known.indexOf(key) !== -1 ? 'method-' + key : 'method-default';
+            return '<span class="method-badge ' + cls + '">' + (method || 'N/A') + '</span>';
+        }
+
         flatpickr("#filter_date_range", {
             mode: "range",
             dateFormat: "Y-m-d",
@@ -1071,6 +1164,15 @@
                     searchable: false
                 }, // ← computed
                 {
+                    // ARCHITECTURAL LIMITATION: this whole column's HTML (the Return Fee,
+                    // Mark as Paid, Refund, Add Invoice Number, print, and payment-history
+                    // action links/buttons) is built server-side by the fee.invoice.datatable
+                    // controller method (InvoiceController::invoiceDatatable), which was not
+                    // provided in this pass. Button-level permission gating for these actions
+                    // (fees.add-payment, fees.mark-as-paid, fees.refund-payment,
+                    // fees.invoice-item-print, fees.return-fee-data,
+                    // fees.confirm-invoice-payment, fees.payment-history) has to happen in
+                    // that controller, not here — this blade file has no access to that HTML.
                     data: 'action',
                     name: 'action',
                     orderable: false,
@@ -1224,6 +1326,19 @@
             }
         }
 
+        // BUG FIX (Section 28): populateInvoiceModal(element) above was a fully-built,
+        // working function with no caller anywhere in this file — the row's "Invoice"
+        // dropdown link only had data-toggle/data-target to auto-open #makeInvoiceModal
+        // via Bootstrap, but nothing ever called populateInvoiceModal() to fill it in.
+        // The modal opened with every field showing its blank "____" placeholder
+        // every single time, for every invoice. Fixed the same way #returnFeeModal and
+        // #viewPaymentHistoryModal already populate themselves (Bootstrap passes the
+        // clicked element as event.relatedTarget on show.bs.modal) rather than adding
+        // an onclick to the link itself, to match this file's own existing convention.
+        $('#makeInvoiceModal').on('show.bs.modal', function(event) {
+            populateInvoiceModal(event.relatedTarget);
+        });
+
         // Function to print invoice
         function printInvoice() {
             var printContent = document.getElementById('invoicePreview').innerHTML;
@@ -1328,7 +1443,8 @@
                 success: function(response) {
                     console.log('Payment history response:', response);
                     modal.find('#totalAmountDisplay').text(response.total_amount);
-                    modal.find('#mainInvoiceNumber').text(response.main_invoice_number);
+                    modal.find('#mainInvoiceNumber').text(response.main_invoice_number ?
+                        ('Invoice: ' + response.main_invoice_number) : ' ');
                     modal.find('#paidAmountDisplay').text(response
                         .paid_amount_sum); // Display sum of paid amounts
                     modal.find('#dueAmountDisplay').text(response.due_amount);
@@ -1341,31 +1457,54 @@
                     var isItemSell = response.invoice_type === 'item_sell';
 
                     let historyHtml =
-                        '<table class="table table-bordered" style="text-align: center; width: 100%;"><thead style="background-color: #f8f9fa;"><tr><th style="text-align: center; padding: 12px;">Invoice Number</th><th style="text-align: center; padding: 12px;">Course Name</th><th style="text-align: center; padding: 12px;">Amount</th><th style="text-align: center; padding: 12px;">Method</th><th style="text-align: center; padding: 12px;">Type</th><th style="text-align: center; padding: 12px;">Receipt No.</th><th style="text-align: center; padding: 12px;">Date</th><th style="text-align: center; padding: 12px;">Action</th></tr></thead><tbody>';
+                        '<table class="payment-history-table"><thead><tr><th>Invoice Number</th><th>Course Name</th><th>Amount</th><th>Method</th><th>Type</th><th>Receipt No.</th><th>Date</th><th>Action</th></tr></thead><tbody>';
                     if (response.payments.length > 0) {
                         let baseUrl = "{{ url('/student/fees/invoice-item-print') }}";
                         response.payments.forEach(function(payment) {
 
-                            let actionDropdown =
-                                `<a href="${baseUrl}/${invoiceId}/${payment.id}" target="_blank" class="btn btn-sm btn-primary col-12 w-full">Re-print</a>`;
+                            // BUG FIX (Section 30): this Re-print link had no permission check at
+                            // all — see $canPrintFeesInvoiceItem in the PHP block above.
+                            let actionDropdown = '';
+                            if (canPrintFeesInvoiceItem) {
+                                actionDropdown +=
+                                    `<a class="dropdown-item" href="${baseUrl}/${invoiceId}/${payment.id}" target="_blank"><i class="fa-solid fa-print text-muted"></i> Re-print</a>`;
+                            }
 
-                            // if (payment.payment_method === 'Invoice' && !payment
-                            //     .payment_invoice_number) {
-                            //     actionDropdown +=
-                            //         `<a style="padding:4px;margin: 2px; background-color: #007bff; color: #fff; text-align: center;" class="dropdown-item add-payment-invoice-number-btn" href="#" data-payment-id="${payment.id}">Add Invoice No.</a>`;
-                            // }
+                            // BUG FIX (Section 28): this "Add Invoice No." link was commented out
+                            // here but was live (uncommented) in the near-duplicate copy of this
+                            // same row-renderer inside loadPaymentHistory() further down this file
+                            // — so the button appeared or not depending on which of the two
+                            // identical-looking code paths happened to render the row (present
+                            // after a refresh, missing on first open). Re-enabled here to match.
+                            if (payment.payment_method === 'Invoice' && !payment
+                                .payment_invoice_number) {
+                                actionDropdown +=
+                                    `<a class="dropdown-item add-payment-invoice-number-btn" href="#" data-payment-id="${payment.id}"><i class="fa-solid fa-hashtag text-primary"></i> Add Invoice No.</a>`;
+                            }
+                            // FLAGGED, NOT ENABLED (Section 28): "Confirm Payment Invoice" has a
+                            // real permission key (fees.confirm-invoice-payment, already in
+                            // config_permissions.php) and a working click handler
+                            // (.confirm-payment-invoice-btn, further down this file, posts to
+                            // /confirm-invoice-payment/{paymentId}) — but the trigger link below is
+                            // commented out in BOTH copies of this row-renderer, so this feature is
+                            // currently unreachable for every role regardless of permissions. Left
+                            // disabled rather than guessing this should be turned on as part of a
+                            // permission-gating pass — that's a feature decision, not a permission
+                            // one. Uncomment (with a permission check, same pattern as Refund below)
+                            // if you want it live:
                             // if (payment.payment_method === 'Invoice' && payment
                             //     .payment_invoice_number && !payment.invoice_payment_confirm) {
                             //     actionDropdown +=
-                            //         `<a style="padding:4px;margin: 2px; background-color: #28a745; color: #fff; text-align: center;" class="dropdown-item confirm-payment-invoice-btn" href="#" data-payment-id="${payment.id}">Confirm Payment Invoice</a>`;
+                            //         `<a class="dropdown-item confirm-payment-invoice-btn" href="#" data-payment-id="${payment.id}"><i class="fa-solid fa-check text-success"></i> Confirm Payment Invoice</a>`;
                             // }
 
                             if (payment.payment_method === 'Bank Transfer') {
                                 actionDropdown +=
-                                    `<a style="padding:4px;margin: 2px; background-color: #28a745; color: #fff; text-align: center;" class="dropdown-item view-bank-details-btn" href="#" data-payment-id="${payment.id}" data-bank-date="${payment.bank_payment_date}" data-bank-amount="${payment.bank_payment_amount}" data-payment-file="${payment.payment_file || ''}">View Bank Details</a>`;
+                                    `<a class="dropdown-item view-bank-details-btn" href="#" data-payment-id="${payment.id}" data-bank-date="${payment.bank_payment_date}" data-bank-amount="${payment.bank_payment_amount}" data-payment-file="${payment.payment_file || ''}"><i class="fa-solid fa-building-columns text-success"></i> View Bank Details</a>`;
                             }
 
-                            const paymentDate = new Date(payment.bank_payment_date || payment.created_at);
+                            const paymentDate = new Date(payment.bank_payment_date || payment
+                                .created_at);
                             const today = new Date();
                             const isBankTransfer = payment.payment_method === 'Bank Transfer';
 
@@ -1373,11 +1512,14 @@
                                 paymentDate.getFullYear() === today.getFullYear() &&
                                 paymentDate.getMonth() === today.getMonth();
 
-                            const isRefundable = (isBankTransfer && isCurrentMonth && !isItemSell) || (!isBankTransfer && !isItemSell)
+                            const isRefundable = (isBankTransfer && isCurrentMonth && !
+                                isItemSell) || (!isBankTransfer && !isItemSell)
 
-                            console.log('Payment ID:', payment.id, isRefundable, isBankTransfer, isCurrentMonth , isItemSell);
+                            console.log('Payment ID:', payment.id, isRefundable, isBankTransfer,
+                                isCurrentMonth, isItemSell);
 
                             if (
+                                canRefundFeesPayment &&
                                 isRefundable &&
                                 payment.payment_invoice_number == null
                             ) {
@@ -1386,47 +1528,46 @@
                                     payment.amount > 0
                                 ) {
                                     actionDropdown += `
-                                    <a style="padding:4px;margin:2px;background-color:#dc3545;color:#fff;text-align:center;"
-                                    class="dropdown-item refund-btn"
+                                    <a class="dropdown-item refund-btn"
                                     href="#"
                                     data-payment-id="${payment.id}"
                                     data-amount="${payment.amount}">
-                                    Refund
+                                    <i class="fa-solid fa-rotate-left text-danger"></i> Refund
                                     </a>`;
                                 }
                             }
 
 
                             historyHtml += `
-                                <tr style="border-bottom: 1px solid #dee2e6;">
-                                    <td style="padding: 12px; text-align: center;">
-                                        ${payment.payment_invoice_number || 'N/A'} 
+                                <tr>
+                                    <td>
+                                        ${payment.payment_invoice_number || 'N/A'}
                                         ${payment.invoice_payment_confirm == 1 ? '- C' : ''}
-                                    </td>                                   
-                                     <td style="padding: 12px; text-align: center;">${courseName || 'N/A'}</td>
-                                    <td style="padding: 12px; text-align: center;">${payment.amount}</td>
-                                    <td style="padding: 12px; text-align: center;">${payment.payment_method}</td>
-                                    <td style="padding: 12px; text-align: center;">${payment.payment_type}</td>
-                                    <td style="padding: 12px; text-align: center;">${payment.receipt_number}</td>
-                                    <td style="padding: 12px; text-align: center;">${new Date(payment.created_at).toLocaleDateString()}</td>
-                                    <td style="padding: 12px; text-align: center;">
+                                    </td>
+                                    <td>${courseName || 'N/A'}</td>
+                                    <td>${payment.amount}</td>
+                                    <td>${paymentMethodBadge(payment.payment_method)}</td>
+                                    <td><span class="payment-type-pill">${(payment.payment_type || 'N/A').toString().replace(/_/g, ' ')}</span></td>
+                                    <td>${payment.receipt_number}</td>
+                                    <td>${new Date(payment.created_at).toLocaleDateString()}</td>
+                                    <td>
                                         ${actionDropdown ? `
-                                                                                                                                                                    <div class="dropdown">
-                                                                                                                                                                        <button class="primary-btn small fix-gr-bg dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" style="border-radius: 6px; padding: 6px 12px; font-size: 12px;">
-                                                                                                                                                                            Actions
-                                                                                                                                                                        </button>
-                                                                                                                                                                        <div class="dropdown-menu" style="min-width: 150px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                                                                                                                                                                            ${actionDropdown}
-                                                                                                                                                                        </div>
-                                                                                                                                                                    </div>
-                                                                                                                                                                ` : '<span class="text-muted">No actions</span>'}
+                                                                                <div class="dropdown modern-row-actions">
+                                                                                    <button class="btn-row-action" type="button" data-toggle="dropdown" aria-expanded="false">
+                                                                                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                                                                                    </button>
+                                                                                    <div class="dropdown-menu dropdown-menu-right">
+                                                                                        ${actionDropdown}
+                                                                                    </div>
+                                                                                </div>
+                                                                            ` : '<span class="text-muted">&mdash;</span>'}
                                     </td>
                                 </tr>
                             `;
                         });
                     } else {
                         historyHtml +=
-                            '<tr><td colspan="8" style="text-align: center; padding: 20px; color: #6c757d;">No payment history found.</td></tr>';
+                            '<tr><td colspan="8" class="payment-history-empty">No payment history found.</td></tr>';
                     }
                     historyHtml += '</tbody></table>';
                     modal.find('#paymentHistoryContent').html(historyHtml);
@@ -1570,35 +1711,34 @@
                             }
 
                             // Create read-only payment history table (no action buttons)
+                            // VISUAL POLISH (Section 30): same .payment-history-table / badge
+                            // classes as the editable Payment History modal, instead of the
+                            // heavy inline style="" attributes this read-only twin table used.
                             let detailsHtml =
-                                '<table class="table table-bordered" style="text-align: center; width: 100%;"><thead style="background-color: #f8f9fa;"><tr><th style="text-align: center; padding: 12px;">Invoice Number</th><th style="text-align: center; padding: 12px;">Amount</th><th style="text-align: center; padding: 12px;">Method</th><th style="text-align: center; padding: 12px;">Type</th><th style="text-align: center; padding: 12px;">Receipt No.</th><th style="text-align: center; padding: 12px;">Date</th></tr></thead><tbody>';
+                                '<table class="payment-history-table"><thead><tr><th>Invoice Number</th><th>Amount</th><th>Method</th><th>Type</th><th>Receipt No.</th><th>Date</th></tr></thead><tbody>';
                             if (response.payments.length > 0) {
                                 response.payments.forEach(function(payment) {
                                     // Highlight return/refund payments
-                                    var rowStyle = '';
-                                    var amountStyle = '';
-                                    if (payment.amount < 0 ||
-                                        payment.payment_type === 'return') {
-                                        rowStyle =
-                                            'style="background-color: #fff3cd; border-left: 4px solid #ffc107;"';
-                                        amountStyle =
-                                            'style="color: #856404; font-weight: bold;"';
-                                    }
+                                    var isReturn = payment.amount < 0 || payment
+                                        .payment_type === 'return';
+                                    var rowClass = isReturn ? 'row-returned' : '';
+                                    var amountClass = isReturn ?
+                                        'amount-highlight' : '';
 
                                     detailsHtml += `
-                                        <tr ${rowStyle}>
-                                            <td style="padding: 12px; text-align: center;">${payment.payment_invoice_number || 'N/A'}</td>
-                                            <td style="padding: 12px; text-align: center;" ${amountStyle}>${payment.amount}</td>
-                                            <td style="padding: 12px; text-align: center;">${payment.payment_method}</td>
-                                            <td style="padding: 12px; text-align: center;">${payment.payment_type}</td>
-                                            <td style="padding: 12px; text-align: center;">${payment.receipt_number}</td>
-                                            <td style="padding: 12px; text-align: center;">${new Date(payment.created_at).toLocaleDateString()}</td>
+                                        <tr class="${rowClass}">
+                                            <td>${payment.payment_invoice_number || 'N/A'}</td>
+                                            <td class="${amountClass}">${payment.amount}</td>
+                                            <td>${paymentMethodBadge(payment.payment_method)}</td>
+                                            <td><span class="payment-type-pill">${(payment.payment_type || 'N/A').toString().replace(/_/g, ' ')}</span></td>
+                                            <td>${payment.receipt_number}</td>
+                                            <td>${new Date(payment.created_at).toLocaleDateString()}</td>
                                         </tr>
                                     `;
                                 });
                             } else {
                                 detailsHtml +=
-                                    '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #6c757d;">No payment history found.</td></tr>';
+                                    '<tr><td colspan="6" class="payment-history-empty">No payment history found.</td></tr>';
                             }
                             detailsHtml += '</tbody></table>';
                             modal.find('#paymentDetailsContent').html(detailsHtml);
@@ -1614,23 +1754,23 @@
 
                             // Still show payment history
                             let detailsHtml =
-                                '<table class="table table-bordered" style="text-align: center; width: 100%;"><thead style="background-color: #f8f9fa;"><tr><th style="text-align: center; padding: 12px;">Invoice Number</th><th style="text-align: center; padding: 12px;">Amount</th><th style="text-align: center; padding: 12px;">Method</th><th style="text-align: center; padding: 12px;">Type</th><th style="text-align: center; padding: 12px;">Receipt No.</th><th style="text-align: center; padding: 12px;">Date</th></tr></thead><tbody>';
+                                '<table class="payment-history-table"><thead><tr><th>Invoice Number</th><th>Amount</th><th>Method</th><th>Type</th><th>Receipt No.</th><th>Date</th></tr></thead><tbody>';
                             if (response.payments.length > 0) {
                                 response.payments.forEach(function(payment) {
                                     detailsHtml += `
                                         <tr>
-                                            <td style="padding: 12px; text-align: center;">${payment.payment_invoice_number || 'N/A'}</td>
-                                            <td style="padding: 12px; text-align: center;">${payment.amount}</td>
-                                            <td style="padding: 12px; text-align: center;">${payment.payment_method}</td>
-                                            <td style="padding: 12px; text-align: center;">${payment.payment_type}</td>
-                                            <td style="padding: 12px; text-align: center;">${payment.receipt_number}</td>
-                                            <td style="padding: 12px; text-align: center;">${new Date(payment.created_at).toLocaleDateString()}</td>
+                                            <td>${payment.payment_invoice_number || 'N/A'}</td>
+                                            <td>${payment.amount}</td>
+                                            <td>${paymentMethodBadge(payment.payment_method)}</td>
+                                            <td><span class="payment-type-pill">${(payment.payment_type || 'N/A').toString().replace(/_/g, ' ')}</span></td>
+                                            <td>${payment.receipt_number}</td>
+                                            <td>${new Date(payment.created_at).toLocaleDateString()}</td>
                                         </tr>
                                     `;
                                 });
                             } else {
                                 detailsHtml +=
-                                    '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #6c757d;">No payment history found.</td></tr>';
+                                    '<tr><td colspan="6" class="payment-history-empty">No payment history found.</td></tr>';
                             }
                             detailsHtml += '</tbody></table>';
                             modal.find('#paymentDetailsContent').html(detailsHtml);
@@ -1783,7 +1923,8 @@
                 },
                 success: function(response) {
                     modal.find('#totalAmountDisplay').text(response.total_amount);
-                    modal.find('#mainInvoiceNumber').text(response.main_invoice_number);
+                    modal.find('#mainInvoiceNumber').text(response.main_invoice_number ?
+                        ('Invoice: ' + response.main_invoice_number) : ' ');
                     modal.find('#paidAmountDisplay').text(response.paid_amount_sum);
                     modal.find('#dueAmountDisplay').text(response.due_amount);
                     modal.find('#paymentAmountInput').attr('max', response.due_amount);
@@ -1792,48 +1933,54 @@
 
                     // Build the history table HTML (reuse your existing code)
                     let historyHtml =
-                        '<table class="table table-bordered" style="text-align: center; width: 100%;"><thead style="background-color: #f8f9fa;"><tr><th>Invoice Number</th><th>Course Name</th><th>Amount</th><th>Method</th><th>Type</th><th>Receipt No.</th><th>Date</th><th>Action</th></tr></thead><tbody>';
+                        '<table class="payment-history-table"><thead><tr><th>Invoice Number</th><th>Course Name</th><th>Amount</th><th>Method</th><th>Type</th><th>Receipt No.</th><th>Date</th><th>Action</th></tr></thead><tbody>';
 
                     if (response.payments.length > 0) {
                         let baseUrl = "{{ url('/student/fees/invoice-item-print') }}";
                         response.payments.forEach(function(payment) {
-                            let actionDropdown =
-                                `<a href="${baseUrl}/${invoiceId}/${payment.id}" target="_blank" class="btn btn-sm btn-primary col-12 w-full">Re-print</a>`;
+                            // BUG FIX (Section 30): this Re-print link had no permission check
+                            // at all — see $canPrintFeesInvoiceItem in the PHP block above.
+                            let actionDropdown = '';
+                            if (canPrintFeesInvoiceItem) {
+                                actionDropdown +=
+                                    `<a class="dropdown-item" href="${baseUrl}/${invoiceId}/${payment.id}" target="_blank"><i class="fa-solid fa-print text-muted"></i> Re-print</a>`;
+                            }
 
                             if (payment.payment_method === 'Invoice' && !payment
                                 .payment_invoice_number) {
                                 actionDropdown +=
-                                    `<a class="dropdown-item add-payment-invoice-number-btn" href="#" data-payment-id="${payment.id}" style="padding:4px;margin:2px;background-color:#007bff;color:#fff;text-align:center;">Add Invoice No.</a>`;
+                                    `<a class="dropdown-item add-payment-invoice-number-btn" href="#" data-payment-id="${payment.id}"><i class="fa-solid fa-hashtag text-primary"></i> Add Invoice No.</a>`;
                             }
                             if (payment.payment_method === 'Bank Transfer') {
                                 actionDropdown +=
-                                    `<a class="dropdown-item view-bank-details-btn" href="#" data-payment-id="${payment.id}" data-bank-date="${payment.bank_payment_date}" data-bank-amount="${payment.bank_payment_amount}" data-payment-file="${payment.payment_file || ''}" style="padding:4px;margin:2px;background-color:#28a745;color:#fff;text-align:center;">View Bank Details</a>`;
+                                    `<a class="dropdown-item view-bank-details-btn" href="#" data-payment-id="${payment.id}" data-bank-date="${payment.bank_payment_date}" data-bank-amount="${payment.bank_payment_amount}" data-payment-file="${payment.payment_file || ''}"><i class="fa-solid fa-building-columns text-success"></i> View Bank Details</a>`;
                             }
-                            if (!isItemSell && payment.payment_status !== 'refunded' && payment.amount >
+                            if (canRefundFeesPayment && !isItemSell && payment.payment_status !==
+                                'refunded' && payment.amount >
                                 0) { // added !isItemSell check
                                 actionDropdown +=
-                                    `<a class="dropdown-item refund-btn" href="#" data-payment-id="${payment.id}" data-amount="${payment.amount}" style="padding:4px;margin:2px;background-color:#dc3545;color:#fff;text-align:center;">Refund</a>`;
+                                    `<a class="dropdown-item refund-btn" href="#" data-payment-id="${payment.id}" data-amount="${payment.amount}"><i class="fa-solid fa-rotate-left text-danger"></i> Refund</a>`;
                             }
 
                             historyHtml += `
                         <tr>
-                            <td style="padding: 12px; text-align: center;">
-                                        ${payment.payment_invoice_number || 'N/A'} 
+                            <td>
+                                        ${payment.payment_invoice_number || 'N/A'}
                                         ${payment.invoice_payment_confirm == 1 ? '- C' : ''}
-                             </td>                                   
+                             </td>
                             <td>${courseName || 'N/A'}</td>
                             <td>${payment.amount}</td>
-                            <td>${payment.payment_method}</td>
-                            <td>${payment.payment_type}</td>
+                            <td>${paymentMethodBadge(payment.payment_method)}</td>
+                            <td><span class="payment-type-pill">${(payment.payment_type || 'N/A').toString().replace(/_/g, ' ')}</span></td>
                             <td>${payment.receipt_number}</td>
                             <td>${new Date(payment.created_at).toLocaleDateString()}</td>
-                            <td>${actionDropdown ? `<div class="dropdown"><button class="primary-btn small fix-gr-bg dropdown-toggle" type="button" data-toggle="dropdown">Actions</button><div class="dropdown-menu">${actionDropdown}</div></div>` : '<span class="text-muted">No actions</span>'}</td>
+                            <td>${actionDropdown ? `<div class="dropdown modern-row-actions"><button class="btn-row-action" type="button" data-toggle="dropdown" aria-expanded="false"><i class="fa-solid fa-ellipsis-vertical"></i></button><div class="dropdown-menu dropdown-menu-right">${actionDropdown}</div></div>` : '<span class="text-muted">&mdash;</span>'}</td>
                         </tr>
                     `;
                         });
                     } else {
                         historyHtml +=
-                            '<tr><td colspan="8" style="text-align:center;padding:20px;color:#6c757d;">No payment history found.</td></tr>';
+                            '<tr><td colspan="8" class="payment-history-empty">No payment history found.</td></tr>';
                     }
 
                     historyHtml += '</tbody></table>';
@@ -2070,7 +2217,7 @@
 <style>
 @media print {
   @page {
-    size: 21.5cm 14cm portrait; 
+    size: 21.5cm 14cm portrait;
     margin: 0;
   }
 
@@ -2079,7 +2226,7 @@
     padding: 0;
     background: #fff;
   }
-    
+
 
   .invoice-report {
     width: 100%;  /* Full paper width */
@@ -2092,7 +2239,7 @@
 
   .field {
     position: absolute;
-    font-family: 'Arial Black', 'Courier New', monospace;    
+    font-family: 'Arial Black', 'Courier New', monospace;
     color: #000;
     line-height: 1;
     font-size: 16px;
@@ -2101,7 +2248,7 @@
 
   .field2 {
     position: absolute;
-    font-family: 'Arial Black', 'Courier New', monospace;    
+    font-family: 'Arial Black', 'Courier New', monospace;
     color: #000;
     line-height: 1;
     font-size: 14.5px;

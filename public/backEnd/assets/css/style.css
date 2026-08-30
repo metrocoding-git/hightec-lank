@@ -5594,9 +5594,9 @@ table.dataTable tbody tr {
   display: none;
 }
 
-#sidebar.sidebar.mini_sidebar .sidebar-header {
+/* #sidebar.sidebar.mini_sidebar .sidebar-header {
   padding-left: 11px;
-}
+} */
 
 #sidebar.sidebar.mini_sidebar .update_sidebar img {
   max-width: 40px !important;

@@ -47,11 +47,31 @@ class ItemIssueController extends Controller
             return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
         }
     }
-    public function issueListView()
+    public function issueListView(Request $request)
     {
         try {
+            // Performance fix (Section 38): this list previously loaded EVERY
+            // active batch (with several eager-loaded relations) on every page
+            // view, which got slow once the table had a lot of history. Added
+            // a date-range filter on issue_date, defaulting to the last month,
+            // so a normal page load only ever pulls a bounded window of rows.
+            // Older data is still reachable by picking a wider range in the
+            // filter form above the table.
+            $request->validate([
+                'from_date' => 'nullable|date',
+                'to_date' => 'nullable|date',
+            ]);
+
+            $fromDateInput = $request->filled('from_date') ? $request->from_date : now()->subMonth()->format('Y-m-d');
+            $toDateInput = $request->filled('to_date') ? $request->to_date : now()->format('Y-m-d');
+
+            $fromDate = Carbon::parse($fromDateInput)->startOfDay();
+            $toDate = Carbon::parse($toDateInput)->endOfDay();
+
             $issuedBatches = ItemIssueBatch::with(['items.item', 'items.category', 'student', 'staff', 'branch', 'course', 'createdBy'])
                 ->where('active_status', 1)
+                ->whereBetween('issue_date', [$fromDate, $toDate])
+                ->orderBy('issue_date', 'desc')
                 ->get();
 
             // Add expiration status to each batch
@@ -86,7 +106,7 @@ class ItemIssueController extends Controller
                 ];
             });
 
-            return view('pages.account.inventory.item-issue-list', compact('batchesWithCourseStatus'));
+            return view('pages.account.inventory.item-issue-list', compact('batchesWithCourseStatus', 'fromDateInput', 'toDateInput'));
         } catch (Exception $e) {
             return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
         }

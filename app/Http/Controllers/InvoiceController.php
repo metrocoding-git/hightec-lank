@@ -202,31 +202,65 @@ class InvoiceController extends Controller
             }, true)
 
             ->addColumn('action', function ($row) {
-                $returnButton = '';
-                if ($row->invoice_type !== 'item_sell') {
-                    $returnButton = '<a class="dropdown-item" data-toggle="modal" data-target="#returnFeeModal"
-                       data-invoice-id="' . $row->id . '"
-                       data-student-id="' . ($row->student_id ?? '') . '"
-                       data-student-name="' . ($row->student_name ?? '') . '"
-                       data-admission-number="' . ($row->admission_number ?? '') . '"
-                       data-paid-amount="' . ($row->paid_amount ?? 0) . '">Return</a>';
+                $user = Auth::user();
+                $items = [];
+ 
+                if ($user->hasPermission('fees.payment-history')) {
+                    $items[] = '<a class="dropdown-item" data-toggle="modal" data-target="#viewPaymentHistoryModal"
+                                   data-invoice-id="' . $row->id . '">
+                                    <i class="fa-solid fa-clock-rotate-left text-muted"></i> View Payment
+                                </a>';
                 }
-
+ 
+                if ($user->hasPermission('fees.invoice-item-print')) {
+                    $items[] = '<a class="dropdown-item" data-toggle="modal" data-target="#makeInvoiceModal"
+                                   data-student-id="' . ($row->student_id ?? '') . '"
+                                   data-invoice-id="' . $row->id . '">
+                                    <i class="fa-solid fa-file-invoice text-muted"></i> Invoice
+                                </a>';
+                }
+ 
+                if ($user->hasPermission('fees.mark-as-paid')) {
+                    $items[] = '<a class="dropdown-item" data-toggle="modal" data-target="#markAsPaidModal"
+                                   data-invoice-id="' . $row->id . '">
+                                    <i class="fa-solid fa-check text-muted"></i> Mark as Paid
+                                </a>';
+                }
+ 
+                if ($row->invoice_type !== 'item_sell' && $user->hasPermission('fees.return-fee-data')) {
+                    $items[] = '<a class="dropdown-item" data-toggle="modal" data-target="#returnFeeModal"
+                                   data-invoice-id="' . $row->id . '"
+                                   data-student-id="' . ($row->student_id ?? '') . '"
+                                   data-student-name="' . ($row->student_name ?? '') . '"
+                                   data-admission-number="' . ($row->admission_number ?? '') . '"
+                                   data-paid-amount="' . ($row->paid_amount ?? 0) . '">
+                                    <i class="fa-solid fa-rotate-left text-muted"></i> Return
+                                </a>';
+                }
+ 
+                if ($user->hasPermission('fees.invoice-print')) {
+                    $items[] = '<a class="dropdown-item" href="' . route('fees.invoice-print', $row->id) . '"
+                                   target="_blank">
+                                    <i class="fa-solid fa-print text-muted"></i> Re-Print
+                                </a>';
+                }
+ 
+                if (empty($items)) {
+                    return '<span class="text-muted">&mdash;</span>';
+                }
+ 
                 return '
-            <div class="dropdown">
-                <button class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown">Action</button>
-                <div class="dropdown-menu">
-                    <a class="dropdown-item" data-toggle="modal" data-target="#viewPaymentHistoryModal"
-                       data-invoice-id="' . $row->id . '">View Payment</a>
-                    <a class="dropdown-item" data-toggle="modal" data-target="#makeInvoiceModal"
-                       data-student-id="' . ($row->student_id ?? '') . '"
-                       data-invoice-id="' . $row->id . '">Invoice</a>
-                    ' . $returnButton . '
-                    <a class="dropdown-item" href="' . route('fees.invoice-print', $row->id) . '"
-                       target="_blank">Re-Print</a>
-                </div>
-            </div>';
+                <div class="dropdown modern-row-actions">
+                    <button class="btn-row-action" type="button" data-toggle="dropdown" aria-expanded="false">
+                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        ' . implode('', $items) . '
+                    </div>
+                </div>';
             })
+
+            
             ->rawColumns(['payment_status', 'action', 'inv_payment_status'])
             ->make(true);
     }

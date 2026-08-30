@@ -5533,7 +5533,7 @@ body.client.color {
 .update_sidebar i {
     font-size: 15px;
     color: #fff;
-    background: var(--gradient_1) !important;
+    background: var(--text_white) !important;
     border: 1px solid var(--gradient_1);
     display: inline-block;
     height: 40px;

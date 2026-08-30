@@ -6,6 +6,26 @@
 
 @section('mainContent')
 
+    <section class="sms-breadcrumb mb-20">
+        <div class="container-fluid">
+            <div class="row justify-content-between">
+                <h1>Student Verification</h1>
+                <div class="bc-pages">
+                    <a href="{{ route('dashboard') }}">Dashboard</a>
+                    <a href="#">Student Info</a>
+                    <a href="#">Verification</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @php
+        // Button-level permission (Section 25). The window itself (GET add-student.verify)
+        // is already gated by route middleware, but the actual submit action has its own
+        // separate key, so a viewer without it can see the page but not act on it.
+        $canSubmitVerification = Auth::user()->hasPermission('add-student.verify.submit');
+    @endphp
+
     <div class="container mt-4">
 
         <h2 class="mb-4">Student Verification</h2>
@@ -21,6 +41,10 @@
 
             @if ($student->is_verified)
                 <div class="alert alert-success"><strong>Already Verified</strong></div>
+            @elseif (!$canSubmitVerification)
+                <div class="alert alert-secondary text-muted">
+                    You do not have permission to submit student verification.
+                </div>
             @else
                 <form method="POST" enctype="multipart/form-data"
                     action="{{ route('add-student.verify.submit', $student->id) }}">
@@ -160,6 +184,73 @@
 
 @section('style')
     <style>
+        /* ---- Modern refresh: breadcrumb card (Section 25) ---- */
+        .sms-breadcrumb {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+            padding: 18px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sms-breadcrumb::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .sms-breadcrumb .row {
+            align-items: center;
+        }
+
+        .sms-breadcrumb h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .sms-breadcrumb .bc-pages {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .sms-breadcrumb .bc-pages a {
+            font-size: 13px;
+            font-weight: 500;
+            color: #8a90a2;
+            text-decoration: none;
+            transition: color .15s ease;
+        }
+
+        .sms-breadcrumb .bc-pages a:hover {
+            color: var(--gradient_1);
+        }
+
+        .sms-breadcrumb .bc-pages a:not(:last-child)::after {
+            content: '\203A';
+            margin: 0 8px;
+            color: #c7cbd6;
+            font-weight: 400;
+        }
+
+        .sms-breadcrumb .bc-pages a:last-child {
+            color: var(--gradient_1);
+            font-weight: 700;
+            pointer-events: none;
+        }
+
+        .card {
+            border-radius: 12px;
+            border: 1px solid var(--border_color);
+        }
+
         .verification-box {
             display: block;
             background: #f8f9fa;

@@ -1,79 +1,218 @@
 @extends('layouts.app')
+@push('css')
+    <style>
+        /* ---- Modern refresh: cards, table styling (Section 25) ---- */
+        .white-box {
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+        }
+
+        .white-box .main-title h3,
+        .white-box .main-title h5 {
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .white-box .main-title h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 42px;
+            height: 3px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .primary_input_field,
+        select.primary_select {
+            border-radius: 8px !important;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        #table_id thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            border: none;
+        }
+
+        #table_id tbody tr {
+            transition: background-color .12s ease;
+        }
+
+        #table_id tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.025);
+        }
+
+        #table_id tbody td {
+            vertical-align: middle;
+        }
+
+        .text-muted {
+            color: #9aa1ac !important;
+        }
+
+        .sms-breadcrumb {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+            padding: 18px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sms-breadcrumb::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .sms-breadcrumb .row {
+            align-items: center;
+        }
+
+        .sms-breadcrumb h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .sms-breadcrumb .bc-pages {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .sms-breadcrumb .bc-pages a {
+            font-size: 13px;
+            font-weight: 500;
+            color: #8a90a2;
+            text-decoration: none;
+            transition: color .15s ease;
+        }
+
+        .sms-breadcrumb .bc-pages a:hover {
+            color: var(--gradient_1);
+        }
+
+        .sms-breadcrumb .bc-pages a:not(:last-child)::after {
+            content: '\203A';
+            margin: 0 8px;
+            color: #c7cbd6;
+            font-weight: 400;
+        }
+
+        .sms-breadcrumb .bc-pages a:last-child {
+            color: var(--gradient_1);
+            font-weight: 700;
+            pointer-events: none;
+        }
+    </style>
+@endpush
 @section('title')
     @lang('student.student_category')
 @endsection
 @section('mainContent')
+
+    <section class="sms-breadcrumb mb-20">
+        <div class="container-fluid">
+            <div class="row justify-content-between">
+                <h1>@lang('student.student_category')</h1>
+                <div class="bc-pages">
+                    <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
+                    <a href="#">@lang('student.student_category')</a>
+                </div>
+            </div>
+        </div>
+    </section>
     <section class="admin-visitor-area up_st_admin_visitor">
         <div class="container-fluid p-0">
+            @php
+                // Button-level permissions (Section 25).
+                $canAddCategory = Auth::user()->hasPermission('student-category.store');
+                $canEditCategory = Auth::user()->hasPermission('student-category.update');
+                $canDeleteCategory = Auth::user()->hasPermission('student-category.destroy');
+                $showCategoryForm = isset($student_type) ? $canEditCategory : $canAddCategory;
+            @endphp
 
             <div class="row">
+                @if ($showCategoryForm)
+                    <div class="col-lg-4">
+                        <div class="row">
+                            <div class="col-lg-12">
 
-                <div class="col-lg-4">
-                    <div class="row">
-                        <div class="col-lg-12">
 
+                                <form
+                                    action="{{ isset($student_type) ? route('student-category.update', ['id' => $student_type->id]) : route('student-category.store') }}"
+                                    method="POST" class="form-horizontal">
+                                    @csrf
+                                    @if (isset($student_type))
+                                        @method('PUT')
+                                    @endif
+                                    <input type="hidden" name="dt_page" class="dt-page-field"
+                                        value="{{ (int) request('dt_page', 0) }}">
+                                    <div class="white-box">
+                                        <div class="main-title">
+                                            <h3 class="mb-15">
+                                                @lang('student.add_student_category')
+                                            </h3>
+                                        </div>
 
-                            <form
-                                action="{{ isset($student_type) ? route('student-category.update', ['id' => $student_type->id]) : route('student-category.store') }}"
-                                method="POST" class="form-horizontal">
-                                @csrf
-                                @if (isset($student_type))
-                                    @method('PUT')
-                                @endif
-                                <input type="hidden" name="dt_page" class="dt-page-field"
-                                    value="{{ (int) request('dt_page', 0) }}">
-                                <div class="white-box">
-                                    <div class="main-title">
-                                        <h3 class="mb-15">
-                                            @lang('student.add_student_category')
-                                        </h3>
-                                    </div>
+                                        <div class="add-visitor">
+                                            <div class="row">
+                                                <div class="col-lg-12">
 
-                                    <div class="add-visitor">
-                                        <div class="row">
-                                            <div class="col-lg-12">
+                                                    <div class="primary_input">
+                                                        <label class="primary_input_label" for="">@lang('common.type')
+                                                            <span class="text-danger"> *</span>
+                                                        </label>
+                                                        <input
+                                                            class="primary_input_field form-control{{ $errors->has('category') ? ' is-invalid' : '' }}"
+                                                            type="text" name="category" autocomplete="off"
+                                                            placeholder="Category Name"
+                                                            value="{{ isset($student_type) ? $student_type->category_name : old('category') }}">
+                                                        <input type="hidden" name="id"
+                                                            value="{{ isset($student_type) ? $student_type->id : '' }}">
 
-                                                <div class="primary_input">
-                                                    <label class="primary_input_label" for="">@lang('common.type')
-                                                        <span class="text-danger"> *</span>
-                                                    </label>
-                                                    <input
-                                                        class="primary_input_field form-control{{ $errors->has('category') ? ' is-invalid' : '' }}"
-                                                        type="text" name="category" autocomplete="off"
-                                                        placeholder="Category Name"
-                                                        value="{{ isset($student_type) ? $student_type->category_name : old('category') }}">
-                                                    <input type="hidden" name="id"
-                                                        value="{{ isset($student_type) ? $student_type->id : '' }}">
+                                                        @if ($errors->has('category'))
+                                                            <span class="text-danger">
+                                                                {{ $errors->first('category') }}
+                                                            </span>
+                                                        @endif
+                                                    </div>
 
-                                                    @if ($errors->has('category'))
-                                                        <span class="text-danger">
-                                                            {{ $errors->first('category') }}
-                                                        </span>
-                                                    @endif
                                                 </div>
-
                                             </div>
-                                        </div>
 
-                                        <div class="row mt-40">
-                                            <div class="col-lg-12 text-center">
-                                                <button class="primary-btn fix-gr-bg submit" data-toggle="tooltip">
-                                                    <span class="ti-check"></span>
+                                            <div class="row mt-20">
+                                                <div class="col-lg-12 text-center">
+                                                    <button class="primary-btn fix-gr-bg submit col-12" data-toggle="tooltip">
+                                                        <span class="ti-check"></span>
 
-                                                    @lang('student.save_category')
+                                                        @lang('student.save_category')
 
 
-                                                </button>
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </form>
+                                </form>
+                            </div>
                         </div>
                     </div>
-                </div>
+                @endif
 
-                <div class="col-lg-8">
+                <div class="col-lg-{{ $showCategoryForm ? '8' : '12' }}">
                     <div class="white-box">
                         <div class="row">
                             <div class="col-lg-4 no-gutters">
@@ -90,7 +229,6 @@
                                             <tr>
                                                 <th>@lang('common.sl')</th>
                                                 <th>@lang('student.category')</th>
-                                                <th>Status</th>
                                                 <th>@lang('common.actions')</th>
                                             </tr>
                                         </thead>
@@ -99,69 +237,77 @@
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
                                                     <td>{{ $category->category_name }}</td>
-                                                    <td>{{ $category->is_active ? 'Activate' : 'Deactivate' }}</td>
 
                                                     <td>
-
-                                                        <x-drop-down>
-                                                            <a class="dropdown-item editCategory student-category-edit-link"
-                                                                href="{{ route('student-category.edit', $category->id) }}">
-                                                                @lang('common.edit')
-                                                            </a>
-                                                            <a class="dropdown-item" data-toggle="modal"
-                                                                data-target="#toggleStatusModal{{ $category->id }}"
-                                                                href="#">
-                                                                {{ $category->is_active ?? true ? 'Deactivate' : 'Activate' }}
-                                                            </a>
-                                                        </x-drop-down>
+                                                        @if ($canEditCategory || $canDeleteCategory)
+                                                            <x-drop-down>
+                                                                @if ($canEditCategory)
+                                                                    <a class="dropdown-item editCategory student-category-edit-link"
+                                                                        href="{{ route('student-category.edit', $category->id) }}">
+                                                                        @lang('common.edit')
+                                                                    </a>
+                                                                @endif
+                                                                @if ($canDeleteCategory)
+                                                                    <a class="dropdown-item" data-toggle="modal"
+                                                                        data-target="#deleteCategoryModal{{ $category->id }}"
+                                                                        href="#">
+                                                                        @lang('common.delete')
+                                                                    </a>
+                                                                @endif
+                                                            </x-drop-down>
+                                                        @else
+                                                            <span class="text-muted">&mdash;</span>
+                                                        @endif
                                                     </td>
                                                 </tr>
 
-                                                <!-- Activate/Deactivate confirm modal for each category — replaces the old Delete modal -->
-                                                <div class="modal fade admin-query"
-                                                    id="toggleStatusModal{{ $category->id }}">
-                                                    <div class="modal-dialog modal-dialog-centered">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h4 class="modal-title">
-                                                                    {{ $category->is_active ?? true ? 'Deactivate Category' : 'Activate Category' }}
-                                                                </h4>
-                                                                <button type="button" class="close"
-                                                                    data-dismiss="modal">&times;</button>
-                                                            </div>
-                                                            <div class="modal-body">
-                                                                <div class="text-center">
-                                                                    <h4>
-                                                                        @if ($category->is_active ?? true)
-                                                                            Are you sure you want to deactivate
-                                                                            "{{ $category->category_name }}"?
-                                                                        @else
-                                                                            Are you sure you want to activate
-                                                                            "{{ $category->category_name }}"?
-                                                                        @endif
+                                                @if ($canDeleteCategory)
+                                                    {{-- BUG FIX (Section 25): this action used to post to
+                                                     student-category.toggle-status (Activate/Deactivate). Per your
+                                                     confirmed decision on the Courses page, Activate/Deactivate is
+                                                     replaced with a real Delete against the student-category.destroy
+                                                     route, which already exists and is permission-gated. --}}
+                                                    <div class="modal fade admin-query"
+                                                        id="deleteCategoryModal{{ $category->id }}">
+                                                        <div class="modal-dialog modal-dialog-centered">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <h4 class="modal-title">
+                                                                        @lang('common.delete')
                                                                     </h4>
+                                                                    <button type="button" class="close"
+                                                                        data-dismiss="modal">&times;</button>
                                                                 </div>
-                                                                <div class="mt-40 d-flex justify-content-between">
-                                                                    <button type="button" class="primary-btn tr-bg"
-                                                                        data-dismiss="modal">
-                                                                        @lang('common.cancel')
-                                                                    </button>
-                                                                    <form
-                                                                        action="{{ route('student-category.toggle-status', $category->id) }}"
-                                                                        method="POST">
-                                                                        @csrf
-                                                                        <input type="hidden" name="dt_page"
-                                                                            class="dt-page-field" value="0">
-                                                                        <button class="primary-btn fix-gr-bg"
-                                                                            type="submit">
-                                                                            {{ $category->is_active ?? true ? 'Deactivate' : 'Activate' }}
+                                                                <div class="modal-body">
+                                                                    <div class="text-center">
+                                                                        <h4>
+                                                                            @lang('common.are_you_sure_to_delete')
+                                                                            "{{ $category->category_name }}"?
+                                                                        </h4>
+                                                                    </div>
+                                                                    <div class="mt-40 d-flex justify-content-between">
+                                                                        <button type="button" class="primary-btn tr-bg"
+                                                                            data-dismiss="modal">
+                                                                            @lang('common.cancel')
                                                                         </button>
-                                                                    </form>
+                                                                        <form
+                                                                            action="{{ route('student-category.destroy', $category->id) }}"
+                                                                            method="POST">
+                                                                            @csrf
+                                                                            @method('DELETE')
+                                                                            <input type="hidden" name="dt_page"
+                                                                                class="dt-page-field" value="0">
+                                                                            <button class="primary-btn fix-gr-bg"
+                                                                                type="submit">
+                                                                                @lang('common.delete')
+                                                                            </button>
+                                                                        </form>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
+                                                @endif
                                             @endforeach
                                         </tbody>
                                     </table>

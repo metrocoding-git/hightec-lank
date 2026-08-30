@@ -1,11 +1,46 @@
 <nav id="sidebar" class="sidebar">
     @php use Illuminate\Support\Facades\Auth; @endphp
     <style>
+        /* UPDATE (Section 41): belt-and-suspenders for the scroll-containment
+           fix below — makes sure the sidebar itself never grows a second
+           scrollbar of its own if the base theme's #sidebar rule (defined
+           elsewhere, not in this file) turns out to allow it. Submenus
+           expand inline rather than flying out, so this doesn't clip
+           anything. */
+        #sidebar {
+            overflow: hidden;
+        }
+
         .sidebar_menu {
             display: block;
             flex-direction: column;
             height: calc(100% - 100px);
             /* Adjust height as needed, considering header/footer */
+            /* UPDATE (Section 41): scrolling now happens inside the menu
+               list itself instead of the whole sidebar — the height above
+               was already capping this element, it just never had overflow
+               turned on, so long menus had nowhere to go but to overflow
+               past the sidebar. The header stays fixed in place since it's
+               a sibling outside this scrollable box, not wrapped by it. */
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        #sidebar_menu::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        #sidebar_menu::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #sidebar_menu::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.18);
+            border-radius: 10px;
+        }
+
+        #sidebar_menu::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.32);
         }
 
         .sidebar_menu>li:last-of-type {
@@ -39,6 +74,29 @@
         }
 
 
+        .sidebar-header {
+            background-color: var(--sidebar_bg);
+        }
+
+        @media (min-width: 992px) {
+            .sidebar-header {
+                background-color: var(--text_white);
+            }
+
+            #sidebar .sidebar-header {
+                padding: 0;
+            }
+
+            .sidebar-header-sub {
+                background-color: var(--sidebar_bg);
+                border-top-right-radius: 40px;
+                padding: 15px 15px 15px 15px;
+
+            }
+        }
+
+
+
         @media (min-width: 992px) {
             .sidebar-header {
                 flex-direction: column !important;
@@ -60,32 +118,129 @@
                 margin-top: 10px;
             }
         }
+
+        /* ===== Modern refresh: sidebar navigation (Section 36) ===== */
+        .sidebar-header.update_sidebar {
+            padding: 22px 16px;
+            /* UPDATE (Section 41): header strip is now white, per request —
+               was transparent before, which just showed the dark sidebar
+               background behind it. Border color switched to match, since
+               the old rgba(255,255,255,.08) divider was tuned for a dark
+               background and would have been invisible on white. */
+            background: #fff;
+            border-bottom: 1px solid #eceef3;
+        }
+
+        .sidebar-header .logo-area img {
+            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.12));
+        }
+
+        /* Close ("X") icon in the mobile header now sits on a white
+           background instead of dark, so it needs a dark color to stay
+           visible — it had no color rule before and was presumably
+           inheriting a light color meant for the dark sidebar body. */
+        #close_sidebar i {
+            color: #000000;
+            transition: color 0.2s ease;
+        }
+
+        #close_sidebar:hover i {
+            color: var(--gradient_1);
+        }
+
+        .sidebar-name {
+            letter-spacing: 0.4px;
+            opacity: 0.92;
+        }
+
+        .sidebar_menu .menu_seperator {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            opacity: 0.45;
+            padding: 2px 5px 0px;
+        }
+
+        .sidebar_menu>li {
+            margin: 2px 2px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .sidebar_menu>li>a {
+            border-radius: 8px;
+            transition: background 0.2s ease, color 0.2s ease, padding-left 0.2s ease;
+        }
+
+        .sidebar_menu>li>a:hover {
+            background: rgba(255, 255, 255, 0.06);
+            padding-left: 24px;
+        }
+
+        .sidebar_menu>li.mm-active>a,
+        .sidebar_menu>li>a.active {
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+            color: #ffffff;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar_menu .has-arrow::after {
+            transition: transform 0.25s ease;
+        }
+
+        .sidebar_menu li.mm-active>a.has-arrow::after {
+            transform: rotate(90deg);
+        }
+
+        .sidebar_menu ul.mm-collapse {
+            transition: all 0.25s ease;
+        }
+
+        .sidebar_menu ul.mm-collapse li a {
+            border-radius: 6px;
+            transition: background 0.2s ease, padding-left 0.2s ease;
+        }
+
+        .sidebar_menu ul.mm-collapse li a:hover,
+        .sidebar_menu ul.mm-collapse li a.active {
+            background: rgba(255, 255, 255, 0.08);
+            padding-left: 4px;
+        }
     </style>
 
-    <div class="sidebar-header update_sidebar d-flex">
+    <div class="sidebar-header update_sidebar d-lg-flex d-none">
+        <div class="sidebar-header-sub">
+            <a href="/" id="admin-dashboard" class="logo-area">
+                <img src="{{ asset('uploads/settings/logo.png') }}" alt="logo" style="max-width: 100px;">
+            </a>
+            <div class="sidebar-name mt-2" style="font-size:14px; font-weight:600;">
+                HIGHTEC LANKA INTERNATIONAL
+            </div>
 
-        <a href="/" id="admin-dashboard" class="logo-area">
-            <img src="{{ asset('uploads/settings/logo.png') }}" alt="logo" style="max-width: 100px;">
-        </a>
-        <div class="sidebar-name" style="font-size:14px; font-weight:600;">
-            HIGHTEC LANKA INTERNATIONAL
+            <a id="close_sidebar" class="d-lg-none">
+                <i class="ti-close" style="font-size:20px;"></i>
+            </a>
         </div>
 
-        <a id="close_sidebar" class="d-lg-none">
-            <i class="ti-close" style="font-size:20px;"></i>
-        </a>
+
     </div>
 
-    {{--
-        PERMISSION GATING RESTORED — every link below checks
-        Auth::user()->hasPermission('<window key>') using the keys from
-        config_permissions.php. Each dropdown parent <li> and each section
-        separator is gated on an OR of all the keys inside it, so the
-        parent/separator only shows if the user can see at least one child
-        link. This uses window (View) permissions only — button-level
-        permissions (Add/Edit/Delete) belong inside each individual page,
-        not here.
-    --}}
+    <div class="sidebar-header update_sidebar d-flex d-lg-none">
+            <a href="/" id="admin-dashboard" class="logo-area">
+                <img src="{{ asset('uploads/settings/logo.png') }}" alt="logo" style="max-width: 100px;">
+            </a>
+            <div class="sidebar-name mt-2" style="font-size:14px; font-weight:600;">
+                HIGHTEC LANKA INTERNATIONAL
+            </div>
+
+            <a id="close_sidebar" class="d-lg-none">
+                <i class="ti-close" style="font-size:20px;"></i>
+            </a>
+    </div>
+
+
 
     <ul class="sidebar_menu list-unstyled" id="sidebar_menu">
 
@@ -291,7 +446,7 @@
                     Auth::user()->hasPermission('add-student.index') ||
                     Auth::user()->hasPermission('student-list') ||
                     Auth::user()->hasPermission('disabled-students') ||
-                    Auth::user()->hasPermission('student-attendance') ||
+                    Auth::user()->hasPermission('scan-attendance') ||
                     Auth::user()->hasPermission('student.add-intake-with-courses.index') ||
                     Auth::user()->hasPermission('fee-group') ||
                     Auth::user()->hasPermission('fees.fees-type') ||
@@ -311,7 +466,7 @@
                     Auth::user()->hasPermission('add-student.index') ||
                     Auth::user()->hasPermission('student-list') ||
                     Auth::user()->hasPermission('disabled-students') ||
-                    Auth::user()->hasPermission('student-attendance') ||
+                    Auth::user()->hasPermission('scan-attendance') ||
                     Auth::user()->hasPermission('student.add-intake-with-courses.index')))
             <li
                 class="studentInfo_section {{ request()->is('student-info') || request()->is('student/student-info/*') ? 'mm-active' : '' }}">
@@ -357,7 +512,7 @@
                             </a>
                         </li>
                     @endif
-                    @if (Auth::user()->hasPermission('student-attendance'))
+                    @if (Auth::user()->hasPermission('scan-attendance'))
                         <li>
                             <a href="/student/student-info/scan-attendance"
                                 class="{{ request()->is('student/student-info/scan-attendance') ? 'active a' : '' }}">
@@ -478,13 +633,7 @@
         {{-- ================== --}}
 
 
-        {{--
-            NOTE: label text says "Account Section" but every class/id on this
-            block says "inventory_section" — looks like a copy-paste label bug
-            from wherever this section was cloned from. Left the visible text
-            alone; say the word and I'll change it to "Inventory Section" to
-            match.
-        --}}
+
         @if (Auth::check() &&
                 (Auth::user()->hasPermission('item-category') ||
                     Auth::user()->hasPermission('item-list') ||
@@ -610,7 +759,7 @@
                     Auth::user()->hasPermission('reports.change-course') ||
                     Auth::user()->hasPermission('reports.invoice-payments') ||
                     Auth::user()->hasPermission('reports.food-payment') ||
-                    Auth::user()->hasPermission('reports.student-attendance')))
+                    Auth::user()->hasPermission('reports.scan-attendance')))
             <span class="menu_seperator" id="seperator_reports_section" data-section="reports_section">Reports
                 Section
             </span>
@@ -627,7 +776,7 @@
                     Auth::user()->hasPermission('reports.change-course') ||
                     Auth::user()->hasPermission('reports.invoice-payments') ||
                     Auth::user()->hasPermission('reports.food-payment') ||
-                    Auth::user()->hasPermission('reports.student-attendance')))
+                    Auth::user()->hasPermission('reports.scan-attendance')))
             <li
                 class="reports_section {{ request()->is('reports') || request()->is('reports/*') ? 'mm-active' : '' }}">
                 <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
@@ -638,8 +787,7 @@
                         <span>Reports</span>
                     </div>
                 </a>
-                <ul
-                    class="mm-collapse {{ request()->is('reports') || request()->is('reports/*') ? 'mm-show' : '' }}">
+                <ul class="mm-collapse {{ request()->is('reports') || request()->is('reports/*') ? 'mm-show' : '' }}">
 
                     @if (Auth::user()->hasPermission('reports.sell-items'))
                         <li>
@@ -728,10 +876,10 @@
                         </li>
                     @endif
 
-                    @if (Auth::user()->hasPermission('reports.student-attendance'))
+                    @if (Auth::user()->hasPermission('reports.scan-attendance'))
                         <li>
-                            <a href="/reports/student-attendance"
-                                class="{{ request()->is('reports/student-attendance') ? 'active a' : '' }}">
+                            <a href="/reports/scan-attendance"
+                                class="{{ request()->is('reports/scan-attendance') ? 'active a' : '' }}">
                                 Student Attendance
                             </a>
                         </li>

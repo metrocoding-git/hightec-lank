@@ -1,6 +1,14 @@
 @extends('layouts.app')
 @push('css')
     <style>
+        #table_id thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            border: none;
+        }
+
         .student_rec_card {
             border-radius: 6px;
             border: 1px solid var(--border_color);
@@ -29,7 +37,7 @@
         }
 
         /* Same as the courses page: keeps horizontal scroll on the table
-           from also dragging the left-side form sideways on large screens. */
+               from also dragging the left-side form sideways on large screens. */
         .intake-table-scroll {
             overflow-x: auto;
             max-width: 100%;
@@ -59,7 +67,8 @@
             background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
         }
 
-        .primary_input_field, select.primary_select {
+        .primary_input_field,
+        select.primary_select {
             border-radius: 8px !important;
             transition: border-color .15s ease, box-shadow .15s ease;
         }
@@ -128,7 +137,6 @@
                 <h1>Intake</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
-                    <a href="#">@lang('academics.academics')</a>
                     <a href="#">Intake</a>
                 </div>
             </div>
@@ -147,101 +155,106 @@
 
             <div class="row">
                 @if ($showIntakeForm)
-                <div class="col-lg-3">
-                    <div class="row">
-                        <div class="col-lg-12">
+                    <div class="col-lg-3">
+                        <div class="row">
+                            <div class="col-lg-12">
 
-                            <form method="POST"
-                                action="{{ isset($intakeId) ? route('intake.update', $intake->id) : route('intake.store') }}">
-                                @csrf
-                                <input type="hidden" name="dt_page" class="dt-page-field"
-                                    value="{{ (int) request('dt_page', 0) }}">
-                                <div class="white-box">
-                                    <div class="main-title">
-                                        <h3 class="mb-20">{{ isset($intakeId) ? 'Edit Intake' : 'Add Intake' }}</h3>
-                                    </div>
+                                <form method="POST"
+                                    action="{{ isset($intakeId) ? route('intake.update', $intake->id) : route('intake.store') }}">
+                                    @csrf
+                                    <input type="hidden" name="dt_page" class="dt-page-field"
+                                        value="{{ (int) request('dt_page', 0) }}">
+                                    <div class="white-box">
+                                        <div class="main-title">
+                                            <h3 class="mb-20">{{ isset($intakeId) ? 'Edit Intake' : 'Add Intake' }}</h3>
+                                        </div>
 
-                                    <div class="row">
-                                        {{-- Branch --}}
-                                        <div class="col-lg-12">
-                                            <div class="primary_input">
-                                                <label class="primary_input_label">Branch <span>*</span></label>
-                                                <select name="branch_id"
-                                                    class="primary_select form-control @error('branch_id') is-invalid @enderror">
+                                        <div class="row">
+                                            {{-- Branch --}}
+                                            <div class="col-lg-12">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label">Branch <span>*</span></label>
+                                                    <select name="branch_id"
+                                                        class="primary_select form-control @error('branch_id') is-invalid @enderror">
                                                         <option value=""> Select Branch </option>
-                                                    @foreach ($branches as $key => $branche)
-                                                        <option value="{{ $branche->id }}"
-                                                            {{ isset($intakeId) && $intake->branch->id === $branche->id ? 'selected' : '' }}>
-                                                            {{ $branche->name }}</option>
+                                                        @foreach ($branches as $key => $branche)
+                                                            <option value="{{ $branche->id }}"
+                                                                {{ isset($intakeId) && $intake->branch->id === $branche->id ? 'selected' : '' }}>
+                                                                {{ $branche->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    @error('branch_id')
+                                                        <span class="text-danger">{{ $message }}</span>
+                                                    @enderror
+                                                </div>
+                                            </div>
+
+                                            {{-- Intake Name --}}
+                                            <div class="col-lg-12 mt-20">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label">Intake Name <span>*</span></label>
+                                                    <input type="text" name="name"
+                                                        class="primary_input_field form-control @error('name') is-invalid @enderror"
+                                                        value="{{ old('name', $intake->name ?? '') }}" autocomplete="off">
+                                                    @error('name')
+                                                        <span class="text-danger">{{ $message }}</span>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                                            {{-- Intake Date --}}
+                                            <div class="col-lg-12 mt-20">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label">Intake Start Date
+                                                        <span>*</span></label>
+                                                    <input type="date" name="date"
+                                                        class="primary_input_field form-control @error('date') is-invalid @enderror"
+                                                        value="{{ old('date', $intake->start_date ?? '') }}"
+                                                        autocomplete="off">
+                                                    @error('date')
+                                                        <span class="text-danger">{{ $message }}</span>
+                                                    @enderror
+                                                </div>
+                                            </div>
+
+                                            {{-- Courses Selection --}}
+                                            <div class="col-lg-12 mt-20">
+                                                <label class="primary_input_label">Courses <span>*</span></label>
+                                                <div class="course-selection-container">
+                                                    @foreach ($courses as $course)
+                                                        <div class="form-check mb-2">
+                                                            <input type="checkbox"
+                                                                class="common-checkbox form-control course-checkbox"
+                                                                name="courses[]" id="course_{{ $course->id }}"
+                                                                value="{{ $course->id }}"
+                                                                {{ isset($intakeId) && in_array($course->id, old('courses', $intake->courses->pluck('id')->toArray() ?? [])) ? 'checked' : '' }}>
+                                                            <label for="course_{{ $course->id }}"
+                                                                class="font-weight-bold">
+                                                                {{ $course->name }}
+                                                            </label>
+                                                        </div>
                                                     @endforeach
-                                                </select>
-                                                @error('branch_id')
+                                                </div>
+                                                @error('courses')
                                                     <span class="text-danger">{{ $message }}</span>
                                                 @enderror
                                             </div>
-                                        </div>
 
-                                        {{-- Intake Name --}}
-                                        <div class="col-lg-12 mt-20">
-                                            <div class="primary_input">
-                                                <label class="primary_input_label">Intake Name <span>*</span></label>
-                                                <input type="text" name="name"
-                                                    class="primary_input_field form-control @error('name') is-invalid @enderror"
-                                                    value="{{ old('name', $intake->name ?? '') }}" autocomplete="off">
-                                                @error('name')
-                                                    <span class="text-danger">{{ $message }}</span>
-                                                @enderror
+
+                                            {{-- Submit --}}
+                                            <div class="col-lg-12 mt-30 text-center">
+                                                <button type="submit" class="primary-btn fix-gr-bg col-12">
+                                                    <span class="ti-check"></span>
+                                                    {{ isset($intakeId) ? 'Update' : 'Save' }}
+                                                </button>
                                             </div>
-                                        </div>
-                                        {{-- Intake Date --}}
-                                        <div class="col-lg-12 mt-20">
-                                            <div class="primary_input">
-                                                <label class="primary_input_label">Intake Start Date <span>*</span></label>
-                                                <input type="date" name="date"
-                                                    class="primary_input_field form-control @error('date') is-invalid @enderror"
-                                                    value="{{ old('date', $intake->start_date ?? '') }}" autocomplete="off">
-                                                @error('date')
-                                                    <span class="text-danger">{{ $message }}</span>
-                                                @enderror
-                                            </div>
-                                        </div>
-
-                                        {{-- Courses Selection --}}
-                                        <div class="col-lg-12 mt-20">
-                                            <label class="primary_input_label">Courses <span>*</span></label>
-                                            <div class="course-selection-container">
-                                                @foreach ($courses as $course)
-                                                    <div class="form-check mb-2">
-                                                        <input type="checkbox" class="common-checkbox form-control course-checkbox"
-                                                            name="courses[]" id="course_{{ $course->id }}"
-                                                            value="{{ $course->id }}"
-                                                            {{ isset($intakeId) && in_array($course->id, old('courses', $intake->courses->pluck('id')->toArray() ?? [])) ? 'checked' : '' }}>
-                                                        <label for="course_{{ $course->id }}" class="font-weight-bold">
-                                                            {{ $course->name }}
-                                                        </label>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                            @error('courses')
-                                                <span class="text-danger">{{ $message }}</span>
-                                            @enderror
-                                        </div>
-
-
-                                        {{-- Submit --}}
-                                        <div class="col-lg-12 mt-30 text-center">
-                                            <button type="submit" class="primary-btn fix-gr-bg">
-                                                <span class="ti-check"></span> {{ isset($intakeId) ? 'Update' : 'Save' }}
-                                            </button>
                                         </div>
                                     </div>
-                                </div>
-                            </form>
+                                </form>
 
 
+                            </div>
                         </div>
                     </div>
-                </div>
                 @endif
 
                 <div class="col-lg-{{ $showIntakeForm ? '9' : '12' }}">
@@ -287,13 +300,18 @@
                                                         @php
                                                             $routeList = [];
                                                             if ($canEditIntake) {
-                                                                $routeList[] = '<a class="dropdown-item intake-edit-link" href="' .
+                                                                $routeList[] =
+                                                                    '<a class="dropdown-item intake-edit-link" href="' .
                                                                     route('intake.edit', $intake->id) .
-                                                                    '">' . __('common.edit') . '</a>';
+                                                                    '">' .
+                                                                    __('common.edit') .
+                                                                    '</a>';
                                                             }
                                                             if ($canDeleteIntake) {
-                                                                $routeList[] = '<a class="dropdown-item text-danger" data-toggle="modal" data-target="#deleteModal' .
-                                                                    $intake->id . '" href="#">Delete</a>';
+                                                                $routeList[] =
+                                                                    '<a class="dropdown-item text-danger" data-toggle="modal" data-target="#deleteModal' .
+                                                                    $intake->id .
+                                                                    '" href="#">Delete</a>';
                                                             }
                                                         @endphp
                                                         @if (count($routeList) > 0)
@@ -305,39 +323,42 @@
                                                 </tr>
 
                                                 @if ($canDeleteIntake)
-                                                <div class="modal fade admin-query" id="deleteModal{{ $intake->id }}">
-                                                    <div class="modal-dialog modal-dialog-centered">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h4 class="modal-title">Delete Intake</h4>
-                                                                <button type="button" class="close"
-                                                                    data-dismiss="modal">&times;</button>
-                                                            </div>
-                                                            <div class="modal-body text-center">
-                                                                <h4>
-                                                                    Are you sure you want to delete "{{ $intake->name }}"?
-                                                                    This cannot be undone.
-                                                                </h4>
-                                                                <div class="mt-40 d-flex justify-content-between">
-                                                                    <button type="button" class="primary-btn tr-bg"
-                                                                        data-dismiss="modal">@lang(key: 'common.cancel')</button>
-                                                                    <form action="{{ route('intake.destroy', $intake->id) }}"
-                                                                        method="POST">
-                                                                        @csrf
-                                                                        @method('DELETE')
+                                                    <div class="modal fade admin-query"
+                                                        id="deleteModal{{ $intake->id }}">
+                                                        <div class="modal-dialog modal-dialog-centered">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <h4 class="modal-title">Delete Intake</h4>
+                                                                    <button type="button" class="close"
+                                                                        data-dismiss="modal">&times;</button>
+                                                                </div>
+                                                                <div class="modal-body text-center">
+                                                                    <h4>
+                                                                        Are you sure you want to delete
+                                                                        "{{ $intake->name }}"?
+                                                                        This cannot be undone.
+                                                                    </h4>
+                                                                    <div class="mt-40 d-flex justify-content-between">
+                                                                        <button type="button" class="primary-btn tr-bg"
+                                                                            data-dismiss="modal">@lang(key: 'common.cancel')</button>
+                                                                        <form
+                                                                            action="{{ route('intake.destroy', $intake->id) }}"
+                                                                            method="POST">
+                                                                            @csrf
+                                                                            @method('DELETE')
 
-                                                                        <input type="hidden" name="dt_page"
-                                                                            class="dt-page-field" value="0">
-                                                                        <button class="primary-btn fix-gr-bg"
-                                                                            type="submit">
-                                                                            Delete
-                                                                        </button>
-                                                                    </form>
+                                                                            <input type="hidden" name="dt_page"
+                                                                                class="dt-page-field" value="0">
+                                                                            <button class="primary-btn fix-gr-bg"
+                                                                                type="submit">
+                                                                                Delete
+                                                                            </button>
+                                                                        </form>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
                                                 @endif
                                             @endforeach
                                         </tbody>
@@ -421,5 +442,4 @@
             $(this).find('.dt-page-field').val(table.page());
         });
     </script>
-
 @endpush

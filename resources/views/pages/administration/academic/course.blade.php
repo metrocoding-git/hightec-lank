@@ -1,6 +1,14 @@
 @extends('layouts.app')
 @push('css')
     <style>
+        #table_id thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            border: none;
+        }
+
         .student_rec_card {
             border-radius: 6px;
             border: 1px solid var(--border_color);
@@ -29,7 +37,7 @@
         }
 
         /* Keeps horizontal scroll on the wide courses table from also
-               dragging the left-side Add/Edit form sideways on large screens. */
+                   dragging the left-side Add/Edit form sideways on large screens. */
         .course-table-scroll {
             overflow-x: auto;
             max-width: 100%;
@@ -60,12 +68,16 @@
             background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
         }
 
-        .primary_input_field, select.primary_select, textarea.form-control {
+        .primary_input_field,
+        select.primary_select,
+        textarea.form-control {
             border-radius: 8px !important;
             transition: border-color .15s ease, box-shadow .15s ease;
         }
 
-        .primary_input_field:focus, select.primary_select:focus, textarea.form-control:focus {
+        .primary_input_field:focus,
+        select.primary_select:focus,
+        textarea.form-control:focus {
             box-shadow: 0 0 0 3px rgba(var(--gradient_1-rgb, 90, 103, 216), 0.12);
         }
 
@@ -123,11 +135,8 @@
         <div class="container-fluid">
             <div class="row justify-content-between">
                 <h1>Courses</h1>
-                {{-- {{Auth::user()->name}} {{Auth::user()->last_name}} role->id {{ Auth::user()->role_id}} --}}
-
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
-                    <a href="#">@lang('academics.academics')</a>
                     <a href="#">Courses</a>
                 </div>
             </div>
@@ -139,270 +148,273 @@
             @php
                 // Button-level permissions (Section 21) — computed once, reused for
                 // both the Add/Edit form on the left and every row's dropdown below.
-                $canAddCourse = Auth::user()->hasPermission('course.store');
-                $canEditCourse = Auth::user()->hasPermission('course.update');
-                $canDeleteCourse = Auth::user()->hasPermission('course.destroy');
+$canAddCourse = Auth::user()->hasPermission('course.store');
+$canEditCourse = Auth::user()->hasPermission('course.update');
+$canDeleteCourse = Auth::user()->hasPermission('course.destroy');
                 $showCourseForm = isset($courseId) ? $canEditCourse : $canAddCourse;
             @endphp
 
             <div class="row">
                 @if ($showCourseForm)
-                <div class="col-lg-3">
-                    <div class="row">
-                        <div class="col-lg-12">
-                            <form
-                                action="{{ isset($courseId) ? route('course.update', $courseId) : route('course.store') }}"
-                                method="POST" enctype="multipart/form-data" class="form-horizontal">
-                                @csrf
-                                <input type="hidden" name="dt_page" class="dt-page-field"
-                                    value="{{ (int) request('dt_page', 0) }}">
-                                <div class="white-box">
-                                    <div class="main-title">
-                                        <h3 class="mb-20">{{ isset($courseId) ? 'Edit Course' : 'Add Course' }}</h3>
-                                    </div>
-
-                                    <div class="add-visitor">
-                                        {{-- Course Name --}}
-                                        <div class="row">
-                                            <div class="col-lg-12">
-                                                <div class="primary_input">
-                                                    <label class="primary_input_label" for="name">Course Name
-                                                        <span>*</span></label>
-                                                    <input
-                                                        class="primary_input_field form-control{{ $errors->has('name') ? ' is-invalid' : '' }}"
-                                                        type="text" name="name" id="name"
-                                                        value="{{ old('name', $course->name ?? '') }}" autocomplete="off">
-                                                    @if ($errors->has('name'))
-                                                        <span class="invalid-feedback" role="alert">
-                                                            <strong>{{ $errors->first('name') }}</strong>
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            </div>
+                    <div class="col-lg-3">
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <form
+                                    action="{{ isset($courseId) ? route('course.update', $courseId) : route('course.store') }}"
+                                    method="POST" enctype="multipart/form-data" class="form-horizontal">
+                                    @csrf
+                                    <input type="hidden" name="dt_page" class="dt-page-field"
+                                        value="{{ (int) request('dt_page', 0) }}">
+                                    <div class="white-box">
+                                        <div class="main-title">
+                                            <h3 class="mb-20">{{ isset($courseId) ? 'Edit Course' : 'Add Course' }}</h3>
                                         </div>
 
-                                        {{-- Course Code --}}
-                                        <div class="row mt-20" hidden>
-                                            <div class="col-lg-12">
-                                                <div class="primary_input">
-                                                    <label class="primary_input_label" for="code">Course Code
-                                                        <span>*</span></label>
-                                                    <input
-                                                        class="primary_input_field form-control{{ $errors->has('code') ? ' is-invalid' : '' }}"
-                                                        type="text" name="code" id="code"
-                                                        value="{{ old('code', $course->code ?? '') }}" autocomplete="off">
-                                                    @if ($errors->has('code'))
-                                                        <span class="invalid-feedback" role="alert">
-                                                            <strong>{{ $errors->first('code') }}</strong>
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {{-- Course Price --}}
-                                        <div class="row mt-20">
-                                            <div class="col-lg-12">
-                                                <div class="primary_input">
-                                                    <label class="primary_input_label" for="price">Course Price
-                                                        <span>*</span></label>
-                                                    <input
-                                                        class="primary_input_field form-control{{ $errors->has('price') ? ' is-invalid' : '' }}"
-                                                        type="number" name="price" id="price"
-                                                        value="{{ old('price', $course->price ?? '') }}" placeholder="0.00"
-                                                        autocomplete="off">
-                                                    @if ($errors->has('price'))
-                                                        <span class="invalid-feedback" role="alert">
-                                                            <strong>{{ $errors->first('price') }}</strong>
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="row mt-20">
-                                            <div class="col-lg-12">
-                                                <div class="primary_input">
-                                                    <label class="primary_input_label" for="price">Course Expiration
-                                                        dates
-                                                        <span>*</span></label>
-                                                    <input
-                                                        class="primary_input_field form-control{{ $errors->has('expiration_date') ? ' is-invalid' : '' }}"
-                                                        type="number" name="expiration_date" id="expiration_date"
-                                                        value="{{ old('expiration_date', $course->expiration_date ?? '') }}"
-                                                        autocomplete="off">
-                                                    @if ($errors->has('expiration_date'))
-                                                        <span class="invalid-feedback" role="alert">
-                                                            <strong>{{ $errors->first('expiration_date') }}</strong>
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {{-- Course Duration --}}
-                                        <div class="row mt-20">
-                                            <div class="col-lg-12">
-                                                <div class="primary_input">
-                                                    <label class="primary_input_label" for="duration">Course
-                                                        Duration</label>
-                                                    <select name="duration" id="duration"
-                                                        class="primary_select form-control{{ $errors->has('duration') ? ' is-invalid' : '' }}">
-                                                        <option value="">Select Duration</option>
-                                                        <option value="2 weeks"
-                                                            {{ old('duration', $course->duration ?? '') == '2 weeks' ? 'selected' : '' }}>
-                                                            2 Weeks</option>
-                                                        <option value="1 month"
-                                                            {{ old('duration', $course->duration ?? '') == '1 month' ? 'selected' : '' }}>
-                                                            1 Month</option>
-                                                        <option value="2 months"
-                                                            {{ old('duration', $course->duration ?? '') == '2 months' ? 'selected' : '' }}>
-                                                            2 Months</option>
-                                                    </select>
-                                                    @if ($errors->has('duration'))
-                                                        <span class="invalid-feedback" role="alert">
-                                                            <strong>{{ $errors->first('duration') }}</strong>
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {{-- NVQ Payment Available --}}
-                                        <div class="row mt-20">
-                                            <div class="col-lg-12">
-                                                <div class="primary_input">
-                                                    <label class="primary_input_label">NVQ Payment Available?</label>
-                                                    <select name="has_nvq_payment" id="has_nvq_payment"
-                                                        class="primary_select form-control">
-                                                        <option value="0">No</option>
-                                                        <option value="1"
-                                                            {{ old('has_nvq_payment', $course->has_nvq_payment ?? '') == 1 ? 'selected' : '' }}>
-                                                            Yes
-                                                        </option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {{-- NVQ Amount --}}
-                                        <div class="row mt-20" id="nvq_amount_box" style="display:none;">
-                                            <div class="col-lg-12">
-                                                <div class="primary_input">
-                                                    <label class="primary_input_label">NVQ Amount</label>
-                                                    <input type="number" step="0.01" name="nvq_amount"
-                                                        class="primary_input_field form-control" placeholder="0.00"
-                                                        value="{{ old('nvq_amount', $course->nvq_amount ?? '') }}">
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {{-- Food Fee Toggle --}}
-                                        <div class="row mt-20">
-                                            <div class="col-lg-12">
-                                                <div class="primary_input">
-                                                    <label class="primary_input_label">Has Food Fee?</label>
-                                                    <select name="has_food_fee" id="has_food_fee"
-                                                        class="primary_select form-control">
-                                                        <option value="0">No</option>
-                                                        <option value="1"
-                                                            {{ old('has_food_fee', $course->has_food_fee ?? 0) == 1 ? 'selected' : '' }}>
-                                                            Yes
-                                                        </option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {{-- Meal Amounts --}}
-                                        <div id="food_fee_box" style="display:none;">
-
-                                            {{-- Breakfast --}}
-                                            <div class="row mt-20">
+                                        <div class="add-visitor">
+                                            {{-- Course Name --}}
+                                            <div class="row">
                                                 <div class="col-lg-12">
                                                     <div class="primary_input">
-                                                        <label class="primary_input_label">Breakfast Amount</label>
-                                                        <input type="number" step="0.01" name="breakfast_amount"
-                                                            id="breakfast_amount"
-                                                            class="primary_input_field form-control meal-amount"
-                                                            placeholder="0.00"
-                                                            value="{{ old('breakfast_amount', $course->breakfast_amount ?? '') }}">
+                                                        <label class="primary_input_label" for="name">Course Name
+                                                            <span>*</span></label>
+                                                        <input
+                                                            class="primary_input_field form-control{{ $errors->has('name') ? ' is-invalid' : '' }}"
+                                                            type="text" name="name" id="name"
+                                                            value="{{ old('name', $course->name ?? '') }}"
+                                                            autocomplete="off">
+                                                        @if ($errors->has('name'))
+                                                            <span class="invalid-feedback" role="alert">
+                                                                <strong>{{ $errors->first('name') }}</strong>
+                                                            </span>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            {{-- Lunch --}}
-                                            <div class="row mt-20">
+                                            {{-- Course Code --}}
+                                            <div class="row mt-20" hidden>
                                                 <div class="col-lg-12">
                                                     <div class="primary_input">
-                                                        <label class="primary_input_label">Lunch Amount</label>
-                                                        <input type="number" step="0.01" name="lunch_amount"
-                                                            id="lunch_amount"
-                                                            class="primary_input_field form-control meal-amount"
-                                                            placeholder="0.00"
-                                                            value="{{ old('lunch_amount', $course->lunch_amount ?? '') }}">
+                                                        <label class="primary_input_label" for="code">Course Code
+                                                            <span>*</span></label>
+                                                        <input
+                                                            class="primary_input_field form-control{{ $errors->has('code') ? ' is-invalid' : '' }}"
+                                                            type="text" name="code" id="code"
+                                                            value="{{ old('code', $course->code ?? '') }}"
+                                                            autocomplete="off">
+                                                        @if ($errors->has('code'))
+                                                            <span class="invalid-feedback" role="alert">
+                                                                <strong>{{ $errors->first('code') }}</strong>
+                                                            </span>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            {{-- Dinner --}}
+                                            {{-- Course Price --}}
                                             <div class="row mt-20">
                                                 <div class="col-lg-12">
                                                     <div class="primary_input">
-                                                        <label class="primary_input_label">Dinner Amount</label>
-                                                        <input type="number" step="0.01" name="dinner_amount"
-                                                            id="dinner_amount"
-                                                            class="primary_input_field form-control meal-amount"
-                                                            placeholder="0.00"
-                                                            value="{{ old('dinner_amount', $course->dinner_amount ?? '') }}">
+                                                        <label class="primary_input_label" for="price">Course Price
+                                                            <span>*</span></label>
+                                                        <input
+                                                            class="primary_input_field form-control{{ $errors->has('price') ? ' is-invalid' : '' }}"
+                                                            type="number" name="price" id="price"
+                                                            value="{{ old('price', $course->price ?? '') }}"
+                                                            placeholder="0.00" autocomplete="off">
+                                                        @if ($errors->has('price'))
+                                                            <span class="invalid-feedback" role="alert">
+                                                                <strong>{{ $errors->first('price') }}</strong>
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row mt-20">
+                                                <div class="col-lg-12">
+                                                    <div class="primary_input">
+                                                        <label class="primary_input_label" for="price">Course Expiration
+                                                            dates
+                                                            <span>*</span></label>
+                                                        <input
+                                                            class="primary_input_field form-control{{ $errors->has('expiration_date') ? ' is-invalid' : '' }}"
+                                                            type="number" name="expiration_date" id="expiration_date"
+                                                            value="{{ old('expiration_date', $course->expiration_date ?? '') }}"
+                                                            autocomplete="off">
+                                                        @if ($errors->has('expiration_date'))
+                                                            <span class="invalid-feedback" role="alert">
+                                                                <strong>{{ $errors->first('expiration_date') }}</strong>
+                                                            </span>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            {{-- Auto-calculated Total --}}
+                                            {{-- Course Duration --}}
                                             <div class="row mt-20">
                                                 <div class="col-lg-12">
                                                     <div class="primary_input">
-                                                        <label class="primary_input_label">Total Food Fee </label>
-                                                        <input type="text" id="food_total"
+                                                        <label class="primary_input_label" for="duration">Course
+                                                            Duration</label>
+                                                        <select name="duration" id="duration"
+                                                            class="primary_select form-control{{ $errors->has('duration') ? ' is-invalid' : '' }}">
+                                                            <option value="">Select Duration</option>
+                                                            <option value="2 weeks"
+                                                                {{ old('duration', $course->duration ?? '') == '2 weeks' ? 'selected' : '' }}>
+                                                                2 Weeks</option>
+                                                            <option value="1 month"
+                                                                {{ old('duration', $course->duration ?? '') == '1 month' ? 'selected' : '' }}>
+                                                                1 Month</option>
+                                                            <option value="2 months"
+                                                                {{ old('duration', $course->duration ?? '') == '2 months' ? 'selected' : '' }}>
+                                                                2 Months</option>
+                                                        </select>
+                                                        @if ($errors->has('duration'))
+                                                            <span class="invalid-feedback" role="alert">
+                                                                <strong>{{ $errors->first('duration') }}</strong>
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {{-- NVQ Payment Available --}}
+                                            <div class="row mt-20">
+                                                <div class="col-lg-12">
+                                                    <div class="primary_input">
+                                                        <label class="primary_input_label">NVQ Payment Available?</label>
+                                                        <select name="has_nvq_payment" id="has_nvq_payment"
+                                                            class="primary_select form-control">
+                                                            <option value="0">No</option>
+                                                            <option value="1"
+                                                                {{ old('has_nvq_payment', $course->has_nvq_payment ?? '') == 1 ? 'selected' : '' }}>
+                                                                Yes
+                                                            </option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {{-- NVQ Amount --}}
+                                            <div class="row mt-20" id="nvq_amount_box" style="display:none;">
+                                                <div class="col-lg-12">
+                                                    <div class="primary_input">
+                                                        <label class="primary_input_label">NVQ Amount</label>
+                                                        <input type="number" step="0.01" name="nvq_amount"
                                                             class="primary_input_field form-control" placeholder="0.00"
-                                                            readonly style="background:#f5f5f5; font-weight:bold;">
+                                                            value="{{ old('nvq_amount', $course->nvq_amount ?? '') }}">
                                                     </div>
                                                 </div>
                                             </div>
 
-                                        </div>
-                                        {{-- Course Description --}}
-                                        <div class="row mt-20">
-                                            <div class="col-lg-12">
-                                                <div class="primary_input">
-                                                    <label class="primary_input_label" for="description">Course
-                                                        Description</label>
-                                                    <textarea class="form-control" name="description" id="description">{{ old('description', $course->description ?? '') }}</textarea>
-                                                    @if ($errors->has('description'))
-                                                        <span class="invalid-feedback" role="alert">
-                                                            <strong>{{ $errors->first('description') }}</strong>
-                                                        </span>
-                                                    @endif
+                                            {{-- Food Fee Toggle --}}
+                                            <div class="row mt-20">
+                                                <div class="col-lg-12">
+                                                    <div class="primary_input">
+                                                        <label class="primary_input_label">Has Food Fee?</label>
+                                                        <select name="has_food_fee" id="has_food_fee"
+                                                            class="primary_select form-control">
+                                                            <option value="0">No</option>
+                                                            <option value="1"
+                                                                {{ old('has_food_fee', $course->has_food_fee ?? 0) == 1 ? 'selected' : '' }}>
+                                                                Yes
+                                                            </option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {{-- Meal Amounts --}}
+                                            <div id="food_fee_box" style="display:none;">
+
+                                                {{-- Breakfast --}}
+                                                <div class="row mt-20">
+                                                    <div class="col-lg-12">
+                                                        <div class="primary_input">
+                                                            <label class="primary_input_label">Breakfast Amount</label>
+                                                            <input type="number" step="0.01" name="breakfast_amount"
+                                                                id="breakfast_amount"
+                                                                class="primary_input_field form-control meal-amount"
+                                                                placeholder="0.00"
+                                                                value="{{ old('breakfast_amount', $course->breakfast_amount ?? '') }}">
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {{-- Lunch --}}
+                                                <div class="row mt-20">
+                                                    <div class="col-lg-12">
+                                                        <div class="primary_input">
+                                                            <label class="primary_input_label">Lunch Amount</label>
+                                                            <input type="number" step="0.01" name="lunch_amount"
+                                                                id="lunch_amount"
+                                                                class="primary_input_field form-control meal-amount"
+                                                                placeholder="0.00"
+                                                                value="{{ old('lunch_amount', $course->lunch_amount ?? '') }}">
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {{-- Dinner --}}
+                                                <div class="row mt-20">
+                                                    <div class="col-lg-12">
+                                                        <div class="primary_input">
+                                                            <label class="primary_input_label">Dinner Amount</label>
+                                                            <input type="number" step="0.01" name="dinner_amount"
+                                                                id="dinner_amount"
+                                                                class="primary_input_field form-control meal-amount"
+                                                                placeholder="0.00"
+                                                                value="{{ old('dinner_amount', $course->dinner_amount ?? '') }}">
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {{-- Auto-calculated Total --}}
+                                                <div class="row mt-20">
+                                                    <div class="col-lg-12">
+                                                        <div class="primary_input">
+                                                            <label class="primary_input_label">Total Food Fee </label>
+                                                            <input type="text" id="food_total"
+                                                                class="primary_input_field form-control"
+                                                                placeholder="0.00" readonly
+                                                                style="background:#f5f5f5; font-weight:bold;">
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                            {{-- Course Description --}}
+                                            <div class="row mt-20">
+                                                <div class="col-lg-12">
+                                                    <div class="primary_input">
+                                                        <label class="primary_input_label" for="description">Course
+                                                            Description</label>
+                                                        <textarea class="form-control" name="description" id="description">{{ old('description', $course->description ?? '') }}</textarea>
+                                                        @if ($errors->has('description'))
+                                                            <span class="invalid-feedback" role="alert">
+                                                                <strong>{{ $errors->first('description') }}</strong>
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {{-- Submit Button --}}
+                                            <div class="row mt-20">
+                                                <div class="col-lg-12 text-center">
+                                                    <button class="primary-btn fix-gr-bg col-12 submit" type="submit">
+                                                        <span class="ti-check"></span>
+                                                        {{ isset($courseId) ? __('Update Course') : __('Save Course') }}
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
-
-                                        {{-- Submit Button --}}
-                                        <div class="row mt-20">
-                                            <div class="col-lg-12 text-center">
-                                                <button class="primary-btn fix-gr-bg submit" type="submit">
-                                                    <span class="ti-check"></span>
-                                                    {{ isset($courseId) ? __('Update Course') : __('Save Course') }}
-                                                </button>
-                                            </div>
-                                        </div>
                                     </div>
-                                </div>
-                            </form>
+                                </form>
 
+                            </div>
                         </div>
                     </div>
-                </div>
                 @endif
 
                 <div class="col-lg-{{ $showCourseForm ? '9' : '12' }}">
@@ -475,13 +487,18 @@
                                                         @php
                                                             $routeList = [];
                                                             if ($canEditCourse) {
-                                                                $routeList[] = '<a class="dropdown-item course-edit-link" href="' .
+                                                                $routeList[] =
+                                                                    '<a class="dropdown-item course-edit-link" href="' .
                                                                     route('course.edit', $course->id) .
-                                                                    '">' . __('common.edit') . '</a>';
+                                                                    '">' .
+                                                                    __('common.edit') .
+                                                                    '</a>';
                                                             }
                                                             if ($canDeleteCourse) {
-                                                                $routeList[] = '<a class="dropdown-item text-danger" data-toggle="modal" data-target="#deleteModal' .
-                                                                    $course->id . '" href="#">Delete</a>';
+                                                                $routeList[] =
+                                                                    '<a class="dropdown-item text-danger" data-toggle="modal" data-target="#deleteModal' .
+                                                                    $course->id .
+                                                                    '" href="#">Delete</a>';
                                                             }
                                                         @endphp
                                                         @if (count($routeList) > 0)
@@ -493,41 +510,41 @@
                                                 </tr>
 
                                                 @if ($canDeleteCourse)
-                                                <div class="modal fade admin-query"
-                                                    id="deleteModal{{ $course->id }}">
-                                                    <div class="modal-dialog modal-dialog-centered">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h4 class="modal-title">Delete Course</h4>
-                                                                <button type="button" class="close"
-                                                                    data-dismiss="modal">&times;</button>
-                                                            </div>
-                                                            <div class="modal-body text-center">
-                                                                <h4>
-                                                                    Are you sure you want to delete
-                                                                    "{{ $course->name }}"? This cannot be undone.
-                                                                </h4>
-                                                                <div class="mt-40 d-flex justify-content-between">
-                                                                    <button type="button" class="primary-btn tr-bg"
-                                                                        data-dismiss="modal">@lang('common.cancel')</button>
-                                                                    <form
-                                                                        action="{{ route('course.destroy', $course->id) }}"
-                                                                        method="POST">
-                                                                        @csrf
-                                                                        @method('DELETE')
+                                                    <div class="modal fade admin-query"
+                                                        id="deleteModal{{ $course->id }}">
+                                                        <div class="modal-dialog modal-dialog-centered">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <h4 class="modal-title">Delete Course</h4>
+                                                                    <button type="button" class="close"
+                                                                        data-dismiss="modal">&times;</button>
+                                                                </div>
+                                                                <div class="modal-body text-center">
+                                                                    <h4>
+                                                                        Are you sure you want to delete
+                                                                        "{{ $course->name }}"? This cannot be undone.
+                                                                    </h4>
+                                                                    <div class="mt-40 d-flex justify-content-between">
+                                                                        <button type="button" class="primary-btn tr-bg"
+                                                                            data-dismiss="modal">@lang('common.cancel')</button>
+                                                                        <form
+                                                                            action="{{ route('course.destroy', $course->id) }}"
+                                                                            method="POST">
+                                                                            @csrf
+                                                                            @method('DELETE')
 
-                                                                        <input type="hidden" name="dt_page"
-                                                                            class="dt-page-field" value="0">
-                                                                        <button class="primary-btn fix-gr-bg"
-                                                                            type="submit">
-                                                                            Delete
-                                                                        </button>
-                                                                    </form>
+                                                                            <input type="hidden" name="dt_page"
+                                                                                class="dt-page-field" value="0">
+                                                                            <button class="primary-btn fix-gr-bg"
+                                                                                type="submit">
+                                                                                Delete
+                                                                            </button>
+                                                                        </form>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
                                                 @endif
                                             @endforeach
                                         </tbody>

@@ -618,16 +618,16 @@
     });
   });
   // bootstrap tab for data table
-  $('a[data-toggle="tab"]').on("shown.bs.tab", function (e) {
-    if($.fn.dataTable){
-      $($.fn.dataTable.tables(true))
-          .DataTable()
-          .columns.adjust()
-          .responsive.recalc();
-    }
+  // $('a[data-toggle="tab"]').on("shown.bs.tab", function (e) {
+  //   if($.fn.dataTable){
+  //     $($.fn.dataTable.tables(true))
+  //         .DataTable()
+  //         .columns.adjust()
+  //         .responsive.recalc();
+  //   }
 
 
-  });
+  // });
   /*----------------------------------------------------*/
   /*  Magnific Pop up js (Image Gallery)
                     /*----------------------------------------------------*/
@@ -1730,17 +1730,17 @@
 
   // TABS DATA TABLE ISSU
   // data table responsive problem tab
-  $(document).ready(function () {
-    $('a[data-toggle="tab"]').on("shown.bs.tab", function (e) {
-      if($.fn.dataTable){
-        $($.fn.dataTable.tables(true))
-            .DataTable()
-            .columns.adjust()
-            .responsive.recalc();
-      }
+  // $(document).ready(function () {
+  //   $('a[data-toggle="tab"]').on("shown.bs.tab", function (e) {
+  //     if($.fn.dataTable){
+  //       $($.fn.dataTable.tables(true))
+  //           .DataTable()
+  //           .columns.adjust()
+  //           .responsive.recalc();
+  //     }
 
-    });
-  });
+  //   });
+  // });
 
   $(document).on('submit', 'form', function(){
     $(".prelaoder_wrapper").fadeOut("slow", function () {

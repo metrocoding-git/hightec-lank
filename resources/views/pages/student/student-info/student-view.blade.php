@@ -1,4 +1,79 @@
 @extends('layouts.app')
+@push('css')
+    <style>
+        /* ---- Modern refresh: cards, breadcrumb (Section 25) ----
+             BUG FIX: this page already used the sms-breadcrumb markup below, but never
+             defined its CSS anywhere, so the banner rendered completely unstyled
+             (no card, no gradient stripe, no crumb-trail styling). Adding the same
+             breadcrumb + card CSS used on every other module page. ---- */
+        .white-box {
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+        }
+
+        .sms-breadcrumb {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+            padding: 18px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sms-breadcrumb::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .sms-breadcrumb .row {
+            align-items: center;
+        }
+
+        .sms-breadcrumb h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .sms-breadcrumb .bc-pages {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .sms-breadcrumb .bc-pages a {
+            font-size: 13px;
+            font-weight: 500;
+            color: #8a90a2;
+            text-decoration: none;
+            transition: color .15s ease;
+        }
+
+        .sms-breadcrumb .bc-pages a:hover {
+            color: var(--gradient_1);
+        }
+
+        .sms-breadcrumb .bc-pages a:not(:last-child)::after {
+            content: '\203A';
+            margin: 0 8px;
+            color: #c7cbd6;
+            font-weight: 400;
+        }
+
+        .sms-breadcrumb .bc-pages a:last-child {
+            color: var(--gradient_1);
+            font-weight: 700;
+            pointer-events: none;
+        }
+    </style>
+@endpush
 @section('title')
     Student Details
 @endsection

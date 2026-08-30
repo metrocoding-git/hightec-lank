@@ -1,6 +1,14 @@
 @extends('layouts.app')
 @push('css')
     <style>
+        #table_id thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            border: none;
+        }
+
         .student_rec_card {
             border-radius: 6px;
             border: 1px solid var(--border_color);
@@ -58,7 +66,9 @@
             background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
         }
 
-        .primary_input_field, select.primary_select, textarea.form-control {
+        .primary_input_field,
+        select.primary_select,
+        textarea.form-control {
             border-radius: 8px !important;
             transition: border-color .15s ease, box-shadow .15s ease;
         }
@@ -126,7 +136,6 @@
                 <h1>@lang('academics.subject')</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
-                    <a href="#">@lang('academics.academics')</a>
                     <a href="#">@lang('academics.subject')</a>
                 </div>
             </div>
@@ -145,143 +154,143 @@
 
             <div class="row">
                 @if ($showSubjectForm)
-                <div class="col-lg-3">
-                    <div class="row">
-                        <div class="col-lg-12">
+                    <div class="col-lg-3">
+                        <div class="row">
+                            <div class="col-lg-12">
 
-                            @if (isset($subjectId))
-                                {{-- Update form --}}
-                                <form class="form-horizontal" action="{{ route('subject.update', $subject->id) }}"
-                                    method="POST" enctype="multipart/form-data">
-                                    @method('POST') {{-- Or PATCH/PUT depending on your route --}}
-                                @else
-                                    {{-- Store form --}}
-                                    {{-- You can remove this check if not needed --}}
-                                    <form class="form-horizontal" action="{{ route('subject.store') }}" method="POST"
-                                        enctype="multipart/form-data">
-                            @endif
+                                @if (isset($subjectId))
+                                    {{-- Update form --}}
+                                    <form class="form-horizontal" action="{{ route('subject.update', $subject->id) }}"
+                                        method="POST" enctype="multipart/form-data">
+                                        @method('POST') {{-- Or PATCH/PUT depending on your route --}}
+                                    @else
+                                        {{-- Store form --}}
+                                        {{-- You can remove this check if not needed --}}
+                                        <form class="form-horizontal" action="{{ route('subject.store') }}" method="POST"
+                                            enctype="multipart/form-data">
+                                @endif
 
-                            @csrf
-                            {{-- FIX (pagination — same mechanism as the Courses/Intake pages):
+                                @csrf
+                                {{-- FIX (pagination — same mechanism as the Courses/Intake pages):
                                  carries the DataTable page you were on through the
                                  Add/Edit round trip. See the script at the bottom of
                                  this file for how the pieces fit together. --}}
-                            <input type="hidden" name="dt_page" class="dt-page-field"
-                                value="{{ (int) request('dt_page', 0) }}">
+                                <input type="hidden" name="dt_page" class="dt-page-field"
+                                    value="{{ (int) request('dt_page', 0) }}">
 
-                            <div class="white-box">
-                                <div class="main-title">
-                                    <h3 class="mb-20">
-                                        @if (isset($subjectId))
-                                            @lang('academics.update_subject')
-                                        @else
-                                            @lang('academics.add_subject')
-                                        @endif
+                                <div class="white-box">
+                                    <div class="main-title">
+                                        <h3 class="mb-20">
+                                            @if (isset($subjectId))
+                                                @lang('academics.update_subject')
+                                            @else
+                                                @lang('academics.add_subject')
+                                            @endif
 
-                                    </h3>
-                                </div>
-                                <div class="add-visitor">
-                                    {{-- Subject Name --}}
-                                    <div class="row">
-                                        <div class="col-lg-12">
-                                            <div class="primary_input">
-                                                <label class="primary_input_label" for="name">@lang('academics.subject_name')
-                                                    <span>*</span></label>
-                                                <input
-                                                    class="primary_input_field form-control{{ $errors->has('name') ? ' is-invalid' : '' }}"
-                                                    type="text" name="name" id="name" autocomplete="off"
-                                                    value="{{ old('name', $subject->name ?? '') }}">
-                                                @if ($errors->has('name'))
-                                                    <span class="invalid-feedback" role="alert">
-                                                        <strong>{{ $errors->first('name') }}</strong>
-                                                    </span>
-                                                @endif
-                                            </div>
-                                        </div>
+                                        </h3>
                                     </div>
-
-                                    {{-- Subject Type --}}
-                                    <div class="row mt-20">
-                                        <div class="col-lg-12">
-                                            <label class="primary_input_label">@lang('academics.subject_type') <span>*</span></label>
-                                            <div class="d-flex radio-btn-flex">
-                                                <div class="mr-30">
-                                                    <input type="radio" name="type" id="theory" value="T"
-                                                        class="common-radio relationButton"
-                                                        {{ old('type', $subject->type ?? 'T') == 'T' ? 'checked' : '' }}>
-                                                    <label for="theory">@lang('academics.theory')</label>
-                                                </div>
-                                                <div class="mr-30">
-                                                    <input type="radio" name="type" id="practical" value="P"
-                                                        class="common-radio relationButton"
-                                                        {{ old('type', $subject->type ?? '') == 'P' ? 'checked' : '' }}>
-                                                    <label for="practical">@lang('academics.practical')</label>
+                                    <div class="add-visitor">
+                                        {{-- Subject Name --}}
+                                        <div class="row">
+                                            <div class="col-lg-12">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label" for="name">@lang('academics.subject_name')
+                                                        <span>*</span></label>
+                                                    <input
+                                                        class="primary_input_field form-control{{ $errors->has('name') ? ' is-invalid' : '' }}"
+                                                        type="text" name="name" id="name" autocomplete="off"
+                                                        value="{{ old('name', $subject->name ?? '') }}">
+                                                    @if ($errors->has('name'))
+                                                        <span class="invalid-feedback" role="alert">
+                                                            <strong>{{ $errors->first('name') }}</strong>
+                                                        </span>
+                                                    @endif
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
 
-
-
-                                    {{-- Demonstrator Time --}}
-                                    <div class="row mt-20">
-                                        <div class="col-lg-12">
-                                            <div class="primary_input">
-                                                <label class="primary_input_label" for="demonstrator_time">
-                                                    @lang('academics.demonstrator_time') ({{ __('common.minutes') }})
-                                                </label>
-                                                <input
-                                                    class="primary_input_field form-control{{ $errors->has('demonstrator_time') ? ' is-invalid' : '' }}"
-                                                    type="number" min="0" name="demonstrator_time"
-                                                    id="demonstrator_time" autocomplete="off"
-                                                    value="{{ old('demonstrator_time', $subject->demonstrator_time ?? '') }}">
-                                                @if ($errors->has('demonstrator_time'))
-                                                    <span class="invalid-feedback" role="alert">
-                                                        <strong>{{ $errors->first('demonstrator_time') }}</strong>
-                                                    </span>
-                                                @endif
+                                        {{-- Subject Type --}}
+                                        <div class="row mt-20">
+                                            <div class="col-lg-12">
+                                                <label class="primary_input_label">@lang('academics.subject_type') <span>*</span></label>
+                                                <div class="d-flex radio-btn-flex">
+                                                    <div class="mr-30">
+                                                        <input type="radio" name="type" id="theory" value="T"
+                                                            class="common-radio relationButton"
+                                                            {{ old('type', $subject->type ?? 'T') == 'T' ? 'checked' : '' }}>
+                                                        <label for="theory">@lang('academics.theory')</label>
+                                                    </div>
+                                                    <div class="mr-30">
+                                                        <input type="radio" name="type" id="practical" value="P"
+                                                            class="common-radio relationButton"
+                                                            {{ old('type', $subject->type ?? '') == 'P' ? 'checked' : '' }}>
+                                                        <label for="practical">@lang('academics.practical')</label>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    {{-- Student Practical --}}
-                                    <div class="row mt-20">
-                                        <div class="col-lg-12">
-                                            <div class="primary_input">
-                                                <label class="primary_input_label" for="practical_time">
-                                                    @lang('academics.practical_time') ({{ __('common.minutes') }})
-                                                </label>
-                                                <input
-                                                    class="primary_input_field form-control{{ $errors->has('practical_time') ? ' is-invalid' : '' }}"
-                                                    type="number" min="0" name="practical_time" id="practical_time"
-                                                    autocomplete="off"
-                                                    value="{{ old('practical_time', $subject->practical_time ?? '') }}">
-                                                @if ($errors->has('practical_time'))
-                                                    <span class="invalid-feedback" role="alert">
-                                                        <strong>{{ $errors->first('practical_time') }}</strong>
-                                                    </span>
-                                                @endif
+
+
+                                        {{-- Demonstrator Time --}}
+                                        <div class="row mt-20">
+                                            <div class="col-lg-12">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label" for="demonstrator_time">
+                                                        @lang('academics.demonstrator_time') ({{ __('common.minutes') }})
+                                                    </label>
+                                                    <input
+                                                        class="primary_input_field form-control{{ $errors->has('demonstrator_time') ? ' is-invalid' : '' }}"
+                                                        type="number" min="0" name="demonstrator_time"
+                                                        id="demonstrator_time" autocomplete="off"
+                                                        value="{{ old('demonstrator_time', $subject->demonstrator_time ?? '') }}">
+                                                    @if ($errors->has('demonstrator_time'))
+                                                        <span class="invalid-feedback" role="alert">
+                                                            <strong>{{ $errors->first('demonstrator_time') }}</strong>
+                                                        </span>
+                                                    @endif
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    {{-- Submit --}}
-                                    <div class="row mt-20">
-                                        <div class="col-lg-12 text-center">
-                                            <button class="primary-btn fix-gr-bg submit" type="submit">
-                                                <span class="ti-check"></span>
-                                                {{ isset($subjectId) ? __('common.update') : __('academics.save_class') }}
-                                            </button>
+                                        {{-- Student Practical --}}
+                                        <div class="row mt-20">
+                                            <div class="col-lg-12">
+                                                <div class="primary_input">
+                                                    <label class="primary_input_label" for="practical_time">
+                                                        @lang('academics.practical_time') ({{ __('common.minutes') }})
+                                                    </label>
+                                                    <input
+                                                        class="primary_input_field form-control{{ $errors->has('practical_time') ? ' is-invalid' : '' }}"
+                                                        type="number" min="0" name="practical_time"
+                                                        id="practical_time" autocomplete="off"
+                                                        value="{{ old('practical_time', $subject->practical_time ?? '') }}">
+                                                    @if ($errors->has('practical_time'))
+                                                        <span class="invalid-feedback" role="alert">
+                                                            <strong>{{ $errors->first('practical_time') }}</strong>
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
 
+                                        {{-- Submit --}}
+                                        <div class="row mt-20">
+                                            <div class="col-lg-12 text-center">
+                                                <button class="primary-btn fix-gr-bg col-12 submit" type="submit">
+                                                    <span class="ti-check"></span>
+                                                    {{ isset($subjectId) ? __('common.update') : __('academics.save_class') }}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                    </div>
                                 </div>
+                                </form>
                             </div>
-                            </form>
-                        </div>
 
+                        </div>
                     </div>
-                </div>
                 @endif
 
                 <div class="col-lg-{{ $showSubjectForm ? '9' : '12' }}">
@@ -334,13 +343,18 @@
                                                         @php
                                                             $routeList = [];
                                                             if ($canEditSubject) {
-                                                                $routeList[] = '<a class="dropdown-item subject-edit-link" href="' .
+                                                                $routeList[] =
+                                                                    '<a class="dropdown-item subject-edit-link" href="' .
                                                                     route('subject.edit', $subject->id) .
-                                                                    '">' . __('common.edit') . '</a>';
+                                                                    '">' .
+                                                                    __('common.edit') .
+                                                                    '</a>';
                                                             }
                                                             if ($canDeleteSubject) {
-                                                                $routeList[] = '<a class="dropdown-item text-danger" data-toggle="modal" data-target="#deleteModal' .
-                                                                    $subject->id . '" href="#">Delete</a>';
+                                                                $routeList[] =
+                                                                    '<a class="dropdown-item text-danger" data-toggle="modal" data-target="#deleteModal' .
+                                                                    $subject->id .
+                                                                    '" href="#">Delete</a>';
                                                             }
                                                         @endphp
                                                         @if (count($routeList) > 0)
@@ -353,8 +367,7 @@
                                             </tr>
 
                                             @if (!$isAssigned && $canDeleteSubject)
-                                                <div class="modal fade admin-query"
-                                                    id="deleteModal{{ $subject->id }}">
+                                                <div class="modal fade admin-query" id="deleteModal{{ $subject->id }}">
                                                     <div class="modal-dialog modal-dialog-centered">
                                                         <div class="modal-content">
                                                             <div class="modal-header">
@@ -378,7 +391,8 @@
                                                                         @method('DELETE')
                                                                         <input type="hidden" name="dt_page"
                                                                             class="dt-page-field" value="0">
-                                                                        <button class="primary-btn fix-gr-bg" type="submit">
+                                                                        <button class="primary-btn fix-gr-bg"
+                                                                            type="submit">
                                                                             Delete
                                                                         </button>
                                                                     </form>

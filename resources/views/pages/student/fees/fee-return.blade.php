@@ -1,16 +1,142 @@
 @extends('layouts.app')
+{{-- BUG FIX (Section 27): the browser-tab title was plain "About" — a leftover
+     placeholder — instead of naming this page. Also adding the standard
+     modern-refresh + breadcrumb + table CSS, which this page never defined
+     despite using the sms-breadcrumb/white-box/#table_id markup.
+
+     No button-level permission gating is needed here beyond what already exists:
+     this window has no Add/Edit/Delete controls, only a read-only report table
+     driven by the Search form, and the window-level 'fees.fee-return.search' key
+     already gates access to the whole page (same precedent as Topic-Overview). --}}
 @section('title')
-    About
+    Return Fee Invoice
 @endsection
+@push('css')
+    <style>
+        .white-box {
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+        }
+
+        .white-box .main-title h3,
+        .white-box .main-title h5 {
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .white-box .main-title h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 42px;
+            height: 3px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .primary_input_field,
+        select.primary_select {
+            border-radius: 8px !important;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        #table_id thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            border: none;
+        }
+
+        #table_id tbody tr {
+            transition: background-color .12s ease;
+        }
+
+        #table_id tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.025);
+        }
+
+        #table_id tbody td {
+            vertical-align: middle;
+        }
+
+        .text-muted {
+            color: #9aa1ac !important;
+        }
+
+        .sms-breadcrumb {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+            padding: 18px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sms-breadcrumb::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .sms-breadcrumb .row {
+            align-items: center;
+        }
+
+        .sms-breadcrumb h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .sms-breadcrumb .bc-pages {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .sms-breadcrumb .bc-pages a {
+            font-size: 13px;
+            font-weight: 500;
+            color: #8a90a2;
+            text-decoration: none;
+            transition: color .15s ease;
+        }
+
+        .sms-breadcrumb .bc-pages a:hover {
+            color: var(--gradient_1);
+        }
+
+        .sms-breadcrumb .bc-pages a:not(:last-child)::after {
+            content: '\203A';
+            margin: 0 8px;
+            color: #c7cbd6;
+            font-weight: 400;
+        }
+
+        .sms-breadcrumb .bc-pages a:last-child {
+            color: var(--gradient_1);
+            font-weight: 700;
+            pointer-events: none;
+        }
+    </style>
+@endpush
 @section('mainContent')
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1>Return Fee Invoice</h1>
+                <h1>Cancelled Fee Invoice</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">Dashboard</a>
-                    <a href="#">Fees Collection</a>
-                    <a href="#">Return Fee Invoice</a>
+                    <a href="#">Cancelled Fee Invoice</a>
                 </div>
             </div>
         </div>
@@ -21,14 +147,8 @@
                 <div class="col-lg-12">
 
                     <div class="white-box">
-                        <div class="row">
-                            <div class="col-lg-4 col-md-6">
-                                <div class="main-title">
-                                    <h3 class="mb-15">Select Criteria</h3>
-                                </div>
-                            </div>
-                        </div>
-                        <form class="form-horizontal" action="{{ route('fees.fee-return.search') }}" method="POST">
+
+                        <form class="form-horizontal mb-0" action="{{ route('fees.fee-return.search') }}" method="POST">
                             @csrf
                             <div class="row">
                                 <input type="hidden" name="url" id="url" value="{{ URL::to('/') }}">
@@ -37,7 +157,6 @@
                                     <select
                                         class="primary_select form-control{{ $errors->has('branch') ? ' is-invalid' : '' }}"
                                         id="select_branch" name="branch">
-                                        <option data-display="Select Branch *" value="">Select Branch *</option>
                                         @foreach ($branches as $branch)
                                             <option value="{{ $branch->id }}"
                                                 {{ isset($branch_id) ? ($branch_id == $branch->id ? 'selected' : '') : '' }}>
@@ -55,7 +174,6 @@
                                     <select
                                         class="primary_select form-control{{ $errors->has('intake') ? ' is-invalid' : '' }}"
                                         id="select_intake" name="intake">
-                                        <option data-display="Select Intake *" value="">Select Intake *</option>
                                         @if (isset($intakes))
                                             @foreach ($intakes as $intake)
                                                 <option value="{{ $intake->id }}"
@@ -75,7 +193,6 @@
                                     <select
                                         class="primary_select form-control{{ $errors->has('course') ? ' is-invalid' : '' }}"
                                         id="select_course" name="course">
-                                        <option data-display="Select Course *" value="">Select Course *</option>
                                         @if (isset($coursess))
                                             @foreach ($coursess as $course)
                                                 <option value="{{ $course->id }}"
@@ -91,8 +208,8 @@
                                     @endif
                                 </div>
 
-                                <div class="col-lg-12 mt-20 text-right">
-                                    <button type="submit" class="primary-btn small fix-gr-bg">
+                                <div class="col-lg-12 mt-10 text-right">
+                                    <button type="submit" class="primary-btn small fix-gr-bg col-12 p-2">
                                         <span class="ti-search pr-2"></span>
                                         Search
                                     </button>
@@ -103,106 +220,112 @@
                 </div>
             </div>
 
-            {{-- {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'method' => 'POST', 'route' => 'fees-forward-store', 'enctype' => 'multipart/form-data'])}} --}}
-            <form class="form-horizontal">
-                <div class="row mt-40">
-                    <div class="col-lg-12">
-                        <div class="white-box">
-                            <div class="row">
-                                <div class="col-lg-6 no-gutters">
-                                    <div class="main-title">
-                                        <h3 class="mb-15">Return Fee Invoice</h3>
-                                    </div>
+
+            <div class="row mt-20">
+                <div class="col-lg-12">
+                    <div class="white-box">
+                        <div class="row">
+                            <div class="col-lg-6 no-gutters">
+                                <div class="main-title">
+                                    <h3 class="mb-15">Return Fee Invoice</h3>
                                 </div>
                             </div>
-                            <input type="hidden" name="update" value="{{ isset($update) ? 1 : '' }}">
-                            <div class="row">
-                                <div class="col-lg-12">
-                                    <x-table>
-                                        <table id="table_id" class="table" cellspacing="0" width="100%">
-                                            <thead>
-                                                @if (isset($update))
-                                                    <tr>
-                                                        <td colspan="6">
-                                                            <div class="alert">
-                                                                <h4 class="mb-0"> Previous balance can only update now.
-                                                                </h4>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                @endif
+                        </div>
+                        {{-- FLAGGED, NOT REMOVED (Section 27): this hidden "update" field and the
+                                 commented-out Form::open/Save button further below appear to be leftover
+                                 from an older "carry forward balance" flow that this page no longer uses —
+                                 $update is never set anywhere in this file's visible logic. Leaving as-is
+                                 since removing dead server-side wiring without the controller in hand risks
+                                 breaking something not visible from the blade file alone. --}}
+                        <input type="hidden" name="update" value="{{ isset($update) ? 1 : '' }}">
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <x-table>
+                                    <table id="table_id" class="table" cellspacing="0" width="100%">
+                                        <thead>
+                                            @if (isset($update))
                                                 <tr>
-                                                    <th>ID</th>
-                                                    <th>Main Invoice No.</th>
-                                                    <th>Fee Name</th>
-                                                    <th>@lang('common.student')</th>
-                                                    <th>Stu Category</th>
-                                                    <th>Branch</th>
-                                                    <th>@lang('admin.admission_no')</th>
-                                                    <th>Balance</th>
-                                                    <th>Return Amount</th>
-                                                    <th>Return date</th>
-                                                    <th>Payment Method</th>
-                                                    <th>Payment Date</th>
-                                                    <th>Short Note</th>
+                                                    <td colspan="6">
+                                                        <div class="alert">
+                                                            <h4 class="mb-0"> Previous balance can only update now.
+                                                            </h4>
+                                                        </div>
+                                                    </td>
                                                 </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach ($returnDetails as $key => $rInvoice)
+                                            @endif
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Main Invoice No.</th>
+                                                <th>Fee Name</th>
+                                                <th>@lang('common.student')</th>
+                                                <th>Stu Category</th>
+                                                <th>Branch</th>
+                                                <th>@lang('admin.admission_no')</th>
+                                                <th>Balance</th>
+                                                <th>Return Amount</th>
+                                                <th>Return date</th>
+                                                <th>Payment Method</th>
+                                                <th>Payment Date</th>
+                                                <th>Short Note</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($returnDetails as $key => $rInvoice)
+                                                <tr>
+                                                    <td>{{ $key + 1 }}</td>
+                                                    <td>
+                                                        <a href="{{ route('fees.fee-invoice-view', ['id' => $rInvoice->invoice->id, 'state' => 'view']) }}"
+                                                            target="_blank">
+                                                            {{ $rInvoice->invoice->main_invoice_number }}
+                                                        </a>
+                                                    </td>
+                                                    <td>
 
-                                                    <tr>
-                                                        <td>{{ $key + 1 }}</td>
-                                                        <td>
-                                                            <a href="{{ route('fees.fee-invoice-view', ['id' => $rInvoice->invoice->id, 'state' => 'view']) }}"
-                                                                target="_blank">
-                                                                {{ $rInvoice->invoice->main_invoice_number }}
-                                                            </a>
-                                                        </td>
-                                                        <td>
+                                                        @if ($rInvoice->invoice->invoice_type == 'fee')
+                                                            {{ $rInvoice->invoice->invoice_item[0]->fee_type->name }}
+                                                        @elseif ($rInvoice->invoice->invoice_type == 'course')
+                                                            {{ $rInvoice->invoice->paidCourses?->course?->name ?? '-' }}
+                                                        @else
+                                                            -
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        <a href="{{ route('student-details', ['id' => $rInvoice->invoice->student->id, 'state' => 'view']) }}"
+                                                            target="_blank">
+                                                            {{ $rInvoice->invoice->student->student_name }}
+                                                        </a>
+                                                    </td>
+                                                    <td>{{ $rInvoice->invoice->student->studentCategory->category_name ?? '-' }}
+                                                    </td>
+                                                    <td>{{ $rInvoice->invoice->branch->name }}</td>
+                                                    <td>{{ $rInvoice->invoice->student->admission_number }}</td>
 
-                                                            @if ($rInvoice->invoice->invoice_type == 'fee')
-                                                                {{ $rInvoice->invoice->invoice_item[0]->fee_type->name }}
-                                                            @elseif ($rInvoice->invoice->invoice_type == 'course')
-                                                                {{ $rInvoice->invoice->paidCourses?->course?->name ?? '-' }}
-                                                            @else
-                                                                -
-                                                            @endif
-                                                        </td>
-                                                        <td>
-                                                            <a href="{{ route('student-details', ['id' => $rInvoice->invoice->student->id, 'state' => 'view']) }}"
-                                                                target="_blank">
-                                                                {{ $rInvoice->invoice->student->student_name }}
-                                                            </a>
-                                                        </td>
-                                                        <td>{{ $rInvoice->invoice->student->studentCategory->category_name ?? '-' }}
-                                                        </td>
-                                                        <td>{{ $rInvoice->invoice->branch->name }}</td>
-                                                        <td>{{ $rInvoice->invoice->student->admission_number }}</td>
+                                                    <td> {{ $rInvoice->balance }} </td>
+                                                    <td> {{ $rInvoice->return_amount ?? 'N/A' }} </td>
+                                                    <td>{{ $rInvoice->created_at ? $rInvoice->created_at->format('Y-m-d') : 'N/A' }}
+                                                    </td>
+                                                    <td>{{ $rInvoice->invoice->payment_method }}</td>
+                                                    <td>{{ \Carbon\Carbon::parse($rInvoice->invoice->create_date)->format('m/d/Y') }}
+                                                    </td>
+                                                    <td> {{ $rInvoice->short_note }} </td>
 
-                                                        <td> {{ $rInvoice->balance }} </td>
-                                                        <td> {{ $rInvoice->return_amount ?? 'N/A' }} </td>
-                                                        <td>{{ $rInvoice->created_at ? $rInvoice->created_at->format('Y-m-d') : 'N/A' }}</td>
-                                                        <td>{{ $rInvoice->invoice->payment_method }}</td>
-                                                        <td>{{ \Carbon\Carbon::parse($rInvoice->invoice->create_date)->format('m/d/Y') }}</td>
-                                                        <td> {{ $rInvoice->short_note }} </td>
-
-                                                        {{-- <td> 
+                                                    {{-- <td>
                                                             <div class="primary_input">
                                                                 <input oninput="numberCheckWithDot(this)" type="text" class="primary_input_field form-control" cols="0" rows="1" name="balance[{{isset($update)? @$student->studentDetail->forwardBalance->id:@$student->student_id}}]" maxlength="8" value="{{isset($update)?
                                                                 @$student->studentDetail->forwardBalance->balance: ''}}">
                                                             </div>
-                                                        </td> 
+                                                        </td>
                                                         <td> --}}
-                                                        {{-- <div class="primary_input">
+                                                    {{-- <div class="primary_input">
                                                                 <input type="text" class="primary_input_field form-control" cols="0" rows="1" name="notes[{{isset($update)? @$student->studentDetail->forwardBalance->id:$student->student_id}}]" value="{{isset($update)?
                                                                 @$student->studentDetail->forwardBalance->notes: 'Fees Carry Forward'}}">
                                                             </div> --}}
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                            </tbody>
-                                            <tr>
-                                                {{-- <td colspan="6">
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                        <tr>
+                                            {{-- <td colspan="6">
                                                     <div class="text-center">
                                                         <button type="submit" class="primary-btn fix-gr-bg mb-0 submit">
                                                             <span class="ti-save pr"></span>
@@ -210,15 +333,15 @@
                                                         </button>
                                                     </div>
                                                 </td> --}}
-                                            </tr>
-                                        </table>
-                                    </x-table>
-                                </div>
+                                        </tr>
+                                    </table>
+                                </x-table>
                             </div>
                         </div>
                     </div>
                 </div>
-            </form>
+            </div>
+
 
         </div>
     </section>

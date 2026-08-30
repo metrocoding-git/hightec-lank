@@ -1,17 +1,154 @@
 @extends('layouts.app')
 
+@push('css')
+    <style>
+        .sms-breadcrumb {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+            padding: 18px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sms-breadcrumb::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .sms-breadcrumb .row {
+            align-items: center;
+        }
+
+        .sms-breadcrumb h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .sms-breadcrumb .bc-pages {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .sms-breadcrumb .bc-pages a {
+            font-size: 13px;
+            font-weight: 500;
+            color: #8a90a2;
+            text-decoration: none;
+            transition: color .15s ease;
+        }
+
+        .sms-breadcrumb .bc-pages a:hover {
+            color: var(--gradient_1);
+        }
+
+        .sms-breadcrumb .bc-pages a:not(:last-child)::after {
+            content: '\203A';
+            margin: 0 8px;
+            color: #c7cbd6;
+            font-weight: 400;
+        }
+
+        .sms-breadcrumb .bc-pages a:last-child {
+            color: var(--gradient_1);
+            font-weight: 700;
+            pointer-events: none;
+        }
+
+        .white-box {
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+        }
+
+        .white-box .main-title h3,
+        .white-box .main-title h4,
+        .white-box .main-title h5 {
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .white-box .main-title h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 42px;
+            height: 3px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .primary_input_field,
+        select.primary_select {
+            border-radius: 8px !important;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        #table_id thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            border: none;
+        }
+
+        #table_id tbody tr {
+            transition: background-color .12s ease;
+        }
+
+        #table_id tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.025);
+        }
+
+        #table_id tbody td {
+            vertical-align: middle;
+        }
+
+        .text-muted {
+            color: #9aa1ac !important;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            color: #fff;
+        }
+    </style>
+@endpush
 @section('title')
     @lang('inventory.item_receive_list')
 @endsection
 
 @section('mainContent')
+    @php
+        // Button-level permissions (Section 34).
+        $canAddItemReceive = Auth::user()->hasPermission('save-item-receive-data');
+        $canViewItemReceive = Auth::user()->hasPermission('item-receive.view');
+        $canDeleteItemReceive = Auth::user()->hasPermission('item-receive.destroy');
+        $canSaveItemReceiveInvoice = Auth::user()->hasPermission('item-receive.invoic-save');
+    @endphp
+
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
             <div class="row justify-content-between">
                 <h1>@lang('inventory.item_receive_list')</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
-                    <a href="#">@lang('inventory.inventory')</a>
                     <a href="#">@lang('inventory.item_receive_list')</a>
                 </div>
             </div>
@@ -20,17 +157,20 @@
 
     <section class="admin-visitor-area up_admin_visitor">
         <div class="container-fluid p-0">
-            <div class="row">
-                <div class="col-lg-8 col-md-6"></div>
-                <div class="col-lg-4 text-md-right text-left col-md-6 mb-30-lg">
-                    <a href="{{ route('item-receive') }}" class="primary-btn small fix-gr-bg">
-                        <span class="ti-plus pr-2"></span>
-                        @lang('inventory.new_item_receive')
-                    </a>
+            @if ($canAddItemReceive)
+                <div class="white-box mb-10 filter_card">
+                    <div class="row">
+                        <div class="col-12 mb-4 mb-sm-0">
+                            <a href="{{ route('item-receive') }}" class="primary-btn small fix-gr-bg col-12 p-2">
+                                <span class="ti-plus pr-2"></span>
+                                @lang('inventory.new_item_receive')
+                            </a>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            @endif
 
-            <div class="row mt-20">
+            <div class="row">
                 <div class="col-lg-12">
                     <div class="white-box">
                         <div class="row">
@@ -75,12 +215,12 @@
                                                     {{-- <td>{{ $itemReceive->transaction_id }}</td> --}}
                                                     <td>{{ $itemReceive->reference_no }}</td>
                                                     <td>
-                                                         {{$itemReceive->item->item_name ?? '-'}}
+                                                        {{ $itemReceive->item->item_name ?? '-' }}
                                                     </td>
                                                     <td>
-                                                        {{$itemReceive->item->category->name ?? '-'}}
-                                                   </td>
-                                                    <td>{{$itemReceive->supplier->company_name }}</td>
+                                                        {{ $itemReceive->item->category->name ?? '-' }}
+                                                    </td>
+                                                    <td>{{ $itemReceive->supplier->company_name }}</td>
                                                     <td>{{ number_format($itemReceive->unit_price, 2) }}</td>
                                                     <td>{{ $itemReceive->quantity }}</td>
                                                     <td>{{ number_format($itemReceive->sub_total, 2) }}</td>
@@ -120,18 +260,22 @@
 
                                                     <td>
                                                         <x-drop-down>
-                                                            <a class="dropdown-item view-item-receive" href="#"
-                                                                data-id="{{ $itemReceive->transaction_id }}">
-                                                                @lang('common.view')
-                                                            </a>
+                                                            @if ($canViewItemReceive)
+                                                                <a class="dropdown-item view-item-receive" href="#"
+                                                                    data-id="{{ $itemReceive->transaction_id }}">
+                                                                    @lang('common.view')
+                                                                </a>
+                                                            @endif
                                                             {{-- <a class="dropdown-item edit-item-receive" href="#"
                                                                 data-id="{{ $itemReceive->transaction_id }}">
                                                                  @lang('common.edit')
                                                             </a> --}}
-                                                            <a class="dropdown-item delete-item-receive" href="#"
-                                                                data-id="{{ $itemReceive->transaction_id }}">
-                                                                @lang('common.delete')
-                                                            </a>
+                                                            @if ($canDeleteItemReceive)
+                                                                <a class="dropdown-item delete-item-receive" href="#"
+                                                                    data-id="{{ $itemReceive->transaction_id }}">
+                                                                    @lang('common.delete')
+                                                                </a>
+                                                            @endif
                                                         </x-drop-down>
                                                     </td>
                                                 </tr>
@@ -440,153 +584,155 @@
         </div>
     </div>
 @endsection
-@push('script')
     @include('components.partials.data_table_js')
     @include('components.partials.server_side_datatable')
     @include('components.partials.date_picker_css_js')
     @include('components.partials.data_table_css')
-    @push('script')
-        <script>
-            $('#table_id').DataTable({
-                responsive: true,
-                dom: 'Bfrtip',
+@push('script')
 
-                buttons: [{
-                        extend: 'copyHtml5',
-                        text: '<i class="fa-regular fa-copy"></i>',
-                        titleAttr: 'Copy'
-                    },
-                    {
-                        extend: 'csvHtml5',
-                        text: '<i class="fa-solid fa-file-csv"></i>',
-                        titleAttr: 'CSV'
-                    },
-                    {
-                        extend: 'excelHtml5',
-                        text: '<i class="fa-solid fa-file-excel"></i>',
-                        titleAttr: 'Excel'
-                    },
-                    {
-                        extend: 'pdfHtml5',
-                        text: '<i class="fa-solid fa-file-pdf"></i>',
-                        titleAttr: 'PDF'
-                    },
-                    {
-                        extend: 'print',
-                        text: '<i class="fa-solid fa-print"></i>',
-                        titleAttr: 'Print'
-                    }
-                ],
+    <script>
+        $('#table_id').DataTable({
+            responsive: true,
+            dom: 'Bfrtip',
 
-                paging: true,
-                searching: true,
-                ordering: true,
-                info: true,
-
-                // 👇 This part adds the search and pagination icons
-                language: {
-                    search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
-                    searchPlaceholder: 'Search...',
-                    paginate: {
-                        previous: '<i class="fa-solid fa-angle-left"></i>',
-                        next: '<i class="fa-solid fa-angle-right"></i>'
-                    }
+            buttons: [{
+                    extend: 'copyHtml5',
+                    text: '<i class="fa-regular fa-copy"></i>',
+                    titleAttr: 'Copy'
+                },
+                {
+                    extend: 'csvHtml5',
+                    text: '<i class="fa-solid fa-file-csv"></i>',
+                    titleAttr: 'CSV'
+                },
+                {
+                    extend: 'excelHtml5',
+                    text: '<i class="fa-solid fa-file-excel"></i>',
+                    titleAttr: 'Excel'
+                },
+                {
+                    extend: 'pdfHtml5',
+                    text: '<i class="fa-solid fa-file-pdf"></i>',
+                    titleAttr: 'PDF'
+                },
+                {
+                    extend: 'print',
+                    text: '<i class="fa-solid fa-print"></i>',
+                    titleAttr: 'Print'
                 }
-            });
-        </script>
-        <script>
-            (function($) {
-                $(document).ready(function() {
+            ],
 
-                    //  View Item Receive
-                    $(document).on('click', '.view-item-receive', function(e) {
-                        e.preventDefault();
-                        let transactionId = $(this).data('id');
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
 
-                        $.ajax({
-                            url: '/account/inventory/item-receive/' + transactionId + '/view',
-                            type: 'GET',
-                            success: function(response) {
-                                if (response.error) {
-                                    toastr.error(response.error);
-                                    return;
-                                }
+            // 👇 This part adds the search and pagination icons
+            language: {
+                search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
+                searchPlaceholder: 'Search...',
+                paginate: {
+                    previous: '<i class="fa-solid fa-angle-left"></i>',
+                    next: '<i class="fa-solid fa-angle-right"></i>'
+                }
+            }
+        });
+    </script>
+    <script>
+        (function($) {
+            $(document).ready(function() {
 
-                                let transaction = response.transaction;
-                                let items = response.items;
-                                let totals = response.totals;
+                //  View Item Receive
+                $(document).on('click', '.view-item-receive', function(e) {
+                    e.preventDefault();
+                    let transactionId = $(this).data('id');
 
-                                // Transaction Details Section
-                                $('#view_transaction_id').text(transaction.transaction_id ||
-                                    'N/A');
-                                $('#view_reference_no').text(transaction.reference_no || 'N/A');
-                                $('#view_receive_date').text(moment(transaction.receive_date)
-                                    .format('MM/DD/YYYY'));
-                                $('#view_payment_method').text(transaction.payment_method ||
-                                    'N/A');
-                                $('#view_total_paid').text('Rs ' + parseFloat(totals
-                                    .total_paid || 0).toLocaleString('en-US', {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2
-                                }));
-                                $('#view_grand_total').text('Rs ' + parseFloat(totals
-                                    .total_sub_total || 0).toLocaleString('en-US', {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2
-                                }));
+                    $.ajax({
+                        url: '/account/inventory/item-receive/' + transactionId + '/view',
+                        type: 'GET',
+                        success: function(response) {
+                            if (response.error) {
+                                toastr.error(response.error);
+                                return;
+                            }
 
-                                // Supplier & Store Information
-                                $('#view_supplier_name').text(transaction.supplier
-                                    ?.company_name ?? 'N/A');
-                                $('#view_store_name').text(transaction.branch?.name ?? 'N/A');
+                            let transaction = response.transaction;
+                            let items = response.items;
+                            let totals = response.totals;
 
-                                // Description
-                                $('#view_description').text(transaction.description ||
-                                    'No description available');
+                            // Transaction Details Section
+                            $('#view_transaction_id').text(transaction.transaction_id ||
+                                'N/A');
+                            $('#view_reference_no').text(transaction.reference_no || 'N/A');
+                            $('#view_receive_date').text(moment(transaction.receive_date)
+                                .format('MM/DD/YYYY'));
+                            $('#view_payment_method').text(transaction.payment_method ||
+                                'N/A');
+                            $('#view_total_paid').text('Rs ' + parseFloat(totals
+                                .total_paid || 0).toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            }));
+                            $('#view_grand_total').text('Rs ' + parseFloat(totals
+                                .total_sub_total || 0).toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            }));
 
-                                // Items Table
-                                let itemsHtml = '';
-                                items.forEach(item => {
-                                    itemsHtml += `<tr>
+                            // Supplier & Store Information
+                            $('#view_supplier_name').text(transaction.supplier
+                                ?.company_name ?? 'N/A');
+                            $('#view_store_name').text(transaction.branch?.name ?? 'N/A');
+
+                            // Description
+                            $('#view_description').text(transaction.description ||
+                                'No description available');
+
+                            // Items Table
+                            let itemsHtml = '';
+                            items.forEach(item => {
+                                itemsHtml += `<tr>
                                     <td>${item.item?.item_name ?? 'N/A'}</td>
                                     <td>${item.quantity}</td>
                                     <td>Rs ${parseFloat(item.unit_price || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                                     <td>Rs ${parseFloat(item.sub_total || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                                 </tr>`;
-                                });
-                                $('#view_items_table_body').html(itemsHtml);
-                                $('#view_total_quantity').text(totals.total_quantity || '0');
+                            });
+                            $('#view_items_table_body').html(itemsHtml);
+                            $('#view_total_quantity').text(totals.total_quantity || '0');
 
-                                // Payment Method Specific Details
-                                let paymentSpecificHtml = '';
-                                if (transaction.payment_method === 'Invoice') {
-                                    if (transaction.invoice_number) {
-                                        paymentSpecificHtml += `
+                            // Payment Method Specific Details
+                            let paymentSpecificHtml = '';
+                            if (transaction.payment_method === 'Invoice') {
+                                if (transaction.invoice_number) {
+                                    paymentSpecificHtml += `
                                             <tr>
                                                 <td><strong>Invoice Number:</strong></td>
                                                 <td><strong >${transaction.invoice_number}</strong></td>
                                             </tr>
                                         `;
-                                    } else {
-                                        paymentSpecificHtml += `
+                                } else {
+                                    paymentSpecificHtml += `
                                             <tr>
                                                 <td><strong>Invoice Number:</strong></td>
                                                 <td>
                                                     <div class="input-group">
                                                         <input type="text" class="form-control" id="invoiceNumberInput" placeholder="Enter invoice number">
                                                         <div class="input-group-append">
-                                                            <button class="btn btn-primary btn-sm" id="saveInvoiceBtn" data-transaction-id="${transaction.id}">
-                                                                Save
-                                                            </button>
+                                                            @if ($canSaveItemReceiveInvoice)
+                                                                <button class="btn btn-primary btn-sm" id="saveInvoiceBtn" data-transaction-id="${transaction.id}">
+                                                                    Save
+                                                                </button>
+                                                            @endif
                                                         </div>
                                                     </div>
                                                     <div id="invoiceSaveMsg" class="mt-2 text-success" style="display:none;">Saved successfully!</div>
                                                 </td>
                                             </tr>
                                         `;
-                                    }
-                                } else if (transaction.payment_method === 'Bank Transfer') {
-                                    paymentSpecificHtml += `
+                                }
+                            } else if (transaction.payment_method === 'Bank Transfer') {
+                                paymentSpecificHtml += `
                                     <tr>
                                         <td><strong>Bank Payment Amount:</strong></td>
                                         <td>Rs ${parseFloat(transaction.bank_payment_amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
@@ -596,210 +742,210 @@
                                         <td>${transaction.bank_payment_date ? moment(transaction.bank_payment_date).format('MM/DD/YYYY') : 'N/A'}</td>
                                     </tr>
                                 `;
-                                    if (transaction.bank_payment_document) {
-                                        paymentSpecificHtml += `
+                                if (transaction.bank_payment_document) {
+                                    paymentSpecificHtml += `
                                         <tr>
                                             <td><strong>Bank Payment Document:</strong></td>
                                             <td><a href="/storage/${transaction.bank_payment_document}" target="_blank" class="primary-btn small fix-gr-bg">View Document</a></td>
                                         </tr>
                                     `;
-                                    } else {
-                                        paymentSpecificHtml += `
+                                } else {
+                                    paymentSpecificHtml += `
                                         <tr>
                                             <td><strong>Bank Payment Document:</strong></td>
                                             <td>N/A</td>
                                         </tr>
                                     `;
-                                    }
-                                }
-                                $('#payment_method_specific_details').html(paymentSpecificHtml);
-
-                                $('#viewItemReceiveModal').modal('show');
-                            },
-                            error: function(xhr) {
-                                console.error('Error response:', xhr.responseText);
-                                if (xhr.responseJSON && xhr.responseJSON.error) {
-                                    toastr.error(xhr.responseJSON.error);
-                                } else {
-                                    toastr.error(
-                                        "Failed to fetch item receive details. Please check the console for more information."
-                                    );
                                 }
                             }
-                        });
-                    });
+                            $('#payment_method_specific_details').html(paymentSpecificHtml);
 
-                    //  Edit Item Receive
-                    $(document).on('click', '.edit-item-receive', function(e) {
-                        e.preventDefault();
-                        let transactionId = $(this).data('id');
-
-                        $('#editItemReceiveForm').attr('action', '/account/inventory/item-receive/' +
-                            transactionId);
-
-                        $.ajax({
-                            url: '/account/inventory/item-receive/' + transactionId + '/edit',
-                            type: 'GET',
-                            success: function(response) {
-                                if (response.error) {
-                                    toastr.error(response.error);
-                                    return;
-                                }
-
-                                let transaction = response.transaction;
-                                let itemReceives = response.itemReceives;
-
-                                // Use the first item for basic form population
-                                let firstItem = itemReceives[0];
-
-                                $('#edit_item_receive_id').val(transactionId);
-                                $('#edit_payment_method').val(transaction.payment_method);
-                                $('#edit_reference_no').val(transaction.reference_no);
-                                $('#edit_receive_date').val(moment(transaction.receive_date)
-                                    .format('MM/DD/YYYY'));
-                                $('#edit_description').val(transaction.description);
-
-                                // Populate suppliers dropdown
-                                let supplierOptions =
-                                    '<option data-display="@lang('inventory.select_supplier') *" value="">@lang('common.select')</option>';
-                                response.suppliers.forEach(supplier => {
-                                    supplierOptions +=
-                                        `<option value="${supplier.id}" ${transaction.supplier_id == supplier.id ? 'selected' : ''}>${supplier.company_name}</option>`;
-                                });
-                                $('#edit_supplier_id').html(supplierOptions);
-
-                                // Populate branches/stores dropdown
-                                let branchOptions =
-                                    '<option data-display="@lang('inventory.select_store') *" value="">@lang('common.select')</option>';
-                                response.branches.forEach(branch => {
-                                    branchOptions +=
-                                        `<option value="${branch.id}" ${transaction.store_id == branch.id ? 'selected' : ''}>${branch.name}</option>`;
-                                });
-                                $('#edit_store_id').html(branchOptions);
-
-                                // Populate items dropdown (for first item)
-                                let itemOptions =
-                                    '<option data-display="@lang('inventory.select_item') *" value="">@lang('common.select')</option>';
-                                response.items.forEach(item => {
-                                    itemOptions +=
-                                        `<option value="${item.id}" ${firstItem.item_id == item.id ? 'selected' : ''}>${item.item_name}</option>`;
-                                });
-                                $('#edit_item_id').html(itemOptions);
-
-                                // Set first item's details
-                                $('#edit_unit_price').val(firstItem.unit_price);
-                                $('#edit_quantity').val(firstItem.quantity);
-
-                                $('.primary_select').niceSelect('update');
-                                $('#editItemReceiveModal').modal('show');
-                            },
-                            error: function(xhr) {
-                                console.error('Error response:', xhr.responseText);
-                                if (xhr.responseJSON && xhr.responseJSON.error) {
-                                    toastr.error(xhr.responseJSON.error);
-                                } else {
-                                    toastr.error("Failed to load transaction for editing.");
-                                }
+                            $('#viewItemReceiveModal').modal('show');
+                        },
+                        error: function(xhr) {
+                            console.error('Error response:', xhr.responseText);
+                            if (xhr.responseJSON && xhr.responseJSON.error) {
+                                toastr.error(xhr.responseJSON.error);
+                            } else {
+                                toastr.error(
+                                    "Failed to fetch item receive details. Please check the console for more information."
+                                );
                             }
-                        });
-                    });
-
-                    //  Submit Edit via AJAX
-                    $('#editItemReceiveForm').on('submit', function(e) {
-                        e.preventDefault();
-                        let url = $(this).attr('action');
-                        let formData = $(this).serialize();
-
-                        $.ajax({
-                            url: url,
-                            type: 'POST', // Laravel will handle PUT via _method
-                            data: formData,
-                            success: function(response) {
-                                $('#editItemReceiveModal').modal('hide');
-                                if (response.status) {
-                                    toastr.success(response.message);
-                                    location.reload();
-                                } else {
-                                    toastr.warning(response.message);
-                                }
-                            },
-                            error: function(xhr) {
-                                console.error('Error response:', xhr.responseText);
-                                if (xhr.responseJSON && xhr.responseJSON.error) {
-                                    toastr.error(xhr.responseJSON.error);
-                                } else if (xhr.responseJSON && xhr.responseJSON.message) {
-                                    toastr.error(xhr.responseJSON.message);
-                                } else {
-                                    toastr.error(
-                                        "Update failed. Please check the console for more information."
-                                    );
-                                }
-                            }
-                        });
-                    });
-
-                    //  Delete Item Receive
-                    $(document).on('click', '.delete-item-receive', function(e) {
-                        e.preventDefault();
-                        let id = $(this).data('id');
-                        $('#deleteItemReceiveForm').attr('action', '/account/inventory/item-receive/' + id);
-                        $('#deleteItemReceiveModal').modal('show');
-                    });
-
-                    //  Submit Delete via AJAX
-                    $('#deleteItemReceiveForm').on('submit', function(e) {
-                        e.preventDefault();
-                        let url = $(this).attr('action');
-                        let formData = $(this).serialize();
-
-                        $.ajax({
-                            url: url,
-                            type: 'POST', // Laravel will handle DELETE via _method
-                            data: formData,
-                            success: function(response) {
-                                $('#deleteItemReceiveModal').modal('hide');
-                                toastr.success(response.message ?? "Deleted successfully!");
-                                location.reload();
-                            },
-                            error: function() {
-                                toastr.error("Delete failed.");
-                            }
-                        });
-                    });
-
-                    // save invoice invoice_number
-                    $(document).on('click', '#saveInvoiceBtn', function() {
-                        const invoiceNumber = $('#invoiceNumberInput').val().trim();
-                        const transactionId = $(this).data('transaction-id');
-
-                        if (!invoiceNumber) {
-                            toastr.warning('Please enter an invoice number');
-                            return;
                         }
-
-                        $.ajax({
-                            url: "{{ route('item-receive.invoic-save') }}",
-                            type: "POST",
-                            data: {
-                                _token: "{{ csrf_token() }}",
-                                id: transactionId,
-                                invoice_number: invoiceNumber
-                            },
-                            success: function(response) {
-                                toastr.success('Invoice number saved successfully!');
-                                $('#invoiceNumberInput').prop('disabled', true);
-                                $('#saveInvoiceBtn').prop('disabled', true).text('Saved');
-                            },
-                            error: function(xhr) {
-                                toastr.error(xhr.responseJSON?.message ||
-                                    'Error saving invoice number');
-                            }
-                        });
                     });
-
-
-
                 });
-            })(jQuery);
-        </script>
-    @endpush
+
+                //  Edit Item Receive
+                $(document).on('click', '.edit-item-receive', function(e) {
+                    e.preventDefault();
+                    let transactionId = $(this).data('id');
+
+                    $('#editItemReceiveForm').attr('action', '/account/inventory/item-receive/' +
+                        transactionId);
+
+                    $.ajax({
+                        url: '/account/inventory/item-receive/' + transactionId + '/edit',
+                        type: 'GET',
+                        success: function(response) {
+                            if (response.error) {
+                                toastr.error(response.error);
+                                return;
+                            }
+
+                            let transaction = response.transaction;
+                            let itemReceives = response.itemReceives;
+
+                            // Use the first item for basic form population
+                            let firstItem = itemReceives[0];
+
+                            $('#edit_item_receive_id').val(transactionId);
+                            $('#edit_payment_method').val(transaction.payment_method);
+                            $('#edit_reference_no').val(transaction.reference_no);
+                            $('#edit_receive_date').val(moment(transaction.receive_date)
+                                .format('MM/DD/YYYY'));
+                            $('#edit_description').val(transaction.description);
+
+                            // Populate suppliers dropdown
+                            let supplierOptions =
+                                '<option data-display="@lang('inventory.select_supplier') *" value="">@lang('common.select')</option>';
+                            response.suppliers.forEach(supplier => {
+                                supplierOptions +=
+                                    `<option value="${supplier.id}" ${transaction.supplier_id == supplier.id ? 'selected' : ''}>${supplier.company_name}</option>`;
+                            });
+                            $('#edit_supplier_id').html(supplierOptions);
+
+                            // Populate branches/stores dropdown
+                            let branchOptions =
+                                '<option data-display="@lang('inventory.select_store') *" value="">@lang('common.select')</option>';
+                            response.branches.forEach(branch => {
+                                branchOptions +=
+                                    `<option value="${branch.id}" ${transaction.store_id == branch.id ? 'selected' : ''}>${branch.name}</option>`;
+                            });
+                            $('#edit_store_id').html(branchOptions);
+
+                            // Populate items dropdown (for first item)
+                            let itemOptions =
+                                '<option data-display="@lang('inventory.select_item') *" value="">@lang('common.select')</option>';
+                            response.items.forEach(item => {
+                                itemOptions +=
+                                    `<option value="${item.id}" ${firstItem.item_id == item.id ? 'selected' : ''}>${item.item_name}</option>`;
+                            });
+                            $('#edit_item_id').html(itemOptions);
+
+                            // Set first item's details
+                            $('#edit_unit_price').val(firstItem.unit_price);
+                            $('#edit_quantity').val(firstItem.quantity);
+
+                            $('.primary_select').niceSelect('update');
+                            $('#editItemReceiveModal').modal('show');
+                        },
+                        error: function(xhr) {
+                            console.error('Error response:', xhr.responseText);
+                            if (xhr.responseJSON && xhr.responseJSON.error) {
+                                toastr.error(xhr.responseJSON.error);
+                            } else {
+                                toastr.error("Failed to load transaction for editing.");
+                            }
+                        }
+                    });
+                });
+
+                //  Submit Edit via AJAX
+                $('#editItemReceiveForm').on('submit', function(e) {
+                    e.preventDefault();
+                    let url = $(this).attr('action');
+                    let formData = $(this).serialize();
+
+                    $.ajax({
+                        url: url,
+                        type: 'POST', // Laravel will handle PUT via _method
+                        data: formData,
+                        success: function(response) {
+                            $('#editItemReceiveModal').modal('hide');
+                            if (response.status) {
+                                toastr.success(response.message);
+                                location.reload();
+                            } else {
+                                toastr.warning(response.message);
+                            }
+                        },
+                        error: function(xhr) {
+                            console.error('Error response:', xhr.responseText);
+                            if (xhr.responseJSON && xhr.responseJSON.error) {
+                                toastr.error(xhr.responseJSON.error);
+                            } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                                toastr.error(xhr.responseJSON.message);
+                            } else {
+                                toastr.error(
+                                    "Update failed. Please check the console for more information."
+                                );
+                            }
+                        }
+                    });
+                });
+
+                //  Delete Item Receive
+                $(document).on('click', '.delete-item-receive', function(e) {
+                    e.preventDefault();
+                    let id = $(this).data('id');
+                    $('#deleteItemReceiveForm').attr('action', '/account/inventory/item-receive/' + id);
+                    $('#deleteItemReceiveModal').modal('show');
+                });
+
+                //  Submit Delete via AJAX
+                $('#deleteItemReceiveForm').on('submit', function(e) {
+                    e.preventDefault();
+                    let url = $(this).attr('action');
+                    let formData = $(this).serialize();
+
+                    $.ajax({
+                        url: url,
+                        type: 'POST', // Laravel will handle DELETE via _method
+                        data: formData,
+                        success: function(response) {
+                            $('#deleteItemReceiveModal').modal('hide');
+                            toastr.success(response.message ?? "Deleted successfully!");
+                            location.reload();
+                        },
+                        error: function() {
+                            toastr.error("Delete failed.");
+                        }
+                    });
+                });
+
+                // save invoice invoice_number
+                $(document).on('click', '#saveInvoiceBtn', function() {
+                    const invoiceNumber = $('#invoiceNumberInput').val().trim();
+                    const transactionId = $(this).data('transaction-id');
+
+                    if (!invoiceNumber) {
+                        toastr.warning('Please enter an invoice number');
+                        return;
+                    }
+
+                    $.ajax({
+                        url: "{{ route('item-receive.invoic-save') }}",
+                        type: "POST",
+                        data: {
+                            _token: "{{ csrf_token() }}",
+                            id: transactionId,
+                            invoice_number: invoiceNumber
+                        },
+                        success: function(response) {
+                            toastr.success('Invoice number saved successfully!');
+                            $('#invoiceNumberInput').prop('disabled', true);
+                            $('#saveInvoiceBtn').prop('disabled', true).text('Saved');
+                        },
+                        error: function(xhr) {
+                            toastr.error(xhr.responseJSON?.message ||
+                                'Error saving invoice number');
+                        }
+                    });
+                });
+
+
+
+            });
+        })(jQuery);
+    </script>
+@endpush

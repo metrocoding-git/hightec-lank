@@ -220,10 +220,30 @@ class ItemSellController extends Controller
     }
 
 
-    public function itemSellList()
+    public function itemSellList(Request $request)
     {
-        $allItemSellLists = ItemSellBatch::with(['role', 'student', 'user', 'student.studentCategory', 'createdBy'])->orderBy('created_at', 'desc')->get();
-        return view('pages.account.inventory.item-sell-list', compact('allItemSellLists'));
+        // Performance fix (Section 38): same issue as Item Issue List -- this
+        // pulled every sell batch ever created on every page view. Added a
+        // date-range filter on sell_date, defaulting to the last month, so a
+        // normal page load only pulls a bounded window of rows. Older data is
+        // still reachable by widening the range in the filter form above the
+        // table.
+        $request->validate([
+            'from_date' => 'nullable|date',
+            'to_date' => 'nullable|date',
+        ]);
+
+        $fromDateInput = $request->filled('from_date') ? $request->from_date : now()->subMonth()->format('Y-m-d');
+        $toDateInput = $request->filled('to_date') ? $request->to_date : now()->format('Y-m-d');
+
+        $fromDate = Carbon::parse($fromDateInput)->startOfDay();
+        $toDate = Carbon::parse($toDateInput)->endOfDay();
+
+        $allItemSellLists = ItemSellBatch::with(['role', 'student', 'user', 'student.studentCategory', 'createdBy'])
+            ->whereBetween('sell_date', [$fromDate, $toDate])
+            ->orderBy('created_at', 'desc')
+            ->get();
+        return view('pages.account.inventory.item-sell-list', compact('allItemSellLists', 'fromDateInput', 'toDateInput'));
     }
 
     public function viewItemSell($id)
@@ -292,7 +312,7 @@ class ItemSellController extends Controller
             $fee_invoice->payment_status = 'returned';
             $fee_invoice->save();
 
-            
+
 
             InvoicesPayments::create([
                 'invoice_id' => $fee_invoice->id,
