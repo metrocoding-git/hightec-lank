@@ -96,7 +96,7 @@ class HomeController extends Controller
             || Auth::user()->hasPermission('reports.change-course')
             || Auth::user()->hasPermission('reports.invoice-payments')
             || Auth::user()->hasPermission('reports.food-payment')
-            || Auth::user()->hasPermission('reports.scan-attendance');
+            || Auth::user()->hasPermission('reports.student-attendance');
 
         // Fetch counts
         $studentsCount = Student::count();

@@ -364,14 +364,62 @@ return [
         [
             'name' => 'Reports',
             'windows' => [
-                ['name' => 'Sell Items', 'window' => ['key' => 'reports.sell-items', 'label' => 'View'], 'buttons' => []],
-                ['name' => 'Issue Items', 'window' => ['key' => 'reports.issue-items', 'label' => 'View'], 'buttons' => []],
-                ['name' => 'Collection Report', 'window' => ['key' => 'reports.students-paid', 'label' => 'View'], 'buttons' => []],
-                ['name' => 'Course Paid', 'window' => ['key' => 'reports.course-paid', 'label' => 'View'], 'buttons' => []],
-                ['name' => 'Course Started & Course Completed', 'window' => ['key' => 'reports.course-dates-payments', 'label' => 'View'], 'buttons' => []],
-                ['name' => 'Course Started & Course Balance Status', 'window' => ['key' => 'reports.course-intake-payments', 'label' => 'View'], 'buttons' => []],
-                ['name' => 'Course Fee Balances as Intake Wise', 'window' => ['key' => 'reports.students-intake-balance', 'label' => 'View'], 'buttons' => []],
-                ['name' => 'Change Course', 'window' => ['key' => 'reports.change-course', 'label' => 'View'], 'buttons' => []],
+                [
+                    'name' => 'Sell Items',
+                    'window' => ['key' => 'reports.sell-items', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'reports.sell-items.export', 'label' => 'Export', 'flag' => 'NEW — added per your request to permission-gate report exports. This report already streams the full filtered result set via ->cursor() (Section 45), ignoring on-screen pagination; this key gates the Export CSV button/link.'],
+                    ],
+                ],
+                [
+                    'name' => 'Issue Items',
+                    'window' => ['key' => 'reports.issue-items', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'reports.issue-items.export', 'label' => 'Export', 'flag' => 'NEW — see Sell Items flag above, same reasoning.'],
+                    ],
+                ],
+                [
+                    'name' => 'Collection Report',
+                    'window' => ['key' => 'reports.students-paid', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'reports.students-paid.export', 'label' => 'Export', 'flag' => 'NEW — see Sell Items flag above, same reasoning.'],
+                    ],
+                ],
+                [
+                    'name' => 'Course Paid',
+                    'window' => ['key' => 'reports.course-paid', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'reports.course-paid.export', 'label' => 'Export', 'flag' => 'NEW — see Sell Items flag above, same reasoning.'],
+                    ],
+                ],
+                [
+                    'name' => 'Course Started & Course Completed',
+                    'window' => ['key' => 'reports.course-dates-payments', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'reports.course-dates-payments.export', 'label' => 'Export', 'flag' => 'NEW — see Sell Items flag above, same reasoning.'],
+                    ],
+                ],
+                [
+                    'name' => 'Course Started & Course Balance Status',
+                    'window' => ['key' => 'reports.course-intake-payments', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'reports.course-intake-payments.export', 'label' => 'Export', 'flag' => 'NEW — see Sell Items flag above, same reasoning.'],
+                    ],
+                ],
+                [
+                    'name' => 'Course Fee Balances as Intake Wise',
+                    'window' => ['key' => 'reports.students-intake-balance', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'reports.students-intake-balance.export', 'label' => 'Export', 'flag' => 'NEW — see Sell Items flag above, same reasoning.'],
+                    ],
+                ],
+                [
+                    'name' => 'Change Course',
+                    'window' => ['key' => 'reports.change-course', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'reports.change-course.export', 'label' => 'Export', 'flag' => 'NEW — see Sell Items flag above, same reasoning.'],
+                    ],
+                ],
                 [
                     'name' => 'Credit Invoice Payments',
                     'window' => ['key' => 'reports.invoice-payments', 'label' => 'View'],
@@ -379,7 +427,13 @@ return [
                         ['key' => 'reports.invoice-payments.export', 'label' => 'Export'],
                     ],
                 ],
-                ['name' => 'All Food Fee Details', 'window' => ['key' => 'reports.food-payment', 'label' => 'View'], 'buttons' => []],
+                [
+                    'name' => 'All Food Fee Details',
+                    'window' => ['key' => 'reports.food-payment', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'reports.food-payment.export', 'label' => 'Export', 'flag' => 'NEW — see Sell Items flag above, same reasoning.'],
+                    ],
+                ],
                 [
                     'name' => 'Student Attendance',
                     'window' => ['key' => 'reports.student-attendance', 'label' => 'View'],

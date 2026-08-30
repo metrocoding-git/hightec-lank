@@ -2,15 +2,78 @@
 @section('title', 'Students Intake Balance Report')
 
 @section('mainContent')
-    @php
-        $defaultFrom = request('date_range')
-            ? explode(' to ', request('date_range'))[0]
-            : \Carbon\Carbon::now()->subDays(30)->format('Y-m-d');
-        $defaultTo = request('date_range')
-            ? explode(' to ', request('date_range'))[1] ?? $defaultFrom
-            : \Carbon\Carbon::now()->format('Y-m-d');
-    @endphp
+    @push('css')
+        <style>
+            .rp-section-header {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 18px;
+            }
 
+            .rp-icon {
+                width: 40px;
+                height: 40px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 17px;
+                flex-shrink: 0;
+                background: color-mix(in srgb, var(--gradient_1) 12%, #fff);
+                color: var(--gradient_1);
+            }
+
+            .rp-section-header h3 {
+                margin: 0;
+                font-weight: 700;
+                font-size: 18px;
+            }
+
+            .rp-stat-row {
+                display: flex;
+                gap: 16px;
+                flex-wrap: wrap;
+                margin-bottom: 20px;
+            }
+
+            .rp-stat-card {
+                flex: 1 1 200px;
+                padding: 16px 20px;
+                border-radius: 14px;
+                background: #fff;
+                border: 1px solid #eceef3;
+                box-shadow: 0 2px 14px rgba(20, 20, 43, 0.05);
+            }
+
+            .rp-stat-card .rp-stat-value {
+                font-size: 24px;
+                font-weight: 700;
+                color: #1c1f2b;
+                font-variant-numeric: tabular-nums;
+            }
+
+            .rp-stat-card .rp-stat-label {
+                font-size: 12px;
+                color: #8a8fa3;
+                margin-top: 4px;
+            }
+
+            .white-box {
+                border-radius: 14px;
+                box-shadow: 0 2px 14px rgba(20, 20, 43, 0.05);
+                border: 1px solid #eceef3;
+            }
+
+            #table_id thead tr th {
+                background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+                color: #fff;
+                font-weight: 600;
+                white-space: nowrap;
+                border: none;
+            }
+        </style>
+    @endpush
 
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
@@ -18,8 +81,7 @@
                 <h1>Course Fee Balances as Intake Wise Report</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">Dashboard</a>
-                    <a href="#">Reports</a>
-                    <a href="#">Students Intake Balance</a>
+                    <a href="#">Course Fee Balances as Intake Wise Report</a>
                 </div>
             </div>
         </div>
@@ -27,11 +89,22 @@
 
     <section class="admin-visitor-area up_admin_visitor">
         <div class="container-fluid p-0">
-            <div class="white-box">
-                <form method="GET" action="" class="mb-20" id="filter-form">
+            <div class="white-box mb-10">
+                <a href="{{ route('reports.students-intake-balance.export', request()->query()) }}"
+                    class="primary-btn small fix-gr-bg col-12 p-2" style="margin-left:auto;">
+                    <span class="ti-download pr-2"></span> Export CSV
+                </a>
+            </div>
+
+            <div class="white-box p-20 mb-20">
+                {{-- <div class="rp-section-header">
+                    <span class="rp-icon"><i class="fa-solid fa-filter"></i></span>
+                    <h3>Filter</h3>
+                </div> --}}
+                <form method="GET" action="{{ route('reports.students-intake-balance') }}" class="mb-0"
+                    id="filter-form">
                     <div class="row">
-                        {{-- Notice --}}
-                        <div class="col-md-12 mt-2">
+                        <div class="col-md-12 mt-1 mb-1 text-center">
                             <small class="text-danger">
                                 <i class="ti-info-alt"></i>
                                 <strong>Group A</strong> (To Date + Branch) and <strong>Group B</strong> (Intake) cannot be
@@ -40,99 +113,135 @@
                             </small>
                         </div>
 
-                        {{-- GROUP A: To Date + Branch --}}
-                        <div class="col-md-4">
-                            <label>To Date <small class="text-muted">(Group A)</small></label>
-                            <input type="text" id="to_date" name="to_date" class="form-control group-a"
-                                value="{{ request('to_date') }}" placeholder="Select to date">
+                        <div class="col-md-6">
+                            <input type="text" id="to_date" placeholder="Select To Date (Group A)" name="to_date"
+                                class="form-control group-a" value="{{ request('to_date') }}" placeholder="Select to date">
                         </div>
-
-                        <div class="col-md-4">
-                            <label>Branch <small class="text-muted">(Group A)</small></label>
+                        <div class="col-md-6">
                             <select name="branch_id" class="form-control group-a">
-                                <option value="">All Branches</option>
+                                <option value="">All Branches (Group A)</option>
                                 @foreach ($branches as $branch)
                                     <option value="{{ $branch->id }}"
-                                        {{ request('branch_id') == $branch->id ? 'selected' : '' }}>
-                                        {{ $branch->name }}
+                                        {{ request('branch_id') == $branch->id ? 'selected' : '' }}>{{ $branch->name }}
                                     </option>
                                 @endforeach
                             </select>
                         </div>
-
-                        {{-- GROUP B: Intake --}}
-                        <div class="col-md-4">
-                            <label>Intake <small class="text-muted">(Group B)</small></label>
-                            <select class="primary_select form-control group-b" name="intake_id" id="search_intake_id">
-                                <option value="">Select Intake</option>
+                        <div class="col-md-12 mt-2">
+                            <select class="form-control group-b" name="intake_id" id="search_intake_id">
+                                <option value="">Select Intake (Group B)</option>
                                 @foreach ($intakes as $intake)
                                     <option value="{{ $intake->id }}"
-                                        {{ request('intake_id') == $intake->id ? 'selected' : '' }}>
-                                        {{ $intake->name }}
+                                        {{ request('intake_id') == $intake->id ? 'selected' : '' }}>{{ $intake->name }}
                                     </option>
                                 @endforeach
                             </select>
                         </div>
+                        <div class="col-md-12 mt-4">
+                            <input type="text" name="search_text" class="form-control" placeholder="Course / intake name"
+                                value="{{ request('search_text') }}">
+                        </div>
 
+                        <div class="col-12 mt-10">
+                            <div class="row align-items-center">
 
+                                <div class="col-10">
+                                    <button type="submit" class="primary-btn small fix-gr-bg col-12 p-2">
+                                        <span class="ti-search pr-2"></span> Search
+                                    </button>
+                                </div>
 
-                        <div class="col-lg-12 mt-20 text-right">
-                            <button type="submit" class="primary-btn small fix-gr-bg">
-                                <span class="ti-search pr-2"></span> Search
-                            </button>
-                            <button class="primary-btn small fix-gr-bg">
-                                <a href="{{ route('reports.students-intake-balance') }}" class="text-white">
-                                    Reset
-                                </a>
-                            </button>
+                                <div class="col-2">
+                                    <button class="primary-btn small fix-gr-bg col-12 p-2">
+                                        <a href="{{ route('reports.students-intake-balance') }}"
+                                            class="text-white">Reset</a>
+                                    </button>
+
+                                </div>
+
+                            </div>
 
                         </div>
                     </div>
                 </form>
             </div>
 
+            <div class="white-box p-20 mb-20">
+                <div class="rp-stat-row mb-0">
+                    <div class="rp-stat-card">
+                        <div class="rp-stat-value">Rs. {{ number_format($grandTotal, 2) }}</div>
+                        <div class="rp-stat-label">Total Amount (Rs.)</div>
+                    </div>
+                    <div class="rp-stat-card">
+                        <div class="rp-stat-value">Rs. {{ number_format($grandPaid, 2) }}</div>
+                        <div class="rp-stat-label">Total Paid (Rs.)</div>
+                    </div>
+                    <div class="rp-stat-card">
+                        <div class="rp-stat-value">Rs. {{ number_format($grandBalance, 2) }}</div>
+                        <div class="rp-stat-label">Total Balance (Rs.)</div>
+                    </div>
+                    <div class="rp-stat-card">
+                        <div class="rp-stat-value">{{ number_format($groupCount) }}</div>
+                        <div class="rp-stat-label">Course/Intake groups</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="row mt-20">
                 <div class="col-lg-12">
                     <div class="white-box">
-                        <div class="main-title mb-15">
-                            <h3>Payments Report</h3>
+                        <div class="row">
+                            <div class="col-lg-4 no-gutters">
+                                <div class="main-title">
+                                    <h3 class="mb-15">Report List</h3>
+                                </div>
+                            </div>
                         </div>
-                        <x-table>
-                            <table id="table_id" class="table" cellspacing="0" width="100%">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Intake</th>
-                                        <th>Course</th>
-                                        <th>Total Amount</th>
-                                        <th>Paid Amount</th>
-                                        <th>Balance</th>
-                                    </tr>
-                                </thead>
 
-                                <tfoot>
-                                    <tr>
-                                        <th colspan="3" style="text-align:right">Total:</th>
-                                        <th id="total_amount_footer"></th>
-                                        <th id="paid_amount_footer"></th>
-                                        <th id="balance_amount_footer"></th>
-                                    </tr>
-                                </tfoot>
-                                <tbody>
-                                    @foreach ($reportData as $key => $data)
-                                        <tr>
-                                            <td>{{ $key + 1 }}</td>
-                                            <td>{{ $data->intake_name }}</td>
-                                            <td>{{ $data->course_name }}</td>
-                                            <td>{{ number_format($data->total_amount, 2) }}</td>
-                                            <td>{{ number_format($data->paid_amount, 2) }}</td>
-                                            <td>{{ number_format($data->balance_amount, 2) }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-
-                        </x-table>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="rp-table-wrapper">
+                                    <x-table>
+                                        <table id="table_id" class="table" cellspacing="0" width="100%">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Intake</th>
+                                                    <th>Course</th>
+                                                    <th>Total Amount</th>
+                                                    <th>Paid Amount</th>
+                                                    <th>Balance</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @forelse ($reportData as $index => $data)
+                                                    <tr>
+                                                        <td>{{ $reportData->firstItem() + $index }}</td>
+                                                        <td>{{ $data->intake_name }}</td>
+                                                        <td>{{ $data->course_name }}</td>
+                                                        <td>{{ number_format($data->total_amount, 2) }}</td>
+                                                        <td>{{ number_format($data->paid_amount, 2) }}</td>
+                                                        <td>{{ number_format($data->balance_amount, 2) }}</td>
+                                                    </tr>
+                                                @empty
+                                                    <tr>
+                                                        <td colspan="6" class="text-center">No records found.</td>
+                                                    </tr>
+                                                @endforelse
+                                            </tbody>
+                                        </table>
+                                    </x-table>
+                                </div>
+                                <div class="rp-pagination-wrapper">
+                                    <div class="rp-pagination-info"> Showing
+                                        <strong>{{ $reportData->firstItem() ?? 0 }}</strong> –
+                                        <strong>{{ $reportData->lastItem() ?? 0 }}</strong> of
+                                        <strong>{{ number_format($reportData->total()) }}</strong> records
+                                    </div>
+                                    <div class="rp-pagination"> {{ $reportData->links('pagination::bootstrap-4') }} </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -140,25 +249,20 @@
     </section>
 @endsection
 
-@include('components.partials.data_table_js')
-@include('components.partials.multi_select_js')
 @include('components.partials.date_picker_css_js')
-@include('components.partials.data_table_css')
-
 @push('script')
     <script>
         flatpickr("#to_date", {
             mode: "single",
             dateFormat: "Y-m-d",
             allowInput: true,
-            defaultDate: "{{ request('to_date') }}" 
+            defaultDate: "{{ request('to_date') }}"
         });
 
-        // Mutual exclusivity between Group A and Group B
         $('.group-a').on('change input', function() {
             var hasGroupA = $('#to_date').val() !== '' || $('[name="branch_id"]').val() !== '';
             if (hasGroupA) {
-                $('#search_intake_id').val('').trigger('change').prop('disabled', true);
+                $('#search_intake_id').val('').prop('disabled', true);
             } else {
                 $('#search_intake_id').prop('disabled', false);
             }
@@ -175,7 +279,6 @@
             }
         });
 
-        // On page load, restore disabled state based on which group has a value
         $(document).ready(function() {
             var hasIntake = $('#search_intake_id').val() !== '';
             var hasGroupA = $('#to_date').val() !== '' || $('[name="branch_id"]').val() !== '';
@@ -185,117 +288,6 @@
             } else if (hasGroupA) {
                 $('#search_intake_id').prop('disabled', true);
             }
-        });
-
-
-
-
-
-        $(document).ready(function() {
-            var table = $('#table_id').DataTable({
-                responsive: false,
-                dom: 'Blfrtip',
-                buttons: [{
-                        extend: 'copy',
-                        title: getFileName()
-                    },
-                    {
-                        extend: 'csv',
-                        title: getFileName()
-                    },
-                    {
-                        extend: 'excel',
-                        title: getFileName()
-                    },
-                    {
-                        extend: 'pdf',
-                        title: getFileName()
-                    },
-                    {
-                        extend: 'print',
-                        title: getFileName()
-                    }
-                ],
-                paging: true,
-                searching: true,
-                ordering: true,
-                info: true,
-                scrollX: true,
-                lengthChange: true,
-                order: [
-                    [0, 'asc']
-                ],
-                lengthMenu: [
-                    [10, 25, 50, 100, -1],
-                    [10, 25, 50, 100, "All"]
-                ],
-                pageLength: 25,
-                language: {
-                    search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
-                    searchPlaceholder: 'Search...',
-                    paginate: {
-                        previous: '<i class="fa-solid fa-angle-left"></i>',
-                        next: '<i class="fa-solid fa-angle-right"></i>'
-                    }
-                }
-            });
-
-            function getFileName() {
-                let now = new Date();
-
-                let date = now.toISOString().slice(0, 10);
-                let time = now.toTimeString().slice(0, 8).replace(/:/g, '-'); // HH-MM-SS
-
-                return 'Students-Intake-Balance-Report_' + date + '__' + time;
-            }
-
-            table.on('length.dt page.dt search.dt order.dt draw.dt', function() {
-                updateFooter();
-            });
-
-            // ============ SUM FOOTER ============
-            function updateFooter() {
-                var totalAmount = 0;
-                var paidAmount = 0;
-                var balanceAmount = 0;
-
-                $('#table_id tbody tr').each(function() {
-                    var totalText = $(this).find('td:eq(3)').text().trim();
-                    var paidText = $(this).find('td:eq(4)').text().trim();
-                    var balanceText = $(this).find('td:eq(5)').text().trim();
-
-                    // remove commas
-                    totalText = totalText.replace(/,/g, '');
-                    paidText = paidText.replace(/,/g, '');
-                    balanceText = balanceText.replace(/,/g, '');
-
-                    totalAmount += parseFloat(totalText) || 0;
-                    paidAmount += parseFloat(paidText) || 0;
-                    balanceAmount += parseFloat(balanceText) || 0;
-                });
-
-                $('#total_amount_footer').html(totalAmount.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                }));
-                $('#paid_amount_footer').html(paidAmount.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                }));
-
-                $('#balance_amount_footer').html(balanceAmount.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                }));
-            }
-
-            // initial calculation
-            updateFooter();
-
-            // recalc on search, paging, ordering
-            table.on('search.dt page.dt order.dt', function() {
-                updateFooter();
-            });
         });
     </script>
 @endpush

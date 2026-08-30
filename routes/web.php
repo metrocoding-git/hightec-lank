@@ -399,20 +399,28 @@ Route::middleware(['permission'])->group(function () {
     // ================= REPORT ROUTES ================= //
     Route::prefix('reports')->group(function () {
         Route::get('course-paid', [ReportController::class, 'coursePaid'])->name('reports.course-paid');
+        Route::get('course-paid/export', [ReportController::class, 'exportCoursePaid'])->name('reports.course-paid.export');
         Route::get('sell-items', [ReportController::class, 'sellItems'])->name('reports.sell-items');
+        Route::get('sell-items/export', [ReportController::class, 'exportSellItems'])->name('reports.sell-items.export');
         Route::get('issue-items', [ReportController::class, 'issueItems'])->name('reports.issue-items');
+        Route::get('issue-items/export', [ReportController::class, 'exportIssueItems'])->name('reports.issue-items.export');
         Route::get('students-paid', [ReportController::class, 'studentsPaid'])->name(name: 'reports.students-paid');
+        Route::get('students-paid/export', [ReportController::class, 'exportStudentsPaid'])->name('reports.students-paid.export');
         Route::get('course-dates-payments', [ReportController::class, 'studentsDatesPayments'])->name(name: 'reports.course-dates-payments');
+        Route::get('course-dates-payments/export', [ReportController::class, 'exportStudentsDatesPayments'])->name('reports.course-dates-payments.export');
         Route::get('course-intake-payments', [ReportController::class, 'courseIntakePayments'])->name('reports.course-intake-payments');
+        Route::get('course-intake-payments/export', [ReportController::class, 'exportCourseIntakePayments'])->name('reports.course-intake-payments.export');
         Route::get('students-intake-balance', [ReportController::class, 'studentsIntakeBalance'])->name('reports.students-intake-balance');
+        Route::get('students-intake-balance/export', [ReportController::class, 'exportStudentsIntakeBalance'])->name('reports.students-intake-balance.export');
         Route::get('invoice-payments', [ReportController::class, 'invoicePayments'])->name('reports.invoice-payments');
-        Route::get('invoice-payments/data', [ReportController::class, 'getInvoicePaymentsData'])->name('reports.invoice-payments.data')->withoutMiddleware(['permission']);
         Route::get('invoice-payments/export', [ReportController::class, 'exportInvoicePayments'])->name('reports.invoice-payments.export');
         Route::get('invoice-payments/{id}/items', [ReportController::class, 'getReceiptItemsData'])->name('reports.invoice-payments.items')->withoutMiddleware(['permission']);
         Route::get('food-payment-report', [ReportController::class, 'foodPaymentReport'])->name('reports.food-payment');
+        Route::get('food-payment-report/export', [ReportController::class, 'exportFoodPayment'])->name('reports.food-payment.export');
         Route::get('change-course', [ReportController::class, 'changeCourse'])->name('reports.change-course');
+        Route::get('change-course/export', [ReportController::class, 'exportChangeCourse'])->name('reports.change-course.export');
         Route::get('/student-attendance', [ReportController::class, 'studentAttendance'])->name('reports.student-attendance');
-        Route::get('/reports/student-attendance/export', [ReportController::class, 'exportCsv'])->name('reports.student-attendance.export');
+        Route::get('/reports/student-attendance/export', [ReportController::class, 'exportStudentAttendance'])->name('reports.student-attendance.export');
     });
 
     Route::get('dashboard', [HomeController::class, 'dashboard'])->name('dashboard');

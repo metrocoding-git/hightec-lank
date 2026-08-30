@@ -759,7 +759,7 @@
                     Auth::user()->hasPermission('reports.change-course') ||
                     Auth::user()->hasPermission('reports.invoice-payments') ||
                     Auth::user()->hasPermission('reports.food-payment') ||
-                    Auth::user()->hasPermission('reports.scan-attendance')))
+                    Auth::user()->hasPermission('reports.student-attendance')))
             <span class="menu_seperator" id="seperator_reports_section" data-section="reports_section">Reports
                 Section
             </span>
@@ -776,7 +776,7 @@
                     Auth::user()->hasPermission('reports.change-course') ||
                     Auth::user()->hasPermission('reports.invoice-payments') ||
                     Auth::user()->hasPermission('reports.food-payment') ||
-                    Auth::user()->hasPermission('reports.scan-attendance')))
+                    Auth::user()->hasPermission('reports.student-attendance')))
             <li
                 class="reports_section {{ request()->is('reports') || request()->is('reports/*') ? 'mm-active' : '' }}">
                 <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
@@ -876,10 +876,10 @@
                         </li>
                     @endif
 
-                    @if (Auth::user()->hasPermission('reports.scan-attendance'))
+                    @if (Auth::user()->hasPermission('reports.student-attendance'))
                         <li>
-                            <a href="/reports/scan-attendance"
-                                class="{{ request()->is('reports/scan-attendance') ? 'active a' : '' }}">
+                            <a href="/reports/student-attendance"
+                                class="{{ request()->is('reports/student-attendance') ? 'active a' : '' }}">
                                 Student Attendance
                             </a>
                         </li>

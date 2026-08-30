@@ -252,7 +252,7 @@
         }
 
 
-          .main-title.search-card-header {
+        .main-title.search-card-header {
             display: flex;
             align-items: center;
             gap: 12px;
@@ -308,7 +308,161 @@
             box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06) !important;
             outline: none;
         }
-        
+
+
+
+        /* new */
+        .rp-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 12px;
+        }
+
+        .rp-table-wrapper table {
+            min-width: 1800px;
+            margin-bottom: 0;
+        }
+
+        .rp-table-wrapper::-webkit-scrollbar {
+            height: 7px;
+        }
+
+        .rp-table-wrapper::-webkit-scrollbar-track {
+            background: #f1f2f6;
+            border-radius: 10px;
+        }
+
+        .rp-table-wrapper::-webkit-scrollbar-thumb {
+            background: #c5c8d2;
+            border-radius: 10px;
+        }
+
+        .rp-table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #999eac;
+        }
+
+        /* Keep table header visible while scrolling vertically */
+        .rp-table-wrapper thead th {
+            white-space: nowrap;
+        }
+
+        /* ========================= Pagination ========================= */
+        .rp-pagination-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #eceef3;
+        }
+
+        .rp-pagination-info {
+            color: #7b8191;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .rp-pagination-info strong {
+            color: #343846;
+            font-weight: 700;
+        }
+
+        /* Laravel Bootstrap pagination */
+        .rp-pagination-wrapper .pagination {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 0;
+            flex-wrap: wrap;
+        }
+
+        .rp-pagination-wrapper .page-item {
+            margin: 0;
+        }
+
+        .rp-pagination-wrapper .page-link {
+            min-width: 36px;
+            height: 36px;
+            padding: 0 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #e5e7ed !important;
+            border-radius: 9px !important;
+            background: #fff;
+            color: #555b6d;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .rp-pagination-wrapper .page-link:hover {
+            background: #f6f6ff;
+            color: var(--gradient_1);
+            border-color: var(--gradient_1) !important;
+            transform: translateY(-1px);
+        }
+
+        .rp-pagination-wrapper .page-item.active .page-link {
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2)) !important;
+            border-color: transparent !important;
+            color: #fff !important;
+            box-shadow: 0 4px 10px rgba(81, 80, 233, 0.22);
+        }
+
+        .rp-pagination-wrapper .page-item.disabled .page-link {
+            background: #f7f7f9;
+            color: #b5b8c2;
+            border-color: #eceef3 !important;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Previous / Next */
+        .rp-pagination-wrapper .page-item:first-child .page-link,
+        .rp-pagination-wrapper .page-item:last-child .page-link {
+            padding-left: 14px;
+            padding-right: 14px;
+        }
+
+        .white-box .main-title h3 {
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .white-box .main-title h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 42px;
+            height: 3px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        /* Mobile */
+        @media (max-width: 767px) {
+            .rp-pagination-wrapper {
+                justify-content: center;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .rp-pagination-info {
+                text-align: center;
+            }
+
+            .rp-pagination-wrapper .pagination {
+                justify-content: center;
+            }
+        }
     </style>
     <style>
         :root {
