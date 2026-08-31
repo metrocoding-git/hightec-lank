@@ -397,3 +397,120 @@ CREATE TABLE `user_course` (
     REFERENCES `courses` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
  
+
+-- 09/01
+ INSERT INTO `permissions` (`id`, `permission_name`, `label`, `created_at`, `updated_at`) VALUES (NULL, 'student-practical-card.show', 'practical Card', NULL, NULL);
+
+
+CREATE TABLE `assessment_templates` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `course_id` BIGINT UNSIGNED NOT NULL,
+  `module_name` VARCHAR(255) NOT NULL,
+  `ncs_code` VARCHAR(100) NULL,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_by` BIGINT UNSIGNED NULL,
+  `updated_by` BIGINT UNSIGNED NULL,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `assessment_templates_course_id_index` (`course_id`),
+  CONSTRAINT `assessment_templates_course_id_foreign`
+    FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `assessment_templates_created_by_foreign`
+    FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `assessment_templates_updated_by_foreign`
+    FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+
+CREATE TABLE `assessment_template_titles` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `assessment_template_id` BIGINT UNSIGNED NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `max_marks` INT UNSIGNED NOT NULL DEFAULT 0,
+  `sort_order` INT UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `assessment_template_titles_template_id_index` (`assessment_template_id`),
+  CONSTRAINT `assessment_template_titles_template_id_foreign`
+    FOREIGN KEY (`assessment_template_id`) REFERENCES `assessment_templates` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE `assessment_template_sub_titles` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `assessment_template_title_id` BIGINT UNSIGNED NOT NULL,
+  `sub_title` VARCHAR(255) NOT NULL,
+  `sort_order` INT UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `assessment_template_sub_titles_title_id_index` (`assessment_template_title_id`),
+  CONSTRAINT `assessment_template_sub_titles_title_id_foreign`
+    FOREIGN KEY (`assessment_template_title_id`) REFERENCES `assessment_template_titles` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+CREATE TABLE `student_assessments` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `student_id` BIGINT UNSIGNED NOT NULL,
+  `student_course_id` BIGINT UNSIGNED NOT NULL,
+  `assessment_template_id` BIGINT UNSIGNED NOT NULL,
+  `vehicle_id` BIGINT UNSIGNED NULL,
+  `equipment_model` VARCHAR(255) NULL,
+  `branch_id` BIGINT UNSIGNED NULL,
+  `assessed_at` DATETIME NULL,
+  `total_marks` INT UNSIGNED NOT NULL DEFAULT 0,
+  `max_marks` INT UNSIGNED NOT NULL DEFAULT 0,
+  `grade` VARCHAR(20) NULL,
+  `is_qualified` TINYINT(1) NOT NULL DEFAULT 0,
+  `comments` TEXT NULL,
+  `evaluator_id` BIGINT UNSIGNED NULL,
+  `operator_signature` VARCHAR(255) NULL,
+  `status` ENUM('draft','submitted') NOT NULL DEFAULT 'draft',
+  `created_by` BIGINT UNSIGNED NULL,
+  `updated_by` BIGINT UNSIGNED NULL,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ 
+
+CREATE TABLE `student_assessment_marks` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `student_assessment_id` BIGINT UNSIGNED NOT NULL,
+  `assessment_template_title_id` BIGINT UNSIGNED NOT NULL,
+  `assessment_template_sub_title_id` BIGINT UNSIGNED NOT NULL,
+  `competency` ENUM('C','NC') NULL,
+  `marks` DECIMAL(6,2) NULL,
+  `remarks` VARCHAR(500) NULL,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `student_assessment_marks_unique` (`student_assessment_id`, `assessment_template_sub_title_id`),
+  KEY `student_assessment_marks_title_id_index` (`assessment_template_title_id`),
+  CONSTRAINT `student_assessment_marks_assessment_id_foreign`
+    FOREIGN KEY (`student_assessment_id`) REFERENCES `student_assessments` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `student_assessment_marks_title_id_foreign`
+    FOREIGN KEY (`assessment_template_title_id`) REFERENCES `assessment_template_titles` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `student_assessment_marks_sub_title_id_foreign`
+    FOREIGN KEY (`assessment_template_sub_title_id`) REFERENCES `assessment_template_sub_titles` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO `permissions` (`permission_name`, `label`, `created_at`, `updated_at`) VALUES
+('assessment-template.index',         'Assessment Template - View',                     NOW(), NOW()),
+('assessment-template.store',         'Assessment Template - Add',                      NOW(), NOW()),
+('assessment-template.update',        'Assessment Template - Edit',                     NOW(), NOW()),
+('assessment-template.destroy', 'Assessment Template - Enable/Disable',           NOW(), NOW()),
+('student-assessment.index',          'Final Assessment Marks - View',                  NOW(), NOW()),
+('student-assessment.store',          'Final Assessment Marks - Save Assessment',       NOW(), NOW()),
+('student-assessment.show',           'Final Assessment Marks - View One Assessment',   NOW(), NOW());
+ 
+
+
+INSERT INTO `permissions` (`permission_name`, `label`, `created_at`, `updated_at`) VALUES
+('student-assessment.destroy', 'Final Assessment Marks - Undo (2-day window)', NOW(), NOW());
+ 
+
+ ALTER TABLE `student_assessments`
+    ADD COLUMN `deleted_at` TIMESTAMP NULL DEFAULT NULL AFTER `updated_at`;
+ 

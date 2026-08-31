@@ -228,16 +228,16 @@
     </div>
 
     <div class="sidebar-header update_sidebar d-flex d-lg-none">
-            <a href="/" id="admin-dashboard" class="logo-area">
-                <img src="{{ asset('uploads/settings/logo.png') }}" alt="logo" style="max-width: 100px;">
-            </a>
-            <div class="sidebar-name mt-2" style="font-size:14px; font-weight:600;">
-                HIGHTEC LANKA INTERNATIONAL
-            </div>
+        <a href="/" id="admin-dashboard" class="logo-area">
+            <img src="{{ asset('uploads/settings/logo.png') }}" alt="logo" style="max-width: 100px;">
+        </a>
+        <div class="sidebar-name mt-2" style="font-size:14px; font-weight:600;">
+            HIGHTEC LANKA INTERNATIONAL
+        </div>
 
-            <a id="close_sidebar" class="d-lg-none">
-                <i class="ti-close" style="font-size:20px;"></i>
-            </a>
+        <a id="close_sidebar" class="d-lg-none">
+            <i class="ti-close" style="font-size:20px;"></i>
+        </a>
     </div>
 
 
@@ -270,6 +270,7 @@
                     Auth::user()->hasPermission('intake.index') ||
                     Auth::user()->hasPermission('subject.index') ||
                     Auth::user()->hasPermission('assign-subject.index') ||
+                    Auth::user()->hasPermission('assessment-template.index') ||
                     Auth::user()->hasPermission('lesson.index') ||
                     Auth::user()->hasPermission('topic.index') ||
                     Auth::user()->hasPermission('topic-overview.index') ||
@@ -287,7 +288,8 @@
                 (Auth::user()->hasPermission('course.index') ||
                     Auth::user()->hasPermission('intake.index') ||
                     Auth::user()->hasPermission('subject.index') ||
-                    Auth::user()->hasPermission('assign-subject.index')))
+                    Auth::user()->hasPermission('assign-subject.index') ||
+                    Auth::user()->hasPermission('assessment-template.index')))
             <li
                 class="administration_section {{ request()->is('academic') || request()->is('administration/academic/*') ? 'mm-active' : '' }}">
                 <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
@@ -329,6 +331,15 @@
                             <a href="/administration/academic/assign-subject"
                                 class="{{ request()->is('administration/academic/assign-subject') ? 'active a' : '' }}">
                                 Assign Subject
+                            </a>
+                        </li>
+                    @endif
+
+                    @if (Auth::user()->hasPermission('assessment-template.index'))
+                        <li>
+                            <a href="/administration/academic/assessment-template"
+                                class="{{ request()->is('administration/academic/assessment-template') ? 'active a' : '' }}">
+                                Assessment Template
                             </a>
                         </li>
                     @endif
@@ -448,6 +459,7 @@
                     Auth::user()->hasPermission('disabled-students') ||
                     Auth::user()->hasPermission('scan-attendance') ||
                     Auth::user()->hasPermission('student.add-intake-with-courses.index') ||
+                    Auth::user()->hasPermission('student-assessment.index') ||
                     Auth::user()->hasPermission('fee-group') ||
                     Auth::user()->hasPermission('fees.fees-type') ||
                     Auth::user()->hasPermission('fees.add-invoice') ||
@@ -467,7 +479,8 @@
                     Auth::user()->hasPermission('student-list') ||
                     Auth::user()->hasPermission('disabled-students') ||
                     Auth::user()->hasPermission('scan-attendance') ||
-                    Auth::user()->hasPermission('student.add-intake-with-courses.index')))
+                    Auth::user()->hasPermission('student.add-intake-with-courses.index') ||
+                    Auth::user()->hasPermission('student-assessment.index')))
             <li
                 class="studentInfo_section {{ request()->is('student-info') || request()->is('student/student-info/*') ? 'mm-active' : '' }}">
                 <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
@@ -525,6 +538,14 @@
                             <a href="/student/student-info/student-add-intake"
                                 class="{{ request()->is('student/student-info/student-add-intake') ? 'active a' : '' }}">
                                 Add Intake & Courses
+                            </a>
+                        </li>
+                    @endif
+                    @if (Auth::user()->hasPermission('student-assessment.index'))
+                        <li>
+                            <a href="/student/student-info/assessment"
+                                class="{{ request()->is('student/student-info/assessment*') ? 'active a' : '' }}">
+                                Final Assessment Marks
                             </a>
                         </li>
                     @endif

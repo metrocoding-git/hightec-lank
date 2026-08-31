@@ -55,6 +55,15 @@ return [
                         ['key' => 'assign-subject.destroy', 'label' => 'Delete', 'flag' => 'Replaces assign-subject.toggle-status per your confirmed decision — deletes the whole intake/course group at once, same blast radius as before Sections 2-6.'],
                     ],
                 ],
+                [
+                    'name' => 'Assessment Template',
+                    'window' => ['key' => 'assessment-template.index', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'assessment-template.store', 'label' => 'Add'],
+                        ['key' => 'assessment-template.update', 'label' => 'Edit'],
+                        ['key' => 'assessment-template.destroy', 'label' => 'Delete', 'flag' => 'Only ever soft-disables (is_active toggle) — there is no hard-delete route, by design, since a template already used in saved assessments must never be destroyable.'],
+                    ],
+                ],
             ],
         ],
 
@@ -164,6 +173,9 @@ return [
                         ['key' => 'student.update-status', 'label' => 'Disable'],
                         ['key' => 'student-details', 'label' => 'View Student Details', 'flag' => 'Full student detail page (student-view/{id}) — not in your original list.'],
                         ['key' => 'student-list.search', 'label' => 'Search/Filter', 'flag' => 'Filter AJAX for this list, not excluded.'],
+                        ['key' => 'student-practical-card.show', 'label' => 'Practical Card'],
+
+
                     ],
                 ],
                 [
@@ -194,6 +206,14 @@ return [
                         ['key' => 'student.add-intake.update-status', 'label' => 'Status Change (start/return/complete/restart)'],
                         ['key' => 'student.add-intake.search', 'label' => 'Search', 'flag' => 'Was missing — a real, non-excluded POST search route.'],
                         ['key' => 'student.add-intake-with-courses.change-course', 'label' => 'Change Course', 'flag' => 'Currently withoutMiddleware(permission) — remove that exclusion to actually gate this.'],
+                    ],
+                ],
+                [
+                    'name' => 'Final Assessment Marks',
+                    'window' => ['key' => 'student-assessment.index', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'student-assessment.store', 'label' => 'Save Assessment'],
+                        ['key' => 'student-assessment.show', 'label' => 'View One Assessment'],
                     ],
                 ],
             ],

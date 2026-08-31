@@ -220,6 +220,12 @@ class StudentController extends Controller
                             </a>';
                 }
 
+                if ($user->hasPermission('student-practical-card.show')) {
+                    $items[] = '<a class="dropdown-item" target="_blank" href="' . route('student-practical-card.show', $s->id) . '">
+                <i class="fa-solid fa-clipboard-list text-muted"></i> Practical Card
+            </a>';
+                }
+
                 if (empty($items)) {
                     return '<span class="text-muted">&mdash;</span>';
                 }
