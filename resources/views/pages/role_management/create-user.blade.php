@@ -26,12 +26,7 @@
             align-items: center;
         }
 
-        .sms-breadcrumb h1 {
-            font-size: 20px;
-            font-weight: 600;
-            margin: 0;
-            color: #1c1c1c;
-        }
+
 
         .sms-breadcrumb .bc-pages a {
             color: #7a7f87;
@@ -49,10 +44,7 @@
             color: #c3c7cf;
         }
 
-        .sms-breadcrumb .bc-pages a:last-child {
-            font-weight: 600;
-            color: #1c1c1c;
-        }
+
 
         .white-box {
             border-radius: 10px;
@@ -180,20 +172,7 @@
             padding: 22px 22px 4px;
         }
 
-        #create-user-form button[type="submit"].primary-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 30px;
-            border-radius: 8px;
-            box-shadow: 0 6px 18px color-mix(in srgb, var(--gradient_1) 30%, transparent);
-            transition: transform .15s ease, box-shadow .15s ease;
-        }
 
-        #create-user-form button[type="submit"].primary-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 24px color-mix(in srgb, var(--gradient_1) 40%, transparent);
-        }
     </style>
 @endpush
 
@@ -204,11 +183,10 @@
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1>Create User</h1>
+                <h1>Create Use</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
-                    <a href="{{ route('role-management.user-list') }}">@lang('role.user_list')</a>
-                    <a href="#">Create User</a>
+                    <a href="#">Create Use</a>
                 </div>
             </div>
         </div>
@@ -264,6 +242,27 @@
                                                     <option value="{{ $branch->id }}">{{ $branch->name }}</option>
                                                 @endforeach
                                             </select>
+                                        </div>
+                                    </div>
+                                    {{-- COURSES (assign-course feature): moved up next to Role/Branch and
+                                         made available for ANY user, not just role = Student. Backed by the
+                                         standalone `user_course` table, so this has no dependency on the
+                                         Student Information section below. --}}
+                                    <div class="col-lg-12">
+                                        <div class="primary_input mb-3">
+                                            <label class="primary_input_label" for="course_ids">Select Courses <span
+                                                    class="optional-pill">Optional</span></label>
+                                            <select name="course_ids[]" id="course_ids"
+                                                class="primary_select form-control" multiple>
+                                                @foreach ($courses as $course)
+                                                    <option value="{{ $course->id }}">
+                                                        {{ $course->name }}{{ $course->code ? ' (' . $course->code . ')' : '' }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            <span class="fsh-sub" style="display:block;margin-top:6px;">You can select
+                                                one or more courses to assign to this user now, or add them
+                                                later.</span>
                                         </div>
                                     </div>
                                 </div>
@@ -331,7 +330,8 @@
                                             <div class="col-lg-6">
                                                 <div class="primary_input mb-3">
                                                     <label class="primary_input_label"
-                                                        for="existing_admission_number">Admission Number (Existing):</label>
+                                                        for="existing_admission_number">Admission Number
+                                                        (Existing):</label>
                                                     <input type="text" name="existing_admission_number"
                                                         id="existing_admission_number"
                                                         class="primary_input_field form-control" readonly>
@@ -348,16 +348,6 @@
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <div class="primary_input mb-3">
-                                        <label class="primary_input_label" for="course_ids">Courses <span class="optional-pill">Optional</span></label>
-                                        <select name="course_ids[]" id="course_ids" class="primary_select form-control" multiple>
-                                            @foreach ($courses as $course)
-                                                <option value="{{ $course->id }}">{{ $course->name }}{{ $course->code ? ' (' . $course->code . ')' : '' }}</option>
-                                            @endforeach
-                                        </select>
-                                        <span class="fsh-sub" style="display:block;margin-top:6px;">You can select one or more courses to associate with this student now, or add them later.</span>
                                     </div>
                                 </div>
 
@@ -406,8 +396,17 @@
                                 </div>
 
                                 @if ($canStoreUser)
-                                    <button type="submit" class="primary-btn fix-gr-bg mt-4">Create User</button>
+                                    <div class="row mt-20">
+                                        <div class="col-lg-12 text-center">
+                                            <button class="primary-btn fix-gr-bg col-12 submit" type="submit">
+                                                <span class="ti-check"></span>
+                                                Create User
+                                            </button>
+                                        </div>
+                                    </div>
                                 @endif
+
+
                             </form>
                         </div>
                     </div>
@@ -416,10 +415,6 @@
         </div>
     </div>
 
-    {{-- BUG FIX (Section 35): removed a redundant jQuery CDN include here.
-         layouts.app already loads jQuery globally; loading a second copy can
-         silently overwrite $.fn extensions registered by plugins (select2,
-         datepicker, etc.) that ran against the first copy. --}}
     <script>
         $(document).ready(function() {
             $(document).on('change', '#role_id', function() {
@@ -455,13 +450,13 @@
                     $('#student_fields_header').hide();
                     newStudentInputFields.hide();
                     existingStudentDisplayFields.hide();
-                    // Clear any course selection made while 'Student' was picked
-                    $('#course_ids').val(null);
-                    $('#course_ids').niceSelect('update');
                     $('#non_student_fields').show(); // Show non-student fields when role is not 'Student'
                     // Ensure first_name and last_name are editable when non-student role is selected
                     $('#first_name').prop('readonly', false);
                     $('#last_name').prop('readonly', false);
+                    // NOTE: Courses is no longer part of the Student-only section (it now sits
+                    // next to Role/Branch and applies to any user), so switching away from
+                    // 'Student' here deliberately does NOT clear #course_ids anymore.
                 }
             });
 

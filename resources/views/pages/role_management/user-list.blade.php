@@ -5,95 +5,6 @@
     User List
 @endsection
 
-@push('css')
-    <style>
-        /* ===== Modern refresh: breadcrumb, cards, table (Section 35) ===== */
-        .sms-breadcrumb {
-            position: relative;
-            background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-            padding: 22px 30px;
-            overflow: hidden;
-        }
-
-        .sms-breadcrumb::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 6px;
-            background: linear-gradient(180deg, var(--gradient_1), var(--gradient_2));
-        }
-
-        .sms-breadcrumb .row {
-            align-items: center;
-        }
-
-        .sms-breadcrumb h1 {
-            font-size: 20px;
-            font-weight: 600;
-            margin: 0;
-            color: #1c1c1c;
-        }
-
-        .sms-breadcrumb .bc-pages a {
-            color: #7a7f87;
-            font-size: 14px;
-            text-decoration: none;
-        }
-
-        .sms-breadcrumb .bc-pages a:hover {
-            color: var(--gradient_2);
-        }
-
-        .sms-breadcrumb .bc-pages a:not(:last-child)::after {
-            content: '\203A';
-            margin: 0 8px;
-            color: #c3c7cf;
-        }
-
-        .sms-breadcrumb .bc-pages a:last-child {
-            font-weight: 600;
-            color: #1c1c1c;
-        }
-
-        .white-box {
-            border-radius: 10px;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-        }
-
-        .white-box .main-title h3::after {
-            content: '';
-            display: block;
-            width: 46px;
-            height: 3px;
-            margin-top: 8px;
-            border-radius: 3px;
-            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
-        }
-
-        #table_id thead tr th {
-            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
-            color: #fff;
-            border: none;
-            white-space: nowrap;
-        }
-
-        #table_id tbody tr:hover {
-            background-color: #f7f9fc;
-        }
-
-        #table_id tbody tr td {
-            vertical-align: middle;
-        }
-
-        .text-muted {
-            color: #9aa1ac !important;
-        }
-    </style>
-@endpush
 @section('mainContent')
     @php
         $canEditUser = Auth::user()->hasPermission('role-management.user-update');
@@ -101,11 +12,12 @@
     @endphp
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
+
             <div class="row justify-content-between">
-                <h1>User List</h1>
+                <h1>Courses</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
-                    <a href="{{ route('role-management.user-list') }}">@lang('role.user_list')</a>
+                    <a href="#">User List</a>
                 </div>
             </div>
         </div>
@@ -114,28 +26,32 @@
     <section class="admin-visitor-area">
         <div class="container-fluid p-0">
             <div class="row">
-                <div class="col-lg-12">
-                    <div class="white-box">
-                        <div class="row">
-                            <div class="col-lg-6 no-gutters col-6 xm_3">
-                                <div class="main-title">
-                                    <h3 class="mb-15">User List</h3>
+                <div class="col-lg-12 mb-10">
+                    @if (Auth::check() && Auth::user()->hasPermission('role-management.create-user'))
+                        <div class="white-box mb-10 filter_card">
+                            <div class="row">
+                                <div class="col-12 mb-4 mb-sm-0">
+                                    <a href="{{ route('role-management.create-user') }}"
+                                        class="primary-btn small fix-gr-bg col-12 p-2">
+                                        <span class="ti-plus pr-2"></span>
+                                        Add User
+                                    </a>
                                 </div>
                             </div>
-                            <div class="col-lg-6 col-6 text-right col-md-6 col-5">
-                                @if(Auth::check() && Auth::user()->hasPermission('role-management.create-user'))
-                                <a href="{{ route('role-management.create-user') }}" class="primary-btn small fix-gr-bg">
-                                    <span class="ti-plus pr-2"></span>
-                                   Add User
-                                </a>
-                                @endif
-                            </div>
                         </div>
+                    @endif
 
-                        <div class="row">
-                            <div class="col-lg-12">
-                                <div class="table-responsive">
-                                    <table id="table_id" class="table" cellspacing="0" width="100%">
+
+                    <div class="col-12">
+
+
+                        <div class="row white-box">
+                            <div class="col-lg-12 mb-10">
+                                <div class="main-title">
+                                    <h3 class="mb-20">User List</h3>
+                                </div>
+                                <x-table>
+                                    <table id="table_id" class="table Crm_table_active3" cellspacing="0" width="100%">
                                         <thead>
                                             <tr>
                                                 <th>@lang('common.sl')</th>
@@ -143,49 +59,63 @@
                                                 <th>Email</th>
                                                 <th>Role</th>
                                                 <th>Branch</th>
+                                                {{-- COURSES (assign-course feature): new column, mirrors Branch --}}
+                                                <th>Courses</th>
                                                 <th>Status</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach($users as $user)
-                                            <tr>
-                                                <td>{{ $loop->iteration }}</td>
-                                                <td>{{ $user->name }} {{ $user->last_name }}</td>
-                                                <td>{{ $user->email }}</td>
-                                                <td>{{ $user->role ? $user->role->role_name : 'N/A' }}</td>
-                                                <td>
-                                                    @foreach($user->branches as $branch)
-                                                        <span class="badge badge-primary">{{ $branch->name }}</span>
-                                                    @endforeach
-                                                </td>
-                                                <td>
-                                                    @if($user->status == 1)
-                                                        <span class="badge badge-success">Active</span>
-                                                    @else
-                                                        <span class="badge badge-danger">Inactive</span>
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    <x-drop-down>
+                                            @foreach ($users as $user)
+                                                <tr>
+                                                    <td>{{ $loop->iteration }}</td>
+                                                    <td>{{ $user->name }} {{ $user->last_name }}</td>
+                                                    <td>{{ $user->email }}</td>
+                                                    <td>{{ $user->role ? $user->role->role_name : 'N/A' }}</td>
+                                                    <td>
+                                                        @foreach ($user->branches as $branch)
+                                                            <span class="badge badge-primary">{{ $branch->name }}</span>
+                                                        @endforeach
+                                                    </td>
+                                                    <td>
+                                                        @forelse ($user->courses as $course)
+                                                            <span class="badge badge-info">{{ $course->name }}</span>
+                                                        @empty
+                                                            <span class="text-muted">-</span>
+                                                        @endforelse
+                                                    </td>
+                                                    <td>
+                                                        @if ($user->status == 1)
+                                                            <span class="badge badge-success">Active</span>
+                                                        @else
+                                                            <span class="badge badge-danger">Inactive</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        <x-drop-down>
 
-                                                        <a class="dropdown-item view-user" href="#" data-id="{{ $user->id }}">@lang('common.view')</a>
-                                                        @if ($canEditUser)
-                                                            <a class="dropdown-item edit-user" href="#" data-id="{{ $user->id }}">@lang('common.edit')</a>
-                                                        @endif
-                                                        @if ($canChangePasswordUser)
-                                                            <a class="dropdown-item change-password" href="#" data-id="{{ $user->id }}">Change Password</a>
-                                                        @endif
-                                                        
-                                                    </x-drop-down>
-                                                        
-                                                    
-                                                </td>
-                                            </tr>
+                                                            <a class="dropdown-item view-user" href="#"
+                                                                data-id="{{ $user->id }}">@lang('common.view')</a>
+                                                            @if ($canEditUser)
+                                                                <a class="dropdown-item edit-user" href="#"
+                                                                    data-id="{{ $user->id }}">@lang('common.edit')</a>
+                                                            @endif
+                                                            @if ($canChangePasswordUser)
+                                                                <a class="dropdown-item change-password" href="#"
+                                                                    data-id="{{ $user->id }}">Change Password</a>
+                                                            @endif
+
+                                                        </x-drop-down>
+
+
+                                                    </td>
+                                                </tr>
                                             @endforeach
                                         </tbody>
                                     </table>
-                                </div>
+                                </x-table>
+
+
                             </div>
                         </div>
                     </div>
@@ -195,7 +125,8 @@
     </section>
 
     {{-- View User Modal --}}
-    <div class="modal fade admin-query" id="viewUserModal" tabindex="-1" role="dialog" aria-labelledby="viewUserModalLabel" aria-hidden="true">
+    <div class="modal fade admin-query" id="viewUserModal" tabindex="-1" role="dialog"
+        aria-labelledby="viewUserModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -212,7 +143,8 @@
     </div>
 
     {{-- Edit User Modal --}}
-    <div class="modal fade admin-query" id="editUserModal" tabindex="-1" role="dialog" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal fade admin-query" id="editUserModal" tabindex="-1" role="dialog"
+        aria-labelledby="editUserModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -227,53 +159,82 @@
                         @method('PUT')
                         <input type="hidden" name="id" id="edit_user_id">
                         <div class="row">
-                            <div class="col-lg-12">
-                                <div class="primary_input mb-25">
-                                    <label class="primary_input_label" for="edit_first_name">First name <span class="text-danger">*</span></label>
-                                    <input class="primary_input_field form-control" type="text" id="edit_first_name" name="first_name" required>
+                            <div class="col-lg-12 mb-10">
+                                <div class="primary_input">
+                                    <label class="primary_input_label" for="edit_first_name">First name <span
+                                            class="text-danger">*</span></label>
+                                    <input class="primary_input_field form-control" type="text" id="edit_first_name"
+                                        name="first_name" required>
                                     <span class="text-danger" id="edit_first_name_error"></span>
                                 </div>
                             </div>
-                            <div class="col-lg-12">
-                                <div class="primary_input mb-25">
+                            <div class="col-lg-12 mb-10">
+                                <div class="primary_input">
                                     <label class="primary_input_label" for="edit_last_name">Last Name</label>
-                                    <input class="primary_input_field form-control" type="text" id="edit_last_name" name="last_name">
+                                    <input class="primary_input_field form-control" type="text" id="edit_last_name"
+                                        name="last_name">
                                     <span class="text-danger" id="edit_last_name_error"></span>
                                 </div>
                             </div>
-                            <div class="col-lg-12">
-                                <div class="primary_input mb-25">
-                                    <label class="primary_input_label" for="edit_email">@lang('common.email') <span class="text-danger">*</span></label>
-                                    <input class="primary_input_field form-control" type="email" id="edit_email" name="email" required>
+                            <div class="col-lg-12 mb-10">
+                                <div class="primary_input">
+                                    <label class="primary_input_label" for="edit_email">@lang('common.email') <span
+                                            class="text-danger">*</span></label>
+                                    <input class="primary_input_field form-control" type="email" id="edit_email"
+                                        name="email" required>
                                     <span class="text-danger" id="edit_email_error"></span>
                                 </div>
                             </div>
-                            <div class="col-lg-12">
-                                <div class="primary_input mb-25">
-                                    <label class="primary_input_label" for="edit_role_id">Role <span class="text-danger">*</span></label>
-                                    <select class="primary_select form-control" name="role_id" id="edit_role_id" required>
+                            <div class="col-lg-12 mb-10">
+                                <div class="primary_input">
+                                    <label class="primary_input_label" for="edit_role_id">Role <span
+                                            class="text-danger">*</span></label>
+                                    <select class="primary_select form-control" name="role_id" id="edit_role_id"
+                                        required>
                                         <option value="">@lang('common.select_role')</option>
-                                        @foreach(\App\Models\Role::all() as $role)
+                                        @foreach (\App\Models\Role::all() as $role)
                                             <option value="{{ $role->id }}">{{ $role->role_name }}</option>
                                         @endforeach
                                     </select>
                                     <span class="text-danger" id="edit_role_id_error"></span>
                                 </div>
                             </div>
-                            <div class="col-lg-12">
-                                <div class="primary_input mb-25">
-                                    <label class="primary_input_label" for="edit_branches">Branches <span class="text-danger">*</span></label>
-                                    <select class="primary_select form-control" name="branch_ids[]" id="edit_branches" multiple required>
-                                        @foreach(\App\Models\Branch::all() as $branch)
+                            <div class="col-lg-12 mb-10">
+                                <div class="primary_input">
+                                    <label class="primary_input_label" for="edit_branches">Branches <span
+                                            class="text-danger">*</span></label>
+                                    <select class="primary_select form-control" name="branch_ids[]" id="edit_branches"
+                                        multiple required>
+                                        @foreach (\App\Models\Branch::all() as $branch)
                                             <option value="{{ $branch->id }}">{{ $branch->name }}</option>
                                         @endforeach
                                     </select>
                                     <span class="text-danger" id="edit_branch_ids_error"></span>
                                 </div>
                             </div>
-                            <div class="col-lg-12">
-                                <div class="primary_input mb-25">
-                                    <label class="primary_input_label" for="edit_status">@lang('common.status') <span class="text-danger">*</span></label>
+
+                            {{-- COURSES (assign-course feature): available for ANY user, not just
+                                 role = Student — always visible, no role-based show/hide. Backed by
+                                 the standalone `user_course` table. --}}
+                            <div class="col-lg-12 mb-10" id="edit_courses_wrapper">
+                                <div class="primary_input">
+                                    <label class="primary_input_label" for="edit_course_ids">Courses
+                                        <span class="text-muted" style="font-weight:400;">(Optional)</span></label>
+                                    <select class="primary_select form-control" name="course_ids[]" id="edit_course_ids"
+                                        multiple>
+                                        @foreach ($courses as $course)
+                                            <option value="{{ $course->id }}">
+                                                {{ $course->name }}{{ $course->code ? ' (' . $course->code . ')' : '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <span class="text-danger" id="edit_course_ids_error"></span>
+                                </div>
+                            </div>
+                            <div class="col-lg-12 mb-10">
+                                <div class="primary_input">
+                                    <label class="primary_input_label" for="edit_status">@lang('common.status') <span
+                                            class="text-danger">*</span></label>
                                     <select class="primary_select form-control" name="status" id="edit_status" required>
                                         <option value="1">Active</option>
                                         <option value="0">Inactive</option>
@@ -282,9 +243,9 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row mt-40">
-                            <div class="col-lg-12 text-center">
-                                <button type="submit" class="primary-btn fix-gr-bg">
+                        <div class="row mt-10">
+                            <div class="col-lg-12 mb-10 text-center">
+                                <button type="submit" class="primary-btn fix-gr-bg col-12">
                                     <span class="ti-check"></span>
                                     @lang('common.update')
                                 </button>
@@ -297,7 +258,8 @@
     </div>
 
     {{-- Change Password Modal --}}
-    <div class="modal fade admin-query" id="changePasswordModal" tabindex="-1" role="dialog" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+    <div class="modal fade admin-query" id="changePasswordModal" tabindex="-1" role="dialog"
+        aria-labelledby="changePasswordModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -311,23 +273,27 @@
                         @csrf
                         <input type="hidden" name="id" id="change_password_user_id">
                         <div class="row">
-                            <div class="col-lg-12">
-                                <div class="primary_input mb-25">
-                                    <label class="primary_input_label" for="new_password">New Password <span class="text-danger">*</span></label>
-                                    <input class="primary_input_field form-control" type="password" id="new_password" name="password" required>
+                            <div class="col-lg-12 mb-10">
+                                <div class="primary_input">
+                                    <label class="primary_input_label" for="new_password">New Password <span
+                                            class="text-danger">*</span></label>
+                                    <input class="primary_input_field form-control" type="password" id="new_password"
+                                        name="password" required>
                                     <span class="text-danger" id="new_password_error"></span>
                                 </div>
                             </div>
-                            <div class="col-lg-12">
-                                <div class="primary_input mb-25">
-                                    <label class="primary_input_label" for="confirm_password">Confirm Password <span class="text-danger">*</span></label>
-                                    <input class="primary_input_field form-control" type="password" id="confirm_password" name="password_confirmation" required>
+                            <div class="col-lg-12 mb-10">
+                                <div class="primary_input">
+                                    <label class="primary_input_label" for="confirm_password">Confirm Password <span
+                                            class="text-danger">*</span></label>
+                                    <input class="primary_input_field form-control" type="password" id="confirm_password"
+                                        name="password_confirmation" required>
                                     <span class="text-danger" id="confirm_password_error"></span>
                                 </div>
                             </div>
                         </div>
                         <div class="row mt-40">
-                            <div class="col-lg-12 text-center">
+                            <div class="col-lg-12 mb-10 text-center">
                                 <button type="submit" class="primary-btn fix-gr-bg">
                                     <span class="ti-check"></span>
                                     Update Password
@@ -342,6 +308,63 @@
 
     <script>
         $(document).ready(function() {
+
+            var table = $('#table_id').DataTable({
+                responsive: true,
+                dom: "<'dt-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3 '" +
+                    "<'dt-toolbar-title'>" +
+                    "<'dt-toolbar-controls d-flex align-items-center flex-wrap gap-2 mt-3'<'dt-search'f><'dt-buttons-wrap'B>>" +
+                    ">" +
+                    "<'row'<'col-sm-12'tr>>" +
+                    "<'gap-2 mt-3'<'dt-info'i><'dt-pagination'p>>",
+                stateSave: true,
+                paging: true,
+                searching: true,
+                ordering: true,
+                info: true,
+                buttons: [{
+                        extend: 'copyHtml5',
+                        title: getFileName(),
+                        text: '<i class="fa-regular fa-copy"></i>',
+                        titleAttr: 'Copy'
+                    },
+                    {
+                        extend: 'csvHtml5',
+                        title: getFileName(),
+                        text: '<i class="fa-solid fa-file-csv"></i>',
+                        titleAttr: 'CSV'
+                    },
+                    {
+                        extend: 'excelHtml5',
+                        title: getFileName(),
+                        text: '<i class="fa-solid fa-file-excel"></i>',
+                        titleAttr: 'Excel'
+                    },
+                    {
+                        extend: 'pdfHtml5',
+                        title: getFileName(),
+                        text: '<i class="fa-solid fa-file-pdf"></i>',
+                        titleAttr: 'PDF'
+                    },
+                    {
+                        extend: 'print',
+                        title: getFileName(),
+                        text: '<i class="fa-solid fa-print"></i>',
+                        titleAttr: 'Print'
+                    }
+                ],
+                pageLength: 100,
+                language: {
+                    search: '<i class=""></i>',
+                    searchPlaceholder: 'Search...',
+                    paginate: {
+                        previous: '<i class="fa-solid fa-angle-left"></i>',
+                        next: '<i class="fa-solid fa-angle-right"></i>'
+                    }
+                },
+
+            });
+
             // View User
             $(document).on('click', '.view-user', function() {
                 let userId = $(this).data('id');
@@ -351,8 +374,21 @@
                     success: function(response) {
                         let branchesHtml = '';
                         response.branches.forEach(function(branch) {
-                            branchesHtml += `<span class="badge badge-primary mr-2 mb-2">${branch.name}</span>`;
+                            branchesHtml +=
+                                `<span class="badge badge-primary mr-2 mb-2">${branch.name}</span>`;
                         });
+
+                        // COURSES (assign-course feature): same badge-list treatment as
+                        // Branches. response.courses comes from the eager-loaded
+                        // `courses` relation in UserController::getUserDetails().
+                        let coursesHtml = '';
+                        (response.courses || []).forEach(function(course) {
+                            coursesHtml +=
+                                `<span class="badge badge-info mr-2 mb-2">${course.name}</span>`;
+                        });
+                        if (!coursesHtml) {
+                            coursesHtml = '<span class="text-muted">No courses assigned</span>';
+                        }
 
                         $('#viewUserModalBody').html(`
                             <div class="row">
@@ -390,6 +426,14 @@
                                 </div>
                                 <div class="col-lg-12">
                                     <div class="primary_input mb-25">
+                                        <label class="primary_input_label">Courses</label>
+                                        <div class="d-flex flex-wrap">
+                                            ${coursesHtml}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-12">
+                                    <div class="primary_input mb-25">
                                         <label class="primary_input_label">@lang('common.status')</label>
                                         <input class="primary_input_field form-control" type="text" value="${response.status == 1 ? 'Active' : 'Inactive'}" readonly>
                                     </div>
@@ -415,13 +459,32 @@
                         $('#edit_first_name').val(response.first_name);
                         $('#edit_last_name').val(response.last_name);
                         $('#edit_email').val(response.email);
+
+                        // BUG FIX: "edit form role not load" — the underlying <option>
+                        // was being selected, but the visible niceSelect widget was
+                        // never told to refresh, so it kept showing its placeholder
+                        // text instead of the user's actual role. Same fix pattern
+                        // already used below for #edit_branches / #edit_course_ids.
                         $('#edit_role_id').val(response.role_id);
+                        $('#edit_role_id').niceSelect('update');
+
                         $('#edit_status').val(response.status);
+                        $('#edit_status').niceSelect('update');
 
                         // Select branches
-                        let selectedBranches = response.branches.map(branch => branch.id.toString());
+                        let selectedBranches = response.branches.map(branch => branch.id
+                            .toString());
                         $('#edit_branches').val(selectedBranches);
-                        $('#edit_branches').niceSelect('update'); // Update the nice-select dropdown
+                        $('#edit_branches').niceSelect(
+                            'update'); // Update the nice-select dropdown
+
+                        // COURSES (assign-course feature): pre-select whatever courses
+                        // this user already has. Not gated by role anymore — every user
+                        // can have courses.
+                        let selectedCourses = (response.course_ids || []).map(courseId =>
+                            courseId.toString());
+                        $('#edit_course_ids').val(selectedCourses);
+                        $('#edit_course_ids').niceSelect('update');
 
                         // Clear password fields
                         $('#edit_password').val('');
@@ -494,7 +557,8 @@
                 $('.text-danger').text('');
 
                 $.ajax({
-                    url: '/role-management/user-change-password/' + userId, // You'll need to define this route
+                    url: '/role-management/user-change-password/' +
+                        userId, // You'll need to define this route
                     type: 'POST', // Or PUT, depending on your API design
                     data: formData,
                     success: function(response) {
@@ -519,3 +583,7 @@
         });
     </script>
 @endsection
+
+
+@include('components.partials.data_table_css')
+@include('components.partials.data_table_js')

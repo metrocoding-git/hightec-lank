@@ -379,3 +379,21 @@ ALTER TABLE `student_categories`
     ADD COLUMN `is_active` TINYINT(1) NOT NULL DEFAULT 1;
 
 ALTER TABLE `permissions` ADD `label` VARCHAR(255) NULL AFTER `permission_name`;
+
+-- 08/31
+CREATE TABLE `user_course` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT UNSIGNED NOT NULL,
+  `course_id` BIGINT UNSIGNED NOT NULL,
+  `created_at` TIMESTAMP NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `user_course_user_id_course_id_unique` (`user_id`, `course_id`),
+  KEY `user_course_user_id_foreign` (`user_id`),
+  KEY `user_course_course_id_foreign` (`course_id`),
+  CONSTRAINT `user_course_user_id_foreign` FOREIGN KEY (`user_id`)
+    REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `user_course_course_id_foreign` FOREIGN KEY (`course_id`)
+    REFERENCES `courses` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+ 

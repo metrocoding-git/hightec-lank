@@ -47,6 +47,10 @@ class UserController extends Controller
             'admission_number' => $request->search_student ? 'nullable' : 'nullable|string|max:255|unique:students,admission_number',
             'national_id_number' => $request->search_student ? 'nullable' : 'nullable|string|max:255|unique:students,national_id_number',
             'search_student' => 'nullable|exists:students,id',
+            // COURSES (assign-course feature): optional, one or more courses.
+            // Backed by the new `user_course` table via User::courses().
+            'course_ids' => 'nullable|array',
+            'course_ids.*' => 'exists:courses,id',
         ]);
 
         if ($validator->fails()) {
@@ -101,19 +105,36 @@ class UserController extends Controller
             }
         }
 
+        // COURSES (assign-course feature): optional — a user can be created
+        // with zero courses. Only attaches when at least one was actually
+        // checked; on a brand-new user there's nothing to remove, so
+        // attach() (not sync()) is enough here.
+        if ($request->filled('course_ids')) {
+            $user->courses()->attach($request->course_ids);
+        }
+
         return redirect()->route('roles.index')->with('success', 'User created successfully!');
     }
 
     public function userList()
     {
-        $users = User::with(['role', 'branches'])->get();
-        return view('pages.role_management.user-list', compact('users'));
+        // COURSES (assign-course feature): eager-load courses too, now that
+        // the User List table shows each user's assigned courses.
+        $users = User::with(['role', 'branches', 'courses'])->get();
+        $courses = Course::all();
+        return view('pages.role_management.user-list', compact('users', 'courses'));
     }
 
     public function getUserDetails($id)
     {
-        $user = User::with(['role', 'branches'])->findOrFail($id);
-        return response()->json($user);
+        $user = User::with(['role', 'branches', 'courses'])->findOrFail($id);
+
+        $response = $user->toArray();
+        // COURSES (assign-course feature): flat array of course ids this
+        // user currently has, so the Edit User modal can pre-select them.
+        $response['course_ids'] = $user->courses->pluck('id')->toArray();
+
+        return response()->json($response);
     }
 
     public function updateUser(Request $request, $id)
@@ -127,6 +148,9 @@ class UserController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'status' => 'required|boolean',
+            // COURSES (assign-course feature): optional, one or more courses.
+            'course_ids' => 'nullable|array',
+            'course_ids.*' => 'exists:courses,id',
         ]);
 
         if ($validator->fails()) {
@@ -147,6 +171,16 @@ class UserController extends Controller
         $user->save();
 
         $user->branches()->sync($request->branch_ids);
+
+        // COURSES (assign-course feature): full sync() here, not just
+        // attach() — unlike student_courses (which is also depended on by
+        // Add Intake & Courses / item-issue eligibility and therefore only
+        // ever gets additive updates, per Section 39's flagged limitation),
+        // `user_course` is a brand-new, standalone table nothing else reads
+        // yet. So it's safe for the Edit User form to behave exactly like a
+        // normal checkbox list: whatever is checked on submit is exactly
+        // what the user ends up with, including removals.
+        $user->courses()->sync($request->course_ids ?? []);
 
         return response()->json(['success' => true, 'message' => 'User updated successfully!']);
     }
