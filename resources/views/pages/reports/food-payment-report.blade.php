@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('title')
-    Food Payment Report
+    Food Payment Details Report
 @endsection
 
 @section('mainContent')
@@ -99,16 +99,100 @@
             color: #6c757d;
             margin-top: 2px;
         }
+
+        .rp-section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .rp-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            flex-shrink: 0;
+            background: color-mix(in srgb, var(--gradient_1) 12%, #fff);
+            color: var(--gradient_1);
+        }
+
+        .rp-section-header h3 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .rp-chart-row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .rp-chart-card {
+            flex: 1 1 340px;
+            background: #fff;
+            border: 1px solid #eceef3;
+            border-radius: 14px;
+            padding: 18px 20px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.05);
+        }
+
+        .rp-chart-card h5 {
+            font-size: 14px;
+            font-weight: 700;
+            margin: 0 0 12px;
+            color: #1c1f2b;
+        }
+
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 18px;
+            margin-top: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #565d6d;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .white-box {
+            border-radius: 14px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.05);
+            border: 1px solid #eceef3;
+        }
+
+        #table_id thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            border: none;
+        }
     </style>
 
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1>Food Payment Report</h1>
+                <h1>Food Payment Details Report</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">Dashboard</a>
-                    <a href="#">Reports</a>
-                    <a href="#">Food Payment</a>
+                    <a href="#">Food Payment Details Report</a>
                 </div>
             </div>
         </div>
@@ -118,20 +202,29 @@
         <div class="container-fluid p-0">
 
             {{-- ===== FILTERS ===== --}}
-            <div class="white-box mb-20">
-                <form method="GET" action="">
+            <div class="white-box mb-10">
+                <a href="{{ route('reports.food-payment.export', request()->query()) }}"
+                    class="primary-btn small fix-gr-bg col-12 p-2" style="margin-left:auto;">
+                    <span class="ti-download pr-2"></span> Export CSV
+                </a>
+            </div>
+
+            <div class="white-box p-20 mb-20">
+                {{-- <div class="rp-section-header">
+                    <span class="rp-icon"><i class="fa-solid fa-filter"></i></span>
+                    <h3>Filter</h3>
+                </div> --}}
+                <form method="GET" action="{{ route('reports.food-payment') }}">
                     <div class="row g-3">
 
                         {{-- Date Range --}}
-                        <div class="col-md-4">
-                            <label>Food Date Range</label>
+                        <div class="col-md-3">
                             <input type="text" id="date_range" name="date_range" class="form-control"
-                                value="{{ request('date_range') }}" placeholder="From date — To date">
+                                value="{{ request('date_range') }}" placeholder="Select Date Range">
                         </div>
 
                         {{-- Month --}}
-                        <div class="col-md-2">
-                            <label>Month</label>
+                        <div class="col-md-3">
                             <select name="month" class="form-control">
                                 <option value="">All Months</option>
                                 @foreach (range(1, 12) as $m)
@@ -143,8 +236,7 @@
                         </div>
 
                         {{-- Year --}}
-                        <div class="col-md-2">
-                            <label>Year</label>
+                        <div class="col-md-3">
                             <select name="year" class="form-control">
                                 <option value="">All Years</option>
                                 @foreach (range(date('Y'), date('Y') - 3) as $y)
@@ -156,7 +248,6 @@
 
                         {{-- Branch --}}
                         <div class="col-md-3">
-                            <label>Branch</label>
                             <select name="branch_id" class="form-control">
                                 <option value="">All Branches</option>
                                 @foreach ($branches as $branch)
@@ -169,8 +260,7 @@
                         </div>
 
                         {{-- Course --}}
-                        <div class="col-md-3">
-                            <label>Course</label>
+                        <div class="col-md-3 mt-2">
                             <select name="course_id" class="form-control">
                                 <option value="">All Courses</option>
                                 @foreach ($courses as $course)
@@ -183,8 +273,7 @@
                         </div>
 
                         {{-- Meal --}}
-                        <div class="col-md-2">
-                            <label>Meal</label>
+                        <div class="col-md-3 mt-2">
                             <select name="meal" class="form-control">
                                 <option value="">All Meals</option>
                                 <option value="breakfast" {{ request('meal') == 'breakfast' ? 'selected' : '' }}>🍳
@@ -197,10 +286,9 @@
                         </div>
 
                         {{-- Lunchbox Letter --}}
-                        <div class="col-md-2">
-                            <label>Lunchbox Group</label>
+                        <div class="col-md-3 mt-2">
                             <select name="letter" class="form-control">
-                                <option value="">All Groups</option>
+                                <option value="">All Lunchbox Groups</option>
                                 @foreach ($letters as $l)
                                     <option value="{{ $l }}" {{ request('letter') == $l ? 'selected' : '' }}>
                                         {{ $l }}</option>
@@ -209,10 +297,9 @@
                         </div>
 
                         {{-- Payment Status --}}
-                        <div class="col-md-2">
-                            <label>Status</label>
+                        <div class="col-md-3 mt-2">
                             <select name="status" class="form-control">
-                                <option value="">All</option>
+                                <option value="">All Status</option>
                                 <option value="1" {{ request('status', '1') == '1' ? 'selected' : '' }}>Active
                                 </option>
                                 <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Inactive</option>
@@ -220,13 +307,32 @@
                             </select>
                         </div>
 
-                        <div class="col-lg-12 mt-10 text-right">
-                            <button type="submit" class="primary-btn small fix-gr-bg">
-                                <span class="ti-search pr-2"></span> Search
-                            </button>
-                            <a href="{{ route('reports.food-payment') }}" class="primary-btn small fix-gr-bg ml-2">
-                                Reset
-                            </a>
+                        {{-- Search --}}
+                        <div class="col-md-12 mt-4">
+                            <input type="text" name="search_text" class="form-control"
+                                placeholder="Lunchbox no. / reg no. / student / invoice no."
+                                value="{{ request('search_text') }}">
+                        </div>
+
+
+                        <div class="col-12 mt-10">
+                            <div class="row align-items-center">
+
+                                <div class="col-10">
+                                    <button type="submit" class="primary-btn small fix-gr-bg col-12 p-2">
+                                        <span class="ti-search pr-2"></span> Search
+                                    </button>
+                                </div>
+
+                                <div class="col-2">
+                                    <button class="primary-btn small fix-gr-bg col-12 p-2">
+                                        <a href="{{ route('reports.food-payment') }}" class="text-white">Reset</a>
+                                    </button>
+
+                                </div>
+
+                            </div>
+
                         </div>
                     </div>
                 </form>
@@ -234,41 +340,59 @@
 
             {{-- ===== SUMMARY CARDS ===== --}}
             @if (isset($foodPayments) && $foodPayments->count())
-                <div class="row mb-20">
-                    <div class="col-md-2">
-                        <div class="summary-card">
-                            <div class="val">{{ $foodPayments->count() }}</div>
-                            <div class="lbl">Total Records</div>
+                <div class="white-box p-20 mb-20">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <div class="summary-card">
+                                <div class="val">{{ $foodPayments->count() }}</div>
+                                <div class="lbl">Total Records</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="summary-card">
+                                <div class="val">{{ $foodPayments->where('has_breakfast', 1)->count() }}</div>
+                                <div class="lbl">🍳 Breakfast</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="summary-card">
+                                <div class="val">{{ $foodPayments->where('has_lunch', 1)->count() }}</div>
+                                <div class="lbl">🍛 Lunch</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="summary-card">
+                                <div class="val">{{ $foodPayments->where('has_dinner', 1)->count() }}</div>
+                                <div class="lbl">🍽️ Dinner</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="summary-card">
+                                <div class="val">{{ number_format($foodPayments->sum('total_food_amount'), 2) }}</div>
+                                <div class="lbl">Total Amount</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="summary-card">
+                                <div class="val">{{ number_format($foodPayments->sum('due_amount'), 2) }}</div>
+                                <div class="lbl">Total Due</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-2">
-                        <div class="summary-card">
-                            <div class="val">{{ $foodPayments->where('has_breakfast', 1)->count() }}</div>
-                            <div class="lbl">🍳 Breakfast</div>
-                        </div>
+                </div>
+            @endif
+
+            @if ($mealBreakdown->count() > 0)
+                <div class="white-box p-20 mb-20">
+                    <div class="rp-section-header">
+                        <span class="rp-icon"><i class="fa-solid fa-chart-pie"></i></span>
+                        <h3>Analytics — Filtered Results</h3>
                     </div>
-                    <div class="col-md-2">
-                        <div class="summary-card">
-                            <div class="val">{{ $foodPayments->where('has_lunch', 1)->count() }}</div>
-                            <div class="lbl">🍛 Lunch</div>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="summary-card">
-                            <div class="val">{{ $foodPayments->where('has_dinner', 1)->count() }}</div>
-                            <div class="lbl">🍽️ Dinner</div>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="summary-card">
-                            <div class="val">{{ number_format($foodPayments->sum('total_food_amount'), 2) }}</div>
-                            <div class="lbl">Total Amount</div>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="summary-card">
-                            <div class="val">{{ number_format($foodPayments->sum('due_amount'), 2) }}</div>
-                            <div class="lbl">Total Due</div>
+                    <div class="rp-chart-row">
+                        <div class="rp-chart-card">
+                            <h5>Meals Served</h5>
+                            <div id="meal-chart" style="height:220px;"></div>
+                            <div id="meal-legend" class="chart-legend"></div>
                         </div>
                     </div>
                 </div>
@@ -290,7 +414,6 @@
                             </div>
 
                             @foreach ($branches as $branchName => $letters)
-
                                 @php
                                     $branchRecords = $letters->flatten();
                                 @endphp
@@ -307,7 +430,7 @@
                                         &nbsp;
                                         🍽️ Dinner: <strong>{{ $branchRecords->where('has_dinner', 1)->count() }}</strong>
                                         &nbsp;&nbsp;
-                                       
+
                                     </span>
                                 </div>
 
@@ -318,84 +441,90 @@
                                         student(s)
                                     </div>
 
-                                    <div class="table-responsive mb-10">
-                                        <table class="table table-sm school-table-style w-100">
-                                            <thead>
-                                                <tr>
-                                                    <th>#</th>
-                                                    <th>Lunchbox No.</th>
-                                                    <th>Student No.</th>
-                                                    <th>Student Name</th>
-                                                    <th>Category</th>
-                                                    <th>Course</th>
-                                                    <th>Food Period</th>
-                                                    <th>Meals</th>
-                                                    
-                                                    <th>Due</th>
-                                                    <th>Status</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach ($records as $i => $fp)
-                                                    @php
-                                                        $student = $fp->invoice?->student;
-                                                        $statusClass = match ((int) $fp->status) {
-                                                            1 => 'text-success',
-                                                            0 => 'text-danger',
-                                                            default => '',
-                                                        };
+                                    <div class="table-responsive mb-10 mt-10">
+                                        <div class="rp-table-wrapper">
+                                            <x-table>
+                                                <table id="table_id" class="table table-sm school-table-style w-100">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>#</th>
+                                                            <th>Lunchbox No.</th>
+                                                            <th>Student No.</th>
+                                                            <th>Student Name</th>
+                                                            <th>Category</th>
+                                                            <th>Course</th>
+                                                            <th>Food Period</th>
+                                                            <th>Meals</th>
 
-                                                        $statusLabel = match ((int) $fp->status) {
-                                                            1 => 'Active',
-                                                            0 => 'Inactive',
-                                                            default => '-',
-                                                        };
-                                                    @endphp
-                                                    <tr>
-                                                        <td>{{ $i + 1 }}</td>
-                                                        <td><span
-                                                                class="lunchbox-badge">{{ $fp->lunchbox_number ?? '-' }}</span>
-                                                        </td>
-                                                        <td>{{ $student?->admission_number ?? 'N/A' }}</td>
-                                                        <td>{{ $student?->student_name ?? 'N/A' }}</td>
-                                                        <td>{{ $student?->studentCategory?->category_name ?? 'N/A' }}</td>
-                                                        <td>{{ $fp->course?->name ?? 'N/A' }}</td>
-                                                        <td>
-                                                            {{ \Carbon\Carbon::parse($fp->from_date)->format('d/m/Y') }}
-                                                            @if ($fp->from_date != $fp->to_date)
-                                                                →
-                                                                {{ \Carbon\Carbon::parse($fp->to_date)->format('d/m/Y') }}
-                                                            @endif
-                                                        </td>
-                                                        <td>
-                                                            @if ($fp->has_breakfast)
-                                                                <span class="meal-badge meal-b">🍳 B</span>
-                                                            @endif
-                                                            @if ($fp->has_lunch)
-                                                                <span class="meal-badge meal-l">🍛 L</span>
-                                                            @endif
-                                                            @if ($fp->has_dinner)
-                                                                <span class="meal-badge meal-d">🍽 D</span>
-                                                            @endif
-                                                        </td>
-                                                        {{-- <td>{{ number_format($fp->total_food_amount, 2) }}</td>
+                                                            <th>Due</th>
+                                                            <th>Status</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach ($records as $i => $fp)
+                                                            @php
+                                                                $student = $fp->invoice?->student;
+                                                                $statusClass = match ((int) $fp->status) {
+                                                                    1 => 'text-success',
+                                                                    0 => 'text-danger',
+                                                                    default => '',
+                                                                };
+
+                                                                $statusLabel = match ((int) $fp->status) {
+                                                                    1 => 'Active',
+                                                                    0 => 'Inactive',
+                                                                    default => '-',
+                                                                };
+                                                            @endphp
+                                                            <tr>
+                                                                <td>{{ $i + 1 }}</td>
+                                                                <td><span
+                                                                        class="lunchbox-badge">{{ $fp->lunchbox_number ?? '-' }}</span>
+                                                                </td>
+                                                                <td>{{ $student?->admission_number ?? 'N/A' }}</td>
+                                                                <td>{{ $student?->student_name ?? 'N/A' }}</td>
+                                                                <td>{{ $student?->studentCategory?->category_name ?? 'N/A' }}
+                                                                </td>
+                                                                <td>{{ $fp->course?->name ?? 'N/A' }}</td>
+                                                                <td>
+                                                                    {{ \Carbon\Carbon::parse($fp->from_date)->format('d/m/Y') }}
+                                                                    @if ($fp->from_date != $fp->to_date)
+                                                                        →
+                                                                        {{ \Carbon\Carbon::parse($fp->to_date)->format('d/m/Y') }}
+                                                                    @endif
+                                                                </td>
+                                                                <td>
+                                                                    @if ($fp->has_breakfast)
+                                                                        <span class="meal-badge meal-b">🍳 B</span>
+                                                                    @endif
+                                                                    @if ($fp->has_lunch)
+                                                                        <span class="meal-badge meal-l">🍛 L</span>
+                                                                    @endif
+                                                                    @if ($fp->has_dinner)
+                                                                        <span class="meal-badge meal-d">🍽 D</span>
+                                                                    @endif
+                                                                </td>
+                                                                {{-- <td>{{ number_format($fp->total_food_amount, 2) }}</td>
                                                         <td>{{ number_format($fp->paid_amount, 2) }}</td> --}}
-                                                        <td>{{ number_format($fp->due_amount, 2) }}</td>
-                                                        <td class="{{ $statusClass }}">
-                                                            <strong>{{ $statusLabel }}</strong>
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                            </tbody>
-                                            <tfoot>
-                                                <tr class="font-weight-bold" style="background:#f1f8e9;">
-                                                    <td colspan="8" class="text-right">Total Due:</td>
-                                                    
-                                                    <td>{{ number_format($records->sum('due_amount'), 2) }}</td>
-                                                    <td></td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
+                                                                <td>{{ number_format($fp->due_amount, 2) }}</td>
+                                                                <td class="{{ $statusClass }}">
+                                                                    <strong>{{ $statusLabel }}</strong>
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                    <tfoot>
+                                                        <tr class="font-weight-bold" style="background:#f1f8e9;">
+                                                            <td colspan="8" class="text-right">Total Due:</td>
+
+                                                            <td>{{ number_format($records->sum('due_amount'), 2) }}</td>
+                                                            <td></td>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
+                                            </x-table>
+                                        </div>
+
                                     </div>
                                 @endforeach
                             @endforeach
@@ -409,85 +538,93 @@
                 @endif
             </div>
 
-            {{-- ===== FLAT TABLE (for export) ===== --}}
+            {{-- ===== FLAT TABLE (paginated) ===== --}}
             <div class="white-box mt-20">
-                <div class="main-title mb-15">
-                    <h3>Full List (Exportable)</h3>
+                <div class="d-flex justify-content-between align-items-center mb-15">
+                    <div class="main-title mb-0">
+                        <h3>Report List</h3>
+                    </div>
                 </div>
-                <x-table>
-                    <table id="food_report_table" class="table" cellspacing="0" width="100%">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Lunchbox No.</th>
-                                <th>Group</th>
-                                <th>Year</th>
-                                <th>Month</th>
-                                <th>Branch</th>
-                                <th>Student No.</th>
-                                <th>Student Name</th>
-                                <th>Category</th>
-                                <th>Course</th>
-                                <th>Food From</th>
-                                <th>Food To</th>
-                                <th>Breakfast</th>
-                                <th>Lunch</th>
-                                <th>Dinner</th>
-                                {{-- <th>Breakfast Amt</th>
-                                <th>Lunch Amt</th>
-                                <th>Dinner Amt</th> --}}
-                                {{-- <th>Total Amount</th>
-                                <th>Paid Amount</th> --}}
-                                <th>Due Amount</th>
-                                <th>Status</th>
-                                <th>Invoice No.</th>
-                                <th>Create Date</th>
-                                <th>Update Date</th>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="rp-table-wrapper">
+                            <x-table>
+                                <table id="table_id" class="table" cellspacing="0" width="100%">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Lunchbox No.</th>
+                                            <th>Group</th>
+                                            <th>Year</th>
+                                            <th>Month</th>
+                                            <th>Branch</th>
+                                            <th>Student No.</th>
+                                            <th>Student Name</th>
+                                            <th>Category</th>
+                                            <th>Course</th>
+                                            <th>Food From</th>
+                                            <th>Food To</th>
+                                            <th>Breakfast</th>
+                                            <th>Lunch</th>
+                                            <th>Dinner</th>
+                                            <th>Due Amount</th>
+                                            <th>Status</th>
+                                            <th>Invoice No.</th>
+                                            <th>Create Date</th>
+                                            <th>Update Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($foodPaymentsFlat as $index => $fp)
+                                            @php $student = $fp->invoice?->student; @endphp
+                                            <tr>
+                                                <td>{{ $foodPaymentsFlat->firstItem() + $index }}</td>
+                                                <td>{{ $fp->lunchbox_number ?? '-' }}</td>
+                                                <td>{{ substr($fp->lunchbox_number ?? '-', 0, 1) }}</td>
+                                                <td>{{ \Carbon\Carbon::parse($fp->from_date)->format('Y') }}</td>
+                                                <td>{{ \Carbon\Carbon::parse($fp->from_date)->format('F') }}</td>
+                                                <td>{{ $fp->invoice?->branch?->name ?? 'N/A' }}</td>
+                                                <td>{{ $student?->admission_number ?? 'N/A' }}</td>
+                                                <td>{{ $student?->student_name ?? 'N/A' }}</td>
+                                                <td>{{ $student?->studentCategory?->category_name ?? 'N/A' }}</td>
+                                                <td>{{ $fp->course?->name ?? 'N/A' }}</td>
+                                                <td>{{ \Carbon\Carbon::parse($fp->from_date)->format('d/m/Y') }}</td>
+                                                <td>{{ \Carbon\Carbon::parse($fp->to_date)->format('d/m/Y') }}</td>
+                                                <td>{{ $fp->has_breakfast ? '✓' : '-' }}</td>
+                                                <td>{{ $fp->has_lunch ? '✓' : '-' }}</td>
+                                                <td>{{ $fp->has_dinner ? '✓' : '-' }}</td>
+                                                <td>{{ number_format($fp->due_amount, 2) }}</td>
+                                                <td>{{ ucfirst($fp->payment_status) }}</td>
+                                                <td>{{ $fp->invoice?->main_invoice_number ?? 'N/A' }}</td>
+                                                <td>{{ $fp->invoice?->created_at ?? 'N/A' }}</td>
+                                                <td>{{ $fp->invoice?->updated_at ?? 'N/A' }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="20" class="text-center">No records found.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </x-table>
+                        </div>
+                    </div>
+                </div>
 
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($foodPayments as $i => $fp)
-                                @php $student = $fp->invoice?->student; @endphp
-                                <tr>
-                                    <td>{{ $i + 1 }}</td>
-                                    <td>{{ $fp->lunchbox_number ?? '-' }}</td>
-                                    <td>{{ substr($fp->lunchbox_number ?? '-', 0, 1) }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($fp->from_date)->format('Y') }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($fp->from_date)->format('F') }}</td>
-                                    <td>{{ $fp->invoice?->branch?->name ?? 'N/A' }}</td>
-                                    <td>{{ $student?->admission_number ?? 'N/A' }}</td>
-                                    <td>{{ $student?->student_name ?? 'N/A' }}</td>
-                                    <td>{{ $student?->studentCategory?->category_name ?? 'N/A' }}</td>
-                                    <td>{{ $fp->course?->name ?? 'N/A' }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($fp->from_date)->format('d/m/Y') }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($fp->to_date)->format('d/m/Y') }}</td>
-                                    <td>{{ $fp->has_breakfast ? '✓' : '-' }}</td>
-                                    <td>{{ $fp->has_lunch ? '✓' : '-' }}</td>
-                                    <td>{{ $fp->has_dinner ? '✓' : '-' }}</td>
-                                    {{-- <td>{{ $fp->has_breakfast ? number_format($fp->breakfast_amount, 2) : '-' }}</td>
-                                    <td>{{ $fp->has_lunch ? number_format($fp->lunch_amount, 2) : '-' }}</td>
-                                    <td>{{ $fp->has_dinner ? number_format($fp->dinner_amount, 2) : '-' }}</td> --}}
-                                    {{-- <td>{{ number_format($fp->total_food_amount, 2) }}</td>
-                                    <td>{{ number_format($fp->paid_amount, 2) }}</td> --}}
-                                    <td>{{ number_format($fp->due_amount, 2) }}</td>
-                                    <td>{{ ucfirst($fp->payment_status) }}</td>
-                                    <td>{{ $fp->invoice?->main_invoice_number ?? 'N/A' }}</td>
-                                    <td>{{ $fp->invoice?->created_at ?? 'N/A' }}</td>
-                                    <td>{{ $fp->invoice?->updated_at ?? 'N/A' }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </x-table>
+                <div class="rp-pagination-wrapper">
+                    <div class="rp-pagination-info"> Showing
+                        <strong>{{ $foodPaymentsFlat->firstItem() ?? 0 }}</strong> –
+                        <strong>{{ $foodPaymentsFlat->lastItem() ?? 0 }}</strong> of
+                        <strong>{{ number_format($foodPaymentsFlat->total()) }}</strong> records
+                    </div>
+                    <div class="rp-pagination"> {{ $foodPaymentsFlat->links('pagination::bootstrap-4') }} </div>
+                </div>
             </div>
 
         </div>
     </section>
 @endsection
 
-@include('components.partials.data_table_js')
-@include('components.partials.data_table_css')
 @include('components.partials.date_picker_css_js')
 
 @push('script')
@@ -497,50 +634,33 @@
             dateFormat: "Y-m-d",
             allowInput: true,
         });
-
-        $('#food_report_table').DataTable({
-            responsive: true,
-            dom: 'Blfrtip',
-            buttons: [{
-                    extend: 'copy',
-                    title: getFileName()
-                },
-                {
-                    extend: 'csv',
-                    title: getFileName()
-                },
-                {
-                    extend: 'excel',
-                    title: getFileName()
-                },
-                {
-                    extend: 'pdf',
-                    title: getFileName()
-                },
-                {
-                    extend: 'print',
-                    title: getFileName()
-                },
-            ],
-            paging: true,
-            searching: true,
-            ordering: true,
-            lengthMenu: [
-                [10, 25, 50, 100, -1],
-                [10, 25, 50, 100, "All"]
-            ],
-            pageLength: 25,
-            language: {
-                search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
-                searchPlaceholder: 'Search...',
-            }
-        });
-
-        function getFileName() {
-            let now = new Date();
-            let date = now.toISOString().slice(0, 10);
-            let time = now.toTimeString().slice(0, 8).replace(/:/g, '-');
-            return 'Food-Payment-Report_' + date + '__' + time;
-        }
     </script>
 @endpush
+
+@if ($mealBreakdown->count() > 0)
+    @push('script')
+        <script>
+            (function() {
+                var gradient1 = getComputedStyle(document.documentElement).getPropertyValue('--gradient_1').trim() ||
+                    '#5150e9';
+                var gradient2 = getComputedStyle(document.documentElement).getPropertyValue('--gradient_2').trim() ||
+                    '#a55eea';
+                var palette = [gradient1, gradient2, '#2ecc71', '#f39c12', '#e74c3c'];
+
+                Morris.Donut({
+                    element: 'meal-chart',
+                    data: @json($mealBreakdown),
+                    colors: palette,
+                    resize: true,
+                });
+                var legendData = @json($mealBreakdown);
+                var legendHtml = '';
+                legendData.forEach(function(row, i) {
+                    legendHtml += '<span class="legend-item"><span class="legend-dot" style="background:' + palette[
+                        i % palette.length] + '"></span>' + row.label + '</span>';
+                });
+                document.getElementById('meal-legend').innerHTML = legendHtml;
+            })();
+        </script>
+    @endpush
+@endif

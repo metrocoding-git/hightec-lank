@@ -1,6 +1,21 @@
 @extends('layouts.app')
+{{-- BUG FIX (Section 27): the browser-tab title called @lang('academics.About') —
+     a leftover placeholder — instead of naming this page. Also adding the
+     standard breadcrumb-banner CSS, which this page never defined despite
+     using the sms-breadcrumb markup (this page has no white-box/#table_id
+     cards — it's a plain print/view invoice layout — so only the breadcrumb
+     rules are added).
+
+     FLAGGED, NOT FIXED (Section 27): this file's @lang() calls use the
+     'fees::feesModule.xxx' module-namespaced form (e.g.
+     'fees::feesModule.view_fees_invoice') everywhere, while every other file
+     in this Fees batch uses the plain 'fees.xxx' form. This may be an old
+     package-view left in place, or it may be intentional if a separate
+     'feesModule' language namespace still exists — the language files aren't
+     available in this pass to tell which is correct, so this is left as-is
+     rather than guessed at. --}}
 @section('title')
-    @lang('academics.About')
+    @lang('fees::feesModule.view_fees_invoice')
 @endsection
 @section('mainContent')
     @push('css')
@@ -30,9 +45,70 @@
         .table{
             min-width: 600px;
         }
+
+        .sms-breadcrumb {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+            padding: 18px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sms-breadcrumb::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .sms-breadcrumb .row {
+            align-items: center;
+        }
+
+        .sms-breadcrumb h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .sms-breadcrumb .bc-pages {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .sms-breadcrumb .bc-pages a {
+            font-size: 13px;
+            font-weight: 500;
+            color: #8a90a2;
+            text-decoration: none;
+            transition: color .15s ease;
+        }
+
+        .sms-breadcrumb .bc-pages a:hover {
+            color: var(--gradient_1);
+        }
+
+        .sms-breadcrumb .bc-pages a:not(:last-child)::after {
+            content: '\203A';
+            margin: 0 8px;
+            color: #c7cbd6;
+            font-weight: 400;
+        }
+
+        .sms-breadcrumb .bc-pages a:last-child {
+            color: var(--gradient_1);
+            font-weight: 700;
+            pointer-events: none;
+        }
     </style>
     @endpush
-    
+
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
             <div class="row justify-content-between">
@@ -181,7 +257,7 @@
                     <tr>
                         <td>{{$key+1}}</td>
                         <td>
-                            {{@$invoiceDetail->feesType->name}} 
+                            {{@$invoiceDetail->feesType->name}}
                             @if($invoiceDetail->note)
                                 <i class="fa fa-info-circle" aria-hidden="true"data-tooltip="tooltip" title="{{$invoiceDetail->note}}" style="courser:help;"></i>
                             @endif
@@ -270,4 +346,3 @@
         </div>
     </section>
 @endsection
-

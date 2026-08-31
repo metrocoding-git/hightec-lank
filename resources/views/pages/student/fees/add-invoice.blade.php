@@ -1,6 +1,10 @@
 @extends('layouts.app')
+{{-- BUG FIX (Section 27): the browser-tab title called @lang('academics.About') —
+     a leftover placeholder — instead of naming this page. Also adding the
+     standard modern-refresh + breadcrumb CSS, which this page never defined
+     despite using the sms-breadcrumb/white-box markup. --}}
 @section('title')
-    @lang('academics.About')
+    @lang('common.add') @lang('fees.fees_invoice')
 @endsection
 @section('mainContent')
     @push('css')
@@ -15,19 +19,116 @@
             html[dir="rtl"] #main-content {
                 overflow: initial !important;
             }
+
+            .white-box {
+                border-radius: 12px;
+                box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+                border: 1px solid var(--border_color);
+            }
+
+            .white-box .main-title h3,
+            .white-box .main-title h5 {
+                font-weight: 700;
+                position: relative;
+                padding-bottom: 10px;
+            }
+
+            .white-box .main-title h3::after {
+                content: '';
+                position: absolute;
+                left: 0;
+                bottom: 0;
+                width: 42px;
+                height: 3px;
+                border-radius: 3px;
+                background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+            }
+
+            .primary_input_field, select.primary_select {
+                border-radius: 8px !important;
+                transition: border-color .15s ease, box-shadow .15s ease;
+            }
+
+            .text-muted {
+                color: #9aa1ac !important;
+            }
+
+            .sms-breadcrumb {
+                background: #fff;
+                border-radius: 12px;
+                box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+                border: 1px solid var(--border_color);
+                padding: 18px 24px;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .sms-breadcrumb::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                width: 4px;
+                background: linear-gradient(180deg, var(--gradient_1), var(--gradient_2));
+            }
+
+            .sms-breadcrumb .row {
+                align-items: center;
+            }
+
+            .sms-breadcrumb h1 {
+                font-size: 20px;
+                font-weight: 700;
+                margin: 0;
+            }
+
+            .sms-breadcrumb .bc-pages {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+
+            .sms-breadcrumb .bc-pages a {
+                font-size: 13px;
+                font-weight: 500;
+                color: #8a90a2;
+                text-decoration: none;
+                transition: color .15s ease;
+            }
+
+            .sms-breadcrumb .bc-pages a:hover {
+                color: var(--gradient_1);
+            }
+
+            .sms-breadcrumb .bc-pages a:not(:last-child)::after {
+                content: '\203A';
+                margin: 0 8px;
+                color: #c7cbd6;
+                font-weight: 400;
+            }
+
+            .sms-breadcrumb .bc-pages a:last-child {
+                color: var(--gradient_1);
+                font-weight: 700;
+                pointer-events: none;
+            }
         </style>
     @endpush
+    @php
+        // Permission key from config_permissions.php ("Fees" category, Registration & Other Payments window).
+        $canAddFeesInvoice = Auth::user()->hasPermission('fees.invoice.store');
+    @endphp
 
     <section class="sms-breadcrumb mb-20">
         <div id="toastContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 11"></div>
 
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1>@lang('fees.fees_invoice')</h1>
+                <h1>Registration & Other Fee Payments</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
-                    <a href="#">@lang('fees.fees')</a>
-                    <a href="#">@lang('common.add') @lang('fees.fees_invoice')</a>
+                    <a href="#">Registration & Other Fee Payments</a>
                 </div>
             </div>
         </div>
@@ -165,12 +266,20 @@
                                     </div>
                                 </div>
 
-                                <div class="row mt-40">
-                                    <div class="col-lg-12 text-center">
-                                        <button id="submit"
-                                            class="primary-btn fix-gr-bg fmInvoice col-12">@lang('common.save')</button>
+                                @if ($canAddFeesInvoice)
+                                    <div class="row mt-20">
+                                        <div class="col-lg-12 text-center">
+                                            <button id="submit"
+                                                class="primary-btn fix-gr-bg fmInvoice col-12">@lang('common.save')</button>
+                                        </div>
                                     </div>
-                                </div>
+                                @else
+                                    <div class="row mt-40">
+                                        <div class="col-lg-12 text-center text-muted">
+                                            You do not have permission to create fee invoices.
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -249,7 +358,7 @@
 
                 if (branchId) {
                     $.ajax({
-                        url: "{{ url('student/invoice/get-student') }}/" + branchId,
+                        url: "{{ url('student/fees/other-payment/get-student') }}/" + branchId,
                         type: 'GET',
                         success: function(data) {
                             console.log('AJAX response:', data);
@@ -518,7 +627,7 @@
                 $('#selectStudentLoader').show();
                 $('#student_id').html('<option>Loading...</option>');
                 if (branchId) {
-                    $.get("{{ url('student/invoice/get-student') }}/" + branchId, function(data) {
+                    $.get("{{ url('student/fees/other-payment/get-student') }}/" + branchId, function(data) {
                         $('#selectStudentLoader').hide();
                         $('#student_id').empty().append('<option value="">Select Student</option>');
                         $.each(data, function(i, student) {
@@ -714,9 +823,12 @@
                             window.open(reprintUrl, '_blank');
 
                             // Redirect with flash message in the URL (encoded)
+                            // BUG FIX (Section 27): this used to redirect to the unrelated
+                            // Student Add Intake page (route('student.add-intake-with-courses.index'))
+                            // after saving a fee invoice. Redirecting to the fee invoice list instead.
                             const message = encodeURIComponent('successfully!');
                             window.location.href =
-                                '{{ route('student.add-intake-with-courses.index') }}' +
+                                '{{ route('fees.fee-invoice') }}' +
                                 '?message-success=' + message;
                         }
                     },

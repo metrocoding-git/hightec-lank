@@ -1,4 +1,61 @@
 @extends('layouts.app')
+@push('css')
+    <style>
+        /* ---- Modern refresh: cards, table styling (Section 22) ---- */
+        .white-box {
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+        }
+
+        .white-box .main-title h3,
+        .white-box .main-title h5 {
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .white-box .main-title h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 42px;
+            height: 3px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .primary_input_field, select.primary_select {
+            border-radius: 8px !important;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        #table_id thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            border: none;
+        }
+
+        #table_id tbody tr {
+            transition: background-color .12s ease;
+        }
+
+        #table_id tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.025);
+        }
+
+        #table_id tbody td {
+            vertical-align: middle;
+        }
+
+        .text-muted {
+            color: #9aa1ac !important;
+        }
+    </style>
+@endpush
 @section('title')
     @lang('academics.About')
 @endsection
@@ -10,8 +67,7 @@
                 <h1>Topic Overview</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
-                    <a href="#">@lang('lesson::lesson.lesson')</a>
-                    <a href="#">@lang('lesson::lesson.topic_overview')</a>
+                    <a href="#">Topic Overview</a>
                 </div>
             </div>
         </div>
@@ -22,15 +78,13 @@
             <div class="row">
                 <div class="col-lg-12">
                     <div class="white-box">
-                        <form id="searchForm" method="GET" action="{{ route('topic-overview.index') }}" class="form-horizontal">
+                        <form id="searchForm" method="GET" action="{{ route('topic-overview.index') }}" class="form-horizontal mb-0">
                             @csrf
                             <div class="row">
                                 <input type="hidden" name="url" id="url" value="{{ URL::to('/') }}">
-                                
+
                                 <div class="col-lg-4">
-                                    <label class="primary_input_label" for="">Course
-                                        <span class="text-danger">*</span>
-                                    </label>
+
                                     <select class="primary_select form-control @error('course_id') is-invalid @enderror"
                                         name="course_id" id="course-select" required>
                                         <option value="">Select Course *</option>
@@ -47,9 +101,7 @@
                                 </div>
 
                                 <div class="col-lg-4">
-                                    <label class="primary_input_label" for="">Intake
-                                        <span class="text-danger">*</span>
-                                    </label>
+
                                     <select class="primary_select form-control @error('intake_id') is-invalid @enderror"
                                         name="intake_id" id="intake-select" required>
                                         <option value="">Select Intake *</option>
@@ -66,9 +118,7 @@
                                 </div>
 
                                 <div class="col-lg-4">
-                                    <label class="primary_input_label" for="">Subject
-                                        <span class="text-danger">*</span>
-                                    </label>
+          
                                     <select class="primary_select form-control @error('subject_id') is-invalid @enderror"
                                         name="subject_id" id="subject-select" required>
                                         <option value="">Select Subject *</option>
@@ -84,8 +134,8 @@
                                     @enderror
                                 </div>
 
-                                <div class="col-lg-12 mt-20 text-right">
-                                    <button type="submit" class="primary-btn small fix-gr-bg" id="searchBtn">
+                                <div class="col-lg-12 mt-10 text-right">
+                                    <button type="submit" class="primary-btn small fix-gr-bg col-12 p-2" id="searchBtn">
                                         <span class="ti-search pr-2"></span>
                                         @lang('common.search')
                                     </button>
@@ -96,10 +146,10 @@
                 </div>
             </div>
 
-            <div class="row mt-40">
+            <div class="row mt-20">
                 <div class="col-lg-12">
                     <div class="white-box">
-                        <div class="row mt-40">
+                        <div class="row mt-20">
                             <div class="col-lg-4 no-gutters">
                                 <div class="main-title" style="padding-left: 15px;">
                                     <!-- Title remains unchanged -->

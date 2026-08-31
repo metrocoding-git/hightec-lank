@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\Student;
 use App\Models\Branch;
+use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -17,7 +18,8 @@ class UserController extends Controller
         $roles = Role::all();
         $students = Student::all(); // Fetch all students
         $branches = Branch::all();
-        return view('pages.role_management.create-user', compact('roles', 'students', 'branches'));
+        $courses = Course::all();
+        return view('pages.role_management.create-user', compact('roles', 'students', 'branches', 'courses'));
     }
 
     public function getStudentDetails($id)

@@ -1,11 +1,112 @@
 @extends('layouts.app')
+@push('css')
+    <style>
+        /* ---- Modern refresh: cards, breadcrumb (Section 25) ----
+             BUG FIX: this page — like every other file in this Student Info batch —
+             used the sms-breadcrumb markup but never defined its CSS anywhere, so the
+             banner rendered unstyled. Adding the same card/breadcrumb CSS used
+             everywhere else in the app. ---- */
+        .white-box {
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+        }
+
+        .white-box .main-title h3 {
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .white-box .main-title h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 42px;
+            height: 3px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .primary_input_field, select.primary_select {
+            border-radius: 8px !important;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        .sms-breadcrumb {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+            padding: 18px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sms-breadcrumb::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .sms-breadcrumb .row {
+            align-items: center;
+        }
+
+        .sms-breadcrumb h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .sms-breadcrumb .bc-pages {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .sms-breadcrumb .bc-pages a {
+            font-size: 13px;
+            font-weight: 500;
+            color: #8a90a2;
+            text-decoration: none;
+            transition: color .15s ease;
+        }
+
+        .sms-breadcrumb .bc-pages a:hover {
+            color: var(--gradient_1);
+        }
+
+        .sms-breadcrumb .bc-pages a:not(:last-child)::after {
+            content: '\203A';
+            margin: 0 8px;
+            color: #c7cbd6;
+            font-weight: 400;
+        }
+
+        .sms-breadcrumb .bc-pages a:last-child {
+            color: var(--gradient_1);
+            font-weight: 700;
+            pointer-events: none;
+        }
+    </style>
+@endpush
 @section('title')
-    @lang('student.student_category')
+    {{-- BUG FIX (Section 25): this was @lang('student.student_category') — copy-pasted
+         from the Student Category page's title and wrong for the Add Student page. --}}
+    @lang('student.add_student')
 @endsection
 @section('mainContent')
     @php
         $branchCount = isset($branches) ? count($branches) : 0;
         $singleBranchId = $branchCount === 1 && isset($branches) ? $branches->first()->id : null;
+        // Button-level permission (Section 25).
+        $canAddStudent = Auth::user()->hasPermission('add-student.store');
     @endphp
     <style>
         #video,
@@ -53,6 +154,12 @@
                                 <div class=" col-lg-6 col-sm-6 col-7">
                                     <div class="d-flex align-items-center justify-content-end gap-3">
 
+                                        {{-- NOTE (Section 25): the students.import route has no dedicated
+                                             permission key in config_permissions.php and its route is
+                                             registered withoutMiddleware('permission'), i.e. it is
+                                             intentionally ungated at the backend right now — so this
+                                             button is left visible rather than gated on a key that
+                                             doesn't actually control access. --}}
                                         <a href="#" class="primary-btn small fix-gr-bg mr-3" data-bs-toggle="modal"
                                             data-bs-target="#importStudentModal">
                                             <span class="ti-plus pr-2"></span>
@@ -117,11 +224,13 @@
                                             @endphp
                                         </div> --}}
 
+                                            @if ($canAddStudent)
                                             <button class="primary-btn fix-gr-bg submit" id="_submit_btn_admission"
                                                 data-toggle="tooltip">
                                                 <span class="ti-check"></span>
                                                 @lang('student.save_student')
                                             </button>
+                                            @endif
                                             {{-- </div>
                             </div> --}}
                                         </li>
@@ -808,34 +917,7 @@
                                             </div>
                                             <div role="tabpanel" class="tab-pane fade" id="parents_and_guardian_info">
                                                 <div class="row pt-4 row-gap-24">
-                                                    <div class="col-lg-12">
-                                                        <div class="form-section">
-                                                            <div class="row">
-
-                                                                <div class="col-lg-12 text-right">
-                                                                    <div class="row">
-                                                                        <div class="col-lg-7 text-left" id="parent_info">
-                                                                            <input type="hidden" name="parent_id"
-                                                                                value="">
-
-                                                                        </div>
-                                                                        {{-- <div class="col-lg-5">
-                                                                            <button
-                                                                                class="primary-btn-small-input primary-btn small fix-gr-bg"
-                                                                                type="button" data-toggle="modal"
-                                                                                data-target="#editStudent">
-                                                                                <span class="ti-plus pr-2"></span>
-                                                                                @lang('student.add_parents')
-                                                                            </button>
-                                                                        </div> --}}
-                                                                    </div>
-
-                                                                </div>
-
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
+                                                    
 
 
                                                     <div class="col-lg-12 guardian_section">

@@ -89,6 +89,121 @@
         .dt-buttons {
             margin-bottom: -90px !important;
         }
+
+        /* ---- Modern refresh: cards, table styling (Section 24) ---- */
+        .white-box {
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+        }
+
+        .white-box .main-title h3,
+        .white-box .main-title h5 {
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .white-box .main-title h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 42px;
+            height: 3px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .primary_input_field, select.primary_select {
+            border-radius: 8px !important;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        #table_id thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            border: none;
+        }
+
+        #table_id tbody tr {
+            transition: background-color .12s ease;
+        }
+
+        #table_id tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.025);
+        }
+
+        #table_id tbody td {
+            vertical-align: middle;
+        }
+
+        .text-muted {
+            color: #9aa1ac !important;
+        }
+
+        .sms-breadcrumb {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+            padding: 18px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sms-breadcrumb::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .sms-breadcrumb .row {
+            align-items: center;
+        }
+
+        .sms-breadcrumb h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .sms-breadcrumb .bc-pages {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .sms-breadcrumb .bc-pages a {
+            font-size: 13px;
+            font-weight: 500;
+            color: #8a90a2;
+            text-decoration: none;
+            transition: color .15s ease;
+        }
+
+        .sms-breadcrumb .bc-pages a:hover {
+            color: var(--gradient_1);
+        }
+
+        .sms-breadcrumb .bc-pages a:not(:last-child)::after {
+            content: '\203A';
+            margin: 0 8px;
+            color: #c7cbd6;
+            font-weight: 400;
+        }
+
+        .sms-breadcrumb .bc-pages a:last-child {
+            color: var(--gradient_1);
+            font-weight: 700;
+            pointer-events: none;
+        }
     </style>
 @endpush
 @section('mainContent')
@@ -98,37 +213,37 @@
 
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1>@lang('downloadCenter.content') </h1>
+                <h1>Content List</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
-                    <a href="#">@lang('downloadCenter.download_center')</a>
-                    <a href="/">@lang('downloadCenter.content')</a>
+                    <a href="#">Content List</a>
                 </div>
             </div>
         </div>
     </section>
     <section class="admin-visitor-area up_st_admin_visitor">
         <div class="container-fluid p-0">
+            @php
+                // Button-level permissions (Section 24).
+                $canAddContent = Auth::user()->hasPermission('download-center.content-store');
+                $canEditContent = Auth::user()->hasPermission('download-center.content-update');
+                $canDeleteContent = Auth::user()->hasPermission('download-center.content-delete');
+                $canShareContent = Auth::user()->hasPermission('download-center.content-share-list-save');
+                $canGenerateUrlContent = Auth::user()->hasPermission('download-center.content-generate-url-save');
+                $showContentForm = isset($editContent) ? $canEditContent : $canAddContent;
+            @endphp
+
             <div class="row">
                 <div class="col-lg-12">
                     <div class="white-box filter_card">
-                        <div class="row">
-                            <div class="col-lg-8 col-md-6 col-sm-6">
-                                <div class="main-title mt_0_sm mt_0_md">
-                                    <h3 class="mb-15 ">@lang('common.search') </h3>
-                                </div>
-                            </div>
-                        </div>
+                        
                         {{-- {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'download-center.content-list-search', 'method' => 'GET', 'enctype' => 'multipart/form-data']) }} --}}
-                        <form class="form-horizontal" action="{{ route('content-list') }}" method="GET">
+                        <form class="form-horizontal mb-0" action="{{ route('download-center.content-list') }}" method="GET">
                             <div class="col-lg-12">
                                 <div class="primary_input sm_mb_20 ">
-                                    <label class="primary_input_label" for="">
-                                        @lang('downloadCenter.name')
-                                    </label>
                                     <input
                                         class="primary_input_field form-control{{ $errors->has('name') ? ' is-invalid' : '' }}"
-                                        type="text" placeholder="Name" name="name"
+                                        type="text" placeholder="Search Name" name="name"
                                         value="{{ isset($name) ? $name : old('name') }}">
                                 </div>
                                 @if ($errors->has('name'))
@@ -137,12 +252,12 @@
                                     </span>
                                 @endif
                             </div>
-                            <div class="col-lg-12 mt-4 text-right mb-30 mt-2">
+                            <div class="col-lg-12 mt-10 text-right">
                                 {{-- <button type="submit" class="primary-btn small fix-gr-bg p-1" id="btnsubmit">
                                     <span class="ti-search pr-2"></span>
                                     @lang('common.search')
                                 </button> --}}
-                                 <button type="submit" class="primary-btn small fix-gr-bg">
+                                 <button type="submit" class="primary-btn small fix-gr-bg col-12 p-2">
                                         <span class="ti-search pr-2"></span>
                                         @lang('common.search')
                                     </button>
@@ -151,7 +266,8 @@
                     </div>
                 </div>
             </div>
-            <div class="row mt-40">
+            <div class="row mt-20">
+                @if ($showContentForm)
                 <div class="col-lg-4 col-xl-3">
                     <div class="row">
                         <div class="col-lg-12">
@@ -181,7 +297,7 @@
                                     </div>
                                     <div class="add-visitor">
 
-                                        <div class="row no-gutters input-right-icon mb-20">
+                                        <div class="row input-right-icon mb-20">
                                             <div class="col-lg-12">
                                                 <div class="primary_input">
                                                     <label>
@@ -232,7 +348,7 @@
                                         </div>
 
 
-                                        <div class="row no-gutters input-right-icon mb-20">
+                                        <div class="row input-right-icon mb-20">
                                             <div class="col-lg-12">
                                                 <div class="primary_input">
                                                     <label>@lang('downloadCenter.youtube_link')</label>
@@ -288,7 +404,7 @@
 
                                         <div class="row mt-20">
                                             <div class="col-lg-12 text-center">
-                                                <button class="primary-btn fix-gr-bg">
+                                                <button class="primary-btn fix-gr-bg col-12">
                                                     <span class="ti-check"></span>
                                                     @if (isset($editContent))
                                                         @lang('common.update')
@@ -304,30 +420,38 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-8 col-xl-9">
+                @endif
+                <div class="col-lg-{{ $showContentForm ? '8' : '12' }} col-xl-{{ $showContentForm ? '9' : '12' }}">
                     <div class="white-box">
                         <div class="row">
-                            <div class="col-lg-4 no-gutters">
+                            <div class="col-lg-4 ">
                                 <div class="main-title">
                                     <h3 class="mb-15">@lang('downloadCenter.content_list')</h3>
                                     {{-- content List table --}}
                                 </div>
                             </div>
                         </div>
-                       
+
 
                             <div class="row">
                                 <div class="col-lg-12">
-                                    <a class="primary-btn fix-gr-bg submit mt-0 shareContentData" id="shareContentModal"
-                                        href="#">@lang('downloadCenter.share')</a>
-                                    <a class="primary-btn fix-gr-bg submit mt-0 shareContentData" id="generateUrlModal"
-                                        href="#">@lang('downloadCenter.generate_url')</a>
+                                    @if ($canShareContent)
+                                        <a class="primary-btn fix-gr-bg submit mt-0 shareContentData" id="shareContentModal"
+                                            href="#">@lang('downloadCenter.share')</a>
+                                    @endif
+                                    @if ($canGenerateUrlContent)
+                                        <a class="primary-btn fix-gr-bg submit mt-0 shareContentData" id="generateUrlModal"
+                                            href="#">@lang('downloadCenter.generate_url')</a>
+                                    @endif
                                     {{-- <!-- generate Url btn --> --}}
                                     <div class="mt-3">
                                         <div class="table-responsive">
                                             <x-table>
                                                 {{-- //Content List Table --}}
-                                                <table id="table_id " class="table Crm_table_active3 content-table"
+                                                {{-- BUG FIX (Section 24): id had a trailing space ("table_id ") so
+                                                     $('#table_id') below never matched it — DataTable silently
+                                                     failed to attach (search/export/pagination all dead). --}}
+                                                <table id="table_id" class="table Crm_table_active3 content-table"
                                                     cellspacing="0" width="100%">
                                                 <thead>
                                                     <tr>
@@ -355,19 +479,28 @@
                                                             <td class="text-break">{{ $content->file_name }}</td>
                                                             <td>{{ $content->content_type->name ?? 'N/A' }}</td>
                                                             <td>{{ $content->file_size ?? 'N/A' }}</td>
-    
+
                                                             <td>{{ $content->created_at }}</td>
                                                             <td>{{ $content->created_at }}</td>
                                                             <td>
-                                                                <x-drop-down>
-                                                                    <a class="dropdown-item"
-                                                                        href="{{ route('download-center.content-edit', $content->id) }}">@lang('common.edit')</a>
-                                                                    <a class="dropdown-item" data-toggle="modal"
-                                                                        data-target="#deleteContentModal{{ @$content->id }}"
-                                                                        href="#">@lang('common.delete')</a>
-                                                                </x-drop-down>
+                                                                @if ($canEditContent || $canDeleteContent)
+                                                                    <x-drop-down>
+                                                                        @if ($canEditContent)
+                                                                            <a class="dropdown-item"
+                                                                                href="{{ route('download-center.content-edit', $content->id) }}">@lang('common.edit')</a>
+                                                                        @endif
+                                                                        @if ($canDeleteContent)
+                                                                            <a class="dropdown-item" data-toggle="modal"
+                                                                                data-target="#deleteContentModal{{ @$content->id }}"
+                                                                                href="#">@lang('common.delete')</a>
+                                                                        @endif
+                                                                    </x-drop-down>
+                                                                @else
+                                                                    <span class="text-muted">&mdash;</span>
+                                                                @endif
                                                             </td>
                                                         </tr>
+                                                        @if ($canDeleteContent)
                                                         <div class="modal fade admin-query"
                                                             id="deleteContentModal{{ @$content->id }}">
                                                             <div class="modal-dialog modal-dialog-centered">
@@ -405,19 +538,26 @@
                                                                 </div>
                                                             </div>
                                                         </div>
+                                                        @endif
                                                     @endforeach
-    
-    
+
+
                                                 </tbody>
                                             </table>
                                         </x-table>
                                     </div>
                                 </div>
                             </div>
-                        
+
                     </div>
                 </div>
             </div>
+        </div>
+        {{-- BUG FIX (Section 24): the closing tag for the outer "container-fluid p-0"
+             wrapper (opened right after the admin-visitor-area section tag) was missing
+             in the original file — one fewer closing div than opening div, leaving that
+             wrapper open going into the two modals below. Browsers auto-recover from
+             this, but it's invalid markup and worth fixing outright. --}}
         </div>
     </section>
     <!-- Start Share Content Modal -->
@@ -457,7 +597,7 @@
                                                 <label class="primary_input_label" for="">@lang('downloadCenter.share_date')<span
                                                         class="text-danger"> *</span></label>
                                                 <div class="primary_datepicker_input">
-                                                    <div class="no-gutters input-right-icon">
+                                                    <div class=" input-right-icon">
                                                         <div class="col">
                                                             <div class="">
                                                                 <input
@@ -483,7 +623,7 @@
                                                 <label class="primary_input_label" for="">@lang('downloadCenter.valid_upto')<span
                                                         class="text-danger"> *</span></label>
                                                 <div class="primary_datepicker_input">
-                                                    <div class="no-gutters input-right-icon">
+                                                    <div class=" input-right-icon">
                                                         <div class="col">
                                                             <div class="">
                                                                 <input
@@ -761,7 +901,7 @@
                                                 <label class="primary_input_label" for="">@lang('downloadCenter.share_date')<span
                                                         class="text-danger"> *</span></label>
                                                 <div class="primary_datepicker_input">
-                                                    <div class="no-gutters input-right-icon">
+                                                    <div class=" input-right-icon">
                                                         <div class="col">
                                                             <div class="">
                                                                 <input
@@ -787,7 +927,7 @@
                                                 <label class="primary_input_label" for="">@lang('downloadCenter.valid_upto')<span
                                                         class="text-danger"> *</span></label>
                                                 <div class="primary_datepicker_input">
-                                                    <div class="no-gutters input-right-icon">
+                                                    <div class=" input-right-icon">
                                                         <div class="col">
                                                             <div class="">
                                                                 <input

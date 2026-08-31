@@ -1,14 +1,158 @@
 @extends('layouts.app')
+{{-- BUG FIX (Section 34): browser-tab title called @lang('academics.About') --
+     the same leftover Academics-template placeholder found and fixed on many
+     other pages across this project -- instead of naming this page. Reused
+     the 'issue_item_list' key already used correctly elsewhere on this
+     same page. --}}
 @section('title')
-    @lang('academics.About')
+    @lang('inventory.issue_item_list')
 @endsection
-<style>
-    .available_quantity input {
-        width: 100px !important;
-        text-align: center;
-    }
-</style>
+@push('css')
+    <style>
+        /* ---- Modern refresh: cards, table, breadcrumb (Section 34) ----
+                         BUG FIX: this page already used the sms-breadcrumb markup and
+                         .white-box/#table_id markup, but never defined any CSS for them
+                         anywhere in the Inventory module, so the banner and cards
+                         rendered completely unstyled. Adding the same breadcrumb/card/
+                         table CSS used across the rest of the app. ---- */
+        .sms-breadcrumb {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+            padding: 18px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sms-breadcrumb::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .sms-breadcrumb .row {
+            align-items: center;
+        }
+
+        .sms-breadcrumb h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .sms-breadcrumb .bc-pages {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .sms-breadcrumb .bc-pages a {
+            font-size: 13px;
+            font-weight: 500;
+            color: #8a90a2;
+            text-decoration: none;
+            transition: color .15s ease;
+        }
+
+        .sms-breadcrumb .bc-pages a:hover {
+            color: var(--gradient_1);
+        }
+
+        .sms-breadcrumb .bc-pages a:not(:last-child)::after {
+            content: '\203A';
+            margin: 0 8px;
+            color: #c7cbd6;
+            font-weight: 400;
+        }
+
+        .sms-breadcrumb .bc-pages a:last-child {
+            color: var(--gradient_1);
+            font-weight: 700;
+            pointer-events: none;
+        }
+
+        .white-box {
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+        }
+
+        .white-box .main-title h3,
+        .white-box .main-title h4,
+        .white-box .main-title h5 {
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .white-box .main-title h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 42px;
+            height: 3px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .primary_input_field,
+        select.primary_select {
+            border-radius: 8px !important;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        #table_id thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            border: none;
+        }
+
+        #table_id tbody tr {
+            transition: background-color .12s ease;
+        }
+
+        #table_id tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.025);
+        }
+
+        #table_id tbody td {
+            vertical-align: middle;
+        }
+
+        .text-muted {
+            color: #9aa1ac !important;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            color: #fff;
+        }
+
+        .available_quantity input {
+            width: 100px !important;
+            text-align: center;
+        }
+    </style>
+@endpush
 @section('mainContent')
+    @php
+        // Button-level permission (Section 34).
+        $canSaveItemIssue = Auth::user()->hasPermission('save-item-issue-data');
+    @endphp
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
             <div class="row justify-content-between">
@@ -254,25 +398,26 @@
                                     {{-- Fee Invoices Table --}}
 
                                 </div>
+
+
+
+
                             </div>
 
 
-                            <div class="row mt-2">
-                                <div class="col-lg-12">
-                                    <div class="white-box">
-                                        {{-- Save Button --}}
-                                        <div class="col-lg-12 text-center ">
-                                            <button type="submit" class="primary-btn fix-gr-bg w-100"
-                                                onclick="debugFormData()">
-                                                <span class="ti-check"></span> Issue
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+
 
                         </div>
-
+                        <div class="white-box mt-10">
+                            {{-- Save Button --}}
+                            <div class="col-lg-12 text-center p-0">
+                                @if ($canSaveItemIssue)
+                                    <button type="submit" class="primary-btn fix-gr-bg w-100 col-12" onclick="debugFormData()">
+                                        <span class="ti-check"></span> Issue
+                                    </button>
+                                @endif
+                            </div>
+                        </div>
 
 
                     </div>
@@ -455,7 +600,7 @@
                                     <button type="button" class="btn btn-danger btn-sm remove_item_btn" >
                                         <i class="ti-trash"></i>
                                     </button>
-                                </td>                           
+                                </td>
                                 </tr>`;
                             $('.allIssuedItems').append(row);
                             updateSerialNumbers();
@@ -647,7 +792,7 @@
                 refreshNiceSelect('#intake_select');
                 refreshNiceSelect('#course_select');
                 $('#student-fee-data').hide();
-                
+
                 $('.allIssuedItems').empty();
                 addedItemTypes.clear();
                 itemRowIndex = 0;

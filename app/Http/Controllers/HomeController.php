@@ -46,24 +46,66 @@ use Modules\Wallet\Entities\WalletTransaction;
 use Modules\Saas\Entities\SmSubscriptionPayment;
 use App\Models\Branch; // Keep this single import for Branch
 use App\Models\FeeInvoices;
+use App\Models\InvoicesPayments;
 use App\Models\StudentVerification;
+use App\Models\Category;
+use App\Models\ItemSellBatch;
+use App\Models\ItemIssueBatch;
+use App\Models\SubjectAttendanceSession;
 
 class HomeController extends Controller
 {
-    // public function __construct()
-    // {
-    //     $this->middleware('auth');
-    // }
 
-    public function login()
-    {
-        return view('auth.login');
-    }
 
     // for display dashboard
     public function dashboard()
     {
         $user = Auth::user();
+
+        // PERMISSIONS (Section 40): the dashboard has only ever had a single
+        // window-level key ('dashboard' — see config/permissions.php), so
+        // there is no dedicated button-level key per widget to gate on.
+        // Rather than invent new keys (against this project's standing
+        // rule), each widget below is gated on the existing permission for
+        // the feature area its data actually comes from — e.g. the Students
+        // card uses the same 'add-student.index' key that guards the actual
+        // student list page. Anyone who can't see a feature's own page won't
+        // see its dashboard summary either.
+        $canViewStudents = Auth::user()->hasPermission('add-student.index');
+        $canViewStaff = Auth::user()->hasPermission('role-management.user-list');
+        $canViewFinance = Auth::user()->hasPermission('fees.fee-invoice');
+        $canViewAcademic = Auth::user()->hasPermission('course.index') || Auth::user()->hasPermission('intake.index');
+        // Section 42: same reuse-the-existing-key approach, extended to the
+        // Inventory/Account section of the sidebar.
+        $canViewInventory = Auth::user()->hasPermission('item-list')
+            || Auth::user()->hasPermission('item-sell-list')
+            || Auth::user()->hasPermission('item-issue-list');
+        // Section 43: "Amount only display all report access pertions only
+        // count display no problem" — every currency figure on the dashboard
+        // (totals, chart values, the Price column) is now gated on having
+        // access to at least one of the Reports section's own permission
+        // keys, same OR-list side-menu.blade.php uses to decide whether to
+        // show the Reports menu item at all. Counts (student/staff/item
+        // counts, etc.) are unaffected and keep using their existing gates.
+        $canViewAmounts = Auth::user()->hasPermission('reports.sell-items')
+            || Auth::user()->hasPermission('reports.issue-items')
+            || Auth::user()->hasPermission('reports.students-paid')
+            || Auth::user()->hasPermission('reports.course-paid')
+            || Auth::user()->hasPermission('reports.course-dates-payments')
+            || Auth::user()->hasPermission('reports.course-intake-payments')
+            || Auth::user()->hasPermission('reports.students-intake-balance')
+            || Auth::user()->hasPermission('reports.change-course')
+            || Auth::user()->hasPermission('reports.invoice-payments')
+            || Auth::user()->hasPermission('reports.food-payment')
+            || Auth::user()->hasPermission('reports.student-attendance');
+        // New — Student Attendance dashboard widget: reuses the same keys
+        // already used elsewhere for attendance access (scan-attendance
+        // gates the live scanner page; reports.student-attendance /
+        // reports.scan-attendance gate the report). Counts, not amounts, so
+        // this is intentionally NOT folded into $canViewAmounts above.
+        $canViewAttendance = Auth::user()->hasPermission('scan-attendance')
+            || Auth::user()->hasPermission('reports.student-attendance')
+            || Auth::user()->hasPermission('reports.scan-attendance');
 
         // Fetch counts
         $studentsCount = Student::count();
@@ -77,169 +119,241 @@ class HomeController extends Controller
             $q->where('role_name', 'Admin');
         })->count();
 
-        // Fetch financial data using existing models
-        $totalIncome = FeeInvoices::sum('paid_amount');
-        $totalExpenses = 0; // No expense model, set to 0
-        $totalProfit = $totalIncome - $totalExpenses;
-        $totalRevenue = $totalIncome;
+        // Fetch financial data using existing models.
+        // BUG FIX (Section 40): the old "Total Expenses" / "Total Profit"
+        // cards always showed $0 expenses and profit == income, because no
+        // expense model exists in this app at all — that wasn't a real
+        // profit figure, it was income relabeled, which is misleading on a
+        // dashboard admins make decisions from. Replaced with two numbers
+        // that ARE real and already tracked: total invoiced vs. total
+        // collected, so the outstanding balance is honest instead of implied
+        // to be zero.
+        $totalIncome = (float) FeeInvoices::sum('paid_amount');
+        $totalInvoiced = (float) FeeInvoices::sum('total_amount');
+        $totalOutstanding = max($totalInvoiced - $totalIncome, 0);
 
-        // Fetch notices using Content model
-        $notices = Content::latest()->take(5)->get();
+        // Invoice status breakdown (Section 42, fixed in Section 43): the
+        // Section 42 version used a `status` column that doesn't exist on
+        // fee_invoices (that P/PP/U/R code set belongs to ItemSellBatch, a
+        // different table) — it looks like this got hand-edited afterwards
+        // to `invoice_type` to stop a "column not found" error, but that's
+        // not a real column either, and the P/PP/U/R labels never matched
+        // what FeeInvoices actually stores. The real, confirmed column is
+        // `payment_status`, set directly in ItemSellController to 'partial'
+        // or 'full' on creation and 'returned' on a return; the 'not' value
+        // comes from the payment_status filter dropdown in course-paid.blade
+        // (@lang('fees.not_paid') => 'not'), so it's a real status this
+        // column can hold even though this session hasn't seen it get set
+        // that way directly.
+        $statusLabels = ['not' => 'Not Paid', 'partial' => 'Partially Paid', 'full' => 'Fully Paid', 'returned' => 'Returned'];
+        $invoiceStatusRaw = FeeInvoices::selectRaw('payment_status, count(*) as cnt')
+            ->groupBy('payment_status')
+            ->pluck('cnt', 'payment_status');
+        $invoiceStatusBreakdown = collect($statusLabels)
+            ->map(function ($label, $code) use ($invoiceStatusRaw) {
+                return ['label' => $label, 'value' => (int) ($invoiceStatusRaw[$code] ?? 0)];
+            })
+            ->filter(fn($row) => $row['value'] > 0)
+            ->values();
+        $invoiceStatusTotal = $invoiceStatusBreakdown->sum('value');
 
-        // Fetch events using Course model
-        $events = Course::all();
+        // Monthly income trend (last 6 months) for the income chart, built
+        // from InvoicesPayments so it reflects actual payment activity over
+        // time rather than a single lifetime total.
+        $monthKeys = collect();
+        for ($i = 5; $i >= 0; $i--) {
+            $monthKeys->push(now()->subMonths($i)->format('Y-m'));
+        }
+        $paymentsByMonth = InvoicesPayments::where('created_at', '>=', now()->subMonths(5)->startOfMonth())
+            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym, SUM(amount) as total")
+            ->groupBy('ym')
+            ->pluck('total', 'ym');
+        $incomeTrend = $monthKeys->map(function ($ym) use ($paymentsByMonth) {
+            return [
+                'month' => Carbon::createFromFormat('Y-m', $ym)->format('M Y'),
+                'income' => (float) ($paymentsByMonth[$ym] ?? 0),
+            ];
+        })->values();
 
         // Fetch branches with intakes and courses
         $branches = Branch::with(['intakes.courses'])->get();
 
-        // Fetch todos - using a simple array for now
-        $todos = []; // Or create a model later
+        // Academic overview (Section 42): the old dashboard listed every
+        // branch -> intake -> course as nested cards, which turns into a
+        // very long scroll once there's more than a handful of branches —
+        // flagged as "smart method easily analized" wanted instead. Replaced
+        // with three at-a-glance totals plus a flat, searchable/sortable
+        // table (DataTables — already used this way everywhere else in the
+        // app) instead of a deep nested list.
+        $totalBranchesCount = $branches->count();
+        $totalIntakesCount = Intake::count();
+        $totalCoursesCount = Course::count();
+        $academicRows = collect();
+        foreach ($branches as $branch) {
+            foreach ($branch->intakes as $intake) {
+                foreach ($intake->courses as $course) {
+                    $academicRows->push([
+                        'branch' => $branch->name,
+                        'intake' => $intake->name,
+                        'course' => $course->name,
+                        'price' => (float) $course->price,
+                    ]);
+                }
+            }
+        }
+
+        // Students per branch, for the enrollment-by-branch chart. One
+        // grouped query instead of a per-branch count to avoid N+1.
+        $studentsPerBranchRaw = Student::selectRaw('branch_id, count(*) as cnt')
+            ->groupBy('branch_id')
+            ->pluck('cnt', 'branch_id');
+        $studentsPerBranch = $branches->map(function ($branch) use ($studentsPerBranchRaw) {
+            return [
+                'branch' => $branch->name,
+                'count' => (int) ($studentsPerBranchRaw[$branch->id] ?? 0),
+            ];
+        })->values();
+
+        // Staff composition (Teachers / Labour / Admin), for the staff donut.
+        // Built already in the {label, value} shape Morris.Donut expects, and
+        // passed through @json() in the view rather than interpolated by
+        // hand into a JS array literal, so labels are properly JSON-escaped.
+        $staffComposition = [
+            ['label' => 'Teachers', 'value' => $teachersCount],
+            ['label' => 'Labour', 'value' => $labourCount],
+            ['label' => 'Admin', 'value' => $adminCount],
+        ];
+        $staffTotal = $teachersCount + $labourCount + $adminCount;
+
+        // Inventory / Account snapshot (Section 42) — covers the sidebar's
+        // Inventory section, which the dashboard had no presence for at all
+        // before. Only using models already confirmed elsewhere in this
+        // codebase (InventoryItem, Category, ItemSellBatch, ItemIssueBatch);
+        // a Supplier count was left out because no Supplier model class is
+        // confirmed anywhere in the code I have access to, and guessing one
+        // risks a hard crash on this page if the class name is wrong.
+        $totalInventoryItems = InventoryItem::count();
+        $totalItemCategories = Category::count();
+        $itemSellCountThisMonth = ItemSellBatch::whereBetween('sell_date', [now()->startOfMonth(), now()->endOfMonth()])->count();
+        $itemIssueCountThisMonth = ItemIssueBatch::whereBetween('issue_date', [now()->startOfMonth(), now()->endOfMonth()])->count();
+
+        $itemSellByMonth = ItemSellBatch::where('sell_date', '>=', now()->subMonths(5)->startOfMonth())
+            ->selectRaw("DATE_FORMAT(sell_date, '%Y-%m') as ym, SUM(total_sell_price) as total")
+            ->groupBy('ym')
+            ->pluck('total', 'ym');
+        $itemSellTrend = $monthKeys->map(function ($ym) use ($itemSellByMonth) {
+            return [
+                'month' => Carbon::createFromFormat('Y-m', $ym)->format('M Y'),
+                'revenue' => (float) ($itemSellByMonth[$ym] ?? 0),
+            ];
+        })->values();
+
+        // Student Attendance snapshot (new): built directly against
+        // SubjectAttendanceSession — the confirmed model behind
+        // ReportController::studentAttendanceQuery() (its Course/Subject/
+        // Practical split and notCheckpoint()/open() scopes are proven
+        // working there already) — scoped to "today" and "last 7 days"
+        // rather than a user-chosen filter range, so nothing here is a new
+        // guess about schema.
+        $attendanceTodayCount = 0;
+        $attendanceOpenCount = 0;
+        $attendanceCompletedTodayCount = 0;
+        $attendanceTypeBreakdown = collect();
+        $attendanceTrend = collect();
+
+        if ($canViewAttendance) {
+            $today = now()->toDateString();
+
+            $attendanceTodayCount = SubjectAttendanceSession::whereDate('attendance_date', $today)
+                ->notCheckpoint()
+                ->count();
+
+            $attendanceOpenCount = SubjectAttendanceSession::whereDate('attendance_date', $today)
+                ->notCheckpoint()
+                ->open()
+                ->count();
+
+            $attendanceCompletedTodayCount = max($attendanceTodayCount - $attendanceOpenCount, 0);
+
+            $attendanceTypeBreakdown = collect([
+                [
+                    'label' => 'Course',
+                    'value' => SubjectAttendanceSession::whereDate('attendance_date', $today)
+                        ->whereNull('checkpoint_type')
+                        ->whereNull('subject_id')
+                        ->count(),
+                ],
+                [
+                    'label' => 'Subject',
+                    'value' => SubjectAttendanceSession::whereDate('attendance_date', $today)
+                        ->whereNull('checkpoint_type')
+                        ->whereHas('subject', fn($q) => $q->where('type', 'T'))
+                        ->count(),
+                ],
+                [
+                    'label' => 'Practical',
+                    'value' => SubjectAttendanceSession::whereDate('attendance_date', $today)
+                        ->whereNull('checkpoint_type')
+                        ->whereHas('subject', fn($q) => $q->where('type', 'P'))
+                        ->count(),
+                ],
+            ])->filter(fn($row) => $row['value'] > 0)->values();
+
+            // 7-day trend — one COUNT query per day (7 total) rather than a
+            // single GROUP BY, so it works the same whether attendance_date
+            // is a date or datetime column, and stays cheap either way.
+            $attendanceTrend = collect();
+            for ($i = 6; $i >= 0; $i--) {
+                $day = now()->subDays($i);
+                $attendanceTrend->push([
+                    'day' => $day->format('D'),
+                    'count' => SubjectAttendanceSession::whereDate('attendance_date', $day->toDateString())
+                        ->notCheckpoint()
+                        ->count(),
+                ]);
+            }
+        }
 
         return view('pages.dashboard.dashboard', compact(
             'user',
+            'canViewStudents',
+            'canViewStaff',
+            'canViewFinance',
+            'canViewAcademic',
+            'canViewInventory',
+            'canViewAmounts',
+            'canViewAttendance',
             'studentsCount',
             'teachersCount',
             'labourCount',
             'adminCount',
             'totalIncome',
-            'totalExpenses',
-            'totalProfit',
-            'totalRevenue',
-            'notices',
-            'events',
+            'totalInvoiced',
+            'totalOutstanding',
+            'incomeTrend',
+            'invoiceStatusBreakdown',
+            'invoiceStatusTotal',
             'branches',
-            'todos'
+            'totalBranchesCount',
+            'totalIntakesCount',
+            'totalCoursesCount',
+            'academicRows',
+            'studentsPerBranch',
+            'staffComposition',
+            'staffTotal',
+            'totalInventoryItems',
+            'totalItemCategories',
+            'itemSellCountThisMonth',
+            'itemIssueCountThisMonth',
+            'itemSellTrend',
+            'attendanceTodayCount',
+            'attendanceOpenCount',
+            'attendanceCompletedTodayCount',
+            'attendanceTypeBreakdown',
+            'attendanceTrend'
         ));
     }
 
 
-
-
-    // public function subjects()
-    // {
-    //     return view('pages.administration.academic.subject');
-    // }
-
-
-
-
-    public function uploadContent()
-    {
-        return view('pages.administration.study-material.upload-content');
-    }
-
-    public function studyMaterialDownload()
-    {
-        return view('pages.administration.study-material.study-material-download');
-    }
-
-    public function otherDownload()
-    {
-        return view('pages.administration.study-material.other-download');
-    }
-
-    public function lesson()
-    {
-        return view('pages.administration.lesson-plan.lesson');
-    }
-
-    public function topic()
-    {
-        return view('pages.administration.lesson-plan.topic');
-    }
-
-    public function topicOverview()
-    {
-        return view('pages.administration.lesson-plan.topic-overview');
-    }
-    public function contentList()
-    {
-        return view('pages.administration.download-center.content-list');
-    }
-
-    // App\Http\Controllers\StudentController.php
-
-    public function verificationHistory($id)
-    {
-        $verifications = StudentVerification::with('user')
-            ->where('student_id', $id)
-            ->orderBy('created_at', 'asc')
-            ->get();
-
-        return response()->json($verifications);
-    }
-
-
-    // public function feeInvoice()
-    // {
-    //     return view('pages.student.fees.fee-invoice');
-    // }
-
-    // public function addInvoice()
-    // {
-    //     return view('pages.student.fees.add-invoice');
-    // }
-// public function invoiceDatatable()
-// {
-//     $query = DB::table('fee_invoices')
-//         ->leftJoin('students', 'students.id', '=', 'fee_invoices.student_id')
-//         ->leftJoin('student_categories', 'student_categories.id', '=', 'students.student_category_id')
-//         ->leftJoin('branches', 'branches.id', '=', 'fee_invoices.branch_id')
-//         ->leftJoin('invoice_items', 'invoice_items.invoice_id', '=', 'fee_invoices.id')
-//         ->leftJoin('fee_types', 'fee_types.id', '=', 'invoice_items.fee_type_id')
-//         ->leftJoin('paid_courses', 'paid_courses.invoice_id', '=', 'fee_invoices.id')
-//         ->leftJoin('courses', 'courses.id', '=', 'paid_courses.course_id')
-//         ->where('fee_invoices.payment_status', '!=', 'returned')
-//         ->select([
-//             'fee_invoices.*',
-//             'students.student_name',
-//             'students.admission_number',
-//             'student_categories.category_name',
-//             'branches.name as branch_name',
-//             'fee_types.name as fee_type_name',
-//             'courses.name as course_name',
-//         ]);
-
-//     return DataTables::of($query)
-//         ->addIndexColumn()
-
-//         ->editColumn('fee_name', function ($row) {
-//             return $row->invoice_type === 'fee'
-//                 ? ($row->fee_type_name ?? '-')
-//                 : ($row->course_name ?? '-');
-//         })
-
-//         ->addColumn('balance', function ($row) {
-//             return number_format($row->total_amount - $row->paid_amount, 2);
-//         })
-
-//         ->addColumn('payment_date', fn($row) =>
-//             \Carbon\Carbon::parse($row->create_date)->format('m/d/Y')
-//         )
-
-//         ->addColumn('due_date', fn($row) =>
-//             \Carbon\Carbon::parse($row->due_date)->format('m/d/Y')
-//         )
-
-//         ->filter(function ($query) {
-//             $keyword = request('search.value');
-
-//             if ($keyword) {
-//                 $query->where(function ($q) use ($keyword) {
-//                     $q->where('fee_invoices.main_invoice_number', 'like', "%{$keyword}%")
-//                       ->orWhere('students.student_name', 'like', "%{$keyword}%")
-//                       ->orWhere('students.admission_number', 'like', "%{$keyword}%")
-//                       ->orWhere('student_categories.category_name', 'like', "%{$keyword}%")
-//                       ->orWhere('branches.name', 'like', "%{$keyword}%")
-//                       ->orWhere('fee_types.name', 'like', "%{$keyword}%")
-//                       ->orWhere('courses.name', 'like', "%{$keyword}%")
-//                       ->orWhere('fee_invoices.payment_status', 'like', "%{$keyword}%");
-//                 });
-//             }
-//         })
-
-//         ->rawColumns(['payment_status', 'action'])
-//         ->make(true);
-// }
 
 }

@@ -100,7 +100,7 @@ class ReturnFeeController extends Controller
 
             InvoicesPayments::create([
                 'invoice_id'      => $invoice->id,
-                'amount'          => -$validated['return_amount'], 
+                'amount'          => -$validated['return_amount'],
                 'payment_method'  => 'cash',
                 'payment_type'    => 'return',
                 'receipt_number'  => 'RET-' . time() . '-' . uniqid(),
@@ -111,16 +111,16 @@ class ReturnFeeController extends Controller
                 'updated_at'      => now(),
             ]);
 
-            
-            if($invoice->invoice_type == 'food'){
+
+            if ($invoice->invoice_type == 'food') {
                 $food_payment = FoodPayment::where('invoice_id', $validated['invoice_id'])->first();
 
                 $food_payment->paid_amount = 0.00;
                 $food_payment->due_amount = $food_payment->total_food_amount;
                 $food_payment->status = 0;
-                $food_payment->save();  
+                $food_payment->save();
             }
-            
+
 
             // Calculate new paid amount
             $newPaidAmount = $invoice->paid_amount - $validated['return_amount'];
@@ -166,5 +166,16 @@ class ReturnFeeController extends Controller
                 ->withInput()
                 ->with('error', 'Failed to process return fee: ' . $e->getMessage());
         }
+    }
+
+    public function viewFeeInvoice($id)
+    {
+        $invoice = FeeInvoices::with('invoice_item.fee_type', 'student', 'branch')->findOrFail($id);
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return view('pages.student.fees.partials.invoice-view-content', compact('invoice'));
+        }
+
+        return view('pages.student.fees.fee-invoice-view', compact('invoice'));
     }
 }

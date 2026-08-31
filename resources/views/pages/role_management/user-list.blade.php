@@ -1,12 +1,108 @@
 @extends('layouts.app')
 @section('title')
-    Role List
+    {{-- BUG FIX (Section 35): this page lists users, not roles; title/heading
+         were leftover copy-paste text from the Roles page. --}}
+    User List
 @endsection
+
+@push('css')
+    <style>
+        /* ===== Modern refresh: breadcrumb, cards, table (Section 35) ===== */
+        .sms-breadcrumb {
+            position: relative;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+            padding: 22px 30px;
+            overflow: hidden;
+        }
+
+        .sms-breadcrumb::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 6px;
+            background: linear-gradient(180deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .sms-breadcrumb .row {
+            align-items: center;
+        }
+
+        .sms-breadcrumb h1 {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0;
+            color: #1c1c1c;
+        }
+
+        .sms-breadcrumb .bc-pages a {
+            color: #7a7f87;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .sms-breadcrumb .bc-pages a:hover {
+            color: var(--gradient_2);
+        }
+
+        .sms-breadcrumb .bc-pages a:not(:last-child)::after {
+            content: '\203A';
+            margin: 0 8px;
+            color: #c3c7cf;
+        }
+
+        .sms-breadcrumb .bc-pages a:last-child {
+            font-weight: 600;
+            color: #1c1c1c;
+        }
+
+        .white-box {
+            border-radius: 10px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+        }
+
+        .white-box .main-title h3::after {
+            content: '';
+            display: block;
+            width: 46px;
+            height: 3px;
+            margin-top: 8px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        #table_id thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+            color: #fff;
+            border: none;
+            white-space: nowrap;
+        }
+
+        #table_id tbody tr:hover {
+            background-color: #f7f9fc;
+        }
+
+        #table_id tbody tr td {
+            vertical-align: middle;
+        }
+
+        .text-muted {
+            color: #9aa1ac !important;
+        }
+    </style>
+@endpush
 @section('mainContent')
+    @php
+        $canEditUser = Auth::user()->hasPermission('role-management.user-update');
+        $canChangePasswordUser = Auth::user()->hasPermission('role-management.user-change-password');
+    @endphp
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1>Role List</h1>
+                <h1>User List</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
                     <a href="{{ route('role-management.user-list') }}">@lang('role.user_list')</a>
@@ -74,8 +170,12 @@
                                                     <x-drop-down>
 
                                                         <a class="dropdown-item view-user" href="#" data-id="{{ $user->id }}">@lang('common.view')</a>
-                                                        <a class="dropdown-item edit-user" href="#" data-id="{{ $user->id }}">@lang('common.edit')</a>
-                                                        <a class="dropdown-item change-password" href="#" data-id="{{ $user->id }}">Change Password</a>
+                                                        @if ($canEditUser)
+                                                            <a class="dropdown-item edit-user" href="#" data-id="{{ $user->id }}">@lang('common.edit')</a>
+                                                        @endif
+                                                        @if ($canChangePasswordUser)
+                                                            <a class="dropdown-item change-password" href="#" data-id="{{ $user->id }}">Change Password</a>
+                                                        @endif
                                                         
                                                     </x-drop-down>
                                                         

@@ -1,6 +1,14 @@
 @extends('layouts.app')
 @push('css')
     <style>
+        #table_id thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            border: none;
+        }
+
         .student_rec_card {
             border-radius: 6px;
             border: 1px solid var(--border_color);
@@ -27,6 +35,87 @@
             max-height: 300px;
             min-height: 300px;
         }
+
+        /* ---- Modern refresh: cards, table, status badges (Section 20) ---- */
+        .white-box {
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+        }
+
+        .white-box .main-title h3 {
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .white-box .main-title h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 42px;
+            height: 3px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .primary_input_field,
+        select.primary_select {
+            border-radius: 8px !important;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        table.Crm_table_active3 thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            border: none;
+        }
+
+        table.Crm_table_active3 tbody tr {
+            transition: background-color .12s ease;
+        }
+
+        table.Crm_table_active3 tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.025);
+        }
+
+        table.Crm_table_active3 tbody td {
+            vertical-align: middle;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: .3px;
+            white-space: nowrap;
+        }
+
+        .status-badge.status-active {
+            background: #e6f7ec;
+            color: #1e8e4f;
+        }
+
+        .status-badge.status-inactive {
+            background: #fdecec;
+            color: #d64545;
+        }
+
+        .dropdown-item.text-danger:hover {
+            background-color: #fdecec;
+        }
+
+        .assign-subject-selection-container {
+            border: 1px solid var(--border_color);
+            border-radius: 8px;
+            max-height: 650px;
+            overflow-y: auto;
+        }
     </style>
 @endpush
 
@@ -37,11 +126,10 @@
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1>@lang('academics.assign_subject')</h1>
+                <h1>@lang('academics.subject')</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
-                    <a href="#">@lang('academics.academics')</a>
-                    <a href="#">@lang('academics.assign_subject')</a>
+                    <a href="#">Assign @lang('academics.subject')</a>
                 </div>
             </div>
         </div>
@@ -49,172 +137,188 @@
     <section class="admin-visitor-area up_st_admin_visitor">
         <div class="container-fluid p-0">
 
+            @php
+                // Button-level permissions (Section 21). The "Copy" row action
+                // is treated as an Add-shortcut (it just pre-fills this same
+                // form via JS, no route of its own) so it's gated on the same
+// 'assign-subject.store' permission as the Add form itself.
+$canAddAssignSubject = Auth::user()->hasPermission('assign-subject.store');
+$canEditAssignSubject = Auth::user()->hasPermission('assign-subject.update');
+$canDeleteAssignSubject = Auth::user()->hasPermission('assign-subject.destroy');
+                $showAssignSubjectForm = isset($assignSubjectId) ? $canEditAssignSubject : $canAddAssignSubject;
+            @endphp
+
             <div class="row">
-                <div class="col-lg-3">
-                    <div class="row">
-                        <div class="col-lg-12">
+                @if ($showAssignSubjectForm)
+                    <div class="col-lg-3">
+                        <div class="row">
+                            <div class="col-lg-12">
 
-                            {{-- Update form --}}
-                            <form method="POST" class="form-horizontal"
-                                action="{{ isset($assignSubjectId) ? route('assign-subject.update', $assignSubjectId) : route('assign-subject.store') }}">
+                                {{-- Update form --}}
+                                <form method="POST" class="form-horizontal"
+                                    action="{{ isset($assignSubjectId) ? route('assign-subject.update', $assignSubjectId) : route('assign-subject.store') }}">
 
-                                @csrf
-                                <input type="hidden" name="dt_page" class="dt-page-field"
-                                    value="{{ (int) request('dt_page', 0) }}">
+                                    @csrf
+                                    <input type="hidden" name="dt_page" class="dt-page-field"
+                                        value="{{ (int) request('dt_page', 0) }}">
 
-                                <div class="white-box">
-                                    <div class="main-title">
-                                        <h3 class="mb-20">
-                                            @if (isset($assignSubjectId))
-                                                Update Assign Subject
-                                            @else
-                                                @lang('academics.assign_subject_create')
-                                            @endif
-                                        </h3>
-                                    </div>
-
-                                    <div class="add-visitor">
-                                        {{-- Intake --}}
-                                        <div class="row">
-                                            <div class="col-lg-12">
-                                                <div class="primary_input">
-                                                    <label class="primary_input_label">Intake <span>*</span></label>
-                                                    @if (isset($assignSubjectId))
-                                                        <select name="intake_id" id="intake-select"
-                                                            class="primary_select form-control {{ $errors->has('intake_id') ? ' is-invalid' : '' }}"
-                                                            readonly>
-                                                            <option
-                                                                value="{{ $intakes->firstWhere('id', $selectedIntake)?->id }}"
-                                                                selected>
-                                                                {{ $intakes->firstWhere('id', $selectedIntake)?->name }}
-                                                            </option>
-
-                                                        </select>
-                                                    @else
-                                                        <select name="intake_id" id="intake-select"
-                                                            class="primary_select form-control {{ $errors->has('intake_id') ? ' is-invalid' : '' }}">
-                                                            <option value="">Select intake</option>
-                                                            @foreach ($intakes as $intake)
-                                                                <option value="{{ $intake->id }}"
-                                                                    {{ old('intake_id', $selectedIntake ?? '') == $intake->id ? 'selected' : '' }}>
-                                                                    {{ $intake->name }}
-                                                                </option>
-                                                            @endforeach
-                                                        </select>
-                                                    @endif
-                                                </div>
-                                            </div>
+                                    <div class="white-box">
+                                        <div class="main-title">
+                                            <h3 class="mb-20">
+                                                @if (isset($assignSubjectId))
+                                                    Update Assign Subject
+                                                @else
+                                                    @lang('academics.assign_subject_create')
+                                                @endif
+                                            </h3>
                                         </div>
 
-
-
-                                        {{-- Course --}}
-                                        <div class="row mt-20">
-                                            <div class="col-lg-12">
-                                                <div class="primary_input">
-                                                    <label class="primary_input_label">Course <span>*</span></label>
-
-                                                    @if (isset($assignSubjectId))
-                                                        <select name="course_id" id="course-select"
-                                                            class="primary_select form-control {{ $errors->has('course_id') ? ' is-invalid' : '' }}"
-                                                            readonly>
-                                                            <option
-                                                                value="{{ $courses->firstWhere('id', $selectedCourse)?->id }}"
-                                                                selected>
-                                                                {{ $courses->firstWhere('id', $selectedCourse)?->name }}
-                                                            </option>
-
-                                                        </select>
-                                                    @else
-                                                        {{-- Normal selectable dropdown --}}
-                                                        <select name="course_id" id="course-select"
-                                                            class="primary_select form-control {{ $errors->has('course_id') ? ' is-invalid' : '' }}">
-                                                            <option value="">Select course</option>
-                                                            @foreach ($courses as $course)
-                                                                <option value="{{ $course->id }}"
-                                                                    {{ old('course_id', $selectedCourse ?? '') == $course->id ? 'selected' : '' }}>
-                                                                    {{ $course->name }}
+                                        <div class="add-visitor">
+                                            {{-- Intake --}}
+                                            <div class="row">
+                                                <div class="col-lg-12">
+                                                    <div class="primary_input">
+                                                        <label class="primary_input_label">Intake <span>*</span></label>
+                                                        @if (isset($assignSubjectId))
+                                                            <select name="intake_id" id="intake-select"
+                                                                class="primary_select form-control {{ $errors->has('intake_id') ? ' is-invalid' : '' }}"
+                                                                readonly>
+                                                                <option
+                                                                    value="{{ $intakes->firstWhere('id', $selectedIntake)?->id }}"
+                                                                    selected>
+                                                                    {{ $intakes->firstWhere('id', $selectedIntake)?->name }}
                                                                 </option>
-                                                            @endforeach
-                                                        </select>
-                                                        @if ($errors->has('course_id'))
-                                                            <span
-                                                                class="text-danger">{{ $errors->first('course_id') }}</span>
+
+                                                            </select>
+                                                        @else
+                                                            <select name="intake_id" id="intake-select"
+                                                                class="primary_select form-control {{ $errors->has('intake_id') ? ' is-invalid' : '' }}">
+                                                                <option value="">Select intake</option>
+                                                                @foreach ($intakes as $intake)
+                                                                    <option value="{{ $intake->id }}"
+                                                                        {{ old('intake_id', $selectedIntake ?? '') == $intake->id ? 'selected' : '' }}>
+                                                                        {{ $intake->name }}
+                                                                    </option>
+                                                                @endforeach
+                                                            </select>
                                                         @endif
-                                                    @endif
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
 
 
-                                        {{-- Subjects --}}
-                                        <div class="row mt-20">
-                                            <div class="col-lg-12">
-                                                <label class="primary_input_label">@lang('academics.subject') <span>*</span></label>
-                                                <div class="d-block">
-                                                    @foreach ($subjects as $subject)
-                                                        <div class="ml-30 mt-3 pb-3"
-                                                            style="border-bottom: 1px solid var(--border_color);">
-                                                            <div>
-                                                                <input type="checkbox" id="sub{{ $subject->id }}"
-                                                                    value="{{ $subject->id }}" name="subjects[]"
-                                                                    class="common-checkbox"
-                                                                    {{ in_array($subject->id, old('subjects', $selectedSubjects ?? [])) ? 'checked' : '' }}>
-                                                                <label
-                                                                    for="sub{{ $subject->id }}"><strong>{{ $subject->name }}</strong></label>
-                                                            </div>
 
-                                                            <div class="mt-1 d-flex align-items-center">
-                                                                <label class="mr-2 mb-0" style="min-width:140px"
-                                                                    for="demo_time_{{ $subject->id }}">
-                                                                    Demonstrator Time
-                                                                </label>
-                                                                <input type="text" id="demo_time_{{ $subject->id }}"
-                                                                    name="times[{{ $subject->id }}][demonstrator_time]"
-                                                                    class="form-control form-control-sm" style="width:150px"
-                                                                    placeholder="Demonstrator time"
-                                                                    value="{{ old('times.' . $subject->id . '.demonstrator_time', $selectedTimes[$subject->id]['demonstrator_time'] ?? $subject->demonstrator_time) }}">
-                                                            </div>
+                                            {{-- Course --}}
+                                            <div class="row mt-20">
+                                                <div class="col-lg-12">
+                                                    <div class="primary_input">
+                                                        <label class="primary_input_label">Course <span>*</span></label>
 
-                                                            <div class="mt-1 d-flex align-items-center">
-                                                                <label class="mr-2 mb-0" style="min-width:140px"
-                                                                    for="practical_time_{{ $subject->id }}">
-                                                                    Practical Time
-                                                                </label>
-                                                                <input type="text"
-                                                                    id="practical_time_{{ $subject->id }}"
-                                                                    name="times[{{ $subject->id }}][practical_time]"
-                                                                    class="form-control form-control-sm" style="width:150px"
-                                                                    placeholder="Practical time"
-                                                                    value="{{ old('times.' . $subject->id . '.practical_time', $selectedTimes[$subject->id]['practical_time'] ?? $subject->practical_time) }}">
-                                                            </div>
-                                                        </div>
-                                                    @endforeach
-                                                    @if ($errors->has('subjects'))
-                                                        <span class="text-danger">{{ $errors->first('subjects') }}</span>
-                                                    @endif
+                                                        @if (isset($assignSubjectId))
+                                                            <select name="course_id" id="course-select"
+                                                                class="primary_select form-control {{ $errors->has('course_id') ? ' is-invalid' : '' }}"
+                                                                readonly>
+                                                                <option
+                                                                    value="{{ $courses->firstWhere('id', $selectedCourse)?->id }}"
+                                                                    selected>
+                                                                    {{ $courses->firstWhere('id', $selectedCourse)?->name }}
+                                                                </option>
+
+                                                            </select>
+                                                        @else
+                                                            {{-- Normal selectable dropdown --}}
+                                                            <select name="course_id" id="course-select"
+                                                                class="primary_select form-control {{ $errors->has('course_id') ? ' is-invalid' : '' }}">
+                                                                <option value="">Select course</option>
+                                                                @foreach ($courses as $course)
+                                                                    <option value="{{ $course->id }}"
+                                                                        {{ old('course_id', $selectedCourse ?? '') == $course->id ? 'selected' : '' }}>
+                                                                        {{ $course->name }}
+                                                                    </option>
+                                                                @endforeach
+                                                            </select>
+                                                            @if ($errors->has('course_id'))
+                                                                <span
+                                                                    class="text-danger">{{ $errors->first('course_id') }}</span>
+                                                            @endif
+                                                        @endif
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        {{-- Submit --}}
-                                        <div class="row mt-40">
-                                            <div class="col-lg-12 text-center">
-                                                <button class="primary-btn fix-gr-bg submit" type="submit">
-                                                    <span class="ti-check"></span>
-                                                    {{ isset($assignSubjectId) ? __('common.update') : __('academics.save_class') }}
-                                                </button>
+
+                                            {{-- Subjects --}}
+                                            <div class="row mt-20">
+                                                <div class="col-lg-12">
+                                                    <label class="primary_input_label">@lang('academics.subject')
+                                                        <span>*</span></label>
+                                                    <div class="assign-subject-selection-container">
+                                                        @foreach ($subjects as $subject)
+                                                            <div class="ml-1 mt-3 pb-3"
+                                                                style="border-bottom: 1px solid var(--border_color);">
+                                                                <div>
+                                                                    <input type="checkbox" id="sub{{ $subject->id }}"
+                                                                        value="{{ $subject->id }}" name="subjects[]"
+                                                                        class="common-checkbox"
+                                                                        {{ in_array($subject->id, old('subjects', $selectedSubjects ?? [])) ? 'checked' : '' }}>
+                                                                    <label
+                                                                        for="sub{{ $subject->id }}"><strong>{{ $subject->name }}</strong></label>
+                                                                </div>
+
+                                                                <div class="mt-1 d-flex align-items-center ml-30">
+                                                                    <label class="mr-2 mb-0" style="min-width:140px"
+                                                                        for="demo_time_{{ $subject->id }}">
+                                                                        Demonstrator Time
+                                                                    </label>
+                                                                    <input type="text"
+                                                                        id="demo_time_{{ $subject->id }}"
+                                                                        name="times[{{ $subject->id }}][demonstrator_time]"
+                                                                        class="form-control form-control-sm"
+                                                                        style="width:150px" placeholder="Demonstrator time"
+                                                                        value="{{ old('times.' . $subject->id . '.demonstrator_time', $selectedTimes[$subject->id]['demonstrator_time'] ?? $subject->demonstrator_time) }}">
+                                                                </div>
+
+                                                                <div class="mt-1 d-flex align-items-center ml-30">
+                                                                    <label class="mr-2 mb-0" style="min-width:140px"
+                                                                        for="practical_time_{{ $subject->id }}">
+                                                                        Practical Time
+                                                                    </label>
+                                                                    <input type="text"
+                                                                        id="practical_time_{{ $subject->id }}"
+                                                                        name="times[{{ $subject->id }}][practical_time]"
+                                                                        class="form-control form-control-sm"
+                                                                        style="width:150px" placeholder="Practical time"
+                                                                        value="{{ old('times.' . $subject->id . '.practical_time', $selectedTimes[$subject->id]['practical_time'] ?? $subject->practical_time) }}">
+                                                                </div>
+                                                            </div>
+                                                        @endforeach
+                                                        @if ($errors->has('subjects'))
+                                                            <span
+                                                                class="text-danger">{{ $errors->first('subjects') }}</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {{-- Submit --}}
+                                            <div class="row mt-40">
+                                                <div class="col-lg-12 text-center">
+                                                    <button class="primary-btn fix-gr-bg col-12 submit" type="submit">
+                                                        <span class="ti-check"></span>
+                                                        {{ isset($assignSubjectId) ? __('common.update') : __('academics.save_class') }}
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </form>
+                                </form>
+                            </div>
+
                         </div>
-
                     </div>
-                </div>
+                @endif
 
-                <div class="col-lg-9">
+                <div class="col-lg-{{ $showAssignSubjectForm ? '9' : '12' }}">
 
                     <div class="row white-box">
                         <div class="col-lg-12">
@@ -231,7 +335,6 @@
                                             <th>Intake</th>
                                             <th>Course</th>
                                             <th>Subjects</th>
-                                            <th>Status</th>
                                             <th>@lang('common.action')</th>
                                         </tr>
                                     </thead>
@@ -258,91 +361,95 @@
                                                         @endif
                                                     @endforeach
                                                 </td>
-                                                <td>{{ $subject->is_active ? 'Activate' : 'Deactivate' }}</td>
 
 
                                                 <td valign="top">
                                                     @php
-                                                        $routeList = [
-                                                            '<a class="dropdown-item assign-subject-edit-link" href="' .
-                                                            route('assign-subject.edit', $assign[0]->id) .
-                                                            '">' .
-                                                            __('common.edit') .
-                                                            '</a>',
-
-                                                            '<a class="dropdown-item" data-toggle="modal" data-target="#toggleStatusModal' .
-                                                            $assign[0]->id .
-                                                            '" href="#">' .
-                                                            ($assign[0]->is_active ?? true
-                                                                ? 'Deactivate'
-                                                                : 'Activate') .
-                                                            '</a>',
-                                                            '<a class="dropdown-item copy-btn" href="#" data-intake-id="' .
-                                                            ($assign[0]->intake->id ?? '') .
-                                                            '" data-course-id="' .
-                                                            ($assign[0]->course->id ?? '') .
-                                                            '" data-subject-ids="' .
-                                                            htmlspecialchars(
-                                                                json_encode($assign->pluck('subject.id')->toArray()),
-                                                            ) .
-                                                            '">' .
-                                                            __('common.copy') .
-                                                            '</a>',
-                                                        ];
+                                                        $routeList = [];
+                                                        if ($canEditAssignSubject) {
+                                                            $routeList[] =
+                                                                '<a class="dropdown-item assign-subject-edit-link" href="' .
+                                                                route('assign-subject.edit', $assign[0]->id) .
+                                                                '">' .
+                                                                __('common.edit') .
+                                                                '</a>';
+                                                        }
+                                                        if ($canDeleteAssignSubject) {
+                                                            $routeList[] =
+                                                                '<a class="dropdown-item text-danger" data-toggle="modal" data-target="#deleteModal' .
+                                                                $assign[0]->id .
+                                                                '" href="#">Delete</a>';
+                                                        }
+                                                        if ($canAddAssignSubject) {
+                                                            $routeList[] =
+                                                                '<a class="dropdown-item copy-btn" href="#" data-intake-id="' .
+                                                                ($assign[0]->intake->id ?? '') .
+                                                                '" data-course-id="' .
+                                                                ($assign[0]->course->id ?? '') .
+                                                                '" data-subject-ids="' .
+                                                                htmlspecialchars(
+                                                                    json_encode(
+                                                                        $assign->pluck('subject.id')->toArray(),
+                                                                    ),
+                                                                ) .
+                                                                '">' .
+                                                                __('common.copy') .
+                                                                '</a>';
+                                                        }
                                                     @endphp
-                                                    <x-drop-down-action-component :routeList="$routeList" />
+                                                    @if (count($routeList) > 0)
+                                                        <x-drop-down-action-component :routeList="$routeList" />
+                                                    @else
+                                                        <span class="text-muted">—</span>
+                                                    @endif
                                                 </td>
                                             </tr>
 
-                                            <div class="modal fade admin-query"
-                                                id="toggleStatusModal{{ $assign[0]->id }}">
-                                                <div class="modal-dialog modal-dialog-centered">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header">
-                                                            <h4 class="modal-title">
-                                                                {{ $assign[0]->is_active ?? true ? 'Deactivate Assignment' : 'Activate Assignment' }}
-                                                            </h4>
-                                                            <button type="button" class="close"
-                                                                data-dismiss="modal">&times;</button>
-                                                        </div>
-
-                                                        <div class="modal-body">
-                                                            <div class="text-center">
-                                                                <h4>
-                                                                    @if ($assign[0]->is_active ?? true)
-                                                                        Are you sure you want to deactivate this subject
-                                                                        assignment?
-                                                                    @else
-                                                                        Are you sure you want to activate this subject
-                                                                        assignment?
-                                                                    @endif
-                                                                </h4>
+                                            @if ($canDeleteAssignSubject)
+                                                <div class="modal fade admin-query" id="deleteModal{{ $assign[0]->id }}">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h4 class="modal-title">Delete Assignment</h4>
+                                                                <button type="button" class="close"
+                                                                    data-dismiss="modal">&times;</button>
                                                             </div>
 
-                                                            <div class="mt-40 d-flex justify-content-between">
-                                                                <button type="button" class="primary-btn tr-bg"
-                                                                    data-dismiss="modal">
-                                                                    @lang('common.cancel')
-                                                                </button>
-                                                                <form
-                                                                    action="{{ route('assign-subject.toggle-status', $assign[0]->id) }}"
-                                                                    method="POST">
-                                                                    @csrf
-                                                                    {{-- Same page-position mechanism as the
+                                                            <div class="modal-body">
+                                                                <div class="text-center">
+                                                                    <h4>
+                                                                        Are you sure you want to delete this subject
+                                                                        assignment? This cannot be undone.
+                                                                    </h4>
+                                                                </div>
+
+                                                                <div class="mt-40 d-flex justify-content-between">
+                                                                    <button type="button" class="primary-btn tr-bg"
+                                                                        data-dismiss="modal">
+                                                                        @lang('common.cancel')
+                                                                    </button>
+                                                                    <form
+                                                                        action="{{ route('assign-subject.destroy', $assign[0]->id) }}"
+                                                                        method="POST">
+                                                                        @csrf
+                                                                        @method('DELETE')
+                                                                        {{-- Same page-position mechanism as the
                                                                          Add/Edit form, synced to the live table
                                                                          page right before submit. --}}
-                                                                    <input type="hidden" name="dt_page"
-                                                                        class="dt-page-field" value="0">
-                                                                    <button class="primary-btn fix-gr-bg" type="submit">
-                                                                        {{ $assign[0]->is_active ?? true ? 'Deactivate' : 'Activate' }}
-                                                                    </button>
-                                                                </form>
+                                                                        <input type="hidden" name="dt_page"
+                                                                            class="dt-page-field" value="0">
+                                                                        <button class="primary-btn fix-gr-bg"
+                                                                            type="submit">
+                                                                            Delete
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
                                                             </div>
-                                                        </div>
 
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            @endif
                                         @endforeach
                                     </tbody>
                                 </table>

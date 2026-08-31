@@ -1,17 +1,89 @@
 @extends('layouts.app')
+@push('css')
+    <style>
+
+        .white-box {
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+        }
+
+        .white-box .main-title h3 {
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .white-box .main-title h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 42px;
+            height: 3px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .primary_input_field,
+        select.primary_select {
+            border-radius: 8px !important;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        #table_id thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            border: none;
+        }
+
+        #table_id tbody tr {
+            transition: background-color .12s ease;
+        }
+
+        #table_id tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.025);
+        }
+
+        #table_id tbody td {
+            vertical-align: middle;
+        }
+
+        .text-muted {
+            color: #9aa1ac !important;
+        }
+        .modern-row-actions .btn-row-action {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border_color);
+            background: #fff;
+            color: #8a90a2;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+        }
+    </style>
+@endpush
 @section('title')
     @lang('academics.About')
 @endsection
 
 
 @section('mainContent')
+    @php
+        $canAddStudent = Auth::user()->hasPermission('add-student.store');
+        $canSearchStudents = Auth::user()->hasPermission('student-list.search');
+    @endphp
     <section class="sms-breadcrumb mb-20 up_breadcrumb">
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1>@lang('student.manage_student')</h1>
+                <h1>@lang('student.student_list')</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
-                    <a href="#">@lang('student.student_information')</a>
                     <a href="#">@lang('student.student_list')</a>
                 </div>
             </div>
@@ -20,62 +92,51 @@
     <section class="admin-visitor-area up_admin_visitor">
         <div class="container-fluid p-0">
             {{-- {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'student-list-search', 'method' => 'POST', 'enctype' => 'multipart/form-data', 'id' => 'infix_form']) }} --}}
-            <form class="form-horizontal" action="{{ route('frontend.student.search') }}" method="post">
+            <form class="form-horizontal" action="{{ route('student-list.search') }}" method="post">
                 @csrf
                 <div class="row">
                     <div class="col-lg-12">
-                        <div class="white-box filter_card">
-                            <div class="row">
-                                <div class="col-lg-8 col-md-6 col-sm-6">
-                                    <div class="main-title mt_0_sm mt_0_md">
-                                        <h3 class="mb-15">@lang('common.select_criteria')</h3>
-                                    </div>
-                                </div>
-
-
-
-                                <div class="col-lg-4 col-md-6 col-sm-6 text-left text-sm-right mb-4 mb-sm-0">
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ route('student-list.export-all') }}"
-                                            class="primary-btn small fix-gr-bg me-2" title="Export all students">
-                                            <span class="ti-download pr-2"></span>
-                                            Export All to Excel
-                                        </a>
-
-                                        <button type="button" class="primary-btn small fix-gr-bg me-2"
-                                            id="exportFilteredBtn" style="display: none;">
-                                            <span class="ti-download pr-2"></span>
-                                            Export Filtered
-                                        </button>
-
-                                        {{-- <button type="button" class="primary-btn small fix-gr-bg me-2" id="bulkCardBtn">
-                                            <span class="ti-download pr-2"></span>
-                                            Generate Cards (Bulk)
-                                        </button> --}}
-
-
-
-                                        <a href="{{ route('add-student.index') }}" class="primary-btn small fix-gr-bg">
+                        @if ($canAddStudent)
+                            <div class="white-box mb-10 filter_card">
+                                <div class="row">
+                                    <div class="col-12 mb-4 mb-sm-0">
+                                        <a href="{{ route('add-student.index') }}"
+                                            class="primary-btn small fix-gr-bg col-12 p-2">
                                             <span class="ti-plus pr-2"></span>
                                             @lang('student.add_student')
                                         </a>
                                     </div>
                                 </div>
-
                             </div>
-                            <div class="row row-gap-24">
-
-                                {{-- <input type="hidden" name="url" id="url" value="{{ URL::to("/") }}"> --}}
+                        @endif
 
 
+                        <div class="white-box filter_card mb-10">
+                            <div class="row">
+                                <div class="col-12 mb-4 mb-sm-0">
+                                    <a href="{{ route('student-list.export-all') }}"
+                                        class="primary-btn small fix-gr-bg me-2 p-2 col-12" title="Export all students">
+                                        <span class="ti-download pr-2"></span>
+                                        Export All to Excel
+                                    </a>
+                                    <button type="button" class="primary-btn small fix-gr-bg me-2 p-2 mt-1 col-12"
+                                        id="exportFilteredBtn" style="display: none;">
+                                        <span class="ti-download pr-2"></span>
+                                        Export Filtered
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="white-box filter_card">
+                            <div class="row">
                                 {{-- Branch --}}
-                                <div class="col-lg-4 mb-15">
+                                <div class="col-lg-4">
                                     <div class="primary_input">
-                                        <label class="primary_input_label" for="branch_id">Branch <span
-                                                class="text-danger">*</span></label>
+
                                         <select class="primary_select form-control ajax_select" name="branch_id"
                                             id="branch-select">
-                                            <option value="">Select Branch</option>
+                                            <option value="">Select Branch </option>
                                             @foreach ($branches ?? [] as $branch)
                                                 <option value="{{ $branch->id }}">{{ $branch->name }}</option>
                                             @endforeach
@@ -84,10 +145,8 @@
                                 </div>
 
                                 {{-- Intake --}}
-                                <div class="col-lg-4 mb-15">
+                                <div class="col-lg-4">
                                     <div class="primary_input">
-                                        <label class="primary_input_label" for="intake_id">Intake <span
-                                                class="text-danger">*</span></label>
                                         <select class="primary_select form-control ajax_select" name="intake_id"
                                             id="intake-select">
                                             <option value="">Select Intake</option>
@@ -96,10 +155,8 @@
                                 </div>
 
                                 {{-- Course --}}
-                                <div class="col-lg-4 mb-15">
+                                <div class="col-lg-4">
                                     <div class="primary_input">
-                                        <label class="primary_input_label" for="course_id">Course <span
-                                                class="text-danger">*</span></label>
                                         <select class="primary_select form-control ajax_select" name="course_id"
                                             id="course-select">
                                             <option value="">Select Course</option>
@@ -107,11 +164,13 @@
 
                                     </div>
                                 </div>
-                                <div class="col-lg-12 mt-20 text-right">
-                                    <button type="submit" class="primary-btn small fix-gr-bg">
-                                        <span class="ti-search pr-2"></span> @lang('common.search')
-                                    </button>
-                                </div>
+                                @if ($canSearchStudents)
+                                    <div class="col-lg-12 mt-10 text-right">
+                                        <button type="submit" class="primary-btn small fix-gr-bg col-12 p-2">
+                                            <span class="ti-search pr-2"></span> @lang('common.search')
+                                        </button>
+                                    </div>
+                                @endif
 
 
 
@@ -134,7 +193,7 @@
                 <input type="hidden" id="un_section" value="{{ @$data['un_section_id'] }}">
             </form>
             {{-- @if (@$students) --}}
-            <div class="row mt-40 full_wide_table">
+            <div class="row mt-20 full_wide_table">
                 <div class="col-lg-12">
                     <div class="white-box">
                         <div class="row">
@@ -182,7 +241,7 @@
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
-
+                                        <tbody></tbody>
 
                                     </table>
                                 </x-table>
@@ -268,7 +327,7 @@
     @php
         if (isset($academic_year) || isset($class_id)) {
             $ajax_url = url(
-                'student-list-datatable?academic_year=' .
+                'student/student-info/student-list/datatable?academic_year=' .
                     $academic_year .
                     '&class=' .
                     $class_id .
@@ -280,7 +339,7 @@
                     $name,
             );
         } else {
-            $ajax_url = url('student-list-datatable');
+            $ajax_url = url('student/student-info/student-list/datatable');
         }
     @endphp
 @endsection
@@ -295,7 +354,6 @@
         $('#table_id').DataTable({
             processing: true,
             serverSide: true,
-
             scrollX: true,
 
             dom: "<'d-flex justify-content-between align-items-center mb-2'<'me-2'l><'mx-auto'f><'ms-2'B>>" +
@@ -342,8 +400,6 @@
                     columns: ':gt(0)'
                 }
             ],
-
-
             paging: true,
             searching: true,
             ordering: true,
@@ -467,6 +523,9 @@
                     orderable: false
                 },
                 {
+                    // Server-rendered Actions column (Edit/Disable/Verify/View links) —
+                    // button-level permission gating for these lives in the controller,
+                    // not here. See the note in the PHP block near the top of this file.
                     data: 'action',
                     orderable: false,
                     searchable: false
@@ -538,7 +597,7 @@
             $('#verificationCheckModal').modal('show');
 
             $.ajax({
-                url: "/student/student-info/verification-history/" + studentId,
+                url: "/student/student-info/student-list/verification-history/" + studentId,
                 method: "GET",
                 success: function(data) {
 
@@ -575,9 +634,9 @@
                                <td>
                                     ${row.signature_path 
                                         ? `<a href="/storage/${row.signature_path}" target="_blank">
-                                                                                                                <img src="/storage/${row.signature_path}" 
-                                                                                                                    style="width:80px; border:1px solid #ccc; padding:2px; cursor:pointer;">
-                                                                                                        </a>`
+                                                                                                                            <img src="/storage/${row.signature_path}" 
+                                                                                                                                style="width:80px; border:1px solid #ccc; padding:2px; cursor:pointer;">
+                                                                                                                    </a>`
                                         : '-'
                                     }
                                 </td>
@@ -622,7 +681,7 @@
 
                 // Make AJAX request to get intakes for selected branch
                 $.ajax({
-                    url: '{{ route('student-list.get-intakes', ':branchId') }}'.replace(':branchId',
+                    url: '{{ route('get-intakes-by-branch', ':branchId') }}'.replace(':branchId',
                         branchId),
                     type: 'GET',
                     headers: {
@@ -690,7 +749,7 @@
 
                 // Make AJAX request to get courses for selected intake
                 $.ajax({
-                    url: '{{ route('student-list.get-courses', ':intakeId') }}'.replace(':intakeId',
+                    url: '{{ route('get-courses-by-intake', ':intakeId') }}'.replace(':intakeId',
                         intakeId),
                     type: 'GET',
                     headers: {

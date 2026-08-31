@@ -18,5 +18,10 @@ class InvoicesPayments extends Model
         return $this->belongsTo(Branch::class);
     }
 
+    public function createUser()
+    {
+        return $this->belongsTo(User::class, 'create_user_id');
+    }
+
 
 }

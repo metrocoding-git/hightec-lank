@@ -1,10 +1,147 @@
 @extends('layouts.app')
+{{-- BUG FIX (Section 34): browser-tab title called @lang('academics.About') --
+     the same leftover Academics-template placeholder found and fixed on many
+     other pages across this project -- instead of naming this page. Reused
+     the 'supplier_list' key already used correctly elsewhere on this
+     same page. --}}
 @section('title')
-    @lang('academics.About')
+    @lang('inventory.supplier_list')
 @endsection
 @section('mainContent')
     @push('css')
         <style>
+        /* ---- Modern refresh: cards, table, breadcrumb (Section 34) ----
+             BUG FIX: this page already used the sms-breadcrumb markup and
+             .white-box/#table_id markup, but never defined any CSS for them
+             anywhere in the Inventory module, so the banner and cards
+             rendered completely unstyled. Adding the same breadcrumb/card/
+             table CSS used across the rest of the app. ---- */
+        .sms-breadcrumb {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+            padding: 18px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sms-breadcrumb::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .sms-breadcrumb .row {
+            align-items: center;
+        }
+
+        .sms-breadcrumb h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .sms-breadcrumb .bc-pages {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .sms-breadcrumb .bc-pages a {
+            font-size: 13px;
+            font-weight: 500;
+            color: #8a90a2;
+            text-decoration: none;
+            transition: color .15s ease;
+        }
+
+        .sms-breadcrumb .bc-pages a:hover {
+            color: var(--gradient_1);
+        }
+
+        .sms-breadcrumb .bc-pages a:not(:last-child)::after {
+            content: '\203A';
+            margin: 0 8px;
+            color: #c7cbd6;
+            font-weight: 400;
+        }
+
+        .sms-breadcrumb .bc-pages a:last-child {
+            color: var(--gradient_1);
+            font-weight: 700;
+            pointer-events: none;
+        }
+
+        .white-box {
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+        }
+
+        .white-box .main-title h3,
+        .white-box .main-title h4,
+        .white-box .main-title h5 {
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .white-box .main-title h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 42px;
+            height: 3px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .primary_input_field,
+        select.primary_select {
+            border-radius: 8px !important;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        #table_id thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            border: none;
+        }
+
+        #table_id tbody tr {
+            transition: background-color .12s ease;
+        }
+
+        #table_id tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.025);
+        }
+
+        #table_id tbody td {
+            vertical-align: middle;
+        }
+
+        .text-muted {
+            color: #9aa1ac !important;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            color: #fff;
+        }
             .invalid-feedback {
                 display: inline-block !important;
             }
@@ -22,9 +159,15 @@
             </div>
         </div>
     </section>
+    @php
+        // Button-level permissions (Section 34).
+        $canAddSupplier = Auth::user()->hasPermission('supplier-store');
+        $canEditSupplier = Auth::user()->hasPermission('supplier-update');
+        $canDeleteSupplier = Auth::user()->hasPermission('supplier-delete');
+    @endphp
     <section class="admin-visitor-area up_st_admin_visitor">
         <div class="container-fluid p-0">
-            @if (isset($editData))
+            @if (isset($editData) && $canAddSupplier)
                 <div class="row">
                     <div class="offset-lg-10 col-lg-2 text-right col-md-12 mb-20">
                         <a href="{{ route('supplier') }}" class="primary-btn small fix-gr-bg">
@@ -152,14 +295,16 @@
                                         </div>
                                         <div class="row mt-40">
                                             <div class="col-lg-12 text-center">
-                                                <button class="primary-btn fix-gr-bg submit" data-toggle="tooltip">
-                                                    <span class="ti-check"></span>
-                                                    @if (isset($editData))
-                                                        @lang('common.update')
-                                                    @else
-                                                        @lang('common.save')
-                                                    @endif
-                                                </button>
+                                                @if (isset($editData) ? $canEditSupplier : $canAddSupplier)
+                                                    <button class="primary-btn fix-gr-bg submit" data-toggle="tooltip">
+                                                        <span class="ti-check"></span>
+                                                        @if (isset($editData))
+                                                            @lang('common.update')
+                                                        @else
+                                                            @lang('common.save')
+                                                        @endif
+                                                    </button>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
@@ -211,19 +356,17 @@
                                                             <td>
                                                                 <x-drop-down>
 
-                                                                    <a class="dropdown-item"
-                                                                        href="{{ route('supplier-edit', $value->id) }}">
-                                                                        @lang('common.edit')</a>
+                                                                    @if ($canEditSupplier)
+                                                                        <a class="dropdown-item"
+                                                                            href="{{ route('supplier-edit', $value->id) }}">
+                                                                            @lang('common.edit')</a>
+                                                                    @endif
 
-
+                                                                    @if ($canDeleteSupplier)
                                                                         <a class="dropdown-item" data-toggle="modal"
-                                                                    data-target="#deletemodal{{ $value->id }}"
-                                                                    href="#">@lang('common.delete')</a>
-
-
-                                                                
-
-
+                                                                            data-target="#deletemodal{{ $value->id }}"
+                                                                            href="#">@lang('common.delete')</a>
+                                                                    @endif
 
                                                                 </x-drop-down>
                                                             </td>
@@ -276,11 +419,10 @@
         </div>
     </section>
 @endsection
+@include('components.partials.data_table_css')
+@include('components.partials.data_table_js')
 @push('script')
-    @include('components.partials.data_table_js')
-    @include('components.partials.multi_select_js')
-    @include('components.partials.date_picker_css_js')
-    @include('components.partials.data_table_css')
+
     <script>
         $('#table_id').DataTable({
             responsive: true,

@@ -136,7 +136,7 @@ class ContentListController extends Controller
 
         $content->update($data);
 
-        return redirect()->route('content-list')->with('success', 'Content updated successfully!');
+        return redirect()->route('download-center.content-list')->with('success', 'Content updated successfully!');
 
     }
 
@@ -155,7 +155,7 @@ class ContentListController extends Controller
 
         $content->delete();
 
-        return redirect()->route('content-list')->with('success', 'Content deleted successfully!');
+        return redirect()->route('download-center.content-list')->with('success', 'Content deleted successfully!');
     }
 
     /**

@@ -47,11 +47,31 @@ class ItemIssueController extends Controller
             return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
         }
     }
-    public function issueListView()
+    public function issueListView(Request $request)
     {
         try {
-            $issuedBatches = ItemIssueBatch::with(['items.item', 'items.category', 'student', 'staff', 'branch', 'course','createdBy'])
+            // Performance fix (Section 38): this list previously loaded EVERY
+            // active batch (with several eager-loaded relations) on every page
+            // view, which got slow once the table had a lot of history. Added
+            // a date-range filter on issue_date, defaulting to the last month,
+            // so a normal page load only ever pulls a bounded window of rows.
+            // Older data is still reachable by picking a wider range in the
+            // filter form above the table.
+            $request->validate([
+                'from_date' => 'nullable|date',
+                'to_date' => 'nullable|date',
+            ]);
+
+            $fromDateInput = $request->filled('from_date') ? $request->from_date : now()->subMonth()->format('Y-m-d');
+            $toDateInput = $request->filled('to_date') ? $request->to_date : now()->format('Y-m-d');
+
+            $fromDate = Carbon::parse($fromDateInput)->startOfDay();
+            $toDate = Carbon::parse($toDateInput)->endOfDay();
+
+            $issuedBatches = ItemIssueBatch::with(['items.item', 'items.category', 'student', 'staff', 'branch', 'course', 'createdBy'])
                 ->where('active_status', 1)
+                ->whereBetween('issue_date', [$fromDate, $toDate])
+                ->orderBy('issue_date', 'desc')
                 ->get();
 
             // Add expiration status to each batch
@@ -86,7 +106,7 @@ class ItemIssueController extends Controller
                 ];
             });
 
-            return view('pages.account.inventory.item-issue-list', compact('batchesWithCourseStatus'));
+            return view('pages.account.inventory.item-issue-list', compact('batchesWithCourseStatus', 'fromDateInput', 'toDateInput'));
         } catch (Exception $e) {
             return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
         }
@@ -107,7 +127,7 @@ class ItemIssueController extends Controller
             'student_id' => 'nullable|exists:students,id',
             'intake_id' => 'nullable|exists:intakes,id',
             'course_id' => 'nullable|exists:courses,id',
-            'staff_id' => 'nullable|exists:users,id', 
+            'staff_id' => 'nullable|exists:users,id',
             'items' => 'required|array|min:1',
             'items.*.item_id' => 'required|exists:inventory_items,id',
             'items.*.item_category_id' => 'required|exists:categories,id',
@@ -147,7 +167,7 @@ class ItemIssueController extends Controller
             }
 
             $batch->save();
-            
+
             // Update student_courses status if student, intake, and course are provided
             if ($request->student_id && $request->intake_id && $request->course_id) {
                 $studentCourse = StudentCourse::where('student_id', $request->student_id)
@@ -158,8 +178,7 @@ class ItemIssueController extends Controller
                 if ($studentCourse) {
                     $studentCourse->status = 'start';
                     $studentCourse->save();
-                } 
-
+                }
             }
 
             $savedItems = [];
@@ -213,99 +232,8 @@ class ItemIssueController extends Controller
         }
     }
 
-    // public function edit($id)
-    // {
-    //     try {
-    //         $issuedItems = ItemIssue::where('active_status', 1)->get();
-    //         $courses = Course::get();
-    //         $staffs = User::get();
-    //         $inventoryItems = Inventory_item::get();
-    //         $intakes = Intake::get();
-    //         $students = Student::get();
-    //         $categories = Category::get();
-    //         $branches = Branch::get();
 
-    //         $editData = ItemIssue::findOrFail($id);
-
-    //         return view('pages.account.inventory.item-issue', compact('issuedItems', 'courses', 'staffs', 'intakes', 'students', 'inventoryItems', 'categories', 'branches', 'editData'));
-    //     } catch (Exception $e) {
-    //         return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
-    //     }
-    // }
-
-    // public function update(Request $request, $id)
-    // {
-    //     $request->validate([
-    //         'branch_id' => 'required',
-    //         'issue_date' => 'required|date',
-    //         'due_date' => 'required|date',
-    //         'issue_to' => 'nullable|exists:users,id', // For staff
-    //         'student_id' => 'nullable|exists:students,id', // For students
-    //         'intake_id' => 'nullable|exists:intakes,id',
-    //         'course_id' => 'nullable|exists:courses,id',
-    //         'items' => 'required|array|min:1', // Ensure at least one item is present
-    //         'items.*.item_id' => 'required|exists:inventory_items,id',
-    //         'items.*.item_category_id' => 'required|exists:categories,id',
-    //         'items.*.quantity' => 'required|integer|min:1',
-    //     ]);
-
-    //     try {
-    //         DB::beginTransaction();
-
-    //         // Find and delete the original item issue record
-    //         // This assumes $id refers to a single ItemIssue record that is being replaced
-    //         // by potentially multiple new records.
-    //         $originalItemIssue = ItemIssue::findOrFail($id);
-    //         $originalItemIssue->delete();
-
-    //         foreach ($request->items as $itemData) {
-    //             $itemIssue = new ItemIssue();
-    //             $itemIssue->branch_id = $request->branch_id;
-    //             $itemIssue->item_category_id = $itemData['item_category_id'];
-    //             $itemIssue->item_id = $itemData['item_id'];
-    //             $itemIssue->issue_date = date('Y-m-d', strtotime($request->issue_date));
-    //             $itemIssue->due_date = date('Y-m-d', strtotime($request->due_date));
-    //             $itemIssue->quantity = $itemData['quantity'];
-    //             $itemIssue->description = $request->description; // Overall description
-    //             $itemIssue->issue_status = 'I'; // Issued
-    //             $itemIssue->active_status = 1;
-
-    //             // Check if student is selected or staff
-    //             if ($request->student_id) {
-    //                 $itemIssue->student_id = $request->student_id;
-    //                 $itemIssue->course_id = $request->course_id;
-    //                 $itemIssue->intake_id = $request->intake_id;
-    //                 $itemIssue->issue_to = null; // Staff ID should be null for students
-    //             } else {
-    //                 $itemIssue->issue_to = $request->staff_id;
-    //                 $itemIssue->student_id = null;
-    //                 $itemIssue->course_id = null;
-    //                 $itemIssue->intake_id = null;
-    //             }
-
-    //             $itemIssue->save();
-    //         }
-
-    //         DB::commit();
-
-    //         return redirect()->route('item-issue')->with('success', 'Items updated successfully.');
-    //     } catch (Exception $e) {
-    //         DB::rollBack();
-    //         return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
-    //     }
-    // }
-
-    // public function returnItemView($id)
-    // {
-    //     try {
-    //         $itemIssue = ItemIssue::findOrFail($id);
-    //         return view('pages.account.inventory.return-item-modal', compact('itemIssue'));
-    //     } catch (Exception $e) {
-    //         return response()->json(['error' => 'Operation Failed: ' . $e->getMessage()], 500);
-    //     }
-    // }
-
-    public function IssueItem(Request $request)
+    public function ReturnBack(Request $request)
     {
         $request->validate([
             'id' => 'required|exists:item_issue_batches,id',
@@ -433,4 +361,116 @@ class ItemIssueController extends Controller
         }
     }
 
+    public function returnItem(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|exists:item_issue_batches,id',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $batch = ItemIssueBatch::findOrFail($request->id);
+
+            $intake = Intake::find($batch->intake_id);
+            $course = Course::find($batch->course_id);
+            $expireDate = Carbon::parse($intake->start_date)->addDays((int)$course->expiration_date);
+
+            $canAdd = now()->lte($expireDate);
+            if ($canAdd) {
+                // Get all items in this batch before updating status.
+                $batchItems = ItemIssueItem::where('batch_id', $batch->id)->get();
+
+                // Track inventory changes for each item return (increase inventory).
+                foreach ($batchItems as $batchItem) {
+                    $currentBalance = ItemInventory::getCurrentBalance($batchItem->item_id, $batch->branch_id);
+                    $newBalance = $currentBalance + $batchItem->quantity;
+
+                    ItemInventory::create([
+                        'item_id' => $batchItem->item_id,
+                        'transaction_type' => 'issue_return',
+                        'branch_id' => $batch->branch_id,
+                        'transaction_id' => $batch->id,
+                        'quantity' => $batchItem->quantity,
+                        'current_balance' => $newBalance,
+                        'reference_no' => 'BATCH-' . $batch->id,
+                        'transaction_date' => now()->toDateString(),
+                        'description' => 'Items returned from batch',
+                    ]);
+                }
+
+                $batch->issue_status = 'R';
+                $batch->save();
+
+                $batchFind = ItemIssueBatch::where('branch_id', $batch->branch_id)
+                    ->where('student_id', $batch->student_id)
+                    ->where('intake_id', $batch->intake_id)
+                    ->where('course_id', $batch->course_id)
+                    ->where('issue_status', 'I')
+                    ->first();
+
+                if (!$batchFind) {
+                    $student_course = StudentCourse::where('student_id', $batch->student_id)
+                        ->where('course_id', $batch->course_id)
+                        ->where('intake_id', $batch->intake_id)
+                        ->where('branch_id', $batch->branch_id)
+                        ->first();
+
+                    if ($student_course) {
+                        $student_course->status = 'return';
+                        $student_course->save();
+                    }
+                }
+
+                DB::commit();
+
+                return redirect()->route('item-issue-list')->with('success', 'Batch returned successfully.');
+            }
+
+            return redirect()->back()->with('error', 'Course Period has expired');
+        } catch (Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Operation Failed: ' . $e->getMessage());
+        }
+    }
+
+    public function checkStudentCourseStatus(Request $request)
+    {
+        try {
+            $student_id = $request->student_id;
+            $course_id = $request->course_id;
+            $intake_id = $request->intake_id;
+
+            $studentCourse = StudentCourse::where('student_id', $student_id)
+                ->where('course_id', $course_id)
+                ->where('intake_id', $intake_id)
+                ->first();
+
+            if ($studentCourse && $studentCourse->status === 'start') {
+                return response()->json([
+                    'can_issue' => true,
+                    'message' => 'Items can be issued.'
+                ]);
+            }
+
+            $intake = Intake::find($intake_id);
+            $course = Course::find($course_id);
+            $expireDate = Carbon::parse($intake->start_date)->addDays((int)$course->expiration_date);
+
+            $canAdd = now()->lte($expireDate);
+            $message = $canAdd
+                ? 'Items can be issued.'
+                : 'Items Cannot be issued. expired';
+
+            return response()->json([
+                'can_issue' => $canAdd,
+                'message' => $message
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'can_issue' => false,
+                'message' => 'Error checking course status.'
+            ], 500);
+        }
+    }
 }

@@ -1,15 +1,158 @@
 @extends('layouts.app')
+@push('css')
+    <style>
+        /* ---- Modern refresh: cards, table, breadcrumb (Section 34) ----
+                     BUG FIX: this page already used the sms-breadcrumb markup and
+                     .white-box/#table_id markup, but never defined any CSS for them
+                     anywhere in the Inventory module, so the banner and cards
+                     rendered completely unstyled. Adding the same breadcrumb/card/
+                     table CSS used across the rest of the app. ---- */
+        .sms-breadcrumb {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+            padding: 18px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sms-breadcrumb::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .sms-breadcrumb .row {
+            align-items: center;
+        }
+
+        .sms-breadcrumb h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .sms-breadcrumb .bc-pages {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .sms-breadcrumb .bc-pages a {
+            font-size: 13px;
+            font-weight: 500;
+            color: #8a90a2;
+            text-decoration: none;
+            transition: color .15s ease;
+        }
+
+        .sms-breadcrumb .bc-pages a:hover {
+            color: var(--gradient_1);
+        }
+
+        .sms-breadcrumb .bc-pages a:not(:last-child)::after {
+            content: '\203A';
+            margin: 0 8px;
+            color: #c7cbd6;
+            font-weight: 400;
+        }
+
+        .sms-breadcrumb .bc-pages a:last-child {
+            color: var(--gradient_1);
+            font-weight: 700;
+            pointer-events: none;
+        }
+
+        .white-box {
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+        }
+
+        .white-box .main-title h3,
+        .white-box .main-title h4,
+        .white-box .main-title h5 {
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .white-box .main-title h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 42px;
+            height: 3px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .primary_input_field,
+        select.primary_select {
+            border-radius: 8px !important;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        #table_id thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            border: none;
+        }
+
+        #table_id tbody tr {
+            transition: background-color .12s ease;
+        }
+
+        #table_id tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.025);
+        }
+
+        #table_id tbody td {
+            vertical-align: middle;
+        }
+
+        .text-muted {
+            color: #9aa1ac !important;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            color: #fff;
+        }
+    </style>
+@endpush
+
 @section('title')
-    @lang('academics.About')
+    @lang('inventory.item_sell_list')
 @endsection
 @section('mainContent')
+    @php
+        $canAddItemSell = Auth::user()->hasPermission('save-item-sell-data');
+        $canViewItemSell = Auth::user()->hasPermission('view-item-sell');
+        $canReprintItemSell = Auth::user()->hasPermission('inventory.item-sell-bill');
+        $canReturnItemSell = Auth::user()->hasPermission('return-item-sell');
+        $canSaveItemSellInvoice = Auth::user()->hasPermission('item-sell.invoic-save');
+    @endphp
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
             <div class="row justify-content-between">
                 <h1>@lang('inventory.item_sell_list')</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
-                    <a href="#">@lang('inventory.inventory')</a>
                     <a href="#">@lang('inventory.item_sell_list')</a>
                 </div>
             </div>
@@ -17,27 +160,58 @@
     </section>
     <section class="admin-visitor-area up_admin_visitor">
         <div class="container-fluid p-0">
-            <div class="row">
-                <div class="col-lg-8 col-md-6">
 
+            @if ($canAddItemSell)
+                <div class="white-box mb-10 filter_card">
+                    <div class="row">
+                        <div class="col-12 mb-4 mb-sm-0">
+                            <a href="{{ route('item-sell') }}" class="primary-btn small fix-gr-bg col-12 p-2">
+                                <span class="ti-plus pr-2"></span>
+                                @lang('inventory.new_item_sell')
+                            </a>
+                        </div>
+                    </div>
                 </div>
+            @endif
 
-                <div class="col-lg-4 text-md-right text-left col-md-6 mb-30-lg">
-                    <a href="{{ route('item-sell') }}" class="primary-btn small fix-gr-bg">
-                        <span class="ti-plus pr-2"></span>
-                        @lang('inventory.new_item_sell')
-                    </a>
+            <div class="row mb-10">
+                <div class="col-lg-12">
+                    <div class="white-box">
+                        <form method="GET" action="{{ route('item-sell-list') }}" class="row align-items-end mb-0">
+                            <div class="col-md-6">
+                                <div class="primary_input">
+                                    <input type="date" class="primary_input_field form-control" id="from_date"
+                                        name="from_date" value="{{ $fromDateInput }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="primary_input">
+                                    <input type="date" class="primary_input_field form-control" id="to_date"
+                                        name="to_date" value="{{ $toDateInput }}">
+                                </div>
+                            </div>
+                            <div class="col-12 pt-10">
+                                <button type="submit" class="primary-btn small fix-gr-bg col-12 p-2">
+                                    <span class="ti-search pr-2"></span>Search
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-
             </div>
 
-            <div class="row mt-20">
+            <div class="row">
                 <div class="col-lg-12">
                     <div class="white-box">
                         <div class="row">
                             <div class="col-lg-4 no-gutters">
                                 <div class="main-title">
-                                    <h3 class="mb-15">@lang('inventory.item_sell_list')</h3>
+                                    <h3 class="mb-15">@lang('inventory.item_sell_list')
+                                        <small class="text-muted" style="font-size: 13px; font-weight: 400;">
+                                            ({{ \Carbon\Carbon::parse($fromDateInput)->format('M d, Y') }} &ndash;
+                                            {{ \Carbon\Carbon::parse($toDateInput)->format('M d, Y') }})
+                                        </small>
+                                    </h3>
                                 </div>
                             </div>
                         </div>
@@ -80,7 +254,8 @@
                                                             <td>{{ $key + 1 }}</td>
                                                             <td>{{ $value->invoice_number }}</td>
                                                             <td>{{ $value->reference_no }}</td>
-                                                            <td>{{ $value->role ? $value->role->role_name : 'Others' }}</td>
+                                                            <td>{{ $value->role ? $value->role->role_name : 'Others' }}
+                                                            </td>
                                                             <td>
                                                                 @if ($value->role_id == 2 && $value->student)
                                                                     {{-- Student Role --}}
@@ -162,17 +337,21 @@
                                                             </td>
                                                             <td>
                                                                 <x-drop-down>
-                                                                    <a class="dropdown-item view-item-sell"
-                                                                        title="@lang('common.view') @lang('inventory.item_sell')"
-                                                                        data-id="{{ $value->id }}"
-                                                                        href="#">@lang('common.view')</a>
+                                                                    @if ($canViewItemSell)
+                                                                        <a class="dropdown-item view-item-sell"
+                                                                            title="@lang('common.view') @lang('inventory.item_sell')"
+                                                                            data-id="{{ $value->id }}"
+                                                                            href="#">@lang('common.view')</a>
+                                                                    @endif
 
-                                                                    <a class="dropdown-item item-sell-bill"
-                                                                        title="Re-Print Invoice" target="_blank"
-                                                                        href="{{ route('inventory.item-sell-bill', $value->id) }}">Re-Print</a>
+                                                                    @if ($canReprintItemSell)
+                                                                        <a class="dropdown-item item-sell-bill"
+                                                                            title="Re-Print Invoice" target="_blank"
+                                                                            href="{{ route('inventory.item-sell-bill', $value->id) }}">Re-Print</a>
+                                                                    @endif
 
 
-                                                                    @if ($value->status != 'R')
+                                                                    @if ($value->status != 'R' && $canReturnItemSell)
                                                                         <a class="dropdown-item return-button"
                                                                             data-id="{{ $value->id }}"
                                                                             title="Return Item Sell"
@@ -284,8 +463,10 @@
                                                 <div class="d-flex gap-2">
                                                     <input type="text" id="newInvoiceNumber" class="form-control"
                                                         placeholder="Enter invoice number">
-                                                    <button class="btn btn-primary btn-sm" id="saveInvoiceNumberBtn"
-                                                        data-id="">Save</button>
+                                                    @if ($canSaveItemSellInvoice)
+                                                        <button class="btn btn-primary btn-sm"
+                                                            id="saveInvoiceNumberBtn" data-id="">Save</button>
+                                                    @endif
                                                 </div>
                                             </div>
 

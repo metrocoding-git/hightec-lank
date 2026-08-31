@@ -1,19 +1,77 @@
 @extends('layouts.app')
+@push('css')
+    <style>
+        .white-box {
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+        }
+
+        .white-box .main-title h3 {
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .white-box .main-title h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 42px;
+            height: 3px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .primary_input_field,
+        select.primary_select {
+            border-radius: 8px !important;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        #table_id thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            border: none;
+        }
+
+        #table_id tbody tr {
+            transition: background-color .12s ease;
+        }
+
+        #table_id tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.025);
+        }
+
+        #table_id tbody td {
+            vertical-align: middle;
+        }
+
+        .text-muted {
+            color: #9aa1ac !important;
+        }
+    </style>
+@endpush
 @section('title')
     Student Add Intake
 @endsection
 @section('mainContent')
 
-
+    @php
+        $canAddStudentIntake = Auth::user()->hasPermission('student.add-intake-with-courses.store');
+        $canSearchStudentIntake = Auth::user()->hasPermission('student.add-intake.search');
+    @endphp
 
     <section class="sms-breadcrumb mb-20 up_breadcrumb">
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1>Student Add Intake</h1>
+                <h1>Student Intake & Courses</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">Dashboard</a>
-                    <a href="#">Student Information</a>
-                    <a href="#">Student Add Intake</a>
+                    <a href="#">Student Intake & Courses</a>
                 </div>
             </div>
         </div>
@@ -21,48 +79,32 @@
 
     <section class="admin-visitor-area up_st_admin_visitor">
         <div class="container-fluid p-0">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="white-box">
-                        <div class="row">
-                            <div class="col-lg-8 col-md-6">
-                                <div class="main-title">
-                                    <h3 class="mb-15">Assign Intake to Student</h3>
+            @if ($canAddStudentIntake)
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="white-box">
+                            <div class="row">
+                                <div class="col-lg-12 text-right">
+                                    <button type="button" class="primary-btn fix-gr-bg col-12" data-toggle="modal"
+                                        data-target="#addStudentIntakeModal">
+                                        <span class="ti-plus"></span> Add Student Course and Intake
+                                    </button>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Add Student Course and Intake Button -->
-                        <div class="row">
-                            <div class="col-lg-12 text-right">
-                                <button type="button" class="primary-btn fix-gr-bg" data-toggle="modal"
-                                    data-target="#addStudentIntakeModal">
-                                    <span class="ti-plus"></span> Add Student Course and Intake
-                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            @endif
 
-            <div class="row mt-40">
+            <div class="row mt-20">
                 <div class="col-lg-12">
                     <div class="white-box filter_card">
-                        <form class="form-horizontal">
+                        <form class="form-horizontal mb-0">
                             @csrf
                             <div class="row">
-                                <div class="col-lg-8 col-md-6 col-sm-6">
-                                    <div class="main-title mt_0_sm mt_0_md">
-                                        <h3 class="mb-15">Select Criteria</h3>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row row-gap-24">
                                 {{-- Branch --}}
-                                <div class="col-lg-3 mb-15">
+                                <div class="col-lg-3 mb-15 mb-lg-0">
                                     <div class="primary_input">
-                                        <label class="primary_input_label" for="search_branch_id">Branch <span
-                                                class="text-danger">*</span></label>
                                         <select class="primary_select form-control ajax_select" name="branch_id"
                                             id="search_branch_id">
                                             @if (count($branches) > 1)
@@ -79,10 +121,8 @@
                                 </div>
 
                                 {{-- Intake --}}
-                                <div class="col-lg-3 mb-15">
+                                <div class="col-lg-3 mb-15 mb-lg-0">
                                     <div class="primary_input">
-                                        <label class="primary_input_label" for="search_intake_id">Intake <span
-                                                class="text-danger">*</span></label>
                                         <select class="primary_select form-control ajax_select" name="intake_id"
                                             id="search_intake_id">
                                             <option value="">Select Intake</option>
@@ -98,10 +138,8 @@
                                 </div>
 
                                 {{-- Course --}}
-                                <div class="col-lg-3 mb-15">
+                                <div class="col-lg-3 mb-15 mb-lg-0">
                                     <div class="primary_input">
-                                        <label class="primary_input_label" for="search_course_id">Course <span
-                                                class="text-danger">*</span></label>
                                         <select class="primary_select form-control ajax_select" name="course_id"
                                             id="search_course_id">
                                             <option value="">Select Course</option>
@@ -116,10 +154,8 @@
                                     </div>
                                 </div>
 
-                                <div class="col-lg-3 mb-15">
+                                <div class="col-lg-3 mb-15 mb-lg-0">
                                     <div class="primary_input">
-                                        <label class="primary_input_label" for="search_status">Status <span
-                                                class="text-danger">*</span></label>
                                         <select class="primary_select form-control ajax_select" name="status"
                                             id="search_status">
                                             <option value="">Select status</option>
@@ -148,11 +184,13 @@
                                     </div>
                                 </div>
 
-                                <div class="col-lg-12 mt-20 text-right">
-                                    <button type="submit" id="filterBtn" class="primary-btn small fix-gr-bg">
-                                        <span class="ti-search pr-2"></span> Search
-                                    </button>
-                                </div>
+                                @if ($canSearchStudentIntake)
+                                    <div class="col-lg-12 mt-10 text-right">
+                                        <button type="submit" id="filterBtn" class="primary-btn small fix-gr-bg col-12 p-2">
+                                            <span class="ti-search pr-2"></span> Search
+                                        </button>
+                                    </div>
+                                @endif
                             </div>
                         </form>
                     </div>
@@ -160,7 +198,7 @@
             </div>
 
             <!-- Student Intake List -->
-            <div class="row mt-40">
+            <div class="row mt-20">
                 <div class="col-lg-12">
                     <div class="white-box">
                         <div class="row">
@@ -1222,6 +1260,46 @@
                     console.error('XHR response:', xhr.responseText);
 
                     var errorMessage = 'Failed to update status';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
+
+                    toastr.error(errorMessage);
+                }
+            });
+        }
+
+        // BUG FIX (Section 26): the server-rendered Delete action (built in
+        // studentAddIntakeWithCoursesData(), see the controller patch) calls
+        // deleteIntake(id) on click, but this function did not exist anywhere in this
+        // file — clicking Delete silently threw "deleteIntake is not defined" and did
+        // nothing. Added here, following the same confirm + ajax + toastr pattern
+        // already used by changeStatus() above, posting to the real
+        // student.add-intake.destroy route.
+        function deleteIntake(id) {
+            if (!confirm('Are you sure you want to remove this intake? This cannot be undone.')) {
+                return;
+            }
+
+            $.ajax({
+                url: '{{ route('student.add-intake.destroy', ':id') }}'.replace(':id', id),
+                type: 'DELETE',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                success: function(response) {
+                    toastr.success('Intake removed successfully!');
+                    table.ajax.reload(null, false);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error deleting intake:', error);
+                    console.error('XHR response:', xhr.responseText);
+
+                    var errorMessage = 'Failed to remove intake';
                     if (xhr.responseJSON && xhr.responseJSON.message) {
                         errorMessage = xhr.responseJSON.message;
                     }

@@ -5,9 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use function _PHPStan_781aefaf6\React\Promise\all;
 
-class CategoryController extends Controller
+class ItemCategoryController extends Controller
 {
     /**
      * Display a listing of the resource.

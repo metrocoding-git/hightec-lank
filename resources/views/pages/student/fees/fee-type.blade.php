@@ -1,27 +1,151 @@
 @extends('layouts.app')
+{{-- BUG FIX (Section 27): the browser-tab title called @lang('academics.About') —
+     a leftover placeholder copied from an Academics-module page — instead of
+     naming this page. Also adding the standard modern-refresh + breadcrumb CSS,
+     which this page never defined despite using the sms-breadcrumb/white-box
+     markup. --}}
+@push('css')
+    <style>
+        .white-box {
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+        }
+
+        .white-box .main-title h3,
+        .white-box .main-title h5 {
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .white-box .main-title h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 42px;
+            height: 3px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .primary_input_field,
+        select.primary_select {
+            border-radius: 8px !important;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        #table_id thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            border: none;
+        }
+
+        #table_id tbody tr {
+            transition: background-color .12s ease;
+        }
+
+        #table_id tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.025);
+        }
+
+        #table_id tbody td {
+            vertical-align: middle;
+        }
+
+        .text-muted {
+            color: #9aa1ac !important;
+        }
+
+        .sms-breadcrumb {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+            padding: 18px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sms-breadcrumb::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .sms-breadcrumb .row {
+            align-items: center;
+        }
+
+        .sms-breadcrumb h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .sms-breadcrumb .bc-pages {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .sms-breadcrumb .bc-pages a {
+            font-size: 13px;
+            font-weight: 500;
+            color: #8a90a2;
+            text-decoration: none;
+            transition: color .15s ease;
+        }
+
+        .sms-breadcrumb .bc-pages a:hover {
+            color: var(--gradient_1);
+        }
+
+        .sms-breadcrumb .bc-pages a:not(:last-child)::after {
+            content: '\203A';
+            margin: 0 8px;
+            color: #c7cbd6;
+            font-weight: 400;
+        }
+
+        .sms-breadcrumb .bc-pages a:last-child {
+            color: var(--gradient_1);
+            font-weight: 700;
+            pointer-events: none;
+        }
+    </style>
+@endpush
 @section('title')
-    @lang('academics.About')
+    @lang('fees.fees_type')
 @endsection
 @section('mainContent')
+    @php
+        // Permission keys from config_permissions.php ("Fees" category, Invoice Type window).
+        $canAddFeesType = Auth::user()->hasPermission('fees.fees-type-store');
+        $canEditFeesType = Auth::user()->hasPermission('fees.fees-type-update');
+        $canDeleteFeesType = Auth::user()->hasPermission('fees.fees-type-delete');
+    @endphp
     <section class="sms-breadcrumb mb-20">
         <div class="container-fluid">
             <div class="row justify-content-between">
                 <h1>@lang('fees.fees_type')</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
-                    <a href="#">@lang('fees.fees')</a>
-                    @if (isset($feesType))
-                        <a href="#">@lang('fees.edit_fees_type')</a>
-                    @else
-                        <a href="#">@lang('fees.fees_type')</a>
-                    @endif
+                    <a href="#">@lang('fees.fees') Type</a>
                 </div>
             </div>
         </div>
     </section>
     <section class="admin-visitor-area up_st_admin_visitor">
         <div class="container-fluid p-0">
-            @if (isset($feesType))
+            @if (isset($feesType) && $canAddFeesType)
                 <div class="row">
                     <div class="offset-lg-10 col-lg-2 text-right col-md-12 mb-20">
                         <a href="{{ route('fees.fees-type') }}" class="primary-btn small fix-gr-bg">
@@ -72,7 +196,7 @@
                                         </div>
 
                                         {{-- Fees Group Field --}}
-                                        <div class="row mt-25">
+                                        <div class="row mt-15">
                                             <div class="col-lg-12">
                                                 <label class="primary_input_label">
                                                     {{ __('fees.fees_group') }} <span class="text-danger">*</span>
@@ -103,7 +227,7 @@
                                         </div>
 
                                         {{-- Amount Field --}}
-                                        <div class="row mt-25">
+                                        <div class="row mt-15">
                                             <div class="col-lg-12">
                                                 <div class="primary_input">
                                                     <label class="primary_input_label">@lang('price')
@@ -119,7 +243,7 @@
                                         </div>
 
                                         {{-- Description Field --}}
-                                        <div class="row mt-25">
+                                        <div class="row mt-15">
                                             <div class="col-lg-12">
                                                 <div class="primary_input">
                                                     <label class="primary_input_label">@lang('common.description')</label>
@@ -129,14 +253,16 @@
                                         </div>
 
                                         {{-- Submit Button --}}
-                                        <div class="row mt-40">
-                                            <div class="col-lg-12 text-center">
-                                                <button class="primary-btn fix-gr-bg submit" data-toggle="tooltip">
-                                                    <span class="ti-check"></span>
-                                                    {{ isset($feesType) ? __('common.update') : __('common.save') }}
-                                                </button>
+                                        @if (isset($feesType) ? $canEditFeesType : $canAddFeesType)
+                                            <div class="row mt-20">
+                                                <div class="col-lg-12 text-center">
+                                                    <button class="primary-btn fix-gr-bg submit col-12" data-toggle="tooltip">
+                                                        <span class="ti-check"></span>
+                                                        {{ isset($feesType) ? __('common.update') : __('common.save') }}
+                                                    </button>
+                                                </div>
                                             </div>
-                                        </div>
+                                        @endif
                                     </div>
                                 </div>
                             </form>
@@ -179,54 +305,63 @@
                                                     <td>{{ $feesType->description }}</td>
                                                     <td>{{ $feesType->price }}</td>
                                                     <td>
-                                                        <x-drop-down>
+                                                        @if ($canEditFeesType || $canDeleteFeesType)
+                                                            <x-drop-down>
 
-                                                            <a class="dropdown-item"
-                                                                href="{{ route('fees.fees-type-edit', [$feesType->id]) }}">@lang('common.edit')</a>
+                                                                @if ($canEditFeesType)
+                                                                    <a class="dropdown-item"
+                                                                        href="{{ route('fees.fees-type-edit', [$feesType->id]) }}">@lang('common.edit')</a>
+                                                                @endif
 
+                                                                @if ($canDeleteFeesType)
+                                                                    <a class="dropdown-item" data-toggle="modal"
+                                                                        data-target="#deleteFeesTypeModal{{ $feesType->id }}"
+                                                                        href="#">@lang('common.delete')</a>
+                                                                @endif
 
-                                                            <a class="dropdown-item" data-toggle="modal"
-                                                                data-target="#deleteFeesTypeModal{{ $feesType->id }}"
-                                                                href="#">@lang('common.delete')</a>
-
-                                                        </x-drop-down>
+                                                            </x-drop-down>
+                                                        @else
+                                                            <span class="text-muted">&mdash;</span>
+                                                        @endif
                                                     </td>
                                                 </tr>
 
-                                                <div class="modal fade admin-query"
-                                                    id="deleteFeesTypeModal{{ $feesType->id }}">
-                                                    <div class="modal-dialog modal-dialog-centered">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h4 class="modal-title">@lang('fees.delete_fees_type')</h4>
-                                                                <button type="button" class="close"
-                                                                    data-dismiss="modal">&times;</button>
-                                                            </div>
-                                                            <div class="modal-body">
-                                                                <div class="text-center">
-                                                                    <h4>@lang('common.are_you_sure_to_delete')</h4>
+                                                @if ($canDeleteFeesType)
+                                                    <div class="modal fade admin-query"
+                                                        id="deleteFeesTypeModal{{ $feesType->id }}">
+                                                        <div class="modal-dialog modal-dialog-centered">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <h4 class="modal-title">@lang('fees.delete_fees_type')</h4>
+                                                                    <button type="button" class="close"
+                                                                        data-dismiss="modal">&times;</button>
                                                                 </div>
-                                                                <div class="mt-40 d-flex justify-content-between">
-                                                                    <button type="button" class="primary-btn tr-bg"
-                                                                        data-dismiss="modal">
-                                                                        @lang('common.cancel')
-                                                                    </button>
-                                                                    <form
-                                                                        action="{{ route('fees.fees-type-delete', $feesType->id) }}"
-                                                                        method="POST">
-                                                                        @csrf
-                                                                        @method('DELETE')
-                                                                        <button class="primary-btn fix-gr-bg"
-                                                                            type="submit">
-                                                                            @lang('common.delete')
+                                                                <div class="modal-body">
+                                                                    <div class="text-center">
+                                                                        <h4>@lang('common.are_you_sure_to_delete')</h4>
+                                                                    </div>
+                                                                    <div class="mt-40 d-flex justify-content-between">
+                                                                        <button type="button" class="primary-btn tr-bg"
+                                                                            data-dismiss="modal">
+                                                                            @lang('common.cancel')
                                                                         </button>
-                                                                    </form>
+                                                                        <form
+                                                                            action="{{ route('fees.fees-type-delete', $feesType->id) }}"
+                                                                            method="POST">
+                                                                            @csrf
+                                                                            @method('DELETE')
+                                                                            <button class="primary-btn fix-gr-bg"
+                                                                                type="submit">
+                                                                                @lang('common.delete')
+                                                                            </button>
+                                                                        </form>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
 
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
+                                                @endif
                                             @endforeach
                                         </tbody>
                                     </table>
@@ -244,8 +379,8 @@
 @include('components.partials.date_picker_css_js')
 @include('components.partials.data_table_css')
 @push('script')
- <script>
-       $('#table_id').DataTable({
+    <script>
+        $('#table_id').DataTable({
             responsive: true,
             dom: 'Bfrtip',
 
@@ -290,6 +425,6 @@
                     next: '<i class="fa-solid fa-angle-right"></i>'
                 }
             }
-        });    </script>
-    
+        });
+    </script>
 @endpush

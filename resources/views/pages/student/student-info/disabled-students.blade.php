@@ -1,16 +1,142 @@
 @extends('layouts.app')
+@push('css')
+    <style>
+        /* ---- Modern refresh: cards, table, breadcrumb (Section 25) ----
+                     BUG FIX: this page already used the sms-breadcrumb markup, but like
+                     student-view.blade.php it never defined the CSS for it, so the banner
+                     rendered unstyled. Adding the same card/table/breadcrumb CSS used
+                     everywhere else. ---- */
+        .white-box {
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+        }
+
+        .white-box .main-title h3 {
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .white-box .main-title h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 42px;
+            height: 3px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .primary_input_field,
+        select.primary_select {
+            border-radius: 8px !important;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        #table_id thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            border: none;
+        }
+
+        #table_id tbody tr {
+            transition: background-color .12s ease;
+        }
+
+        #table_id tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.025);
+        }
+
+        #table_id tbody td {
+            vertical-align: middle;
+        }
+
+        .text-muted {
+            color: #9aa1ac !important;
+        }
+
+        .sms-breadcrumb {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+            padding: 18px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sms-breadcrumb::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .sms-breadcrumb .row {
+            align-items: center;
+        }
+
+        .sms-breadcrumb h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .sms-breadcrumb .bc-pages {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .sms-breadcrumb .bc-pages a {
+            font-size: 13px;
+            font-weight: 500;
+            color: #8a90a2;
+            text-decoration: none;
+            transition: color .15s ease;
+        }
+
+        .sms-breadcrumb .bc-pages a:hover {
+            color: var(--gradient_1);
+        }
+
+        .sms-breadcrumb .bc-pages a:not(:last-child)::after {
+            content: '\203A';
+            margin: 0 8px;
+            color: #c7cbd6;
+            font-weight: 400;
+        }
+
+        .sms-breadcrumb .bc-pages a:last-child {
+            color: var(--gradient_1);
+            font-weight: 700;
+            pointer-events: none;
+        }
+    </style>
+@endpush
 @section('title')
     @lang('academics.About')
 @endsection
 @section('mainContent')
+    @php
+        // Button-level permissions (Section 25).
+        $canSearchDisabledStudents = Auth::user()->hasPermission('disabled-students.search');
+        $canEnableStudent = Auth::user()->hasPermission('student.update-status');
+    @endphp
     <section class="sms-breadcrumb mb-20 up_breadcrumb">
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1>{{ @$pt }}</h1>
+                <h1>Disabled @lang('student.student_list')</h1>
                 <div class="bc-pages">
-                    <a href="{{ url('dashboard') }}">@lang('common.dashboard')</a>
-                    <a href="#">@lang('student.student_information')</a>
-                    <a href="#">{{ @$pt }}</a>
+                    <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
+                    <a href="#">Disabled @lang('student.student_list')</a>
                 </div>
             </div>
         </div>
@@ -20,7 +146,7 @@
         <div class="container-fluid p-0">
 
             {{-- {{ Form::open(['class' => 'form-horizontal', 'files' => true, 'route' => 'disabled_student_search', 'method' => 'POST', 'enctype' => 'multipart/form-data']) }} --}}
-            <form class="form-horizontal" action="{{ route('frontend.disabled-student.search') }}" method="post">
+            <form class="form-horizontal" action="{{ route('disabled-students.search') }}" method="post">
                 @csrf
                 <input type="hidden" id="class_id" value="{{ @$class_id }}">
                 <input type="hidden" id="section_id" value="{{ @$section_id }}">
@@ -31,18 +157,9 @@
                     <div class="col-lg-12">
                         <div class="white-box">
                             <div class="row">
-                                <div class="col-lg-8 col-md-6">
-                                    <div class="main-title">
-                                        <h3 class="mb-15">@lang('common.select_criteria') </h3>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
                                 <input type="hidden" name="url" id="url" value="{{ URL::to('/') }}">
-                                 <div class="col-lg-4 mb-15">
+                                <div class="col-lg-4">
                                     <div class="primary_input">
-                                        <label class="primary_input_label" for="branch_id">Branch <span
-                                                class="text-danger">*</span></label>
                                         <select class="primary_select form-control ajax_select" name="branch_id"
                                             id="branch-select">
                                             <option value="">Select Branch</option>
@@ -53,10 +170,8 @@
                                     </div>
                                 </div>
                                 {{-- Intake --}}
-                                <div class="col-lg-4 mb-15">
+                                <div class="col-lg-4">
                                     <div class="primary_input">
-                                        <label class="primary_input_label" for="intake_id">Intake <span
-                                                class="text-danger">*</span></label>
                                         <select class="primary_select form-control ajax_select" name="intake_id"
                                             id="intake-select">
                                             <option value="">Select Intake</option>
@@ -65,10 +180,8 @@
                                 </div>
 
                                 {{-- Course --}}
-                                <div class="col-lg-4 mb-15">
+                                <div class="col-lg-4">
                                     <div class="primary_input">
-                                        <label class="primary_input_label" for="course_id">Course <span
-                                                class="text-danger">*</span></label>
                                         <select class="primary_select form-control ajax_select" name="course_id"
                                             id="course-select">
                                             <option value="">Select Course</option>
@@ -78,25 +191,27 @@
                                 </div>
 
 
-                                <div class="col-lg-12 mt-20 text-right">
-                                    <button type="submit" class="primary-btn small fix-gr-bg">
-                                        <span class="ti-search pr-2"></span>
-                                        @lang('common.search')
-                                    </button>
-                                </div>
+                                @if ($canSearchDisabledStudents)
+                                    <div class="col-lg-12 mt-10 text-right">
+                                        <button type="submit" class="primary-btn small fix-gr-bg p-2 col-12">
+                                            <span class="ti-search pr-2"></span>
+                                            @lang('common.search')
+                                        </button>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>
                 </div>
             </form>
 
-            <div class="row mt-40">
+            <div class="row mt-20">
                 <div class="col-lg-12">
                     <div class="white-box">
                         <div class="row">
                             <div class="col-lg-4 no-gutters">
                                 <div class="main-title">
-                                    <h3 class="mb-15">{{ @$pt }} </h3>
+                                    <h3 class="mb-15">Disabled @lang('student.student_list')</h3>
                                 </div>
                             </div>
                         </div>
@@ -134,21 +249,25 @@
                                                     <td>{{ $student->studentCategory->category_name ?? 'N/A' }}</td>
                                                     <td>{{ $student->phone_number }}</td>
                                                     <td valign="top">
-                                                        @php
-                                                            $studentLink = $student->is_active
-                                                                ? 'student.disable'
-                                                                : 'student.enable';
-                                                            $routeList = [
-                                                                '<a class="dropdown-item" data-toggle="modal" data-student-id="' .
-                                                                $student->id .
-                                                                '" data-target="#statusUpdateModal" href="' .
-                                                                route('student.update-status') .
-                                                                '">' .
-                                                                __('common.enable') .
-                                                                '</a>',
-                                                            ];
-                                                        @endphp
-                                                        <x-drop-down-action-component :routeList="$routeList" />
+                                                        @if ($canEnableStudent)
+                                                            @php
+                                                                $studentLink = $student->is_active
+                                                                    ? 'student.disable'
+                                                                    : 'student.enable';
+                                                                $routeList = [
+                                                                    '<a class="dropdown-item" data-toggle="modal" data-student-id="' .
+                                                                    $student->id .
+                                                                    '" data-target="#statusUpdateModal" href="' .
+                                                                    route('student.update-status') .
+                                                                    '">' .
+                                                                    __('common.enable') .
+                                                                    '</a>',
+                                                                ];
+                                                            @endphp
+                                                            <x-drop-down-action-component :routeList="$routeList" />
+                                                        @else
+                                                            <span class="text-muted">&mdash;</span>
+                                                        @endif
                                                     </td>
                                                 </tr>
                                             @empty
@@ -190,6 +309,7 @@
         </div>
     </section>
 
+
     <div class="modal fade admin-query" id="deleteStudentModal">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -225,8 +345,8 @@
         </div>
     </div>
 @endsection
+@include('components.partials.data_table_css')
 @include('components.partials.data_table_js')
-@include('components.partials.server_side_datatable')
 
 @pushOnce('scripts')
     <script>
@@ -250,7 +370,8 @@
 
                 // Make AJAX request to get intakes for selected branch
                 $.ajax({
-                    url: '{{ route("student-list.get-intakes", ":branchId") }}'.replace(':branchId', branchId),
+                    url: '{{ route('get-intakes-by-branch', ':branchId') }}'.replace(':branchId',
+                        branchId),
                     type: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
@@ -262,7 +383,8 @@
 
                         if (data.intakes && data.intakes.length > 0) {
                             data.intakes.forEach(function(intake) {
-                                options += '<option value="' + intake.id + '">' + intake.name + '</option>';
+                                options += '<option value="' + intake.id + '">' + intake.name +
+                                    '</option>';
                             });
                         } else {
                             options = '<option value="">No intakes available for this branch</option>';
@@ -316,7 +438,8 @@
 
                 // Make AJAX request to get courses for selected intake
                 $.ajax({
-                    url: '{{ route("student-list.get-courses", ":intakeId") }}'.replace(':intakeId', intakeId),
+                    url: '{{ route('get-courses-by-intake', ':intakeId') }}'.replace(':intakeId',
+                        intakeId),
                     type: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
@@ -328,7 +451,8 @@
 
                         if (data.courses && data.courses.length > 0) {
                             data.courses.forEach(function(course) {
-                                options += '<option value="' + course.id + '">' + course.name + '</option>';
+                                options += '<option value="' + course.id + '">' + course.name +
+                                    '</option>';
                             });
                         } else {
                             options = '<option value="">No courses available for this intake</option>';
@@ -362,174 +486,53 @@
                 }
             }
         });
-    </script>
-@endPushOnce
 
-{{-- @push('script')
-    <script>
-        $(document).ready(function() {
-            $('.data-table').DataTable({
-                processing: true,
-                serverSide: true,
-                "ajax": $.fn.dataTable.pipeline({
-                    url: "{{ route('disable-student-list-datatable') }}",
-                    data: {
-                        class_id: $('#class_id').val(),
-                        section_id: $('#section_id').val(),
-                        name: $('#name').val(),
-                        admission_no: $('#admission_no').val(),
-                    },
-                    pages: "{{ generalSetting()->ss_page_load }}" // number of pages to cache
-                }),
-                columns: [{
-                        data: 'admission_no',
-                        name: 'admission_no'
-                    },
-                    {
-                        data: 'roll_no',
-                        name: 'roll_no'
-                    },
-                    {
-                        data: 'full_name',
-                        name: 'full_name'
-                    },
-                    @if (moduleStatusCheck('University'))
-                        {
-                            data: 'semester_label',
-                            name: 'semester_label'
-                        }, {
-                            data: 'class_sec',
-                            name: 'class_sec'
-                        },
-                    @else
-                        {
-                            data: 'class_sec',
-                            name: 'class_sec'
-                        },
-                    @endif
 
-                    @if (!moduleStatusCheck('University') && generalSetting()->with_guardian)
-                        {
-                            data: 'parents.fathers_name',
-                            name: 'parents.fathers_name'
-                        },
-                    @endif {
-                        data: 'dob',
-                        name: 'dob'
-                    },
+        $('#table_id').DataTable({
+            responsive: true,
+            dom: 'Bfrtip',
 
-                    {
-                        data: 'gender.base_setup_name',
-                        name: 'gender.base_setup_name'
-                    },
-                    {
-                        data: 'category.category_name',
-                        name: 'category.category_name'
-                    },
-                    {
-                        data: 'mobile',
-                        name: 'sm_students.mobile'
-                    },
-                    {
-                        data: 'action',
-                        name: 'action',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'first_name',
-                        name: 'first_name',
-                        visible: false
-                    },
-                    {
-                        data: 'last_name',
-                        name: 'last_name',
-                        visible: false
-                    },
-                ],
-                bLengthChange: false,
-                bDestroy: true,
-                language: {
-                    search: "<i class='ti-search'></i>",
-                    searchPlaceholder: window.jsLang('quick_search'),
-                    paginate: {
-                        next: "<i class='ti-arrow-right'></i>",
-                        previous: "<i class='ti-arrow-left'></i>",
-                    },
+            buttons: [{
+                    extend: 'copyHtml5',
+                    text: '<i class="fa-regular fa-copy"></i>',
+                    titleAttr: 'Copy'
                 },
-                dom: "Bfrtip",
-                buttons: [{
-                        extend: "copyHtml5",
-                        text: '<i class="fa fa-files-o"></i>',
-                        title: $("#logo_title").val(),
-                        titleAttr: window.jsLang('copy_table'),
-                        exportOptions: {
-                            columns: ':visible:not(.not-export-col)'
-                        },
-                    },
-                    {
-                        extend: "excelHtml5",
-                        text: '<i class="fa fa-file-excel-o"></i>',
-                        titleAttr: window.jsLang('export_to_excel'),
-                        title: $("#logo_title").val(),
-                        margin: [10, 10, 10, 0],
-                        exportOptions: {
-                            columns: ':visible:not(.not-export-col)'
-                        },
-                    },
-                    {
-                        extend: "csvHtml5",
-                        text: '<i class="fa fa-file-text-o"></i>',
-                        titleAttr: window.jsLang('export_to_csv'),
-                        exportOptions: {
-                            columns: ':visible:not(.not-export-col)'
-                        },
-                    },
-                    {
-                        extend: "pdfHtml5",
-                        text: '<i class="fa fa-file-pdf-o"></i>',
-                        title: $("#logo_title").val(),
-                        titleAttr: window.jsLang('export_to_pdf'),
-                        exportOptions: {
-                            columns: ':visible:not(.not-export-col)'
-                        },
-                        orientation: "landscape",
-                        pageSize: "A4",
-                        margin: [0, 0, 0, 12],
-                        alignment: "center",
-                        header: true,
-                        customize: function(doc) {
-                            doc.content[1].margin = [100, 0, 100, 0]; //left, top, right, bottom
-                            doc.content.splice(1, 0, {
-                                margin: [0, 0, 0, 12],
-                                alignment: "center",
-                                image: "data:image/png;base64," + $("#logo_img").val(),
-                            });
-                            doc.defaultStyle = {
-                                font: 'DejaVuSans'
-                            }
-                        },
-                    },
-                    {
-                        extend: "print",
-                        text: '<i class="fa fa-print"></i>',
-                        titleAttr: window.jsLang('print'),
-                        title: $("#logo_title").val(),
-                        exportOptions: {
-                            columns: ':visible:not(.not-export-col)'
-                        },
-                    },
-                    {
-                        extend: "colvis",
-                        text: '<i class="fa fa-columns"></i>',
-                        postfixButtons: ["colvisRestore"],
-                    },
-                ],
-                columnDefs: [{
-                    visible: false,
-                }, ],
-                responsive: true,
-            });
+                {
+                    extend: 'csvHtml5',
+                    text: '<i class="fa-solid fa-file-csv"></i>',
+                    titleAttr: 'CSV'
+                },
+                {
+                    extend: 'excelHtml5',
+                    text: '<i class="fa-solid fa-file-excel"></i>',
+                    titleAttr: 'Excel'
+                },
+                {
+                    extend: 'pdfHtml5',
+                    text: '<i class="fa-solid fa-file-pdf"></i>',
+                    titleAttr: 'PDF'
+                },
+                {
+                    extend: 'print',
+                    text: '<i class="fa-solid fa-print"></i>',
+                    titleAttr: 'Print'
+                }
+            ],
+
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+
+            // 👇 This part adds the search and pagination icons
+            language: {
+                search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
+                searchPlaceholder: 'Search...',
+                paginate: {
+                    previous: '<i class="fa-solid fa-angle-left"></i>',
+                    next: '<i class="fa-solid fa-angle-right"></i>'
+                }
+            }
         });
     </script>
-@endpush --}}
+@endPushOnce

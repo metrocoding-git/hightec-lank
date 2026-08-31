@@ -127,8 +127,8 @@ class StudentController extends Controller
                 if (!$s->photo) return '-';
                 $url = asset('storage/' . $s->photo);
                 return '<a href="' . $url . '" target="_blank">
-                            <img src="' . $url . '" width="40">
-                        </a>';
+                        <img src="' . $url . '" width="40">
+                    </a>';
             })
 
             ->editColumn('email', fn($s) => $s->email_address ?? '-')
@@ -180,23 +180,59 @@ class StudentController extends Controller
             ->editColumn('updated_by', fn($s) => $s->updateUser->name ?? '-')
 
             ->addColumn('action', function ($s) {
+                $user = Auth::user();
+                $items = [];
+
+                if ($user->hasPermission('student-card.show')) {
+                    $items[] = '<a class="dropdown-item" target="_blank" href="' . route('student-card.show', $s->id) . '">
+                                <i class="fa-solid fa-id-card text-muted"></i> Generate Card
+                            </a>';
+                }
+
+                if ($user->hasPermission('student-details')) {
+                    $items[] = '<a class="dropdown-item" target="_blank" href="' . route('student-details', $s->id) . '">
+                                <i class="fa-solid fa-eye text-muted"></i> View
+                            </a>';
+                }
+
+                if ($user->hasPermission('add-student.update')) {
+                    $items[] = '<a class="dropdown-item" href="' . route('add-student.edit', $s->id) . '">
+                                <i class="fa-solid fa-pen text-muted"></i> Edit
+                            </a>';
+                }
+
+                if ($user->hasPermission('add-student.verify')) {
+                    $items[] = '<a class="dropdown-item" target="_blank" href="' . route('add-student.verify', $s->id) . '">
+                                <i class="fa-solid fa-signature text-muted"></i> Verification
+                            </a>';
+                }
+
+                if ($user->hasPermission('student-list.verification-history')) {
+                    $items[] = '<a class="dropdown-item openVerificationModal" href="#" data-id="' . $s->id . '">
+                                <i class="fa-solid fa-clock-rotate-left text-muted"></i> Verification Check
+                            </a>';
+                }
+
+                if ($user->hasPermission('student.update-status')) {
+                    $items[] = '<a class="dropdown-item text-danger" data-toggle="modal"
+                               data-student-id="' . $s->id . '" data-target="#statusUpdateModal" href="#">
+                                <i class="fa-solid fa-ban"></i> Disable
+                            </a>';
+                }
+
+                if (empty($items)) {
+                    return '<span class="text-muted">&mdash;</span>';
+                }
+
                 return '
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown">
-                        Action
-                    </button>
-                    <div class="dropdown-menu">
-                        <a class="dropdown-item" target="_blank" href="' . route('student-card.show', $s->id) . '">Generate Card</a>
-                        <a class="dropdown-item" target="_blank" href="' . route('student-details', $s->id) . '">View</a>
-                        <a class="dropdown-item" href="' . route('add-student.edit', $s->id) . '">Edit</a>
-                        <a class="dropdown-item" target="_blank" href="' . route('add-student.verify', $s->id) . '">Verification</a>
-                        <a class="dropdown-item openVerificationModal" href="#" data-id="' . $s->id . '">Verification Check</a>
-                        <a class="dropdown-item" data-toggle="modal"
-                           data-student-id="' . $s->id . '" data-target="#statusUpdateModal">
-                           Disable
-                        </a>
-                    </div>
-                </div>';
+            <div class="dropdown modern-row-actions">
+                <button class="btn-row-action" type="button" data-toggle="dropdown" aria-expanded="false">
+                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-right">
+                    ' . implode('', $items) . '
+                </div>
+            </div>';
             })
 
             // ======================
@@ -724,6 +760,7 @@ class StudentController extends Controller
         ));
     }
 
+
     public function studentAddIntakeWithCoursesData(Request $request)
     {
         $query = StudentCourse::with([
@@ -830,69 +867,84 @@ class StudentController extends Controller
 
             ->addColumn('note', fn($row) => $row->notes)
 
+            // ======================
+            // ACTIONS COLUMN (Section 26: modernized + permission-gated)
+            // ======================
+
             ->addColumn('actions', function ($row) {
+                $user = Auth::user();
+                $items = [];
 
-                $buttons = '<div class="dropdown">
-                <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-toggle="dropdown">
-                    Action
-                </button>
-                <div class="dropdown-menu">';
-                $buttons .= '
-                    <a class="dropdown-item" href="javascript:void(0);" 
-                    onclick="openEditCategoryModal(' . $row->id . ', ' . $row->student_category_id . '); return false;">
-                        <span class="text-warning">Edit Category</span>
-                    </a>
-                ';
+                if ($user->hasPermission('student.add-intake.update-category')) {
+                    $items[] = '<a class="dropdown-item" href="javascript:void(0);"
+                                onclick="openEditCategoryModal(' . $row->id . ', ' . $row->student_category_id . '); return false;">
+                                <i class="fa-solid fa-layer-group text-warning"></i> Edit Category
+                            </a>';
+                }
 
-                // PENDING
                 if ($row->status == 'pending') {
-                    $buttons .= '
-                    <a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'start\')">
-                        <span class="text-info">Start</span>
-                    </a>
+                    if ($user->hasPermission('student.add-intake.update-status')) {
+                        $items[] = '<a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'start\')">
+                                    <i class="fa-solid fa-play text-info"></i> Start
+                                </a>';
+                    }
 
-                    <a class="dropdown-item text-danger" href="#" onclick="deleteIntake(' . $row->id . ')">
-                        Delete
-                    </a>
+                    if ($user->hasPermission('student.add-intake.destroy')) {
+                        $items[] = '<a class="dropdown-item text-danger" href="#" onclick="deleteIntake(' . $row->id . ')">
+                                    <i class="fa-solid fa-trash"></i> Delete
+                                </a>';
+                    }
 
-                    <a class="dropdown-item" href="#"
-                        onclick="openChangeCourseModal(' . $row->id . ', ' . $row->course_id . ', ' . $row->intake_id . ')">
-                        <span class="text-primary">Change Course</span>
-                    </a>';
+                    if ($user->hasPermission('student.add-intake-with-courses.change-course')) {
+                        $items[] = '<a class="dropdown-item" href="#"
+                                    onclick="openChangeCourseModal(' . $row->id . ', ' . $row->course_id . ', ' . $row->intake_id . ')">
+                                    <i class="fa-solid fa-shuffle text-primary"></i> Change Course
+                                </a>';
+                    }
                 }
 
-                // START
                 if ($row->status == 'start') {
-                    $buttons .= '
-                    <a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'return\')">
-                        <span class="text-warning">Return</span>
-                    </a>
+                    if ($user->hasPermission('student.add-intake.update-status')) {
+                        $items[] = '<a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'return\')">
+                                    <i class="fa-solid fa-arrow-rotate-left text-warning"></i> Return
+                                </a>';
+                        $items[] = '<a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'complete\')">
+                                    <i class="fa-solid fa-check text-success"></i> Complete
+                                </a>';
+                    }
 
-                    <a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'complete\')">
-                        <span class="text-success">Complete</span>
-                    </a>
-
-                    <a class="dropdown-item" href="#"
-                        onclick="openChangeCourseModal(' . $row->id . ', ' . $row->course_id . ', ' . $row->intake_id . ')">
-                        <span class="text-primary">Change Course</span>
-                    </a>';
+                    if ($user->hasPermission('student.add-intake-with-courses.change-course')) {
+                        $items[] = '<a class="dropdown-item" href="#"
+                                    onclick="openChangeCourseModal(' . $row->id . ', ' . $row->course_id . ', ' . $row->intake_id . ')">
+                                    <i class="fa-solid fa-shuffle text-primary"></i> Change Course
+                                </a>';
+                    }
                 }
 
-                // RETURN
                 if ($row->status == 'return') {
-                    $buttons .= '
-                    <a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'start\')">
-                        <span class="text-info">Restart</span>
-                    </a>
-
-                    <a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'complete\')">
-                        <span class="text-success">Complete</span>
-                    </a>';
+                    if ($user->hasPermission('student.add-intake.update-status')) {
+                        $items[] = '<a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'start\')">
+                                    <i class="fa-solid fa-rotate-left text-info"></i> Restart
+                                </a>';
+                        $items[] = '<a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'complete\')">
+                                    <i class="fa-solid fa-check text-success"></i> Complete
+                                </a>';
+                    }
                 }
 
-                $buttons .= '</div></div>';
+                if (empty($items)) {
+                    return '<span class="text-muted">&mdash;</span>';
+                }
 
-                return $buttons;
+                return '
+            <div class="dropdown modern-row-actions">
+                <button class="btn-row-action" type="button" data-toggle="dropdown" aria-expanded="false">
+                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-right">
+                    ' . implode('', $items) . '
+                </div>
+            </div>';
             })
 
             ->rawColumns([
@@ -907,6 +959,7 @@ class StudentController extends Controller
 
             ->make(true);
     }
+
 
     public function updateStudentCategory(Request $request, $id)
     {
@@ -1224,45 +1277,7 @@ class StudentController extends Controller
         }
     }
 
-    public function checkStudentCourseStatus(Request $request)
-    {
-        try {
-            $student_id = $request->student_id;
-            $course_id = $request->course_id;
-            $intake_id = $request->intake_id;
 
-            $studentCourse = StudentCourse::where('student_id', $student_id)
-                ->where('course_id', $course_id)
-                ->where('intake_id', $intake_id)
-                ->first();
-
-            if ($studentCourse && $studentCourse->status === 'start') {
-                return response()->json([
-                    'can_issue' => true,
-                    'message' => 'Items can be issued.'
-                ]);
-            }
-
-            $intake = Intake::find($intake_id);
-            $course = Course::find($course_id);
-            $expireDate = Carbon::parse($intake->start_date)->addDays((int)$course->expiration_date);
-
-            $canAdd = now()->lte($expireDate);
-            $message = $canAdd
-                ? 'Items can be issued.'
-                : 'Items Cannot be issued. expired';
-
-            return response()->json([
-                'can_issue' => $canAdd,
-                'message' => $message
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'can_issue' => false,
-                'message' => 'Error checking course status.'
-            ], 500);
-        }
-    }
 
     public function verify($id)
     {
@@ -1598,8 +1613,14 @@ class StudentController extends Controller
         return redirect()->back()->with('message-success', 'Student status update successfully!');
     }
 
-    public function studentExport()
+
+    public function verificationHistory($id)
     {
-        return view('pages.student.student-info.student-export');
+        $verifications = StudentVerification::with('user')
+            ->where('student_id', $id)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        return response()->json($verifications);
     }
 }

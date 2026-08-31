@@ -1,16 +1,140 @@
 @extends('layouts.app')
+@push('css')
+    <style>
+        .white-box {
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+        }
+
+        .white-box .main-title h3,
+        .white-box .main-title h5 {
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .white-box .main-title h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 42px;
+            height: 3px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+        }
+
+
+        .record-count-badge {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gradient_1);
+            background: rgba(0, 0, 0, 0.04);
+            border-radius: 999px;
+            padding: 5px 14px;
+            white-space: nowrap;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: capitalize;
+            white-space: nowrap;
+            line-height: 1.4;
+        }
+
+        .status-badge.status-pending {
+            background: rgba(255, 159, 28, 0.14);
+            color: #b3720a;
+        }
+
+        .status-badge.status-completed {
+            background: rgba(40, 167, 69, 0.14);
+            color: #1e7e34;
+        }
+
+        .status-badge.status-not_open {
+            background: rgba(108, 117, 125, 0.14);
+            color: #5a6268;
+        }
+
+        .status-badge.status-default {
+            background: rgba(0, 0, 0, 0.06);
+            color: #495057;
+        }
+
+
+        .custom-checkbox input.payment-checkbox {
+            position: absolute;
+            opacity: 0;
+            width: 1px;
+            height: 1px;
+            margin: 0;
+        }
+
+        .custom-checkbox-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+            border: 2px solid #c7cbd6;
+            background: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color .15s ease, border-color .15s ease;
+        }
+
+        .custom-checkbox-indicator::after {
+            content: '';
+            width: 6px;
+            height: 11px;
+            border: solid #fff;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg) scale(0);
+            transition: transform .12s ease;
+            margin-top: -2px;
+        }
+
+        .custom-checkbox input.payment-checkbox:checked+.custom-checkbox-indicator {
+            background: linear-gradient(135deg, var(--gradient_1), var(--gradient_2));
+            border-color: transparent;
+        }
+
+        .custom-checkbox input.payment-checkbox:checked+.custom-checkbox-indicator::after {
+            transform: rotate(45deg) scale(1);
+        }
+
+        .custom-checkbox input.payment-checkbox:focus-visible+.custom-checkbox-indicator {
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .custom-checkbox input.payment-checkbox:disabled+.custom-checkbox-indicator {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+    </style>
+@endpush
 @section('title')
     @lang('finance.Invoice Payments')
 @endsection
 
 @section('mainContent')
+    @php
+        $canBulkUpdateInvoicePayments =
+            Auth::user()->hasPermission('invoice-payments.bulk-not-open') ||
+            Auth::user()->hasPermission('invoice-payments.bulk-pending');
+    @endphp
     <section class="sms-breadcrumb mb-20 up_breadcrumb">
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1>Invoice Method Payments</h1>
+                <h1>Credit Invoice</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
-                    <a href="#">Invoice Method Payments Confirm</a>
+                    <a href="#">Credit Invoice</a>
                 </div>
             </div>
         </div>
@@ -18,19 +142,15 @@
 
     <section class="admin-visitor-area up_admin_visitor">
         <div class="container-fluid p-0">
-            <div class="row align-items-center mb-3">
+            <div class="row align-items-center mb-20">
                 <div class="col-lg-12">
                     <div class="white-box">
-                        <div class="col-lg-8 col-md-6">
-                            <h3 class="mb-15">@lang('common.select_criteria')</h3>
-                        </div>
-                        <form class="form-horizontal" id="filter-form">
+                        <form class="form-horizontal mb-0" id="filter-form">
                             @csrf
                             <div class="row">
                                 {{-- Branch Filter --}}
-                                <div class="col-lg-12 mb-15">
+                                <div class="col-lg-12">
                                     <div class="primary_input">
-                                        <label class="primary_input_label" for="branch_id">@lang('common.branch')</label>
                                         <select class="primary_select form-control" name="branch_id" id="branch-select">
                                             <option value="">Select Branch</option>
                                             @foreach ($branches ?? [] as $branch)
@@ -40,21 +160,9 @@
                                     </div>
                                 </div>
 
-                                {{-- Payment Status Filter --}}
-                                {{-- <div class="col-lg-6 mb-15">
-                                    <div class="primary_input">
-                                        <label class="primary_input_label" for="payment_status">@lang('finance.payment_status')</label>
-                                        <select class="primary_select form-control" name="payment_status"
-                                            id="status-select">
-                                            <option value="not_open" selected>Not Open</option>
-                                            <option value="pending">Pending</option>
-                                            <option value="completed">Completed</option>
-                                        </select>
-                                    </div>
-                                </div> --}}
-
-                                <div class="col-lg-12 mt-1 text-right">
-                                    <button type="button" class="primary-btn small fix-gr-bg" id="submit-search">
+                                <div class="col-lg-12 mt-10 text-right">
+                                    <button type="button" class="primary-btn small fix-gr-bg col-12 p-2"
+                                        id="submit-search">
                                         <span class="ti-search pr-2"></span>@lang('common.search')
                                     </button>
                                 </div>
@@ -62,54 +170,67 @@
                         </form>
                     </div>
                 </div>
-
             </div>
 
+            @if ($canBulkUpdateInvoicePayments)
+                <div class="row align-items-center mb-10">
+                    <div class="col-lg-12">
+                        <div class="white-box">
+                            <div class="col-12 text-left text-sm-right p-0">
+                                <button id="bulk-action-btn" class="primary-btn small col-12 p-2">Bulk Update</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             {{-- Payments Table --}}
-            <div class="row mt-40 full_wide_table">
+            <div class="row mt-10 full_wide_table">
                 <div class="col-lg-12">
-
                     <div class="white-box">
-                        <div class="col-lg-4 col-md-6 text-left text-sm-right mb-4 offset-lg-8 offset-md-6">
-                            <button id="bulk-action-btn" class="primary-btn small">Bulk Update</button>
+
+                        <div class="row">
+                            <div class="col-lg-4 no-gutters">
+                                <div class="main-title">
+                                    <h3 class="mb-15">Credit Invoice List</h3>
+                                </div>
+                            </div>
                         </div>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <x-table>
+                                    <table id="table_id"
+                                        class="table data-table Crm_table_active3 no-footer dtr-inline collapsed"
+                                        cellspacing="0" width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Invoice Number</th>
+                                                <th>Invoice Item Number</th>
+                                                <th>amount</th>
+                                                <th>Branch</th>
+                                                <th>Student Name</th>
+                                                <th>Stu Category name</th>
+                                                <th>Stu Reg No</th>
+                                                <th>Fee Name</th>
+                                                <th>status</th>
+                                                <th>date</th>
 
-                        <div class="main-title mb-3">
-                            <h3>@lang('finance.invoice_payment_list')</h3>
+                                            </tr>
+                                        </thead>
+
+                                        <tfoot>
+                                            <tr>
+                                                <th colspan="3" style="text-align:right">Total:</th>
+                                                <th id="total_amount_footer" style="text-align:center"></th>
+                                                <th colspan="5"></th>
+
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </x-table>
+                            </div>
                         </div>
-
-                        <x-table>
-                            <table id="invoice_table"
-                                class="table data-table Crm_table_active3 no-footer dtr-inline collapsed" cellspacing="0"
-                                width="100%">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Invoice Number</th>
-                                        <th>Invoice Item Number</th>
-                                        <th>amount</th>
-                                        <th>Branch</th>
-                                        <th>Student Name</th>
-                                        <th>Stu Category name</th>
-                                        <th>Stu Reg No</th>
-                                        <th>Fee Name</th>
-                                        <th>status</th>
-                                        <th>date</th>
-
-                                    </tr>
-                                </thead>
-
-                                <tfoot>
-                                    <tr>
-                                        <th colspan="3" style="text-align:right">Total:</th>
-                                        <th id="total_amount_footer" style="text-align:center"></th>
-                                        <th colspan="5"></th>
-
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </x-table>
                     </div>
                 </div>
             </div>
@@ -205,32 +326,80 @@
         $('#select-all').on('click', function() {
             $('.payment-checkbox').prop('checked', this.checked);
         });
-        $('#invoice_table').DataTable({
-            responsive: false,
-            scrollX: true,
-            autoWidth: false,
+        $('#table_id').DataTable({
             processing: true,
-            searching: true,
             serverSide: true,
-            lengthMenu: [
-                [25, 50, 100, -1],
-                [25, 50, 100, "All"]
-            ],
+            scrollX: true,
 
-            pageLength: 25,
+            dom: "<'d-flex justify-content-between align-items-center mb-2'<'me-2'l><'mx-auto'f><'ms-2'B>>" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'d-flex justify-content-between align-items-center mt-2'<'mb-0 col-4'i><'mb-0 col-8'p>>",
+
+            lengthChange: true,
+            buttons: [{
+                    extend: 'pdf',
+                    title: getFileName(),
+                    text: '<i title="export to pdf" class="fa fa-file-pdf-o"></i>',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                },
+                {
+                    extend: 'csv',
+                    title: getFileName(),
+                    text: '<i title="export to csv" class="fa fa-file-text-o"></i>',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                },
+                {
+                    extend: 'excel',
+                    title: getFileName(),
+                    text: '<i title="export to excel" class="fa fa-file-excel-o"></i>',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                },
+                {
+                    extend: 'print',
+                    title: getFileName(),
+                    text: '<i title="print" class="fa fa-print"></i>',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                },
+                {
+                    extend: 'colvis',
+                    title: getFileName(),
+                    text: '<i title="column visibility" class="fa fa-eye"></i>',
+                    columns: ':gt(0)'
+                }
+            ],
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+            order: [
+                [0, 'desc']
+            ],
             ajax: {
                 url: "{{ route('invoice-payments.not-start-datatable') }}",
                 data: function(d) {
                     d.branch_id = $('#branch-select').val();
                 }
             },
-            dom: "<'d-flex justify-content-between align-items-center mb-2'<'me-2'l><'mx-auto'f><'ms-2'B>>" +
-                "<'row'<'col-sm-12'tr>>" +
-                "<'d-flex justify-content-between align-items-center mt-2'<'mb-0 col-4'i><'mb-0 col-8'p>>",
-            buttons: ['pdf', 'csv', 'excel', 'print', 'colvis'],
-            order: [
-                [0, 'desc']
-            ],
+            columnDefs: [{
+                targets: 9,
+                render: function(data) {
+                    if (!data) {
+                        return data;
+                    }
+                    var key = String(data).toLowerCase().trim().replace(/\s+/g, '_');
+                    var known = ['pending', 'completed', 'not_open'];
+                    var cls = known.indexOf(key) !== -1 ? 'status-' + key : 'status-default';
+                    return '<span class="status-badge ' + cls + '">' + data + '</span>';
+                }
+            }],
             columns: [{
                     data: 'select',
                     orderable: false,
@@ -276,7 +445,7 @@
             ],
         });
 
-        let table = $('#invoice_table').DataTable();
+        let table = $('#table_id').DataTable();
 
 
         // ============ SUM FOOTER ============
@@ -284,7 +453,7 @@
             var totalAmount = 0;
             var paidAmount = 0;
 
-            $('#invoice_table tbody tr').each(function() {
+            $('#table_id tbody tr').each(function() {
                 var totalText = $(this).find('td:eq(3)').text().trim();
 
                 // remove commas
@@ -308,7 +477,7 @@
             updateFooter();
         });
 
-        $('#invoice_table_filter input')
+        $('#table_id_filter input')
             .off()
             .on('keyup', function() {
                 clearTimeout($.data(this, 'timer'));
@@ -320,7 +489,7 @@
 
         // Filter table on select change
         $('#submit-search').on('click', function() {
-            $('#invoice_table').DataTable().ajax.reload();
+            $('#table_id').DataTable().ajax.reload();
         })
 
         let currentStatus = null;
@@ -431,7 +600,7 @@
                 currentStudent = null;
                 $('#bulk-action-form')[0].reset();
                 $('#bulkActionModal').modal('hide');
-                $('#invoice_table').DataTable().ajax.reload();
+                $('#table_id').DataTable().ajax.reload();
 
                 if (status === 'not_open') {
                     window.open('/student/fees/fee-invoice/invoice-payments/print/' + res.invoice_number,

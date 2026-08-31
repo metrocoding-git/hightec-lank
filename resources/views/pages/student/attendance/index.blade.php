@@ -68,9 +68,6 @@
             line-height: 1.3;
         }
 
-        .section-panel {
-            padding-top: 18px;
-        }
 
         /* ---- Scan box ---- */
         .scan-input-wrap {
@@ -255,6 +252,21 @@
             outline-offset: -1px;
         }
 
+        /* BUG FIX (Section 29): showPracticalSubjectPicker() JS already adds a
+           "subject-open" class + an "In Progress" badge to a practical subject
+           that's currently open (picking it CLOSES the session rather than
+           starting a new one) — but no CSS rule for that class existed, so an
+           in-progress subject rendered as a plain, unmarked row apart from its
+           badge text. Given "already done today" gets an amber inset stripe and
+           "done on an earlier day" gets a dashed outline, an open/in-progress
+           session — arguably the state most worth noticing, since clicking it
+           has different consequences than any other row — had no matching visual
+           cue at all. Added a blue inset stripe, consistent with the same
+           left-edge-accent language used for the other two states. */
+        .subject-check-list .form-check.subject-open {
+            box-shadow: inset 3px 0 0 var(--tp-theme-primary, #5150e9);
+        }
+
         #scan_log_empty {
             text-align: center;
             color: #9aa0b4;
@@ -302,7 +314,133 @@
             font-size: 12px;
             font-weight: 600;
         }
+
+        /* ---- Modern refresh: card shadow, breadcrumb, table header (Section 29) ----
+             BUG FIX: this page already used the sms-breadcrumb/white-box markup
+             (same as almost every other page in the app), but never defined the
+             CSS for either -- the same missing-CSS pattern already found and
+             fixed repeatedly across the Student Info and Fees batches. Adding it
+             here into the SAME inline style tag (not a new push-css block) to
+             match this file's own stated reasoning above about the layout's
+             css stack not rendering on this page. ---- */
+        .white-box {
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+        }
+
+        .white-box .main-title h3 {
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .white-box .main-title h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 42px;
+            height: 3px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .primary_input_field, select.primary_select {
+            border-radius: 8px !important;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        .text-muted {
+            color: #9aa1ac !important;
+        }
+
+        #scan_log thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            border: none;
+        }
+
+        #scan_log tbody td {
+            vertical-align: middle;
+        }
+
+        .sms-breadcrumb {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+            padding: 18px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sms-breadcrumb::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .sms-breadcrumb .row {
+            align-items: center;
+        }
+
+        .sms-breadcrumb h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .sms-breadcrumb .bc-pages {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .sms-breadcrumb .bc-pages a {
+            font-size: 13px;
+            font-weight: 500;
+            color: #8a90a2;
+            text-decoration: none;
+            transition: color .15s ease;
+        }
+
+        .sms-breadcrumb .bc-pages a:hover {
+            color: var(--gradient_1);
+        }
+
+        .sms-breadcrumb .bc-pages a:not(:last-child)::after {
+            content: '\203A';
+            margin: 0 8px;
+            color: #c7cbd6;
+            font-weight: 400;
+        }
+
+        .sms-breadcrumb .bc-pages a:last-child {
+            color: var(--gradient_1);
+            font-weight: 700;
+            pointer-events: none;
+        }
     </style>
+
+    @php
+        // Permission keys from config_permissions.php ("Scan Attendance" window).
+        // The window key itself ('scan-attendance') already gates whether this page
+        // is reachable at all, via route middleware (Sections 18-19) — these gate
+        // each of the three scan METHODS individually within the page, since a role
+        // could plausibly be allowed to scan by Course but not by Subject, etc.
+        $canScanCourse = Auth::user()->hasPermission('scan-attendance.course.scan');
+        $canScanSubject = Auth::user()->hasPermission('scan-attendance.subject.scan');
+        $canScanPractical = Auth::user()->hasPermission('scan-attendance.practical.scan');
+        $canUndoScan = Auth::user()->hasPermission('scan-attendance.undo');
+        $canScanAny = $canScanCourse || $canScanSubject || $canScanPractical;
+    @endphp
 
     <section class="sms-breadcrumb mb-20 up_breadcrumb">
         <div class="container-fluid">
@@ -310,7 +448,6 @@
                 <h1>Scan Attendance</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
-                    <a href="#">Student Information</a>
                     <a href="#">Scan Attendance</a>
                 </div>
             </div>
@@ -320,187 +457,205 @@
     <section class="admin-visitor-area up_st_admin_visitor">
         <div class="container-fluid p-0">
 
-            {{-- Method selector --}}
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="white-box">
-                        <div class="main-title mb-15">
-                            <h3 class="mb-0">Attendance Method</h3>
-                        </div>
+            @if ($canScanAny)
+                {{-- Method selector --}}
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="white-box">
+                            <div class="main-title mb-15">
+                                <h3 class="mb-0">Attendance Method</h3>
+                            </div>
 
-                        <div class="method-cards mb-10">
-                            <div class="method-card active" data-section="course">
-                                <div class="method-icon"><span class="ti-book"></span></div>
-                                <div>
-                                    <div class="method-title">Course</div>
-                                    <div class="method-desc">Pick a course, then scan — intake is detected from the student.
+                            <div class="method-cards mb-10">
+                                @if ($canScanCourse)
+                                    <div class="method-card active" data-section="course">
+                                        <div class="method-icon"><span class="ti-book"></span></div>
+                                        <div>
+                                            <div class="method-title">Course</div>
+                                            <div class="method-desc">Pick a course, then scan — intake is detected from the student.
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                                @if ($canScanSubject)
+                                    <div class="method-card" data-section="subject">
+                                        <div class="method-icon"><span class="ti-agenda"></span></div>
+                                        <div>
+                                            <div class="method-title">Subject</div>
+                                            <div class="method-desc">Pick one or more theory subjects, then scan any student.</div>
+                                        </div>
+                                    </div>
+                                @endif
+                                @if ($canScanPractical)
+                                    <div class="method-card" data-section="practical">
+                                        <div class="method-icon"><span class="ti-user"></span></div>
+                                        <div>
+                                            <div class="method-title">Student (Practical)</div>
+                                            <div class="method-desc">Scan the student first, then pick one practical subject.</div>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- Section 1: course only --}}
+                            @if ($canScanCourse)
+                                <div id="section_course" class="section-panel row">
+                                    <div class="col-lg-12">
+                                        <div class="primary_input">
+
+                                            <select class="primary_select form-control" id="course_id">
+                                                <option value="">Select Course</option>
+                                                @foreach ($courses as $course)
+                                                    <option value="{{ $course->id }}">{{ $course->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            @endif
+
+                            {{-- Section 2: any number of theory subjects, no course/intake picked up front --}}
+                            @if ($canScanSubject)
+                                <div id="section_subject" class="section-panel row" style="display:none;">
+                                    <div class="col-lg-12">
+                                        <input type="text" id="subject_search"
+                                            class="primary_input_field form-control subject-search"
+                                            placeholder="Select Subjects (Select one or more)">
+                                        <div class="subject-check-list" id="subject_all_list">
+                                            @foreach ($subjects as $subject)
+                                                <div class="form-check" data-subject-name="{{ strtolower($subject->name) }}">
+                                                    <input class="form-check-input subject-all-check" type="checkbox"
+                                                        value="{{ $subject->id }}" id="allsubj_{{ $subject->id }}">
+                                                    <label class="form-check-label" for="allsubj_{{ $subject->id }}">
+                                                        {{ $subject->name }}
+                                                        @if ($subject->type)
+                                                            <span
+                                                                class="badge badge-secondary subject-type-badge">{{ $subject->type }}</span>
+                                                        @endif
+                                                    </label>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                      
+                                    </div>
+                                </div>
+                            @endif
+
+                            {{-- Section 3: scan the student first --}}
+                            @if ($canScanPractical)
+                                <div id="section_practical" class="section-panel " style="display:none;">
+                                    {{-- <div class="alert alert-info mb-0 d-flex align-items-center">
+                                        <span class="ti-info-alt pr-2"></span>
+                                        Scan or enter the student's register number below. Only their active practical
+                                        subjects will be offered — but only once that student's course attendance has been started
+                                        today (and hasn't ended yet). Pick exactly one subject, then optionally a vehicle and note.
+                                        Practical attendance can be repeated more than once a day.
+                                    </div> --}}
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Scan box (shared by all permitted methods) --}}
+                <div class="row mt-20">
+                    <div class="col-lg-12">
+                        <div class="white-box">
+                            <div class="main-title mb-15">
+                                <h3>Student Reg Number</h3>
+                            </div>
+                            <div class="row align-items-center">
+                                <div class="col-lg-9 mb-15">
+                                    <div class="scan-input-wrap">
+                                        <span class="ti-search"></span>
+                                        <input type="text" id="scan_input"
+                                            class="primary_input_field form-control scanner-input"
+                                            placeholder="Scan barcode, or type register no. and press Enter" autocomplete="off"
+                                            autofocus>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 mb-15">
+                                    <button type="button" id="scan_submit_btn"
+                                        class="primary-btn fix-gr-bg w-100">Submit</button>
+                                </div>
+                            </div>
+
+                            <button type="button" id="camera_toggle_btn" class="btn btn-outline-secondary btn-sm col-12">
+                                <span class="ti-camera pr-1"></span> Scan with Camera
+                            </button>
+                            <div id="qr_camera_status" class="text-muted mb-10" style="font-size:12px;"></div>
+                            <div id="qr-reader" style="display:none;"></div>
+                            <div id="scan_feedback"></div>
+                            <div id="balance_alert_box"></div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Section 3 step 2: pick the one practical subject, optional vehicle + note --}}
+                @if ($canScanPractical)
+                    <div class="row mt-20" id="practical_confirm_box" style="display:none;">
+                        <div class="col-lg-12">
+                            <div class="white-box">
+                                <div class="main-title mb-15">
+                                    <h3>Pick Subject for <span id="practical_student_name"></span></h3>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-4 mb-15">
+                                        <div id="practical_subject_list" class="subject-check-list"></div>
+                                    </div>
+                                    <div class="col-lg-4 mb-15">
+                                        <div class="primary_input">
+                                            <label class="primary_input_label" for="practical_vehicle_id">Vehicle
+                                                (optional)</label>
+                                            <select class="primary_select form-control" id="practical_vehicle_id">
+                                                <option value="">No vehicle</option>
+                                            </select>
+                                            <small class="text-muted">Only vehicles available at this student's branch are
+                                                listed.</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4 mb-15">
+                                        <div class="primary_input">
+                                            <label class="primary_input_label" for="practical_note">Note (optional)</label>
+                                            <input type="text" id="practical_note" class="primary_input_field form-control"
+                                                autocomplete="off">
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-12">
+                                        <button type="button" id="practical_submit_btn" class="primary-btn fix-gr-bg">Mark
+                                            Attendance</button>
                                     </div>
                                 </div>
                             </div>
-                            <div class="method-card" data-section="subject">
-                                <div class="method-icon"><span class="ti-agenda"></span></div>
-                                <div>
-                                    <div class="method-title">Subject</div>
-                                    <div class="method-desc">Pick one or more theory subjects, then scan any student.</div>
-                                </div>
-                            </div>
-                            <div class="method-card" data-section="practical">
-                                <div class="method-icon"><span class="ti-user"></span></div>
-                                <div>
-                                    <div class="method-title">Student (Practical)</div>
-                                    <div class="method-desc">Scan the student first, then pick one practical subject.</div>
-                                </div>
-                            </div>
                         </div>
-
-                        {{-- Section 1: course only --}}
-                        <div id="section_course" class="section-panel row">
-                            <div class="col-lg-5 mb-15">
-                                <div class="primary_input">
-                                    <label class="primary_input_label" for="course_id">Course <span
-                                            class="text-danger">*</span></label>
-                                    <select class="primary_select form-control" id="course_id">
-                                        <option value="">Select Course</option>
-                                        @foreach ($courses as $course)
-                                            <option value="{{ $course->id }}">{{ $course->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-lg-7 mb-15 d-flex align-items-center">
-                                <small class="text-muted">The intake is detected automatically from the scanned student's
-                                    own enrolment — you'll see it appear next to their name once scanned. Ending an open
-                                    course session requires that any practical attendance today has finished, plus a short
-                                    buffer afterwards.</small>
-                            </div>
-                        </div>
-
-                        {{-- Section 2: any number of theory subjects, no course/intake picked up front --}}
-                        <div id="section_subject" class="section-panel row" style="display:none;">
-                            <div class="col-lg-12 mb-15">
-                                <label class="primary_input_label">Subjects <span class="text-danger">*</span> (select one
-                                    or more)</label>
-                                <input type="text" id="subject_search"
-                                    class="primary_input_field form-control subject-search"
-                                    placeholder="Search subjects...">
-                                <div class="subject-check-list" id="subject_all_list">
-                                    @foreach ($subjects as $subject)
-                                        <div class="form-check" data-subject-name="{{ strtolower($subject->name) }}">
-                                            <input class="form-check-input subject-all-check" type="checkbox"
-                                                value="{{ $subject->id }}" id="allsubj_{{ $subject->id }}">
-                                            <label class="form-check-label" for="allsubj_{{ $subject->id }}">
-                                                {{ $subject->name }}
-                                                @if ($subject->type)
-                                                    <span
-                                                        class="badge badge-secondary subject-type-badge">{{ $subject->type }}</span>
-                                                @endif
-                                            </label>
-                                        </div>
-                                    @endforeach
-                                </div>
-                                <small class="text-muted">Checked against each student's own active course(s) — if a subject
-                                    belongs to more than one active course, both get marked.</small>
-                            </div>
-                        </div>
-
-                        {{-- Section 3: scan the student first --}}
-                        <div id="section_practical" class="section-panel" style="display:none;">
-                            <div class="alert alert-info mb-0 d-flex align-items-center">
-                                <span class="ti-info-alt pr-2"></span>
-                                Scan or enter the student's register number below. Only their active
-                                <strong>practical</strong>
-                                subjects will be offered — but only once that student's course attendance has been started
-                                today (and hasn't ended yet). Pick exactly one subject, then optionally a vehicle and note.
-                                Practical attendance can be repeated more than once a day.
+                    </div>
+                @endif
+            @else
+                {{-- PERMISSION GATE (Section 29): role has scan-attendance (View) but none
+                     of the three scan-method keys — can watch Today's Scans below but has
+                     nothing to submit a scan with. --}}
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="white-box">
+                            <div class="text-center text-muted py-4">
+                                You do not have permission to submit attendance scans by any method.
+                                You can still view today's scan log below. Contact an administrator if
+                                you believe this is incorrect.
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            @endif
 
-            {{-- Scan box (shared by all three methods) --}}
-            <div class="row mt-20">
-                <div class="col-lg-12">
-                    <div class="white-box">
-                        <div class="main-title mb-15">
-                            <h3>Scan / Enter Student</h3>
-                        </div>
-                        <div class="row align-items-center">
-                            <div class="col-lg-9 mb-15">
-                                <div class="scan-input-wrap">
-                                    <span class="ti-search"></span>
-                                    <input type="text" id="scan_input"
-                                        class="primary_input_field form-control scanner-input"
-                                        placeholder="Scan barcode, or type register no. and press Enter" autocomplete="off"
-                                        autofocus>
-                                </div>
-                            </div>
-                            <div class="col-lg-3 mb-15">
-                                <button type="button" id="scan_submit_btn"
-                                    class="primary-btn fix-gr-bg w-100">Submit</button>
-                            </div>
-                        </div>
-
-                        {{-- Camera QR only opens once "Scan with Camera" is clicked — auto-fill of the
-                             decoded value into #scan_input and auto-submit still happen on decode. --}}
-                        <button type="button" id="camera_toggle_btn" class="btn btn-outline-secondary btn-sm">
-                            <span class="ti-camera pr-1"></span> Scan with Camera
-                        </button>
-                        <div id="qr_camera_status" class="text-muted mb-10" style="font-size:12px;"></div>
-                        <div id="qr-reader" style="display:none;"></div>
-                        <div id="scan_feedback"></div>
-                        <div id="balance_alert_box"></div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Section 3 step 2: pick the one practical subject, optional vehicle + note --}}
-            <div class="row mt-20" id="practical_confirm_box" style="display:none;">
-                <div class="col-lg-12">
-                    <div class="white-box">
-                        <div class="main-title mb-15">
-                            <h3>Pick Subject for <span id="practical_student_name"></span></h3>
-                        </div>
-                        <div class="row">
-                            <div class="col-lg-4 mb-15">
-                                <div id="practical_subject_list" class="subject-check-list"></div>
-                            </div>
-                            <div class="col-lg-4 mb-15">
-                                <div class="primary_input">
-                                    <label class="primary_input_label" for="practical_vehicle_id">Vehicle
-                                        (optional)</label>
-                                    <select class="primary_select form-control" id="practical_vehicle_id">
-                                        <option value="">No vehicle</option>
-                                    </select>
-                                    <small class="text-muted">Only vehicles available at this student's branch are
-                                        listed.</small>
-                                </div>
-                            </div>
-                            <div class="col-lg-4 mb-15">
-                                <div class="primary_input">
-                                    <label class="primary_input_label" for="practical_note">Note (optional)</label>
-                                    <input type="text" id="practical_note" class="primary_input_field form-control"
-                                        autocomplete="off">
-                                </div>
-                            </div>
-                            <div class="col-lg-12">
-                                <button type="button" id="practical_submit_btn" class="primary-btn fix-gr-bg">Mark
-                                    Attendance</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Live scan log --}}
+            {{-- Live scan log — always visible; read-only for a role with no scan-method
+                 permissions at all. --}}
             <div class="row mt-20">
                 <div class="col-lg-12">
                     <div class="white-box">
                         <div class="main-title mb-15">
                             <h3>Today's Scans</h3>
                         </div>
-                        <small class="text-muted">Shared across everyone signed in — reflects all scans made today, by
-                            anyone.</small>
                         <div class="table-responsive mt-10">
                             <table class="table school-table-style" id="scan_log">
                                 <thead>
@@ -541,7 +696,15 @@
             const csrfToken = "{{ csrf_token() }}";
             const STORAGE_KEY = 'scan_attendance_active_section';
 
-            let activeSection = 'course'; // 'course' | 'subject' | 'practical'
+            // PERMISSION GATE (Section 29): mirrors the blade-side conditionals above. The
+            // Undo button in the scan log is a per-row control with no blade markup
+            // of its own to gate (it's built entirely in addLogRow() below), so it's
+            // gated here instead. The undo ROUTE itself is already permission-gated
+            // server-side (Section 19) — this only controls whether the button is
+            // offered; a role without the permission would 403 on the request anyway.
+            const canUndoScan = {{ $canUndoScan ? 'true' : 'false' }};
+
+            let activeSection = null; // 'course' | 'subject' | 'practical' | null (no permitted method)
             let practicalIdentifier = null; // identifier awaiting subject pick (section 3)
 
             // Subject id -> name, used to label the scan log. Pre-seeded from the
@@ -618,14 +781,24 @@
                 activateSection($(this).data('section'));
             });
 
-            // Restore the last-used section on page load; default to "course" if
-            // nothing's cached yet.
-            let savedSection = null;
-            try {
-                savedSection = localStorage.getItem(STORAGE_KEY);
-            } catch (e) {}
-            activateSection((savedSection === 'course' || savedSection === 'subject' || savedSection ===
-                'practical') ? savedSection : 'course');
+            // PERMISSION GATE (Section 29): only method-cards the role actually has
+            // permission for are rendered at all (see the blade conditionals above), so
+            // restore-from-storage has to check against what's actually in the DOM
+            // rather than assuming 'course' (or the saved value) is always valid —
+            // otherwise a role without Course permission whose browser still had
+            // "course" cached from before would land on a hidden/nonexistent panel.
+            const availableSections = $('.method-card').map(function() {
+                return $(this).data('section');
+            }).get();
+
+            if (availableSections.length) {
+                let savedSection = null;
+                try {
+                    savedSection = localStorage.getItem(STORAGE_KEY);
+                } catch (e) {}
+                activateSection(availableSections.includes(savedSection) ? savedSection :
+                    availableSections[0]);
+            }
 
             // ---- Section 2: live subject search filter ----
             $('#subject_search').on('input', function() {
@@ -650,6 +823,7 @@
             }
 
             function submitScan() {
+                if (!activeSection) return; // no permitted scan method
                 const identifier = $('#scan_input').val().trim();
                 if (!identifier) return;
                 $('#scan_input').val('');
@@ -1003,7 +1177,7 @@
 
                 const t = (time instanceof Date) ? time.toLocaleTimeString() : time;
                 const rowId = 'scan_row_' + (++rowSeq);
-                const undoCell = (sessionId && undoable) ?
+                const undoCell = (canUndoScan && sessionId && undoable) ?
                     `<button type="button" class="btn btn-sm btn-outline-danger btn-undo" data-session-id="${sessionId}" data-row-id="${rowId}">Undo</button>` :
                     '';
                 const statusHtml = `<span class="status-pill ${pill}">${status}</span>`;

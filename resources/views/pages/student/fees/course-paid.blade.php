@@ -1,12 +1,194 @@
 @extends('layouts.app')
 
+{{-- BUG FIX (Section 27): the browser-tab title called @lang('academics.About') —
+     a leftover placeholder — instead of naming this page. Also adding the
+     standard modern-refresh + breadcrumb CSS, which this page never defined
+     despite using the sms-breadcrumb/white-box markup. --}}
 @section('title')
-    @lang('academics.About')
+    Course Payment Details
 @endsection
 
 @section('mainContent')
+    @php
+        // Permission key from config_permissions.php ("Fees" category, Course, NVQ & Food Payment window).
+        $canAddCoursePayment = Auth::user()->hasPermission('fees.course-payment.store');
+    @endphp
     @push('css')
         <link rel="stylesheet" href="{{ url('Modules/Fees/Resources/assets/css/feesStyle.css') }}" />
+        <style>
+            .white-box {
+                border-radius: 12px;
+                box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+                border: 1px solid var(--border_color);
+            }
+
+            .white-box .main-title h3,
+            .white-box .main-title h5 {
+                font-weight: 700;
+                position: relative;
+                padding-bottom: 10px;
+            }
+
+            .white-box .main-title h3::after {
+                content: '';
+                position: absolute;
+                left: 0;
+                bottom: 0;
+                width: 42px;
+                height: 3px;
+                border-radius: 3px;
+                background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+            }
+
+            .primary_input_field,
+            select.primary_select {
+                border-radius: 8px !important;
+                transition: border-color .15s ease, box-shadow .15s ease;
+            }
+
+            .text-muted {
+                color: #9aa1ac !important;
+            }
+
+            .sms-breadcrumb {
+                background: #fff;
+                border-radius: 12px;
+                box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+                border: 1px solid var(--border_color);
+                padding: 18px 24px;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .sms-breadcrumb::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                width: 4px;
+                background: linear-gradient(180deg, var(--gradient_1), var(--gradient_2));
+            }
+
+            .sms-breadcrumb .row {
+                align-items: center;
+            }
+
+            .sms-breadcrumb h1 {
+                font-size: 20px;
+                font-weight: 700;
+                margin: 0;
+            }
+
+            .sms-breadcrumb .bc-pages {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+
+            .sms-breadcrumb .bc-pages a {
+                font-size: 13px;
+                font-weight: 500;
+                color: #8a90a2;
+                text-decoration: none;
+                transition: color .15s ease;
+            }
+
+            .sms-breadcrumb .bc-pages a:hover {
+                color: var(--gradient_1);
+            }
+
+            .sms-breadcrumb .bc-pages a:not(:last-child)::after {
+                content: '\203A';
+                margin: 0 8px;
+                color: #c7cbd6;
+                font-weight: 400;
+            }
+
+            .sms-breadcrumb .bc-pages a:last-child {
+                color: var(--gradient_1);
+                font-weight: 700;
+                pointer-events: none;
+            }
+
+            /* ---- Payment History card polish ---- */
+            .main-title.invoice-history-card {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 10px;
+                padding-bottom: 14px;
+                border-bottom: 1px solid var(--border_color);
+            }
+
+            .main-title.invoice-history-card h3::after {
+                display: none;
+            }
+
+            .main-title.invoice-history-card .title-group {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .main-title.invoice-history-card .title-icon {
+                width: 38px;
+                height: 38px;
+                border-radius: 10px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient(135deg, var(--gradient_1), var(--gradient_2));
+                color: #fff;
+                font-size: 16px;
+                flex-shrink: 0;
+            }
+
+            .record-count-badge {
+                font-size: 12px;
+                font-weight: 600;
+                color: var(--gradient_1);
+                background: rgba(0, 0, 0, 0.04);
+                border-radius: 999px;
+                padding: 5px 14px;
+                white-space: nowrap;
+            }
+
+            .status-badge {
+                display: inline-block;
+                padding: 4px 12px;
+                border-radius: 999px;
+                font-size: 12px;
+                font-weight: 600;
+                text-transform: capitalize;
+                white-space: nowrap;
+                line-height: 1.4;
+            }
+
+            .status-badge.status-course {
+                background: rgba(0, 123, 255, 0.14);
+                color: #0056b3;
+            }
+
+            .status-badge.status-nvq {
+                background: rgba(111, 66, 193, 0.14);
+                color: #59339d;
+            }
+
+            .status-badge.status-food {
+                background: rgba(40, 167, 69, 0.14);
+                color: #1e7e34;
+            }
+
+            .fw-600 {
+                font-weight: 600;
+            }
+
+            #paymentHistoryTable tbody tr:hover {
+                background: rgba(0, 0, 0, 0.02);
+            }
+        </style>
     @endpush
     <style>
         .school-table-style tr th,
@@ -125,10 +307,10 @@
         <div id="toastContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 11"></div>
         <div class="container-fluid">
             <div class="row justify-content-between">
-                <h1 id="TopPanelTitle">Course Payment Details</h1>
+                <h1 id="TopPanelTitle">Course, NVQ & Food Fee Payments</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
-                    <a href="#">@lang('fees.fees')</a>
+                    <a href="#">Course, NVQ & Food Fee Payments</a>
                 </div>
             </div>
         </div>
@@ -139,14 +321,15 @@
 
     <!-- Main Content -->
     <section class="admin-visitor-area up_st_admin_visitor">
-        <div class="container-fluid">
 
-            {{-- ===== Mode toggle (3-way: Normal → NVQ → Food → Normal) ===== --}}
-            <div class="mb-3 col-9 offset-3">
-                <button type="button" class="col-12 primary-btn mode-normal" id="toggleMode">
-                    Switch to NVQ Payment
-                </button>
+            <div class="white-box mb-10">
+                <div class="p-0 col-12 ">
+                    <button type="button" class="col-12 primary-btn mode-normal" id="toggleMode">
+                        Switch to NVQ Payment
+                    </button>
+                </div>
             </div>
+
 
             <form method="POST" enctype="multipart/form-data" id="invoiceForm">
                 @csrf
@@ -352,13 +535,21 @@
                                 </div>
 
                                 {{-- Save --}}
-                                <div class="row mt-15">
-                                    <div class="col-lg-12 text-center">
-                                        <button id="submit" class="primary-btn fix-gr-bg fmInvoice w-100 py-1">
-                                            @lang('common.save')
-                                        </button>
+                                @if ($canAddCoursePayment)
+                                    <div class="row mt-15">
+                                        <div class="col-lg-12 text-center">
+                                            <button id="submit" class="primary-btn fix-gr-bg fmInvoice w-100 py-1">
+                                                @lang('common.save')
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
+                                @else
+                                    <div class="row mt-15">
+                                        <div class="col-lg-12 text-center text-muted">
+                                            You do not have permission to record course payments.
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -404,11 +595,20 @@
                             </div>
 
                             {{-- Payment History --}}
+                            {{-- BUG FIX (Section 27 addendum): this column was labelled "Status" but the
+                                 row-builder JS below has only ever populated it with payment.payment_type
+                                 (course / nvq / food) — there is no separate paid/partial/pending status in
+                                 the history payload. Relabelled to "Payment Type" to match what is actually
+                                 shown, and the value now renders as a colour-coded pill instead of plain text. --}}
                             <div class="row mt-4">
                                 <div class="col-12">
                                     <div class="white-box">
-                                        <div class="main-title mb-3">
-                                            <h3>Payment History</h3>
+                                        <div class="main-title mb-3 invoice-history-card">
+                                            <div class="title-group">
+                                                {{-- <span class="title-icon"><span class="ti-money"></span></span> --}}
+                                                <h3 class="mb-0">Payment History</h3>
+                                            </div>
+                                            <span class="record-count-badge" id="paymentHistoryCount">0 records</span>
                                         </div>
                                         <div class="table-responsive">
                                             <table class="table school-table-style w-100" id="paymentHistoryTable">
@@ -417,7 +617,7 @@
                                                         <th>Date</th>
                                                         <th>Paid Amount</th>
                                                         <th>Payment Method</th>
-                                                        <th>Status</th>
+                                                        <th>Payment Type</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody></tbody>
@@ -431,7 +631,6 @@
                     </div>
                 </div><!-- /.row -->
             </form>
-        </div>
     </section>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -706,6 +905,7 @@
                     $('.allCourseDetails').empty();
                     addedCourseId = null;
                     $('#paymentHistoryTable tbody').empty();
+                    $('#paymentHistoryCount').text('0 records');
                     return;
                 }
 
@@ -833,23 +1033,38 @@
                                 historyTable.empty();
                                 if (data.history.length > 0) {
                                     data.history.forEach(function(payment) {
+                                        // Payment type drives the pill colour: course/nvq/food match the
+                                        // same blue/purple/green used for the mode-toggle button above.
+                                        let typeLabel = payment.payment_type ||
+                                        'course';
+                                        let typeClass = 'status-' + typeLabel.toString()
+                                            .toLowerCase();
+                                        let paidAmount = parseFloat(payment.amount) ||
+                                        0;
                                         historyTable.append(
                                             '<tr>' +
                                             '<td>' + new Date(payment.created_at)
                                             .toLocaleDateString() + '</td>' +
-                                            '<td>' + payment.amount + '</td>' +
+                                            '<td class="fw-600">' + paidAmount
+                                            .toFixed(2) +
+                                            '</td>' +
                                             '<td>' + payment.payment_method +
                                             '</td>' +
-                                            '<td>' + payment.payment_type +
-                                            '</td>' +
+                                            '<td><span class="status-badge ' +
+                                            typeClass +
+                                            '">' + typeLabel + '</span></td>' +
                                             '</tr>'
                                         );
                                     });
+                                    $('#paymentHistoryCount').text(
+                                        data.history.length + (data.history.length === 1 ?
+                                            ' record' : ' records'));
                                 } else {
                                     historyTable.append(
-                                        '<tr><td colspan="4">No payment history found.</td></tr>'
+                                        '<tr><td colspan="4" class="text-center text-muted py-3">No payment history found.</td></tr>'
                                     );
                                     $('.allCourseDetails tr').addClass('first-payment');
+                                    $('#paymentHistoryCount').text('0 records');
                                 }
 
                                 // ── FIX 3: Set due amount from history response ──

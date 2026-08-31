@@ -1,4 +1,101 @@
 @extends('layouts.app')
+@push('css')
+    <style>
+        /* ---- Modern refresh: cards, breadcrumb (Section 25) ----
+             BUG FIX: this page — like every other file in this Student Info batch —
+             used the sms-breadcrumb markup but never defined its CSS anywhere, so the
+             banner rendered unstyled. Adding the same card/breadcrumb CSS used
+             everywhere else in the app. ---- */
+        .white-box {
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+        }
+
+        .white-box .main-title h3 {
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .white-box .main-title h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 42px;
+            height: 3px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .primary_input_field, select.primary_select {
+            border-radius: 8px !important;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        .sms-breadcrumb {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
+            border: 1px solid var(--border_color);
+            padding: 18px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sms-breadcrumb::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--gradient_1), var(--gradient_2));
+        }
+
+        .sms-breadcrumb .row {
+            align-items: center;
+        }
+
+        .sms-breadcrumb h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .sms-breadcrumb .bc-pages {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .sms-breadcrumb .bc-pages a {
+            font-size: 13px;
+            font-weight: 500;
+            color: #8a90a2;
+            text-decoration: none;
+            transition: color .15s ease;
+        }
+
+        .sms-breadcrumb .bc-pages a:hover {
+            color: var(--gradient_1);
+        }
+
+        .sms-breadcrumb .bc-pages a:not(:last-child)::after {
+            content: '\203A';
+            margin: 0 8px;
+            color: #c7cbd6;
+            font-weight: 400;
+        }
+
+        .sms-breadcrumb .bc-pages a:last-child {
+            color: var(--gradient_1);
+            font-weight: 700;
+            pointer-events: none;
+        }
+    </style>
+@endpush
 @section('title')
     @lang('student.edit_student')
 @endsection
@@ -6,6 +103,8 @@
     @php
         $branchCount = isset($branches) ? count($branches) : 0;
         $singleBranchId = ($branchCount === 1 && isset($branches)) ? $branches->first()->id : null;
+        // Button-level permission (Section 25).
+        $canEditStudent = Auth::user()->hasPermission('add-student.update');
     @endphp
     <style>
         #video,
@@ -89,11 +188,13 @@
                                         </li>
 
                                         <li class="nav-item flex-grow-1 text-right">
+                                            @if ($canEditStudent)
                                             <button class="primary-btn fix-gr-bg submit" id="_submit_btn_admission"
                                                 data-toggle="tooltip">
                                                 <span class="ti-check"></span>
                                                 @lang('student.update_student')
                                             </button>
+                                            @endif
                                         </li>
                                     </ul>
                                 </div>

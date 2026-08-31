@@ -239,7 +239,19 @@ class InvoicePaymentController extends Controller
         return DataTables::of($query)
 
             // CHECKBOX + STATUS
+            // ── PERMISSION GATE (Section 28) ──────────────────────────────────
+            // No checkbox at all if the role can't do either bulk action — matches
+            // the "Bulk Update" button on the blade side, which is already hidden
+            // for these same two keys ($canBulkUpdateInvoicePayments).
             ->addColumn('select', function ($row) {
+
+                $user = Auth::user();
+                if (
+                    !$user->hasPermission('invoice-payments.bulk-not-open') &&
+                    !$user->hasPermission('invoice-payments.bulk-pending')
+                ) {
+                    return '';
+                }
 
                 if ($row->invoice_payment_confirm) {
                     $status = 'completed';
@@ -249,11 +261,14 @@ class InvoicePaymentController extends Controller
                     $status = 'not_open';
                 }
 
-                return '<input type="checkbox"
-                class="payment-checkbox"
-                value="' . $row->id . '"
-                data-status="' . $status . '"
-                data-student="' . ($row->invoice->student_id ?? '') . '">';
+                return '<label class="custom-checkbox">
+                <input type="checkbox"
+                    class="payment-checkbox"
+                    value="' . $row->id . '"
+                    data-status="' . $status . '"
+                    data-student="' . ($row->invoice->student_id ?? '') . '">
+                <span class="custom-checkbox-indicator"></span>
+            </label>';
             })
 
             // INVOICE NO
@@ -353,13 +368,16 @@ class InvoicePaymentController extends Controller
             })
 
             // ACTION
+            // ── PERMISSION GATE (Section 28) ──────────────────────────────────
+            // Same 'invoice-payments.print' key used by pendingDatatable() below —
+            // it's the exact same route on both tables.
             ->addColumn('action', function ($row) {
 
-                if ($row->payment_invoice_number) {
-                    return '<a href="' . route('invoice-payments.print', $row->payment_invoice_number) . '" 
-                    target="_blank" 
+                if ($row->payment_invoice_number && Auth::user()->hasPermission('invoice-payments.print')) {
+                    return '<a href="' . route('invoice-payments.print', $row->payment_invoice_number) . '"
+                    target="_blank"
                     class="primary-btn small btn-primary text-white">
-                    Reprint
+                    <i class="fa-solid fa-print"></i> Reprint
                 </a>';
                 }
 
@@ -369,6 +387,7 @@ class InvoicePaymentController extends Controller
             ->rawColumns(['action', 'select'])
             ->make(true);
     }
+
 
     public function pendingDatatable(Request $request)
     {
@@ -381,11 +400,11 @@ class InvoicePaymentController extends Controller
             MIN(id) as id,
             MAX(created_at) as created_at,
             MAX(payment_invoice_open_date) as payment_invoice_open_date,
-
-    
+ 
+ 
             SUM(amount) as total_amount,
             SUM(invoice_payment_amount) as total_confirm_amount,
-    
+ 
             COUNT(*) as total_count,
             SUM(CASE WHEN invoice_payment_confirm = 1 THEN 1 ELSE 0 END) as confirmed_count,
             SUM(CASE WHEN invoice_payment_confirm IS NULL THEN 1 ELSE 0 END) as pending_count,
@@ -406,7 +425,7 @@ class InvoicePaymentController extends Controller
             $dates = explode(' to ', $request->date_range);
 
             $from = isset($dates[0]) && !empty($dates[0]) ? $dates[0] : null;
-            $to = isset($dates[1]) && !empty($dates[1]) ? $dates[1] : $from; 
+            $to = isset($dates[1]) && !empty($dates[1]) ? $dates[1] : $from;
 
             if ($from) {
                 $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $from)->startOfDay();
@@ -470,15 +489,30 @@ class InvoicePaymentController extends Controller
         return DataTables::of($query)
 
             // checkbox
+            // ── PERMISSION GATE (Section 28) ──────────────────────────────────
+            // No checkbox if the role can't do either bulk action on THIS window
+            // (Payment Update / Back) — same keys invoice-payments.blade.php's own
+            // $canUpdateInvoicePayment/$canBackInvoicePayment already gate.
             ->addColumn('select', function ($row) {
 
+                $user = Auth::user();
+                if (
+                    !$user->hasPermission('invoice-payments.bulk-pending') &&
+                    !$user->hasPermission('invoice-payments.bulk-back')
+                ) {
+                    return '';
+                }
+
                 $status = $row->pending_count > 0 ? 'pending' : 'completed';
-                return '<input type="checkbox"
-            class="payment-checkbox"
-            value="' . $row->payment_invoice_number . '"
-            data-status="' . $status . '"
-            data-total="' . $row->total_amount . '"
-            data-confirm="' . $row->total_confirm_amount . '">';
+                return '<label class="custom-checkbox">
+            <input type="checkbox"
+                class="payment-checkbox"
+                value="' . $row->payment_invoice_number . '"
+                data-status="' . $status . '"
+                data-total="' . $row->total_amount . '"
+                data-confirm="' . $row->total_confirm_amount . '">
+            <span class="custom-checkbox-indicator"></span>
+        </label>';
             })
 
             // invoice number
@@ -582,12 +616,17 @@ class InvoicePaymentController extends Controller
             })
 
             // action
+            // ── PERMISSION GATE (Section 28) ──────────────────────────────────
             ->addColumn('action', function ($row) {
+
+                if (!Auth::user()->hasPermission('invoice-payments.print')) {
+                    return '-';
+                }
 
                 return '<a href="' . route('invoice-payments.print', $row->payment_invoice_number) . '"
             target="_blank"
             class="btn btn-primary btn-sm">
-            Print
+            <i class="fa-solid fa-print"></i> Print
         </a>';
             })
 

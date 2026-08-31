@@ -11435,7 +11435,7 @@
 			 *      } );
 			 *    } );
 			 */
-			"sEmptyTable": trans('no_data_available_in_table'),
+			// "sEmptyTable": trans('no_data_available_in_table'),
 	
 	
 			/**
