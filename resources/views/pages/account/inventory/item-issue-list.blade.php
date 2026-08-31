@@ -2,11 +2,11 @@
 @push('css')
     <style>
         /* ---- Modern refresh: cards, table, breadcrumb (Section 34) ----
-                     BUG FIX: this page already used the sms-breadcrumb markup and
-                     .white-box/#table_id markup, but never defined any CSS for them
-                     anywhere in the Inventory module, so the banner and cards
-                     rendered completely unstyled. Adding the same breadcrumb/card/
-                     table CSS used across the rest of the app. ---- */
+                         BUG FIX: this page already used the sms-breadcrumb markup and
+                         .white-box/#table_id markup, but never defined any CSS for them
+                         anywhere in the Inventory module, so the banner and cards
+                         rendered completely unstyled. Adding the same breadcrumb/card/
+                         table CSS used across the rest of the app. ---- */
         .sms-breadcrumb {
             background: #fff;
             border-radius: 12px;
@@ -162,7 +162,7 @@
             <div class="row">
                 <div class="col-lg-12">
 
-                     @if ($canAddItemIssue)
+                    @if ($canAddItemIssue)
                         <div class="white-box mb-10 filter_card">
                             <div class="row">
                                 <div class="col-12 mb-4 mb-sm-0">
@@ -204,7 +204,7 @@
                         </div>
                     </div>
 
-                   
+
                     <div class="row full_wide_table">
                         <div class="col-lg-12">
                             <div class="white-box">
@@ -219,7 +219,7 @@
                                 <div class="row">
                                     <div class="col-lg-12">
                                         <x-table>
-                                            <table id="table_id" class="table" cellspacing="0" width="100%">
+                                    <table id="table_id" class="table" cellspacing="0" width="100%">
                                                 <thead>
                                                     <tr>
                                                         <th>ID</th>
@@ -446,7 +446,13 @@
     <script>
         $('#table_id').DataTable({
             responsive: true,
-            dom: 'Bfrtip',
+            dom: "<'dt-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3 '" +
+                "<'dt-toolbar-title'>" +
+                "<'dt-toolbar-controls d-flex align-items-center flex-wrap gap-2 mt-3'<'dt-search'f><'dt-buttons-wrap'B>>" +
+                ">" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'gap-2 mt-3'<'dt-info'i><'dt-pagination'p>>",
+
             buttons: [
                 'copy', 'csv', 'excel', 'pdf', 'print'
             ],
@@ -456,7 +462,50 @@
             info: true,
             order: [
                 [0, 'desc']
-            ], // Sort by first column (ID) in descending order
+            ],
+            pageLength: 100,
+
+            buttons: [{
+                    extend: 'copyHtml5',
+                    title: getFileName(),
+                    text: '<i class="fa-regular fa-copy"></i>',
+                    titleAttr: 'Copy'
+                },
+                {
+                    extend: 'csvHtml5',
+                    title: getFileName(),
+                    text: '<i class="fa-solid fa-file-csv"></i>',
+                    titleAttr: 'CSV'
+                },
+                {
+                    extend: 'excelHtml5',
+                    title: getFileName(),
+                    text: '<i class="fa-solid fa-file-excel"></i>',
+                    titleAttr: 'Excel'
+                },
+                {
+                    extend: 'pdfHtml5',
+                    title: getFileName(),
+                    text: '<i class="fa-solid fa-file-pdf"></i>',
+                    titleAttr: 'PDF'
+                },
+                {
+                    extend: 'print',
+                    title: getFileName(),
+                    text: '<i class="fa-solid fa-print"></i>',
+                    titleAttr: 'Print'
+                }
+            ],
+
+            language: {
+                search: '<i class=""></i>',
+                searchPlaceholder: 'Search...',
+                paginate: {
+                    previous: '<i class="fa-solid fa-angle-left"></i>',
+                    next: '<i class="fa-solid fa-angle-right"></i>'
+                }
+            },
+
         });
 
         $(document).on('click', '.view-item-issue', function(e) {

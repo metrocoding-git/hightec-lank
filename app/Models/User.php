@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
- // Import the Role model
+// Import the Role model
 
 class User extends Authenticatable
 {
@@ -97,5 +97,11 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function courses()
+    {
+        return $this->belongsToMany(\App\Models\Course::class, 'user_course', 'user_id', 'course_id')
+            ->withTimestamps();
     }
 }

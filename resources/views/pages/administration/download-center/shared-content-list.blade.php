@@ -719,50 +719,57 @@
     <script>
        $('#table_id').DataTable({
             responsive: true,
-            dom: 'Bfrtip',
-
+            dom: "<'dt-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3 '" +
+                "<'dt-toolbar-title'>" +
+                "<'dt-toolbar-controls d-flex align-items-center flex-wrap gap-2 mt-3'<'dt-search'f><'dt-buttons-wrap'B>>" +
+                ">" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'gap-2 mt-3'<'dt-info'i><'dt-pagination'p>>",
             buttons: [{
                     extend: 'copyHtml5',
+                    title: getFileName(),
                     text: '<i class="fa-regular fa-copy"></i>',
                     titleAttr: 'Copy'
                 },
                 {
                     extend: 'csvHtml5',
+                    title: getFileName(),
                     text: '<i class="fa-solid fa-file-csv"></i>',
                     titleAttr: 'CSV'
                 },
                 {
                     extend: 'excelHtml5',
+                    title: getFileName(),
                     text: '<i class="fa-solid fa-file-excel"></i>',
                     titleAttr: 'Excel'
                 },
                 {
                     extend: 'pdfHtml5',
+                    title: getFileName(),
                     text: '<i class="fa-solid fa-file-pdf"></i>',
                     titleAttr: 'PDF'
                 },
                 {
                     extend: 'print',
+                    title: getFileName(),
                     text: '<i class="fa-solid fa-print"></i>',
                     titleAttr: 'Print'
                 }
             ],
-
-            paging: true,
-            searching: true,
-            ordering: true,
-            info: true,
-
-            // 👇 This part adds the search and pagination icons
+            pageLength: 100,
             language: {
-                search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
+                search: '<i class=""></i>',
                 searchPlaceholder: 'Search...',
                 paginate: {
                     previous: '<i class="fa-solid fa-angle-left"></i>',
                     next: '<i class="fa-solid fa-angle-right"></i>'
                 }
-            }
-        });
+            },
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+ });
         $(document).on('click', '.copyToClipboard', function(e) {
             toastr.success("Link Copied", 'Success');
         });

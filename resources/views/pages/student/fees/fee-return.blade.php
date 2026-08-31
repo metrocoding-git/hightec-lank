@@ -349,9 +349,19 @@
     <script>
         $('#table_id').DataTable({
             responsive: true,
-            dom: 'Bfrtip',
+            dom: "<'dt-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3 '" +
+                "<'dt-toolbar-title'>" +
+                "<'dt-toolbar-controls d-flex align-items-center flex-wrap gap-2 mt-3'<'dt-search'f><'dt-buttons-wrap'B>>" +
+                ">" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'gap-2 mt-3'<'dt-info'i><'dt-pagination'p>>",
 
-            buttons: [{
+        
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+buttons: [{
                     extend: 'copyHtml5',
                     title: getFileName(),
                     text: '<i class="fa-regular fa-copy"></i>',
@@ -382,21 +392,15 @@
                     titleAttr: 'Print'
                 }
             ],
-
-            paging: true,
-            searching: true,
-            ordering: true,
-            info: true,
-
-            // 👇 This part adds the search and pagination icons
+            pageLength: 100,
             language: {
-                search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
+                search: '<i class=""></i>',
                 searchPlaceholder: 'Search...',
                 paginate: {
                     previous: '<i class="fa-solid fa-angle-left"></i>',
                     next: '<i class="fa-solid fa-angle-right"></i>'
                 }
-            }
+            },
         });
 
         function getFileName() {
