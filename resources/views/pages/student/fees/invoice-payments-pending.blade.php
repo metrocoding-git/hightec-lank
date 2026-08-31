@@ -199,9 +199,7 @@
                         <div class="row">
                             <div class="col-lg-12">
                                 <x-table>
-                                    <table id="table_id"
-                                        class="table data-table Crm_table_active3 no-footer dtr-inline collapsed"
-                                        cellspacing="0" width="100%">
+                                    <table id="table_id" class="table" cellspacing="0" width="100%">
                                         <thead>
                                             <tr>
                                                 <th>#</th>
@@ -331,10 +329,12 @@
             serverSide: true,
             scrollX: true,
 
-            dom: "<'d-flex justify-content-between align-items-center mb-2'<'me-2'l><'mx-auto'f><'ms-2'B>>" +
+            dom: "<'dt-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3'" +
+                "<'dt-toolbar-title'>" +
+                "<'dt-toolbar-controls d-flex align-items-center flex-wrap gap-2 mt-3'<'dt-search'f><'dt-buttons-wrap'B>>" +
+                ">" +
                 "<'row'<'col-sm-12'tr>>" +
-                "<'d-flex justify-content-between align-items-center mt-2'<'mb-0 col-4'i><'mb-0 col-8'p>>",
-
+                "<'gap-2 mt-3'<'dt-info'i><'dt-pagination'p>>",
             lengthChange: true,
             buttons: [{
                     extend: 'pdf',
@@ -378,6 +378,8 @@
             paging: true,
             searching: true,
             ordering: true,
+            pageLength: 100,
+
             info: true,
             order: [
                 [0, 'desc']
@@ -443,6 +445,16 @@
                     data: 'date'
                 }
             ],
+            language: {
+                search: '<i class=""></i>',
+                searchPlaceholder: 'Search...',
+                paginate: {
+                    previous: '<i class="fa-solid fa-angle-left"></i>',
+                    next: '<i class="fa-solid fa-angle-right"></i>'
+                }
+            },
+
+
         });
 
         let table = $('#table_id').DataTable();

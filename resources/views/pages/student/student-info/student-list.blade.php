@@ -1,73 +1,4 @@
 @extends('layouts.app')
-@push('css')
-    <style>
-
-        .white-box {
-            border-radius: 12px;
-            box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
-            border: 1px solid var(--border_color);
-        }
-
-        .white-box .main-title h3 {
-            font-weight: 700;
-            position: relative;
-            padding-bottom: 10px;
-        }
-
-        .white-box .main-title h3::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            bottom: 0;
-            width: 42px;
-            height: 3px;
-            border-radius: 3px;
-            background: linear-gradient(90deg, var(--gradient_1), var(--gradient_2));
-        }
-
-        .primary_input_field,
-        select.primary_select {
-            border-radius: 8px !important;
-            transition: border-color .15s ease, box-shadow .15s ease;
-        }
-
-        #table_id thead tr th {
-            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
-            color: #fff;
-            font-weight: 600;
-            white-space: nowrap;
-            border: none;
-        }
-
-        #table_id tbody tr {
-            transition: background-color .12s ease;
-        }
-
-        #table_id tbody tr:hover {
-            background-color: rgba(0, 0, 0, 0.025);
-        }
-
-        #table_id tbody td {
-            vertical-align: middle;
-        }
-
-        .text-muted {
-            color: #9aa1ac !important;
-        }
-        .modern-row-actions .btn-row-action {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            border: 1px solid var(--border_color);
-            background: #fff;
-            color: #8a90a2;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color .15s ease, color .15s ease, border-color .15s ease;
-        }
-    </style>
-@endpush
 @section('title')
     @lang('academics.About')
 @endsection
@@ -206,9 +137,7 @@
                         <div class="row">
                             <div class="col-lg-12">
                                 <x-table>
-                                    <table id="table_id"
-                                        class="table data-table Crm_table_active3 no-footer dtr-inline collapsed"
-                                        cellspacing="0" width="100%">
+                                    <table id="table_id" class="table" cellspacing="0" width="100%">
                                         <thead>
                                             <tr>
                                                 <th>Admission No</th>
@@ -352,76 +281,20 @@
 @push('script')
     <script>
         $('#table_id').DataTable({
+            scrollX: true,
+            dom: "<'dt-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3 '" +
+                "<'dt-toolbar-title'>" +
+                "<'dt-toolbar-controls d-flex align-items-center flex-wrap gap-2 mt-3'<'dt-search'f><'dt-buttons-wrap'B>>" +
+                ">" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'gap-2 mt-3'<'dt-info'i><'dt-pagination'p>>",
             processing: true,
             serverSide: true,
-            scrollX: true,
-
-            dom: "<'d-flex justify-content-between align-items-center mb-2'<'me-2'l><'mx-auto'f><'ms-2'B>>" +
-                "<'row'<'col-sm-12'tr>>" +
-                "<'d-flex justify-content-between align-items-center mt-2'<'mb-0 col-4'i><'mb-0 col-8'p>>",
-
-            lengthChange: true,
-            buttons: [{
-                    extend: 'pdf',
-                    title: getFileName(),
-                    text: '<i title="export to pdf" class="fa fa-file-pdf-o"></i>',
-                    exportOptions: {
-                        columns: ':visible'
-                    }
-                },
-                {
-                    extend: 'csv',
-                    title: getFileName(),
-                    text: '<i title="export to csv" class="fa fa-file-text-o"></i>',
-                    exportOptions: {
-                        columns: ':visible'
-                    }
-                },
-                {
-                    extend: 'excel',
-                    title: getFileName(),
-                    text: '<i title="export to excel" class="fa fa-file-excel-o"></i>',
-                    exportOptions: {
-                        columns: ':visible'
-                    }
-                },
-                {
-                    extend: 'print',
-                    title: getFileName(),
-                    text: '<i title="print" class="fa fa-print"></i>',
-                    exportOptions: {
-                        columns: ':visible'
-                    }
-                },
-                {
-                    extend: 'colvis',
-                    title: getFileName(),
-                    text: '<i title="column visibility" class="fa fa-eye"></i>',
-                    columns: ':gt(0)'
-                }
-            ],
-            paging: true,
-            searching: true,
-            ordering: true,
-            info: true,
-            order: [
-                [0, 'desc']
-            ],
-            pageLength: 25,
+            pageLength: 100,
             lengthMenu: [
-                [25, 50, 100, 500],
-                [25, 50, 100, 500]
+                [25, 50, 100, -1],
+                [25, 50, 100, "All"]
             ],
-            language: {
-                search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
-                searchPlaceholder: 'Search...',
-                paginate: {
-                    previous: '<i class="fa-solid fa-angle-left"></i>',
-                    next: '<i class="fa-solid fa-angle-right"></i>'
-                }
-            },
-
-
             ajax: "{{ route('student-list.datatable') }}",
             columns: [{
                     data: 'admission_number',
@@ -523,14 +396,65 @@
                     orderable: false
                 },
                 {
-                    // Server-rendered Actions column (Edit/Disable/Verify/View links) —
-                    // button-level permission gating for these lives in the controller,
-                    // not here. See the note in the PHP block near the top of this file.
                     data: 'action',
                     orderable: false,
                     searchable: false
                 }
-            ]
+            ],
+            buttons: [{
+                    extend: 'pdf',
+                    title: getFileName(),
+                    text: '<i title="export to pdf" class="fa fa-file-pdf-o"></i>',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                },
+                {
+                    extend: 'csv',
+                    title: getFileName(),
+                    text: '<i title="export to csv" class="fa fa-file-text-o"></i>',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                },
+                {
+                    extend: 'excel',
+                    title: getFileName(),
+                    text: '<i title="export to excel" class="fa fa-file-excel-o"></i>',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                },
+                {
+                    extend: 'print',
+                    title: getFileName(),
+                    text: '<i title="print" class="fa fa-print"></i>',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                },
+                {
+                    extend: 'colvis',
+                    title: getFileName(),
+                    text: '<i title="column visibility" class="fa fa-eye"></i>',
+                    columns: ':gt(0)'
+                }
+            ],
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+            order: [
+                [0, 'desc']
+            ],
+            language: {
+                search: '<i class=""></i>',
+                searchPlaceholder: 'Search...',
+                paginate: {
+                    previous: '<i class="fa-solid fa-angle-left"></i>',
+                    next: '<i class="fa-solid fa-angle-right"></i>'
+                }
+            },
 
         });
 
@@ -634,9 +558,9 @@
                                <td>
                                     ${row.signature_path 
                                         ? `<a href="/storage/${row.signature_path}" target="_blank">
-                                                                                                                            <img src="/storage/${row.signature_path}" 
-                                                                                                                                style="width:80px; border:1px solid #ccc; padding:2px; cursor:pointer;">
-                                                                                                                    </a>`
+                                                                                                                                                <img src="/storage/${row.signature_path}" 
+                                                                                                                                                    style="width:80px; border:1px solid #ccc; padding:2px; cursor:pointer;">
+                                                                                                                                        </a>`
                                         : '-'
                                     }
                                 </td>

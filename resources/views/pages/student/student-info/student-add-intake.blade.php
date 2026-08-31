@@ -186,7 +186,8 @@
 
                                 @if ($canSearchStudentIntake)
                                     <div class="col-lg-12 mt-10 text-right">
-                                        <button type="submit" id="filterBtn" class="primary-btn small fix-gr-bg col-12 p-2">
+                                        <button type="submit" id="filterBtn"
+                                            class="primary-btn small fix-gr-bg col-12 p-2">
                                             <span class="ti-search pr-2"></span> Search
                                         </button>
                                     </div>
@@ -237,152 +238,6 @@
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
-                                        {{-- <tbody>
-                                            @foreach ($studentIntakes as $key => $studentIntake)
-                                                <tr>
-                                                    <td>{{ $key + 1 }}</td>
-                                                    <td>{{ $studentIntake->student->student_name }}</td>
-                                                    <td
-                                                        class="{{ $studentIntake->student->isVerified('Full Name Verified') ? 'text-success' : '' }}">
-                                                        {!! $studentIntake->student->isVerified('Full Name Verified') ? '<span class="text-success">YES</span>' : 'NO' !!}
-                                                    </td>
-                                                    <td>{{ $studentIntake->student->studentCategory->category_name ?? '-' }}
-                                                    </td>
-                                                    <td>{{ $studentIntake->student->admission_number }}</td>
-                                                    <td
-                                                        class="{{ $studentIntake->student->isVerified('NIC Verified') ? 'text-success' : '' }}">
-                                                        {{ $studentIntake->student->national_id_number }}
-                                                    </td>
-                                                    <td
-                                                        class="{{ $studentIntake->student->isVerified('NIC Verified') ? 'text-success' : '' }}">
-                                                        {!! $studentIntake->student->isVerified('NIC Verified') ? '<span class="text-success">YES</span>' : 'NO' !!}
-                                                    </td>
-                                                    <td>{{ $studentIntake->intake->name ?? '-' }}</td>
-                                                    <td>{{ $studentIntake->course->name ?? '-' }}</td>
-                                                    <td>{{ $studentIntake->change_course->name ?? '-' }}</td>
-                                                    <td
-                                                        class="{{ $studentIntake->student->isVerified('phone_number') ? 'text-success' : '' }}">
-                                                        {{ $studentIntake->student->phone_number }}</td>
-                                                    <td
-                                                        class="{{ $studentIntake->student->isVerified('Mobile Number 2 Verified') ? 'text-success' : '' }}">
-                                                        {{ $studentIntake->student->phone_number_2 ?? '-' }}</td>
-                                                    <td
-                                                        class="{{ $studentIntake->student->isVerified('phone_number') ? 'text-success' : '' }}">
-                                                        {!! $studentIntake->student->isVerified('phone_number') ? '<span class="text-success">YES</span>' : 'NO' !!}
-                                                    </td>
-                                                    <td
-                                                        class="{{ $studentIntake->student->isVerified('Mobile Number 2 Verified') ? 'text-success' : '' }}">
-                                                        {!! $studentIntake->student->isVerified('Mobile Number 2 Verified')
-                                                            ? '<span class="text-success">YES</span>'
-                                                            : 'NO' !!}
-                                                    </td>
-
-                                                    <td>{{ $studentIntake->branch->name ?? '-' }}</td>
-                                                    <td
-                                                        class="{{ $studentIntake->student->isVerified('permanent_address') ? 'text-success' : '' }}">
-                                                        {{ $studentIntake->student->permanent_address ?? '-' }}
-                                                    </td>
-                                                    <td
-                                                        class="{{ $studentIntake->student->isVerified('permanent_address') ? 'text-success' : '' }}">
-                                                        {!! $studentIntake->student->isVerified('permanent_address') ? '<span class="text-success">YES</span>' : 'NO' !!}
-                                                    </td>
-                                                    <td>{{ $studentIntake->created_at ? date('Y-m-d', strtotime($studentIntake->created_at)) : '-' }}
-                                                    </td>
-                                                    <td>
-                                                        <span
-                                                            class="badge {{ $studentIntake->status == 'pending' ? 'badge-success' : ($studentIntake->status == 'start' ? 'badge-info' : ($studentIntake->status == 'return' ? 'badge-warning' : 'badge-primary')) }}">
-                                                            {{ ucfirst($studentIntake->status) }}
-                                                        </span>
-                                                    </td>
-                                                    <td>{{ $studentIntake->notes }}</td>
-                                                    <td>
-                                                        <x-drop-down>
-                                                            @if ($studentIntake->status == 'pending')
-                                                                <a class="dropdown-item" href="#"
-                                                                    onclick="changeStatus({{ $studentIntake->id }}, 'start')">
-                                                                    <span class="text-info">Start</span>
-                                                                </a>
-
-                                                                <a class="dropdown-item" data-toggle="modal"
-                                                                    data-target="#deleteStudentIntakeModal{{ $studentIntake->id }}"
-                                                                    href="#">
-                                                                    <span class="text-danger">Delete</span>
-                                                                </a>
-
-                                                                <a class="dropdown-item" href="#"
-                                                                    onclick="openChangeCourseModal({{ $studentIntake->id }}, {{ $studentIntake->course_id }}, {{ $studentIntake->intake_id }})">
-                                                                    <span class="text-primary">Change Course</span>
-                                                                </a>
-                                                            @endif
-                                                            @if ($studentIntake->status == 'start')
-                                                                <a class="dropdown-item" href="#"
-                                                                    onclick="changeStatus({{ $studentIntake->id }}, 'return')">
-                                                                    <span class="text-warning">Return</span>
-                                                                </a>
-                                                                <a class="dropdown-item" href="#"
-                                                                    onclick="changeStatus({{ $studentIntake->id }}, 'complete')">
-                                                                    <span class="text-success">Complete</span>
-                                                                </a>
-
-                                                                <a class="dropdown-item" href="#"
-                                                                    onclick="openChangeCourseModal({{ $studentIntake->id }}, {{ $studentIntake->course_id }}, {{ $studentIntake->intake_id }})">
-                                                                    <span class="text-primary">Change Course</span>
-                                                                </a>
-                                                            @endif
-                                                            @if ($studentIntake->status == 'return')
-                                                                <a class="dropdown-item" href="#"
-                                                                    onclick="changeStatus({{ $studentIntake->id }}, 'start')">
-                                                                    <span class="text-info">Restart</span>
-                                                                </a>
-                                                                <a class="dropdown-item" href="#"
-                                                                    onclick="changeStatus({{ $studentIntake->id }}, 'complete')">
-                                                                    <span class="text-success">Complete</span>
-                                                                </a>
-                                                            @endif
-
-
-
-                                                        </x-drop-down>
-                                                    </td>
-                                                </tr>
-
-                                                <!-- Delete Modal -->
-                                                <div class="modal fade admin-query"
-                                                    id="deleteStudentIntakeModal{{ $studentIntake->id }}">
-                                                    <div class="modal-dialog modal-dialog-centered">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h4 class="modal-title">Remove Intake</h4>
-                                                                <button type="button" class="close"
-                                                                    data-dismiss="modal">&times;</button>
-                                                            </div>
-                                                            <div class="modal-body">
-                                                                <div class="text-center">
-                                                                    <h4>Are you sure to remove intake?</h4>
-                                                                </div>
-                                                                <div class="mt-40 d-flex justify-content-between">
-                                                                    <button type="button" class="primary-btn tr-bg"
-                                                                        data-dismiss="modal">
-                                                                        Cancel
-                                                                    </button>
-                                                                    <form
-                                                                        action="{{ route('student.add-intake.destroy', $studentIntake->id) }}"
-                                                                        method="POST">
-                                                                        @csrf
-                                                                        @method('DELETE')
-                                                                        <button class="primary-btn fix-gr-bg"
-                                                                            type="submit">
-                                                                            Remove
-                                                                        </button>
-                                                                    </form>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            @endforeach
-
-                                        </tbody> --}}
                                     </table>
                                 </x-table>
                             </div>
@@ -641,10 +496,15 @@
         // store DataTable in a variable
         var table = $('#table_id').DataTable({
             scrollX: true,
-            dom: 'Blfrtip',
+            dom: "<'dt-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3 '" +
+                "<'dt-toolbar-title'>" +
+                "<'dt-toolbar-controls d-flex align-items-center flex-wrap gap-2 mt-3'<'dt-search'f><'dt-buttons-wrap'B>>" +
+                ">" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'gap-2 mt-3'<'dt-info'i><'dt-pagination'p>>",
+
             processing: true,
             serverSide: true,
-            pageLength: 25,
             lengthMenu: [
                 [25, 50, 100, -1],
                 [25, 50, 100, "All"]
@@ -755,6 +615,16 @@
                     titleAttr: 'Print'
                 }
             ],
+            pageLength: 100,
+            language: {
+                search: '<i class=""></i>',
+                searchPlaceholder: 'Search...',
+                paginate: {
+                    previous: '<i class="fa-solid fa-angle-left"></i>',
+                    next: '<i class="fa-solid fa-angle-right"></i>'
+                }
+            },
+
             paging: true,
             searching: true,
             ordering: true,
@@ -762,16 +632,9 @@
             order: [
                 [0, 'desc']
             ],
-            language: {
-                search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
-                searchPlaceholder: 'Search...',
-                paginate: {
-                    first: '<i class="fa-solid fa-angle-double-left"></i>',
-                    last: '<i class="fa-solid fa-angle-double-right"></i>',
-                    previous: '<i class="fa-solid fa-angle-left"></i>',
-                    next: '<i class="fa-solid fa-angle-right"></i>'
-                }
-            }
+
+
+
         });
 
         function getFileName() {

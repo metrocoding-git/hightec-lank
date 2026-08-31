@@ -181,10 +181,7 @@
                         <div class="row">
                             <div class="col-lg-12">
                                 <x-table>
-                                    <table id="table_id"
-                                        class="table data-table Crm_table_active3 no-footer dtr-inline collapsed"
-                                        cellspacing="0" width="100%">
-
+                                    <table id="table_id" class="table" cellspacing="0" width="100%">
                                         <thead>
                                             <tr>
                                                 <th>ID</th>
@@ -952,7 +949,6 @@
 
 @push('script')
     <script>
-
         const canRefundFeesPayment = {{ $canRefundFeesPayment ? 'true' : 'false' }};
 
         const canPrintFeesInvoiceItem = {{ $canPrintFeesInvoiceItem ? 'true' : 'false' }};
@@ -977,9 +973,12 @@
         var table = $('#table_id').DataTable({
             scrollX: true,
             serverSide: true,
-            dom: "<'d-flex justify-content-between align-items-center mb-2'<'me-2'l><'mx-auto'f><'ms-2'B>>" +
+            dom: "<'dt-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3 '" +
+                "<'dt-toolbar-title'>" +
+                "<'dt-toolbar-controls d-flex align-items-center flex-wrap gap-2 mt-3'<'dt-search'f><'dt-buttons-wrap'B>>" +
+                ">" +
                 "<'row'<'col-sm-12'tr>>" +
-                "<'d-flex justify-content-between align-items-center mt-2'<'mb-0 col-4'i><'mb-0 col-8'p>>",
+                "<'gap-2 mt-3'<'dt-info'i><'dt-pagination'p>>",
             lengthChange: true,
             buttons: [{
                     extend: 'pdf',
@@ -1027,13 +1026,13 @@
             order: [
                 [1, 'desc']
             ],
-            pageLength: 25,
+            pageLength: 100,
             lengthMenu: [
                 [25, 50, 100, -1],
                 [25, 50, 100, "All"]
             ],
             language: {
-                search: '<i class="fa-solid fa-magnifying-glass me-2"></i>',
+                search: '<i class=""></i>',
                 searchPlaceholder: 'Search...',
                 paginate: {
                     previous: '<i class="fa-solid fa-angle-left"></i>',
@@ -1552,15 +1551,15 @@
                                     <td>${new Date(payment.created_at).toLocaleDateString()}</td>
                                     <td>
                                         ${actionDropdown ? `
-                                                                                <div class="dropdown modern-row-actions">
-                                                                                    <button class="btn-row-action" type="button" data-toggle="dropdown" aria-expanded="false">
-                                                                                        <i class="fa-solid fa-ellipsis-vertical"></i>
-                                                                                    </button>
-                                                                                    <div class="dropdown-menu dropdown-menu-right">
-                                                                                        ${actionDropdown}
-                                                                                    </div>
-                                                                                </div>
-                                                                            ` : '<span class="text-muted">&mdash;</span>'}
+                                                                                        <div class="dropdown modern-row-actions">
+                                                                                            <button class="btn-row-action" type="button" data-toggle="dropdown" aria-expanded="false">
+                                                                                                <i class="fa-solid fa-ellipsis-vertical"></i>
+                                                                                            </button>
+                                                                                            <div class="dropdown-menu dropdown-menu-right">
+                                                                                                ${actionDropdown}
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    ` : '<span class="text-muted">&mdash;</span>'}
                                     </td>
                                 </tr>
                             `;

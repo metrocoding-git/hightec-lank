@@ -207,10 +207,7 @@
                             <div class="col-lg-4 no-gutters">
                                 <div class="main-title">
                                     <h3 class="mb-15">@lang('inventory.item_sell_list')
-                                        <small class="text-muted" style="font-size: 13px; font-weight: 400;">
-                                            ({{ \Carbon\Carbon::parse($fromDateInput)->format('M d, Y') }} &ndash;
-                                            {{ \Carbon\Carbon::parse($toDateInput)->format('M d, Y') }})
-                                        </small>
+                                        
                                     </h3>
                                 </div>
                             </div>
@@ -637,14 +634,56 @@
         $(document).ready(function() {
             $('#table_id').DataTable({
                 responsive: true,
-                dom: 'Bfrtip',
-                buttons: [
-                    'copy', 'csv', 'excel', 'pdf', 'print'
-                ],
+dom: "<'dt-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3 '" +
+                "<'dt-toolbar-title'>" +
+                "<'dt-toolbar-controls d-flex align-items-center flex-wrap gap-2 mt-3'<'dt-search'f><'dt-buttons-wrap'B>>" +
+                ">" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'gap-2 mt-3'<'dt-info'i><'dt-pagination'p>>",                buttons: [{
+                    extend: 'copyHtml5',
+                    title: getFileName(),
+                    text: '<i class="fa-regular fa-copy"></i>',
+                    titleAttr: 'Copy'
+                },
+                {
+                    extend: 'csvHtml5',
+                    title: getFileName(),
+                    text: '<i class="fa-solid fa-file-csv"></i>',
+                    titleAttr: 'CSV'
+                },
+                {
+                    extend: 'excelHtml5',
+                    title: getFileName(),
+                    text: '<i class="fa-solid fa-file-excel"></i>',
+                    titleAttr: 'Excel'
+                },
+                {
+                    extend: 'pdfHtml5',
+                    title: getFileName(),
+                    text: '<i class="fa-solid fa-file-pdf"></i>',
+                    titleAttr: 'PDF'
+                },
+                {
+                    extend: 'print',
+                    title: getFileName(),
+                    text: '<i class="fa-solid fa-print"></i>',
+                    titleAttr: 'Print'
+                }
+            ],
+            pageLength: 100,
+            language: {
+                search: '<i class=""></i>',
+                searchPlaceholder: 'Search...',
+                paginate: {
+                    previous: '<i class="fa-solid fa-angle-left"></i>',
+                    next: '<i class="fa-solid fa-angle-right"></i>'
+                }
+            },
                 paging: true,
                 searching: true,
                 ordering: true,
                 info: true,
+
             });
 
             // Show Item Details

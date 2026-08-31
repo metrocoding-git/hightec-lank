@@ -19668,7 +19668,7 @@ div#dashboard_bg_color_section input {
 }
 
 .dataTables_filter > label {
-    border-bottom: 1px solid rgba(130, 139, 178, 0.3);
+    border-bottom: 0px solid rgba(130, 139, 178, 0.3);
 }
 
 .dataTables_filter > label i {

@@ -152,8 +152,8 @@
                             <div class="row">
                                 {{-- Date Range Filter --}}
                                 <div class="col-lg-4">
-                                        <input type="text" class="form-control" id="date_range" name="date_range"
-                                            placeholder="Select date range">
+                                    <input type="text" class="form-control" id="date_range" name="date_range"
+                                        placeholder="Select date range">
                                 </div>
 
                                 {{-- Branch Filter --}}
@@ -171,8 +171,7 @@
                                 {{-- Payment Status Filter --}}
                                 <div class="col-lg-4">
                                     <div class="primary_input">
-                                        <select class="form-control" name="payment_status"
-                                            id="status-select">
+                                        <select class="form-control" name="payment_status" id="status-select">
                                             <option value="all" selected>All</option>
                                             <option value="pending">Pending</option>
                                             <option value="completed">Completed</option>
@@ -237,9 +236,7 @@
                         <div class="row">
                             <div class="col-lg-12">
                                 <x-table>
-                                    <table id="table_id"
-                                        class="table data-table Crm_table_active3 no-footer dtr-inline collapsed"
-                                        cellspacing="0" width="100%">
+                                    <table id="table_id" class="table" cellspacing="0" width="100%">
                                         <thead>
                                             <tr>
                                                 <th>#</th>
@@ -299,8 +296,7 @@
 
                             <div class="form-group">
                                 <label>Amount</label>
-                                <input type="number" class="form-control" id="bulk-amount" name="amount"
-                                    step="0.01">
+                                <input type="number" class="form-control" id="bulk-amount" name="amount" step="0.01">
                             </div>
 
                             <div class="form-group">
@@ -347,9 +343,9 @@
                 dateFormat: "Y-m-d",
                 allowInput: true,
                 defaultDate: [
-                "{{ \Carbon\Carbon::now()->subDays(30)->format('Y-m-d') }}",
-                "{{ \Carbon\Carbon::now()->format('Y-m-d') }}"
-            ]
+                    "{{ \Carbon\Carbon::now()->subDays(30)->format('Y-m-d') }}",
+                    "{{ \Carbon\Carbon::now()->format('Y-m-d') }}"
+                ]
             });
 
             function showToast(message, type = 'success') {
@@ -381,9 +377,12 @@
                 serverSide: true,
                 scrollX: true,
 
-                dom: "<'d-flex justify-content-between align-items-center mb-2'<'me-2'l><'mx-auto'f><'ms-2'B>>" +
-                    "<'row'<'col-sm-12'tr>>" +
-                    "<'d-flex justify-content-between align-items-center mt-2'<'mb-0 col-4'i><'mb-0 col-8'p>>",
+                dom: "<'dt-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3 '" +
+                "<'dt-toolbar-title'>" +
+                "<'dt-toolbar-controls d-flex align-items-center flex-wrap gap-2 mt-3'<'dt-search'f><'dt-buttons-wrap'B>>" +
+                ">" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'gap-2 mt-3'<'dt-info'i><'dt-pagination'p>>",
 
                 lengthChange: true,
                 buttons: [{
@@ -429,9 +428,20 @@
                 searching: true,
                 ordering: true,
                 info: true,
+                            pageLength: 100,
+
                 order: [
                     [0, 'desc']
                 ],
+                language: {
+                search: '<i class=""></i>',
+                searchPlaceholder: 'Search...',
+                paginate: {
+                    previous: '<i class="fa-solid fa-angle-left"></i>',
+                    next: '<i class="fa-solid fa-angle-right"></i>'
+                }
+            },
+
 
                 ajax: {
                     url: "{{ route('invoice-payments-datatable') }}",
