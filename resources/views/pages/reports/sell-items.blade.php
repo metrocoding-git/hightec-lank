@@ -162,7 +162,7 @@
                                 class="form-control" value="{{ request('date_range') }}">
                         </div>
                         <div class="col-md-4">
-                            <select name="payment_method" class="form-control">
+                            <select name="payment_method" class="form-control primary_select ">
                                 <option value="">All Payment Method</option>
                                 <option value="Cash" {{ request('payment_method') == 'Cash' ? 'selected' : '' }}>Cash
                                 </option>
@@ -174,7 +174,7 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <select name="status" class="form-control">
+                            <select name="status" class="form-control primary_select ">
                                 <option value="">All Status</option>
                                 <option value="P" {{ request('status') == 'P' ? 'selected' : '' }}>@lang('inventory.paid')
                                 </option>

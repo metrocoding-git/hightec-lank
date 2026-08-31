@@ -828,7 +828,7 @@
                             // after saving a fee invoice. Redirecting to the fee invoice list instead.
                             const message = encodeURIComponent('successfully!');
                             window.location.href =
-                                '{{ route('fees.fee-invoice') }}' +
+                                '{{ route('student.add-intake-with-courses.index') }}' +
                                 '?message-success=' + message;
                         }
                     },

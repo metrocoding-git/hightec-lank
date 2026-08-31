@@ -158,7 +158,7 @@
                                 placeholder="Select Date Range " value="{{ request('date_range') }}">
                         </div>
                         <div class="col-md-3">
-                            <select name="issue_status" class="form-control">
+                            <select name="issue_status" class="form-control primary_select ">
                                 <option value="">All Status</option>
                                 <option value="I" {{ request('issue_status') == 'I' ? 'selected' : '' }}>
                                     @lang('inventory.issued')</option>
@@ -167,7 +167,7 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <select name="course_id" class="form-control">
+                            <select name="course_id" class="form-control primary_select ">
                                 <option value="">All Courses</option>
                                 @foreach ($courses as $course)
                                     <option value="{{ $course->id }}"
@@ -177,7 +177,7 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <select name="intake_id" class="form-control">
+                            <select name="intake_id" class="form-control primary_select ">
                                 <option value="">All Intakes</option>
                                 @foreach ($intakes as $intake)
                                     <option value="{{ $intake->id }}"

@@ -222,7 +222,7 @@
                                 class="form-control" value="{{ request('date_range') }}">
                         </div>
                         <div class="col-md-4">
-                            <select name="branch_id" id="branch_id" class="form-control">
+                            <select name="branch_id" id="branch_id" class="form-control primary_select ">
                                 <option value="">All Branches</option>
                                 @foreach ($branches as $branch)
                                     <option value="{{ $branch->id }}"
@@ -233,7 +233,7 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <select name="payment_method" id="payment_method" class="form-control">
+                            <select name="payment_method" id="payment_method" class="form-control primary_select ">
                                 <option value="">All Payment Methods</option>
                                 @foreach ($paymentMethods as $method)
                                     <option value="{{ $method }}"

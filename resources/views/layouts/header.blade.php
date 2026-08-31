@@ -316,7 +316,7 @@
             width: 100%;
             border-radius: 12px;
         }
-        
+
         .rp-table-wrapper {
             width: 100%;
             overflow-x: auto;
@@ -468,8 +468,63 @@
                 justify-content: center;
             }
         }
+
+        .dataTables_scrollBody {
+            min-height: 400px;
+        }
+
+        .primary_select_wrapper .nice-select .list,
+        .nice-select .list {
+            max-height: 450px !important;
+            overflow-y: auto !important;
+        }
+
+        /* Scrollbar */
+        .nice-select .list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .nice-select .list::-webkit-scrollbar-track {
+            background: #f1f2f6;
+            border-radius: 10px;
+        }
+
+        .nice-select .list::-webkit-scrollbar-thumb {
+            background: var(--gradient_1);
+            border-radius: 10px;
+        }
+
+        .nice-select .list::-webkit-scrollbar-thumb:hover {
+            background: var(--gradient_2);
+        }
+
+        /* Firefox */
+        ::-webkit-scrollbar {
+            width: 12px;
+            /* vertical scrollbar */
+            height: 12px;
+            /* horizontal scrollbar */
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--gradient_1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gradient_2);
+        }
+
+        * {
+            scrollbar-width: auto;
+            scrollbar-color: var(--gradient_1) transparent;
+        }
     </style>
-        <style>
+    <style>
         .dt-toolbar {
             padding-bottom: 4px;
         }
