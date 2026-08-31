@@ -399,7 +399,7 @@
     @if ($canViewFinance || $canViewStudents || $canViewStaff)
         <section class="mb-30">
             <div class="row row-gap-24">
-                @if ($canViewFinance)
+                {{-- @if ($canViewFinance)
                     <div class="col-lg-6">
                         <div class="white-box chart-card">
                             <div class="dash-section-header">
@@ -409,9 +409,7 @@
                                     <span class="dsh-sub">Payments collected over the last 6 months</span>
                                 </div>
                             </div>
-                            {{-- PERMISSION (Section 43): amount figures need Reports access
-                                 on top of Fees access ("Amount only display all report
-                                 access pertions only, count display no problem") --}}
+                          
                             @if ($canViewAmounts)
                                 <div class="finance-mini-stats">
                                     <div class="fms-item">
@@ -433,10 +431,10 @@
                             @endif
                         </div>
                     </div>
-                @endif
+                @endif --}}
 
                 @if ($canViewStudents)
-                    <div class="col-lg-3 col-sm-6">
+                    <div class="col-lg-6 col-sm-6">
                         <div class="white-box chart-card">
                             <div class="dash-section-header">
                                 <span class="dsh-icon"><i class="fas fa-code-branch"></i></span>
@@ -454,7 +452,7 @@
                 @endif
 
                 @if ($canViewStaff)
-                    <div class="col-lg-3 col-sm-6">
+                    <div class="col-lg-6 col-sm-6">
                         <div class="white-box chart-card">
                             <div class="dash-section-header">
                                 <span class="dsh-icon"><i class="fas fa-users"></i></span>
