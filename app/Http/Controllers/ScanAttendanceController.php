@@ -900,7 +900,7 @@ class ScanAttendanceController extends Controller
                 'intake_id' => $intakeId,
                 'subject_id' => null,
                 'time_in' => $startedAt,
-                'time_out' => $startedAt->copy()->addMinutes(1),
+                'time_out' => $startedAt->copy()->addMinutes(20),
                 'marked_in_by' => $markedBy,
                 'marked_out_by' => $markedBy,
             ]
@@ -921,7 +921,7 @@ class ScanAttendanceController extends Controller
                 'intake_id' => $intakeId,
                 'subject_id' => null,
                 'time_in' => $endedAt,
-                'time_out' => $endedAt->copy()->addMinutes(1),
+                'time_out' => $endedAt->copy()->addMinutes(10),
                 'marked_in_by' => $markedBy,
                 'marked_out_by' => $markedBy,
             ]

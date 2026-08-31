@@ -231,12 +231,7 @@
                                 </div>
                             </div>
                         </div>
-                        {{-- FLAGGED, NOT REMOVED (Section 27): this hidden "update" field and the
-                                 commented-out Form::open/Save button further below appear to be leftover
-                                 from an older "carry forward balance" flow that this page no longer uses —
-                                 $update is never set anywhere in this file's visible logic. Leaving as-is
-                                 since removing dead server-side wiring without the controller in hand risks
-                                 breaking something not visible from the blade file alone. --}}
+
                         <input type="hidden" name="update" value="{{ isset($update) ? 1 : '' }}">
                         <div class="row">
                             <div class="col-lg-12">

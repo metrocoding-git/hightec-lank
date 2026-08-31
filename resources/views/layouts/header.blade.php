@@ -312,7 +312,7 @@
 
 
         /* new */
-        #table_id_wrapper {
+        #table_id {
             width: 100%;
             border-radius: 12px;
         }
