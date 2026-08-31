@@ -18,9 +18,21 @@ class ScanAttendanceController extends Controller
 {
     public function index()
     {
-        $courses = Course::all();
 
-        $subjects = Subject::where('type', 'T')->orderBy('name')->get(['id', 'name', 'code', 'type']);
+        $userCourseIds = $this->currentUserCourseIds();
+
+        if (!empty($userCourseIds)) {
+            $courses = Course::whereIn('id', $userCourseIds)->get();
+
+            $subjectIds = $this->subjectIdsForCourses($userCourseIds);
+            $subjects = Subject::where('type', 'T')
+                ->whereIn('id', $subjectIds)
+                ->orderBy('name')
+                ->get(['id', 'name', 'code', 'type']);
+        } else {
+            $courses = Course::all();
+            $subjects = Subject::where('type', 'T')->orderBy('name')->get(['id', 'name', 'code', 'type']);
+        }
 
         return view('pages.student.attendance.index', compact('courses', 'subjects'));
     }
@@ -135,8 +147,17 @@ class ScanAttendanceController extends Controller
 
     public function allSubjects()
     {
+
+        $userCourseIds = $this->currentUserCourseIds();
+
+        $query = Subject::where('type', 'T');
+
+        if (!empty($userCourseIds)) {
+            $query->whereIn('id', $this->subjectIdsForCourses($userCourseIds));
+        }
+
         return response()->json([
-            'subjects' => Subject::where('type', 'T')->orderBy('name')->get(['id', 'name', 'code', 'type']),
+            'subjects' => $query->orderBy('name')->get(['id', 'name', 'code', 'type']),
         ]);
     }
 
@@ -774,6 +795,27 @@ class ScanAttendanceController extends Controller
         })->values();
     }
 
+    private function currentUserCourseIds(): array
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return [];
+        }
+
+        return $user->courses->pluck('id')->all();
+    }
+
+
+    private function subjectIdsForCourses(array $courseIds): array
+    {
+        return AssignSubjects::whereIn('course_id', $courseIds)
+            ->pluck('subject_id')
+            ->unique()
+            ->values()
+            ->all();
+    }
+
     private function openCourseSession(Student $student, int $courseId): ?SubjectAttendanceSession
     {
         return SubjectAttendanceSession::where('student_id', $student->id)
@@ -1116,7 +1158,7 @@ class ScanAttendanceController extends Controller
      private function resolveVehicleBranchIds(array $fallbackBranchIds): array
     {
         $user = Auth::user();
- 
+
         if (!$user) {
             return $fallbackBranchIds;
         }
@@ -1124,11 +1166,11 @@ class ScanAttendanceController extends Controller
         $userBranchIds = DB::table('user_branches')
             ->where('user_id', $user->id)
             ->pluck('branch_id');
- 
+
         if ($userBranchIds->count() === 1) {
             return [$userBranchIds->first()];
         }
- 
+
         return $fallbackBranchIds;
     }
 }
