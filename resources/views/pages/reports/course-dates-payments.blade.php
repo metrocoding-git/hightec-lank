@@ -160,7 +160,7 @@
                                 class="form-control" value="{{ request('date_range') }}">
                         </div>
                         <div class="col-md-6">
-                            <select name="branch_id" class="form-control">
+                            <select name="branch_id" class="form-control primary_select ">
                                 <option value="">All Branches</option>
                                 @foreach ($branches as $branch)
                                     <option value="{{ $branch->id }}"

@@ -118,7 +118,7 @@
                                 class="form-control group-a" value="{{ request('to_date') }}" placeholder="Select to date">
                         </div>
                         <div class="col-md-6">
-                            <select name="branch_id" class="form-control group-a">
+                            <select name="branch_id" class="form-control group-a primary_select ">
                                 <option value="">All Branches (Group A)</option>
                                 @foreach ($branches as $branch)
                                     <option value="{{ $branch->id }}"
@@ -128,7 +128,7 @@
                             </select>
                         </div>
                         <div class="col-md-12 mt-2">
-                            <select class="form-control group-b" name="intake_id" id="search_intake_id">
+                            <select class="form-control group-b primary_select " name="intake_id" id="search_intake_id">
                                 <option value="">Select Intake (Group B)</option>
                                 @foreach ($intakes as $intake)
                                     <option value="{{ $intake->id }}"

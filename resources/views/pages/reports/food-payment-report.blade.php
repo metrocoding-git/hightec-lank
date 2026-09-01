@@ -225,7 +225,7 @@
 
                         {{-- Month --}}
                         <div class="col-md-3">
-                            <select name="month" class="form-control">
+                            <select name="month" class="form-control primary_select ">
                                 <option value="">All Months</option>
                                 @foreach (range(1, 12) as $m)
                                     <option value="{{ $m }}" {{ request('month') == $m ? 'selected' : '' }}>
@@ -237,7 +237,7 @@
 
                         {{-- Year --}}
                         <div class="col-md-3">
-                            <select name="year" class="form-control">
+                            <select name="year" class="form-control primary_select ">
                                 <option value="">All Years</option>
                                 @foreach (range(date('Y'), date('Y') - 3) as $y)
                                     <option value="{{ $y }}" {{ request('year') == $y ? 'selected' : '' }}>
@@ -248,7 +248,7 @@
 
                         {{-- Branch --}}
                         <div class="col-md-3">
-                            <select name="branch_id" class="form-control">
+                            <select name="branch_id" class="form-control primary_select ">
                                 <option value="">All Branches</option>
                                 @foreach ($branches as $branch)
                                     <option value="{{ $branch->id }}"
@@ -261,7 +261,7 @@
 
                         {{-- Course --}}
                         <div class="col-md-3 mt-2">
-                            <select name="course_id" class="form-control">
+                            <select name="course_id" class="form-control primary_select ">
                                 <option value="">All Courses</option>
                                 @foreach ($courses as $course)
                                     <option value="{{ $course->id }}"
@@ -274,7 +274,7 @@
 
                         {{-- Meal --}}
                         <div class="col-md-3 mt-2">
-                            <select name="meal" class="form-control">
+                            <select name="meal" class="form-control primary_select ">
                                 <option value="">All Meals</option>
                                 <option value="breakfast" {{ request('meal') == 'breakfast' ? 'selected' : '' }}>🍳
                                     Breakfast</option>
@@ -287,7 +287,7 @@
 
                         {{-- Lunchbox Letter --}}
                         <div class="col-md-3 mt-2">
-                            <select name="letter" class="form-control">
+                            <select name="letter" class="form-control primary_select ">
                                 <option value="">All Lunchbox Groups</option>
                                 @foreach ($letters as $l)
                                     <option value="{{ $l }}" {{ request('letter') == $l ? 'selected' : '' }}>
@@ -298,7 +298,7 @@
 
                         {{-- Payment Status --}}
                         <div class="col-md-3 mt-2">
-                            <select name="status" class="form-control">
+                            <select name="status" class="form-control primary_select ">
                                 <option value="">All Status</option>
                                 <option value="1" {{ request('status', '1') == '1' ? 'selected' : '' }}>Active
                                 </option>

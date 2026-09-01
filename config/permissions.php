@@ -55,6 +55,15 @@ return [
                         ['key' => 'assign-subject.destroy', 'label' => 'Delete', 'flag' => 'Replaces assign-subject.toggle-status per your confirmed decision — deletes the whole intake/course group at once, same blast radius as before Sections 2-6.'],
                     ],
                 ],
+                [
+                    'name' => 'Assessment Template',
+                    'window' => ['key' => 'assessment-template.index', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'assessment-template.store', 'label' => 'Add'],
+                        ['key' => 'assessment-template.update', 'label' => 'Edit'],
+                        ['key' => 'assessment-template.destroy', 'label' => 'Delete', 'flag' => 'Only ever soft-disables (is_active toggle) — there is no hard-delete route, by design, since a template already used in saved assessments must never be destroyable.'],
+                    ],
+                ],
             ],
         ],
 
@@ -164,6 +173,9 @@ return [
                         ['key' => 'student.update-status', 'label' => 'Disable'],
                         ['key' => 'student-details', 'label' => 'View Student Details', 'flag' => 'Full student detail page (student-view/{id}) — not in your original list.'],
                         ['key' => 'student-list.search', 'label' => 'Search/Filter', 'flag' => 'Filter AJAX for this list, not excluded.'],
+                        ['key' => 'student-practical-card.show', 'label' => 'Practical Card'],
+
+
                     ],
                 ],
                 [
@@ -196,9 +208,27 @@ return [
                         ['key' => 'student.add-intake-with-courses.change-course', 'label' => 'Change Course', 'flag' => 'Currently withoutMiddleware(permission) — remove that exclusion to actually gate this.'],
                     ],
                 ],
+                [
+                    'name' => 'Final Assessment Marks',
+                    'window' => ['key' => 'student-assessment.index', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'student-assessment.store', 'label' => 'Save Assessment'],
+                        ['key' => 'student-assessment.show', 'label' => 'View One Assessment'],
+                        ['key' => 'student-assessment.destroy', 'label' => 'Undo Assessment', 'flag' => 'One-way soft-delete — the controller itself also enforces "creator only, within 2 days" on top of this permission; this key just controls who can reach the Undo button at all.'],
+                        ['key' => 'student-assessment.marks-popup', 'label' => 'Enter Marks (popup window)', 'flag' => 'This is really a second page load (the marks-entry popup opened after selecting a course), not a button — kept here since it lives under the same Final Assessment Marks feature, not as its own sidebar item.'],
+                    ],
+                ],
+                [
+                    'name' => 'Certificate Management',
+                    'window' => ['key' => 'certificate.index', 'label' => 'View', 'flag' => 'NEW (Section 65) — the "Manage Certificates" window, opened via a link from Final Assessment Marks. Lists every PASSed assessment, certificate generated or not, with filters by signing stage and downloaded status.'],
+                    'buttons' => [
+                        ['key' => 'certificate.generate', 'label' => 'Generate Certificate(s)'],
+                        ['key' => 'certificate.sign-conductor', 'label' => 'Sign — Assessment Conductor', 'flag' => 'Step 1 of signing. The controller rejects signing as Owner on a certificate the Conductor hasn\'t signed yet, regardless of what this permission allows.'],
+                        ['key' => 'certificate.sign-owner', 'label' => 'Sign — Owner', 'flag' => 'Step 2 — finalizes the certificate and unlocks download. Replaces certificate.approve from the first version of this feature, which no longer exists.'],
+                    ],
+                ],
             ],
         ],
-
         [
             'name' => 'Fees',
             'windows' => [

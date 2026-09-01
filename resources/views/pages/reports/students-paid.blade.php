@@ -165,7 +165,7 @@
 
                         {{-- Payment Method --}}
                         <div class="col-md-3">
-                            <select name="payment_method" class="form-control" id="payment_method">
+                            <select name="payment_method" class="form-control primary_select " id="payment_method">
                                 <option value="">All Payment Methods</option>
                                 <option value="Cash" {{ request('payment_method') == 'Cash' ? 'selected' : '' }}>Cash
                                 </option>
@@ -180,7 +180,7 @@
 
                         {{-- Branch --}}
                         <div class="col-md-3">
-                            <select name="branch_id" class="form-control" id="branch_id">
+                            <select name="branch_id" class="form-control primary_select " id="branch_id">
                                 <option value="">All Branches</option>
                                 @foreach ($branches as $branch)
                                     <option value="{{ $branch->id }}"
@@ -193,7 +193,7 @@
 
                         {{-- Fee Type --}}
                         <div class="col-md-3">
-                            <select name="payment_type" class="form-control" id="payment_type">
+                            <select name="payment_type" class="form-control primary_select " id="payment_type">
                                 <option value="">All Payment Type</option>
                                 <option value="course_fee" {{ request('payment_type') == 'course_fee' ? 'selected' : '' }}>
                                     Course & Fee

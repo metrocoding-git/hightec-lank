@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AssessmentTemplateController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\TopicController;
@@ -27,6 +28,7 @@ use App\Http\Controllers\StudentCategoryController;
 use App\Http\Controllers\ItemSellController;
 use App\Http\Controllers\VideoListController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\CoursePaymentController;
 use App\Http\Controllers\OtherPaymentController;
 use App\Http\Controllers\ReportController;
@@ -34,7 +36,9 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\StudentCardController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ScanAttendanceController;
+use App\Http\Controllers\StudentAssessmentController;
 use App\Http\Controllers\TrainingVehicleController;
+use App\Http\Controllers\StudentPracticalCardController;
 
 Route::middleware(['permission'])->group(function () {
 
@@ -84,8 +88,16 @@ Route::middleware(['permission'])->group(function () {
                 Route::post('toggle-status/{id}', [AssignSubjectController::class, 'toggleStatus'])->name('assign-subject.toggle-status')->withoutMiddleware(['permission']);
                 Route::get('get-courses/{intakeId}', [AssignSubjectController::class, 'getCoursesByIntake'])->name('assign-subject.get-courses')->withoutMiddleware(['permission']);
             });
-        });
 
+            // ================= ACADEMIC MANAGEMENT ASSESSMENT TEMPLATE ROUTES ================= //
+            Route::prefix('assessment-template')->group(function () {
+                Route::get('/', [AssessmentTemplateController::class, 'index'])->name('assessment-template.index');
+                Route::get('course/{courseId}/data', [AssessmentTemplateController::class, 'courseData'])->name('assessment-template.course-data')->withoutMiddleware(['permission']);
+                Route::post('/', [AssessmentTemplateController::class, 'store'])->name('assessment-template.store');
+                Route::post('{id}/update', [AssessmentTemplateController::class, 'update'])->name('assessment-template.update');
+                Route::delete('{id}', [AssessmentTemplateController::class, 'destroy'])->name('assessment-template.destroy');
+            });
+        });
 
         // ================= ACADEMIC MANAGEMENT LESSON PLAN ROUTES ================= //
         Route::prefix('lesson-plan')->group(callback: function () {
@@ -159,6 +171,7 @@ Route::middleware(['permission'])->group(function () {
                 Route::delete('destroy/{id}', [VideoListController::class, 'videoListDestroy'])->name('download-center.video-list-destroy');
             });
         });
+
     });
 
 
@@ -200,6 +213,10 @@ Route::middleware(['permission'])->group(function () {
             Route::get('export-all', [StudentController::class, 'exportAllStudents'])->name('student-list.export-all')->withoutMiddleware(['permission']);
             Route::get('export-filtered', [StudentController::class, 'exportFilteredStudents'])->name('student-list.export-filtered')->withoutMiddleware(['permission']);
             Route::get('verification-history/{id}', [StudentController::class, 'verificationHistory'])->name('student-list.verification-history');
+        });
+
+        Route::prefix('student/practical-card')->group(function () {
+            Route::get('{id}', [StudentPracticalCardController::class, 'show'])->name('student-practical-card.show');
         });
 
         // ================= STUDENT CARD ROUTES ================= //
@@ -248,7 +265,49 @@ Route::middleware(['permission'])->group(function () {
             Route::post('/confirm-out', [ScanAttendanceController::class, 'confirmOut'])->name('scan-attendance.confirm-out')->withoutMiddleware(['permission']);
             Route::get('/today-log', [ScanAttendanceController::class, 'todayLog'])->name('scan-attendance.today-log')->withoutMiddleware(['permission']);
         });
+
+
+
+
+        // ================= FINAL ASSESSMENT — STUDENT MARK ENTRY ROUTES ================= //
+        Route::prefix('assessment')->group(function () {
+            Route::get('/', [StudentAssessmentController::class, 'index'])->name('student-assessment.index');
+            Route::post('find', [StudentAssessmentController::class, 'findStudent'])->name('student-assessment.find')->withoutMiddleware(['permission']);
+            Route::get('template/{courseId}', [StudentAssessmentController::class, 'templateForCourse'])->name('student-assessment.template')->withoutMiddleware(['permission']);
+            Route::post('store', [StudentAssessmentController::class, 'store'])->name('student-assessment.store');
+            Route::get('{id}', [StudentAssessmentController::class, 'show'])->name('student-assessment.show');
+            Route::get('{id}/pdf', [StudentAssessmentController::class, 'pdf'])->name('student-assessment.pdf')->withoutMiddleware(['permission']);
+            Route::get('existing/{studentCourseId}', [StudentAssessmentController::class, 'existingForCourse'])->name('student-assessment.existing')->withoutMiddleware(['permission']);
+            Route::delete('{id}', [StudentAssessmentController::class, 'destroy'])->name('student-assessment.destroy');
+            Route::get('marks-popup/{studentCourseId}', [StudentAssessmentController::class, 'marksPopup'])->withoutMiddleware(['permission']);
+        });
+
+
+        Route::prefix('certificate')->group(callback: function () {
+            Route::get('/', [CertificateController::class, 'index'])
+                ->name('certificate.index');
+
+            Route::post('generate', [CertificateController::class, 'generate'])
+                ->name('certificate.generate');
+
+            Route::post('sign-conductor', [CertificateController::class, 'signConductor'])
+                ->name('certificate.sign-conductor');
+
+            Route::post('sign-owner', [CertificateController::class, 'signOwner'])
+                ->name('certificate.sign-owner');
+
+            Route::get('{id}/download', [CertificateController::class, 'download'])
+                ->name('certificate.download')
+                ->withoutMiddleware(['permission']);
+
+            Route::post('bulk-download', [CertificateController::class, 'bulkDownload'])
+                ->name('certificate.bulk-download')
+                ->withoutMiddleware(['permission']);
+        });
     });
+
+
+
 
 
     // ================= STUDENT FEES MANAGEMENT ROUTES ================= //
@@ -489,5 +548,4 @@ Route::middleware(['permission'])->group(function () {
         Route::put('/{vehicle}', [TrainingVehicleController::class, 'update'])->name('training-vehicles.update');
         Route::delete('/{vehicle}', [TrainingVehicleController::class, 'destroy'])->name('training-vehicles.destroy');
     });
-
 });
