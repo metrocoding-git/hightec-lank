@@ -28,6 +28,7 @@ use App\Http\Controllers\StudentCategoryController;
 use App\Http\Controllers\ItemSellController;
 use App\Http\Controllers\VideoListController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\CoursePaymentController;
 use App\Http\Controllers\OtherPaymentController;
 use App\Http\Controllers\ReportController;
@@ -170,6 +171,7 @@ Route::middleware(['permission'])->group(function () {
                 Route::delete('destroy/{id}', [VideoListController::class, 'videoListDestroy'])->name('download-center.video-list-destroy');
             });
         });
+
     });
 
 
@@ -279,8 +281,31 @@ Route::middleware(['permission'])->group(function () {
             Route::delete('{id}', [StudentAssessmentController::class, 'destroy'])->name('student-assessment.destroy');
             Route::get('marks-popup/{studentCourseId}', [StudentAssessmentController::class, 'marksPopup'])->withoutMiddleware(['permission']);
         });
+
+
+        Route::prefix('certificate')->group(callback: function () {
+            Route::get('/', [CertificateController::class, 'index'])
+                ->name('certificate.index');
+
+            Route::post('generate', [CertificateController::class, 'generate'])
+                ->name('certificate.generate');
+
+            Route::post('sign-conductor', [CertificateController::class, 'signConductor'])
+                ->name('certificate.sign-conductor');
+
+            Route::post('sign-owner', [CertificateController::class, 'signOwner'])
+                ->name('certificate.sign-owner');
+
+            Route::get('{id}/download', [CertificateController::class, 'download'])
+                ->name('certificate.download')
+                ->withoutMiddleware(['permission']);
+
+            Route::post('bulk-download', [CertificateController::class, 'bulkDownload'])
+                ->name('certificate.bulk-download')
+                ->withoutMiddleware(['permission']);
+        });
     });
-      
+
 
 
 

@@ -20,8 +20,9 @@ class StudentAssessmentController extends Controller
 {
     public function index(Request $request)
     {
-        $query = StudentAssessment::with(['student', 'template.course', 'evaluator:id,name'])
-            ->latest();
+
+        $query = StudentAssessment::with(['student', 'template.course', 'evaluator:id,name', 'certificate'])->latest();
+
 
         if ($request->filled('course_id')) {
             $courseId = $request->course_id;

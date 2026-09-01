@@ -66,4 +66,9 @@ class StudentAssessment extends Model
     {
         return $this->hasMany(StudentAssessmentMark::class);
     }
+
+    public function certificate()
+    {
+        return $this->hasOne(\App\Models\Certificate::class, 'student_assessment_id');
+    }
 }

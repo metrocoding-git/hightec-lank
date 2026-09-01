@@ -514,3 +514,46 @@ INSERT INTO `permissions` (`permission_name`, `label`, `created_at`, `updated_at
  ALTER TABLE `student_assessments`
     ADD COLUMN `deleted_at` TIMESTAMP NULL DEFAULT NULL AFTER `updated_at`;
  
+
+
+ 
+CREATE TABLE `certificates` (
+  `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `student_assessment_id` BIGINT UNSIGNED NOT NULL,
+  `certificate_number` VARCHAR(50) NOT NULL,
+  `status` ENUM('generated','conductor_signed','approved') NOT NULL DEFAULT 'generated',
+ 
+  `conductor_signature_path` VARCHAR(255) NULL,
+  `conductor_signed_by` BIGINT UNSIGNED NULL,
+  `conductor_signed_at` TIMESTAMP NULL,
+ 
+  `owner_signature_path` VARCHAR(255) NULL,
+  `owner_signed_by` BIGINT UNSIGNED NULL,
+  `owner_signed_at` TIMESTAMP NULL,
+ 
+  `pdf_path` VARCHAR(255) NULL,
+  `generated_by` BIGINT UNSIGNED NULL,
+  `generated_at` TIMESTAMP NULL,
+ 
+  `downloaded_by` BIGINT UNSIGNED NULL,
+  `downloaded_at` TIMESTAMP NULL,
+  `download_count` INT UNSIGNED NOT NULL DEFAULT 0,
+ 
+  `created_at` TIMESTAMP NULL,
+  `updated_at` TIMESTAMP NULL,
+ 
+  UNIQUE KEY `uniq_student_assessment` (`student_assessment_id`),
+  UNIQUE KEY `uniq_certificate_number` (`certificate_number`),
+  CONSTRAINT `fk_cert_assessment` FOREIGN KEY (`student_assessment_id`) REFERENCES `student_assessments`(`id`),
+  CONSTRAINT `fk_cert_generated_by` FOREIGN KEY (`generated_by`) REFERENCES `users`(`id`),
+  CONSTRAINT `fk_cert_conductor_signed_by` FOREIGN KEY (`conductor_signed_by`) REFERENCES `users`(`id`),
+  CONSTRAINT `fk_cert_owner_signed_by` FOREIGN KEY (`owner_signed_by`) REFERENCES `users`(`id`),
+  CONSTRAINT `fk_cert_downloaded_by` FOREIGN KEY (`downloaded_by`) REFERENCES `users`(`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+ 
+
+ INSERT INTO `permissions` (`permission_name`, `label`, `created_at`, `updated_at`) VALUES
+('certificate.index',          'Certificate - Manage (view certificate window)', NOW(), NOW()),
+('certificate.generate',       'Certificate - Generate', NOW(), NOW()),
+('certificate.sign-conductor', 'Certificate - Sign (Assessment Conductor)', NOW(), NOW()),
+('certificate.sign-owner',     'Certificate - Sign (Owner) — finalizes & unlocks download', NOW(), NOW());

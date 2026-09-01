@@ -4,6 +4,10 @@
 @endsection
 
 @section('mainContent')
+    @php
+        $canAddAssessment = Auth::user()->hasPermission('student-assessment.store');
+        $canUndoAssessment = Auth::user()->hasPermission('student-assessment.destroy');
+    @endphp
     <section class="sms-breadcrumb mb-20 up_breadcrumb">
         <div class="container-fluid">
             <div class="row justify-content-between">
@@ -24,57 +28,82 @@
 
     <section class="admin-visitor-area up_admin_visitor mt-10">
         <div class="container-fluid p-0">
-            <div class="white-box">
-                <h4 class="mb-15">Final Assessment Records</h4>
-
+            <div class="white-box p-20 mb-20 mt-40">
                 <form method="GET" action="{{ route('student-assessment.index') }}" class="row align-items-end mb-15">
-                    <div class="col-lg-2 col-md-4 mb-2">
-                        <label class="ampl-filter-label">Course</label>
-                        <select name="course_id" class="form-control">
-                            <option value="">All Courses</option>
+                    <div class="col-lg-4 mb-2">
+                        <select name="course_id" class="primary_select form-control ajax_select">
                             @foreach ($courseOptions ?? [] as $c)
-                                <option value="{{ $c->id }}" {{ (string) request('course_id') === (string) $c->id ? 'selected' : '' }}>
+                                <option value="{{ $c->id }}"
+                                    {{ (string) request('course_id') === (string) $c->id ? 'selected' : '' }}>
                                     {{ $c->name }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-lg-2 col-md-4 mb-2">
+                    <div class="col-lg-4 mb-2">
                         <label class="ampl-filter-label">Result</label>
-                        <select name="result" class="form-control">
+                        <select name="result" class="primary_select form-control ajax_select">
                             <option value="">All Results</option>
                             <option value="PASS" {{ request('result') === 'PASS' ? 'selected' : '' }}>Pass</option>
                             <option value="FAIL" {{ request('result') === 'FAIL' ? 'selected' : '' }}>Fail</option>
                         </select>
                     </div>
-                    <div class="col-lg-2 col-md-4 mb-2">
-                        <label class="ampl-filter-label">Created By</label>
-                        <select name="created_by" class="form-control">
+                    <div class="col-lg-4 mb-2">
+                        <select name="created_by" class="primary_select form-control ajax_selectl">
                             <option value="">Everyone</option>
                             @foreach ($creatorOptions ?? [] as $u)
-                                <option value="{{ $u->id }}" {{ (string) request('created_by') === (string) $u->id ? 'selected' : '' }}>
+                                <option value="{{ $u->id }}"
+                                    {{ (string) request('created_by') === (string) $u->id ? 'selected' : '' }}>
                                     {{ $u->name }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-lg-3 col-md-6 mb-2">
-                        <label class="ampl-filter-label">Search (Name / Reg No / NIC)</label>
+                    <div class="col-lg-12 mb-2">
                         <input type="text" name="q" class="form-control" value="{{ request('q') }}"
-                               placeholder="Search student...">
+                            placeholder="Search (Name / Reg No / NIC)">
                     </div>
-                    <div class="col-lg-3 col-md-6 mb-2 d-flex" style="gap:8px;">
-                        <button type="submit" class="ampl-btn ampl-btn-primary" style="flex:1;">Search</button>
-                        <a href="{{ route('student-assessment.index') }}" class="ampl-btn ampl-btn-outline"
-                           style="flex:1; text-align:center; text-decoration:none; margin-top:0;">Reset</a>
+
+                    <div class="col-12 mt-10">
+                        <div class="row align-items-center">
+
+                            <div class="col-10">
+                                <button type="submit" class="primary-btn small fix-gr-bg col-12 p-2">
+                                    <span class="ti-search pr-2"></span> Search
+                                </button>
+                            </div>
+
+                            <div class="col-2">
+                                <button class="primary-btn small fix-gr-bg col-12 p-2">
+                                    <a href="{{ route('student-assessment.index') }}" class="text-white">Reset</a>
+                                </button>
+
+                            </div>
+
+                        </div>
+
                     </div>
                 </form>
+            </div>
+
+            <div class="white-box">
+
+                <div class="row">
+                    <div class="col-lg-4 no-gutters">
+                        <div class="main-title">
+                            <h3 class="mb-15">Final Assessment Records</h3>
+                        </div>
+                    </div>
+                </div>
+
+
 
                 <div class="table-responsive">
                     <x-table>
-                        <table id="assessments-table" class="table data-table" cellspacing="0" width="100%">
+                        <table id="table_id" class="table data-table" cellspacing="0" width="100%">
                             <thead>
                                 <tr>
+                                    <th></th>
                                     <th>#</th>
                                     <th>Student</th>
                                     <th>Reg No</th>
@@ -90,6 +119,7 @@
                             <tbody>
                                 @forelse (($recent ?? collect()) as $i => $a)
                                     <tr>
+                                        <td></td>
                                         <td>{{ $i + 1 }}</td>
                                         <td>{{ $a->student->student_name ?? '-' }}</td>
                                         <td>{{ $a->student->admission_number ?? '-' }}</td>
@@ -107,12 +137,12 @@
                                         <td>{{ $a->evaluator->name ?? '-' }}</td>
                                         <td>
                                             <a href="{{ url('/student/student-info/assessment/' . $a->id . '/pdf') }}"
-                                               class="btn btn-sm btn-outline-primary" target="_blank">PDF</a>
+                                                class="btn btn-sm btn-outline-primary" target="_blank">PDF</a>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="10" class="text-center">No assessments found.</td>
+                                        <td colspan="11" class="text-center">No assessments found.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -128,61 +158,241 @@
 @include('components.partials.data_table_js')
 
 @push('script')
-    <style>
-        .ampl-card { background: #fff; border-radius: 10px; padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-        .ampl-findform { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
-        .ampl-findform > div { flex: 1; min-width: 220px; }
-        .ampl-input { width: 100%; padding: 8px 10px; border: 1px solid #d7dde3; border-radius: 6px; font-size: 14px; background: #fff; }
-        .ampl-input:focus { outline: none; border-color: #1d4e89; }
-        label { font-weight: 600; font-size: 13px; color: #37474f; display: block; margin-bottom: 4px; }
-        .ampl-filter-label { font-weight: 600; font-size: 12px; color: #6b7784; display: block; margin-bottom: 4px; }
-        .ampl-btn { border: none; border-radius: 6px; padding: 9px 18px; font-size: 14px; font-weight: 600; cursor: pointer; }
-        .ampl-btn-primary { background: #1d4e89; color: #fff; }
-        .ampl-btn-primary:disabled { opacity: .6; cursor: default; }
-        .ampl-btn-outline { background: #fff; border: 1px solid #1d4e89; color: #1d4e89; margin-top: 8px; }
-        .ampl-btn-danger { background: #fff; border: 1px solid #c0392b; color: #c0392b; }
-        .ampl-btn-danger:disabled { opacity: .5; cursor: default; }
-        .ampl-banner { padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; }
-        .ampl-banner-error { background: #fdecea; color: #a12a2a; border: 1px solid #f5c6c6; }
-        .ampl-banner-success { background: #e8f6ee; color: #1e7a43; border: 1px solid #bfe6cf; }
-        .ampl-studentrow { display: flex; gap: 24px; flex-wrap: wrap; font-size: 14px; color: #37474f; }
-        .ampl-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-        @media (max-width: 767px) { .ampl-grid2 { grid-template-columns: 1fr; } }
-        .ampl-muted { color: #8a95a1; font-size: 13px; }
-        .ampl-tablewrap { overflow-x: auto; }
-        .ampl-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .ampl-table th, .ampl-table td { border: 1px solid #e1e6eb; padding: 8px; vertical-align: middle; }
-        .ampl-table th { background: #f4f6f8; text-align: left; }
-        .ampl-titlerow td { background: #eef3f9; }
-        .ampl-yieldcell { text-align: center; font-weight: 700; background: #f9fbfc; }
-        .ampl-totalcell { text-align: right; font-weight: 700; }
-        .ampl-pass { color: #1e7a43; font-weight: 700; margin-top: 4px; }
-        .ampl-fail { color: #a12a2a; font-weight: 700; margin-top: 4px; }
-        .ampl-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; }
-        .ampl-badge-locked { background: #f4f6f8; color: #6b7784; }
-        .ampl-badge-open { background: #e8f6ee; color: #1e7a43; }
-        .ampl-locked-note { color: #8a95a1; font-size: 13px; margin-top: 8px; }
-        .ampl-context-ribbon {
-            display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
-            background: linear-gradient(90deg, #1d4e89, #2f6fb0); color: #fff;
-            padding: 12px 18px; border-radius: 8px; margin-bottom: 16px; font-size: 13px;
-        }
-        .ampl-context-ribbon .chip { background: rgba(255,255,255,.16); padding: 4px 12px; border-radius: 20px; font-weight: 600; }
-        .mt-10 { margin-top: 10px; }
-        .mt-15 { margin-top: 15px; }
+    <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap4.min.css">
 
-        #assessments-table thead tr th {
-            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
-            color: #fff; font-weight: 600; white-space: nowrap; border: none;
+    <style>
+        .ampl-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
         }
-        #assessments-table tbody tr { transition: background-color .12s ease; }
-        #assessments-table tbody tr:hover { background-color: rgba(0, 0, 0, 0.025); }
-        #assessments-table tbody td { vertical-align: middle; }
+
+        .ampl-findform {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .ampl-findform>div {
+            flex: 1;
+            min-width: 220px;
+        }
+
+        .ampl-input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #d7dde3;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #fff;
+        }
+
+        .ampl-input:focus {
+            outline: none;
+            border-color: #1d4e89;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 13px;
+            color: #37474f;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .ampl-filter-label {
+            font-weight: 600;
+            font-size: 12px;
+            color: #6b7784;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .ampl-btn {
+            border: none;
+            border-radius: 6px;
+            padding: 9px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+
+
+        .ampl-btn-primary:disabled {
+            opacity: .6;
+            cursor: default;
+        }
+
+        .ampl-btn-outline {
+            background: #fff;
+            border: 1px solid #1d4e89;
+            color: #1d4e89;
+            margin-top: 8px;
+        }
+
+        .ampl-btn-danger {
+            background: #fff;
+            border: 1px solid #c0392b;
+            color: #c0392b;
+        }
+
+        .ampl-btn-danger:disabled {
+            opacity: .5;
+            cursor: default;
+        }
+
+        .ampl-banner {
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .ampl-banner-error {
+            background: #fdecea;
+            color: #a12a2a;
+            border: 1px solid #f5c6c6;
+        }
+
+        .ampl-banner-success {
+            background: #e8f6ee;
+            color: #1e7a43;
+            border: 1px solid #bfe6cf;
+        }
+
+        .ampl-studentrow {
+            /* display: flex; */
+            gap: 24px;
+            flex-wrap: wrap;
+            font-size: 14px;
+            color: #37474f;
+        }
+
+        .ampl-grid2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        @media (max-width: 767px) {
+            .ampl-grid2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .ampl-muted {
+            color: #8a95a1;
+            font-size: 13px;
+        }
+
+        .ampl-tablewrap {
+            overflow-x: auto;
+        }
+
+        .ampl-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .ampl-table th,
+        .ampl-table td {
+            border: 1px solid #e1e6eb;
+            padding: 8px;
+            vertical-align: middle;
+        }
+
+        .ampl-table th {
+            background: #f4f6f8;
+            text-align: left;
+        }
+
+        .ampl-titlerow td {
+            background: #eef3f9;
+        }
+
+        .ampl-yieldcell {
+            text-align: center;
+            font-weight: 700;
+            background: #f9fbfc;
+        }
+
+        .ampl-totalcell {
+            text-align: right;
+            font-weight: 700;
+        }
+
+        .ampl-pass {
+            color: #1e7a43;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        .ampl-fail {
+            color: #a12a2a;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        .ampl-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .ampl-badge-locked {
+            background: #f4f6f8;
+            color: #6b7784;
+        }
+
+        .ampl-badge-open {
+            background: #e8f6ee;
+            color: #1e7a43;
+        }
+
+        .ampl-locked-note {
+            color: #8a95a1;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        .ampl-context-ribbon {
+            flex-wrap: wrap;
+            align-items: center;
+            background: linear-gradient(90deg, #1d4e89, #2f6fb0);
+            color: #fff;
+            padding: 12px 18px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        .ampl-context-ribbon .chip {
+            background: rgba(255, 255, 255, .16);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .mt-10 {
+            margin-top: 10px;
+        }
+
+        .mt-15 {
+            margin-top: 15px;
+        }
     </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
+    <script src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
 
     <script>
         window.__CSRF_TOKEN__ = "{{ csrf_token() }}";
@@ -192,10 +402,15 @@
             marksPopup: "{{ url('/student/student-info/assessment/marks-popup') }}",
             assessmentBase: "{{ url('/student/student-info/assessment') }}",
         };
+
+        window.__PERMISSIONS__ = {
+            canAdd: @json($canAddAssessment),
+            canUndo: @json($canUndoAssessment),
+        };
     </script>
 
     @verbatim
-    <script type="text/babel" data-presets="react">
+        <script type="text/babel" data-presets="react">
         async function apiFetch(url, options = {}) {
             const opts = Object.assign({}, options);
             opts.headers = Object.assign({
@@ -230,9 +445,27 @@
 
         const POPUP_FEATURES = 'width=1100,height=850,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes';
 
+        function updateUrl(admissionNumber, studentCourseId) {
+            const params = new URLSearchParams(window.location.search);
+            if (admissionNumber) {
+                params.set('admission_number', admissionNumber);
+            } else {
+                params.delete('admission_number');
+            }
+            if (studentCourseId) {
+                params.set('student_course_id', studentCourseId);
+            } else {
+                params.delete('student_course_id');
+            }
+            const qs = params.toString();
+            const newUrl = window.location.pathname + (qs ? `?${qs}` : '');
+            window.history.replaceState(null, '', newUrl);
+        }
+
         function App() {
             const [regNo, setRegNo] = React.useState('');
             const [busy, setBusy] = React.useState(false);
+            const [restoring, setRestoring] = React.useState(true);
             const [banner, setBanner] = React.useState(null);
             const [student, setStudent] = React.useState(null);
             const [courses, setCourses] = React.useState([]);
@@ -241,20 +474,95 @@
             const [existingAssessment, setExistingAssessment] = React.useState(null);
             const [canUndo, setCanUndo] = React.useState(false);
 
-            // Listens for the popup marks-entry window telling us it saved
-            // successfully, so this window can update without the popup
-            // having to reach back into our React state directly.
+            // Shared by: (a) an interactive course selection — where a blank
+            // popup was already opened synchronously by the caller, before any
+            // await, so browsers don't treat it as an unrequested popup — and
+            // (b) restoring state from the URL on page load, where `popup` is
+            // null and nothing is auto-opened (a page load isn't a genuine
+            // user click, so a popup there would just get blocked anyway).
+            async function resolveCourseSelection(scId, popup) {
+                setBusy(true);
+                setBanner(null);
+                try {
+                    const data = await apiFetch(`${window.__ROUTES__.existing}/${scId}`);
+                    if (data.status === 'ok' && data.assessment) {
+                        setExistingAssessment(data.assessment);
+                        setCanUndo(!!data.can_undo);
+                        if (popup && !popup.closed) popup.close();
+                    } else {
+                        setExistingAssessment(null);
+                        setCanUndo(false);
+                        if (popup) {
+                            popup.location = `${window.__ROUTES__.marksPopup}/${scId}`;
+                            popup.focus();
+                        }
+                    }
+                } catch (err) {
+                    if (popup && !popup.closed) popup.close();
+                    setBanner({ type: 'error', text: err.message });
+                } finally {
+                    setBusy(false);
+                }
+            }
+
+            // Restore student + course from the URL on page load/refresh, so
+            // the "already has a saved assessment — View / Undo" card (and any
+            // in-progress course selection) survives a reload instead of
+            // disappearing every time the page reloads.
             React.useEffect(() => {
                 function handleMessage(e) {
                     if (e.origin !== window.location.origin) return;
                     if (!e.data || e.data.type !== 'assessment-saved') return;
                     if (String(e.data.studentCourseId) === String(studentCourseId)) {
-                        checkExisting(studentCourseId);
+                        resolveCourseSelection(studentCourseId, null);
                     }
                 }
                 window.addEventListener('message', handleMessage);
                 return () => window.removeEventListener('message', handleMessage);
             }, [studentCourseId]);
+
+            React.useEffect(() => {
+                const params = new URLSearchParams(window.location.search);
+                const savedAdmissionNumber = params.get('admission_number');
+                const savedStudentCourseId = params.get('student_course_id');
+
+                if (!savedAdmissionNumber) {
+                    setRestoring(false);
+                    return;
+                }
+
+                (async () => {
+                    setBusy(true);
+                    try {
+                        const data = await apiFetch(window.__ROUTES__.find, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ admission_number: savedAdmissionNumber }),
+                        });
+                        setStudent(data.student);
+                        setCourses(data.courses || []);
+                        setRegNo(savedAdmissionNumber);
+
+                        if (savedStudentCourseId) {
+                            const sc = (data.courses || []).find(
+                                (c) => String(c.student_course_id) === String(savedStudentCourseId)
+                            );
+                            if (sc) {
+                                setStudentCourseId(savedStudentCourseId);
+                                setCourseId(sc.course_id);
+                                await resolveCourseSelection(savedStudentCourseId, null);
+                            }
+                        }
+                    } catch (err) {
+                        // Stale/invalid saved link (student deleted, bad id, etc) —
+                        // clear it quietly rather than greeting the page with an error.
+                        updateUrl('', '');
+                    } finally {
+                        setBusy(false);
+                        setRestoring(false);
+                    }
+                })();
+            }, []);
 
             async function handleFind(e) {
                 e.preventDefault();
@@ -273,6 +581,7 @@
                     setStudentCourseId('');
                     setCourseId('');
                     setExistingAssessment(null);
+                    updateUrl(regNo.trim(), '');
                 } catch (err) {
                     setStudent(null);
                     setCourses([]);
@@ -283,26 +592,7 @@
                 }
             }
 
-            async function checkExisting(scId) {
-                setBusy(true);
-                setBanner(null);
-                try {
-                    const data = await apiFetch(`${window.__ROUTES__.existing}/${scId}`);
-                    if (data.status === 'ok' && data.assessment) {
-                        setExistingAssessment(data.assessment);
-                        setCanUndo(!!data.can_undo);
-                    } else {
-                        setExistingAssessment(null);
-                        setCanUndo(false);
-                    }
-                } catch (err) {
-                    setBanner({ type: 'error', text: err.message });
-                } finally {
-                    setBusy(false);
-                }
-            }
-
-            async function handleCourseChange(e) {
+            function handleCourseChange(e) {
                 const scId = e.target.value;
                 setStudentCourseId(scId);
                 setExistingAssessment(null);
@@ -310,6 +600,7 @@
 
                 if (!scId) {
                     setCourseId('');
+                    updateUrl(regNo, '');
                     return;
                 }
 
@@ -319,38 +610,22 @@
                     return;
                 }
                 setCourseId(sc.course_id);
+                updateUrl(regNo, scId);
 
                 // Open the popup window SYNCHRONOUSLY, inside this click/change
-                // handler, before the network round-trip below — most browsers
-                // block window.open() once it happens after an `await`, treating
-                // it as an unrequested popup rather than a direct user action.
-                // We decide afterwards whether to navigate it or close it again.
+                // handler, before the network round-trip below.
                 const popup = window.open('', 'assessmentMarksPopup', POPUP_FEATURES);
+                resolveCourseSelection(scId, popup);
+            }
 
-                setBusy(true);
-                setBanner(null);
-                try {
-                    const data = await apiFetch(`${window.__ROUTES__.existing}/${scId}`);
-                    if (data.status === 'ok' && data.assessment) {
-                        setExistingAssessment(data.assessment);
-                        setCanUndo(!!data.can_undo);
-                        if (popup && !popup.closed) popup.close();
-                    } else {
-                        setExistingAssessment(null);
-                        setCanUndo(false);
-                        if (popup) {
-                            popup.location = `${window.__ROUTES__.marksPopup}/${scId}`;
-                            popup.focus();
-                        } else {
-                            setBanner({ type: 'error', text: 'Could not open the marks-entry window — please allow pop-ups for this site and try again.' });
-                        }
-                    }
-                } catch (err) {
-                    if (popup && !popup.closed) popup.close();
-                    setBanner({ type: 'error', text: err.message });
-                } finally {
-                    setBusy(false);
-                }
+            function handleOpenMarksWindow() {
+                if (!studentCourseId) return;
+                const popup = window.open(
+                    `${window.__ROUTES__.marksPopup}/${studentCourseId}`,
+                    'assessmentMarksPopup',
+                    POPUP_FEATURES
+                );
+                if (popup) popup.focus();
             }
 
             async function handleUndo() {
@@ -382,39 +657,40 @@
 
             return (
                 <div>
-                    <div className="ampl-card">
-                        <form onSubmit={handleFind} className="ampl-findform">
-                            <div>
-                                <label>Student Registration Number</label>
-                                <input
-                                    type="text"
-                                    className="ampl-input"
-                                    value={regNo}
-                                    onChange={(e) => setRegNo(e.target.value)}
-                                    placeholder="e.g. HTL/2024/0123"
-                                />
-                            </div>
-                            <button type="submit" className="ampl-btn ampl-btn-primary" disabled={busy}>
-                                {busy ? 'Searching…' : 'Find Student'}
-                            </button>
-                        </form>
-                    </div>
+                    {window.__PERMISSIONS__.canAdd && (
+                        <div className="ampl-card col-12">
+                            <form onSubmit={handleFind} className="form-horizontal row pb-0 mb-0">
+                                <div class="col-12">
+                                    <input
+                                        type="text"
+                                        className="ampl-input"
+                                        value={regNo}
+                                        onChange={(e) => setRegNo(e.target.value)}
+                                        placeholder="Enter Student Reg Number"
+                                    />
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" className="primary-btn small fix-gr-bg me-2 p-2 mt-1 col-12" disabled={busy}>
+                                        {busy ? 'Searching…' : 'Find Student'}
+                                    </button>
+                                </div>
 
+                            </form>
+                            {restoring && <div className="ampl-muted mt-10">Restoring your last search…</div>}
+                        </div>
+                    )}
                     {banner && <div className={`ampl-banner ampl-banner-${banner.type}`}>{banner.text}</div>}
 
                     {student && (
                         <div className="ampl-card">
-                            <div className="ampl-studentrow">
-                                <div><strong>{student.name}</strong></div>
-                                <div>Reg No: {student.admission_number}</div>
-                                <div>NIC: {student.nic || '-'}</div>
+                            <div className="ampl-studentrow text-center">
+                                <div><strong>{student.name} - {student.admission_number}</strong></div>
                             </div>
 
-                            <div className="ampl-grid2 mt-10">
-                                <div>
-                                    <label>Select Course (started only)</label>
-                                    <select className="ampl-input" value={studentCourseId} onChange={handleCourseChange} disabled={busy}>
-                                        <option value="">-- Select Course --</option>
+                            <div className="mt-10">
+                                <div class="col-12">
+                                    <select className="primary_select form-control col-12" value={studentCourseId} onChange={handleCourseChange} disabled={busy}>
+                                        <option value="">Select Course </option>
                                         {courses.map((c) => (
                                             <option key={c.student_course_id} value={c.student_course_id}>{c.course_name}</option>
                                         ))}
@@ -423,51 +699,55 @@
                             </div>
 
                             {!existingAssessment && studentCourseId && !busy && (
-                                <div className="ampl-muted mt-10">
-                                    No existing assessment for this course — a marks-entry window should have opened.
-                                    If nothing opened, your browser likely blocked the pop-up; allow pop-ups for this
-                                    site and reselect the course.
+                                <div className="mt-10">
+                                    <div className="ampl-muted">
+                                        No existing assessment for this course. A marks-entry window should have
+                                        opened automatically — if your browser blocked it, use the button below.
+                                    </div>
+                                    <button type="button" className="ampl-btn ampl-btn-outline" onClick={handleOpenMarksWindow}>
+                                        Open Marks-Entry Window
+                                    </button>
                                 </div>
                             )}
                         </div>
                     )}
 
                     {existingAssessment && (
-                        <div className="ampl-card">
-                            <div className="ampl-context-ribbon">
-                                <span className="chip">{student.name}</span>
-                                <span className="chip">{student.admission_number}</span>
-                                <span className="chip">{existingAssessment.template.module_name}</span>
+                        <div className="ampl-card col-12">
+                            <div className="ampl-context-ribbon row">
+                                <span className="chip col-5">{student.name}</span>
+                                <span className="chip col-2">{student.admission_number}</span>
+                                <span className="chip col-5">{existingAssessment.template.module_name}</span>
                             </div>
 
-                            <div className="ampl-studentrow">
+                            <div className="ampl-studentrow text-center">
                                 <h4 style={{ margin: 0 }}>{existingAssessment.template.module_name}</h4>
-                                <span className={`ampl-badge ${canUndo ? 'ampl-badge-open' : 'ampl-badge-locked'}`}>
+                                <span className={`ampl-badge mt-1 ${canUndo ? 'ampl-badge-open' : 'ampl-badge-locked'}`}>
                                     {canUndo ? 'Undo available' : 'Locked'}
                                 </span>
                             </div>
-                            <div className="ampl-muted mt-10">
+                            <div className="ampl-muted mt-10 text-center">
                                 This student already has a saved assessment for this course
                                 (by {existingAssessment.evaluator ? existingAssessment.evaluator.name : 'unknown'},{' '}
                                 {existingAssessment.created_at ? existingAssessment.created_at.substring(0, 10) : ''}).
                             </div>
 
-                            <div className="mt-15">
+                            <div className="mt-15 row">
                                 <a
                                     href={`${window.__ROUTES__.assessmentBase}/${existingAssessment.id}/pdf`}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="ampl-btn ampl-btn-outline"
+                                    className="primary-btn small fix-gr-bg col-12 p-2"
                                     style={{ marginRight: 10 }}
                                 >
-                                    View / Export PDF
+                                    Export PDF
                                 </a>
                                 {canUndo ? (
-                                    <button type="button" className="ampl-btn ampl-btn-danger" onClick={handleUndo} disabled={busy}>
+                                    <button type="button" className="ampl-btn ampl-btn-danger col-12 mt-2 text-center" onClick={handleUndo} disabled={busy}>
                                         {busy ? 'Undoing…' : 'Undo This Assessment'}
                                     </button>
                                 ) : (
-                                    <div className="ampl-locked-note">
+                                    <div className="ampl-locked-note col-12 mt-2 text-center">
                                         Only the staff member who created this, within 2 days, can undo it.
                                     </div>
                                 )}
@@ -484,56 +764,72 @@
 
     @pushOnce('scripts')
         <script>
-            $(function () {
+            $(function() {
                 if (!$('#assessments-table').length) {
                     return;
                 }
 
-                $('#assessments-table').DataTable({
-                    responsive: true,
+                $('#table_id').DataTable({
+                    scrollX: true,
                     dom: "<'dt-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3 '" +
                         "<'dt-toolbar-title'>" +
                         "<'dt-toolbar-controls d-flex align-items-center flex-wrap gap-2 mt-3'<'dt-search'f><'dt-buttons-wrap'B>>" +
                         ">" +
                         "<'row'<'col-sm-12'tr>>" +
                         "<'gap-2 mt-3'<'dt-info'i><'dt-pagination'p>>",
+                    processing: true,
+                    serverSide: true,
+                    pageLength: 100,
+                    lengthMenu: [
+                        [25, 50, 100, -1],
+                        [25, 50, 100, "All"]
+                    ],
+                    buttons: [{
+                            extend: 'pdf',
+                            title: getFileName(),
+                            text: '<i title="export to pdf" class="fa fa-file-pdf-o"></i>',
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'csv',
+                            title: getFileName(),
+                            text: '<i title="export to csv" class="fa fa-file-text-o"></i>',
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'excel',
+                            title: getFileName(),
+                            text: '<i title="export to excel" class="fa fa-file-excel-o"></i>',
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'print',
+                            title: getFileName(),
+                            text: '<i title="print" class="fa fa-print"></i>',
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'colvis',
+                            title: getFileName(),
+                            text: '<i title="column visibility" class="fa fa-eye"></i>',
+                            columns: ':gt(0)'
+                        }
+                    ],
                     paging: true,
                     searching: true,
                     ordering: true,
                     info: true,
-                    buttons: [
-                        {
-                            extend: 'copyHtml5',
-                            title: typeof getFileName === 'function' ? getFileName() : 'assessments',
-                            text: '<i class="fa-regular fa-copy"></i>',
-                            titleAttr: 'Copy'
-                        },
-                        {
-                            extend: 'csvHtml5',
-                            title: typeof getFileName === 'function' ? getFileName() : 'assessments',
-                            text: '<i class="fa-solid fa-file-csv"></i>',
-                            titleAttr: 'CSV'
-                        },
-                        {
-                            extend: 'excelHtml5',
-                            title: typeof getFileName === 'function' ? getFileName() : 'assessments',
-                            text: '<i class="fa-solid fa-file-excel"></i>',
-                            titleAttr: 'Excel'
-                        },
-                        {
-                            extend: 'pdfHtml5',
-                            title: typeof getFileName === 'function' ? getFileName() : 'assessments',
-                            text: '<i class="fa-solid fa-file-pdf"></i>',
-                            titleAttr: 'PDF'
-                        },
-                        {
-                            extend: 'print',
-                            title: typeof getFileName === 'function' ? getFileName() : 'assessments',
-                            text: '<i class="fa-solid fa-print"></i>',
-                            titleAttr: 'Print'
-                        }
+                    order: [
+                        [0, 'desc']
                     ],
-                    pageLength: 25,
                     language: {
                         search: '<i class=""></i>',
                         searchPlaceholder: 'Search...',
@@ -542,7 +838,10 @@
                             next: '<i class="fa-solid fa-angle-right"></i>'
                         }
                     },
+
                 });
+
+
             });
         </script>
     @endPushOnce

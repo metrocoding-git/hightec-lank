@@ -460,6 +460,7 @@
                     Auth::user()->hasPermission('scan-attendance') ||
                     Auth::user()->hasPermission('student.add-intake-with-courses.index') ||
                     Auth::user()->hasPermission('student-assessment.index') ||
+                    Auth::user()->hasPermission('certificate.index') ||
                     Auth::user()->hasPermission('fee-group') ||
                     Auth::user()->hasPermission('fees.fees-type') ||
                     Auth::user()->hasPermission('fees.add-invoice') ||
@@ -480,7 +481,8 @@
                     Auth::user()->hasPermission('disabled-students') ||
                     Auth::user()->hasPermission('scan-attendance') ||
                     Auth::user()->hasPermission('student.add-intake-with-courses.index') ||
-                    Auth::user()->hasPermission('student-assessment.index')))
+                    Auth::user()->hasPermission('student-assessment.index') ||
+                    Auth::user()->hasPermission('certificate.index')))
             <li
                 class="studentInfo_section {{ request()->is('student-info') || request()->is('student/student-info/*') ? 'mm-active' : '' }}">
                 <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
@@ -546,6 +548,14 @@
                             <a href="/student/student-info/assessment"
                                 class="{{ request()->is('student/student-info/assessment*') ? 'active a' : '' }}">
                                 Final Assessment Marks
+                            </a>
+                        </li>
+                    @endif
+                    @if (Auth::user()->hasPermission('certificate.index'))
+                        <li>
+                            <a href="/student/student-info/certificate"
+                                class="{{ request()->is('student/student-info/certificate*') ? 'active a' : '' }}">
+                                Certificate Management
                             </a>
                         </li>
                     @endif
