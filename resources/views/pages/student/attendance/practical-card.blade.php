@@ -3,12 +3,15 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>{{ $student->student_name }} - Practical Attendance Card</title>
+    <title>{{ $student->student_name }} - Attendance Cards</title>
     <style>
         :root {
             --brand: #1d4e89;
             --brand-dark: #123a66;
             --brand-light: #eaf1fb;
+            --brand2: #6a3fb5;
+            --brand2-dark: #4b2a82;
+            --brand2-light: #f1eafb;
             --ok: #1f8a4c;
             --ok-bg: #e8f7ee;
             --warn: #b93a3a;
@@ -29,16 +32,12 @@
             background: #eef1f5;
         }
 
-        .card-wrap {
+        .cards-page-wrap {
             max-width: 1150px;
             margin: 0 auto;
-            background: #fff;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 14px rgba(20, 30, 60, 0.08);
         }
 
-        /* ---------- toolbar ---------- */
+        /* ---------- shared toolbar (course selector + both print buttons) ---------- */
         .toolbar {
             display: flex;
             justify-content: space-between;
@@ -47,7 +46,8 @@
             flex-wrap: wrap;
             padding: 16px 24px;
             background: #f6f8fb;
-            border-bottom: 1px solid var(--border);
+            border: 1px solid var(--border);
+            border-radius: 10px 10px 0 0;
         }
 
         .toolbar .field label {
@@ -72,6 +72,7 @@
         .toolbar .actions {
             display: flex;
             gap: 8px;
+            flex-wrap: wrap;
         }
 
         .btn {
@@ -97,6 +98,44 @@
             background: var(--brand);
             border-color: var(--brand);
             color: #fff;
+        }
+
+        .btn-secondary {
+            background: var(--brand2);
+            border-color: var(--brand2);
+            color: #fff;
+        }
+
+        /* ---------- card ---------- */
+        .card-wrap {
+            background: #fff;
+            overflow: hidden;
+            box-shadow: 0 2px 14px rgba(20, 30, 60, 0.08);
+            margin-bottom: 22px;
+        }
+
+        .card-wrap:first-of-type {
+            border-radius: 0;
+        }
+
+        .card-wrap.theory .header {
+            background: linear-gradient(135deg, var(--brand2) 0%, var(--brand2-dark) 100%);
+        }
+
+        .card-wrap.theory .meta-grid .value,
+        .card-wrap.theory .summary-item .num {
+            color: var(--brand2);
+        }
+
+        .card-title-bar {
+            padding: 10px 24px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            font-weight: 700;
+            color: #667;
+            background: #f6f8fb;
+            border-bottom: 1px solid var(--border);
         }
 
         /* ---------- header ---------- */
@@ -189,9 +228,45 @@
             color: #667;
         }
 
-        /* ---------- table ---------- */
+        /* ---------- section (one per subject / checkpoint group) ---------- */
         .table-area {
             padding: 20px 24px 26px;
+        }
+
+        .section-block {
+            margin-bottom: 22px;
+        }
+
+        .section-block:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-heading {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 13.5px;
+            font-weight: 700;
+            color: var(--brand-dark);
+            margin: 0 0 8px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid var(--brand-light);
+        }
+
+        .card-wrap.theory .section-heading {
+            color: var(--brand2-dark);
+            border-bottom-color: var(--brand2-light);
+        }
+
+        .total-chip {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .03em;
+            padding: 4px 11px;
+            border-radius: 999px;
+            background: var(--brand-light);
+            color: var(--brand-dark);
         }
 
         table.attendance {
@@ -224,6 +299,11 @@
             font-size: 13px;
             color: var(--brand-dark);
             padding: 9px 10px;
+        }
+
+        .card-wrap.theory tr.subject-row td {
+            background: var(--brand2-light);
+            color: var(--brand2-dark);
         }
 
         tr.subject-row .badge {
@@ -272,19 +352,6 @@
             padding: 10px;
         }
 
-        .checkpoint-cell {
-            font-size: 11.5px;
-            line-height: 1.35;
-        }
-
-        .checkpoint-cell .rng {
-            color: #333;
-        }
-
-        .checkpoint-cell .dur {
-            color: #888;
-        }
-
         .empty-state {
             padding: 40px;
             text-align: center;
@@ -306,9 +373,9 @@
             }
 
             .card-wrap {
-                border-radius: 0;
                 box-shadow: none;
                 max-width: 100%;
+                margin-bottom: 0;
             }
 
             .no-print {
@@ -318,12 +385,23 @@
             table.attendance {
                 font-size: 10.5px;
             }
+
+            /* Each card prints on its own — printOnly() adds one of these
+               two classes to <body> right before window.print(), so the
+               OTHER card is hidden for that particular print job. */
+            body.printing-practical #theoryCard {
+                display: none !important;
+            }
+
+            body.printing-theory #practicalCard {
+                display: none !important;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="card-wrap">
+    <div class="cards-page-wrap">
 
         <div class="toolbar no-print">
             <div class="field">
@@ -340,152 +418,356 @@
             </div>
 
             <div class="actions">
-                <a href="javascript:history.back()" class="btn">
+                <a href="{{ route('student-practical-card.index') }}" class="btn">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M19 12H5M12 19l-7-7 7-7" />
                     </svg>
-                    Back
+                    Back to List
                 </a>
-                <button type="button" class="btn btn-primary" onclick="window.print()">
+                <button type="button" class="btn btn-primary" onclick="printOnly('practical')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" />
                     </svg>
-                    Print Card
+                    Print Practical Card
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="printOnly('theory')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" />
+                    </svg>
+                    Print Theory Card
                 </button>
             </div>
         </div>
 
-        <div class="header">
-            @if ($student->photo)
-                <img class="photo" src="{{ asset('storage/' . $student->photo) }}" alt="photo">
-            @else
-                <div class="photo-placeholder">{{ strtoupper(substr($student->student_name, 0, 1)) }}</div>
-            @endif
+ 
+        <div class="card-wrap" id="practicalCard">
+            <div class="card-title-bar">Practical Attendance Card</div>
 
-            <div class="titles">
-                <h1>{{ $student->student_name }}</h1>
-                <div class="sub">Practical Attendance Card</div>
+            @php
+                $totalPracticalSubjects = count($practicalSubjects);
+                $attendedPracticalSubjects = collect($practicalSubjects)->filter(fn($s) => $s['attended_count'] > 0)->count();
+                $totalPracticalInstances = collect($practicalSubjects)->sum('attended_count');
+            @endphp
 
-                <div class="meta-grid">
-                    <div class="item">
-                        <div class="label">Admission No</div>
-                        <div class="value">{{ $student->admission_number ?? '-' }}</div>
-                    </div>
-                    <div class="item">
-                        <div class="label">NIC</div>
-                        <div class="value">{{ $student->national_id_number ?? '-' }}</div>
-                    </div>
-                    <div class="item">
-                        <div class="label">Branch</div>
-                        <div class="value">{{ $student->branch->name ?? '-' }}</div>
-                    </div>
-                    <div class="item">
-                        <div class="label">Course</div>
-                        <div class="value">{{ $selectedCourse->name ?? '-' }}</div>
+            <div class="header">
+                @if ($student->photo)
+                    <img class="photo" src="{{ asset('storage/' . $student->photo) }}" alt="photo">
+                @else
+                    <div class="photo-placeholder">{{ strtoupper(substr($student->student_name, 0, 1)) }}</div>
+                @endif
+
+                <div class="titles">
+                    <h1>{{ $student->student_name }}</h1>
+                    <div class="sub">Practical Attendance Card</div>
+
+                    <div class="meta-grid">
+                        <div class="item">
+                            <div class="label">Admission No</div>
+                            <div class="value">{{ $student->admission_number ?? '-' }}</div>
+                        </div>
+                        <div class="item">
+                            <div class="label">NIC</div>
+                            <div class="value">{{ $student->national_id_number ?? '-' }}</div>
+                        </div>
+                        <div class="item">
+                            <div class="label">Branch</div>
+                            <div class="value">{{ $student->branch->name ?? '-' }}</div>
+                        </div>
+                        <div class="item">
+                            <div class="label">Course</div>
+                            <div class="value">{{ $selectedCourse->name ?? '-' }}</div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        @php
-            $totalSubjects = count($subjects);
-            $attendedSubjects = collect($subjects)->filter(fn($s) => $s['attended_count'] > 0)->count();
-            $totalInstances = collect($subjects)->sum('attended_count');
-        @endphp
-
-        <div class="summary-strip">
-            <div class="summary-item">
-                <div class="num">{{ $attendedSubjects }} / {{ $totalSubjects }}</div>
-                <div class="lbl">Subjects Attended</div>
+            <div class="summary-strip">
+                <div class="summary-item">
+                    <div class="num">{{ $attendedPracticalSubjects }} / {{ $totalPracticalSubjects }}</div>
+                    <div class="lbl">Subjects Attended</div>
+                </div>
+                <div class="summary-item">
+                    <div class="num">{{ $totalPracticalInstances }}</div>
+                    <div class="lbl">Total Practical Sessions</div>
+                </div>
             </div>
-            <div class="summary-item">
-                <div class="num">{{ $totalInstances }}</div>
-                <div class="lbl">Total Practical Sessions</div>
-            </div>
-        </div>
 
-        <div class="table-area">
-            @if (empty($subjects))
-                <div class="empty-state">No practical subjects are assigned to this course.</div>
-            @else
-                <table class="attendance">
-                    <thead>
-                        <tr>
-                            <th style="width:4%">No</th>
-                            <th style="width:11%">Date</th>
-                            <th style="width:14%">Before Checking</th>
-                            <th style="width:9%">Time In</th>
-                            <th style="width:9%">Time Out</th>
-                            <th style="width:8%">Duration</th>
-                            <th style="width:13%">Vehicle</th>
-                            <th style="width:11%">Marked By</th>
-                            <th style="width:14%">After Checking</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($subjects as $subject)
-                            <tr class="subject-row">
-                                <td colspan="9">
-                                    {{ $subject['subject'] }}
-                                    <span class="planned-times">
-                                        <span class="chip">Demo Time: {{ $subject['demonstrator_time'] }}</span>
-                                        <span class="chip">Practical Time: {{ $subject['practical_time'] }}</span>
-                                    </span>
-                                    @if ($subject['attended_count'] > 0)
-                                        <span class="badge badge-ok">Attended {{ $subject['attended_count'] }}x</span>
-                                    @else
-                                        <span class="badge badge-warn">Not Attended</span>
-                                    @endif
-                                </td>
-                            </tr>
+            <div class="table-area">
 
-                            @if ($subject['attended_count'] === 0)
-                                <tr class="not-attended">
-                                    <td colspan="9">No practical attendance recorded yet for this subject.</td>
+                {{-- ---------- Practical Subjects ---------- --}}
+                <div class="section-block">
+                    <div class="section-heading">
+                        Practical Subjects
+                        <span class="total-chip">Practical Time (Total): {{ $practicalTotalPracticalTime }}</span>
+                    </div>
+
+                    @if (empty($practicalSubjects))
+                        <div class="empty-state">No practical subjects are assigned to this course.</div>
+                    @else
+                        <table class="attendance">
+                            <thead>
+                                <tr>
+                                    <th style="width:4%">No</th>
+                                    <th style="width:14%">Date</th>
+                                    <th style="width:11%">Time In</th>
+                                    <th style="width:11%">Time Out</th>
+                                    <th style="width:10%">Duration</th>
+                                    <th style="width:20%">Vehicle</th>
+                                    <th style="width:15%">Marked By</th>
                                 </tr>
-                            @else
-                                @foreach ($subject['instances'] as $index => $instance)
-                                    <tr class="instance-row">
-                                        <td>{{ $index + 1 }}</td>
-                                        <td>{{ $instance['date'] }}</td>
-                                        <td class="checkpoint-cell">
-                                            @if ($instance['before'])
-                                                <div class="rng">{{ $instance['before']['time_in']?->format('h:i A') ?? '-' }}
-                                                    &ndash;
-                                                    {{ $instance['before']['time_out']?->format('h:i A') ?? '-' }}
-                                                </div>
-                                                <div class="dur">{{ $instance['before']['duration'] }}</div>
+                            </thead>
+                            <tbody>
+                                @foreach ($practicalSubjects as $subject)
+                                    <tr class="subject-row">
+                                        <td colspan="7">
+                                            {{ $subject['subject'] }}
+                                            <span class="planned-times">
+                                                <span class="chip">Demo Time: {{ $subject['demonstrator_time'] }}</span>
+                                                <span class="chip">Practical Time: {{ $subject['practical_time'] }}</span>
+                                            </span>
+                                            @if ($subject['attended_count'] > 0)
+                                                <span class="badge badge-ok">Attended {{ $subject['attended_count'] }}x</span>
                                             @else
-                                                -
-                                            @endif
-                                        </td>
-                                        <td>{{ $instance['time_in']?->format('h:i A') ?? '-' }}</td>
-                                        <td>{{ $instance['time_out']?->format('h:i A') ?? '-' }}</td>
-                                        <td>{{ $instance['duration'] }}</td>
-                                        <td>{{ $instance['vehicle'] }}</td>
-                                        <td>{{ $instance['marked_by'] }}</td>
-                                        <td class="checkpoint-cell">
-                                            @if ($instance['after'])
-                                                <div class="rng">{{ $instance['after']['time_in']?->format('h:i A') ?? '-' }}
-                                                    &ndash;
-                                                    {{ $instance['after']['time_out']?->format('h:i A') ?? '-' }}
-                                                </div>
-                                                <div class="dur">{{ $instance['after']['duration'] }}</div>
-                                            @else
-                                                -
+                                                <span class="badge badge-warn">Not Attended</span>
                                             @endif
                                         </td>
                                     </tr>
+
+                                    @if ($subject['attended_count'] === 0)
+                                        <tr class="not-attended">
+                                            <td colspan="7">No practical attendance recorded yet for this subject.</td>
+                                        </tr>
+                                    @else
+                                        @foreach ($subject['instances'] as $index => $instance)
+                                            <tr class="instance-row">
+                                                <td>{{ $index + 1 }}</td>
+                                                <td>{{ $instance['date'] }}</td>
+                                                <td>{{ $instance['time_in']?->format('h:i A') ?? '-' }}</td>
+                                                <td>{{ $instance['time_out']?->format('h:i A') ?? '-' }}</td>
+                                                <td>{{ $instance['duration'] }}</td>
+                                                <td>{{ $instance['vehicle'] }}</td>
+                                                <td>{{ $instance['marked_by'] }}</td>
+                                            </tr>
+                                        @endforeach
+                                    @endif
                                 @endforeach
-                            @endif
-                        @endforeach
-                    </tbody>
-                </table>
-            @endif
+                            </tbody>
+                        </table>
+                    @endif
+                </div>
+
+
+                @foreach ([$beforeChecking, $afterChecking] as $group)
+                    <div class="section-block">
+                        <div class="section-heading">{{ $group['title'] }}</div>
+
+                        <div class="section-heading">
+                            {{ $courseAttendance['title'] }}
+                            <span class="total-chip">Total Time : {{ $group['total_duration'] }}</span>
+                        </div>
+    
+                        @if ($group['attended_count'] === 0)
+                            <div class="empty-state">No {{ strtolower($group['title']) }} records for this course.</div>
+                        @else
+                            <table class="attendance">
+                                <thead>
+                                    <tr>
+                                        <th style="width:4%">No</th>
+                                        <th style="width:14%">Date</th>
+                                        <th style="width:11%">Time In</th>
+                                        <th style="width:11%">Time Out</th>
+                                        <th style="width:10%">Duration</th>
+                                        <th style="width:15%">Marked By</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($group['instances'] as $index => $instance)
+                                        <tr class="instance-row">
+                                            <td>{{ $index + 1 }}</td>
+                                            <td>{{ $instance['date'] }}</td>
+                                            <td>{{ $instance['time_in']?->format('h:i A') ?? '-' }}</td>
+                                            <td>{{ $instance['time_out']?->format('h:i A') ?? '-' }}</td>
+                                            <td>{{ $instance['duration'] }}</td>
+                                            <td>{{ $instance['marked_by'] }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        @endif
+                    </div>
+                @endforeach
+
+                {{-- ---------- Course Attendance ---------- --}}
+                <div class="section-block">
+                    <div class="section-heading">
+                        {{ $courseAttendance['title'] }}
+                        <span class="total-chip">Total Demo Time : {{ $practicalTotalDemonstratorTime }}</span>
+                        <span class="total-chip">Doing Total Demo Time : {{ $courseAttendance['total_duration'] }}</span>
+
+                    </div>
+                    
+
+                    @if ($courseAttendance['attended_count'] === 0)
+                        <div class="empty-state">No course attendance records for this course.</div>
+                    @else
+                        <table class="attendance">
+                            <thead>
+                                <tr>
+                                    <th style="width:4%">No</th>
+                                    <th style="width:14%">Date</th>
+                                    <th style="width:11%">Time In</th>
+                                    <th style="width:11%">Time Out</th>
+                                    <th style="width:10%">Duration</th>
+                                    <th style="width:15%">Marked By</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($courseAttendance['instances'] as $index => $instance)
+                                    <tr class="instance-row">
+                                        <td>{{ $index + 1 }}</td>
+                                        <td>{{ $instance['date'] }}</td>
+                                        <td>{{ $instance['time_in']?->format('h:i A') ?? '-' }}</td>
+                                        <td>{{ $instance['time_out']?->format('h:i A') ?? '-' }}</td>
+                                        <td>{{ $instance['duration'] }}</td>
+                                        <td>{{ $instance['marked_by'] }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @endif
+                </div>
+
+            </div>
+
+            <div class="footer-note">Generated {{ now()->format('Y-m-d h:i A') }}</div>
         </div>
 
-        <div class="footer-note">Generated {{ now()->format('Y-m-d h:i A') }}</div>
+        {{-- =======================================================
+             THEORY CARD — new, mirrors the Practical card's subject
+             section but for Subject::type = 'T', no Vehicle column.
+             ======================================================= --}}
+        <div class="card-wrap theory" id="theoryCard">
+            <div class="card-title-bar">Theory Attendance Card</div>
+
+            @php
+                $totalTheorySubjects = count($theorySubjects);
+                $attendedTheorySubjects = collect($theorySubjects)->filter(fn($s) => $s['attended_count'] > 0)->count();
+                $totalTheoryInstances = collect($theorySubjects)->sum('attended_count');
+            @endphp
+
+            <div class="header">
+                @if ($student->photo)
+                    <img class="photo" src="{{ asset('storage/' . $student->photo) }}" alt="photo">
+                @else
+                    <div class="photo-placeholder">{{ strtoupper(substr($student->student_name, 0, 1)) }}</div>
+                @endif
+
+                <div class="titles">
+                    <h1>{{ $student->student_name }}</h1>
+                    <div class="sub">Theory Attendance Card</div>
+
+                    <div class="meta-grid">
+                        <div class="item">
+                            <div class="label">Admission No</div>
+                            <div class="value">{{ $student->admission_number ?? '-' }}</div>
+                        </div>
+                        <div class="item">
+                            <div class="label">NIC</div>
+                            <div class="value">{{ $student->national_id_number ?? '-' }}</div>
+                        </div>
+                        <div class="item">
+                            <div class="label">Branch</div>
+                            <div class="value">{{ $student->branch->name ?? '-' }}</div>
+                        </div>
+                        <div class="item">
+                            <div class="label">Course</div>
+                            <div class="value">{{ $selectedCourse->name ?? '-' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="summary-strip">
+                <div class="summary-item">
+                    <div class="num">{{ $attendedTheorySubjects }} / {{ $totalTheorySubjects }}</div>
+                    <div class="lbl">Subjects Attended</div>
+                </div>
+                <div class="summary-item">
+                    <div class="num">{{ $totalTheoryInstances }}</div>
+                    <div class="lbl">Total Theory Sessions</div>
+                </div>
+            </div>
+
+            <div class="table-area">
+                <div class="section-block">
+                    <div class="section-heading">Theory Subjects</div>
+
+                    @if (empty($theorySubjects))
+                        <div class="empty-state">No theory subjects are assigned to this course.</div>
+                    @else
+                        <table class="attendance">
+                            <thead>
+                                <tr>
+                                    <th style="width:5%">No</th>
+                                    <th style="width:17%">Date</th>
+                                    <th style="width:14%">Time In</th>
+                                    <th style="width:14%">Time Out</th>
+                                    <th style="width:12%">Duration</th>
+                                    <th style="width:18%">Marked By</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($theorySubjects as $subject)
+                                    <tr class="subject-row">
+                                        <td colspan="6">
+                                            {{ $subject['subject'] }}
+                                            @if ($subject['attended_count'] > 0)
+                                                <span class="badge badge-ok">Attended {{ $subject['attended_count'] }}x</span>
+                                            @else
+                                                <span class="badge badge-warn">Not Attended</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+
+                                    @if ($subject['attended_count'] === 0)
+                                        <tr class="not-attended">
+                                            <td colspan="6">No theory attendance recorded yet for this subject.</td>
+                                        </tr>
+                                    @else
+                                        @foreach ($subject['instances'] as $index => $instance)
+                                            <tr class="instance-row">
+                                                <td>{{ $index + 1 }}</td>
+                                                <td>{{ $instance['date'] }}</td>
+                                                <td>{{ $instance['time_in']?->format('h:i A') ?? '-' }}</td>
+                                                <td>{{ $instance['time_out']?->format('h:i A') ?? '-' }}</td>
+                                                <td>{{ $instance['duration'] }}</td>
+                                                <td>{{ $instance['marked_by'] }}</td>
+                                            </tr>
+                                        @endforeach
+                                    @endif
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @endif
+                </div>
+            </div>
+
+            <div class="footer-note">Generated {{ now()->format('Y-m-d h:i A') }}</div>
+        </div>
+
     </div>
+
+    <script>
+        function printOnly(which) {
+            document.body.classList.remove('printing-practical', 'printing-theory');
+            document.body.classList.add('printing-' + which);
+            window.print();
+        }
+
+        window.addEventListener('afterprint', function () {
+            document.body.classList.remove('printing-practical', 'printing-theory');
+        });
+    </script>
 </body>
 
 </html>

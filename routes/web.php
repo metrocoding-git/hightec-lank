@@ -214,10 +214,12 @@ Route::middleware(['permission'])->group(function () {
             Route::get('export-filtered', [StudentController::class, 'exportFilteredStudents'])->name('student-list.export-filtered')->withoutMiddleware(['permission']);
             Route::get('verification-history/{id}', [StudentController::class, 'verificationHistory'])->name('student-list.verification-history');
         });
-
+        
         Route::prefix('student/practical-card')->group(function () {
-            Route::get('{id}', [StudentPracticalCardController::class, 'show'])->name('student-practical-card.show');
+            Route::get('/', [StudentPracticalCardController::class, 'index'])->name('student-practical-card.index')->withoutMiddleware(['permission']);
+            Route::get('{id}', [StudentPracticalCardController::class, 'show'])->name('student-practical-card.show')->withoutMiddleware(['permission']);
         });
+         
 
         // ================= STUDENT CARD ROUTES ================= //
         Route::prefix('student/card')->group(function () {
