@@ -215,7 +215,7 @@ Route::middleware(['permission'])->group(function () {
             Route::get('verification-history/{id}', [StudentController::class, 'verificationHistory'])->name('student-list.verification-history');
         });
         
-        Route::prefix('student/practical-card')->group(function () {
+        Route::prefix('attendance-card')->group(function () {
             Route::get('/', [StudentPracticalCardController::class, 'index'])->name('student-practical-card.index')->withoutMiddleware(['permission']);
             Route::get('{id}', [StudentPracticalCardController::class, 'show'])->name('student-practical-card.show')->withoutMiddleware(['permission']);
         });

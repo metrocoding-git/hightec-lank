@@ -332,6 +332,12 @@
             margin-right: 6px;
         }
 
+        tr.subject-row .planned-times .chip.chip-total {
+            background: var(--brand-dark);
+            color: #fff;
+            border-color: var(--brand-dark);
+        }
+
         .badge-ok {
             background: var(--ok-bg);
             color: var(--ok);
@@ -439,7 +445,11 @@
             </div>
         </div>
 
- 
+        {{-- =======================================================
+             PRACTICAL CARD — subjects, then Before Checking,
+             After Checking and Course Attendance as their own
+             subject-style sections (every instance listed).
+             ======================================================= --}}
         <div class="card-wrap" id="practicalCard">
             <div class="card-title-bar">Practical Attendance Card</div>
 
@@ -524,11 +534,22 @@
                                             <span class="planned-times">
                                                 <span class="chip">Demo Time: {{ $subject['demonstrator_time'] }}</span>
                                                 <span class="chip">Practical Time: {{ $subject['practical_time'] }}</span>
+                                                {{-- "if has subject 2 or more attends want total duration...
+                                                     with that subject Practical Time" --}}
+                                                @if ($subject['total_duration'] !== null)
+                                                    <span class="chip chip-total">Total Duration: {{ $subject['total_duration'] }}</span>
+                                                @endif
                                             </span>
                                             @if ($subject['attended_count'] > 0)
                                                 <span class="badge badge-ok">Attended {{ $subject['attended_count'] }}x</span>
                                             @else
                                                 <span class="badge badge-warn">Not Attended</span>
+                                            @endif
+                                            {{-- "...then if complete that time or not" --}}
+                                            @if ($subject['completed'] === true)
+                                                <span class="badge badge-ok">Practical Time Completed</span>
+                                            @elseif ($subject['completed'] === false)
+                                                <span class="badge badge-warn">Practical Time Not Completed</span>
                                             @endif
                                         </td>
                                     </tr>
@@ -556,16 +577,20 @@
                     @endif
                 </div>
 
-
+                {{-- ---------- Before Checking / After Checking ----------
+                     Same subject-style block, reused for both groups; each
+                     shows its own total time once it has at least one
+                     instance (no "planned time" exists for a checkpoint,
+                     so there's no Completed/Not Completed badge here). --}}
                 @foreach ([$beforeChecking, $afterChecking] as $group)
                     <div class="section-block">
-                        <div class="section-heading">{{ $group['title'] }}</div>
-
                         <div class="section-heading">
-                            {{ $courseAttendance['title'] }}
-                            <span class="total-chip">Total Time : {{ $group['total_duration'] }}</span>
+                            {{ $group['title'] }}
+                            @if ($group['attended_count'] > 0)
+                                <span class="total-chip">Total Time: {{ $group['total_duration'] }}</span>
+                            @endif
                         </div>
-    
+
                         @if ($group['attended_count'] === 0)
                             <div class="empty-state">No {{ strtolower($group['title']) }} records for this course.</div>
                         @else
@@ -577,6 +602,7 @@
                                         <th style="width:11%">Time In</th>
                                         <th style="width:11%">Time Out</th>
                                         <th style="width:10%">Duration</th>
+                                        <th style="width:20%">Vehicle</th>
                                         <th style="width:15%">Marked By</th>
                                     </tr>
                                 </thead>
@@ -588,6 +614,7 @@
                                             <td>{{ $instance['time_in']?->format('h:i A') ?? '-' }}</td>
                                             <td>{{ $instance['time_out']?->format('h:i A') ?? '-' }}</td>
                                             <td>{{ $instance['duration'] }}</td>
+                                            <td>{{ $instance['vehicle'] }}</td>
                                             <td>{{ $instance['marked_by'] }}</td>
                                         </tr>
                                     @endforeach
@@ -601,11 +628,17 @@
                 <div class="section-block">
                     <div class="section-heading">
                         {{ $courseAttendance['title'] }}
-                        <span class="total-chip">Total Demo Time : {{ $practicalTotalDemonstratorTime }}</span>
-                        <span class="total-chip">Doing Total Demo Time : {{ $courseAttendance['total_duration'] }}</span>
-
+                        <span class="total-chip">Demo Time : {{ $practicalTotalDemonstratorTime }}</span>
+                        {{-- "Doing Total Demo Time" = Course Attendance + After Checking + Before
+                             Checking + every practical subject's actual total + every theory
+                             subject's actual total. --}}
+                        <span class="total-chip">Completed Time: {{ $doingTotalDemoTime }}</span>
+                        @if ($courseAttendanceCompleted === true)
+                            <span class="badge badge-ok">Demo Time Completed</span>
+                        @elseif ($courseAttendanceCompleted === false)
+                            <span class="badge badge-warn">Demo Time Not Completed</span>
+                        @endif
                     </div>
-                    
 
                     @if ($courseAttendance['attended_count'] === 0)
                         <div class="empty-state">No course attendance records for this course.</div>
@@ -618,6 +651,7 @@
                                     <th style="width:11%">Time In</th>
                                     <th style="width:11%">Time Out</th>
                                     <th style="width:10%">Duration</th>
+                                    <th style="width:20%">Vehicle</th>
                                     <th style="width:15%">Marked By</th>
                                 </tr>
                             </thead>
@@ -629,6 +663,7 @@
                                         <td>{{ $instance['time_in']?->format('h:i A') ?? '-' }}</td>
                                         <td>{{ $instance['time_out']?->format('h:i A') ?? '-' }}</td>
                                         <td>{{ $instance['duration'] }}</td>
+                                        <td>{{ $instance['vehicle'] }}</td>
                                         <td>{{ $instance['marked_by'] }}</td>
                                     </tr>
                                 @endforeach
@@ -643,7 +678,7 @@
         </div>
 
         {{-- =======================================================
-             THEORY CARD — new, mirrors the Practical card's subject
+             THEORY CARD — mirrors the Practical card's subject
              section but for Subject::type = 'T', no Vehicle column.
              ======================================================= --}}
         <div class="card-wrap theory" id="theoryCard">

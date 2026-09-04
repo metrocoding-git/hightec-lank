@@ -141,10 +141,26 @@ class ReportController extends Controller
             $handle = fopen('php://output', 'w');
             fwrite($handle, "\xEF\xBB\xBF");
             fputcsv($handle, [
-                'No', 'Reference No', 'Item', 'Item Category', 'Buyer Name', 'Create User', 'Reg No',
-                'Stu Category', 'Date', 'Sell Price', 'Total Quantity', 'Grand Total', 'Total Price',
-                'Total Qty', 'Payment Method', 'Bank Payment Amount', 'Bank Payment Date',
-                'Invoice Number', 'Note', 'Status',
+                'No',
+                'Reference No',
+                'Item',
+                'Item Category',
+                'Buyer Name',
+                'Create User',
+                'Reg No',
+                'Stu Category',
+                'Date',
+                'Sell Price',
+                'Total Quantity',
+                'Grand Total',
+                'Total Price',
+                'Total Qty',
+                'Payment Method',
+                'Bank Payment Amount',
+                'Bank Payment Date',
+                'Invoice Number',
+                'Note',
+                'Status',
             ]);
 
             $rowNo = 0;
@@ -337,8 +353,20 @@ class ReportController extends Controller
             $handle = fopen('php://output', 'w');
             fwrite($handle, "\xEF\xBB\xBF");
             fputcsv($handle, [
-                'No', 'Item Name', 'Item Category', 'Issued To', 'Reg No', 'Category', 'Issue Date',
-                'Quantity', 'Intake Name', 'Course Name', 'Create User', 'Course Expiration', 'Note', 'Status',
+                'No',
+                'Item Name',
+                'Item Category',
+                'Issued To',
+                'Reg No',
+                'Category',
+                'Issue Date',
+                'Quantity',
+                'Intake Name',
+                'Course Name',
+                'Create User',
+                'Course Expiration',
+                'Note',
+                'Status',
             ]);
 
             $rowNo = 0;
@@ -567,10 +595,24 @@ class ReportController extends Controller
             fwrite($handle, "\xEF\xBB\xBF"); // UTF-8 BOM so Excel renders names correctly
 
             fputcsv($handle, [
-                'No', 'Stu No', 'Stu Category', 'Paid Branch', 'Invoice Number', 'Receipt Number',
-                'Payment Name', 'Paid Amount', 'Payment Method', 'Payment Date', 'Payment Invoice Number',
-                'Bank Payment Amount', 'Bank Payment Date', 'Note', 'Create User',
-                'Invoice Payment Status', 'Invoice Payment Amount', 'Lunch Box Number',
+                'No',
+                'Stu No',
+                'Stu Category',
+                'Paid Branch',
+                'Invoice Number',
+                'Receipt Number',
+                'Payment Name',
+                'Paid Amount',
+                'Payment Method',
+                'Payment Date',
+                'Payment Invoice Number',
+                'Bank Payment Amount',
+                'Bank Payment Date',
+                'Note',
+                'Create User',
+                'Invoice Payment Status',
+                'Invoice Payment Amount',
+                'Lunch Box Number',
             ]);
 
             $rowNo = 0;
@@ -595,7 +637,7 @@ class ReportController extends Controller
                         ? \Carbon\Carbon::parse($row->bank_payment_date)->format('m/d/Y')
                         : '-',
                     $row->notes ?? '-',
-                    $row->invoice?->createUser?->name ?? 'N/A',
+                    $row->createUser?->name ?? ($row->invoice?->createUser?->name ?? 'N/A'),
                     $this->getInvoicePaymentStatus($row),
                     $row->payment_method == 'Invoice' ? $row->invoice_payment_amount : '-',
                     $row->payment_type === 'food'
@@ -790,8 +832,14 @@ class ReportController extends Controller
             $handle = fopen('php://output', 'w');
             fwrite($handle, "\xEF\xBB\xBF");
             fputcsv($handle, [
-                'No', 'Student Name', 'Course Name', 'Course Price', 'Paid Amount', 'Due Amount',
-                'Payment Status', 'Payment Method',
+                'No',
+                'Student Name',
+                'Course Name',
+                'Course Price',
+                'Paid Amount',
+                'Due Amount',
+                'Payment Status',
+                'Payment Method',
             ]);
 
             $rowNo = 0;
@@ -950,9 +998,22 @@ class ReportController extends Controller
             $handle = fopen('php://output', 'w');
             fwrite($handle, "\xEF\xBB\xBF");
             fputcsv($handle, [
-                'No', 'Invoice No', 'Student No', 'Student Category', 'Branch', 'Course', 'Intake',
-                'Last Payment Date', 'Invoice Create Date', 'Intake Date', 'Status', 'Total Amount',
-                'Paid Amount', 'Cash', 'Bank Transfer', 'Invoice',
+                'No',
+                'Invoice No',
+                'Student No',
+                'Student Category',
+                'Branch',
+                'Course',
+                'Intake',
+                'Last Payment Date',
+                'Invoice Create Date',
+                'Intake Date',
+                'Status',
+                'Total Amount',
+                'Paid Amount',
+                'Cash',
+                'Bank Transfer',
+                'Invoice',
             ]);
 
             $rowNo = 0;
@@ -1092,9 +1153,23 @@ class ReportController extends Controller
             $handle = fopen('php://output', 'w');
             fwrite($handle, "\xEF\xBB\xBF");
             fputcsv($handle, [
-                'No', 'Invoice No', 'Student No', 'Student Category', 'Branch', 'Course', 'Intake',
-                'Last Payment Date', 'Invoice Create Date', 'Intake Date', 'Status', 'Total Amount',
-                'Paid Amount', 'Due Amount', 'Cash', 'Bank Transfer', 'Invoice',
+                'No',
+                'Invoice No',
+                'Student No',
+                'Student Category',
+                'Branch',
+                'Course',
+                'Intake',
+                'Last Payment Date',
+                'Invoice Create Date',
+                'Intake Date',
+                'Status',
+                'Total Amount',
+                'Paid Amount',
+                'Due Amount',
+                'Cash',
+                'Bank Transfer',
+                'Invoice',
             ]);
 
             $rowNo = 0;
@@ -1787,9 +1862,26 @@ class ReportController extends Controller
             $handle = fopen('php://output', 'w');
             fwrite($handle, "\xEF\xBB\xBF");
             fputcsv($handle, [
-                'No', 'Lunchbox No.', 'Group', 'Year', 'Month', 'Branch', 'Student No.', 'Student Name',
-                'Category', 'Course', 'Food From', 'Food To', 'Breakfast', 'Lunch', 'Dinner',
-                'Due Amount', 'Status', 'Invoice No.', 'Create Date', 'Update Date',
+                'No',
+                'Lunchbox No.',
+                'Group',
+                'Year',
+                'Month',
+                'Branch',
+                'Student No.',
+                'Student Name',
+                'Category',
+                'Course',
+                'Food From',
+                'Food To',
+                'Breakfast',
+                'Lunch',
+                'Dinner',
+                'Due Amount',
+                'Status',
+                'Invoice No.',
+                'Create Date',
+                'Update Date',
             ]);
 
             $rowNo = 0;
@@ -1826,28 +1918,36 @@ class ReportController extends Controller
 
     private function studentAttendanceQuery(Request $request): Builder
     {
-        // "Before checking" / "after checking" rows are included here — they're
-        // real attendance rows just like course/subject/practical scans. Each
-        // carries $session->type_label ('Course' / 'Subject' / 'Practical' /
-        // 'Before Checking' / 'After Checking') so the view/export can tell them
-        // apart even though checkpoint rows share subject_id = null with real
-        // course rows.
         $query = SubjectAttendanceSession::with([
             'student.branch',
             'subject',
             'course',
             'intake',
+            'intake.branch',
             'vehicle',
             'markedInBy',
+            'markedInBy.branches',
             'markedOutBy',
         ]);
 
+
         if ($request->filled('branch_id')) {
-            // Filters by the student's own (home) branch — Student::branch —
-            // not the per-enrolment branch used to scope practical vehicles.
             $branchId = $request->branch_id;
             $query->whereHas('student', function ($q) use ($branchId) {
                 $q->where('branch_id', $branchId);
+            });
+            $query->where(function ($q) use ($branchId) {
+                $q->whereHas('markedInBy', function ($userQuery) use ($branchId) {
+                    $userQuery
+                        ->whereHas('branches', function ($branchQuery) use ($branchId) {
+                            $branchQuery->where('branches.id', $branchId);
+                        })
+                        ->whereDoesntHave('branches', function ($branchQuery) use ($branchId) {
+                        });
+                })
+                    ->orWhereHas('intake', function ($intakeQuery) use ($branchId) {
+                        $intakeQuery->where('branch_id', $branchId);
+                    });
             });
         }
         if ($request->filled('intake_id')) {
@@ -1941,12 +2041,6 @@ class ReportController extends Controller
             ->selectRaw('SUM(TIMESTAMPDIFF(MINUTE, time_in, time_out)) as total')
             ->value('total') ?? 0;
 
-        // ANALYTICS: type breakdown, built from 5 plain COUNT queries rather
-        // than a join to the subjects table — every filter used here
-        // (whereNull('checkpoint_type'), whereNull('subject_id'),
-        // whereHas('subject', ...)) is already proven working in
-        // studentAttendanceQuery() above, so this adds no new guesses about
-        // table/column names. COUNT queries stay cheap even on a large table.
         $typeBreakdown = collect([
             ['label' => 'Course', 'value' => (clone $query)->whereNull('checkpoint_type')->whereNull('subject_id')->count()],
             ['label' => 'Subject', 'value' => (clone $query)->whereNull('checkpoint_type')->whereHas('subject', fn($q) => $q->where('type', 'T'))->count()],
@@ -1955,10 +2049,6 @@ class ReportController extends Controller
             ['label' => 'After Checking', 'value' => (clone $query)->where('checkpoint_type', 'after_checking')->count()],
         ])->filter(fn($row) => $row['value'] > 0)->values();
 
-        // ANALYTICS: sessions-per-day trend. When the user hasn't narrowed
-        // the range themselves, cap the CHART (not the totals above) to the
-        // last 30 days so the line stays readable and the query stays bounded
-        // even if attendance data goes back years.
         $trendQuery = (clone $query);
         if (!$request->filled('date_from') && !$request->filled('date_to')) {
             $trendQuery->where('attendance_date', '>=', now()->subDays(30));
@@ -2031,7 +2121,7 @@ class ReportController extends Controller
                     optional($session->attendance_date)->format('Y-m-d'),
                     $session->student->admission_number ?? '',
                     $session->student->student_name ?? '',
-                    $session->student->branch->name ?? '',
+                    $session->attendance_branch?->name ?? '',
                     $session->intake->name ?? '',
                     $session->course->name ?? '',
                     $session->type_label,

@@ -458,6 +458,7 @@
                     Auth::user()->hasPermission('student-list') ||
                     Auth::user()->hasPermission('disabled-students') ||
                     Auth::user()->hasPermission('scan-attendance') ||
+                    Auth::user()->hasPermission('student-practical-card.index') ||
                     Auth::user()->hasPermission('student.add-intake-with-courses.index') ||
                     Auth::user()->hasPermission('student-assessment.index') ||
                     Auth::user()->hasPermission('certificate.index') ||
@@ -480,6 +481,7 @@
                     Auth::user()->hasPermission('student-list') ||
                     Auth::user()->hasPermission('disabled-students') ||
                     Auth::user()->hasPermission('scan-attendance') ||
+                    Auth::user()->hasPermission('student-practical-card.index') ||
                     Auth::user()->hasPermission('student.add-intake-with-courses.index') ||
                     Auth::user()->hasPermission('student-assessment.index') ||
                     Auth::user()->hasPermission('certificate.index')))
@@ -535,6 +537,15 @@
                             </a>
                         </li>
                     @endif
+                    @if (Auth::user()->hasPermission('student-practical-card.index'))
+                        <li>
+                            <a href="/student/student-info/attendance-card"
+                                class="{{ request()->is('student/student-info/attendance-card') ? 'active a' : '' }}">
+                                Student Attendance Card
+                            </a>
+                        </li>
+                    @endif
+
                     @if (Auth::user()->hasPermission('student.add-intake-with-courses.index'))
                         <li>
                             <a href="/student/student-info/student-add-intake"

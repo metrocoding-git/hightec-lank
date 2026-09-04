@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AssignSubjects;
-use App\Models\Course;
+use App\Models\Branch;
 use App\Models\Student;
 use App\Models\StudentCourse;
 use App\Models\Subject;
@@ -14,54 +14,80 @@ use Illuminate\Support\Carbon;
 class StudentPracticalCardController extends Controller
 {
     /**
-     * NEW (this round) — the "student attendance card list" window. Lists
-     * every student who has at least one course assignment, with a Course
-     * filter + name/admission/NIC search, each row linking to that
-     * student's card (show()) instead of needing a direct URL with an id.
+     * The "student attendance card list" window. Base list is Student
+     * itself (so it's populated as long as the students table has rows —
+     * "there default dont show any data" was the old version filtering the
+     * base list down through student_courses first, which came back empty),
+     * with Branch (direct column), Intake and Course (both via
+     * student_courses, matching the branch->intake->course cascade the
+     * disabled-students page already uses) as optional filters, plus the
+     * existing name/admission/NIC search. No date-range filter — asked
+     * about it, answer was "dont want date."
      */
     public function index(Request $request)
     {
-        $studentCourseQuery = StudentCourse::query();
+        $hasFilter = $request->filled('branch_id')
+            || $request->filled('intake_id')
+            || $request->filled('course_id')
+            || $request->filled('q');
 
-        if ($request->filled('course_id')) {
-            $studentCourseQuery->where('course_id', (int) $request->input('course_id'));
+        $students = collect();
+
+        if ($hasFilter) {
+            $query = Student::with('branch');
+
+            if ($request->filled('branch_id')) {
+                $query->where('branch_id', (int) $request->input('branch_id'));
+            }
+
+            if ($request->filled('intake_id') || $request->filled('course_id')) {
+                $query->whereIn('id', function ($sub) use ($request) {
+                    $sub->select('student_id')->from('student_courses');
+
+                    if ($request->filled('intake_id')) {
+                        $sub->where('intake_id', (int) $request->input('intake_id'));
+                    }
+
+                    if ($request->filled('course_id')) {
+                        $sub->where('course_id', (int) $request->input('course_id'));
+                    }
+                });
+            }
+
+            if ($request->filled('q')) {
+                $term = trim($request->input('q'));
+                $query->where(function ($q) use ($term) {
+                    $q->where('student_name', 'like', "%{$term}%")
+                        ->orWhere('admission_number', 'like', "%{$term}%")
+                        ->orWhere('national_id_number', 'like', "%{$term}%");
+                });
+            }
+
+            $students = $query->orderBy('student_name')->get();
         }
 
-        $studentIds = $studentCourseQuery->pluck('student_id')->unique();
-
-        $studentsQuery = Student::with('branch')
-            ->whereIn('id', $studentIds)
-            ->orderBy('student_name');
-
-        if ($request->filled('q')) {
-            $term = trim($request->input('q'));
-            $studentsQuery->where(function ($q) use ($term) {
-                $q->where('student_name', 'like', "%{$term}%")
-                    ->orWhere('admission_number', 'like', "%{$term}%")
-                    ->orWhere('national_id_number', 'like', "%{$term}%");
-            });
-        }
-
-        $students = $studentsQuery->get();
-
-        $courseOptions = Course::whereIn('id', StudentCourse::pluck('course_id')->unique())
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $branches = Branch::orderBy('name')->get(['id', 'name']);
 
         return view('pages.student.attendance.practical-card-index', [
             'students' => $students,
-            'courseOptions' => $courseOptions,
+            'branches' => $branches,
+            'hasFilter' => $hasFilter,
+            'selectedBranchId' => $request->input('branch_id'),
+            'selectedIntakeId' => $request->input('intake_id'),
             'selectedCourseId' => $request->input('course_id'),
             'q' => $request->input('q'),
         ]);
     }
 
     /**
-     * Printable attendance card for one student under one course — now
-     * TWO cards in the same window (Practical + Theory, each printed
-     * separately), and Before Checking / After Checking / Course
-     * Attendance are their own subject-style sections (every instance
-     * listed, not just the first checkpoint of the day).
+     * Printable attendance card for one student under one course — two
+     * cards in the same window (Practical + Theory, each printed
+     * separately). Before Checking / After Checking / Course Attendance
+     * are their own subject-style sections (every instance listed). Each
+     * practical subject with 2+ attended instances now also shows its
+     * actual total duration next to its planned Practical Time, with a
+     * Completed / Not Completed badge — same idea applied to Course
+     * Attendance's actual total vs. the planned Demo Time.
      */
     public function show($id, Request $request)
     {
@@ -96,11 +122,28 @@ class StudentPracticalCardController extends Controller
         $practical = $this->buildSubjectRows($student->id, $selectedCourseId, $selectedEnrolment->intake_id, 'P');
         $theory = $this->buildSubjectRows($student->id, $selectedCourseId, $selectedEnrolment->intake_id, 'T');
 
-        $beforeChecking = $this->buildCheckpointGroup('Before Checking', $student->id, $selectedCourseId, 'before_checking');
-        
-        $afterChecking = $this->buildCheckpointGroup('After Checking', $student->id, $selectedCourseId, 'after_checking');
+        $beforeChecking = $this->buildCheckpointGroup('පෙර පණගැවුම් පරික්ෂාව', $student->id, $selectedCourseId, 'before_checking');
+        $afterChecking = $this->buildCheckpointGroup('පසු පණගැවුම් පරික්ෂාව', $student->id, $selectedCourseId, 'after_checking');
+        $courseAttendance = $this->buildCheckpointGroup('නිරීක්ෂණ මිනිත්තුව', $student->id, $selectedCourseId, null);
 
-        $courseAttendance = $this->buildCheckpointGroup('Course Attendance', $student->id, $selectedCourseId, null);
+        // "Doing Total Demo Time" — reworked per the latest request: NOT
+        // just Course Attendance's own sessions any more. Now it's the
+        // grand total of everything actually done for this course —
+        // Course Attendance + After Checking + Before Checking + every
+        // practical subject's actual duration + every theory subject's
+        // actual duration — compared against the planned figure (sum of
+        // every practical subject's Demo Time) for the Completed / Not
+        // Completed badge.
+        $doingTotalDemoMinutes = $courseAttendance['total_minutes']
+            - $afterChecking['total_minutes']
+            - $beforeChecking['total_minutes']
+            - $practical['totalActualMinutes']
+            - $theory['totalActualMinutes'];
+        $doingTotalDemoTime = $this->formatMinutes($doingTotalDemoMinutes);
+
+        $courseAttendanceCompleted = $practical['totalDemonstratorMinutes'] > 0
+            ? $doingTotalDemoMinutes >= $practical['totalDemonstratorMinutes']
+            : null;
 
         return view('pages.student.attendance.practical-card', [
             'student' => $student,
@@ -111,20 +154,22 @@ class StudentPracticalCardController extends Controller
             'practicalTotalDemonstratorTime' => $practical['totalDemonstratorTime'],
             'practicalTotalPracticalTime' => $practical['totalPracticalTime'],
             'theorySubjects' => $theory['rows'],
-            'totalBeforeChecking' => $beforeChecking['total_duration'],
-            'totalAfterChecking' => $afterChecking['total_duration'],
             'beforeChecking' => $beforeChecking,
             'afterChecking' => $afterChecking,
             'courseAttendance' => $courseAttendance,
+            'doingTotalDemoTime' => $doingTotalDemoTime,
+            'courseAttendanceCompleted' => $courseAttendanceCompleted,
         ]);
     }
 
     /**
      * One entry per subject of the given type ($subjectType: 'P' practical,
      * 'T' theory) ASSIGNED to this course/intake — with every attendance
-     * instance recorded for it (possibly none) — plus the total planned
-     * Demonstrator Time / Practical Time summed across those subjects
-     * (used for the two new "title header" totals).
+     * instance recorded for it (possibly none), the total planned
+     * Demonstrator Time / Practical Time summed across those subjects, and
+     * (NEW) — for any subject with 2 or more attended instances — its own
+     * actual total duration plus whether that meets its planned Practical
+     * Time or not.
      */
     private function buildSubjectRows(int $studentId, int $courseId, ?int $intakeId, string $subjectType): array
     {
@@ -157,15 +202,17 @@ class StudentPracticalCardController extends Controller
         $totals = [
             'totalDemonstratorTime' => $this->formatMinutes($totalDemonstratorMinutes),
             'totalPracticalTime' => $this->formatMinutes($totalPracticalMinutes),
+            'totalDemonstratorMinutes' => $totalDemonstratorMinutes,
+            'totalPracticalMinutes' => $totalPracticalMinutes,
         ];
 
         if ($subjects->isEmpty()) {
-            return array_merge(['rows' => []], $totals);
+            return array_merge(['rows' => [], 'totalActualMinutes' => 0], $totals);
         }
 
         // Every real attendance session for those subjects (checkpoints are
-        // handled separately now, by buildCheckpointGroup()), grouped by
-        // subject so each subject can list all its instances.
+        // handled separately, by buildCheckpointGroup()), grouped by subject
+        // so each subject can list all its instances.
         $sessionsBySubject = SubjectAttendanceSession::with([
             'vehicle:id,name,vehicle_number',
             'markedInBy:id,name',
@@ -181,21 +228,42 @@ class StudentPracticalCardController extends Controller
             ->groupBy('subject_id');
 
         $rows = [];
+        $totalActualMinutes = 0;
 
         foreach ($subjects as $subject) {
             $assignment = $assignments->get($subject->id);
             $subjectSessions = $sessionsBySubject->get($subject->id, collect());
+            $subjectActualMinutes = 0;
 
-            $instances = $subjectSessions->map(function ($s) {
+            $instances = $subjectSessions->map(function ($s) use (&$subjectActualMinutes) {
+                $minutes = $this->sessionDurationMinutes($s->time_in, $s->time_out);
+                $subjectActualMinutes += $minutes;
+
                 return [
                     'date' => $s->attendance_date->format('Y-m-d (D)'),
                     'time_in' => $s->time_in,
                     'time_out' => $s->time_out,
-                    'duration' => $this->duration($s->time_in, $s->time_out),
+                    'duration' => $this->formatMinutes($minutes),
                     'vehicle' => $s->vehicle->name ?? '-',
                     'marked_by' => optional($s->markedOutBy)->name ?? optional($s->markedInBy)->name ?? '-',
                 ];
             })->values();
+
+            // Feeds the course-wide "Doing Total Demo Time" grand total in
+            // show() — every subject's actual minutes count toward that,
+            // regardless of the per-subject display threshold below.
+            $totalActualMinutes += $subjectActualMinutes;
+
+            $plannedPracticalMinutes = $this->parsePlannedMinutes($assignment->practical_time ?? null);
+
+            // "want practical subject one by one... get subject Practical
+            // Time - that subject total duration" — the actual-vs-planned
+            // total/Completed comparison is now shown for every subject
+            // with at least one attended instance (previously required 2+).
+            // completed stays null (meaning "not applicable / can't tell")
+            // when there's no planned time to compare against, or nothing
+            // attended yet.
+            $showTotal = $instances->count() >= 1;
 
             $rows[] = [
                 'subject' => $subject->name,
@@ -203,23 +271,24 @@ class StudentPracticalCardController extends Controller
                 'practical_time' => $this->formatPlannedTime($assignment->practical_time ?? null),
                 'attended_count' => $instances->count(),
                 'instances' => $instances,
+                'total_duration' => $showTotal ? $this->formatMinutes($subjectActualMinutes) : null,
+                'completed' => ($showTotal && $plannedPracticalMinutes > 0)
+                    ? ($subjectActualMinutes >= $plannedPracticalMinutes)
+                    : null,
             ];
         }
 
-        return array_merge(['rows' => $rows], $totals);
+        return array_merge(['rows' => $rows, 'totalActualMinutes' => $totalActualMinutes], $totals);
     }
 
     /**
-     * NEW (this round) — a single subject-style group for something that
-     * ISN'T a real assigned subject: Before Checking, After Checking, or
-     * (when $checkpointType is null) general Course Attendance. Same shape
-     * as a subject row (so the view can render it with the same table
-     * markup) but with no planned Demo/Practical time, and EVERY matching
-     * instance listed — the old code only kept the first checkpoint of a
-     * given day, silently dropping any extra ones; this lists them all.
+     * A single subject-style group for something that ISN'T a real assigned
+     * subject: Before Checking, After Checking, or (when $checkpointType is
+     * null) general Course Attendance. Same shape as a subject row (so the
+     * view can render it with the same table markup) but with no planned
+     * Demo/Practical time, EVERY matching instance listed (not just the
+     * first checkpoint of a day), and its own actual total duration.
      */
-
-    
     private function buildCheckpointGroup(string $title, int $studentId, int $courseId, ?string $checkpointType): array
     {
         $query = SubjectAttendanceSession::with([
@@ -240,23 +309,17 @@ class StudentPracticalCardController extends Controller
 
         $sessions = $query->orderBy('attendance_date')->orderBy('time_in')->get();
 
-        $totalMinutes = $sessions->sum(function ($s) {
-            if (!$s->time_in || !$s->time_out) {
-                return 0;
-            }
-    
-            $timeIn = \Carbon\Carbon::parse($s->time_in);
-            $timeOut = \Carbon\Carbon::parse($s->time_out);
-    
-            return $timeIn->diffInMinutes($timeOut);
-        });
+        $totalMinutes = 0;
 
-        $instances = $sessions->map(function ($s) {
+        $instances = $sessions->map(function ($s) use (&$totalMinutes) {
+            $minutes = $this->sessionDurationMinutes($s->time_in, $s->time_out);
+            $totalMinutes += $minutes;
+
             return [
                 'date' => $s->attendance_date->format('Y-m-d (D)'),
                 'time_in' => $s->time_in,
                 'time_out' => $s->time_out,
-                'duration' => $this->duration($s->time_in, $s->time_out),
+                'duration' => $this->formatMinutes($minutes),
                 'vehicle' => $s->vehicle->name ?? '-',
                 'marked_by' => optional($s->markedOutBy)->name ?? optional($s->markedInBy)->name ?? '-',
             ];
@@ -265,6 +328,7 @@ class StudentPracticalCardController extends Controller
         return [
             'title' => $title,
             'attended_count' => $instances->count(),
+            'total_minutes' => $totalMinutes,
             'total_duration' => $this->formatMinutes($totalMinutes),
             'instances' => $instances,
         ];
@@ -285,11 +349,11 @@ class StudentPracticalCardController extends Controller
     }
 
     /**
-     * NEW (this round) — parses the same raw demonstrator_time/practical_time
-     * value (either a "H:i" string or a plain number of minutes) into a
-     * whole number of minutes, so several subjects' planned times can be
-     * summed for the new "title header" totals. Unrecognized values are
-     * treated as 0 rather than throwing.
+     * Parses the same raw demonstrator_time/practical_time value (either a
+     * "H:i" string or a plain number of minutes) into a whole number of
+     * minutes, so several subjects' planned times can be summed for the
+     * "title header" totals. Unrecognized values are treated as 0 rather
+     * than throwing.
      */
     private function parsePlannedMinutes($value): int
     {
@@ -309,9 +373,8 @@ class StudentPracticalCardController extends Controller
     }
 
     /**
-     * NEW (this round) — shared H:i formatter for a whole number of
-     * minutes, used by both duration() (a single session's time in/out)
-     * and the new planned-time totals, so they always render the same way.
+     * Shared H:i formatter for a whole number of minutes, used by every
+     * duration/total shown on the card, so they all render the same way.
      */
     private function formatMinutes(int $minutes): string
     {
@@ -321,8 +384,11 @@ class StudentPracticalCardController extends Controller
     }
 
     /**
-     * HARDENED (this round) — "durate calculation is wrong" (per-session
-     * time in -> time out). Two defensive fixes applied, since no specific
+     * The actual "durate calculation" logic, as a minute count rather than
+     * a formatted string, so both a single row's duration() AND any total
+     * that sums several sessions (a subject's total, a checkpoint group's
+     * total) share the exact same math instead of two slightly different
+     * copies of it drifting apart. Two defensive fixes, since no specific
      * wrong example was available to reproduce against:
      *  1. Both times are re-anchored to the exact same base date (by
      *     re-parsing just their H:i:s portion) before diffing, in case
@@ -330,14 +396,12 @@ class StudentPracticalCardController extends Controller
      *  2. A session that crosses midnight (time out is earlier-looking
      *     than time in, e.g. 11:50 PM -> 12:10 AM) is detected and $end is
      *     pushed a day forward before diffing, instead of producing a huge
-     *     wrong number (or a wrong-looking near-24h value).
-     * If a duration still looks wrong after this, the exact times shown
-     * would help pin down anything this doesn't already cover.
+     *     wrong number.
      */
-    private function duration(?Carbon $start, ?Carbon $end): string
+    private function sessionDurationMinutes(?Carbon $start, ?Carbon $end): int
     {
         if (!$start || !$end) {
-            return '-';
+            return 0;
         }
 
         $start = Carbon::parse($start->format('H:i:s'));
@@ -347,8 +411,15 @@ class StudentPracticalCardController extends Controller
             $end->addDay();
         }
 
-        $totalMinutes = (int) $start->diffInMinutes($end);
+        return (int) $start->diffInMinutes($end);
+    }
 
-        return $this->formatMinutes($totalMinutes);
+    /**
+     * Single-session duration, formatted — thin wrapper around
+     * sessionDurationMinutes() + formatMinutes() for the per-row display.
+     */
+    private function duration(?Carbon $start, ?Carbon $end): string
+    {
+        return $this->formatMinutes($this->sessionDurationMinutes($start, $end));
     }
 }

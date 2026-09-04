@@ -10,6 +10,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class AssessmentTemplateController extends Controller
 {
@@ -39,13 +40,25 @@ class AssessmentTemplateController extends Controller
     {
         $validated = $request->validate([
             'course_id' => 'required|exists:courses,id',
-            'module_name' => 'required|string|max:255',
+            'module_name' => [
+                'required',
+                'string',
+                'max:255',
+                // "Module Name and NCS Code can be same different courses...
+                // same course cant be create 2" — unique PER COURSE (active
+                // templates only, so a name freed up by a deleted template
+                // can be reused straight away), not unique globally.
+                Rule::unique('assessment_templates', 'module_name')
+                    ->where(fn($q) => $q->where('course_id', $request->input('course_id'))->where('is_active', true)),
+            ],
             'ncs_code' => 'nullable|string|max:100',
             'titles' => 'required|array|min:1',
             'titles.*.title' => 'required|string|max:255',
             'titles.*.max_marks' => 'required|integer|min:0',
             'titles.*.sub_titles' => 'required|array|min:1',
             'titles.*.sub_titles.*.sub_title' => 'required|string|max:255',
+        ], [
+            'module_name.unique' => 'A template with this Module Name already exists for this course. Pick a different name, or edit the existing one.',
         ]);
 
         DB::transaction(function () use ($validated) {
@@ -81,7 +94,17 @@ class AssessmentTemplateController extends Controller
         $template = AssessmentTemplate::findOrFail($id);
 
         $validated = $request->validate([
-            'module_name' => 'required|string|max:255',
+            'module_name' => [
+                'required',
+                'string',
+                'max:255',
+                // Same per-course uniqueness as store(), scoped to this
+                // template's own (unchangeable) course_id and excluding
+                // itself so re-saving without changing the name still works.
+                Rule::unique('assessment_templates', 'module_name')
+                    ->where(fn($q) => $q->where('course_id', $template->course_id)->where('is_active', true))
+                    ->ignore($template->id),
+            ],
             'ncs_code' => 'nullable|string|max:100',
             'titles' => 'required|array|min:1',
             'titles.*.id' => 'nullable|exists:assessment_template_titles,id',
@@ -90,6 +113,8 @@ class AssessmentTemplateController extends Controller
             'titles.*.sub_titles' => 'required|array|min:1',
             'titles.*.sub_titles.*.id' => 'nullable|exists:assessment_template_sub_titles,id',
             'titles.*.sub_titles.*.sub_title' => 'required|string|max:255',
+        ], [
+            'module_name.unique' => 'A template with this Module Name already exists for this course. Pick a different name, or edit the existing one.',
         ]);
 
         $locked = [];
