@@ -557,3 +557,7 @@ CREATE TABLE `certificates` (
 ('certificate.generate',       'Certificate - Generate', NOW(), NOW()),
 ('certificate.sign-conductor', 'Certificate - Sign (Assessment Conductor)', NOW(), NOW()),
 ('certificate.sign-owner',     'Certificate - Sign (Owner) — finalizes & unlocks download', NOW(), NOW());
+
+
+-- 09/04
+INSERT INTO `permissions` (`id`, `permission_name`, `label`, `created_at`, `updated_at`) VALUES (NULL, 'student-practical-card.index', 'Attendance Card', NULL, NULL);

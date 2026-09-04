@@ -206,6 +206,26 @@
             justify-content: space-between;
             margin-top: 8px;
         }
+
+        .atpl-copied-banner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            background: #eef3fb;
+            border: 1px solid #c8d9f0;
+            color: #1d4e89;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        .atpl-copied-banner .atpl-copied-actions {
+            display: flex;
+            gap: 8px;
+        }
     </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
@@ -268,6 +288,15 @@
                 const [loadingList, setLoadingList] = React.useState(false);
                 const [banner, setBanner] = React.useState(null);
                 const [builder, setBuilder] = React.useState(null);
+                // "want to have copy button for coppy template, then want
+                // past button for tamplete past" — Copy holds a template's
+                // content (title/sub-title text + planned marks, IDs
+                // stripped so pasting always creates something NEW rather
+                // than editing the original) so it can be pasted into the
+                // builder for whichever course is currently selected,
+                // whether that's a different course entirely or the same
+                // one after a delete.
+                const [copied, setCopied] = React.useState(null);
 
                 const loadTemplates = React.useCallback(async (cid) => {
                     setLoadingList(true);
@@ -310,6 +339,37 @@
                             title: t.title,
                             maxMarks: t.max_marks,
                             subTitles: (t.sub_titles || []).map(s => ({ id: s.id, subTitle: s.sub_title })),
+                        })),
+                    });
+                    setBanner(null);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+
+                function handleCopy(tpl) {
+                    setCopied({
+                        moduleName: tpl.module_name,
+                        ncsCode: tpl.ncs_code || '',
+                        titles: (tpl.titles || []).map(t => ({
+                            title: t.title,
+                            maxMarks: t.max_marks,
+                            subTitles: (t.sub_titles || []).map(s => ({ subTitle: s.sub_title })),
+                        })),
+                    });
+                    setBanner({ type: 'success', text: `Copied "${tpl.module_name}". Select a course (any course) and click "Paste" to use it there.` });
+                }
+
+                function handlePaste() {
+                    if (!copied || !courseId) return;
+                    setBuilder({
+                        id: null,
+                        courseId,
+                        moduleName: copied.moduleName,
+                        ncsCode: copied.ncsCode,
+                        titles: copied.titles.map(t => ({
+                            id: null,
+                            title: t.title,
+                            maxMarks: t.maxMarks,
+                            subTitles: t.subTitles.map(s => ({ id: null, subTitle: s.subTitle })),
                         })),
                     });
                     setBanner(null);
@@ -423,6 +483,20 @@
                             </select>
                         </div>
 
+                        {copied && (
+                            <div className="atpl-copied-banner">
+                                <div>Copied template: <strong>{copied.moduleName}</strong></div>
+                                <div className="atpl-copied-actions">
+                                    {courseId && (
+                                        <button type="button" className="atpl-btn atpl-btn-primary atpl-btn-sm" onClick={handlePaste}>
+                                            Paste into this course
+                                        </button>
+                                    )}
+                                    <button type="button" className="atpl-btn atpl-btn-sm" onClick={() => setCopied(null)}>Clear</button>
+                                </div>
+                            </div>
+                        )}
+
                         {banner && <div className={`atpl-banner atpl-banner-${banner.type}`}>{banner.text}</div>}
 
                         {courseId && (
@@ -442,6 +516,7 @@
                                                 </div>
                                                 <div className="atpl-list-actions">
                                                     <button type="button" className="atpl-btn atpl-btn-outline" onClick={() => startEdit(t)}>Edit</button>
+                                                    <button type="button" className="atpl-btn" onClick={() => handleCopy(t)}>Copy</button>
                                                     <button type="button" className="atpl-btn atpl-btn-danger" onClick={() => handleDelete(t)}>Delete</button>
                                                 </div>
                                             </li>

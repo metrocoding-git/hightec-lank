@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AssessmentTemplate;
 use App\Models\Course;
+use App\Models\FeeInvoices;
 use App\Models\Student;
 use App\Models\StudentAssessment;
 use App\Models\StudentAssessmentMark;
@@ -18,10 +19,28 @@ use Illuminate\Support\Facades\File;
 
 class StudentAssessmentController extends Controller
 {
+    // Grade bands, all percentage-of-that-template's-own-Max-Marks (NOT a
+    // raw score out of 100 — templates don't all add up to 100) —
+    // "90-100 = A, 80-89 = B+, 70-79 = B, 60-69 = C", anything under 60% is
+    // a FAIL. Kept as one ordered list so store() and the percentageToGrade()
+    // helper below can never drift apart.
+    private const GRADE_BANDS = [
+        ['min' => 90, 'grade' => 'A'],
+        ['min' => 80, 'grade' => 'B+'],
+        ['min' => 70, 'grade' => 'B'],
+        ['min' => 60, 'grade' => 'C'],
+    ];
+
     public function index(Request $request)
     {
 
-        $query = StudentAssessment::with(['student', 'template.course', 'evaluator:id,name', 'certificate'])->latest();
+        $query = StudentAssessment::with([
+            'student.verifications',
+            'template.course',
+            'evaluator:id,name',
+            'certificate',
+            'studentCourse',
+        ])->latest();
 
 
         if ($request->filled('course_id')) {
@@ -50,13 +69,57 @@ class StudentAssessmentController extends Controller
 
         $recent = $query->get();
 
+        // "Student Category (from the course-related invoice)" — NOT
+        // students.student_category_id directly; the fee_invoices row tied
+        // to this student+course can override the category, falling back
+        // to the student's own when it doesn't. Same COALESCE
+        // InvoiceController::invoiceDatatable() already uses. Batched into
+        // one query for the whole $recent list rather than N+1 per row.
+        $categoriesByPair = $this->resolveCourseCategoriesForRecent($recent);
+
         $courseIds = AssessmentTemplate::pluck('course_id')->unique();
         $courseOptions = Course::whereIn('id', $courseIds)->orderBy('name')->get(['id', 'name']);
 
         $creatorIds = StudentAssessment::whereNotNull('created_by')->distinct()->pluck('created_by');
         $creatorOptions = User::whereIn('id', $creatorIds)->orderBy('name')->get(['id', 'name']);
 
-        return view('pages.administration.assessment.mark-entry', compact('recent', 'courseOptions', 'creatorOptions'));
+        return view('pages.administration.assessment.mark-entry', compact('recent', 'courseOptions', 'creatorOptions', 'categoriesByPair'));
+    }
+
+    /**
+     * Batched "Student Category (from the course-related invoice)" lookup
+     * for the whole $recent list in ONE query, keyed by "studentId-courseId"
+     * so the view can do `$categoriesByPair[$a->student_id.'-'.$courseId]`.
+     * Mirrors the exact join/COALESCE InvoiceController::invoiceDatatable()
+     * already uses against fee_invoices/paid_courses/student_categories.
+     */
+    private function resolveCourseCategoriesForRecent($recent)
+    {
+        $pairs = $recent
+            ->map(fn($a) => ['student_id' => $a->student_id, 'course_id' => optional($a->template->course)->id])
+            ->filter(fn($p) => $p['course_id']);
+
+        if ($pairs->isEmpty()) {
+            return collect();
+        }
+
+        $rows = DB::table('fee_invoices')
+            ->join('paid_courses', 'paid_courses.invoice_id', '=', 'fee_invoices.id')
+            ->leftJoin('students', 'students.id', '=', 'fee_invoices.student_id')
+            ->leftJoin('student_categories', function ($join) {
+                $join->on(
+                    'student_categories.id',
+                    '=',
+                    DB::raw('COALESCE(fee_invoices.student_category_id, students.student_category_id)')
+                );
+            })
+            ->whereIn('fee_invoices.student_id', $pairs->pluck('student_id')->unique())
+            ->whereIn('paid_courses.course_id', $pairs->pluck('course_id')->unique())
+            ->where('fee_invoices.payment_status', '!=', 'returned')
+            ->select('fee_invoices.student_id', 'paid_courses.course_id', 'student_categories.category_name')
+            ->get();
+
+        return $rows->keyBy(fn($r) => $r->student_id . '-' . $r->course_id);
     }
 
     /** AJAX: resolve a student by Reg No, plus the courses they've STARTED (final assessment applies once a course is underway). */
@@ -156,16 +219,49 @@ class StudentAssessmentController extends Controller
                 'message' => 'This course already has a saved assessment for this student. Undo it first (within 2 days, by the same user who created it) if you need to redo it.',
             ], 422);
         }
+
         $template = AssessmentTemplate::with('titles')->findOrFail($validated['assessment_template_id']);
+
+        // "mark subtitle total can't be go more title mark. sub title marks
+        // total leas than or equal to title total marks" — enforced here
+        // too (not just client-side in the popup), by summing the
+        // submitted marks per title_id and comparing against that title's
+        // own max_marks from the template itself (never trusting a
+        // client-sent max).
+        $marksByTitle = collect($validated['marks'])->groupBy('title_id');
+        $overLimitTitles = [];
+
+        foreach ($template->titles as $title) {
+            $submittedForTitle = $marksByTitle->get($title->id, collect());
+            $titleTotal = $submittedForTitle->sum(fn($m) => (float) ($m['marks'] ?? 0));
+
+            if ($titleTotal > $title->max_marks) {
+                $overLimitTitles[] = "{$title->title} ({$titleTotal} > {$title->max_marks})";
+            }
+        }
+
+        if (!empty($overLimitTitles)) {
+            return response()->json([
+                'status' => 'over_limit',
+                'message' => 'Sub Title marks total can\'t be more than the Title\'s Max Marks: ' . implode(', ', $overLimitTitles),
+            ], 422);
+        }
+
         $maxMarks = $template->titles->sum('max_marks');
         $totalMarks = collect($validated['marks'])->sum(fn($m) => (float) ($m['marks'] ?? 0));
-        $isQualified = $totalMarks > 59;
+
+        // Grade/pass-fail are both PERCENTAGE-based against this template's
+        // OWN max marks (templates don't all add up to 100), not the raw
+        // total_marks number — see percentageToGrade() below.
+        $percentage = $maxMarks > 0 ? ($totalMarks / $maxMarks) * 100 : 0;
+        $grade = $this->percentageToGrade($percentage);
+        $isQualified = $grade !== 'FAIL';
 
         $signaturePath = !empty($validated['signature_data'])
             ? $this->storeSignature($validated['signature_data'])
             : null;
 
-        $assessment = DB::transaction(function () use ($validated, $template, $maxMarks, $totalMarks, $isQualified, $signaturePath) {
+        $assessment = DB::transaction(function () use ($validated, $template, $maxMarks, $totalMarks, $grade, $isQualified, $signaturePath) {
             $assessment = StudentAssessment::create([
                 'student_id' => $validated['student_id'],
                 'student_course_id' => $validated['student_course_id'],
@@ -176,7 +272,7 @@ class StudentAssessmentController extends Controller
                 'assessed_at' => $validated['assessed_at'] ?? now(),
                 'total_marks' => $totalMarks,
                 'max_marks' => $maxMarks,
-                'grade' => $isQualified ? 'PASS' : 'FAIL',
+                'grade' => $grade,
                 'is_qualified' => $isQualified,
                 'comments' => $validated['comments'] ?? null,
                 'evaluator_id' => Auth::id(),
@@ -210,6 +306,23 @@ class StudentAssessmentController extends Controller
         ]);
     }
 
+    /**
+     * Percentage (0-100) -> letter grade, per self::GRADE_BANDS ("90-100 = A,
+     * 80-89 = B+, 70-79 = B, 60-69 = C"), else 'FAIL'. Shared by store()
+     * here; the marks-entry popup mirrors this exact banding client-side
+     * for the live preview, so the two can never disagree.
+     */
+    private function percentageToGrade(float $percentage): string
+    {
+        foreach (self::GRADE_BANDS as $band) {
+            if ($percentage >= $band['min']) {
+                return $band['grade'];
+            }
+        }
+
+        return 'FAIL';
+    }
+
     public function show($id)
     {
         $assessment = $this->loadAssessment($id);
@@ -217,6 +330,7 @@ class StudentAssessmentController extends Controller
         return view('pages.administration.assessment.mark-entry', [
             'viewOnly' => $assessment,
             'recent' => collect(),
+            'categoriesByPair' => collect(),
         ]);
     }
 
@@ -311,14 +425,29 @@ class StudentAssessmentController extends Controller
 
     public function marksPopup($studentCourseId)
     {
-        $studentCourse = StudentCourse::with(['student.branch:id,name', 'course:id,name'])
+        $studentCourse = StudentCourse::with(['student.branch:id,name', 'student.verifications', 'course:id,name'])
             ->findOrFail($studentCourseId);
 
         $vehicles = TrainingVehicle::active()->orderBy('name')->get(['id', 'name', 'vehicle_number']);
 
+        // "before student assesment mark. want display student related all
+        // payments if not complete want notify" — every non-returned,
+        // course-related invoice for this student+course (via paid_courses,
+        // same relationship InvoiceController already uses), so the popup
+        // can show a "payment not complete" notice. This is informational
+        // only — it does NOT block entering marks.
+        $invoices = FeeInvoices::where('student_id', $studentCourse->student_id)
+            ->where('payment_status', '!=', 'returned')
+            ->whereHas('paidCourses', fn($q) => $q->where('course_id', $studentCourse->course_id))
+            ->get(['id', 'total_amount', 'paid_amount', 'payment_status', 'invoice_type']);
+
+        $paymentIncomplete = $invoices->contains(fn($inv) => $inv->payment_status !== 'full');
+
         return view('pages.administration.assessment.marks-popup', [
             'studentCourse' => $studentCourse,
             'vehicles' => $vehicles,
+            'invoices' => $invoices,
+            'paymentIncomplete' => $paymentIncomplete,
         ]);
     }
 }

@@ -61,6 +61,17 @@ class SubjectAttendanceSession extends Model
         return $this->belongsTo(\App\Models\User::class, 'marked_in_by');
     }
 
+    public function getAttendanceBranchAttribute()
+    {
+        $branches = $this->markedInBy?->branches;
+
+        if ($branches && $branches->count() === 1) {
+            return $branches->first();
+        }
+
+        return $this->intake?->branch;
+    }
+
     public function markedOutBy()
     {
         return $this->belongsTo(\App\Models\User::class, 'marked_out_by');

@@ -174,6 +174,9 @@ return [
                         ['key' => 'student-details', 'label' => 'View Student Details', 'flag' => 'Full student detail page (student-view/{id}) — not in your original list.'],
                         ['key' => 'student-list.search', 'label' => 'Search/Filter', 'flag' => 'Filter AJAX for this list, not excluded.'],
                         ['key' => 'student-practical-card.show', 'label' => 'Practical Card'],
+                        ['key' => 'student-practical-card.index', 'label' => 'Attendance Card'],
+
+                        
 
 
                     ],

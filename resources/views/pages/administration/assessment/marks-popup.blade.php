@@ -13,73 +13,325 @@
 
 @push('script')
     <style>
-        body { background: #f4f6f8; }
-        .ampl-card { background: #fff; border-radius: 10px; padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-        .ampl-input { width: 100%; padding: 8px 10px; border: 1px solid #d7dde3; border-radius: 6px; font-size: 14px; background: #fff; }
-        .ampl-input-sm { padding: 5px 8px; }
-        .ampl-input:focus { outline: none; border-color: #1d4e89; }
-        .ampl-input:disabled { background: #f4f6f8; color: #8a95a1; }
-        label { font-weight: 600; font-size: 13px; color: #37474f; display: block; margin-bottom: 4px; }
-        .ampl-btn { border: none; border-radius: 6px; padding: 9px 18px; font-size: 14px; font-weight: 600; cursor: pointer; }
-        .ampl-btn-primary { background: #1d4e89; color: #fff; }
-        .ampl-btn-primary:disabled { opacity: .6; cursor: default; }
-        .ampl-btn-outline { background: #fff; border: 1px solid #1d4e89; color: #1d4e89; margin-top: 8px; }
-        .ampl-banner { padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; }
-        .ampl-banner-error { background: #fdecea; color: #a12a2a; border: 1px solid #f5c6c6; }
-        .ampl-banner-success { background: #e8f6ee; color: #1e7a43; border: 1px solid #bfe6cf; }
-        .ampl-grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
-        @media (max-width: 767px) { .ampl-grid3 { grid-template-columns: 1fr; } }
-        .ampl-muted { color: #8a95a1; font-size: 13px; }
-        .ampl-tablewrap { overflow-x: auto; }
-        .ampl-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .ampl-table th, .ampl-table td { border: 1px solid #e1e6eb; padding: 8px; vertical-align: middle; }
-        .ampl-table th { background: #f4f6f8; text-align: left; }
-        .ampl-titlerow td { background: #eef3f9; }
-        .ampl-yieldcell { text-align: center; font-weight: 700; background: #f9fbfc; }
-        .ampl-pass { color: #1e7a43; font-weight: 700; }
-        .ampl-fail { color: #a12a2a; font-weight: 700; }
+        body {
+            background: #f4f6f8;
+        }
+
+        .ampl-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+        }
+
+        .ampl-input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #d7dde3;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #fff;
+        }
+
+        .ampl-input-sm {
+            padding: 5px 8px;
+        }
+
+        .ampl-input:focus {
+            outline: none;
+            border-color: #1d4e89;
+        }
+
+        .ampl-input:disabled {
+            background: #f4f6f8;
+            color: #8a95a1;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 13px;
+            color: #37474f;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .ampl-btn {
+            border: none;
+            border-radius: 6px;
+            padding: 9px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .ampl-btn-primary {
+            background: #1d4e89;
+            color: #fff;
+        }
+
+        .ampl-btn-primary:disabled {
+            opacity: .6;
+            cursor: default;
+        }
+
+        .ampl-btn-outline {
+            background: #fff;
+            border: 1px solid #1d4e89;
+            color: #1d4e89;
+            margin-top: 8px;
+        }
+
+        .ampl-banner {
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .ampl-banner-error {
+            background: #fdecea;
+            color: #a12a2a;
+            border: 1px solid #f5c6c6;
+        }
+
+        .ampl-banner-success {
+            background: #e8f6ee;
+            color: #1e7a43;
+            border: 1px solid #bfe6cf;
+        }
+
+        .ampl-banner-warning {
+            background: #fff6e5;
+            color: #8a6300;
+            border: 1px solid #f2dfa1;
+        }
+
+        .ampl-grid3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 14px;
+        }
+
+        @media (max-width: 767px) {
+            .ampl-grid3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .ampl-muted {
+            color: #8a95a1;
+            font-size: 13px;
+        }
+
+        .ampl-tablewrap {
+            overflow-x: auto;
+        }
+
+        .ampl-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .ampl-table th,
+        .ampl-table td {
+            border: 1px solid #e1e6eb;
+            padding: 8px;
+            vertical-align: middle;
+        }
+
+        .ampl-table th {
+            background: #f4f6f8;
+            text-align: left;
+        }
+
+        .ampl-titlerow td {
+            background: #eef3f9;
+        }
+
+        .ampl-titlerow.is-over td {
+            background: #fdecea;
+        }
+
+        .ampl-yieldcell {
+            text-align: center;
+            font-weight: 700;
+            background: #f9fbfc;
+        }
+
+        .ampl-yieldcell.is-over {
+            background: #fdecea;
+            color: #a12a2a;
+        }
+
+        .ampl-pass {
+            color: #1e7a43;
+            font-weight: 700;
+        }
+
+        .ampl-fail {
+            color: #a12a2a;
+            font-weight: 700;
+        }
+
+        .ampl-title-overlimit {
+            color: #a12a2a;
+            font-size: 11.5px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
         .ampl-context-ribbon {
-            display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
-            background: linear-gradient(90deg, #1d4e89, #2f6fb0); color: #fff;
-            padding: 12px 18px; border-radius: 8px; margin-bottom: 16px; font-size: 13px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            background: linear-gradient(90deg, #1d4e89, #2f6fb0);
+            color: #fff;
+            padding: 12px 18px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
         }
-        .ampl-context-ribbon .chip { background: rgba(255,255,255,.16); padding: 4px 12px; border-radius: 20px; font-weight: 600; }
-        .ampl-competency-toggle { display: flex; gap: 6px; }
+
+        .ampl-context-ribbon .chip {
+            background: rgba(255, 255, 255, .16);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .ampl-competency-toggle {
+            display: flex;
+            gap: 6px;
+        }
+
         .ampl-competency-toggle button {
-            flex: 1; border: 1px solid #d7dde3; background: #fff; padding: 6px 4px; border-radius: 6px;
-            font-size: 12px; font-weight: 700; cursor: pointer; color: #6b7784; transition: all .12s ease;
+            flex: 1;
+            border: 1px solid #d7dde3;
+            background: #fff;
+            padding: 6px 4px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            color: #6b7784;
+            transition: all .12s ease;
         }
-        .ampl-competency-toggle button.is-active-c { background: #e8f6ee; border-color: #1e7a43; color: #1e7a43; }
-        .ampl-competency-toggle button.is-active-nc { background: #fdecea; border-color: #a12a2a; color: #a12a2a; }
-        .ampl-competency-toggle button:disabled { opacity: .55; cursor: default; }
+
+        .ampl-competency-toggle button.is-active-c {
+            background: #e8f6ee;
+            border-color: #1e7a43;
+            color: #1e7a43;
+        }
+
+        .ampl-competency-toggle button.is-active-nc {
+            background: #fdecea;
+            border-color: #a12a2a;
+            color: #a12a2a;
+        }
+
+        .ampl-competency-toggle button:disabled {
+            opacity: .55;
+            cursor: default;
+        }
+
         .ampl-summary-bar {
-            margin-top: 16px; padding: 16px 20px; border-radius: 8px; display: flex;
-            justify-content: space-between; align-items: center; font-size: 17px; font-weight: 700;
+            margin-top: 16px;
+            padding: 16px 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 17px;
+            font-weight: 700;
         }
-        .ampl-summary-bar.is-pass { background: #e8f6ee; color: #1e7a43; }
-        .ampl-summary-bar.is-fail { background: #fdecea; color: #a12a2a; }
-        .ampl-summary-bar .sub { font-size: 12px; font-weight: 500; opacity: .8; }
+
+        .ampl-summary-bar.is-pass {
+            background: #e8f6ee;
+            color: #1e7a43;
+        }
+
+        .ampl-summary-bar.is-fail {
+            background: #fdecea;
+            color: #a12a2a;
+        }
+
+        .ampl-summary-bar .sub {
+            font-size: 12px;
+            font-weight: 500;
+            opacity: .8;
+        }
+
         .ampl-sig-preview {
-            height: 180px; border: 1px solid #d7dde3; border-radius: 8px; background: #f8f9fa;
-            display: flex; align-items: center; justify-content: center; cursor: pointer; text-align: center;
+            height: 180px;
+            border: 1px solid #d7dde3;
+            border-radius: 8px;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            text-align: center;
         }
-        .ampl-sig-preview:hover { border-color: #1d4e89; }
-        .ampl-sig-preview img { height: 150px; }
-        .ampl-sig-canvas-wrap canvas { border: 1px solid #ccc; width: 100%; height: 350px; touch-action: none; }
+
+        .ampl-sig-preview:hover {
+            border-color: #1d4e89;
+        }
+
+        .ampl-sig-preview img {
+            height: 150px;
+        }
+
+        .ampl-sig-canvas-wrap canvas {
+            border: 1px solid #ccc;
+            width: 100%;
+            height: 350px;
+            touch-action: none;
+        }
+
         .ampl-signed-lock-note {
-            background: #eef3f9; border: 1px solid #d7e2ee; color: #1d4e89; border-radius: 6px;
-            padding: 8px 12px; font-size: 13px; margin-bottom: 10px;
+            background: #eef3f9;
+            border: 1px solid #d7e2ee;
+            color: #1d4e89;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 13px;
+            margin-bottom: 10px;
         }
+
         .ampl-closing-overlay {
-            position: fixed; inset: 0; background: rgba(20,26,32,.6); display: flex;
-            align-items: center; justify-content: center; z-index: 1000;
+            position: fixed;
+            inset: 0;
+            background: rgba(20, 26, 32, .6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
         }
+
         .ampl-closing-box {
-            background: #fff; border-radius: 10px; padding: 30px 40px; text-align: center; font-size: 16px;
+            background: #fff;
+            border-radius: 10px;
+            padding: 30px 40px;
+            text-align: center;
+            font-size: 16px;
         }
-        .ampl-closing-box .checkmark { font-size: 40px; color: #1e7a43; margin-bottom: 10px; }
-        .mt-10 { margin-top: 10px; }
-        .mt-15 { margin-top: 15px; }
+
+        .ampl-closing-box .checkmark {
+            font-size: 40px;
+            color: #1e7a43;
+            margin-bottom: 10px;
+        }
+
+        .mt-10 {
+            margin-top: 10px;
+        }
+
+        .mt-15 {
+            margin-top: 15px;
+        }
     </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
@@ -106,10 +358,38 @@
             template: "{{ url('/student/student-info/assessment/template') }}",
             store: "{{ route('student-assessment.store') }}",
         };
+
+        @php
+            // Computed here as a plain PHP variable, NOT inline as a
+            // multi-line closure passed directly into @json(...) — that
+            // was what was actually tripping up the Blade compiler (the
+            // directive-argument parser chokes on a closure/array literal
+            // spanning many lines inside @json(...)). @json() now only
+            // ever receives a single already-built variable, which is a
+            // trivially simple argument for it to handle.
+            $__paymentCheckInvoices = ($invoices ?? collect())->map(function ($inv) {
+                return [
+                    'type' => $inv->invoice_type,
+                    'total' => (float) $inv->total_amount,
+                    'paid' => (float) $inv->paid_amount,
+                    'balance' => (float) ($inv->total_amount - $inv->paid_amount),
+                    'status' => $inv->payment_status,
+                ];
+            })->values();
+        @endphp
+        window.__PAYMENT_CHECK__ = {
+            incomplete: @json($paymentIncomplete ?? false),
+            invoices: @json($__paymentCheckInvoices),
+        };
+        window.__VERIFICATION__ = {
+            name: @json((bool) optional($studentCourse->student)->isVerified('Full Name Verified')),
+            nic: @json((bool) optional($studentCourse->student)->isVerified('NIC Verified')),
+            address: @json((bool) optional($studentCourse->student)->isVerified('Address Verified')),
+        };
     </script>
 
     @verbatim
-    <script type="text/babel" data-presets="react">
+        <script type="text/babel" data-presets="react">
         async function apiFetch(url, options = {}) {
             const opts = Object.assign({}, options);
             opts.headers = Object.assign({
@@ -140,6 +420,23 @@
             }
 
             return data;
+        }
+
+        // Percentage (0-100) -> letter grade — mirrors
+        // StudentAssessmentController::percentageToGrade() exactly ("90-100
+        // = A, 80-89 = B+, 70-79 = B, 60-69 = C"), so this live preview can
+        // never disagree with what actually gets saved.
+        const GRADE_BANDS = [
+            { min: 90, grade: 'A' },
+            { min: 80, grade: 'B+' },
+            { min: 70, grade: 'B' },
+            { min: 60, grade: 'C' },
+        ];
+        function percentageToGrade(percentage) {
+            for (const band of GRADE_BANDS) {
+                if (percentage >= band.min) return band.grade;
+            }
+            return 'FAIL';
         }
 
         const SignaturePad = React.forwardRef(function SignaturePad(props, ref) {
@@ -256,6 +553,8 @@
         function App() {
             const ctx = window.__CONTEXT__;
             const vehicles = window.__VEHICLES__ || [];
+            const paymentCheck = window.__PAYMENT_CHECK__ || { incomplete: false, invoices: [] };
+            const verification = window.__VERIFICATION__ || { name: true, nic: true, address: true };
 
             const [loading, setLoading] = React.useState(true);
             const [busy, setBusy] = React.useState(false);
@@ -317,12 +616,30 @@
                 }, 0);
             }
 
+            // "mark subtitle total can't be go more title mark. sub title
+            // marks total leas than or equal to title total marks"
+            function isTitleOverLimit(title) {
+                return titleSum(title) > Number(title.max_marks || 0);
+            }
+
             const overallMax = template ? (template.titles || []).reduce((s, t) => s + Number(t.max_marks || 0), 0) : 0;
             const grandTotal = template ? (template.titles || []).reduce((s, t) => s + titleSum(t), 0) : 0;
-            const qualified = grandTotal > 59;
+            const percentage = overallMax > 0 ? (grandTotal / overallMax) * 100 : 0;
+            const grade = percentageToGrade(percentage);
+            const qualified = grade !== 'FAIL';
+            const anyTitleOverLimit = template ? (template.titles || []).some(isTitleOverLimit) : false;
 
             async function handleSave() {
                 if (!template) return;
+
+                const overLimitTitles = (template.titles || []).filter(isTitleOverLimit);
+                if (overLimitTitles.length) {
+                    setBanner({
+                        type: 'error',
+                        text: `Sub Title marks total can't be more than the Title's Max Marks: ${overLimitTitles.map((t) => t.title).join(', ')}`,
+                    });
+                    return;
+                }
 
                 const marksPayload = [];
                 (template.titles || []).forEach((t) => {
@@ -397,6 +714,11 @@
                 );
             }
 
+            const unverifiedFields = [];
+            if (!verification.name) unverifiedFields.push('Full Name');
+            if (!verification.nic) unverifiedFields.push('NIC');
+            if (!verification.address) unverifiedFields.push('Address');
+
             return (
                 <div>
                     <div className="ampl-context-ribbon">
@@ -404,6 +726,28 @@
                         <span className="chip">{ctx.admissionNumber}</span>
                         <span className="chip">{ctx.courseName}</span>
                     </div>
+
+                    {/* "before student assesment mark. want display student related
+                        all payments if not complete want notify, student details
+                        is verified" — notice only, doesn't block entering marks. */}
+                    {paymentCheck.incomplete && (
+                        <div className="ampl-banner ampl-banner-warning">
+                            ⚠ This student's payments for this course is not fully complete yet
+                            {paymentCheck.invoices.some((inv) => inv.status !== 'full') && (
+                                <> — outstanding balance:{' '}
+                                    {paymentCheck.invoices
+                                        .filter((inv) => inv.status !== 'full')
+                                        .reduce((s, inv) => s + inv.balance, 0)
+                                        .toFixed(2)}
+                                </>
+                            )}. You can still proceed — please confirm with accounts if unsure.
+                        </div>
+                    )}
+                    {unverifiedFields.length > 0 && (
+                        <div className="ampl-banner ampl-banner-warning">
+                            ⚠ This student's details are not fully verified yet: {unverifiedFields.join(', ')}.
+                        </div>
+                    )}
 
                     {banner && <div className={`ampl-banner ampl-banner-${banner.type}`}>{banner.text}</div>}
 
@@ -430,54 +774,62 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {(template.titles || []).map((t) => (
-                                            <React.Fragment key={t.id}>
-                                                <tr className="ampl-titlerow">
-                                                    <td colSpan="4">
-                                                        <strong>{t.title}</strong>{' '}
-                                                        <span className="ampl-muted">(Max {t.max_marks})</span>
-                                                    </td>
-                                                    <td rowSpan={(t.sub_titles || []).length + 1} className="ampl-yieldcell">
-                                                        {titleSum(t)} / {t.max_marks}
-                                                    </td>
-                                                </tr>
-                                                {(t.sub_titles || []).map((st) => (
-                                                    <tr key={st.id}>
-                                                        <td>{st.sub_title}</td>
-                                                        <td>
-                                                            <CompetencyToggle
-                                                                value={(marks[st.id] && marks[st.id].competency) || ''}
-                                                                onChange={(v) => updateMark(st.id, 'competency', v)}
-                                                                disabled={hasSignature}
-                                                            />
+                                        {(template.titles || []).map((t) => {
+                                            const overLimit = isTitleOverLimit(t);
+                                            return (
+                                                <React.Fragment key={t.id}>
+                                                    <tr className={`ampl-titlerow ${overLimit ? 'is-over' : ''}`}>
+                                                        <td colSpan="4">
+                                                            <strong>{t.title}</strong>{' '}
+                                                            <span className="ampl-muted">(Max {t.max_marks})</span>
+                                                            {overLimit && (
+                                                                <div className="ampl-title-overlimit">
+                                                                    Sub Title marks total ({titleSum(t)}) is more than this Title's Max Marks ({t.max_marks}) — reduce a mark below before saving.
+                                                                </div>
+                                                            )}
                                                         </td>
-                                                        <td>
-                                                            <input
-                                                                type="number" min="0" className="ampl-input ampl-input-sm"
-                                                                value={(marks[st.id] && marks[st.id].marks) || ''}
-                                                                onChange={(e) => updateMark(st.id, 'marks', e.target.value)}
-                                                                disabled={hasSignature}
-                                                            />
-                                                        </td>
-                                                        <td>
-                                                            <input
-                                                                type="text" className="ampl-input ampl-input-sm"
-                                                                value={(marks[st.id] && marks[st.id].remarks) || ''}
-                                                                onChange={(e) => updateMark(st.id, 'remarks', e.target.value)}
-                                                                disabled={hasSignature}
-                                                            />
+                                                        <td rowSpan={(t.sub_titles || []).length + 1} className={`ampl-yieldcell ${overLimit ? 'is-over' : ''}`}>
+                                                            {titleSum(t)} / {t.max_marks}
                                                         </td>
                                                     </tr>
-                                                ))}
-                                            </React.Fragment>
-                                        ))}
+                                                    {(t.sub_titles || []).map((st) => (
+                                                        <tr key={st.id}>
+                                                            <td>{st.sub_title}</td>
+                                                            <td>
+                                                                <CompetencyToggle
+                                                                    value={(marks[st.id] && marks[st.id].competency) || ''}
+                                                                    onChange={(v) => updateMark(st.id, 'competency', v)}
+                                                                    disabled={hasSignature}
+                                                                />
+                                                            </td>
+                                                            <td>
+                                                                <input
+                                                                    type="number" min="0" className="ampl-input ampl-input-sm"
+                                                                    value={(marks[st.id] && marks[st.id].marks) || ''}
+                                                                    onChange={(e) => updateMark(st.id, 'marks', e.target.value)}
+                                                                    disabled={hasSignature}
+                                                                />
+                                                            </td>
+                                                            <td>
+                                                                <input
+                                                                    type="text" className="ampl-input ampl-input-sm"
+                                                                    value={(marks[st.id] && marks[st.id].remarks) || ''}
+                                                                    onChange={(e) => updateMark(st.id, 'remarks', e.target.value)}
+                                                                    disabled={hasSignature}
+                                                                />
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </React.Fragment>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>
 
                             <div className={`ampl-summary-bar ${qualified ? 'is-pass' : 'is-fail'}`}>
                                 <div>
-                                    Total: {grandTotal} / {overallMax}
+                                    Total: {grandTotal} / {overallMax} ({percentage.toFixed(1)}%) — Grade: {grade}
                                     <div className="sub">Live total — updates as marks are entered</div>
                                 </div>
                                 <div>{qualified ? 'PASS' : 'FAIL'}</div>
@@ -524,9 +876,14 @@
                             </div>
 
                             <div className="mt-15">
-                                <button type="button" className="ampl-btn ampl-btn-primary" onClick={handleSave} disabled={busy}>
+                                <button type="button" className="ampl-btn ampl-btn-primary" onClick={handleSave} disabled={busy || anyTitleOverLimit}>
                                     {busy ? 'Saving…' : 'Submit Assessment'}
                                 </button>
+                                {anyTitleOverLimit && (
+                                    <span className="ampl-title-overlimit" style={{ marginLeft: 12 }}>
+                                        Fix the over-limit title(s) above before saving.
+                                    </span>
+                                )}
                             </div>
                         </div>
                     )}

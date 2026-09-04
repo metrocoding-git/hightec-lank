@@ -429,7 +429,7 @@
                                                         <td>{{ $session->attendance_date->format('Y-m-d') }}</td>
                                                         <td>{{ $session->student->admission_number ?? '-' }}</td>
                                                         <td>{{ $session->student->student_name ?? '-' }}</td>
-                                                        <td>{{ $session->student->branch->name ?? '-' }}</td>
+                                                        <td>{{$session->attendance_branch?->name ?? '-' }}</td>
                                                         <td>{{ $session->intake->name ?? '-' }}</td>
                                                         <td>{{ $session->course->name ?? '-' }}</td>
                                                         <td>

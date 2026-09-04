@@ -719,12 +719,12 @@
     <script>
        $('#table_id').DataTable({
             responsive: true,
-            dom: "<'dt-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3 '" +
+            dom: "<'dt-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3'" +
                 "<'dt-toolbar-title'>" +
-                "<'dt-toolbar-controls d-flex align-items-center flex-wrap gap-2 mt-3'<'dt-search'f><'dt-buttons-wrap'B>>" +
+                "<'dt-toolbar-controls d-flex align-items-center flex-wrap gap-2 mt-3'<'dt-length'l><'dt-search'f><'dt-buttons-wrap'B>>" +
                 ">" +
                 "<'row'<'col-sm-12'tr>>" +
-                "<'gap-2 mt-3'<'dt-info'i><'dt-pagination'p>>",
+                "<'gap-2 mt-3'<'dt-info'i><'dt-pagination'p>> ",
             buttons: [{
                     extend: 'copyHtml5',
                     title: getFileName(),
