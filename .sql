@@ -561,3 +561,8 @@ CREATE TABLE `certificates` (
 
 -- 09/04
 INSERT INTO `permissions` (`id`, `permission_name`, `label`, `created_at`, `updated_at`) VALUES (NULL, 'student-practical-card.index', 'Attendance Card', NULL, NULL);
+
+
+ 
+ALTER TABLE `student_assessments`
+    MODIFY COLUMN `grade` VARCHAR(10) NULL;

@@ -23,6 +23,11 @@ class StudentPracticalCardController extends Controller
      * disabled-students page already uses) as optional filters, plus the
      * existing name/admission/NIC search. No date-range filter — asked
      * about it, answer was "dont want date."
+     *
+     * "dont send data default. if has slectors only send data" — the list
+     * stays empty on a plain page load (no query even runs); it only
+     * fetches and shows students once at least one filter (Branch, Intake,
+     * Course, or the search box) is actually set.
      */
     public function index(Request $request)
     {
@@ -84,10 +89,14 @@ class StudentPracticalCardController extends Controller
      * cards in the same window (Practical + Theory, each printed
      * separately). Before Checking / After Checking / Course Attendance
      * are their own subject-style sections (every instance listed). Each
-     * practical subject with 2+ attended instances now also shows its
+     * practical subject with 1+ attended instances now also shows its
      * actual total duration next to its planned Practical Time, with a
-     * Completed / Not Completed badge — same idea applied to Course
-     * Attendance's actual total vs. the planned Demo Time.
+     * Completed / Not Completed badge.
+     *
+     * Course Attendance is special: both its own per-row durations AND its
+     * group total/"Completed Time" are NET figures, not raw time-in-to-
+     * time-out gaps — see applyNetDurationToCourseAttendance() below for
+     * exactly what gets subtracted and why.
      */
     public function show($id, Request $request)
     {
@@ -126,19 +135,28 @@ class StudentPracticalCardController extends Controller
         $afterChecking = $this->buildCheckpointGroup('පසු පණගැවුම් පරික්ෂාව', $student->id, $selectedCourseId, 'after_checking');
         $courseAttendance = $this->buildCheckpointGroup('නිරීක්ෂණ මිනිත්තුව', $student->id, $selectedCourseId, null);
 
-        // "Doing Total Demo Time" — reworked per the latest request: NOT
-        // just Course Attendance's own sessions any more. Now it's the
-        // grand total of everything actually done for this course —
-        // Course Attendance + After Checking + Before Checking + every
-        // practical subject's actual duration + every theory subject's
-        // actual duration — compared against the planned figure (sum of
-        // every practical subject's Demo Time) for the Completed / Not
-        // Completed badge.
-        $doingTotalDemoMinutes = $courseAttendance['total_minutes']
-            - $afterChecking['total_minutes']
-            - $beforeChecking['total_minutes']
-            - $practical['totalActualMinutes']
-            - $theory['totalActualMinutes'];
+        // "that duration want get that gap - පෙර පණගැවුම් පරික්ෂාව that
+        // date - පසු පණගැවුම් පරික්ෂාව that date - theory subjects that
+        // day - practical subjects that day" — each Course Attendance
+        // ROW's own displayed duration (not just the Completed Time
+        // total) is net of that same date's Before/After Checking +
+        // theory/practical subject time, using the same per-date pairing
+        // the Completed Time total already uses. This also recomputes
+        // $courseAttendance['total_minutes']/['total_duration'] so the
+        // group's own totals always match what its rows add up to.
+        $courseAttendance = $this->applyNetDurationToCourseAttendance(
+            $courseAttendance,
+            $beforeChecking['minutesByDate'],
+            $afterChecking['minutesByDate'],
+            $theory['minutesByDate'],
+            $practical['minutesByDate']
+        );
+
+        // "Completed Time" is simply Course Attendance's own (already-net)
+        // total — the net calculation now lives entirely inside
+        // applyNetDurationToCourseAttendance(), so there's nothing left to
+        // subtract here.
+        $doingTotalDemoMinutes = $courseAttendance['total_minutes'];
         $doingTotalDemoTime = $this->formatMinutes($doingTotalDemoMinutes);
 
         $courseAttendanceCompleted = $practical['totalDemonstratorMinutes'] > 0
@@ -166,17 +184,14 @@ class StudentPracticalCardController extends Controller
      * One entry per subject of the given type ($subjectType: 'P' practical,
      * 'T' theory) ASSIGNED to this course/intake — with every attendance
      * instance recorded for it (possibly none), the total planned
-     * Demonstrator Time / Practical Time summed across those subjects, and
-     * (NEW) — for any subject with 2 or more attended instances — its own
-     * actual total duration plus whether that meets its planned Practical
-     * Time or not.
+     * Demonstrator Time / Practical Time summed across those subjects, its
+     * own actual total duration plus whether that meets its planned
+     * Practical Time or not, and (for the per-day Completed Time
+     * calculation) a minutesByDate map of this group's minutes bucketed by
+     * attendance_date.
      */
     private function buildSubjectRows(int $studentId, int $courseId, ?int $intakeId, string $subjectType): array
     {
-        // Every subject assigned to this course (scoped to the student's
-        // own intake when we know it, same as the scan-attendance flow's
-        // resolvePracticalSubjects()) — keyed by subject_id so each subject
-        // can look up its own planned demonstrator_time/practical_time.
         $assignments = AssignSubjects::where('course_id', $courseId)
             ->when($intakeId, fn($q) => $q->where('intake_id', $intakeId))
             ->get(['subject_id', 'demonstrator_time', 'practical_time'])
@@ -187,9 +202,6 @@ class StudentPracticalCardController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        // Total planned time across the subjects of THIS type only — the
-        // $assignments collection includes every assigned subject regardless
-        // of type, so this is scoped down to just the ones in $subjects.
         $totalDemonstratorMinutes = 0;
         $totalPracticalMinutes = 0;
 
@@ -207,12 +219,9 @@ class StudentPracticalCardController extends Controller
         ];
 
         if ($subjects->isEmpty()) {
-            return array_merge(['rows' => [], 'totalActualMinutes' => 0], $totals);
+            return array_merge(['rows' => [], 'totalActualMinutes' => 0, 'minutesByDate' => []], $totals);
         }
 
-        // Every real attendance session for those subjects (checkpoints are
-        // handled separately, by buildCheckpointGroup()), grouped by subject
-        // so each subject can list all its instances.
         $sessionsBySubject = SubjectAttendanceSession::with([
             'vehicle:id,name,vehicle_number',
             'markedInBy:id,name',
@@ -229,15 +238,20 @@ class StudentPracticalCardController extends Controller
 
         $rows = [];
         $totalActualMinutes = 0;
+        $minutesByDate = []; // combined across every subject of this type.
 
         foreach ($subjects as $subject) {
             $assignment = $assignments->get($subject->id);
             $subjectSessions = $sessionsBySubject->get($subject->id, collect());
             $subjectActualMinutes = 0;
 
-            $instances = $subjectSessions->map(function ($s) use (&$subjectActualMinutes) {
+            $instances = $subjectSessions->map(function ($s) use (&$subjectActualMinutes, &$minutesByDate) {
                 $minutes = $this->sessionDurationMinutes($s->time_in, $s->time_out);
                 $subjectActualMinutes += $minutes;
+
+                // Accumulate this session's minutes onto its date.
+                $dateKey = $s->attendance_date->format('Y-m-d');
+                $minutesByDate[$dateKey] = ($minutesByDate[$dateKey] ?? 0) + $minutes;
 
                 return [
                     'date' => $s->attendance_date->format('Y-m-d (D)'),
@@ -249,20 +263,16 @@ class StudentPracticalCardController extends Controller
                 ];
             })->values();
 
-            // Feeds the course-wide "Doing Total Demo Time" grand total in
-            // show() — every subject's actual minutes count toward that,
-            // regardless of the per-subject display threshold below.
             $totalActualMinutes += $subjectActualMinutes;
 
             $plannedPracticalMinutes = $this->parsePlannedMinutes($assignment->practical_time ?? null);
 
             // "want practical subject one by one... get subject Practical
             // Time - that subject total duration" — the actual-vs-planned
-            // total/Completed comparison is now shown for every subject
-            // with at least one attended instance (previously required 2+).
-            // completed stays null (meaning "not applicable / can't tell")
-            // when there's no planned time to compare against, or nothing
-            // attended yet.
+            // total/Completed comparison shows for every subject with at
+            // least one attended instance. completed stays null ("not
+            // applicable") when there's no planned time to compare
+            // against, or nothing attended yet.
             $showTotal = $instances->count() >= 1;
 
             $rows[] = [
@@ -278,7 +288,7 @@ class StudentPracticalCardController extends Controller
             ];
         }
 
-        return array_merge(['rows' => $rows, 'totalActualMinutes' => $totalActualMinutes], $totals);
+        return array_merge(['rows' => $rows, 'totalActualMinutes' => $totalActualMinutes, 'minutesByDate' => $minutesByDate], $totals);
     }
 
     /**
@@ -287,7 +297,17 @@ class StudentPracticalCardController extends Controller
      * null) general Course Attendance. Same shape as a subject row (so the
      * view can render it with the same table markup) but with no planned
      * Demo/Practical time, EVERY matching instance listed (not just the
-     * first checkpoint of a day), and its own actual total duration.
+     * first checkpoint of a day), its own actual total duration, and (for
+     * the per-day Completed Time calculation) a minutesByDate map of this
+     * group's minutes bucketed by attendance_date.
+     *
+     * NOTE for the Course Attendance case ($checkpointType === null): the
+     * per-instance 'duration'/'total_minutes'/'total_duration' this method
+     * returns are the RAW time-in-to-time-out figures. show() immediately
+     * runs the result through applyNetDurationToCourseAttendance() to turn
+     * those into the NET (minus same-day checking/subject time) figures
+     * actually shown on the card — this method itself doesn't know about
+     * that, it just returns the raw group like it always has.
      */
     private function buildCheckpointGroup(string $title, int $studentId, int $courseId, ?string $checkpointType): array
     {
@@ -310,10 +330,15 @@ class StudentPracticalCardController extends Controller
         $sessions = $query->orderBy('attendance_date')->orderBy('time_in')->get();
 
         $totalMinutes = 0;
+        $minutesByDate = [];
 
-        $instances = $sessions->map(function ($s) use (&$totalMinutes) {
+        $instances = $sessions->map(function ($s) use (&$totalMinutes, &$minutesByDate) {
             $minutes = $this->sessionDurationMinutes($s->time_in, $s->time_out);
             $totalMinutes += $minutes;
+
+            // Accumulate this session's minutes onto its date.
+            $dateKey = $s->attendance_date->format('Y-m-d');
+            $minutesByDate[$dateKey] = ($minutesByDate[$dateKey] ?? 0) + $minutes;
 
             return [
                 'date' => $s->attendance_date->format('Y-m-d (D)'),
@@ -330,8 +355,137 @@ class StudentPracticalCardController extends Controller
             'attended_count' => $instances->count(),
             'total_minutes' => $totalMinutes,
             'total_duration' => $this->formatMinutes($totalMinutes),
+            'minutesByDate' => $minutesByDate,
             'instances' => $instances,
         ];
+    }
+
+    /**
+     * Pairs up each date-keyed minutes map (Course Attendance, Before
+     * Checking, After Checking, Theory, Practical) and computes, for every
+     * date that appears in ANY of them:
+     *   thatDay(courseAttendance) - thatDay(beforeChecking)
+     *                              - thatDay(afterChecking)
+     *                              - thatDay(theory)
+     *                              - thatDay(practical)
+     * A category with no session on a given date contributes 0 for that
+     * date — it doesn't skip the whole day. The per-day results are summed
+     * into one grand total, which can go negative overall (a day where
+     * checking/subject time exceeds that day's Course Attendance nets
+     * negative, and isn't clamped to zero before being added in — only the
+     * FINAL formatted value the caller displays is floored at 00:00, via
+     * formatMinutes()). This method itself returns the raw signed sum.
+     */
+    private function sumCompletedTimeByDate(
+        array $courseAttendanceByDate,
+        array $beforeCheckingByDate,
+        array $afterCheckingByDate,
+        array $theoryByDate,
+        array $practicalByDate
+    ): int {
+        $dates = array_unique(array_merge(
+            array_keys($courseAttendanceByDate),
+            array_keys($beforeCheckingByDate),
+            array_keys($afterCheckingByDate),
+            array_keys($theoryByDate),
+            array_keys($practicalByDate)
+        ));
+
+        $total = 0;
+
+        foreach ($dates as $date) {
+            $total += ($courseAttendanceByDate[$date] ?? 0)
+                - ($beforeCheckingByDate[$date] ?? 0)
+                - ($afterCheckingByDate[$date] ?? 0)
+                - ($theoryByDate[$date] ?? 0)
+                - ($practicalByDate[$date] ?? 0);
+        }
+
+        return $total;
+    }
+
+    /**
+     * Rewrites Course Attendance's own per-instance 'duration' strings (and
+     * recomputes 'total_minutes'/'total_duration' to match) so each ROW
+     * reflects the net calculation:
+     *   that row's own raw gap
+     *     - that date's Before Checking
+     *     - that date's After Checking
+     *     - that date's theory subjects' duration
+     *     - that date's practical subjects' duration
+     *
+     * The deduction for a given date is applied ONCE — to that date's
+     * chronologically first Course Attendance row (buildCheckpointGroup()
+     * already returns instances ordered by attendance_date/time_in, so
+     * "first encountered per date" is already chronological) — never to
+     * every row on that date, so a day with 2+ Course Attendance entries
+     * doesn't have its checking/subject time subtracted more than once. If
+     * Course Attendance is always exactly one entry per day in this data,
+     * this case never actually comes up.
+     *
+     * A date with checking/subject activity but NO Course Attendance row
+     * at all still pulls the group's total down via sumCompletedTimeByDate()
+     * below (a "phantom negative day") even though there's no visible row
+     * to explain why — same behavior the aggregate Completed Time total
+     * already had, kept consistent here.
+     *
+     * $courseAttendance MUST be the array buildCheckpointGroup() returns
+     * (has 'instances' and 'minutesByDate' keys); the other four params are
+     * each some other group's own 'minutesByDate'.
+     */
+    private function applyNetDurationToCourseAttendance(
+        array $courseAttendance,
+        array $beforeCheckingByDate,
+        array $afterCheckingByDate,
+        array $theoryByDate,
+        array $practicalByDate
+    ): array {
+        $deductedDates = [];
+
+        $instances = collect($courseAttendance['instances'])
+            ->map(function ($instance) use (&$deductedDates, $beforeCheckingByDate, $afterCheckingByDate, $theoryByDate, $practicalByDate) {
+                // 'date' is formatted 'Y-m-d (D)' for display — the plain
+                // Y-m-d is always exactly the first 10 characters.
+                $dateKey = substr($instance['date'], 0, 10);
+
+                // Recover this row's own raw gap in minutes from its
+                // already-correct formatted "H:i" duration (no need to
+                // redo the time_in/time_out math — buildCheckpointGroup()
+                // already got that right via sessionDurationMinutes()).
+                [$h, $m] = array_map('intval', explode(':', $instance['duration']));
+                $net = ($h * 60) + $m;
+
+                if (!in_array($dateKey, $deductedDates, true)) {
+                    $net -= ($beforeCheckingByDate[$dateKey] ?? 0)
+                        + ($afterCheckingByDate[$dateKey] ?? 0)
+                        + ($theoryByDate[$dateKey] ?? 0)
+                        + ($practicalByDate[$dateKey] ?? 0);
+                    $deductedDates[] = $dateKey;
+                }
+
+                $instance['duration'] = $this->formatMinutes($net);
+
+                return $instance;
+            })
+            ->values()
+            ->all();
+
+        $courseAttendance['instances'] = $instances;
+
+        // Group total follows the exact same per-date net math, reusing
+        // sumCompletedTimeByDate() so this can never drift from the
+        // Completed Time figure it also feeds.
+        $netTotal = $this->sumCompletedTimeByDate(
+            $courseAttendance['minutesByDate'],
+            $beforeCheckingByDate,
+            $afterCheckingByDate,
+            $theoryByDate,
+            $practicalByDate
+        );
+        $courseAttendance['total_minutes'] = $netTotal;
+        $courseAttendance['total_duration'] = $this->formatMinutes($netTotal);
+
+        return $courseAttendance;
     }
 
     /**
@@ -388,8 +542,7 @@ class StudentPracticalCardController extends Controller
      * a formatted string, so both a single row's duration() AND any total
      * that sums several sessions (a subject's total, a checkpoint group's
      * total) share the exact same math instead of two slightly different
-     * copies of it drifting apart. Two defensive fixes, since no specific
-     * wrong example was available to reproduce against:
+     * copies of it drifting apart. Two defensive fixes:
      *  1. Both times are re-anchored to the exact same base date (by
      *     re-parsing just their H:i:s portion) before diffing, in case
      *     $start/$end ever come from casts that anchor to different dates.

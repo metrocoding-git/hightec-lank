@@ -107,6 +107,20 @@
             border: 1px solid #f2dfa1;
         }
 
+        /* NEW — informational only (practical/theory completion counts),
+           deliberately a calmer blue rather than the amber warning color
+           used for payment/verification, since "X of Y completed" isn't a
+           problem to flag, just a status readout. */
+        .ampl-banner-info {
+            background: #eef3f9;
+            color: #1d4e89;
+            border: 1px solid #d7e2ee;
+        }
+
+        .ampl-banner-info strong {
+            color: #123a68;
+        }
+
         .ampl-grid3 {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -386,6 +400,14 @@
             nic: @json((bool) optional($studentCourse->student)->isVerified('NIC Verified')),
             address: @json((bool) optional($studentCourse->student)->isVerified('Address Verified')),
         };
+        // NEW — "how many practical subject completed (like 10 for 4)" /
+        // "how many theory subject completed": {completed, total} for each,
+        // computed server-side by
+        // StudentAssessmentController::countSubjectCompletion().
+        window.__PROGRESS__ = {
+            practical: @json($practicalProgress ?? ['completed' => 0, 'total' => 0]),
+            theory: @json($theoryProgress ?? ['completed' => 0, 'total' => 0]),
+        };
     </script>
 
     @verbatim
@@ -555,6 +577,10 @@
             const vehicles = window.__VEHICLES__ || [];
             const paymentCheck = window.__PAYMENT_CHECK__ || { incomplete: false, invoices: [] };
             const verification = window.__VERIFICATION__ || { name: true, nic: true, address: true };
+            const progress = window.__PROGRESS__ || {
+                practical: { completed: 0, total: 0 },
+                theory: { completed: 0, total: 0 },
+            };
 
             const [loading, setLoading] = React.useState(true);
             const [busy, setBusy] = React.useState(false);
@@ -748,6 +774,15 @@
                             ⚠ This student's details are not fully verified yet: {unverifiedFields.join(', ')}.
                         </div>
                     )}
+
+                    {/* NEW — "how many practical subject completed (like 10 for
+                        4)" / "how many theory subject completed": informational
+                        readout, doesn't block entering marks either. */}
+                    <div className="ampl-banner ampl-banner-info">
+                        <strong>Practical:</strong> {progress.practical.completed} / {progress.practical.total} subject{progress.practical.total === 1 ? '' : 's'} completed
+                        &nbsp;&nbsp;|&nbsp;&nbsp;
+                        <strong>Theory:</strong> {progress.theory.completed} / {progress.theory.total} subject{progress.theory.total === 1 ? '' : 's'} completed
+                    </div>
 
                     {banner && <div className={`ampl-banner ampl-banner-${banner.type}`}>{banner.text}</div>}
 
