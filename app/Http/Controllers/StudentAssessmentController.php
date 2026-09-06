@@ -3,16 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\AssessmentTemplate;
+use App\Models\AssignSubjects;
 use App\Models\Course;
 use App\Models\FeeInvoices;
 use App\Models\Student;
 use App\Models\StudentAssessment;
 use App\Models\StudentAssessmentMark;
 use App\Models\StudentCourse;
+use App\Models\Subject;
+use App\Models\SubjectAttendanceSession;
 use App\Models\TrainingVehicle;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -436,6 +440,13 @@ class StudentAssessmentController extends Controller
         // same relationship InvoiceController already uses), so the popup
         // can show a "payment not complete" notice. This is informational
         // only — it does NOT block entering marks.
+        //
+        // NOT YET CHANGED this round: "want check only payment that course
+        // payment only" — still checking every non-returned invoice tied to
+        // this course via paid_courses, same as before. Left alone rather
+        // than guessed at — see the chat message alongside this file for
+        // why (need to see how a per-course paid amount is actually tracked
+        // before this can be narrowed safely).
         $invoices = FeeInvoices::where('student_id', $studentCourse->student_id)
             ->where('payment_status', '!=', 'returned')
             ->whereHas('paidCourses', fn($q) => $q->where('course_id', $studentCourse->course_id))
@@ -443,11 +454,143 @@ class StudentAssessmentController extends Controller
 
         $paymentIncomplete = $invoices->contains(fn($inv) => $inv->payment_status !== 'full');
 
+        // NEW — "how many practical subject completed (like 10 for 4)" /
+        // "how many theory subject completed": out of every subject of that
+        // type assigned to this course/intake, how many has the student
+        // actually COMPLETED — same "attended minutes >= that subject's
+        // planned practical_time" definition
+        // StudentPracticalCardController::buildSubjectRows() already uses
+        // for the attendance card's own badges (see
+        // countSubjectCompletion() below), kept identical on purpose so the
+        // two features never disagree about what "completed" means for a
+        // subject.
+        $practicalProgress = $this->countSubjectCompletion(
+            $studentCourse->student_id,
+            $studentCourse->course_id,
+            $studentCourse->intake_id,
+            'P'
+        );
+        $theoryProgress = $this->countSubjectCompletion(
+            $studentCourse->student_id,
+            $studentCourse->course_id,
+            $studentCourse->intake_id,
+            'T'
+        );
+
         return view('pages.administration.assessment.marks-popup', [
             'studentCourse' => $studentCourse,
             'vehicles' => $vehicles,
             'invoices' => $invoices,
             'paymentIncomplete' => $paymentIncomplete,
+            'practicalProgress' => $practicalProgress,
+            'theoryProgress' => $theoryProgress,
         ]);
+    }
+
+    /**
+     * How many of the subjects of $subjectType ('P' or 'T') assigned to
+     * this course/intake has the student COMPLETED, out of how many are
+     * assigned in total — e.g. ['completed' => 4, 'total' => 10].
+     * "Completed" uses the exact same rule
+     * StudentPracticalCardController::buildSubjectRows() already applies
+     * for the attendance card's per-subject badges: the student's total
+     * attended minutes for that subject (every whereNull('checkpoint_type')
+     * session, real subject attendance — not a Before/After/Course
+     * Attendance checkpoint) meet or exceed that subject's planned
+     * practical_time. A subject with no planned time set can never count
+     * as "completed" (nothing to compare against) but still counts toward
+     * the total — same as an unattended subject.
+     *
+     * Deliberately duplicated here rather than calling into
+     * StudentPracticalCardController (the two controllers don't share a
+     * base/trait in this app) — sessionDurationMinutes()/
+     * parsePlannedMinutes() below are byte-for-byte copies of that
+     * controller's own private helpers, kept identical on purpose so the
+     * duration math can't drift between the two features.
+     */
+    private function countSubjectCompletion(int $studentId, int $courseId, ?int $intakeId, string $subjectType): array
+    {
+        $assignments = AssignSubjects::where('course_id', $courseId)
+            ->when($intakeId, fn($q) => $q->where('intake_id', $intakeId))
+            ->get(['subject_id', 'practical_time'])
+            ->keyBy('subject_id');
+
+        $subjects = Subject::whereIn('id', $assignments->keys())
+            ->where('type', $subjectType)
+            ->get(['id']);
+
+        if ($subjects->isEmpty()) {
+            return ['completed' => 0, 'total' => 0];
+        }
+
+        $minutesBySubject = SubjectAttendanceSession::where('student_id', $studentId)
+            ->where('course_id', $courseId)
+            ->whereIn('subject_id', $subjects->pluck('id'))
+            ->whereNull('checkpoint_type')
+            ->get(['subject_id', 'time_in', 'time_out'])
+            ->groupBy('subject_id')
+            ->map(function ($sessions) {
+                return $sessions->sum(fn($s) => $this->sessionDurationMinutes($s->time_in, $s->time_out));
+            });
+
+        $completed = 0;
+
+        foreach ($subjects as $subject) {
+            $planned = $this->parsePlannedMinutes($assignments->get($subject->id)->practical_time ?? null);
+            $actual = $minutesBySubject->get($subject->id, 0);
+
+            if ($planned > 0 && $actual >= $planned) {
+                $completed++;
+            }
+        }
+
+        return ['completed' => $completed, 'total' => $subjects->count()];
+    }
+
+    /**
+     * Same hardened per-session minute calculation as
+     * StudentPracticalCardController::sessionDurationMinutes() — both times
+     * re-anchored to the same base date before diffing, and a session that
+     * crosses midnight gets $end pushed a day forward instead of producing
+     * a huge wrong number. Copied rather than shared (see the doc-comment
+     * on countSubjectCompletion() above).
+     */
+    private function sessionDurationMinutes(?Carbon $start, ?Carbon $end): int
+    {
+        if (!$start || !$end) {
+            return 0;
+        }
+
+        $start = Carbon::parse($start->format('H:i:s'));
+        $end = Carbon::parse($end->format('H:i:s'));
+
+        if ($end->lessThan($start)) {
+            $end->addDay();
+        }
+
+        return (int) $start->diffInMinutes($end);
+    }
+
+    /**
+     * Same parser as StudentPracticalCardController::parsePlannedMinutes()
+     * — a subject's raw practical_time (either a "H:i" string or a plain
+     * number of minutes) into whole minutes. Unrecognized values are
+     * treated as 0 rather than throwing.
+     */
+    private function parsePlannedMinutes($value): int
+    {
+        if ($value === null || $value === '') {
+            return 0;
+        }
+
+        if (is_numeric($value)) {
+            return (int) $value;
+        }
+
+        if (preg_match('/^(\d{1,3}):(\d{2})$/', trim((string) $value), $m)) {
+            return ((int) $m[1] * 60) + (int) $m[2];
+        }
+
+        return 0;
     }
 }
