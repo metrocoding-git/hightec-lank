@@ -8,6 +8,8 @@
         $genarateCertificate = Auth::user()->hasPermission('certificate.generate');
         $signConductor = Auth::user()->hasPermission('certificate.sign-conductor');
         $signOwner = Auth::user()->hasPermission('certificate.sign-owner');
+        $undoCertificate = Auth::user()->hasPermission('certificate.undo');
+        $manageTemplates = Auth::user()->hasPermission('certificate-template.index');
         // $download = Auth::user()->hasPermission('student-list.search');
     @endphp
 
@@ -18,6 +20,9 @@
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
                     <a href="#">Certificate Management</a>
+                    @if ($manageTemplates)
+                        <a href="{{ route('certificate-template.index') }}">Certificate Templates</a>
+                    @endif
                 </div>
             </div>
         </div>
@@ -46,10 +51,11 @@
                                 {{ request('cert_status') === 'not_generated' ? 'selected' : '' }}>Not Generated Yet
                             </option>
                             <option value="pending_conductor"
-                                {{ request('cert_status') === 'pending_conductor' ? 'selected' : '' }}>Awaiting Conductor
-                                Signature</option>
+                                {{ request('cert_status') === 'pending_conductor' ? 'selected' : '' }}>Awaiting Director
+                                Training Signature</option>
                             <option value="pending_owner"
-                                {{ request('cert_status') === 'pending_owner' ? 'selected' : '' }}>Awaiting Owner Signature
+                                {{ request('cert_status') === 'pending_owner' ? 'selected' : '' }}>Awaiting Managing
+                                Director Signature
                             </option>
                             <option value="approved" {{ request('cert_status') === 'approved' ? 'selected' : '' }}>Fully
                                 Signed / Approved</option>
@@ -102,19 +108,25 @@
 
                         @if ($signConductor)
                             <button type="button" id="cert-sign-conductor-btn" class="ampl-btn ampl-btn-outline col-3">
-                                <i class="fa-solid fa-signature"></i> Sign — Assessment Conductor
+                                <i class="fa-solid fa-signature"></i> Sign — Director Training
                             </button>
                         @endif
 
                         @if ($signOwner)
                             <button type="button" id="cert-sign-owner-btn" class="ampl-btn ampl-btn-outline col-3">
-                                <i class="fa-solid fa-signature"></i> Sign — Owner
+                                <i class="fa-solid fa-signature"></i> Sign — Managing Director
                             </button>
                         @endif
 
                         <button type="button" id="cert-download-btn" class="ampl-btn ampl-btn-outline col-3">
                             <i class="fa-solid fa-download"></i> Download Certificate(s)
                         </button>
+
+                        @if ($undoCertificate)
+                            <button type="button" id="cert-undo-btn" class="ampl-btn ampl-btn-outline col-3">
+                                <i class="fa-solid fa-rotate-left"></i> Undo Last Step
+                            </button>
+                        @endif
 
                     </div>
                 </div>
@@ -149,8 +161,8 @@
                                     <th>Module</th>
                                     <th>Certificate #</th>
                                     <th>Stage</th>
-                                    <th>Conductor Signed</th>
-                                    <th>Owner Signed</th>
+                                    <th>Director Training Signed</th>
+                                    <th>Managing Director Signed</th>
                                     <th>Downloaded</th>
                                     <th></th>
                                 </tr>
@@ -178,9 +190,9 @@
                                             @if (!$cert)
                                                 <span class="cert-badge cert-badge-none">Not generated</span>
                                             @elseif ($cert->status === 'generated')
-                                                <span class="cert-badge cert-badge-pending">Awaiting Conductor</span>
+                                                <span class="cert-badge cert-badge-pending">Awaiting Director Training</span>
                                             @elseif ($cert->status === 'conductor_signed')
-                                                <span class="cert-badge cert-badge-pending">Awaiting Owner</span>
+                                                <span class="cert-badge cert-badge-pending">Awaiting Managing Director</span>
                                             @else
                                                 <span class="cert-badge cert-badge-approved">Approved</span>
                                             @endif
@@ -238,12 +250,54 @@
         </div>
     </section>
 
-    {{-- ===================== Sign — Assessment Conductor modal ===================== --}}
+    {{-- ===================== Generate modal (item 5 — template + issue date) ===================== --}}
+    <div class="modal fade" id="certGenerateModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Generate Certificate(s)</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <p id="cert-generate-summary" class="ampl-muted"></p>
+
+                    <div class="form-group">
+                        <label>Certificate Template <span class="text-danger">*</span></label>
+                        <select id="cert-generate-template" class="primary_select form-control">
+                            <option value="">— Select a template —</option>
+                            @foreach ($templateOptions ?? [] as $t)
+                                <option value="{{ $t->id }}">{{ $t->name }}</option>
+                            @endforeach
+                        </select>
+                        @if (!count($templateOptions ?? []))
+                            <small class="text-danger">No active certificate templates exist yet — create one
+                                first under Certificate Templates.</small>
+                        @endif
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label>Date of Issue <span class="text-danger">*</span></label>
+                        <input type="date" id="cert-generate-issue-date" class="form-control">
+                    </div>
+
+                    <div id="cert-generate-error" class="ampl-banner ampl-banner-error mt-15" style="display:none;">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" id="cert-generate-confirm" class="btn btn-primary">Generate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- ===================== Sign — Director Training modal ===================== --}}
     <div class="modal fade" id="certSignConductorModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Sign — Assessment Conductor</h5>
+                    <h5 class="modal-title">Sign — Director Training</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
                 </div>
@@ -272,18 +326,18 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="button" id="cert-sign-conductor-confirm" class="btn btn-primary">Sign as
-                        Conductor</button>
+                        Director Training</button>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- ===================== Sign — Owner modal ===================== --}}
+    {{-- ===================== Sign — Managing Director modal ===================== --}}
     <div class="modal fade" id="certSignOwnerModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Sign — Owner</h5>
+                    <h5 class="modal-title">Sign — Managing Director</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
                 </div>
@@ -312,8 +366,8 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="button" id="cert-sign-owner-confirm" class="btn btn-primary">Sign as Owner &amp;
-                        Approve</button>
+                    <button type="button" id="cert-sign-owner-confirm" class="btn btn-primary">Sign as Managing
+                        Director &amp; Approve</button>
                 </div>
             </div>
         </div>
@@ -559,6 +613,7 @@
             certificateGenerate: "{{ route('certificate.generate') }}",
             certificateSignConductor: "{{ route('certificate.sign-conductor') }}",
             certificateSignOwner: "{{ route('certificate.sign-owner') }}",
+            certificateUndo: "{{ route('certificate.undo') }}",
             certificateDownloadTemplate: "{{ route('certificate.download', ['id' => '__ID__']) }}",
             certificateBulkDownload: "{{ route('certificate.bulk-download') }}",
         };
@@ -699,30 +754,56 @@
                     });
                 }
 
-                // ---------------- Generate ----------------
+                // ---------------- Generate (item 5 — pick a template + issue date first) ----------------
+                var pendingGenerateIds = [];
+
                 $('#cert-generate-btn').on('click', function() {
                     var rows = selectedRows();
-                    var ids = rows.filter(function(r) {
+                    pendingGenerateIds = rows.filter(function(r) {
                         return !r.certId;
                     }).map(function(r) {
                         return r.assessmentId;
                     });
-                    var skippedCount = rows.length - ids.length;
+                    var skippedCount = rows.length - pendingGenerateIds.length;
 
                     if (!rows.length) {
                         alert('Select one or more rows first.');
                         return;
                     }
-                    if (!ids.length) {
+                    if (!pendingGenerateIds.length) {
                         alert(
                             'None of the selected rows are eligible — a certificate already exists for all of them.'
                         );
                         return;
                     }
-                    var msg = 'Generate ' + ids.length + ' certificate(s)?';
-                    if (skippedCount > 0) msg += ' (' + skippedCount +
-                        ' selected row(s) already have one and will be skipped.)';
-                    if (!confirm(msg)) return;
+
+                    var summary = pendingGenerateIds.length + ' certificate(s) will be generated.';
+                    if (skippedCount > 0) summary += ' ' + skippedCount +
+                        ' selected row(s) already have one and will be skipped.';
+                    $('#cert-generate-summary').text(summary);
+                    $('#cert-generate-error').hide().text('');
+                    $('#cert-generate-template').val('');
+                    // "genarate date (default set today)" — pre-filled here, still editable.
+                    $('#cert-generate-issue-date').val(new Date().toISOString().slice(0, 10));
+                    $('#certGenerateModal').modal('show');
+                });
+
+                $('#cert-generate-confirm').on('click', function() {
+                    var templateId = $('#cert-generate-template').val();
+                    var issueDate = $('#cert-generate-issue-date').val();
+
+                    if (!templateId) {
+                        $('#cert-generate-error').text('Select a Certificate Template first.').show();
+                        return;
+                    }
+                    if (!issueDate) {
+                        $('#cert-generate-error').text('Date of Issue is required.').show();
+                        return;
+                    }
+
+                    var $btn = $(this);
+                    $btn.prop('disabled', true).text('Generating…');
+                    $('#cert-generate-error').hide().text('');
 
                     apiCall(window.__ROUTES__.certificateGenerate, {
                         method: 'POST',
@@ -730,14 +811,19 @@
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            student_assessment_ids: ids
+                            student_assessment_ids: pendingGenerateIds,
+                            certificate_template_id: templateId,
+                            issue_date: issueDate,
                         }),
                     }).then(function(data) {
+                        $('#certGenerateModal').modal('hide');
                         alert(data.created.length + ' certificate(s) generated.' + (data.skipped
                             .length ? ' ' + data.skipped.length + ' skipped.' : ''));
                         window.location.reload();
                     }).catch(function(err) {
-                        alert(err.message);
+                        $('#cert-generate-error').text(err.message).show();
+                    }).finally(function() {
+                        $btn.prop('disabled', false).text('Generate');
                     });
                 });
 
@@ -800,7 +886,7 @@
                     };
                 }
 
-                // ---------------- Sign — Assessment Conductor (step 1) ----------------
+                // ---------------- Sign — Director Training (step 1) ----------------
                 var pendingConductorIds = [];
 
                 $('#cert-sign-conductor-btn').on('click', function() {
@@ -818,12 +904,12 @@
                     }
                     if (!pendingConductorIds.length) {
                         alert(
-                            'None of the selected rows are eligible — a certificate must be generated (and not yet Conductor-signed) first.'
+                            'None of the selected rows are eligible — a certificate must be generated (and not yet Director Training-signed) first.'
                         );
                         return;
                     }
                     var summary = pendingConductorIds.length +
-                        ' certificate(s) will be signed as Assessment Conductor.';
+                        ' certificate(s) will be signed as Director Training.';
                     if (skippedCount > 0) summary += ' ' + skippedCount + ' selected row(s) will be skipped.';
                     $('#cert-sign-conductor-summary').text(summary);
                     $('#cert-sign-conductor-error').hide().text('');
@@ -836,7 +922,7 @@
                     var sig = signatureBlob('conductor');
                     if (!sig) {
                         $('#cert-sign-conductor-error').text(
-                            'Assessment Conductor signature is required — draw or upload one.').show();
+                            'Director Training signature is required — draw or upload one.').show();
                         return;
                     }
 
@@ -860,7 +946,7 @@
                         })
                         .then(function(data) {
                             $('#certSignConductorModal').modal('hide');
-                            alert(data.signed.length + ' certificate(s) signed as Conductor.' + (data
+                            alert(data.signed.length + ' certificate(s) signed as Director Training.' + (data
                                 .skipped.length ? ' ' + data.skipped.length + ' skipped.' : ''));
                             window.location.reload();
                         })
@@ -868,11 +954,11 @@
                             $('#cert-sign-conductor-error').text(err.message).show();
                         })
                         .finally(function() {
-                            $btn.prop('disabled', false).text('Sign as Conductor');
+                            $btn.prop('disabled', false).text('Sign as Director Training');
                         });
                 });
 
-                // ---------------- Sign — Owner (step 2, finalizes) ----------------
+                // ---------------- Sign — Managing Director (step 2, finalizes) ----------------
                 var pendingOwnerIds = [];
 
                 $('#cert-sign-owner-btn').on('click', function() {
@@ -890,12 +976,12 @@
                     }
                     if (!pendingOwnerIds.length) {
                         alert(
-                            'None of the selected rows are eligible — the Assessment Conductor must sign first.'
+                            'None of the selected rows are eligible — Director Training must sign first.'
                         );
                         return;
                     }
                     var summary = pendingOwnerIds.length +
-                        ' certificate(s) will be signed as Owner and marked Approved.';
+                        ' certificate(s) will be signed as Managing Director and marked Approved.';
                     if (skippedCount > 0) summary += ' ' + skippedCount + ' selected row(s) will be skipped.';
                     $('#cert-sign-owner-summary').text(summary);
                     $('#cert-sign-owner-error').hide().text('');
@@ -907,7 +993,7 @@
                 $('#cert-sign-owner-confirm').on('click', function() {
                     var sig = signatureBlob('owner');
                     if (!sig) {
-                        $('#cert-sign-owner-error').text('Owner signature is required — draw or upload one.')
+                        $('#cert-sign-owner-error').text('Managing Director signature is required — draw or upload one.')
                             .show();
                         return;
                     }
@@ -940,8 +1026,71 @@
                             $('#cert-sign-owner-error').text(err.message).show();
                         })
                         .finally(function() {
-                            $btn.prop('disabled', false).text('Sign as Owner & Approve');
+                            $btn.prop('disabled', false).text('Sign as Managing Director & Approve');
                         });
+                });
+
+                // ---------------- Undo Last Step ----------------
+                // "want to can be go back one like if only do genarate can be
+                // do undo to that if do sign conductor can be do undo to
+                // genarate level if do sign owner sign can be do undo to sign
+                // conductor if complete sign owner can be undow that" — every
+                // eligible selected row (anything with a certificate at all)
+                // steps back exactly one stage. "if download want to aleret
+                // that donwloded" is handled here, client-side, BEFORE the
+                // request is even sent — a plain confirm() for the normal
+                // case, with an extra explicit warning line appended when one
+                // or more selected rows have already been downloaded, since
+                // undoing doesn't erase that download history (the backend
+                // keeps downloaded_at/download_count as-is on purpose).
+                $('#cert-undo-btn').on('click', function() {
+                    var rows = selectedRows();
+                    var eligible = rows.filter(function(r) {
+                        return !!r.certId;
+                    });
+                    var skippedCount = rows.length - eligible.length;
+                    var alreadyDownloadedCount = eligible.filter(function(r) {
+                        return r.downloaded;
+                    }).length;
+
+                    if (!rows.length) {
+                        alert('Select one or more rows first.');
+                        return;
+                    }
+                    if (!eligible.length) {
+                        alert(
+                            'None of the selected rows have a certificate yet — there is nothing to undo.'
+                        );
+                        return;
+                    }
+
+                    var msg = 'Step ' + eligible.length +
+                        ' certificate(s) back one stage (e.g. Approved -> Director Training signed, or Generated -> not generated)?';
+                    if (skippedCount > 0) msg += ' (' + skippedCount +
+                        ' selected row(s) have no certificate and will be skipped.)';
+                    if (alreadyDownloadedCount > 0) {
+                        msg += '\n\n⚠ ' + alreadyDownloadedCount +
+                            ' of these have ALREADY BEEN DOWNLOADED before. Undoing won\'t recall any copies already given out — it only reverts the record here.';
+                    }
+                    if (!confirm(msg)) return;
+
+                    apiCall(window.__ROUTES__.certificateUndo, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            certificate_ids: eligible.map(function(r) {
+                                return r.certId;
+                            })
+                        }),
+                    }).then(function(data) {
+                        alert(data.reverted.length + ' certificate(s) stepped back.' + (data.skipped
+                            .length ? ' ' + data.skipped.length + ' skipped.' : ''));
+                        window.location.reload();
+                    }).catch(function(err) {
+                        alert(err.message);
+                    });
                 });
 
                 // ---------------- Download ----------------

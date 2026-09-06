@@ -64,6 +64,15 @@ return [
                         ['key' => 'assessment-template.destroy', 'label' => 'Delete', 'flag' => 'Only ever soft-disables (is_active toggle) — there is no hard-delete route, by design, since a template already used in saved assessments must never be destroyable.'],
                     ],
                 ],
+                 [
+                    'name' => 'Certificate Template',
+                    'window' => ['key' => 'certificate-template.index', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'certificate-template.store', 'label' => 'Add'],
+                        ['key' => 'certificate-template.update', 'label' => 'Edit'],
+                        ['key' => 'certificate-template.destroy', 'label' => 'Delete', 'flag' => 'Only ever soft-disables (is_active toggle) — there is no hard-delete route, by design, since a template already used in saved assessments must never be destroyable.'],
+                    ],
+                ],
             ],
         ],
 

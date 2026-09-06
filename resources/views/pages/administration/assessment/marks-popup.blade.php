@@ -906,12 +906,12 @@
                             </div>
 
                             <div className="mt-15">
-                                <label>Evaluator Signature</label>
+                                <label>Operator Signature</label>
                                 <SignaturePad ref={sigRef} onChange={(url) => setHasSignature(!!url)} />
                             </div>
 
                             <div className="mt-15">
-                                <button type="button" className="ampl-btn ampl-btn-primary" onClick={handleSave} disabled={busy || anyTitleOverLimit}>
+                                <button type="button" className="ampl-btn ampl-btn-primary col-12" onClick={handleSave} disabled={busy || anyTitleOverLimit}>
                                     {busy ? 'Saving…' : 'Submit Assessment'}
                                 </button>
                                 {anyTitleOverLimit && (

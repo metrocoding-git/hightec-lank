@@ -14,6 +14,7 @@ use App\Models\Subject;
 use App\Models\SubjectAttendanceSession;
 use App\Models\TrainingVehicle;
 use App\Models\User;
+use App\Models\UserBranch;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -380,20 +381,21 @@ class StudentAssessmentController extends Controller
         return 'signatures/assessments/' . $imageName;
     }
 
-    public function existingForCourse($studentCourseId)
+
+     public function existingForCourse($studentCourseId)
     {
-        $assessment = StudentAssessment::with(['template.titles.subTitles', 'marks', 'evaluator:id,name'])
+        $assessment = StudentAssessment::with(['template.titles.subTitles', 'marks', 'evaluator:id,name', 'certificate'])
             ->where('student_course_id', $studentCourseId)
             ->latest()
             ->first();
-
+ 
         if (!$assessment) {
             return response()->json(['status' => 'none']);
         }
-
+ 
         $canUndo = $assessment->created_by === Auth::id()
-            && $assessment->created_at->gt(now()->subDays(2));
-
+            && !$assessment->certificate;
+ 
         return response()->json([
             'status' => 'ok',
             'assessment' => $assessment,
@@ -403,7 +405,7 @@ class StudentAssessmentController extends Controller
 
     public function destroy($id)
     {
-        $assessment = StudentAssessment::findOrFail($id);
+        $assessment = StudentAssessment::with('certificate')->findOrFail($id);
 
         if ((int) $assessment->created_by !== (int) Auth::id()) {
             return response()->json([
@@ -412,27 +414,28 @@ class StudentAssessmentController extends Controller
             ], 403);
         }
 
-        if ($assessment->created_at->lt(now()->subDays(2))) {
+        if ($assessment->certificate) {
             return response()->json([
-                'status' => 'expired',
-                'message' => 'This assessment can no longer be undone — the 2-day window has passed.',
+                'status' => 'certificate_exists',
+                'message' => 'This assessment already has a certificate generated for it and can no longer be undone. Contact an administrator if this needs to be corrected.',
             ], 403);
         }
 
-        $assessment->delete(); // soft delete (deleted_at) — see SQL/model changes below
+        $assessment->delete();
 
         return response()->json([
             'status' => 'ok',
             'message' => 'Assessment undone. You can now enter a fresh one for this course.',
         ]);
     }
-
     public function marksPopup($studentCourseId)
     {
         $studentCourse = StudentCourse::with(['student.branch:id,name', 'student.verifications', 'course:id,name'])
             ->findOrFail($studentCourseId);
 
-        $vehicles = TrainingVehicle::active()->orderBy('name')->get(['id', 'name', 'vehicle_number']);
+        $user = Auth::user();
+        $branchId = UserBranch::where('user_id', $user->id)->first()?->branch_id;
+        $vehicles = TrainingVehicle::where('branch_id', $branchId)->active()->orderBy('name')->get(['id', 'name', 'vehicle_number']);
 
         // "before student assesment mark. want display student related all
         // payments if not complete want notify" — every non-returned,
@@ -539,8 +542,15 @@ class StudentAssessmentController extends Controller
             $planned = $this->parsePlannedMinutes($assignments->get($subject->id)->practical_time ?? null);
             $actual = $minutesBySubject->get($subject->id, 0);
 
-            if ($planned > 0 && $actual >= $planned) {
-                $completed++;
+            if ($subjectType == 'P') {
+                if ($planned > 0 && $actual >= $planned) {
+                    $completed++;
+                }
+            }
+            if ($subjectType == 'T') {
+                if ($actual > 0) {
+                    $completed++;
+                }
             }
         }
 

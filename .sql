@@ -566,3 +566,30 @@ INSERT INTO `permissions` (`id`, `permission_name`, `label`, `created_at`, `upda
  
 ALTER TABLE `student_assessments`
     MODIFY COLUMN `grade` VARCHAR(10) NULL;
+
+
+-- 09/07
+CREATE TABLE certificate_templates (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,                 -- internal label shown in the Generate template dropdown, e.g. "Fork Lift Operator"
+    course_id BIGINT UNSIGNED NULL,             -- optional convenience link, see note above
+    course_name_line1 VARCHAR(255) NOT NULL,    -- e.g. "Heavy Vehicle Operator"
+    course_name_line2 VARCHAR(255) NULL,        -- e.g. "(Fork Lift Truck)"
+    bottom_image_path VARCHAR(500) NULL,        -- equipment/course photo, bottom-right of the certificate
+    back_side_content LONGTEXT NULL,            -- rendered as a literal page 2 of the generated PDF when non-empty
+    is_active TINYINT(1) NOT NULL DEFAULT 1,    -- one-way soft-disable, same convention as everything else in this app — no re-enable route
+    created_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    KEY certificate_templates_course_id_index (course_id),
+    KEY certificate_templates_is_active_index (is_active)
+);
+
+ALTER TABLE certificates
+    ADD COLUMN certificate_template_id BIGINT UNSIGNED NULL AFTER student_assessment_id,
+    ADD COLUMN issue_date DATE NULL AFTER certificate_template_id,
+    ADD KEY certificates_certificate_template_id_index (certificate_template_id);
+ 
+INSERT INTO `permissions` (`id`, `permission_name`, `label`, `created_at`, `updated_at`) VALUES (NULL, 'certificate-template.store', 'Add', NULL, NULL), (NULL, 'certificate-template.update', 'Update', NULL, NULL);
+
+INSERT INTO `permissions` (`id`, `permission_name`, `label`, `created_at`, `updated_at`) VALUES (NULL, 'certificate-template.destroy', 'Delete', NULL, NULL), (NULL, 'certificate-template.index', 'View', NULL, NULL);

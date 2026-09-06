@@ -31,6 +31,8 @@ class Certificate extends Model
         'downloaded_by',
         'downloaded_at',
         'download_count',
+        'certificate_template_id',
+        'issue_date'
     ];
 
     protected $casts = [
@@ -83,5 +85,10 @@ class Certificate extends Model
     public function isDownloaded(): bool
     {
         return !is_null($this->downloaded_at);
+    }
+
+     public function certificateTemplate()
+    {
+        return $this->belongsTo(\App\Models\CertificateTemplate::class);
     }
 }

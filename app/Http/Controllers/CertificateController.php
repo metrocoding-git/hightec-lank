@@ -1,31 +1,12 @@
 <?php
-/**
- * ============================================================================
- * REPLACES the CertificateController.php delivered last round — place at:
- * app/Http/Controllers/CertificateController.php
- *
- * Changes from last round:
- *   - generate() no longer accepts/stores a duration_text.
- *   - approve() is GONE, replaced by two separate steps matching the new
- *     two-stage signing flow: signConductor() then signOwner(). Owner
- *     signing is what finally sets status='approved' and unlocks download.
- *   - download()/bulkDownload() now record who/when a certificate was
- *     downloaded and bump a counter, so the new certificate management
- *     page (certificate-index.blade.php) can filter "not downloaded yet"
- *     vs "already downloaded".
- *   - New index() — the "new window" for certificate generation/management,
- *     with the filters requested: by course, by stage (not generated /
- *     pending Conductor sign / pending Owner sign / approved), and by
- *     downloaded yes/no, plus the existing name/reg-no/NIC search.
- * ============================================================================
- */
-
 namespace App\Http\Controllers;
 
 use App\Models\AssessmentTemplate;
 use App\Models\Certificate;
+use App\Models\CertificateTemplate;
 use App\Models\Course;
 use App\Models\StudentAssessment;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -103,19 +84,33 @@ class CertificateController extends Controller
         $courseIds = AssessmentTemplate::pluck('course_id')->unique();
         $courseOptions = Course::whereIn('id', $courseIds)->orderBy('name')->get(['id', 'name']);
 
-        return view('pages.administration.certificate.index', compact('assessments', 'courseOptions'));
+        // NEW — for the Generate modal's template dropdown (item 5 of the
+        // certificate expansion request).
+        $templateOptions = CertificateTemplate::active()->orderBy('name')->get(['id', 'name']);
+
+        return view('pages.administration.certificate.index', compact('assessments', 'courseOptions', 'templateOptions'));
     }
 
     /**
      * Generate certificate(s) for one or many PASSed student_assessments.
-     * Body: { student_assessment_ids: [1,2,3] }
+     * Body: { student_assessment_ids: [1,2,3], certificate_template_id, issue_date }
+     *
+     * UPDATED this round (item 5): certificate_template_id and issue_date
+     * are now required inputs from the Generate modal instead of being
+     * implicit. issue_date defaults to today when not sent (belt-and-
+     * braces — the UI already defaults its date input to today, this is
+     * just the server-side fallback for the same rule).
      */
     public function generate(Request $request)
     {
         $data = $request->validate([
             'student_assessment_ids'   => 'required|array|min:1',
             'student_assessment_ids.*' => 'integer|distinct',
+            'certificate_template_id'  => 'required|integer|exists:certificate_templates,id',
+            'issue_date'               => 'nullable|date',
         ]);
+
+        $issueDate = $data['issue_date'] ?? now()->toDateString();
 
         $created = [];
         $skipped = [];
@@ -136,13 +131,15 @@ class CertificateController extends Controller
                 continue;
             }
 
-            $certificate = DB::transaction(function () use ($assessment) {
+            $certificate = DB::transaction(function () use ($assessment, $data, $issueDate) {
                 $certificate = Certificate::create([
-                    'student_assessment_id' => $assessment->id,
-                    'certificate_number'    => $this->nextCertificateNumber(),
-                    'status'                => 'generated',
-                    'generated_by'          => Auth::id(),
-                    'generated_at'          => now(),
+                    'student_assessment_id'   => $assessment->id,
+                    'certificate_template_id' => $data['certificate_template_id'],
+                    'issue_date'              => $issueDate,
+                    'certificate_number'      => $this->nextCertificateNumber(),
+                    'status'                  => 'generated',
+                    'generated_by'            => Auth::id(),
+                    'generated_at'            => now(),
                 ]);
 
                 $certificate->pdf_path = $this->renderCertificatePdf($certificate->fresh(['studentAssessment']));
@@ -162,9 +159,13 @@ class CertificateController extends Controller
     }
 
     /**
-     * STEP 1 of signing — Assessment Conductor signs first. Only certificates
-     * still in 'generated' status are eligible. Moves status to
-     * 'conductor_signed' (still NOT downloadable — Owner still has to sign).
+     * STEP 1 of signing — Director Training signs first (was labeled
+     * "Assessment Conductor" — renamed in the UI only, see the earlier
+     * round's chat message; the underlying status value 'conductor_signed',
+     * column names, route names and permission key are all UNCHANGED on
+     * purpose). Only certificates still in 'generated' status are eligible.
+     * Moves status to 'conductor_signed' (still NOT downloadable — Managing
+     * Director still has to sign).
      * Body: { certificate_ids: [1,2,3], conductor_signature_data | conductor_signature_file }
      */
     public function signConductor(Request $request)
@@ -177,7 +178,7 @@ class CertificateController extends Controller
         ]);
 
         if (empty($data['conductor_signature_data']) && !$request->hasFile('conductor_signature_file')) {
-            return response()->json(['success' => false, 'message' => 'Assessment Conductor signature is required (draw or upload).'], 422);
+            return response()->json(['success' => false, 'message' => 'Director Training signature is required (draw or upload).'], 422);
         }
 
         $path = $request->hasFile('conductor_signature_file')
@@ -195,7 +196,7 @@ class CertificateController extends Controller
                 continue;
             }
             if (!$certificate->needsConductorSignature()) {
-                $skipped[] = ['id' => $certId, 'reason' => 'Not awaiting the Conductor signature (already signed, or not generated)'];
+                $skipped[] = ['id' => $certId, 'reason' => 'Not awaiting the Director Training signature (already signed, or not generated)'];
                 continue;
             }
 
@@ -217,9 +218,12 @@ class CertificateController extends Controller
     }
 
     /**
-     * STEP 2 of signing — Owner signs second, after the Conductor. Only
-     * certificates in 'conductor_signed' status are eligible. This is what
-     * finally moves status to 'approved' and unlocks download.
+     * STEP 2 of signing — Managing Director signs second, after Director
+     * Training (was labeled "Owner" — renamed in the UI only; the
+     * underlying status value 'approved', column names ('owner_*'), route
+     * name and permission key are all UNCHANGED). Only certificates in
+     * 'conductor_signed' status are eligible. This is what finally moves
+     * status to 'approved' and unlocks download.
      * Body: { certificate_ids: [1,2,3], owner_signature_data | owner_signature_file }
      */
     public function signOwner(Request $request)
@@ -232,7 +236,7 @@ class CertificateController extends Controller
         ]);
 
         if (empty($data['owner_signature_data']) && !$request->hasFile('owner_signature_file')) {
-            return response()->json(['success' => false, 'message' => 'Owner signature is required (draw or upload).'], 422);
+            return response()->json(['success' => false, 'message' => 'Managing Director signature is required (draw or upload).'], 422);
         }
 
         $path = $request->hasFile('owner_signature_file')
@@ -250,7 +254,7 @@ class CertificateController extends Controller
                 continue;
             }
             if (!$certificate->needsOwnerSignature()) {
-                $skipped[] = ['id' => $certId, 'reason' => 'Not awaiting the Owner signature (Conductor must sign first, or it is already approved)'];
+                $skipped[] = ['id' => $certId, 'reason' => 'Not awaiting the Managing Director signature (Director Training must sign first, or it is already approved)'];
                 continue;
             }
 
@@ -272,6 +276,88 @@ class CertificateController extends Controller
     }
 
     /**
+     * "want to can be go back one like if only do genarate can be do undo
+     * to that if do sign conductor can be do undo to genarate level if do
+     * sign owner sign can be do undo to sign conductor if complete sign
+     * owner can be undow that" — steps a certificate back exactly ONE
+     * stage from wherever it currently is:
+     *   approved          -> conductor_signed
+     *   conductor_signed  -> generated
+     *   generated         -> not generated at all (deletes the row + PDF)
+     *
+     * Deliberately does NOT clear downloaded_at/downloaded_by/download_count
+     * — "if download want to aleret that donwloded" is handled client-side
+     * (a warning before the confirm, see certificate-index.blade.php),
+     * not by erasing that a download happened.
+     *
+     * Body: { certificate_ids: [1,2,3] }
+     */
+    public function undo(Request $request)
+    {
+        $data = $request->validate([
+            'certificate_ids'   => 'required|array|min:1',
+            'certificate_ids.*' => 'integer|distinct',
+        ]);
+
+        $reverted = [];
+        $skipped = [];
+
+        foreach ($data['certificate_ids'] as $certId) {
+            $certificate = Certificate::find($certId);
+
+            if (!$certificate) {
+                $skipped[] = ['id' => $certId, 'reason' => 'Certificate not found'];
+                continue;
+            }
+
+            switch ($certificate->status) {
+                case 'approved':
+                    if ($certificate->owner_signature_path) {
+                        Storage::disk('local')->delete($certificate->owner_signature_path);
+                    }
+                    $certificate->owner_signature_path = null;
+                    $certificate->owner_signed_by = null;
+                    $certificate->owner_signed_at = null;
+                    $certificate->status = 'conductor_signed';
+                    $certificate->pdf_path = $this->renderCertificatePdf($certificate);
+                    $certificate->save();
+                    $reverted[] = ['id' => $certificate->id, 'to' => 'conductor_signed'];
+                    break;
+
+                case 'conductor_signed':
+                    if ($certificate->conductor_signature_path) {
+                        Storage::disk('local')->delete($certificate->conductor_signature_path);
+                    }
+                    $certificate->conductor_signature_path = null;
+                    $certificate->conductor_signed_by = null;
+                    $certificate->conductor_signed_at = null;
+                    $certificate->status = 'generated';
+                    $certificate->pdf_path = $this->renderCertificatePdf($certificate);
+                    $certificate->save();
+                    $reverted[] = ['id' => $certificate->id, 'to' => 'generated'];
+                    break;
+
+                case 'generated':
+                    if ($certificate->pdf_path) {
+                        Storage::disk('local')->delete($certificate->pdf_path);
+                    }
+                    $certificate->delete();
+                    $reverted[] = ['id' => $certId, 'to' => 'not_generated'];
+                    break;
+
+                default:
+                    $skipped[] = ['id' => $certId, 'reason' => 'Unrecognized certificate status: ' . $certificate->status];
+            }
+        }
+
+        return response()->json([
+            'success'  => true,
+            'reverted' => $reverted,
+            'skipped'  => $skipped,
+        ]);
+    }
+
+    /**
      * Download a single approved certificate PDF. Records who/when it was
      * downloaded and bumps download_count, so the management page's
      * "already downloaded" filter has something to key off.
@@ -281,7 +367,7 @@ class CertificateController extends Controller
         $certificate = Certificate::with('studentAssessment.student')->findOrFail($id);
 
         if (!$certificate->isApproved() || !$certificate->pdf_path || !Storage::disk('local')->exists($certificate->pdf_path)) {
-            abort(403, 'Certificate is not fully approved yet (both Conductor and Owner must sign first).');
+            abort(403, 'Certificate is not fully approved yet (both Director Training and Managing Director must sign first).');
         }
 
         $this->recordDownload($certificate);
@@ -349,8 +435,11 @@ class CertificateController extends Controller
     }
 
     /**
-     * HTL-2026-00001 style numbering — my own default, adjust if you have
-     * an existing convention.
+     * HTL-2026-00001 style numbering — kept as-is this round. You confirmed
+     * (answer to the numbering question) that this global scheme should
+     * stay rather than switching to the sample's course-prefixed
+     * "FL/OP/5255" style — that format was just this particular course's
+     * own paper stock, not a numbering convention to copy.
      */
     private function nextCertificateNumber(): string
     {
@@ -408,20 +497,122 @@ class CertificateController extends Controller
 
     /**
      * Render (or re-render) the certificate PDF and return its stored path.
-     * A4 landscape — placeholder layout, see certificate-pdf.blade.php header
-     * comment for what's still pending your clean CorelDRAW export.
+     * A4 PORTRAIT now (was landscape) — matches the sample certificate.pdf
+     * you uploaded. Gathers everything the redesigned
+     * certificate-pdf.blade.php needs: the chosen CertificateTemplate (for
+     * course name lines / bottom image / back-side content), the student's
+     * training start/end dates (for "From: ... to ..." and the auto-computed
+     * duration-in-words), and both signature images as data: URIs (so
+     * dompdf doesn't need filesystem/remote access at render time).
+     *
+     * ASSUMPTION flagged (not confirmed): studentAssessment->studentCourse()
+     * — see StudentAssessment_ADD_studentCourse_relation.php delivered
+     * alongside this file. If that relation doesn't exist yet under this
+     * name, $studentCourse below will just be null and the certificate
+     * renders with blank From/To dates and no duration wording — it won't
+     * error, but the dates won't show until that relation is confirmed/added
+     * AND course_start_date/course_end_date are actually filled in on the
+     * relevant student_courses row.
      */
     private function renderCertificatePdf(Certificate $certificate): string
     {
-        $certificate->loadMissing(['studentAssessment.student', 'studentAssessment.template.course', 'studentAssessment.evaluator']);
+        $certificate->loadMissing([
+            'studentAssessment.student',
+            'studentAssessment.template.course',
+            'studentAssessment.evaluator',
+            'studentAssessment.studentCourse',
+            'certificateTemplate',
+        ]);
+
+        $studentCourse = optional($certificate->studentAssessment)->studentCourse;
+        $startDate = optional($studentCourse)->created_at ? Carbon::parse($studentCourse->created_at) : null;
+        $endDate = optional($studentCourse)->course_end_date ? Carbon::parse($studentCourse->course_end_date) : null;
+
+        $durationWords = null;
+        if ($startDate && $endDate && $endDate->gte($startDate)) {
+            $days = $startDate->diffInDays($endDate) + 1; // inclusive of both the start and end day
+            $durationWords = $this->numberToWords($days);
+        }
 
         $pdf = Pdf::loadView('pages.administration.certificate.pdf', [
-            'certificate' => $certificate,
-        ])->setPaper('a4', 'landscape');
+            'certificate'               => $certificate,
+            'template'                  => $certificate->certificateTemplate,
+            'startDate'                 => $startDate,
+            'endDate'                   => $endDate,
+            'durationWords'             => $durationWords,
+            'qrDataUri'                 => $this->buildQrDataUri($certificate),
+            'bottomImageDataUri'        => $certificate->certificateTemplate
+                ? $this->fileToDataUri($certificate->certificateTemplate->bottom_image_path, 'public')
+                : null,
+            'ownerSignatureDataUri'     => $this->fileToDataUri($certificate->owner_signature_path, 'local'),
+            'conductorSignatureDataUri' => $this->fileToDataUri($certificate->conductor_signature_path, 'local'),
+        ])->setPaper('a4', 'portrait');
 
         $path = 'certificates/pdf/' . $certificate->certificate_number . '.pdf';
         Storage::disk('local')->put($path, $pdf->output());
 
         return $path;
+    }
+
+    /**
+     * Small 1-99 number-to-words converter — covers any realistic training
+     * duration ("fourteen days", matching the sample). Falls back to plain
+     * digits for 100+ (shouldn't come up for a training-course length, but
+     * safer than throwing).
+     */
+    private function numberToWords(int $number): string
+    {
+        $ones = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+            'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+        $tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+
+        if ($number < 20) {
+            return $ones[$number];
+        }
+        if ($number < 100) {
+            $ten = intdiv($number, 10);
+            $one = $number % 10;
+            return trim($tens[$ten] . ($one ? '-' . $ones[$one] : ''));
+        }
+
+        return (string) $number;
+    }
+
+    /**
+     * QR code — OPTIONAL, guarded by class_exists so this doesn't error if
+     * the simplesoftwareio/simple-qrcode package isn't installed. Content
+     * is just the certificate number (no public verification URL exists in
+     * this app that I know of) — if you have (or want) a real verification
+     * link/route, tell me and this can encode that instead.
+     */
+    private function buildQrDataUri(Certificate $certificate): ?string
+    {
+        if (!class_exists(\SimpleSoftwareIO\QrCode\Facades\QrCode::class)) {
+            return null; // package not installed — the view just omits the QR image
+        }
+
+        $svg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(140)->generate($certificate->certificate_number);
+
+        return 'data:image/svg+xml;base64,' . base64_encode($svg);
+    }
+
+    /**
+     * Reads a stored file (signature or template bottom-image) and returns
+     * it as a data: URI, so dompdf embeds the actual bytes at render time
+     * instead of needing filesystem/remote access to resolve a path or URL
+     * (dompdf's remote-file support is inconsistent depending on server
+     * config — inlining avoids that entirely). Returns null quietly if the
+     * path is empty or the file no longer exists.
+     */
+    private function fileToDataUri(?string $path, string $disk): ?string
+    {
+        if (!$path || !Storage::disk($disk)->exists($path)) {
+            return null;
+        }
+
+        $mime = Storage::disk($disk)->mimeType($path) ?: 'image/png';
+        $contents = Storage::disk($disk)->get($path);
+
+        return 'data:' . $mime . ';base64,' . base64_encode($contents);
     }
 }
