@@ -220,21 +220,7 @@
         </tr>
     </table>
 
-    <div class="footer-bar">
-        <table>
-            <tr>
-                <td style="width:70%;">HIGHTEC LANKA INTERNATIONAL VOCATIONAL &amp; TECHNICAL TRAINING INSTITUTE</td>
-                <td class="doc-info">Date:2021/07/07&nbsp;&nbsp;&nbsp;Rev.001&nbsp;&nbsp;&nbsp;OP/FL/DI/024</td>
-            </tr>
-        </table>
-    </div>
-
-    <div style="page-break-before: always;"></div>
-
-    <h1 class="main-title">HIGHTEC LANKA INTERNATIONAL</h1>
-    <p class="sub-title">VOCATIONAL &amp; TECHNICAL TRAINING INSTITUTE(PVT)LTD.</p>
-
-    <table class="meta" style="margin-top:30px;">
+    <table class="boxes" style="margin-top:30px;">
         <tr>
             <td style="width:55%;"><strong>Evaluator Name:</strong> {{ $assessment->evaluator->name ?? '-' }}</td>
             <td>
@@ -246,14 +232,7 @@
         </tr>
     </table>
 
-    <div class="footer-bar" style="position:fixed; bottom:0; left:0; right:0;">
-        <table>
-            <tr>
-                <td style="width:70%;">HIGHTEC LANKA INTERNATIONAL VOCATIONAL &amp; TECHNICAL TRAINING INSTITUTE</td>
-                <td class="doc-info">Date:2021/07/07&nbsp;&nbsp;&nbsp;Rev.001&nbsp;&nbsp;&nbsp;OP/FL/DI/024</td>
-            </tr>
-        </table>
-    </div>
+   
 
 </body>
 

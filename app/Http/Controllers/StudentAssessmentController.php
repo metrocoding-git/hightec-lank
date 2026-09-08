@@ -153,12 +153,40 @@ class StudentAssessmentController extends Controller
             ])
             ->values();
 
+
+
         if ($courses->isEmpty()) {
             return response()->json([
                 'status' => 'no_started_course',
                 'message' => "{$student->student_name} has no course currently in 'start' status.",
             ], 422);
         }
+
+        $courseIds = $courses->pluck('course_id')->all();
+
+        $paidCourseIds = FeeInvoices::where('student_id', $student->id)
+            ->where('payment_status', '!=', 'returned')
+            ->where('invoice_type', 'course')
+            ->with(['paidCourses' => function ($q) use ($courseIds) {
+                $q->whereIn('course_id', $courseIds);
+            }])
+            ->get()
+            ->pluck('paidCourses')
+            ->flatten()
+            ->pluck('course_id')
+            ->unique();
+
+        $coursesWithPayment = $courses->filter(fn($c) => $paidCourseIds->contains($c['course_id']))->values();
+
+        if ($coursesWithPayment->isEmpty()) {
+            return response()->json([
+                'status' => 'no_paid_course',
+                'message' => "{$student->student_name} has started course(s), but none of them have a payment on record yet.",
+            ], 422);
+        }
+
+        $courses = $coursesWithPayment;
+
 
         $vehicles = TrainingVehicle::active()->orderBy('name')->get(['id', 'name', 'vehicle_number']);
 
@@ -382,20 +410,20 @@ class StudentAssessmentController extends Controller
     }
 
 
-     public function existingForCourse($studentCourseId)
+    public function existingForCourse($studentCourseId)
     {
         $assessment = StudentAssessment::with(['template.titles.subTitles', 'marks', 'evaluator:id,name', 'certificate'])
             ->where('student_course_id', $studentCourseId)
             ->latest()
             ->first();
- 
+
         if (!$assessment) {
             return response()->json(['status' => 'none']);
         }
- 
+
         $canUndo = $assessment->created_by === Auth::id()
             && !$assessment->certificate;
- 
+
         return response()->json([
             'status' => 'ok',
             'assessment' => $assessment,
