@@ -96,7 +96,7 @@
                                     <th>Reg No</th>
                                     <th>Course</th>
                                     <th>Module</th>
-                                    <th>Date</th>
+                                    <th>Created Date</th>
                                     <th>Total</th>
                                     <th>Result</th>
                                     <th>Grade</th>
@@ -106,7 +106,12 @@
                                     <th>Name Verified</th>
                                     <th>NIC / ID No. Verified</th>
                                     <th>Address Verified</th>
+                                    <th>Start Date</th>
                                     <th>Created By</th>
+                                    <th>Intake</th>
+                                    <th>FS Conduct Branch</th>
+                                    <th>Intake Branch</th>
+
                                     <th></th>
                                 </tr>
                             </thead>
@@ -115,7 +120,8 @@
                                     @php
                                         $assessedCourseId = optional($a->template->course)->id;
                                         $categoryKey = $a->student_id . '-' . $assessedCourseId;
-                                        $studentCategory = optional($categoriesByPair->get($categoryKey))->category_name ?? '-';
+                                        $studentCategory =
+                                            optional($categoriesByPair->get($categoryKey))->category_name ?? '-';
                                     @endphp
                                     <tr>
                                         <td></td>
@@ -168,7 +174,12 @@
                                                 NO
                                             @endif
                                         </td>
+                                        <td>{{ $a->studentCourse->intake->start_date ?? '-' }}</td>
                                         <td>{{ $a->evaluator->name ?? '-' }}</td>
+                                        <td>{{ $a->studentCourse->intake->name ?? '-' }}</td>
+                                        <td>{{ $a->evaluator->branches->first()->name ?? '-' }}</td>
+                                        <td>{{ $a->studentCourse->branch->name ?? '-' }}</td>
+
                                         <td>
                                             <a href="{{ url('/student/student-info/assessment/' . $a->id . '/pdf') }}"
                                                 class="btn btn-sm btn-outline-primary" target="_blank">PDF</a>
@@ -199,16 +210,19 @@
             margin-bottom: 16px;
             box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
         }
+
         .ampl-findform {
             display: flex;
             gap: 12px;
             align-items: flex-end;
             flex-wrap: wrap;
         }
+
         .ampl-findform>div {
             flex: 1;
             min-width: 220px;
         }
+
         .ampl-input {
             width: 100%;
             padding: 8px 10px;
@@ -217,10 +231,12 @@
             font-size: 14px;
             background: #fff;
         }
+
         .ampl-input:focus {
             outline: none;
             border-color: #1d4e89;
         }
+
         label {
             font-weight: 600;
             font-size: 13px;
@@ -228,6 +244,7 @@
             display: block;
             margin-bottom: 4px;
         }
+
         .ampl-filter-label {
             font-weight: 600;
             font-size: 12px;
@@ -235,6 +252,7 @@
             display: block;
             margin-bottom: 4px;
         }
+
         .ampl-btn {
             border: none;
             border-radius: 6px;
@@ -243,41 +261,49 @@
             font-weight: 600;
             cursor: pointer;
         }
+
         .ampl-btn-primary:disabled {
             opacity: .6;
             cursor: default;
         }
+
         .ampl-btn-outline {
             background: #fff;
             border: 1px solid #1d4e89;
             color: #1d4e89;
             margin-top: 8px;
         }
+
         .ampl-btn-danger {
             background: #fff;
             border: 1px solid #c0392b;
             color: #c0392b;
         }
+
         .ampl-btn-danger:disabled {
             opacity: .5;
             cursor: default;
         }
+
         .ampl-banner {
             padding: 10px 14px;
             border-radius: 6px;
             margin-bottom: 16px;
             font-size: 14px;
         }
+
         .ampl-banner-error {
             background: #fdecea;
             color: #a12a2a;
             border: 1px solid #f5c6c6;
         }
+
         .ampl-banner-success {
             background: #e8f6ee;
             color: #1e7a43;
             border: 1px solid #bfe6cf;
         }
+
         .ampl-studentrow {
             /* display: flex; */
             gap: 24px;
@@ -285,60 +311,73 @@
             font-size: 14px;
             color: #37474f;
         }
+
         .ampl-grid2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 14px;
         }
+
         @media (max-width: 767px) {
             .ampl-grid2 {
                 grid-template-columns: 1fr;
             }
         }
+
         .ampl-muted {
             color: #8a95a1;
             font-size: 13px;
         }
+
         .ampl-tablewrap {
             overflow-x: auto;
         }
+
         .ampl-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 13px;
         }
+
         .ampl-table th,
         .ampl-table td {
             border: 1px solid #e1e6eb;
             padding: 8px;
             vertical-align: middle;
         }
+
         .ampl-table th {
             background: #f4f6f8;
             text-align: left;
         }
+
         .ampl-titlerow td {
             background: #eef3f9;
         }
+
         .ampl-yieldcell {
             text-align: center;
             font-weight: 700;
             background: #f9fbfc;
         }
+
         .ampl-totalcell {
             text-align: right;
             font-weight: 700;
         }
+
         .ampl-pass {
             color: #1e7a43;
             font-weight: 700;
             margin-top: 4px;
         }
+
         .ampl-fail {
             color: #a12a2a;
             font-weight: 700;
             margin-top: 4px;
         }
+
         .ampl-badge {
             display: inline-block;
             padding: 2px 10px;
@@ -346,19 +385,23 @@
             font-size: 12px;
             font-weight: 700;
         }
+
         .ampl-badge-locked {
             background: #f4f6f8;
             color: #6b7784;
         }
+
         .ampl-badge-open {
             background: #e8f6ee;
             color: #1e7a43;
         }
+
         .ampl-locked-note {
             color: #8a95a1;
             font-size: 13px;
             margin-top: 8px;
         }
+
         .ampl-context-ribbon {
             flex-wrap: wrap;
             align-items: center;
@@ -369,15 +412,18 @@
             margin-bottom: 16px;
             font-size: 13px;
         }
+
         .ampl-context-ribbon .chip {
             background: rgba(255, 255, 255, .16);
             padding: 4px 12px;
             border-radius: 20px;
             font-weight: 600;
         }
+
         .mt-10 {
             margin-top: 10px;
         }
+
         .mt-15 {
             margin-top: 15px;
         }
@@ -429,6 +475,23 @@
             return data;
         }
         const POPUP_FEATURES = 'width=1100,height=850,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes';
+        // "after open marksPopup. after close that want repreesh is page" —
+        // once the marks-entry popup window is actually showing the form
+        // (not the brief blank placeholder window used just to check for an
+        // existing assessment), poll for it being closed and reload this
+        // page when it is. A full reload is what was asked for — simpler
+        // than trying to patch just the DataTable + React state, and it
+        // also picks up a fresh "Final Assessment Records" table row for
+        // whatever was just entered.
+        function watchPopupAndRefreshOnClose(popup) {
+            if (!popup) return;
+            const timer = setInterval(() => {
+                if (popup.closed) {
+                    clearInterval(timer);
+                    window.location.reload();
+                }
+            }, 500);
+        }
         function updateUrl(admissionNumber, studentCourseId) {
             const params = new URLSearchParams(window.location.search);
             if (admissionNumber) {
@@ -477,6 +540,7 @@
                         if (popup) {
                             popup.location = `${window.__ROUTES__.marksPopup}/${scId}`;
                             popup.focus();
+                            watchPopupAndRefreshOnClose(popup);
                         }
                     }
                 } catch (err) {
@@ -595,7 +659,10 @@
                     'assessmentMarksPopup',
                     POPUP_FEATURES
                 );
-                if (popup) popup.focus();
+                if (popup) {
+                    popup.focus();
+                    watchPopupAndRefreshOnClose(popup);
+                }
             }
             async function handleUndo() {
                 if (!existingAssessment) return;
@@ -611,6 +678,7 @@
                     if (popup && studentCourseId) {
                         popup.location = `${window.__ROUTES__.marksPopup}/${studentCourseId}`;
                         popup.focus();
+                        watchPopupAndRefreshOnClose(popup);
                     } else if (popup) {
                         popup.close();
                     }

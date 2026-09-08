@@ -43,8 +43,13 @@ class StudentAssessmentController extends Controller
             'student.verifications',
             'template.course',
             'evaluator:id,name',
+            'evaluator.branches:id,name',
             'certificate',
             'studentCourse',
+            'studentCourse.intake',
+            'studentCourse.branch'
+
+            
         ])->latest();
 
 
