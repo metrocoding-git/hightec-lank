@@ -232,9 +232,9 @@
                                         <select name="type" class="primary_select form-control">
                                             <option value="">All Types</option>
                                             <option value="course" {{ request('type') == 'course' ? 'selected' : '' }}>
-                                                Course</option>
+                                                Daily Attendance</option>
                                             <option value="subject" {{ request('type') == 'subject' ? 'selected' : '' }}>
-                                                Subject</option>
+                                                Theory</option>
                                             <option value="practical"
                                                 {{ request('type') == 'practical' ? 'selected' : '' }}>Practical</option>
                                             <option value="before_checking"
@@ -440,7 +440,7 @@
                                                                 {{ $session->type_label }}
                                                             @endif
                                                         </td>
-                                                        <td>{{ $session->checkpoint_type ? '—' : $session->subject->name ?? 'Course-wise' }}
+                                                        <td>{{ $session->checkpoint_type ? '—' : $session->subject->name ?? 'Daily Attendance' }}
                                                         </td>
                                                         <td>{{ $session->time_in ? $session->time_in->format('h:i A') : '-' }}
                                                         </td>

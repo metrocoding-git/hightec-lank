@@ -123,7 +123,7 @@
                         </button>
 
                         @if ($undoCertificate)
-                            <button type="button" id="cert-undo-btn" class="ampl-btn ampl-btn-outline col-3">
+                            <button type="button" id="cert-undo-btn" class="ampl-btn ampl-btn-outline col-12 mt-2">
                                 <i class="fa-solid fa-rotate-left"></i> Undo Last Step
                             </button>
                         @endif

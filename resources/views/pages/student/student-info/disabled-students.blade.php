@@ -2,10 +2,10 @@
 @push('css')
     <style>
         /* ---- Modern refresh: cards, table, breadcrumb (Section 25) ----
-                     BUG FIX: this page already used the sms-breadcrumb markup, but like
-                     student-view.blade.php it never defined the CSS for it, so the banner
-                     rendered unstyled. Adding the same card/table/breadcrumb CSS used
-                     everywhere else. ---- */
+                         BUG FIX: this page already used the sms-breadcrumb markup, but like
+                         student-view.blade.php it never defined the CSS for it, so the banner
+                         rendered unstyled. Adding the same card/table/breadcrumb CSS used
+                         everywhere else. ---- */
         .white-box {
             border-radius: 12px;
             box-shadow: 0 2px 14px rgba(20, 20, 43, 0.06);
@@ -496,12 +496,12 @@
                 ">" +
                 "<'row'<'col-sm-12'tr>>" +
                 "<'gap-2 mt-3'<'dt-info'i><'dt-pagination'p>> ",
-            
+
             paging: true,
             searching: true,
             ordering: true,
             info: true,
-buttons: [{
+            buttons: [{
                     extend: 'copyHtml5',
                     title: getFileName(),
                     text: '<i class="fa-regular fa-copy"></i>',

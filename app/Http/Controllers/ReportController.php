@@ -1942,8 +1942,7 @@ class ReportController extends Controller
                         ->whereHas('branches', function ($branchQuery) use ($branchId) {
                             $branchQuery->where('branches.id', $branchId);
                         })
-                        ->whereDoesntHave('branches', function ($branchQuery) use ($branchId) {
-                        });
+                        ->whereDoesntHave('branches', function ($branchQuery) use ($branchId) {});
                 })
                     ->orWhereHas('intake', function ($intakeQuery) use ($branchId) {
                         $intakeQuery->where('branch_id', $branchId);
@@ -2042,8 +2041,8 @@ class ReportController extends Controller
             ->value('total') ?? 0;
 
         $typeBreakdown = collect([
-            ['label' => 'Course', 'value' => (clone $query)->whereNull('checkpoint_type')->whereNull('subject_id')->count()],
-            ['label' => 'Subject', 'value' => (clone $query)->whereNull('checkpoint_type')->whereHas('subject', fn($q) => $q->where('type', 'T'))->count()],
+            ['label' => 'Daily Attendance', 'value' => (clone $query)->whereNull('checkpoint_type')->whereNull('subject_id')->count()],
+            ['label' => 'Theory', 'value' => (clone $query)->whereNull('checkpoint_type')->whereHas('subject', fn($q) => $q->where('type', 'T'))->count()],
             ['label' => 'Practical', 'value' => (clone $query)->whereNull('checkpoint_type')->whereHas('subject', fn($q) => $q->where('type', 'P'))->count()],
             ['label' => 'Before Checking', 'value' => (clone $query)->where('checkpoint_type', 'before_checking')->count()],
             ['label' => 'After Checking', 'value' => (clone $query)->where('checkpoint_type', 'after_checking')->count()],
@@ -2125,7 +2124,7 @@ class ReportController extends Controller
                     $session->intake->name ?? '',
                     $session->course->name ?? '',
                     $session->type_label,
-                    $session->checkpoint_type ? '—' : ($session->subject->name ?? 'Course-wise'),
+                    $session->checkpoint_type ? '—' : ($session->subject->name ?? 'Daily Attendance'),
                     optional($session->time_in)->format('h:i A'),
                     $session->markedInBy->name ?? '',
                     $session->time_out ? $session->time_out->format('h:i A') : 'Still in',

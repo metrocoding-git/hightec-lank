@@ -12,6 +12,7 @@ class CertificateTemplate extends Model
         'course_id',
         'course_name_line1',
         'course_name_line2',
+        'duration',
         'bottom_image_path',
         'back_side_content',
         'is_active',

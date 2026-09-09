@@ -237,6 +237,8 @@ return [
                         ['key' => 'certificate.generate', 'label' => 'Generate Certificate(s)'],
                         ['key' => 'certificate.sign-conductor', 'label' => 'Sign — Assessment Conductor', 'flag' => 'Step 1 of signing. The controller rejects signing as Owner on a certificate the Conductor hasn\'t signed yet, regardless of what this permission allows.'],
                         ['key' => 'certificate.sign-owner', 'label' => 'Sign — Owner', 'flag' => 'Step 2 — finalizes the certificate and unlocks download. Replaces certificate.approve from the first version of this feature, which no longer exists.'],
+                        ['key' => 'certificate.undo', 'label' => 'Undo', 'flag' => 'Undo the step by step process.'],
+                    
                     ],
                 ],
             ],

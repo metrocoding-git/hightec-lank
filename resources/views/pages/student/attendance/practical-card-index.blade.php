@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @push('css')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-daterangepicker/3.1.0/daterangepicker.css">
     <style>
         /* Matches the disabled-students list window's look (card/table/
                breadcrumb) — same --gradient_1/--gradient_2/--border_color
@@ -180,6 +181,40 @@
                                     </div>
                                 </div>
 
+                                {{-- NEW — "want add filter final assement done or not done and
+                                     finall assement fail or pass and final assement date". When no
+                                     Course is picked above, these reflect each student's MOST
+                                     RECENT course (same tie-break practical-card's show() page
+                                     already uses); with a Course picked, they reflect that course
+                                     specifically. --}}
+                                <div class="col-lg-4 mt-2">
+                                    <div class="primary_input">
+                                        <select class="primary_select form-control" name="assessment_status">
+                                            <option value="">Final Assessment: All</option>
+                                            <option value="done" @selected($selectedAssessmentStatus === 'done')>Done</option>
+                                            <option value="not_done" @selected($selectedAssessmentStatus === 'not_done')>Not Done</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-4 mt-2">
+                                    <div class="primary_input">
+                                        <select class="primary_select form-control" name="assessment_result">
+                                            <option value="">Result: All</option>
+                                            <option value="pass" @selected($selectedAssessmentResult === 'pass')>Pass</option>
+                                            <option value="fail" @selected($selectedAssessmentResult === 'fail')>Fail</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-4 mt-2">
+                                    <div class="primary_input">
+                                        <input type="text" id="assessment_date_range" name="assessment_date_range"
+                                            class="form-control primary_input_field" value="{{ $assessmentDateRange }}"
+                                            placeholder="Final Assessment Date Range" autocomplete="off">
+                                    </div>
+                                </div>
+
                                 <div class="col-lg-12 mt-10 text-right">
                                     <div class="row">
                                         <button type="submit" class="primary-btn small fix-gr-bg p-2 col-8">
@@ -221,6 +256,9 @@
                                                 <th>Student Name</th>
                                                 <th>NIC</th>
                                                 <th>Branch</th>
+                                                <th>Final Assessment</th>
+                                                <th>Result</th>
+                                                <th>Assessment Date</th>
                                                 <th>Card</th>
                                             </tr>
                                         </thead>
@@ -233,6 +271,23 @@
                                                     <td>{{ $student->national_id_number ?? '-' }}</td>
                                                     <td>{{ $student->branch->name ?? '-' }}</td>
                                                     <td>
+                                                        @if ($student->final_assessment_done)
+                                                            <span class="badge badge-success">Done</span>
+                                                        @else
+                                                            <span class="badge badge-secondary">Not Done</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @if (!$student->final_assessment_done)
+                                                            -
+                                                        @elseif ($student->final_assessment_passed)
+                                                            <span class="badge badge-success">PASS</span>
+                                                        @else
+                                                            <span class="badge badge-danger">FAIL</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>{{ $student->final_assessment_date ?? '-' }}</td>
+                                                    <td>
                                                         <a href="{{ route('student-practical-card.show', $student->id) }}"
                                                             target="_blank" rel="noopener"
                                                             class="primary-btn small fix-gr-bg p-2">
@@ -242,7 +297,7 @@
                                                 </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="6" class="text-center">
+                                                    <td colspan="9" class="text-center">
                                                         @if ($hasFilter ?? false)
                                                             No students found.
                                                         @else
@@ -266,22 +321,15 @@
 @include('components.partials.data_table_js')
 
 @pushOnce('scripts')
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-daterangepicker/3.1.0/daterangepicker.js"></script>
     <script>
-        // Same branch->intake->course AJAX cascade as the disabled-students
-        // search form, reusing the same two existing endpoints.
-        //
-        // BUG FIX: ".primary_select" elements on this app are enhanced by
-        // the niceSelect plugin, which renders its own separate dropdown
-        // widget on top of the real <select> at page-load time. Swapping
-        // the real <select>'s options with jQuery .html() (what this code
-        // was already doing) DOES update the underlying element — that's
-        // why the API response clearly contains the right data — but
-        // niceSelect's own visible widget is a snapshot from init time and
-        // does NOT auto-refresh from that change. It needs an explicit
-        // '.niceSelect('update')' call after every .html() swap, exactly
-        // like the disabled-students reference page already does; that
-        // call was missing here, which is why the intake dropdown looked
-        // empty/unchanged even though the data had already arrived.
+        flatpickr("#assessment_date_range", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            allowInput: true
+        });
+
         function refreshSelect($el) {
             if ($el.hasClass('primary_select') && typeof $el.niceSelect === 'function') {
                 $el.niceSelect('update');
@@ -419,6 +467,42 @@
             if (initialBranchId) {
                 loadIntakes(initialBranchId, initialIntakeId, initialCourseId);
             }
+        });
+
+        // NEW — "final assement date" filter, same daterangepicker.js +
+        // "YYYY-MM-DD - YYYY-MM-DD" convention already used on the Final
+        // Assessment Marks list's Created Date Range filter, so the two
+        // date-range filters in this app behave identically.
+        $(function() {
+            var $assessmentDateRange = $('#assessment_date_range');
+
+            if (!$assessmentDateRange.length) {
+                return;
+            }
+
+            var existingRange = $assessmentDateRange.val();
+            var drpOptions = {
+                autoUpdateInput: false,
+                locale: {
+                    cancelLabel: 'Clear',
+                    format: 'YYYY-MM-DD',
+                },
+            };
+
+            if (existingRange && existingRange.indexOf(' - ') !== -1) {
+                var existingParts = existingRange.split(' - ');
+                drpOptions.autoUpdateInput = true;
+                drpOptions.startDate = existingParts[0];
+                drpOptions.endDate = existingParts[1];
+            }
+
+            $assessmentDateRange.daterangepicker(drpOptions);
+            $assessmentDateRange.on('apply.daterangepicker', function(ev, picker) {
+                $(this).val(picker.startDate.format('YYYY-MM-DD') + ' - ' + picker.endDate.format('YYYY-MM-DD'));
+            });
+            $assessmentDateRange.on('cancel.daterangepicker', function() {
+                $(this).val('');
+            });
         });
 
         $('#attendance-cards-table').DataTable({

@@ -495,25 +495,6 @@ class CertificateController extends Controller
         return $path;
     }
 
-    /**
-     * Render (or re-render) the certificate PDF and return its stored path.
-     * A4 PORTRAIT now (was landscape) — matches the sample certificate.pdf
-     * you uploaded. Gathers everything the redesigned
-     * certificate-pdf.blade.php needs: the chosen CertificateTemplate (for
-     * course name lines / bottom image / back-side content), the student's
-     * training start/end dates (for "From: ... to ..." and the auto-computed
-     * duration-in-words), and both signature images as data: URIs (so
-     * dompdf doesn't need filesystem/remote access at render time).
-     *
-     * ASSUMPTION flagged (not confirmed): studentAssessment->studentCourse()
-     * — see StudentAssessment_ADD_studentCourse_relation.php delivered
-     * alongside this file. If that relation doesn't exist yet under this
-     * name, $studentCourse below will just be null and the certificate
-     * renders with blank From/To dates and no duration wording — it won't
-     * error, but the dates won't show until that relation is confirmed/added
-     * AND course_start_date/course_end_date are actually filled in on the
-     * relevant student_courses row.
-     */
     private function renderCertificatePdf(Certificate $certificate): string
     {
         $certificate->loadMissing([
@@ -526,13 +507,32 @@ class CertificateController extends Controller
 
         $studentCourse = optional($certificate->studentAssessment)->studentCourse;
         $startDate = optional($studentCourse)->created_at ? Carbon::parse($studentCourse->created_at) : null;
-        $endDate = optional($studentCourse)->course_end_date ? Carbon::parse($studentCourse->course_end_date) : null;
 
-        $durationWords = null;
-        if ($startDate && $endDate && $endDate->gte($startDate)) {
-            $days = $startDate->diffInDays($endDate) + 1; // inclusive of both the start and end day
-            $durationWords = $this->numberToWords($days);
-        }
+        // CHANGED this round ("to date is cetrificate genarate date"): the
+        // "to" date on the "From: ... to ..." line used to come from
+        // studentCourse->course_end_date, which is why it printed blank on
+        // the real certificate you sent (that column wasn't set). Now it's
+        // just the certificate's own generated/issue date — the same value
+        // "Date of issued" below it already uses — so it's never blank for
+        // any certificate that's actually been generated.
+        $generatedDate = $certificate->issue_date ?? optional($certificate->generated_at)->toDateString();
+        $endDate = $generatedDate ? Carbon::parse($generatedDate) : null;
+
+        $durationWords = optional($certificate->certificateTemplate)->duration;
+
+        $bottomImagePath = optional($certificate->certificateTemplate)->bottom_image_path;
+        $bottomImageDims = $this->scaledImageDimensions($bottomImagePath, 'public', 123, 92);
+
+        // Shrink-to-fit for long names — see the class-doc comment above.
+        // 41 characters is roughly the longest that fits on one line at
+        // the full 20pt size inside the name's 412pt-wide blank line,
+        // measured against the real embedded name font; anything longer
+        // scales down proportionally instead of wrapping onto the NIC
+        // line below it. Floors at 13pt so an extreme outlier still stays
+        // legible rather than shrinking to nothing.
+        $studentName = optional(optional($certificate->studentAssessment)->student)->student_name ?? '';
+        $nameLength = mb_strlen($studentName);
+        $nameFontSize = $nameLength > 41 ? max(10, round(20 * (41 / $nameLength))) : 14;
 
         $pdf = Pdf::loadView('pages.administration.certificate.pdf', [
             'certificate'               => $certificate,
@@ -540,13 +540,18 @@ class CertificateController extends Controller
             'startDate'                 => $startDate,
             'endDate'                   => $endDate,
             'durationWords'             => $durationWords,
+            'nameFontSize'              => $nameFontSize,
             'qrDataUri'                 => $this->buildQrDataUri($certificate),
-            'bottomImageDataUri'        => $certificate->certificateTemplate
-                ? $this->fileToDataUri($certificate->certificateTemplate->bottom_image_path, 'public')
+            'bottomImageDataUri'        => $bottomImagePath
+                ? $this->fileToDataUri($bottomImagePath, 'public')
                 : null,
+            'bottomImageWidth'          => $bottomImageDims['width'] ?? null,
+            'bottomImageHeight'         => $bottomImageDims['height'] ?? null,
             'ownerSignatureDataUri'     => $this->fileToDataUri($certificate->owner_signature_path, 'local'),
             'conductorSignatureDataUri' => $this->fileToDataUri($certificate->conductor_signature_path, 'local'),
-        ])->setPaper('a4', 'portrait');
+            'nameFontDataUri'           => $this->fontToDataUri('certificate-name-font.ttf'),
+            'gradeFontDataUri'          => $this->fontToDataUri('certificate-grade-font.ttf'),
+        ])->setPaper('letter', 'portrait');
 
         $path = 'certificates/pdf/' . $certificate->certificate_number . '.pdf';
         Storage::disk('local')->put($path, $pdf->output());
@@ -555,27 +560,36 @@ class CertificateController extends Controller
     }
 
     /**
-     * Small 1-99 number-to-words converter — covers any realistic training
-     * duration ("fourteen days", matching the sample). Falls back to plain
-     * digits for 100+ (shouldn't come up for a training-course length, but
-     * safer than throwing).
+     * Reads a stored image's real dimensions and scales them down (never
+     * up) to fit inside a $maxWidth x $maxHeight box in points, preserving
+     * aspect ratio — so the certificate PDF can set explicit width/height
+     * HTML attributes on the <img> tag rather than relying on CSS
+     * max-width/max-height, which dompdf does not reliably honor on
+     * inline base64 images (confirmed: your uploaded bottom-image
+     * rendered oversized and bled off the page edge with only CSS
+     * constraints in place). Returns null if the file is missing or its
+     * dimensions can't be read (the view then falls back to plain CSS
+     * max-width/max-height as a safety net).
      */
-    private function numberToWords(int $number): string
+    private function scaledImageDimensions(?string $path, string $disk, int $maxWidth, int $maxHeight): ?array
     {
-        $ones = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
-            'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
-        $tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
-
-        if ($number < 20) {
-            return $ones[$number];
-        }
-        if ($number < 100) {
-            $ten = intdiv($number, 10);
-            $one = $number % 10;
-            return trim($tens[$ten] . ($one ? '-' . $ones[$one] : ''));
+        if (!$path || !Storage::disk($disk)->exists($path)) {
+            return null;
         }
 
-        return (string) $number;
+        $size = @getimagesize(Storage::disk($disk)->path($path));
+
+        if (!$size || $size[0] <= 0 || $size[1] <= 0) {
+            return null;
+        }
+
+        [$originalWidth, $originalHeight] = $size;
+        $scale = min($maxWidth / $originalWidth, $maxHeight / $originalHeight);
+
+        return [
+            'width'  => (int) round($originalWidth * $scale),
+            'height' => (int) round($originalHeight * $scale),
+        ];
     }
 
     /**
@@ -614,5 +628,28 @@ class CertificateController extends Controller
         $contents = Storage::disk($disk)->get($path);
 
         return 'data:' . $mime . ';base64,' . base64_encode($contents);
+    }
+
+    /**
+     * Reads a .ttf font file bundled with the app (NOT user-uploaded, so
+     * this reads from resources/fonts rather than a Storage disk) and
+     * returns it as a data: URI for an @font-face rule in pdf.blade.php.
+     * Returns null quietly if the file hasn't been placed there yet —
+     * pdf.blade.php falls back to its normal font stack in that case, so
+     * this is safe to ship before the .ttf files are actually deployed.
+     *
+     * Put the two files I sent at:
+     *   resources/fonts/certificate-name-font.ttf
+     *   resources/fonts/certificate-grade-font.ttf
+     */
+    private function fontToDataUri(string $filename): ?string
+    {
+        $path = resource_path('fonts/' . $filename);
+
+        if (!is_file($path)) {
+            return null;
+        }
+
+        return 'data:font/ttf;base64,' . base64_encode(file_get_contents($path));
     }
 }

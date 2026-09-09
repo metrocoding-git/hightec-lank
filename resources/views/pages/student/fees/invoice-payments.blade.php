@@ -378,11 +378,11 @@
                 scrollX: true,
 
                 dom: "<'dt-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3'" +
-                "<'dt-toolbar-title'>" +
-                "<'dt-toolbar-controls d-flex align-items-center flex-wrap gap-2 mt-3'<'dt-length'l><'dt-search'f><'dt-buttons-wrap'B>>" +
-                ">" +
-                "<'row'<'col-sm-12'tr>>" +
-                "<'gap-2 mt-3'<'dt-info'i><'dt-pagination'p>> ",
+                    "<'dt-toolbar-title'>" +
+                    "<'dt-toolbar-controls d-flex align-items-center flex-wrap gap-2 mt-3'<'dt-length'l><'dt-search'f><'dt-buttons-wrap'B>>" +
+                    ">" +
+                    "<'row'<'col-sm-12'tr>>" +
+                    "<'gap-2 mt-3'<'dt-info'i><'dt-pagination'p>> ",
 
                 lengthChange: true,
                 buttons: [{
@@ -428,19 +428,23 @@
                 searching: true,
                 ordering: true,
                 info: true,
-                            pageLength: 100,
+                pageLength: 100,
 
                 order: [
                     [0, 'desc']
                 ],
+                lengthMenu: [
+                    [50, 100, 500, -1],
+                    [50, 100, 500, "All"]
+                ],
                 language: {
-                search: '<i class=""></i>',
-                searchPlaceholder: 'Search...',
-                paginate: {
-                    previous: '<i class="fa-solid fa-angle-left"></i>',
-                    next: '<i class="fa-solid fa-angle-right"></i>'
-                }
-            },
+                    search: '<i class=""></i>',
+                    searchPlaceholder: 'Search...',
+                    paginate: {
+                        previous: '<i class="fa-solid fa-angle-left"></i>',
+                        next: '<i class="fa-solid fa-angle-right"></i>'
+                    }
+                },
 
 
                 ajax: {

@@ -29,6 +29,7 @@ class CertificateTemplateController extends Controller
             'course_id'          => 'nullable|integer|exists:courses,id',
             'course_name_line1'  => 'required|string|max:255',
             'course_name_line2'  => 'nullable|string|max:255',
+            'duration'           => 'nullable|string|max:255',
             'back_side_content'  => 'nullable|string',
             'bottom_image'       => 'nullable|image|mimes:png,jpg,jpeg|max:4096',
         ]);
@@ -58,6 +59,7 @@ class CertificateTemplateController extends Controller
             'course_id'          => 'nullable|integer|exists:courses,id',
             'course_name_line1'  => 'required|string|max:255',
             'course_name_line2'  => 'nullable|string|max:255',
+            'duration'           => 'nullable|string|max:255',
             'back_side_content'  => 'nullable|string',
             'bottom_image'       => 'nullable|image|mimes:png,jpg,jpeg|max:4096',
         ]);

@@ -554,7 +554,7 @@ class ScanAttendanceController extends Controller
             $studentName = $session->student->student_name ?? '-';
             $regNo = $session->student->admission_number ?? '-';
             $courseName = $session->course->name ?? '-';
-            $subjectLabel = $session->subject->name ?? 'Course-wise';
+            $subjectLabel = $session->subject->name ?? 'Daily Attendance';
 
             if ($session->time_in) {
                 $rows[] = [

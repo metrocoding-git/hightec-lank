@@ -121,6 +121,70 @@
             color: #123a68;
         }
 
+        /* NEW — "header want like attendance card": photo + name/sub +
+           an Admission/NIC/Course meta row, styled as its own card at the
+           top of the popup (same visual language as .ampl-card elsewhere
+           in this file — white card, soft shadow, rounded corners). */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: #fff;
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+            flex-wrap: wrap;
+        }
+
+        .header .photo {
+            width: 84px;
+            height: 84px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 1px solid #d7dde3;
+            flex-shrink: 0;
+        }
+
+        .header .titles {
+            flex: 1;
+            min-width: 220px;
+        }
+
+        .header .titles h1 {
+            font-size: 19px;
+            font-weight: 700;
+            margin: 0 0 2px;
+            color: #1d4e89;
+        }
+
+        .header .titles .sub {
+            font-size: 12.5px;
+            color: #8a95a1;
+            margin-bottom: 12px;
+        }
+
+        .header .meta-grid {
+            display: flex;
+            gap: 28px;
+            flex-wrap: wrap;
+        }
+
+        .header .meta-grid .item .label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #8a95a1;
+            text-transform: uppercase;
+            letter-spacing: .02em;
+            margin-bottom: 2px;
+        }
+
+        .header .meta-grid .item .value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #37474f;
+        }
+
         .ampl-grid3 {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -361,6 +425,9 @@
             courseId: {{ (int) $studentCourse->course_id }},
             studentId: {{ (int) $studentCourse->student_id }},
             studentName: @json($studentCourse->student->student_name ?? ''),
+            nationalIdNumber: @json($studentCourse->student->national_id_number ?? ''),
+            photo: @json($studentCourse->student->photo ?? ''),
+            photoUrl: @json($studentCourse->student->photo ? asset('storage/' . $studentCourse->student->photo) : ''),
             admissionNumber: @json($studentCourse->student->admission_number ?? ''),
             branchId: {{ $studentCourse->student->branch_id ?? 'null' }},
             branchName: @json(optional($studentCourse->student->branch)->name ?? ''),
@@ -751,6 +818,45 @@
                         <span className="chip">{ctx.studentName}</span>
                         <span className="chip">{ctx.admissionNumber}</span>
                         <span className="chip">{ctx.courseName}</span>
+                    </div>
+
+                    {/* FIXED — "header is not work.. that header want like
+                        attendance card". This block used to be pasted-in
+                        Blade markup (@if / {{ }} / PHP's ?? '-') sitting
+                        inside a @verbatim React script — Blade never
+                        touches anything inside @verbatim, and PHP's ??
+                        isn't valid JS, so it was a hard Babel syntax error
+                        that broke the ENTIRE popup (blank white screen),
+                        not just the header. Rewritten as real JSX using the
+                        ctx object already in scope, plus a matching .header
+                        CSS block added above (none of these classes existed
+                        before — .header/.photo/.titles/.meta-grid/.item/
+                        .label/.value are all new). ctx.photoUrl is a new
+                        field added to window.__CONTEXT__ above, built
+                        server-side with asset('storage/...') since that
+                        Blade helper can't be called from client-side JS. */}
+                    <div className="header">
+                        {ctx.photoUrl && (
+                            <img className="photo" src={ctx.photoUrl} alt="photo" />
+                        )}
+                        <div className="titles">
+                            <h1>{ctx.studentName}</h1>
+                            <div className="sub">Practical Attendance Card</div>
+                            <div className="meta-grid">
+                                <div className="item">
+                                    <div className="label">Admission No</div>
+                                    <div className="value">{ctx.admissionNumber || '-'}</div>
+                                </div>
+                                <div className="item">
+                                    <div className="label">NIC</div>
+                                    <div className="value">{ctx.nationalIdNumber || '-'}</div>
+                                </div>
+                                <div className="item">
+                                    <div className="label">Course</div>
+                                    <div className="value">{ctx.courseName || '-'}</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     {/* "before student assesment mark. want display student related

@@ -2,206 +2,7 @@
 @section('title')
     Final Assessment Marks
 @endsection
-@section('mainContent')
-    @php
-        $canAddAssessment = Auth::user()->hasPermission('student-assessment.store');
-        $canUndoAssessment = Auth::user()->hasPermission('student-assessment.destroy');
-        $categoriesByPair = $categoriesByPair ?? collect();
-    @endphp
-    <section class="sms-breadcrumb mb-20 up_breadcrumb">
-        <div class="container-fluid">
-            <div class="row justify-content-between">
-                <h1>Final Assessment Marks</h1>
-                <div class="bc-pages">
-                    <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
-                    <a href="#">Final Assessment Marks</a>
-                </div>
-            </div>
-        </div>
-    </section>
-    <section class="admin-visitor-area up_admin_visitor">
-        <div class="container-fluid p-0">
-            <div id="assessment-mark-root"></div>
-        </div>
-    </section>
-    <section class="admin-visitor-area up_admin_visitor mt-10">
-        <div class="container-fluid p-0">
-            <div class="white-box p-20 mb-20 mt-40">
-                <form method="GET" action="{{ route('student-assessment.index') }}" class="row align-items-end mb-15">
-                    <div class="col-lg-4 mb-2">
-                        <select name="course_id" class="primary_select form-control ajax_select">
-                            @foreach ($courseOptions ?? [] as $c)
-                                <option value="{{ $c->id }}"
-                                    {{ (string) request('course_id') === (string) $c->id ? 'selected' : '' }}>
-                                    {{ $c->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-lg-4 mb-2">
-                        <label class="ampl-filter-label">Result</label>
-                        <select name="result" class="primary_select form-control ajax_select">
-                            <option value="">All Results</option>
-                            <option value="PASS" {{ request('result') === 'PASS' ? 'selected' : '' }}>Pass</option>
-                            <option value="FAIL" {{ request('result') === 'FAIL' ? 'selected' : '' }}>Fail</option>
-                        </select>
-                    </div>
-                    <div class="col-lg-4 mb-2">
-                        <select name="created_by" class="primary_select form-control ajax_selectl">
-                            <option value="">Everyone</option>
-                            @foreach ($creatorOptions ?? [] as $u)
-                                <option value="{{ $u->id }}"
-                                    {{ (string) request('created_by') === (string) $u->id ? 'selected' : '' }}>
-                                    {{ $u->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-lg-12 mb-2">
-                        <input type="text" name="q" class="form-control" value="{{ request('q') }}"
-                            placeholder="Search (Name / Reg No / NIC)">
-                    </div>
-                    <div class="col-12 mt-10">
-                        <div class="row align-items-center">
-                            <div class="col-10">
-                                <button type="submit" class="primary-btn small fix-gr-bg col-12 p-2">
-                                    <span class="ti-search pr-2"></span> Search
-                                </button>
-                            </div>
-                            <div class="col-2">
-                                <button class="primary-btn small fix-gr-bg col-12 p-2">
-                                    <a href="{{ route('student-assessment.index') }}" class="text-white">Reset</a>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="white-box">
-                <div class="row">
-                    <div class="col-lg-4 no-gutters">
-                        <div class="main-title">
-                            <h3 class="mb-15">Final Assessment Records</h3>
-                        </div>
-                    </div>
-                </div>
-                <div class="table-responsive">
-                    <x-table>
-                        <table id="table_id" class="table data-table" cellspacing="0" width="100%">
-                            <thead>
-                                <tr>
-                                    <th></th>
-                                    <th>#</th>
-                                    <th>Student</th>
-                                    <th>Reg No</th>
-                                    <th>Course</th>
-                                    <th>Module</th>
-                                    <th>Created Date</th>
-                                    <th>Total</th>
-                                    <th>Result</th>
-                                    <th>Grade</th>
-                                    <th>Student Category</th>
-                                    <th>Course Start Date</th>
-                                    <th>Address</th>
-                                    <th>Name Verified</th>
-                                    <th>NIC / ID No. Verified</th>
-                                    <th>Address Verified</th>
-                                    <th>Start Date</th>
-                                    <th>Created By</th>
-                                    <th>Intake</th>
-                                    <th>FS Conduct Branch</th>
-                                    <th>Intake Branch</th>
-
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse (($recent ?? collect()) as $i => $a)
-                                    @php
-                                        $assessedCourseId = optional($a->template->course)->id;
-                                        $categoryKey = $a->student_id . '-' . $assessedCourseId;
-                                        $studentCategory =
-                                            optional($categoriesByPair->get($categoryKey))->category_name ?? '-';
-                                    @endphp
-                                    <tr>
-                                        <td></td>
-                                        <td>{{ $i + 1 }}</td>
-                                        <td>{{ $a->student->student_name ?? '-' }}</td>
-                                        <td>{{ $a->student->admission_number ?? '-' }}</td>
-                                        <td>{{ $a->template->course->name ?? '-' }}</td>
-                                        <td>{{ $a->template->module_name ?? '-' }}</td>
-                                        <td>{{ optional($a->assessed_at)->format('Y-m-d') }}</td>
-                                        <td>{{ $a->total_marks }} / {{ $a->max_marks }}</td>
-                                        <td>
-                                            @if ($a->is_qualified)
-                                                <span class="badge badge-success">PASS</span>
-                                            @else
-                                                <span class="badge badge-danger">FAIL</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            {{-- grade now stores the letter band (A / B+ / B / C) or FAIL,
-                                                 computed in StudentAssessmentController::percentageToGrade() --}}
-                                            {{ $a->grade ?? '-' }}
-                                        </td>
-                                        <td>{{ $studentCategory }}</td>
-                                        <td>
-                                            {{-- TODO: wire this in once the real column is confirmed —
-                                                 student_courses.start_date? intakes.start_date? something
-                                                 else? Left as a placeholder rather than guessing a column
-                                                 name that might not exist and 500ing the page. --}}
-                                            -
-                                        </td>
-                                        <td>{{ $a->student->permanent_address ?? '-' }}</td>
-                                        <td>
-                                            @if ($a->student && $a->student->isVerified('Full Name Verified'))
-                                                <span class="text-success">YES</span>
-                                            @else
-                                                NO
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if ($a->student && $a->student->isVerified('NIC Verified'))
-                                                <span class="text-success">YES</span>
-                                            @else
-                                                NO
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if ($a->student && $a->student->isVerified('Address Verified'))
-                                                <span class="text-success">YES</span>
-                                            @else
-                                                NO
-                                            @endif
-                                        </td>
-                                        <td>{{ $a->studentCourse->intake->start_date ?? '-' }}</td>
-                                        <td>{{ $a->evaluator->name ?? '-' }}</td>
-                                        <td>{{ $a->studentCourse->intake->name ?? '-' }}</td>
-                                        <td>{{ $a->evaluator->branches->first()->name ?? '-' }}</td>
-                                        <td>{{ $a->studentCourse->branch->name ?? '-' }}</td>
-
-                                        <td>
-                                            <a href="{{ url('/student/student-info/assessment/' . $a->id . '/pdf') }}"
-                                                class="btn btn-sm btn-outline-primary" target="_blank">PDF</a>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="17" class="text-center">No assessments found.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </x-table>
-                </div>
-            </div>
-        </div>
-    </section>
-@endsection
-@include('components.partials.data_table_css')
-@include('components.partials.data_table_js')
-@push('script')
-    <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap4.min.css">
+@push('css')
     <style>
         .ampl-card {
             background: #fff;
@@ -428,10 +229,227 @@
             margin-top: 15px;
         }
     </style>
+@endpush
+@section('mainContent')
+    @php
+        $canAddAssessment = Auth::user()->hasPermission('student-assessment.store');
+        $canUndoAssessment = Auth::user()->hasPermission('student-assessment.destroy');
+        $categoriesByPair = $categoriesByPair ?? collect();
+    @endphp
+    <section class="sms-breadcrumb mb-20 up_breadcrumb">
+        <div class="container-fluid">
+            <div class="row justify-content-between">
+                <h1>Final Assessment Marks</h1>
+                <div class="bc-pages">
+                    <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
+                    <a href="#">Final Assessment Marks</a>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="admin-visitor-area up_admin_visitor">
+        <div class="container-fluid p-0">
+            <div id="assessment-mark-root"></div>
+        </div>
+    </section>
+    <section class="admin-visitor-area up_admin_visitor mt-10">
+        <div class="container-fluid p-0">
+            <div class="white-box p-20 mb-20 mt-40">
+                <form method="GET" action="{{ route('student-assessment.index') }}" class="row align-items-end mb-15">
+                    <div class="col-lg-4 mb-2">
+                        <select name="course_id" class="primary_select form-control ajax_select">
+                            <option value="">All Courses</option>
+                            @foreach ($courseOptions ?? [] as $c)
+                                <option value="{{ $c->id }}"
+                                    {{ (string) request('course_id') === (string) $c->id ? 'selected' : '' }}>
+                                    {{ $c->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-lg-4 mb-2">
+                        <select name="result" class="primary_select form-control ajax_select">
+                            <option value="">All Results</option>
+                            <option value="PASS" {{ request('result') === 'PASS' ? 'selected' : '' }}>Pass</option>
+                            <option value="FAIL" {{ request('result') === 'FAIL' ? 'selected' : '' }}>Fail</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-4 mb-2">
+                        <select name="created_by" class="primary_select form-control ajax_selectl">
+                            <option value="">Everyone</option>
+                            @foreach ($creatorOptions ?? [] as $u)
+                                <option value="{{ $u->id }}"
+                                    {{ (string) request('created_by') === (string) $u->id ? 'selected' : '' }}>
+                                    {{ $u->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-lg-8 mb-2">
+                        <input type="text" id="filter_date_range" name="date_range" class="form-control"
+                            value="{{ request('date_range') }}" placeholder="Select Created Date Range" autocomplete="off">
+                    </div>
+                    <div class="col-lg-4 mb-2">
+                        <select name="branch_id" class="primary_select form-control ajax_select">
+                            <option value="">All Branches (Evaluator)</option>
+                            @foreach ($branchOptions ?? [] as $b)
+                                <option value="{{ $b->id }}"
+                                    {{ (string) request('branch_id') === (string) $b->id ? 'selected' : '' }}>
+                                    {{ $b->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-lg-12 mb-2">
+                        <input type="text" name="q" class="form-control" value="{{ request('q') }}"
+                            placeholder="Search (Name / Reg No / NIC)">
+                    </div>
+                    <div class="col-12 mt-10">
+                        <div class="row align-items-center">
+                            <div class="col-10">
+                                <button type="submit" class="primary-btn small fix-gr-bg col-12 p-2">
+                                    <span class="ti-search pr-2"></span> Search
+                                </button>
+                            </div>
+                            <div class="col-2">
+                                <button class="primary-btn small fix-gr-bg col-12 p-2">
+                                    <a href="{{ route('student-assessment.index') }}" class="text-white">Reset</a>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="white-box">
+                <div class="row">
+                    <div class="col-lg-4 no-gutters">
+                        <div class="main-title">
+                            <h3 class="mb-15">Final Assessment Records</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <x-table>
+                        <table id="table_id" class="table " cellspacing="0" width="100%">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>#</th>
+                                    <th>Student</th>
+                                    <th>Reg No</th>
+                                    <th>NIC Number</th>
+                                    <th>Course</th>
+                                    <th>Module</th>
+                                    <th>Created Date</th>
+                                    <th>Total</th>
+                                    <th>Result</th>
+                                    <th>Grade</th>
+                                    <th>Student Category</th>
+                                    <th>Address</th>
+                                    <th>Name Verified</th>
+                                    <th>NIC / ID No. Verified</th>
+                                    <th>Address Verified</th>
+                                    <th>Start Date</th>
+                                    <th>Created By</th>
+                                    <th>Intake</th>
+                                    <th>FS Conduct Branch</th>
+                                    <th>Intake Branch</th>
+
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse (($recent ?? collect()) as $i => $a)
+                                    @php
+                                        $assessedCourseId = optional($a->template->course)->id;
+                                        $categoryKey = $a->student_id . '-' . $assessedCourseId;
+                                        $studentCategory =
+                                            optional($categoriesByPair->get($categoryKey))->category_name ?? '-';
+                                    @endphp
+                                    <tr>
+                                        <td></td>
+                                        <td>{{ $i + 1 }}</td>
+                                        <td>{{ $a->student->student_name ?? '-' }}</td>
+                                        <td>{{ $a->student->admission_number ?? '-' }}</td>
+                                        <td>{{ $a->student->national_id_number ?? '-' }}</td>
+                                        <td>{{ $a->template->course->name ?? '-' }}</td>
+                                        <td>{{ $a->template->module_name ?? '-' }}</td>
+                                        <td>{{ optional($a->assessed_at)->format('Y-m-d') }}</td>
+                                        <td>{{ $a->total_marks }} / {{ $a->max_marks }}</td>
+                                        <td>
+                                            @if ($a->is_qualified)
+                                                <span class="badge badge-success">PASS</span>
+                                            @else
+                                                <span class="badge badge-danger">FAIL</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            {{-- grade now stores the letter band (A / B+ / B / C) or FAIL,
+                                                 computed in StudentAssessmentController::percentageToGrade() --}}
+                                            {{ $a->grade ?? '-' }}
+                                        </td>
+                                        <td>{{ $studentCategory }}</td>
+                                        <td>{{ $a->student->permanent_address ?? '-' }}</td>
+                                        <td>
+                                            @if ($a->student && $a->student->isVerified('Full Name Verified'))
+                                                <span class="text-success">YES</span>
+                                            @else
+                                                NO
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if ($a->student && $a->student->isVerified('NIC Verified'))
+                                                <span class="text-success">YES</span>
+                                            @else
+                                                NO
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if ($a->student && $a->student->isVerified('Address Verified'))
+                                                <span class="text-success">YES</span>
+                                            @else
+                                                NO
+                                            @endif
+                                        </td>
+                                        <td>{{ $a->studentCourse->intake->start_date ?? '-' }}</td>
+                                        <td>{{ $a->evaluator->name ?? '-' }}</td>
+                                        <td>{{ $a->studentCourse->intake->name ?? '-' }}</td>
+                                        <td>{{ $a->evaluator->branches->first()->name ?? '-' }}</td>
+                                        <td>{{ $a->studentCourse->branch->name ?? '-' }}</td>
+
+                                        <td>
+                                            <a href="{{ url('/student/student-info/assessment/' . $a->id . '/pdf') }}"
+                                                class="btn btn-sm btn-outline-primary" target="_blank">PDF</a>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="17" class="text-center">No assessments found.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </x-table>
+                </div>
+            </div>
+        </div>
+    </section>
+@endsection
+@include('components.partials.data_table_js')
+@include('components.partials.multi_select_js')
+@include('components.partials.date_picker_css_js')
+@include('components.partials.data_table_css')
+@push('script')
+    <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap4.min.css">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-daterangepicker/3.1.0/daterangepicker.css">
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
     <script src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-daterangepicker/3.1.0/daterangepicker.js"></script>
     <script>
         window.__CSRF_TOKEN__ = "{{ csrf_token() }}";
         window.__ROUTES__ = {
@@ -444,6 +462,61 @@
             canAdd: @json($canAddAssessment),
             canUndo: @json($canUndoAssessment),
         };
+
+        $('#table_id').DataTable({
+            responsive: true,
+            dom: "<'dt-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3'" +
+                "<'dt-toolbar-title'>" +
+                "<'dt-toolbar-controls d-flex align-items-center flex-wrap gap-2 mt-3'<'dt-length'l><'dt-search'f><'dt-buttons-wrap'B>>" +
+                ">" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'gap-2 mt-3'<'dt-info'i><'dt-pagination'p>> ",
+
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+            buttons: [{
+                    extend: 'copyHtml5',
+                    title: getFileName(),
+                    text: '<i class="fa-regular fa-copy"></i>',
+                    titleAttr: 'Copy'
+                },
+                {
+                    extend: 'csvHtml5',
+                    title: getFileName(),
+                    text: '<i class="fa-solid fa-file-csv"></i>',
+                    titleAttr: 'CSV'
+                },
+                {
+                    extend: 'excelHtml5',
+                    title: getFileName(),
+                    text: '<i class="fa-solid fa-file-excel"></i>',
+                    titleAttr: 'Excel'
+                },
+                {
+                    extend: 'pdfHtml5',
+                    title: getFileName(),
+                    text: '<i class="fa-solid fa-file-pdf"></i>',
+                    titleAttr: 'PDF'
+                },
+                {
+                    extend: 'print',
+                    title: getFileName(),
+                    text: '<i class="fa-solid fa-print"></i>',
+                    titleAttr: 'Print'
+                }
+            ],
+            pageLength: 100,
+            language: {
+                search: '<i class=""></i>',
+                searchPlaceholder: 'Search...',
+                paginate: {
+                    previous: '<i class="fa-solid fa-angle-left"></i>',
+                    next: '<i class="fa-solid fa-angle-right"></i>'
+                }
+            },
+        });
     </script>
     @verbatim
         <script type="text/babel" data-presets="react">
@@ -475,14 +548,6 @@
             return data;
         }
         const POPUP_FEATURES = 'width=1100,height=850,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes';
-        // "after open marksPopup. after close that want repreesh is page" —
-        // once the marks-entry popup window is actually showing the form
-        // (not the brief blank placeholder window used just to check for an
-        // existing assessment), poll for it being closed and reload this
-        // page when it is. A full reload is what was asked for — simpler
-        // than trying to patch just the DataTable + React state, and it
-        // also picks up a fresh "Final Assessment Records" table row for
-        // whatever was just entered.
         function watchPopupAndRefreshOnClose(popup) {
             if (!popup) return;
             const timer = setInterval(() => {
@@ -519,12 +584,6 @@
             const [courseId, setCourseId] = React.useState('');
             const [existingAssessment, setExistingAssessment] = React.useState(null);
             const [canUndo, setCanUndo] = React.useState(false);
-            // Shared by: (a) an interactive course selection — where a blank
-            // popup was already opened synchronously by the caller, before any
-            // await, so browsers don't treat it as an unrequested popup — and
-            // (b) restoring state from the URL on page load, where `popup` is
-            // null and nothing is auto-opened (a page load isn't a genuine
-            // user click, so a popup there would just get blocked anyway).
             async function resolveCourseSelection(scId, popup) {
                 setBusy(true);
                 setBanner(null);
@@ -550,10 +609,6 @@
                     setBusy(false);
                 }
             }
-            // Restore student + course from the URL on page load/refresh, so
-            // the "already has a saved assessment — View / Undo" card (and any
-            // in-progress course selection) survives a reload instead of
-            // disappearing every time the page reloads.
             React.useEffect(() => {
                 function handleMessage(e) {
                     if (e.origin !== window.location.origin) return;
@@ -595,8 +650,6 @@
                             }
                         }
                     } catch (err) {
-                        // Stale/invalid saved link (student deleted, bad id, etc) —
-                        // clear it quietly rather than greeting the page with an error.
                         updateUrl('', '');
                     } finally {
                         setBusy(false);
@@ -647,8 +700,6 @@
                 }
                 setCourseId(sc.course_id);
                 updateUrl(regNo, scId);
-                // Open the popup window SYNCHRONOUSLY, inside this click/change
-                // handler, before the network round-trip below.
                 const popup = window.open('', 'assessmentMarksPopup', POPUP_FEATURES);
                 resolveCourseSelection(scId, popup);
             }
@@ -787,83 +838,35 @@
         ReactDOM.createRoot(document.getElementById('assessment-mark-root')).render(<App />);
     </script>
     @endverbatim
-    @pushOnce('scripts')
-        <script>
-            $(function() {
-                if (!$('#assessments-table').length) {
-                    return;
-                }
-                $('#table_id').DataTable({
-                    scrollX: true,
-                    dom: "<'dt-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3 '" +
-                        "<'dt-toolbar-title'>" +
-                        "<'dt-toolbar-controls d-flex align-items-center flex-wrap gap-2 mt-3'<'dt-search'f><'dt-buttons-wrap'B>>" +
-                        ">" +
-                        "<'row'<'col-sm-12'tr>>" +
-                        "<'gap-2 mt-3'<'dt-info'i><'dt-pagination'p>>",
-                    processing: true,
-                    serverSide: true,
-                    pageLength: 100,
-                    lengthMenu: [
-                        [25, 50, 100, -1],
-                        [25, 50, 100, "All"]
-                    ],
-                    buttons: [{
-                            extend: 'pdf',
-                            title: getFileName(),
-                            text: '<i title="export to pdf" class="fa fa-file-pdf-o"></i>',
-                            exportOptions: {
-                                columns: ':visible'
-                            }
-                        },
-                        {
-                            extend: 'csv',
-                            title: getFileName(),
-                            text: '<i title="export to csv" class="fa fa-file-text-o"></i>',
-                            exportOptions: {
-                                columns: ':visible'
-                            }
-                        },
-                        {
-                            extend: 'excel',
-                            title: getFileName(),
-                            text: '<i title="export to excel" class="fa fa-file-excel-o"></i>',
-                            exportOptions: {
-                                columns: ':visible'
-                            }
-                        },
-                        {
-                            extend: 'print',
-                            title: getFileName(),
-                            text: '<i title="print" class="fa fa-print"></i>',
-                            exportOptions: {
-                                columns: ':visible'
-                            }
-                        },
-                        {
-                            extend: 'colvis',
-                            title: getFileName(),
-                            text: '<i title="column visibility" class="fa fa-eye"></i>',
-                            columns: ':gt(0)'
-                        }
-                    ],
-                    paging: true,
-                    searching: true,
-                    ordering: true,
-                    info: true,
-                    order: [
-                        [0, 'desc']
-                    ],
-                    language: {
-                        search: '<i class=""></i>',
-                        searchPlaceholder: 'Search...',
-                        paginate: {
-                            previous: '<i class="fa-solid fa-angle-left"></i>',
-                            next: '<i class="fa-solid fa-angle-right"></i>'
-                        }
+    <script>
+        $(function() {
+            var $dateRangeInput = $('#filter_date_range');
+            if ($dateRangeInput.length) {
+                var existingRange = $dateRangeInput.val();
+                var drpOptions = {
+                    autoUpdateInput: false,
+                    locale: {
+                        cancelLabel: 'Clear',
+                        format: 'YYYY-MM-DD',
                     },
+                };
+                if (existingRange && existingRange.indexOf(' - ') !== -1) {
+                    var existingParts = existingRange.split(' - ');
+                    drpOptions.autoUpdateInput = true;
+                    drpOptions.startDate = existingParts[0];
+                    drpOptions.endDate = existingParts[1];
+                }
+                $dateRangeInput.daterangepicker(drpOptions);
+                $dateRangeInput.on('apply.daterangepicker', function(ev, picker) {
+                    $(this).val(picker.startDate.format('YYYY-MM-DD') + ' - ' + picker.endDate.format(
+                        'YYYY-MM-DD'));
                 });
-            });
-        </script>
-    @endPushOnce
+                $dateRangeInput.on('cancel.daterangepicker', function() {
+                    $(this).val('');
+                });
+            }
+
+
+        });
+    </script>
 @endpush

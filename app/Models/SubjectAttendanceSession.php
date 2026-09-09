@@ -109,9 +109,10 @@ class SubjectAttendanceSession extends Model
     }
 
     /**
-     * 'Course' / 'Subject' / 'Practical' / 'Before Checking' / 'After
-     * Checking' — lets the report and CSV export tell rows apart even
-     * though checkpoint rows share subject_id = null with real course rows.
+     * 'Daily Attendance' / 'Theory' / 'Practical' / 'Before Checking' /
+     * 'After Checking' — lets the report and CSV export tell rows apart
+     * even though checkpoint rows share subject_id = null with real
+     * course-wide (daily attendance) rows.
      */
     public function getTypeLabelAttribute(): string
     {
@@ -124,7 +125,7 @@ class SubjectAttendanceSession extends Model
         }
 
         if (is_null($this->subject_id)) {
-            return 'Course';
+            return 'Daily Attendance';
         }
 
         return match (optional($this->subject)->type) {

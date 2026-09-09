@@ -82,6 +82,7 @@
 
 
 
+
     @include('components.partials.css')
     <style>
         * {

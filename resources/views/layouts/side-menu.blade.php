@@ -271,6 +271,7 @@
                     Auth::user()->hasPermission('subject.index') ||
                     Auth::user()->hasPermission('assign-subject.index') ||
                     Auth::user()->hasPermission('assessment-template.index') ||
+                    Auth::user()->hasPermission('certificate-template.index') ||
                     Auth::user()->hasPermission('lesson.index') ||
                     Auth::user()->hasPermission('topic.index') ||
                     Auth::user()->hasPermission('topic-overview.index') ||
@@ -289,7 +290,8 @@
                     Auth::user()->hasPermission('intake.index') ||
                     Auth::user()->hasPermission('subject.index') ||
                     Auth::user()->hasPermission('assign-subject.index') ||
-                    Auth::user()->hasPermission('assessment-template.index')))
+                    Auth::user()->hasPermission('assessment-template.index') ||
+                    Auth::user()->hasPermission('certificate-template.index')))
             <li
                 class="administration_section {{ request()->is('academic') || request()->is('administration/academic/*') ? 'mm-active' : '' }}">
                 <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
@@ -340,6 +342,15 @@
                             <a href="/administration/academic/assessment-template"
                                 class="{{ request()->is('administration/academic/assessment-template') ? 'active a' : '' }}">
                                 Assessment Template
+                            </a>
+                        </li>
+                    @endif
+
+                    @if (Auth::user()->hasPermission('certificate-template.index'))
+                        <li>
+                            <a href="/administration/academic/certificate-template"
+                                class="{{ request()->is('administration/academic/certificate-template') ? 'active a' : '' }}">
+                                Certificate Template
                             </a>
                         </li>
                     @endif

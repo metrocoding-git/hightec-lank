@@ -504,11 +504,24 @@
 
             <div class="table-area">
 
-                {{-- ---------- Practical Subjects ---------- --}}
+                {{-- ---------- Practical Subjects ----------
+                     UPDATED — the Before Checking / After Checking group
+                     totals used to show in their OWN section headings
+                     further down; moved up here instead, alongside a new
+                     "Total Completed Duration" chip (the actual attended
+                     total across all practical subjects, next to the
+                     existing planned "Practical Time (Total)" chip). --}}
                 <div class="section-block">
                     <div class="section-heading">
                         Practical Subjects
-                        <span class="total-chip">Practical Time (Total): {{ $practicalTotalPracticalTime }}</span>
+                        <span class="total-chip">Total Practical Time: {{ $practicalTotalPracticalTime }}</span>
+                        <span class="total-chip">Total Completed Duration: {{ $practicalTotalActualTime }}</span>
+                        @if ($beforeChecking['attended_count'] > 0)
+                            <span class="total-chip">පෙර පණගැවුම් Total Time: {{ $beforeChecking['total_duration'] }}</span>
+                        @endif
+                        @if ($afterChecking['attended_count'] > 0)
+                            <span class="total-chip">පසු පණගැවුම් Total Time: {{ $afterChecking['total_duration'] }}</span>
+                        @endif
                     </div>
 
                     @if (empty($practicalSubjects))
@@ -578,17 +591,15 @@
                 </div>
 
                 {{-- ---------- Before Checking / After Checking ----------
-                     Same subject-style block, reused for both groups; each
-                     shows its own total time once it has at least one
-                     instance (no "planned time" exists for a checkpoint,
-                     so there's no Completed/Not Completed badge here). --}}
+                     Same subject-style block, reused for both groups.
+                     UPDATED — the "Total Time" chip that used to sit here
+                     has been moved up into the Practical Subjects heading
+                     above (as පෙර/පසු පණගැවුම් Total Time), so this
+                     heading is just the group title now. --}}
                 @foreach ([$beforeChecking, $afterChecking] as $group)
                     <div class="section-block">
                         <div class="section-heading">
                             {{ $group['title'] }}
-                            @if ($group['attended_count'] > 0)
-                                <span class="total-chip">Total Time: {{ $group['total_duration'] }}</span>
-                            @endif
                         </div>
 
                         @if ($group['attended_count'] === 0)
@@ -602,7 +613,6 @@
                                         <th style="width:11%">Time In</th>
                                         <th style="width:11%">Time Out</th>
                                         <th style="width:10%">Duration</th>
-                                        <th style="width:20%">Vehicle</th>
                                         <th style="width:15%">Marked By</th>
                                     </tr>
                                 </thead>
@@ -614,7 +624,6 @@
                                             <td>{{ $instance['time_in']?->format('h:i A') ?? '-' }}</td>
                                             <td>{{ $instance['time_out']?->format('h:i A') ?? '-' }}</td>
                                             <td>{{ $instance['duration'] }}</td>
-                                            <td>{{ $instance['vehicle'] }}</td>
                                             <td>{{ $instance['marked_by'] }}</td>
                                         </tr>
                                     @endforeach
@@ -624,19 +633,18 @@
                     </div>
                 @endforeach
 
-                {{-- ---------- Course Attendance ---------- --}}
+                {{-- ---------- Course Attendance ----------
+                     UPDATED — Demo Time chip, Completed Time chip, and the
+                     Completed/Not Completed badge all removed. Replaced
+                     with a single "Total Time" chip showing this group's
+                     own (already net-of-checking/subjects) total
+                     duration — same pattern Before/After Checking used to
+                     use for their own totals. --}}
                 <div class="section-block">
                     <div class="section-heading">
                         {{ $courseAttendance['title'] }}
-                        <span class="total-chip">Demo Time : {{ $practicalTotalDemonstratorTime }}</span>
-                        {{-- "Doing Total Demo Time" = Course Attendance + After Checking + Before
-                             Checking + every practical subject's actual total + every theory
-                             subject's actual total. --}}
-                        <span class="total-chip">Completed Time: {{ $doingTotalDemoTime }}</span>
-                        @if ($courseAttendanceCompleted === true)
-                            <span class="badge badge-ok">Demo Time Completed</span>
-                        @elseif ($courseAttendanceCompleted === false)
-                            <span class="badge badge-warn">Demo Time Not Completed</span>
+                        @if ($courseAttendance['attended_count'] > 0)
+                            <span class="total-chip">Total Time: {{ $courseAttendance['total_duration'] }}</span>
                         @endif
                     </div>
 
@@ -651,7 +659,6 @@
                                     <th style="width:11%">Time In</th>
                                     <th style="width:11%">Time Out</th>
                                     <th style="width:10%">Duration</th>
-                                    <th style="width:20%">Vehicle</th>
                                     <th style="width:15%">Marked By</th>
                                 </tr>
                             </thead>
@@ -663,7 +670,6 @@
                                         <td>{{ $instance['time_in']?->format('h:i A') ?? '-' }}</td>
                                         <td>{{ $instance['time_out']?->format('h:i A') ?? '-' }}</td>
                                         <td>{{ $instance['duration'] }}</td>
-                                        <td>{{ $instance['vehicle'] }}</td>
                                         <td>{{ $instance['marked_by'] }}</td>
                                     </tr>
                                 @endforeach
@@ -735,7 +741,13 @@
 
             <div class="table-area">
                 <div class="section-block">
-                    <div class="section-heading">Theory Subjects</div>
+                    {{-- UPDATED — added the total completed duration chip
+                         in front of "Theory Subjects", same idea as the
+                         Practical card's new chip. --}}
+                    <div class="section-heading">
+                        Theory Subjects
+                        <span class="total-chip">Total Completed Duration: {{ $theoryTotalActualTime }}</span>
+                    </div>
 
                     @if (empty($theorySubjects))
                         <div class="empty-state">No theory subjects are assigned to this course.</div>

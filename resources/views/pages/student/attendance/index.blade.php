@@ -471,8 +471,8 @@
                                     <div class="method-card active" data-section="course">
                                         <div class="method-icon"><span class="ti-book"></span></div>
                                         <div>
-                                            <div class="method-title">Course</div>
-                                            <div class="method-desc">Pick a course, then scan — intake is detected from the student.
+                                            <div class="method-title">Daily Attendance</div>
+                                            <div class="method-desc">Pick a course, then scan any student.
                                             </div>
                                         </div>
                                     </div>
@@ -481,7 +481,7 @@
                                     <div class="method-card" data-section="subject">
                                         <div class="method-icon"><span class="ti-agenda"></span></div>
                                         <div>
-                                            <div class="method-title">Subject</div>
+                                            <div class="method-title">Theory Attendance</div>
                                             <div class="method-desc">Pick one or more theory subjects, then scan any student.</div>
                                         </div>
                                     </div>
@@ -490,7 +490,7 @@
                                     <div class="method-card" data-section="practical">
                                         <div class="method-icon"><span class="ti-user"></span></div>
                                         <div>
-                                            <div class="method-title">Student (Practical)</div>
+                                            <div class="method-title">Practical Attendance</div>
                                             <div class="method-desc">Scan the student first, then pick one practical subject.</div>
                                         </div>
                                     </div>

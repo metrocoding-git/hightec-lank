@@ -51,6 +51,7 @@
                                     <th>Name</th>
                                     <th>Linked Course</th>
                                     <th>Course Name on Certificate</th>
+                                    <th>Duration</th>
                                     <th>Bottom Image</th>
                                     <th>Back Side</th>
                                     <th>Status</th>
@@ -62,6 +63,7 @@
                                     <tr data-id="{{ $t->id }}" data-name="{{ $t->name }}"
                                         data-course-id="{{ $t->course_id }}" data-line1="{{ $t->course_name_line1 }}"
                                         data-line2="{{ $t->course_name_line2 }}"
+                                        data-duration="{{ $t->duration }}"
                                         data-back-side="{{ $t->back_side_content }}"
                                         data-image-url="{{ $t->bottom_image_path ? asset('storage/' . $t->bottom_image_path) : '' }}">
                                         <td>{{ $i + 1 }}</td>
@@ -69,6 +71,7 @@
                                         <td>{{ $t->course->name ?? '—' }}</td>
                                         <td>{{ $t->course_name_line1 }}{{ $t->course_name_line2 ? ' / ' . $t->course_name_line2 : '' }}
                                         </td>
+                                        <td>{{ $t->duration ?? '—' }}</td>
                                         <td>
                                             @if ($t->bottom_image_path)
                                                 <img src="{{ asset('storage/' . $t->bottom_image_path) }}" alt=""
@@ -153,6 +156,14 @@
                             <label>Course Name — Line 2 (optional)</label>
                             <input type="text" id="ct-line2" class="form-control" maxlength="255"
                                 placeholder='e.g. "(Fork Lift Truck)"'>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>Duration (optional)</label>
+                            <input type="text" id="ct-duration" class="form-control" maxlength="255"
+                                placeholder='e.g. "3 Months" or "120 Hours"'>
                         </div>
                     </div>
 
@@ -293,6 +304,7 @@
                     $('#ct-course-id').val('').trigger('change');
                     $('#ct-line1').val('');
                     $('#ct-line2').val('');
+                    $('#ct-duration').val('');
                     $('#ct-bottom-image').val('');
                     $('#ct-current-image-wrap').hide();
                     $('#ct-current-image').attr('src', '');
@@ -314,6 +326,7 @@
                     $('#ct-course-id').val($tr.data('course-id') || '').trigger('change');
                     $('#ct-line1').val($tr.data('line1'));
                     $('#ct-line2').val($tr.data('line2'));
+                    $('#ct-duration').val($tr.data('duration'));
                     $('#ct-back-side').val($tr.data('back-side'));
                     var imageUrl = $tr.data('image-url');
                     if (imageUrl) {
@@ -338,6 +351,7 @@
                     formData.append('course_id', $('#ct-course-id').val() || '');
                     formData.append('course_name_line1', line1);
                     formData.append('course_name_line2', $('#ct-line2').val().trim());
+                    formData.append('duration', $('#ct-duration').val().trim());
                     formData.append('back_side_content', $('#ct-back-side').val());
                     var file = $('#ct-bottom-image')[0].files[0];
                     if (file) {

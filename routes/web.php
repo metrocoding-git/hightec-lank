@@ -101,10 +101,10 @@ Route::middleware(['permission'])->group(function () {
 
 
             Route::prefix('certificate-template')->group(function () {
-                Route::get('/', [CertificateTemplateController::class, 'index'])->name('certificate-template.index');
-                Route::post('/', [CertificateTemplateController::class, 'store'])->name('certificate-template.store');
-                Route::post('{id}', [CertificateTemplateController::class, 'update'])->name('certificate-template.update');
-                Route::delete('{id}', [CertificateTemplateController::class, 'destroy'])->name('certificate-template.destroy');
+                Route::get('/', [CertificateTemplateController::class, 'index'])->name('certificate-template.index')->withoutMiddleware(['permission']);
+                Route::post('/', [CertificateTemplateController::class, 'store'])->name('certificate-template.store')->withoutMiddleware(['permission']);
+                Route::post('{id}', [CertificateTemplateController::class, 'update'])->name('certificate-template.update')->withoutMiddleware(['permission']);
+                Route::delete('{id}', [CertificateTemplateController::class, 'destroy'])->name('certificate-template.destroy')->withoutMiddleware(['permission']);
             });
 
         });

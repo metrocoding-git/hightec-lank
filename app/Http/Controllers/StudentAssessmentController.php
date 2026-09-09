@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AssessmentTemplate;
 use App\Models\AssignSubjects;
+use App\Models\Branch;
 use App\Models\Course;
 use App\Models\FeeInvoices;
 use App\Models\Student;
@@ -38,7 +39,6 @@ class StudentAssessmentController extends Controller
 
     public function index(Request $request)
     {
-
         $query = StudentAssessment::with([
             'student.verifications',
             'template.course',
@@ -47,11 +47,8 @@ class StudentAssessmentController extends Controller
             'certificate',
             'studentCourse',
             'studentCourse.intake',
-            'studentCourse.branch'
-
-            
+            'studentCourse.branch',
         ])->latest();
-
 
         if ($request->filled('course_id')) {
             $courseId = $request->course_id;
@@ -76,15 +73,26 @@ class StudentAssessmentController extends Controller
                     ->orWhere('national_id_number', 'like', "%{$search}%");
             });
         }
+        if ($request->filled('date_range')) {
+
+            if (str_contains($request->date_range, ' to ')) {
+                [$from, $to] = explode(' to ', $request->date_range);
+            } else {
+                $from = $to = $request->date_range;
+            }
+            $query->whereBetween('assessed_at', [$from, $to]);
+        }
+
+
+        if ($request->filled('branch_id')) {
+            $branchId = $request->branch_id;
+            $query->whereHas('evaluator.branches', function ($q) use ($branchId) {
+                $q->where('branches.id', $branchId);
+            });
+        }
 
         $recent = $query->get();
 
-        // "Student Category (from the course-related invoice)" — NOT
-        // students.student_category_id directly; the fee_invoices row tied
-        // to this student+course can override the category, falling back
-        // to the student's own when it doesn't. Same COALESCE
-        // InvoiceController::invoiceDatatable() already uses. Batched into
-        // one query for the whole $recent list rather than N+1 per row.
         $categoriesByPair = $this->resolveCourseCategoriesForRecent($recent);
 
         $courseIds = AssessmentTemplate::pluck('course_id')->unique();
@@ -93,7 +101,16 @@ class StudentAssessmentController extends Controller
         $creatorIds = StudentAssessment::whereNotNull('created_by')->distinct()->pluck('created_by');
         $creatorOptions = User::whereIn('id', $creatorIds)->orderBy('name')->get(['id', 'name']);
 
-        return view('pages.administration.assessment.mark-entry', compact('recent', 'courseOptions', 'creatorOptions', 'categoriesByPair'));
+        // NEW — branch dropdown options for the branch filter above.
+        $branchOptions = Branch::orderBy('name')->get(['id', 'name']);
+
+        return view('pages.administration.assessment.mark-entry', compact(
+            'recent',
+            'courseOptions',
+            'creatorOptions',
+            'categoriesByPair',
+            'branchOptions'
+        ));
     }
 
     /**
@@ -470,19 +487,6 @@ class StudentAssessmentController extends Controller
         $branchId = UserBranch::where('user_id', $user->id)->first()?->branch_id;
         $vehicles = TrainingVehicle::where('branch_id', $branchId)->active()->orderBy('name')->get(['id', 'name', 'vehicle_number']);
 
-        // "before student assesment mark. want display student related all
-        // payments if not complete want notify" — every non-returned,
-        // course-related invoice for this student+course (via paid_courses,
-        // same relationship InvoiceController already uses), so the popup
-        // can show a "payment not complete" notice. This is informational
-        // only — it does NOT block entering marks.
-        //
-        // NOT YET CHANGED this round: "want check only payment that course
-        // payment only" — still checking every non-returned invoice tied to
-        // this course via paid_courses, same as before. Left alone rather
-        // than guessed at — see the chat message alongside this file for
-        // why (need to see how a per-course paid amount is actually tracked
-        // before this can be narrowed safely).
         $invoices = FeeInvoices::where('student_id', $studentCourse->student_id)
             ->where('payment_status', '!=', 'returned')
             ->whereHas('paidCourses', fn($q) => $q->where('course_id', $studentCourse->course_id))
@@ -490,16 +494,6 @@ class StudentAssessmentController extends Controller
 
         $paymentIncomplete = $invoices->contains(fn($inv) => $inv->payment_status !== 'full');
 
-        // NEW — "how many practical subject completed (like 10 for 4)" /
-        // "how many theory subject completed": out of every subject of that
-        // type assigned to this course/intake, how many has the student
-        // actually COMPLETED — same "attended minutes >= that subject's
-        // planned practical_time" definition
-        // StudentPracticalCardController::buildSubjectRows() already uses
-        // for the attendance card's own badges (see
-        // countSubjectCompletion() below), kept identical on purpose so the
-        // two features never disagree about what "completed" means for a
-        // subject.
         $practicalProgress = $this->countSubjectCompletion(
             $studentCourse->student_id,
             $studentCourse->course_id,

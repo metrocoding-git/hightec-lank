@@ -593,3 +593,10 @@ ALTER TABLE certificates
 INSERT INTO `permissions` (`id`, `permission_name`, `label`, `created_at`, `updated_at`) VALUES (NULL, 'certificate-template.store', 'Add', NULL, NULL), (NULL, 'certificate-template.update', 'Update', NULL, NULL);
 
 INSERT INTO `permissions` (`id`, `permission_name`, `label`, `created_at`, `updated_at`) VALUES (NULL, 'certificate-template.destroy', 'Delete', NULL, NULL), (NULL, 'certificate-template.index', 'View', NULL, NULL);
+
+-- 09/10    
+ALTER TABLE `certificate_templates`
+ADD COLUMN `duration` VARCHAR(255) NULL
+AFTER `course_name_line2`;
+
+INSERT INTO `permissions` (`id`, `permission_name`, `label`, `created_at`, `updated_at`) VALUES (NULL, 'certificate.undo', 'undo', NULL, NULL);

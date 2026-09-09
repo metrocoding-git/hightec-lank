@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AssignSubjects;
 use App\Models\Branch;
 use App\Models\Student;
+use App\Models\StudentAssessment;
 use App\Models\StudentCourse;
 use App\Models\Subject;
 use App\Models\SubjectAttendanceSession;
@@ -13,28 +14,18 @@ use Illuminate\Support\Carbon;
 
 class StudentPracticalCardController extends Controller
 {
-    /**
-     * The "student attendance card list" window. Base list is Student
-     * itself (so it's populated as long as the students table has rows —
-     * "there default dont show any data" was the old version filtering the
-     * base list down through student_courses first, which came back empty),
-     * with Branch (direct column), Intake and Course (both via
-     * student_courses, matching the branch->intake->course cascade the
-     * disabled-students page already uses) as optional filters, plus the
-     * existing name/admission/NIC search. No date-range filter — asked
-     * about it, answer was "dont want date."
-     *
-     * "dont send data default. if has slectors only send data" — the list
-     * stays empty on a plain page load (no query even runs); it only
-     * fetches and shows students once at least one filter (Branch, Intake,
-     * Course, or the search box) is actually set.
-     */
     public function index(Request $request)
     {
         $hasFilter = $request->filled('branch_id')
             || $request->filled('intake_id')
             || $request->filled('course_id')
-            || $request->filled('q');
+            || $request->filled('q')
+            // NEW — an assessment filter alone is also enough to trigger a
+            // query, same "only show data once at least one selector is
+            // set" rule the other filters already follow.
+            || $request->filled('assessment_status')
+            || $request->filled('assessment_result')
+            || $request->filled('assessment_date_range');
 
         $students = collect();
 
@@ -69,6 +60,46 @@ class StudentPracticalCardController extends Controller
             }
 
             $students = $query->orderBy('student_name')->get();
+
+            // NEW — batched Final Assessment lookup (see the method below
+            // for exactly how the "relevant course" is resolved), then the
+            // three new filters, applied in-memory since done/pass-fail/
+            // date are computed attributes, not real columns to filter in
+            // SQL.
+            $students = $this->attachAssessmentStatus($students, $request->input('course_id'));
+
+            if ($request->filled('assessment_status')) {
+                $wantDone = $request->input('assessment_status') === 'done';
+                $students = $students->filter(fn($s) => (bool) $s->final_assessment_done === $wantDone)->values();
+            }
+
+            if ($request->filled('assessment_result')) {
+                $wantPass = $request->input('assessment_result') === 'pass';
+                $students = $students->filter(
+                    fn($s) => $s->final_assessment_done && (bool) $s->final_assessment_passed === $wantPass
+                )->values();
+            }
+
+            if ($request->filled('assessment_date_range')) {
+                $parts = array_map('trim', explode(' - ', $request->input('assessment_date_range')));
+
+                if (count($parts) === 2) {
+                    try {
+                        $rangeStart = \Carbon\Carbon::parse($parts[0])->startOfDay();
+                        $rangeEnd = \Carbon\Carbon::parse($parts[1])->endOfDay();
+
+                        $students = $students->filter(function ($s) use ($rangeStart, $rangeEnd) {
+                            if (!$s->final_assessment_date_raw) {
+                                return false;
+                            }
+
+                            return $s->final_assessment_date_raw->between($rangeStart, $rangeEnd);
+                        })->values();
+                    } catch (\Exception $e) {
+                        // ignore silently — malformed range shouldn't break the page
+                    }
+                }
+            }
         }
 
         $branches = Branch::orderBy('name')->get(['id', 'name']);
@@ -81,29 +112,59 @@ class StudentPracticalCardController extends Controller
             'selectedIntakeId' => $request->input('intake_id'),
             'selectedCourseId' => $request->input('course_id'),
             'q' => $request->input('q'),
+            // NEW
+            'selectedAssessmentStatus' => $request->input('assessment_status'),
+            'selectedAssessmentResult' => $request->input('assessment_result'),
+            'assessmentDateRange' => $request->input('assessment_date_range'),
         ]);
     }
 
-    /**
-     * Printable attendance card for one student under one course — two
-     * cards in the same window (Practical + Theory, each printed
-     * separately). Before Checking / After Checking / Course Attendance
-     * are their own subject-style sections (every instance listed). Each
-     * practical subject with 1+ attended instances now also shows its
-     * actual total duration next to its planned Practical Time, with a
-     * Completed / Not Completed badge.
-     *
-     * Course Attendance is special: both its own per-row durations AND its
-     * group total/"Completed Time" are NET figures, not raw time-in-to-
-     * time-out gaps — see applyNetDurationToCourseAttendance() below for
-     * exactly what gets subtracted and why.
-     */
+    private function attachAssessmentStatus($students, $filterCourseId = null)
+    {
+        if ($students->isEmpty()) {
+            return $students;
+        }
+
+        $studentIds = $students->pluck('id');
+
+        $courseQuery = StudentCourse::whereIn('student_id', $studentIds)->orderBy('id');
+
+        if ($filterCourseId) {
+            $courseQuery->where('course_id', (int) $filterCourseId);
+        }
+
+        $relevantCourseByStudent = $courseQuery
+            ->get(['id', 'student_id', 'course_id'])
+            ->groupBy('student_id')
+            ->map(fn($rows) => $rows->unique('course_id')->last());
+
+        $studentCourseIds = $relevantCourseByStudent->pluck('id')->filter()->values();
+
+        $assessmentsByStudentCourseId = StudentAssessment::whereIn('student_course_id', $studentCourseIds)
+            ->orderBy('created_at')
+            ->get(['student_course_id', 'is_qualified', 'assessed_at'])
+            ->groupBy('student_course_id')
+            ->map(fn($rows) => $rows->last());
+
+        return $students->map(function ($student) use ($relevantCourseByStudent, $assessmentsByStudentCourseId) {
+            $relevantCourse = $relevantCourseByStudent->get($student->id);
+            $assessment = $relevantCourse ? $assessmentsByStudentCourseId->get($relevantCourse->id) : null;
+
+            $student->final_assessment_done = (bool) $assessment;
+            $student->final_assessment_passed = $assessment ? (bool) $assessment->is_qualified : null;
+            $student->final_assessment_date_raw = $assessment ? $assessment->assessed_at : null;
+            $student->final_assessment_date = ($assessment && $assessment->assessed_at)
+                ? $assessment->assessed_at->format('Y-m-d')
+                : null;
+
+            return $student;
+        });
+    }
+
     public function show($id, Request $request)
     {
         $student = Student::with('branch')->findOrFail($id);
 
-        // Distinct courses this student is/was assigned to, oldest -> newest,
-        // used to populate the course selector.
         $studentCourses = StudentCourse::with('course:id,name')
             ->where('student_id', $student->id)
             ->orderBy('id')
@@ -116,8 +177,6 @@ class StudentPracticalCardController extends Controller
             return back()->with('error', 'This student has no assigned courses.');
         }
 
-        // Selected course: ?course_id= if valid for this student, otherwise
-        // default to the LAST assigned course (e.g. 3 courses -> the 3rd).
         $requestedCourseId = $request->input('course_id');
         $validCourseIds = $studentCourses->pluck('course_id');
 
@@ -135,15 +194,6 @@ class StudentPracticalCardController extends Controller
         $afterChecking = $this->buildCheckpointGroup('පසු පණගැවුම් පරික්ෂාව', $student->id, $selectedCourseId, 'after_checking');
         $courseAttendance = $this->buildCheckpointGroup('නිරීක්ෂණ මිනිත්තුව', $student->id, $selectedCourseId, null);
 
-        // "that duration want get that gap - පෙර පණගැවුම් පරික්ෂාව that
-        // date - පසු පණගැවුම් පරික්ෂාව that date - theory subjects that
-        // day - practical subjects that day" — each Course Attendance
-        // ROW's own displayed duration (not just the Completed Time
-        // total) is net of that same date's Before/After Checking +
-        // theory/practical subject time, using the same per-date pairing
-        // the Completed Time total already uses. This also recomputes
-        // $courseAttendance['total_minutes']/['total_duration'] so the
-        // group's own totals always match what its rows add up to.
         $courseAttendance = $this->applyNetDurationToCourseAttendance(
             $courseAttendance,
             $beforeChecking['minutesByDate'],
@@ -152,10 +202,6 @@ class StudentPracticalCardController extends Controller
             $practical['minutesByDate']
         );
 
-        // "Completed Time" is simply Course Attendance's own (already-net)
-        // total — the net calculation now lives entirely inside
-        // applyNetDurationToCourseAttendance(), so there's nothing left to
-        // subtract here.
         $doingTotalDemoMinutes = $courseAttendance['total_minutes'];
         $doingTotalDemoTime = $this->formatMinutes($doingTotalDemoMinutes);
 
@@ -171,7 +217,13 @@ class StudentPracticalCardController extends Controller
             'practicalSubjects' => $practical['rows'],
             'practicalTotalDemonstratorTime' => $practical['totalDemonstratorTime'],
             'practicalTotalPracticalTime' => $practical['totalPracticalTime'],
+            // NEW — total ACTUAL (completed) duration across all practical
+            // subjects, for the new "Total Completed Duration" chip on the
+            // Practical Subjects heading.
+            'practicalTotalActualTime' => $this->formatMinutes($practical['totalActualMinutes']),
             'theorySubjects' => $theory['rows'],
+            // NEW — same, for the Theory Subjects heading.
+            'theoryTotalActualTime' => $this->formatMinutes($theory['totalActualMinutes']),
             'beforeChecking' => $beforeChecking,
             'afterChecking' => $afterChecking,
             'courseAttendance' => $courseAttendance,
@@ -180,27 +232,30 @@ class StudentPracticalCardController extends Controller
         ]);
     }
 
-    /**
-     * One entry per subject of the given type ($subjectType: 'P' practical,
-     * 'T' theory) ASSIGNED to this course/intake — with every attendance
-     * instance recorded for it (possibly none), the total planned
-     * Demonstrator Time / Practical Time summed across those subjects, its
-     * own actual total duration plus whether that meets its planned
-     * Practical Time or not, and (for the per-day Completed Time
-     * calculation) a minutesByDate map of this group's minutes bucketed by
-     * attendance_date.
-     */
     private function buildSubjectRows(int $studentId, int $courseId, ?int $intakeId, string $subjectType): array
     {
+        // CHANGED — ->orderBy('id') added so $assignments (and therefore
+        // the assign-order we sort subjects by below) reflects the actual
+        // order rows were assigned in assign_subjects, not DB-undefined
+        // default order.
         $assignments = AssignSubjects::where('course_id', $courseId)
             ->when($intakeId, fn($q) => $q->where('intake_id', $intakeId))
+            ->orderBy('id')
             ->get(['subject_id', 'demonstrator_time', 'practical_time'])
             ->keyBy('subject_id');
 
+        // CHANGED — dropped ->orderBy('name') (that was the alphabetical
+        // ordering the user wants replaced). whereIn() alone doesn't
+        // preserve any particular order, so the fetched subjects are
+        // explicitly re-sorted below to match $assignments' own order.
         $subjects = Subject::whereIn('id', $assignments->keys())
             ->where('type', $subjectType)
-            ->orderBy('name')
             ->get(['id', 'name']);
+
+        // "subject order is want come assign order" — re-sort to match the
+        // order subjects were actually assigned (assign_subjects.id asc).
+        $assignOrder = array_flip($assignments->keys()->all());
+        $subjects = $subjects->sortBy(fn($s) => $assignOrder[$s->id] ?? PHP_INT_MAX)->values();
 
         $totalDemonstratorMinutes = 0;
         $totalPracticalMinutes = 0;
@@ -238,7 +293,7 @@ class StudentPracticalCardController extends Controller
 
         $rows = [];
         $totalActualMinutes = 0;
-        $minutesByDate = []; // combined across every subject of this type.
+        $minutesByDate = [];
 
         foreach ($subjects as $subject) {
             $assignment = $assignments->get($subject->id);
@@ -249,7 +304,6 @@ class StudentPracticalCardController extends Controller
                 $minutes = $this->sessionDurationMinutes($s->time_in, $s->time_out);
                 $subjectActualMinutes += $minutes;
 
-                // Accumulate this session's minutes onto its date.
                 $dateKey = $s->attendance_date->format('Y-m-d');
                 $minutesByDate[$dateKey] = ($minutesByDate[$dateKey] ?? 0) + $minutes;
 
@@ -266,13 +320,6 @@ class StudentPracticalCardController extends Controller
             $totalActualMinutes += $subjectActualMinutes;
 
             $plannedPracticalMinutes = $this->parsePlannedMinutes($assignment->practical_time ?? null);
-
-            // "want practical subject one by one... get subject Practical
-            // Time - that subject total duration" — the actual-vs-planned
-            // total/Completed comparison shows for every subject with at
-            // least one attended instance. completed stays null ("not
-            // applicable") when there's no planned time to compare
-            // against, or nothing attended yet.
             $showTotal = $instances->count() >= 1;
 
             $rows[] = [
@@ -291,24 +338,7 @@ class StudentPracticalCardController extends Controller
         return array_merge(['rows' => $rows, 'totalActualMinutes' => $totalActualMinutes, 'minutesByDate' => $minutesByDate], $totals);
     }
 
-    /**
-     * A single subject-style group for something that ISN'T a real assigned
-     * subject: Before Checking, After Checking, or (when $checkpointType is
-     * null) general Course Attendance. Same shape as a subject row (so the
-     * view can render it with the same table markup) but with no planned
-     * Demo/Practical time, EVERY matching instance listed (not just the
-     * first checkpoint of a day), its own actual total duration, and (for
-     * the per-day Completed Time calculation) a minutesByDate map of this
-     * group's minutes bucketed by attendance_date.
-     *
-     * NOTE for the Course Attendance case ($checkpointType === null): the
-     * per-instance 'duration'/'total_minutes'/'total_duration' this method
-     * returns are the RAW time-in-to-time-out figures. show() immediately
-     * runs the result through applyNetDurationToCourseAttendance() to turn
-     * those into the NET (minus same-day checking/subject time) figures
-     * actually shown on the card — this method itself doesn't know about
-     * that, it just returns the raw group like it always has.
-     */
+
     private function buildCheckpointGroup(string $title, int $studentId, int $courseId, ?string $checkpointType): array
     {
         $query = SubjectAttendanceSession::with([
