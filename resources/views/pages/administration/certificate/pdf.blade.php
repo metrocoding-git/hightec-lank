@@ -18,14 +18,14 @@
 
         @font-face {
             font-family: 'UnifrakturCookPDF';
-            src: url('{{ storage_path('app/fonts/UnifrakturCook-Bold.ttf') }}') format('truetype');
+            src: url('{{ public_path('fonts/UnifrakturCook-Bold.ttf') }}') format('truetype');
             font-weight: 400;
             font-style: normal;
         }
 
         @font-face {
             font-family: 'OrbitronVariableFont_wght';
-            src: url('{{ storage_path('app/fonts/Orbitron-VariableFont_wght.ttf') }}') format('truetype');
+            src: url('{{ public_path('fonts/Orbitron-VariableFont_wght.ttf') }}') format('truetype');
             font-weight: 400;
             font-style: normal;
         }
