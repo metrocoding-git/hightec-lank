@@ -420,6 +420,25 @@ class InvoicePaymentController extends Controller
             $query->where('branch_id', $request->branch_id);
         }
 
+        // ----- STUDENT SEARCH FILTER (Reg No / Name / NIC) -----
+        if ($request->filled('student_search')) {
+            $studentSearch = $request->student_search;
+
+            $query->whereExists(function ($sub) use ($studentSearch) {
+                $sub->select(DB::raw(1))
+                    ->from('invoices_payments as ip')
+                    ->leftJoin('fee_invoices as i', 'i.id', '=', 'ip.invoice_id')
+                    ->leftJoin('students as s', 's.id', '=', 'i.student_id')
+                    ->whereColumn('ip.payment_invoice_number', 'invoices_payments.payment_invoice_number')
+                    ->where(function ($qq) use ($studentSearch) {
+                        $qq->where('s.admission_number', 'like', "%{$studentSearch}%")
+                            ->orWhere('s.student_name', 'like', "%{$studentSearch}%")
+                            ->orWhere('s.national_id_number', 'like', "%{$studentSearch}%");
+                    });
+            });
+        }
+
+
         // ----- DATE RANGE FILTER -----
         if ($request->date_range) {
             $dates = explode(' to ', $request->date_range);

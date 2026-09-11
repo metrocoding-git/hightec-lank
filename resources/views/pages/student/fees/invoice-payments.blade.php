@@ -179,6 +179,12 @@
                                     </div>
                                 </div>
 
+                                {{-- Student Search Filter: Reg No / Name / NIC --}}
+                                <div class="col-lg-12 mt-10">
+                                    <input type="text" class="form-control" id="student-search" name="student_search"
+                                        placeholder="Search Reg No / Name / NIC">
+                                </div>
+
                                 <div class="col-lg-12 mt-10 text-right">
                                     <button type="button" class="primary-btn small fix-gr-bg col-12 p-2"
                                         id="submit-search">
@@ -296,7 +302,8 @@
 
                             <div class="form-group">
                                 <label>Amount</label>
-                                <input type="number" class="form-control" id="bulk-amount" name="amount" step="0.01">
+                                <input type="number" class="form-control" id="bulk-amount" name="amount"
+                                    step="0.01">
                             </div>
 
                             <div class="form-group">
@@ -428,14 +435,14 @@
                 searching: true,
                 ordering: true,
                 info: true,
-                pageLength: 100,
+                pageLength: 10,
 
                 order: [
                     [0, 'desc']
                 ],
                 lengthMenu: [
-                    [50, 100, 500, -1],
-                    [50, 100, 500, "All"]
+                    [10, 50, 100, 500, -1],
+                    [10, 50, 100, 500, "All"]
                 ],
                 language: {
                     search: '<i class=""></i>',
@@ -453,6 +460,8 @@
                         d.branch_id = $('#branch-select').val();
                         d.date_range = $('#date_range').val();
                         d.payment_status = $('#status-select').val();
+                        d.student_search = $('#student-search').val(); // NEW
+
                     }
                 },
 
@@ -533,6 +542,7 @@
                 $('#date_range').val('');
                 $('#branch-select').val('');
                 $('#status-select').val('all');
+                $('#student-search').val(''); 
                 $('#table_id').DataTable().ajax.reload();
             })
 

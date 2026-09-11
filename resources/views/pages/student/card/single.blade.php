@@ -69,7 +69,7 @@
 
                 <div class="back-contact">
                     <span class="lbl">Address</span><span class="sep">:</span> No 549, Kandy Road, Mawathagama.<br>
-                    <span class="lbl">Call</span><span class="sep">:</span> +94 37 22 97 999 &nbsp;|&nbsp; <span class="lbl">Fax</span><span class="sep">:</span> +94 37 22 96029<br>
+                    <span class="lbl">Call</span><span class="sep">:</span> +94 37 22 97 999 &nbsp;<br>
                     <span class="lbl">Web</span><span class="sep">:</span> www.highteclanka.com &nbsp;|&nbsp; <span class="lbl">Email</span><span class="sep">:</span> info@highteclanka.com
                 </div>
 

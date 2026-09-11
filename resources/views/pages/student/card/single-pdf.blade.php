@@ -751,15 +751,6 @@
 
                 +94 37 22 97 999
 
-                &nbsp;|&nbsp;
-
-
-                <span class="lbl">
-                    Fax:
-                </span>
-
-                +94 37 22 96029
-
                 <br>
 
 
