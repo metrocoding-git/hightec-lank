@@ -122,10 +122,7 @@
             background: linear-gradient(135deg, var(--brand2) 0%, var(--brand2-dark) 100%);
         }
 
-        .card-wrap.theory .meta-grid .value,
-        .card-wrap.theory .summary-item .num {
-            color: var(--brand2);
-        }
+
 
         .card-title-bar {
             padding: 10px 24px;
@@ -136,6 +133,7 @@
             color: #667;
             background: #f6f8fb;
             border-bottom: 1px solid var(--border);
+            text-align: center;
         }
 
         /* ---------- header ---------- */
@@ -432,13 +430,15 @@
                 </a>
                 <button type="button" class="btn btn-primary" onclick="printOnly('practical')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" />
+                        <path
+                            d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" />
                     </svg>
                     Print Practical Card
                 </button>
                 <button type="button" class="btn btn-secondary" onclick="printOnly('theory')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" />
+                        <path
+                            d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" />
                     </svg>
                     Print Theory Card
                 </button>
@@ -451,11 +451,20 @@
              subject-style sections (every instance listed).
              ======================================================= --}}
         <div class="card-wrap" id="practicalCard">
+            <div
+                style="text-align: center; font-size: 11px; color: rgb(38, 38, 38); padding-bottom: 10px; padding-top: 10px; background-color: #dee2e7;">
+                <span style="font-weight: bold; font-size: 20px;">HIGHTEC LANKA INTERNATIONAL</span>
+                <span style="display: block;">Vocational & Technical Training Institute (Pvt) Ltd.</span>
+                <span style="display: block; margin-top: 5px;">No 549, Kandy Road, Mawathagama.</span>
+            </div>
+
             <div class="card-title-bar">Practical Attendance Card</div>
 
             @php
                 $totalPracticalSubjects = count($practicalSubjects);
-                $attendedPracticalSubjects = collect($practicalSubjects)->filter(fn($s) => $s['attended_count'] > 0)->count();
+                $attendedPracticalSubjects = collect($practicalSubjects)
+                    ->filter(fn($s) => $s['attended_count'] > 0)
+                    ->count();
                 $totalPracticalInstances = collect($practicalSubjects)->sum('attended_count');
             @endphp
 
@@ -514,14 +523,19 @@
                 <div class="section-block">
                     <div class="section-heading">
                         Practical Subjects
-                        <span class="total-chip">Total Practical Time: {{ $practicalTotalPracticalTime }}</span>
-                        <span class="total-chip">Total Completed Duration: {{ $practicalTotalActualTime }}</span>
+                        <span class="total-chip">Total Required Practical Time:
+                            {{ $practicalTotalPracticalTime }}</span>
+                        <span class="total-chip">Total Completed Practical Time: {{ $practicalTotalActualTime }}</span>
                         @if ($beforeChecking['attended_count'] > 0)
-                            <span class="total-chip">පෙර පණගැවුම් Total Time: {{ $beforeChecking['total_duration'] }}</span>
+                            <span class="total-chip">පෙර පණගැවුම් Total Time:
+                                {{ $beforeChecking['total_duration'] }}</span>
                         @endif
                         @if ($afterChecking['attended_count'] > 0)
-                            <span class="total-chip">පසු පණගැවුම් Total Time: {{ $afterChecking['total_duration'] }}</span>
+                            <span class="total-chip">පසු පණගැවුම් Total Time:
+                                {{ $afterChecking['total_duration'] }}</span>
                         @endif
+                        <small style="margin-left: 8px; font-size: 11px; color: #667;">Total Required Practical Time and
+                            Total Completed Practical Time excluding Pre-startup time and Post-startup time.</small>
                     </div>
 
                     @if (empty($practicalSubjects))
@@ -540,21 +554,25 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($practicalSubjects as $subject)
+                                 @foreach ($practicalSubjects as $index => $subject)
                                     <tr class="subject-row">
                                         <td colspan="7">
-                                            {{ $subject['subject'] }}
+                                            {{ $index + 1 }}. {{ $subject['subject'] }}
                                             <span class="planned-times">
-                                                <span class="chip">Demo Time: {{ $subject['demonstrator_time'] }}</span>
-                                                <span class="chip">Practical Time: {{ $subject['practical_time'] }}</span>
+                                                <span class="chip">Demo Time:
+                                                    {{ $subject['demonstrator_time'] }}</span>
+                                                <span class="chip">Practical Time:
+                                                    {{ $subject['practical_time'] }}</span>
                                                 {{-- "if has subject 2 or more attends want total duration...
                                                      with that subject Practical Time" --}}
                                                 @if ($subject['total_duration'] !== null)
-                                                    <span class="chip chip-total">Total Duration: {{ $subject['total_duration'] }}</span>
+                                                    <span class="chip chip-total">Total Duration:
+                                                        {{ $subject['total_duration'] }}</span>
                                                 @endif
                                             </span>
                                             @if ($subject['attended_count'] > 0)
-                                                <span class="badge badge-ok">Attended {{ $subject['attended_count'] }}x</span>
+                                                <span class="badge badge-ok">Attended
+                                                    {{ $subject['attended_count'] }}x</span>
                                             @else
                                                 <span class="badge badge-warn">Not Attended</span>
                                             @endif
@@ -569,7 +587,8 @@
 
                                     @if ($subject['attended_count'] === 0)
                                         <tr class="not-attended">
-                                            <td colspan="7">No practical attendance recorded yet for this subject.</td>
+                                            <td colspan="7">No practical attendance recorded yet for this subject.
+                                            </td>
                                         </tr>
                                     @else
                                         @foreach ($subject['instances'] as $index => $instance)
@@ -603,7 +622,8 @@
                         </div>
 
                         @if ($group['attended_count'] === 0)
-                            <div class="empty-state">No {{ strtolower($group['title']) }} records for this course.</div>
+                            <div class="empty-state">No {{ strtolower($group['title']) }} records for this course.
+                            </div>
                         @else
                             <table class="attendance">
                                 <thead>
@@ -688,6 +708,12 @@
              section but for Subject::type = 'T', no Vehicle column.
              ======================================================= --}}
         <div class="card-wrap theory" id="theoryCard">
+            <div
+                style="text-align: center; font-size: 11px; color: rgb(38, 38, 38); padding-bottom: 10px; padding-top: 10px; background-color: #dee2e7;">
+                <span style="font-weight: bold; font-size: 20px;">HIGHTEC LANKA INTERNATIONAL</span>
+                <span style="display: block;">Vocational & Technical Training Institute (Pvt) Ltd.</span>
+                <span style="display: block; margin-top: 5px;">No 549, Kandy Road, Mawathagama.</span>
+            </div>
             <div class="card-title-bar">Theory Attendance Card</div>
 
             @php
@@ -746,7 +772,7 @@
                          Practical card's new chip. --}}
                     <div class="section-heading">
                         Theory Subjects
-                        <span class="total-chip">Total Completed Duration: {{ $theoryTotalActualTime }}</span>
+                        <span class="total-chip">Total Completed Theory Time: {{ $theoryTotalActualTime }}</span>
                     </div>
 
                     @if (empty($theorySubjects))
@@ -764,12 +790,13 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($theorySubjects as $subject)
+                                @foreach ($theorySubjects as $index => $subject)
                                     <tr class="subject-row">
                                         <td colspan="6">
-                                            {{ $subject['subject'] }}
+                                            {{ $index + 1 }}. {{ $subject['subject'] }}
                                             @if ($subject['attended_count'] > 0)
-                                                <span class="badge badge-ok">Attended {{ $subject['attended_count'] }}x</span>
+                                                <span class="badge badge-ok">Attended
+                                                    {{ $subject['attended_count'] }}x</span>
                                             @else
                                                 <span class="badge badge-warn">Not Attended</span>
                                             @endif
@@ -811,7 +838,7 @@
             window.print();
         }
 
-        window.addEventListener('afterprint', function () {
+        window.addEventListener('afterprint', function() {
             document.body.classList.remove('printing-practical', 'printing-theory');
         });
     </script>

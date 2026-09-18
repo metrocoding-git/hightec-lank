@@ -106,7 +106,6 @@ Route::middleware(['permission'])->group(function () {
                 Route::post('{id}', [CertificateTemplateController::class, 'update'])->name('certificate-template.update')->withoutMiddleware(['permission']);
                 Route::delete('{id}', [CertificateTemplateController::class, 'destroy'])->name('certificate-template.destroy')->withoutMiddleware(['permission']);
             });
-
         });
 
         // ================= ACADEMIC MANAGEMENT LESSON PLAN ROUTES ================= //
@@ -226,9 +225,14 @@ Route::middleware(['permission'])->group(function () {
 
         Route::prefix('attendance-card')->group(function () {
             Route::get('/', [StudentPracticalCardController::class, 'index'])->name('student-practical-card.index')->withoutMiddleware(['permission']);
+
+            // NEW — course-scoped "View Template" page (no student, subjects only).
+            Route::get('template', [StudentPracticalCardController::class, 'template'])->name('student-practical-card.template')->withoutMiddleware(['permission']);
+            Route::get('template/export/practical', [StudentPracticalCardController::class, 'exportTemplatePractical'])->name('student-practical-card.template.export.practical')->withoutMiddleware(['permission']);
+            Route::get('template/export/theory', [StudentPracticalCardController::class, 'exportTemplateTheory'])->name('student-practical-card.template.export.theory')->withoutMiddleware(['permission']);
+
             Route::get('{id}', [StudentPracticalCardController::class, 'show'])->name('student-practical-card.show')->withoutMiddleware(['permission']);
         });
-
 
         // ================= STUDENT CARD ROUTES ================= //
         Route::prefix('student/card')->group(function () {

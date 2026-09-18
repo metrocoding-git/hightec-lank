@@ -181,7 +181,7 @@
                                     </div>
                                 </div>
 
-                                {{-- NEW — "want add filter final assement done or not done and
+                                {{-- "want add filter final assement done or not done and
                                      finall assement fail or pass and final assement date". When no
                                      Course is picked above, these reflect each student's MOST
                                      RECENT course (same tie-break practical-card's show() page
@@ -227,6 +227,13 @@
                                     </div>
                                 </div>
                             </div>
+
+                              <div class="col-lg-12 no-gutters text-right">
+                                <a href="{{ route('student-practical-card.template') }}" target="_blank" rel="noopener"
+                                    class="primary-btn small fix-gr-bg p-2 col-12 mt-3">
+                                    <i class="fa-solid fa-file-lines"></i> View Template
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -235,12 +242,13 @@
             <div class="row mt-20">
                 <div class="col-lg-12">
                     <div class="white-box">
-                        <div class="row">
+                        <div class="row justify-content-between align-items-center">
                             <div class="col-lg-4 no-gutters">
                                 <div class="main-title">
                                     <h3 class="mb-15">Student Attendance Cards</h3>
                                 </div>
                             </div>
+                          
                         </div>
 
                         <div class="row">
@@ -469,7 +477,7 @@
             }
         });
 
-        // NEW — "final assement date" filter, same daterangepicker.js +
+        // "final assement date" filter, same daterangepicker.js +
         // "YYYY-MM-DD - YYYY-MM-DD" convention already used on the Final
         // Assessment Marks list's Created Date Range filter, so the two
         // date-range filters in this app behave identically.
