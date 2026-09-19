@@ -49,29 +49,34 @@
                                 <tr>
                                     <th>#</th>
                                     <th>Name</th>
-                                    <th>Linked Course</th>
+                                    <th>Linked Course(s)</th>
                                     <th>Course Name on Certificate</th>
                                     <th>Duration</th>
+                                    <th>Serial Prefix</th>
                                     <th>Bottom Image</th>
+                                    <th>QR Code</th>
                                     <th>Back Side</th>
-                                    <th>Status</th>
                                     <th></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse (($templates ?? collect()) as $i => $t)
                                     <tr data-id="{{ $t->id }}" data-name="{{ $t->name }}"
-                                        data-course-id="{{ $t->course_id }}" data-line1="{{ $t->course_name_line1 }}"
+                                        data-course-ids="{{ $t->courses->pluck('id')->toJson() }}"
+                                        data-line1="{{ $t->course_name_line1 }}"
                                         data-line2="{{ $t->course_name_line2 }}"
                                         data-duration="{{ $t->duration }}"
-                                        data-back-side="{{ $t->back_side_content }}"
-                                        data-image-url="{{ $t->bottom_image_path ? asset('storage/' . $t->bottom_image_path) : '' }}">
+                                        data-serial-prefix="{{ $t->serialPrefix->prefix ?? '' }}"
+                                        data-image-url="{{ $t->bottom_image_path ? asset('storage/' . $t->bottom_image_path) : '' }}"
+                                        data-qr-image-url="{{ $t->qr_code_image_path ? asset('storage/' . $t->qr_code_image_path) : '' }}"
+                                        data-back-side-pdf-url="{{ $t->back_side_pdf_path ? asset('storage/' . $t->back_side_pdf_path) : '' }}">
                                         <td>{{ $i + 1 }}</td>
                                         <td>{{ $t->name }}</td>
-                                        <td>{{ $t->course->name ?? '—' }}</td>
+                                        <td>{{ $t->courses->pluck('name')->implode(', ') ?: '—' }}</td>
                                         <td>{{ $t->course_name_line1 }}{{ $t->course_name_line2 ? ' / ' . $t->course_name_line2 : '' }}
                                         </td>
                                         <td>{{ $t->duration ?? '—' }}</td>
+                                        <td>{{ $t->serialPrefix->prefix ?? '—' }}</td>
                                         <td>
                                             @if ($t->bottom_image_path)
                                                 <img src="{{ asset('storage/' . $t->bottom_image_path) }}" alt=""
@@ -81,33 +86,41 @@
                                             @endif
                                         </td>
                                         <td>
-                                            @if ($t->back_side_content)
-                                                <span class="ct-yes">Yes</span>
+                                            @if ($t->qr_code_image_path)
+                                                <img src="{{ asset('storage/' . $t->qr_code_image_path) }}" alt=""
+                                                    style="max-height:36px;max-width:60px;object-fit:contain;">
+                                            @else
+                                                <span class="ct-muted">—</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if ($t->back_side_pdf_path)
+                                                <a href="{{ asset('storage/' . $t->back_side_pdf_path) }}" target="_blank"
+                                                    rel="noopener" class="ct-yes">
+                                                    <i class="fa-solid fa-file-pdf"></i> View
+                                                </a>
                                             @else
                                                 <span class="ct-muted">No</span>
                                             @endif
                                         </td>
-                                        <td>
-                                            @if ($t->is_active)
-                                                <span class="ct-badge ct-badge-active">Active</span>
-                                            @else
-                                                <span class="ct-badge ct-badge-disabled">Disabled</span>
-                                            @endif
-                                        </td>
                                         <td class="text-nowrap">
-                                            @if ($canUpdate && $t->is_active)
+                                            @if ($canUpdate)
                                                 <button type="button" class="btn btn-sm btn-outline-primary ct-edit-btn">
                                                     <i class="fa-solid fa-pen"></i>
                                                 </button>
                                             @endif
-                                            @if ($canDisable && $t->is_active)
+                                            @if ($canDisable)
                                                 <button type="button" class="btn btn-sm btn-outline-danger ct-disable-btn">
                                                     <i class="fa-solid fa-ban"></i>
                                                 </button>
                                             @endif
                                         </td>
                                     </tr>
-                                @endforeach
+                                @empty
+                                    <tr>
+                                        <td colspan="10" class="text-center">No certificate templates found.</td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </x-table>
@@ -135,15 +148,15 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Linked Course (optional)</label>
-                        <select id="ct-course-id" class="primary_select form-control">
-                            <option value="">— None —</option>
+                        <label>Linked Course(s) (optional)</label>
+                        <select id="ct-course-ids" class="form-control" multiple size="6">
                             @foreach ($courseOptions ?? [] as $c)
                                 <option value="{{ $c->id }}">{{ $c->name }}</option>
                             @endforeach
                         </select>
-                        <small class="ct-muted">Just a convenience link for your own reference — any template can
-                            still be picked for any certificate at generate time.</small>
+                        <small class="ct-muted">Hold Ctrl (Windows) / Cmd (Mac) to select more than one. A course can
+                            only be linked to one active template at a time — saving will tell you which template to
+                            remove it from first if there's a clash.</small>
                     </div>
 
                     <div class="row">
@@ -165,6 +178,19 @@
                             <input type="text" id="ct-duration" class="form-control" maxlength="255"
                                 placeholder='e.g. "3 Months" or "120 Hours"'>
                         </div>
+                        <div class="col-md-6 form-group">
+                            <label>Serial Number Prefix (optional)</label>
+                            <input type="text" id="ct-serial-prefix" class="form-control" maxlength="50"
+                                list="ct-serial-prefix-options"
+                                placeholder='e.g. "STB-NW" → STB-NW-0001, STB-NW-0002, ...'>
+                            <datalist id="ct-serial-prefix-options">
+                                @foreach ($serialPrefixOptions ?? [] as $p)
+                                    <option value="{{ $p->prefix }}">
+                                @endforeach
+                            </datalist>
+                            <small class="ct-muted">Type an existing prefix to keep using its running number, or a
+                                new one to start a fresh series at 0001.</small>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -177,10 +203,26 @@
                         </div>
                     </div>
 
+                    <div class="form-group">
+                        <label>QR Code Image (optional)</label>
+                        <input type="file" id="ct-qr-image" class="form-control" accept="image/png,image/jpeg">
+                        <div id="ct-current-qr-wrap" class="mt-10" style="display:none;">
+                            <small class="ct-muted">Current image:</small><br>
+                            <img id="ct-current-qr" src="" alt=""
+                                style="max-height:60px;max-width:100px;object-fit:contain;">
+                        </div>
+                    </div>
+
                     <div class="form-group mb-0">
-                        <label>Back Side Content (optional)</label>
-                        <textarea id="ct-back-side" class="form-control" rows="5"
-                            placeholder="Printed as a literal second page of the generated certificate PDF. Leave blank for a single-page certificate."></textarea>
+                        <label>Back Side (optional)</label>
+                        <input type="file" id="ct-back-side-pdf" class="form-control" accept="application/pdf">
+                        <div id="ct-current-back-side-wrap" class="mt-10" style="display:none;">
+                            <a id="ct-current-back-side-link" href="" target="_blank" rel="noopener">
+                                <i class="fa-solid fa-file-pdf"></i> View current back side PDF
+                            </a>
+                        </div>
+                        <small class="ct-muted">Uploaded as-is as a literal second page of the generated certificate
+                            PDF. Leave blank for a single-page certificate.</small>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -206,25 +248,6 @@
             color: #1e7a43;
             font-weight: 700;
             font-size: 12px;
-        }
-
-        .ct-badge {
-            display: inline-block;
-            padding: 2px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 700;
-            white-space: nowrap;
-        }
-
-        .ct-badge-active {
-            background: #e8f6ee;
-            color: #1e7a43;
-        }
-
-        .ct-badge-disabled {
-            background: #f4f6f8;
-            color: #8a95a1;
         }
 
         .ampl-banner {
@@ -301,19 +324,25 @@
                     editingId = null;
                     $('#ctFormModalTitle').text('New Certificate Template');
                     $('#ct-name').val('');
-                    $('#ct-course-id').val('').trigger('change');
+                    $('#ct-course-ids').val([]);
                     $('#ct-line1').val('');
                     $('#ct-line2').val('');
                     $('#ct-duration').val('');
+                    $('#ct-serial-prefix').val('');
                     $('#ct-bottom-image').val('');
                     $('#ct-current-image-wrap').hide();
                     $('#ct-current-image').attr('src', '');
-                    $('#ct-back-side').val('');
+                    $('#ct-qr-image').val('');
+                    $('#ct-current-qr-wrap').hide();
+                    $('#ct-current-qr').attr('src', '');
+                    $('#ct-back-side-pdf').val('');
+                    $('#ct-current-back-side-wrap').hide();
+                    $('#ct-current-back-side-link').attr('href', '');
                     $('#ct-form-error').hide().text('');
                 }
 
                 $('#ct-new-btn').on('click', function() {
-                    // resetForm();
+                    resetForm();
                     $('#ctFormModal').modal('show');
                 });
 
@@ -323,16 +352,36 @@
                     editingId = $tr.data('id');
                     $('#ctFormModalTitle').text('Edit Certificate Template');
                     $('#ct-name').val($tr.data('name'));
-                    $('#ct-course-id').val($tr.data('course-id') || '').trigger('change');
+
+                    // jQuery auto-parses a data-course-ids="[1,2,3]" attribute
+                    // into a real array; .val() on a multi-select needs the
+                    // option values as strings to match correctly.
+                    var courseIds = $tr.data('course-ids') || [];
+                    $('#ct-course-ids').val(courseIds.map(String));
+
                     $('#ct-line1').val($tr.data('line1'));
                     $('#ct-line2').val($tr.data('line2'));
                     $('#ct-duration').val($tr.data('duration'));
-                    $('#ct-back-side').val($tr.data('back-side'));
+                    $('#ct-serial-prefix').val($tr.data('serial-prefix'));
+
                     var imageUrl = $tr.data('image-url');
                     if (imageUrl) {
                         $('#ct-current-image').attr('src', imageUrl);
                         $('#ct-current-image-wrap').show();
                     }
+
+                    var qrUrl = $tr.data('qr-image-url');
+                    if (qrUrl) {
+                        $('#ct-current-qr').attr('src', qrUrl);
+                        $('#ct-current-qr-wrap').show();
+                    }
+
+                    var backSideUrl = $tr.data('back-side-pdf-url');
+                    if (backSideUrl) {
+                        $('#ct-current-back-side-link').attr('href', backSideUrl);
+                        $('#ct-current-back-side-wrap').show();
+                    }
+
                     $('#ctFormModal').modal('show');
                 });
 
@@ -348,14 +397,27 @@
 
                     var formData = new FormData();
                     formData.append('name', name);
-                    formData.append('course_id', $('#ct-course-id').val() || '');
+                    ($('#ct-course-ids').val() || []).forEach(function(id) {
+                        formData.append('course_ids[]', id);
+                    });
                     formData.append('course_name_line1', line1);
                     formData.append('course_name_line2', $('#ct-line2').val().trim());
                     formData.append('duration', $('#ct-duration').val().trim());
-                    formData.append('back_side_content', $('#ct-back-side').val());
-                    var file = $('#ct-bottom-image')[0].files[0];
-                    if (file) {
-                        formData.append('bottom_image', file);
+                    formData.append('serial_prefix', $('#ct-serial-prefix').val().trim());
+
+                    var bottomImage = $('#ct-bottom-image')[0].files[0];
+                    if (bottomImage) {
+                        formData.append('bottom_image', bottomImage);
+                    }
+
+                    var qrImage = $('#ct-qr-image')[0].files[0];
+                    if (qrImage) {
+                        formData.append('qr_code_image', qrImage);
+                    }
+
+                    var backSidePdf = $('#ct-back-side-pdf')[0].files[0];
+                    if (backSidePdf) {
+                        formData.append('back_side_pdf', backSidePdf);
                     }
 
                     var url = editingId ?
@@ -407,7 +469,7 @@
                     var name = $tr.data('name');
 
                     if (!confirm('Disable "' + name +
-                            '"? This cannot be undone from here — it will stop appearing as a choice when generating new certificates, but certificates already generated with it are unaffected.'
+                            '"? This cannot be undone from here — it will stop appearing as a choice when generating new certificates and will disappear from this list, but certificates already generated with it are unaffected.'
                         )) {
                         return;
                     }

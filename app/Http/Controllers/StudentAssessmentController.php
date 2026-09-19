@@ -74,15 +74,53 @@ class StudentAssessmentController extends Controller
             });
         }
         if ($request->filled('date_range')) {
+            $dateRangeParts = array_map('trim', explode(' - ', $request->date_range));
 
-            if (str_contains($request->date_range, ' to ')) {
-                [$from, $to] = explode(' to ', $request->date_range);
-            } else {
-                $from = $to = $request->date_range;
+            if (count($dateRangeParts) === 2 && $dateRangeParts[0] !== '' && $dateRangeParts[1] !== '') {
+                try {
+                    $from = Carbon::parse($dateRangeParts[0])->startOfDay();
+                    $to = Carbon::parse($dateRangeParts[1])->endOfDay();
+                    $query->whereBetween('assessed_at', [$from, $to]);
+                } catch (\Exception $e) {
+                    // ignore silently — malformed range shouldn't break the page
+                }
+            } elseif (count($dateRangeParts) === 1 && $dateRangeParts[0] !== '') {
+                // Defensive: a single date with no " - " separator at all.
+                try {
+                    $day = Carbon::parse($dateRangeParts[0]);
+                    $query->whereBetween('assessed_at', [$day->copy()->startOfDay(), $day->copy()->endOfDay()]);
+                } catch (\Exception $e) {
+                    // ignore silently
+                }
             }
-            $query->whereBetween('assessed_at', [$from, $to]);
         }
 
+        if ($request->filled('start_date_range')) {
+            $startDateRangeParts = array_map('trim', explode(' - ', $request->start_date_range));
+
+            if (count($startDateRangeParts) === 2 && $startDateRangeParts[0] !== '' && $startDateRangeParts[1] !== '') {
+                try {
+                    $startFrom = Carbon::parse($startDateRangeParts[0])->startOfDay();
+                    $startTo = Carbon::parse($startDateRangeParts[1])->endOfDay();
+
+                    $query->whereHas('studentCourse.intake', function ($q) use ($startFrom, $startTo) {
+                        $q->whereBetween('start_date', [$startFrom, $startTo]);
+                    });
+                } catch (\Exception $e) {
+                    // ignore silently — malformed range shouldn't break the page
+                }
+            } elseif (count($startDateRangeParts) === 1 && $startDateRangeParts[0] !== '') {
+                try {
+                    $startDay = Carbon::parse($startDateRangeParts[0]);
+
+                    $query->whereHas('studentCourse.intake', function ($q) use ($startDay) {
+                        $q->whereBetween('start_date', [$startDay->copy()->startOfDay(), $startDay->copy()->endOfDay()]);
+                    });
+                } catch (\Exception $e) {
+                    // ignore silently
+                }
+            }
+        }
 
         if ($request->filled('branch_id')) {
             $branchId = $request->branch_id;
@@ -92,6 +130,26 @@ class StudentAssessmentController extends Controller
         }
 
         $recent = $query->get();
+        
+        $recent->each(function ($a) {
+            if ($a->studentCourse) {
+                $a->theoryProgress = $this->countSubjectCompletion(
+                    $a->student_id,
+                    $a->studentCourse->course_id,
+                    $a->studentCourse->intake_id,
+                    'T'
+                );
+                $a->practicalProgress = $this->countSubjectCompletion(
+                    $a->student_id,
+                    $a->studentCourse->course_id,
+                    $a->studentCourse->intake_id,
+                    'P'
+                );
+            } else {
+                $a->theoryProgress = ['completed' => 0, 'total' => 0];
+                $a->practicalProgress = ['completed' => 0, 'total' => 0];
+            }
+        });
 
         $categoriesByPair = $this->resolveCourseCategoriesForRecent($recent);
 

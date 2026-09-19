@@ -285,11 +285,25 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-lg-8 mb-2">
+                    <div class="col-lg-6 mb-2">
+                        <label class="ampl-filter-label">Created Date Range</label>
                         <input type="text" id="filter_date_range" name="date_range" class="form-control"
                             value="{{ request('date_range') }}" placeholder="Select Created Date Range" autocomplete="off">
                     </div>
-                    <div class="col-lg-4 mb-2">
+                    {{-- NEW — separate range filter for the course's Start
+                         Date (the intake's start_date, same value the
+                         "Start Date" table column already shows). Kept as
+                         its own field/picker rather than reusing
+                         filter_date_range, since it filters a different
+                         column (studentCourse.intake.start_date, not
+                         assessed_at). --}}
+                    <div class="col-lg-6 mb-2">
+                        <label class="ampl-filter-label">Course Start Date Range</label>
+                        <input type="text" id="filter_start_date_range" name="start_date_range" class="form-control"
+                            value="{{ request('start_date_range') }}" placeholder="Select Course Start Date Range"
+                            autocomplete="off">
+                    </div>
+                    <div class="col-lg-6 mb-2">
                         <select name="branch_id" class="primary_select form-control ajax_select">
                             <option value="">All Branches (Evaluator)</option>
                             @foreach ($branchOptions ?? [] as $b)
@@ -300,7 +314,7 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-lg-12 mb-2">
+                    <div class="col-lg-6 mb-2">
                         <input type="text" name="q" class="form-control" value="{{ request('q') }}"
                             placeholder="Search (Name / Reg No / NIC)">
                     </div>
@@ -312,9 +326,11 @@
                                 </button>
                             </div>
                             <div class="col-2">
-                                <button class="primary-btn small fix-gr-bg col-12 p-2">
-                                    <a href="{{ route('student-assessment.index') }}" class="text-white">Reset</a>
-                                </button>
+                   
+                                <a href="/student/student-info/assessment"
+                                    class="primary-btn small fix-gr-bg col-12 p-2">
+                                   Reset
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -340,6 +356,12 @@
                                     <th>NIC Number</th>
                                     <th>Course</th>
                                     <th>Module</th>
+                                    {{-- NEW — "like 12/20" completed/total
+                                         columns, same figures the marks
+                                         popup already shows for one
+                                         student, reused here per row. --}}
+                                    <th>Theory Subjects</th>
+                                    <th>Practical Subjects</th>
                                     <th>Created Date</th>
                                     <th>Total</th>
                                     <th>Result</th>
@@ -365,6 +387,8 @@
                                         $categoryKey = $a->student_id . '-' . $assessedCourseId;
                                         $studentCategory =
                                             optional($categoriesByPair->get($categoryKey))->category_name ?? '-';
+                                        $theoryProgress = $a->theoryProgress ?? ['completed' => 0, 'total' => 0];
+                                        $practicalProgress = $a->practicalProgress ?? ['completed' => 0, 'total' => 0];
                                     @endphp
                                     <tr>
                                         <td></td>
@@ -374,6 +398,8 @@
                                         <td>{{ $a->student->national_id_number ?? '-' }}</td>
                                         <td>{{ $a->template->course->name ?? '-' }}</td>
                                         <td>{{ $a->template->module_name ?? '-' }}</td>
+                                        <td>{{ $theoryProgress['completed'] }}/{{ $theoryProgress['total'] }}</td>
+                                        <td>{{ $practicalProgress['completed'] }}/{{ $practicalProgress['total'] }}</td>
                                         <td>{{ optional($a->assessed_at)->format('Y-m-d') }}</td>
                                         <td>{{ $a->total_marks }} / {{ $a->max_marks }}</td>
                                         <td>
@@ -424,7 +450,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="17" class="text-center">No assessments found.</td>
+                                        <td colspan="24" class="text-center">No assessments found.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -463,6 +489,24 @@
             canUndo: @json($canUndoAssessment),
         };
 
+
+        flatpickr("#filter_date_range", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            allowInput: true,
+        });
+
+        // NEW — Course Start Date Range filter, same flatpickr range
+        // picker/settings as Created Date Range above (this page uses
+        // flatpickr, not the bootstrap-daterangepicker jQuery plugin those
+        // <link>/<script> tags above load — those were already unused in
+        // this file before this change and are left as-is).
+        flatpickr("#filter_start_date_range", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            allowInput: true,
+        });
+
         $('#table_id').DataTable({
             responsive: true,
             dom: "<'dt-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3'" +
@@ -476,6 +520,10 @@
             searching: true,
             ordering: true,
             info: true,
+            lengthMenu: [
+                [25, 50, 100, -1],
+                [25, 50, 100, "All"]
+            ],
             buttons: [{
                     extend: 'copyHtml5',
                     title: getFileName(),
@@ -838,35 +886,4 @@
         ReactDOM.createRoot(document.getElementById('assessment-mark-root')).render(<App />);
     </script>
     @endverbatim
-    <script>
-        $(function() {
-            var $dateRangeInput = $('#filter_date_range');
-            if ($dateRangeInput.length) {
-                var existingRange = $dateRangeInput.val();
-                var drpOptions = {
-                    autoUpdateInput: false,
-                    locale: {
-                        cancelLabel: 'Clear',
-                        format: 'YYYY-MM-DD',
-                    },
-                };
-                if (existingRange && existingRange.indexOf(' - ') !== -1) {
-                    var existingParts = existingRange.split(' - ');
-                    drpOptions.autoUpdateInput = true;
-                    drpOptions.startDate = existingParts[0];
-                    drpOptions.endDate = existingParts[1];
-                }
-                $dateRangeInput.daterangepicker(drpOptions);
-                $dateRangeInput.on('apply.daterangepicker', function(ev, picker) {
-                    $(this).val(picker.startDate.format('YYYY-MM-DD') + ' - ' + picker.endDate.format(
-                        'YYYY-MM-DD'));
-                });
-                $dateRangeInput.on('cancel.daterangepicker', function() {
-                    $(this).val('');
-                });
-            }
-
-
-        });
-    </script>
 @endpush

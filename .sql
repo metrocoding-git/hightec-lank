@@ -600,3 +600,49 @@ ADD COLUMN `duration` VARCHAR(255) NULL
 AFTER `course_name_line2`;
 
 INSERT INTO `permissions` (`id`, `permission_name`, `label`, `created_at`, `updated_at`) VALUES (NULL, 'certificate.undo', 'undo', NULL, NULL);
+
+
+-- 09/19
+CREATE TABLE `certificate_template_course` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `certificate_template_id` BIGINT UNSIGNED NOT NULL,
+    `course_id` BIGINT UNSIGNED NOT NULL,
+    `created_at` TIMESTAMP NULL DEFAULT NULL,
+    `updated_at` TIMESTAMP NULL DEFAULT NULL,
+
+    PRIMARY KEY (`id`),
+
+    UNIQUE KEY `certificate_template_course_template_course_unique`
+        (`certificate_template_id`, `course_id`),
+
+    CONSTRAINT `certificate_template_course_certificate_template_id_foreign`
+        FOREIGN KEY (`certificate_template_id`)
+        REFERENCES `certificate_templates` (`id`)
+        ON DELETE CASCADE,
+
+    CONSTRAINT `certificate_template_course_course_id_foreign`
+        FOREIGN KEY (`course_id`)
+        REFERENCES `courses` (`id`)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE `certificate_serial_prefixes` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `prefix` VARCHAR(50) NOT NULL,
+    `last_number` INT UNSIGNED NOT NULL DEFAULT 0,
+    `created_at` TIMESTAMP NULL DEFAULT NULL,
+    `updated_at` TIMESTAMP NULL DEFAULT NULL,
+
+    PRIMARY KEY (`id`),
+
+    UNIQUE KEY `certificate_serial_prefixes_prefix_unique` (`prefix`)
+);
+
+ALTER TABLE `certificate_templates`
+    ADD COLUMN `qr_code_image_path` VARCHAR(255) NULL AFTER `bottom_image_path`,
+    ADD COLUMN `back_side_pdf_path` VARCHAR(255) NULL AFTER `back_side_content`,
+    ADD COLUMN `serial_prefix_id` BIGINT UNSIGNED NULL AFTER `back_side_pdf_path`,
+    ADD CONSTRAINT `certificate_templates_serial_prefix_id_foreign`
+        FOREIGN KEY (`serial_prefix_id`)
+        REFERENCES `certificate_serial_prefixes` (`id`)
+        ON DELETE SET NULL;
