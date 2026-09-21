@@ -309,11 +309,50 @@
             max-height: 90pt;
         }
 
-        .back-side {
-            page-break-before: always;
-            padding: 55pt;
-            font-size: 11pt;
-            line-height: 1.5;
+        /* NEW — "certificate want add footer details": institute name /
+           address / website on the left, TVEC Reg No. and PV No. on the
+           right, in two stacked rows. Sits just above the very bottom
+           edge, below the QR caption (ends ~top:741.6pt) and the bottom
+           image block (ends ~top:748.6pt), so it doesn't collide with
+           either. Only $footerAddress varies per certificate (by
+           branch) — everything else here is fixed text; see
+           CertificateController::branchFooterAddress(). */
+        .footer-band {
+            position: absolute;
+            top: 758pt;
+            left: 48pt;
+            width: 512pt;
+            padding-top: 5pt;
+            font-family: 'Helvetica', 'DejaVu Sans', Arial, sans-serif;
+            font-size: 7.5pt;
+            color: #333;
+        }
+
+        .footer-band-row {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        .footer-band-row+.footer-band-row {
+            margin-top: 2pt;
+        }
+
+        .footer-band-name,
+        .footer-band-address {
+            display: table-cell;
+            text-align: left;
+        }
+
+        .footer-band-name {
+            font-weight: bold;
+        }
+
+        .footer-band-reg {
+            display: table-cell;
+            width: 130pt;
+            text-align: right;
+            white-space: nowrap;
         }
     </style>
 </head>
@@ -408,7 +447,19 @@
             </table>
         </div>
 
-        @if ($qrDataUri)
+        {{-- "bottom left side qr to want add qr image" — the template's
+             own uploaded QR Code Image (Certificate Templates screen)
+             now renders here in preference to the auto-generated
+             barcode; $qrDataUri is only ever set as a fallback when no
+             image was uploaded (see renderCertificatePdf()). Explicit
+             width/height (not just the CSS above) for the same reason
+             the bottom image block already needs it — dompdf doesn't
+             reliably honor max-width/max-height on inline base64
+             images. --}}
+        @if ($qrImageDataUri)
+            <img class="qr-image" src="{{ $qrImageDataUri }}"
+                @if ($qrImageWidth && $qrImageHeight) width="{{ $qrImageWidth }}" height="{{ $qrImageHeight }}" style="width: {{ $qrImageWidth }}pt; height: {{ $qrImageHeight }}pt;" @else width="55" height="55" style="width: 55pt; height: 55pt;" @endif>
+        @elseif ($qrDataUri)
             <img class="qr-image" src="{{ $qrDataUri }}" width="55" height="55"
                 style="width: 55pt; height: 55pt;">
         @endif
@@ -422,13 +473,36 @@
                     @if ($bottomImageWidth && $bottomImageHeight) width="{{ $bottomImageWidth }}" height="{{ $bottomImageHeight }}" style="width: {{ $bottomImageWidth }}pt; height: {{ $bottomImageHeight }}pt;" @endif>
             @endif
         </div>
+
+        {{-- NEW — "certificate want add footer details": institute name,
+             address (varies by branch — see branchFooterAddress()),
+             website, TVEC Reg No. and PV No. --}}
+        <div class="footer-band">
+            <div class="footer-band-row">
+                <span class="footer-band-name">HIGHTEC LANKA INTERNATIONAL VOCATIONAL TECHNICAL TRAINING INSTITUTE (PVT) LTD.</span>
+                <span class="footer-band-reg">TVEC Re. No. P12/0113</span>
+            </div>
+            <div class="footer-band-row">
+                <span class="footer-band-address">{{ $footerAddress }}&nbsp;&nbsp;&nbsp;https://highteclanka.com</span>
+                <span class="footer-band-reg">PV 81127</span>
+            </div>
+        </div>
     </div>
 
-    {{-- @if ($template && $template->back_side_content)
-        <div class="back-side">
-            {!! nl2br(e($template->back_side_content)) !!}
-        </div>
-    @endif --}}
+    {{--
+        REMOVED — "certificate want join back side page to next page".
+        This block used to render certificate_templates.back_side_content
+        (typed text) as a literal second HTML page, but that field was
+        replaced a couple rounds ago by back_side_pdf_path (an uploaded
+        PDF file), which dompdf can't render as HTML at all. The back
+        side is now handled entirely in
+        CertificateController::renderCertificatePdf() /
+        mergeBackSide(): the template's uploaded back-side PDF's own
+        page(s) are appended, as themselves, after whatever this template
+        (pdf.blade.php) renders as the front page — so there is nothing
+        left for this file to do for the back side; it only ever renders
+        the front page now.
+    --}}
 </body>
 
 </html>

@@ -646,3 +646,11 @@ ALTER TABLE `certificate_templates`
         FOREIGN KEY (`serial_prefix_id`)
         REFERENCES `certificate_serial_prefixes` (`id`)
         ON DELETE SET NULL;
+
+ALTER TABLE `certificates`
+    ADD COLUMN `course_end_date` DATE NULL AFTER `issue_date`;
+
+
+-- 09/22
+ALTER TABLE certificates
+ADD COLUMN pv_number VARCHAR(255) NULL UNIQUE AFTER certificate_number;

@@ -2,10 +2,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\AssessmentTemplate;
+use App\Models\AssignSubjects;
 use App\Models\Certificate;
+use App\Models\CertificateSerialPrefix;
 use App\Models\CertificateTemplate;
 use App\Models\Course;
 use App\Models\StudentAssessment;
+use App\Models\Subject;
+use App\Models\SubjectAttendanceSession;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,7 +28,24 @@ class CertificateController extends Controller
      */
     public function index(Request $request)
     {
-        $query = StudentAssessment::with(['student', 'template.course', 'evaluator:id,name', 'certificate'])
+        // WIDENED this round — "list want add all assment list table
+        // details all": these extra eager loads (student.verifications,
+        // evaluator.branches, studentCourse.intake, studentCourse.branch)
+        // are what the new Theory/Practical Subjects, Student Category,
+        // verification badges, Start Date, Intake, and branch columns
+        // below need — the exact same relations
+        // StudentAssessmentController::index() already loads for the
+        // Final Assessment Marks list.
+        $query = StudentAssessment::with([
+            'student.verifications',
+            'template.course',
+            'evaluator:id,name',
+            'evaluator.branches:id,name',
+            'certificate',
+            'studentCourse',
+            'studentCourse.intake',
+            'studentCourse.branch',
+        ])
             ->where('is_qualified', true)
             ->latest();
 
@@ -81,42 +102,228 @@ class CertificateController extends Controller
 
         $assessments = $query->get();
 
+        // NEW — "list want add all assment list table details all": the
+        // same Theory/Practical Subjects progress figures the Final
+        // Assessment Marks list already computes per row, via
+        // countSubjectCompletion() below (deliberately duplicated from
+        // StudentAssessmentController — see that method's doc-comment).
+        $assessments->each(function ($a) {
+            if ($a->studentCourse) {
+                $a->theoryProgress = $this->countSubjectCompletion(
+                    $a->student_id,
+                    $a->studentCourse->course_id,
+                    $a->studentCourse->intake_id,
+                    'T'
+                );
+                $a->practicalProgress = $this->countSubjectCompletion(
+                    $a->student_id,
+                    $a->studentCourse->course_id,
+                    $a->studentCourse->intake_id,
+                    'P'
+                );
+            } else {
+                $a->theoryProgress = ['completed' => 0, 'total' => 0];
+                $a->practicalProgress = ['completed' => 0, 'total' => 0];
+            }
+        });
+
+        // NEW — same "Student Category" batched lookup the Final
+        // Assessment Marks list uses for its own column.
+        $categoriesByPair = $this->resolveCourseCategoriesForRecent($assessments);
+
         $courseIds = AssessmentTemplate::pluck('course_id')->unique();
         $courseOptions = Course::whereIn('id', $courseIds)->orderBy('name')->get(['id', 'name']);
 
-        // NEW — for the Generate modal's template dropdown (item 5 of the
-        // certificate expansion request).
-        $templateOptions = CertificateTemplate::active()->orderBy('name')->get(['id', 'name']);
+        // REMOVED — the Generate modal no longer asks the user to pick a
+        // certificate template; it's auto-selected per course (see
+        // generate() below), so $templateOptions is no longer needed
+        // here or in the view.
 
-        return view('pages.administration.certificate.index', compact('assessments', 'courseOptions', 'templateOptions'));
+        return view('pages.administration.certificate.index', compact('assessments', 'courseOptions', 'categoriesByPair'));
+    }
+
+    /**
+     * Batched "Student Category (from the course-related invoice)" lookup
+     * for the whole $assessments list in ONE query — copied verbatim from
+     * StudentAssessmentController::resolveCourseCategoriesForRecent().
+     * Deliberately duplicated rather than calling into that controller
+     * (this app has no shared base/trait between them; see the
+     * doc-comment on countSubjectCompletion() below for the same
+     * reasoning) — kept byte-for-byte identical on purpose so the two
+     * lists' "Student Category" column can never silently drift apart.
+     */
+    private function resolveCourseCategoriesForRecent($recent)
+    {
+        $pairs = $recent
+            ->map(fn($a) => ['student_id' => $a->student_id, 'course_id' => optional($a->template->course)->id])
+            ->filter(fn($p) => $p['course_id']);
+
+        if ($pairs->isEmpty()) {
+            return collect();
+        }
+
+        $rows = DB::table('fee_invoices')
+            ->join('paid_courses', 'paid_courses.invoice_id', '=', 'fee_invoices.id')
+            ->leftJoin('students', 'students.id', '=', 'fee_invoices.student_id')
+            ->leftJoin('student_categories', function ($join) {
+                $join->on(
+                    'student_categories.id',
+                    '=',
+                    DB::raw('COALESCE(fee_invoices.student_category_id, students.student_category_id)')
+                );
+            })
+            ->whereIn('fee_invoices.student_id', $pairs->pluck('student_id')->unique())
+            ->whereIn('paid_courses.course_id', $pairs->pluck('course_id')->unique())
+            ->where('fee_invoices.payment_status', '!=', 'returned')
+            ->select('fee_invoices.student_id', 'paid_courses.course_id', 'student_categories.category_name')
+            ->get();
+
+        return $rows->keyBy(fn($r) => $r->student_id . '-' . $r->course_id);
+    }
+
+    /**
+     * How many of the subjects of $subjectType ('P' or 'T') assigned to
+     * this course/intake has the student COMPLETED, out of how many are
+     * assigned in total — copied verbatim from
+     * StudentAssessmentController::countSubjectCompletion() (see that
+     * method's own doc-comment for the exact completion rule). Deliberately
+     * duplicated here rather than calling into StudentAssessmentController
+     * (this app has no shared base/trait between these two controllers) so
+     * this page's Theory/Practical Subjects columns can never silently
+     * drift out of sync with the Final Assessment Marks list's own
+     * columns.
+     */
+    private function countSubjectCompletion(int $studentId, int $courseId, ?int $intakeId, string $subjectType): array
+    {
+        $assignments = AssignSubjects::where('course_id', $courseId)
+            ->when($intakeId, fn($q) => $q->where('intake_id', $intakeId))
+            ->get(['subject_id', 'practical_time'])
+            ->keyBy('subject_id');
+
+        $subjects = Subject::whereIn('id', $assignments->keys())
+            ->where('type', $subjectType)
+            ->get(['id']);
+
+        if ($subjects->isEmpty()) {
+            return ['completed' => 0, 'total' => 0];
+        }
+
+        $minutesBySubject = SubjectAttendanceSession::where('student_id', $studentId)
+            ->where('course_id', $courseId)
+            ->whereIn('subject_id', $subjects->pluck('id'))
+            ->whereNull('checkpoint_type')
+            ->get(['subject_id', 'time_in', 'time_out'])
+            ->groupBy('subject_id')
+            ->map(function ($sessions) {
+                return $sessions->sum(fn($s) => $this->sessionDurationMinutes($s->time_in, $s->time_out));
+            });
+
+        $completed = 0;
+
+        foreach ($subjects as $subject) {
+            $planned = $this->parsePlannedMinutes($assignments->get($subject->id)->practical_time ?? null);
+            $actual = $minutesBySubject->get($subject->id, 0);
+
+            if ($subjectType == 'P') {
+                if ($planned > 0 && $actual >= $planned) {
+                    $completed++;
+                }
+            }
+            if ($subjectType == 'T') {
+                if ($actual > 0) {
+                    $completed++;
+                }
+            }
+        }
+
+        return ['completed' => $completed, 'total' => $subjects->count()];
+    }
+
+    /**
+     * Same hardened per-session minute calculation as
+     * StudentAssessmentController::sessionDurationMinutes() — copied
+     * verbatim (see the doc-comment on countSubjectCompletion() above).
+     */
+    private function sessionDurationMinutes(?Carbon $start, ?Carbon $end): int
+    {
+        if (!$start || !$end) {
+            return 0;
+        }
+
+        $start = Carbon::parse($start->format('H:i:s'));
+        $end = Carbon::parse($end->format('H:i:s'));
+
+        if ($end->lessThan($start)) {
+            $end->addDay();
+        }
+
+        return (int) $start->diffInMinutes($end);
+    }
+
+    /**
+     * Same parser as StudentAssessmentController::parsePlannedMinutes() —
+     * copied verbatim (see the doc-comment on countSubjectCompletion()
+     * above).
+     */
+    private function parsePlannedMinutes($value): int
+    {
+        if ($value === null || $value === '') {
+            return 0;
+        }
+
+        if (is_numeric($value)) {
+            return (int) $value;
+        }
+
+        if (preg_match('/^(\d{1,3}):(\d{2})$/', trim((string) $value), $m)) {
+            return ((int) $m[1] * 60) + (int) $m[2];
+        }
+
+        return 0;
     }
 
     /**
      * Generate certificate(s) for one or many PASSed student_assessments.
-     * Body: { student_assessment_ids: [1,2,3], certificate_template_id, issue_date }
+     * Body: { student_assessment_ids: [1,2,3], issue_date, course_end_date }
      *
-     * UPDATED this round (item 5): certificate_template_id and issue_date
-     * are now required inputs from the Generate modal instead of being
-     * implicit. issue_date defaults to today when not sent (belt-and-
-     * braces — the UI already defaults its date input to today, this is
-     * just the server-side fallback for the same rule).
+     * UPDATED this round:
+     *  - certificate_template_id is GONE from the request — "course
+     *    template want auto select (because course has only one
+     *    template)". Each assessment's own course is resolved and its
+     *    ONE active CertificateTemplate (via the certificate_template_course
+     *    pivot) is looked up automatically. If a course has no template
+     *    linked yet, that assessment is skipped with a clear reason
+     *    rather than failing the whole batch.
+     *  - course_end_date is now a required input (see the new column on
+     *    certificates) — "genarate certficate want add course end date".
+     *  - "course start date is future date, then can't be genarate
+     *    certificate" and "course start date and course end date duration
+     *    want check" are both enforced PER ASSESSMENT below, since a bulk
+     *    selection can span different students/intakes/courses with
+     *    different start dates and required durations.
      */
     public function generate(Request $request)
     {
         $data = $request->validate([
             'student_assessment_ids'   => 'required|array|min:1',
             'student_assessment_ids.*' => 'integer|distinct',
-            'certificate_template_id'  => 'required|integer|exists:certificate_templates,id',
             'issue_date'               => 'nullable|date',
+            'course_end_date'          => 'required|date',
         ]);
 
         $issueDate = $data['issue_date'] ?? now()->toDateString();
+        $courseEndDate = Carbon::parse($data['course_end_date'])->startOfDay();
 
         $created = [];
         $skipped = [];
 
         foreach ($data['student_assessment_ids'] as $assessmentId) {
-            $assessment = StudentAssessment::with('certificate')->find($assessmentId);
+            $assessment = StudentAssessment::with([
+                'certificate',
+                'studentCourse.intake',
+                'studentCourse.course',
+                'template.course',
+            ])->find($assessmentId);
 
             if (!$assessment) {
                 $skipped[] = ['id' => $assessmentId, 'reason' => 'Assessment not found'];
@@ -131,12 +338,96 @@ class CertificateController extends Controller
                 continue;
             }
 
-            $certificate = DB::transaction(function () use ($assessment, $data, $issueDate) {
+            // "course template want auto select (because course has only
+            // one templete)" — resolve the course, then the ONE active
+            // CertificateTemplate linked to it via certificate_template_course.
+            $course = optional($assessment->studentCourse)->course ?: optional($assessment->template)->course;
+
+            if (!$course) {
+                $skipped[] = ['id' => $assessmentId, 'reason' => 'Could not determine the course for this assessment'];
+                continue;
+            }
+
+            $certificateTemplate = CertificateTemplate::active()
+                ->whereHas('courses', fn($q) => $q->where('courses.id', $course->id))
+                ->first();
+
+            if (!$certificateTemplate) {
+                $skipped[] = [
+                    'id' => $assessmentId,
+                    'reason' => "No certificate template is linked to course \"{$course->name}\" yet — link one under Certificate Templates first.",
+                ];
+                continue;
+            }
+
+            // "course start date is future date, then can't be genarate
+            // certificate" — the real, scheduled start date is the
+            // intake's start_date (the same value the Final Assessment
+            // Marks list's "Start Date" column already reads), not when
+            // the enrollment row happened to be created in the DB.
+            $intakeStartDate = optional(optional($assessment->studentCourse)->intake)->start_date;
+
+            if (!$intakeStartDate) {
+                $skipped[] = ['id' => $assessmentId, 'reason' => 'Course start date (intake) is not set for this student — cannot validate.'];
+                continue;
+            }
+
+            $courseStartDate = Carbon::parse($intakeStartDate)->startOfDay();
+
+            if ($courseStartDate->isFuture()) {
+                $skipped[] = [
+                    'id' => $assessmentId,
+                    'reason' => "Course start date ({$courseStartDate->format('Y-m-d')}) is in the future — the course hasn't started yet.",
+                ];
+                continue;
+            }
+
+            if ($courseEndDate->lessThan($courseStartDate)) {
+                $skipped[] = [
+                    'id' => $assessmentId,
+                    'reason' => "Course End Date can't be before the course start date ({$courseStartDate->format('Y-m-d')}).",
+                ];
+                continue;
+            }
+
+            // "course start date and course end date durattion want check"
+            // — the gap between the two must cover the course's own
+            // official duration (courses.duration, e.g. "2 Months" -> 60
+            // days). See courseDurationInDays() below for the exact
+            // mapping. A duration string that can't be parsed skips this
+            // check entirely rather than blocking generation.
+            $actualDays = $courseStartDate->diffInDays($courseEndDate);
+            $requiredDays = $this->courseDurationInDays($course->duration ?? null);
+
+            if ($requiredDays !== null && $actualDays < $requiredDays) {
+                $skipped[] = [
+                    'id' => $assessmentId,
+                    'reason' => "Course \"{$course->name}\" needs at least {$requiredDays} day(s) ({$course->duration}) between start and end date — {$courseStartDate->format('Y-m-d')} to {$courseEndDate->format('Y-m-d')} is only {$actualDays} day(s).",
+                ];
+                continue;
+            }
+
+            $certificate = DB::transaction(function () use ($assessment, $certificateTemplate, $issueDate, $courseEndDate) {
+                // "certificate want serial number. template has serial
+                // then add number order" — a template with a Serial
+                // Number Prefix configured (Certificate Templates screen)
+                // now drives the certificate's actual number via that
+                // series (e.g. "STB-NW-0001", next one "STB-NW-0002", ...
+                // — CertificateSerialPrefix::nextSerialFor() is the exact
+                // atomically-incrementing helper that screen already
+                // built for this, just not wired in until now). A
+                // template with NO prefix configured keeps the original
+                // global "HTL-YYYY-NNNNN" numbering, unchanged.
+                $certificateNumber = $certificateTemplate->serial_prefix_id
+                    ? CertificateSerialPrefix::nextSerialFor($certificateTemplate->serial_prefix_id)
+                    : $this->nextCertificateNumber();
+
                 $certificate = Certificate::create([
                     'student_assessment_id'   => $assessment->id,
-                    'certificate_template_id' => $data['certificate_template_id'],
+                    'certificate_template_id' => $certificateTemplate->id,
                     'issue_date'              => $issueDate,
-                    'certificate_number'      => $this->nextCertificateNumber(),
+                    'course_end_date'         => $courseEndDate->toDateString(),
+                    'certificate_number'      => $certificateNumber,
                     'status'                  => 'generated',
                     'generated_by'            => Auth::id(),
                     'generated_at'            => now(),
@@ -156,6 +447,41 @@ class CertificateController extends Controller
             'created' => $created,
             'skipped' => $skipped,
         ]);
+    }
+
+    /**
+     * "course start date and course end date durattion want check (course
+     * table has duration. duration: 2 weeks , 1 month , 2 month .. if 2
+     * weeks days 14, if 1 month 30 days , if 2 month 60 dates" — courses
+     * .duration is a free-text string; this pulls the leading number and
+     * unit out of it and converts to a flat day count using 7-day weeks /
+     * 30-day months, matching the examples given exactly ("2 weeks" ->
+     * 14, "1 month" -> 30, "2 month"/"2 months" -> 60). Returns null if
+     * it can't be parsed (empty, or an unrecognized format), so the
+     * caller skips the duration check rather than wrongly blocking
+     * generation on a value it can't understand.
+     */
+    private function courseDurationInDays(?string $duration): ?int
+    {
+        if (!$duration) {
+            return null;
+        }
+
+        if (!preg_match('/(\d+(?:\.\d+)?)\s*(day|week|month)/i', trim($duration), $m)) {
+            return null;
+        }
+
+        $amount = (float) $m[1];
+        $unit = strtolower($m[2]);
+
+        $daysPerUnit = match ($unit) {
+            'day' => 1,
+            'week' => 7,
+            'month' => 30,
+            default => null,
+        };
+
+        return $daysPerUnit ? (int) round($amount * $daysPerUnit) : null;
     }
 
     /**
@@ -501,27 +827,62 @@ class CertificateController extends Controller
             'studentAssessment.student',
             'studentAssessment.template.course',
             'studentAssessment.evaluator',
-            'studentAssessment.studentCourse',
+            'studentAssessment.studentCourse.intake',
+            'studentAssessment.studentCourse.branch',
             'certificateTemplate',
         ]);
 
         $studentCourse = optional($certificate->studentAssessment)->studentCourse;
-        $startDate = optional($studentCourse)->created_at ? Carbon::parse($studentCourse->created_at) : null;
 
-        // CHANGED this round ("to date is cetrificate genarate date"): the
-        // "to" date on the "From: ... to ..." line used to come from
-        // studentCourse->course_end_date, which is why it printed blank on
-        // the real certificate you sent (that column wasn't set). Now it's
-        // just the certificate's own generated/issue date — the same value
-        // "Date of issued" below it already uses — so it's never blank for
-        // any certificate that's actually been generated.
-        $generatedDate = $certificate->issue_date ?? optional($certificate->generated_at)->toDateString();
-        $endDate = $generatedDate ? Carbon::parse($generatedDate) : null;
+        // CHANGED this round — "From:" now uses the course's real,
+        // scheduled start date (studentCourse.intake.start_date, the same
+        // value used to validate at generate() time and already shown as
+        // "Start Date" on the Final Assessment Marks list), instead of
+        // the enrollment row's created_at timestamp (which was never the
+        // actual course start date, just whenever that DB row happened to
+        // be inserted).
+        $startDate = optional(optional($studentCourse)->intake)->start_date
+            ? Carbon::parse($studentCourse->intake->start_date)
+            : null;
+
+        // CHANGED this round — "to" now uses the certificate's own
+        // course_end_date (a real field entered at generate time — see
+        // the "add course end date" request), replacing the previous
+        // fallback to issue_date/generated_at.
+        $endDate = $certificate->course_end_date ? Carbon::parse($certificate->course_end_date) : null;
 
         $durationWords = optional($certificate->certificateTemplate)->duration;
 
         $bottomImagePath = optional($certificate->certificateTemplate)->bottom_image_path;
         $bottomImageDims = $this->scaledImageDimensions($bottomImagePath, 'public', 123, 92);
+
+        // NEW — "bottom left side qr to want add qr image": the
+        // Certificate Templates screen has had a "QR Code Image" upload
+        // (qr_code_image_path) for a couple of rounds now, but nothing
+        // ever actually rendered it onto the certificate — the PDF was
+        // still only using buildQrDataUri()'s AUTO-GENERATED barcode
+        // (which also needs its own separate, optional composer package,
+        // and just encodes the certificate number as a QR pattern; it's
+        // not an uploaded image at all). Now the template's own uploaded
+        // QR image takes priority, sized/scaled the exact same safe way
+        // the bottom image already is (see scaledImageDimensions()'s
+        // doc-comment for why explicit width/height beats CSS
+        // max-width/max-height in dompdf). The auto-generated QR is kept
+        // as a fallback ONLY for a template with no uploaded QR image at
+        // all, so nothing regresses for a template that was relying on
+        // it before.
+        $qrImagePath = optional($certificate->certificateTemplate)->qr_code_image_path;
+        $qrImageDims = $this->scaledImageDimensions($qrImagePath, 'public', 55, 55);
+
+        // NEW — "certificate want add footer details... check intake
+        // start branch withing branch change only address" — the new
+        // institute footer band (name / address / website / TVEC Reg No.
+        // / PV No.) is the same on every certificate EXCEPT the address
+        // line, which depends on which branch the student's course ran
+        // at (studentCourse->branch — the same relation already shown as
+        // "Intake Branch" in the assessment/certificate lists).
+        $branchName = optional(optional($studentCourse)->branch)->name;
+        $footerAddress = $this->branchFooterAddress($branchName);
 
         // Shrink-to-fit for long names — see the class-doc comment above.
         // 41 characters is roughly the longest that fits on one line at
@@ -541,7 +902,14 @@ class CertificateController extends Controller
             'endDate'                   => $endDate,
             'durationWords'             => $durationWords,
             'nameFontSize'              => $nameFontSize,
-            'qrDataUri'                 => $this->buildQrDataUri($certificate),
+            // Fallback only — see the comment above $qrImagePath.
+            'qrDataUri'                 => $qrImagePath ? null : $this->buildQrDataUri($certificate),
+            'qrImageDataUri'            => $qrImagePath
+                ? $this->fileToDataUri($qrImagePath, 'public')
+                : null,
+            'qrImageWidth'              => $qrImageDims['width'] ?? null,
+            'qrImageHeight'             => $qrImageDims['height'] ?? null,
+            'footerAddress'             => $footerAddress,
             'bottomImageDataUri'        => $bottomImagePath
                 ? $this->fileToDataUri($bottomImagePath, 'public')
                 : null,
@@ -553,10 +921,138 @@ class CertificateController extends Controller
             'gradeFontDataUri'          => $this->fontToDataUri('certificate-grade-font.ttf'),
         ])->setPaper('letter', 'portrait');
 
+        // "certificate want join back side page to next page" — the
+        // template's uploaded back-side PDF (certificate_templates
+        // .back_side_pdf_path, added a couple rounds ago) is appended as
+        // real extra page(s) after the front page dompdf just rendered,
+        // rather than being left out entirely (dompdf can only render
+        // HTML/CSS, it can't embed an already-existing PDF's pages —
+        // that needs a separate PDF-merge step, see mergeBackSide()).
+        $finalPdfBinary = $this->mergeBackSide(
+            $pdf->output(),
+            optional($certificate->certificateTemplate)->back_side_pdf_path
+        );
+
         $path = 'certificates/pdf/' . $certificate->certificate_number . '.pdf';
-        Storage::disk('local')->put($path, $pdf->output());
+        Storage::disk('local')->put($path, $finalPdfBinary);
 
         return $path;
+    }
+
+    /**
+     * "certificate want add footer details... check intake start branch
+     * withing branch change only address. there 2 branches kurunegala
+     * and kaduwela" — the institute name, website, TVEC Reg No. and PV
+     * No. printed in the new footer band are the same on every
+     * certificate; only this address line changes, based on which
+     * branch the student's course ran at.
+     *
+     * *** NEEDS YOUR CONFIRMATION BEFORE THIS PRINTS ON A REAL
+     * CERTIFICATE *** — see the delivery README. The Kurunegala address
+     * below is my best reading of the reference photo you sent ("No.
+     * 549, Kandy Road, Mawathagama, Sri Lanka.") — Mawathagama is a town
+     * in the Kurunegala district, so I assumed that's the Kurunegala
+     * branch's own address, but please double check the exact wording.
+     * The Kaduwela address is a PLACEHOLDER — I don't have your real
+     * Kaduwela branch address, so I can't invent one for an official
+     * document. Replace the placeholder string below (or tell me the
+     * real address and I'll do it).
+     */
+    private function branchFooterAddress(?string $branchName): string
+    {
+        $branchName = $branchName ? trim($branchName) : '';
+
+        return match (true) {
+            stripos($branchName, 'kurunegala') !== false => 'No. 549, Kandy Road, Mawathagama, Sri Lanka.',
+            stripos($branchName, 'kaduwela') !== false => 'PLACEHOLDER — TELL ME THE REAL KADUWELA BRANCH ADDRESS, Sri Lanka.',
+            // Fallback for a branch that's neither of the two named ones
+            // (or no branch on record at all) — same as Kurunegala for
+            // now, since that's the only confirmed address I have.
+            default => 'No. 549, Kandy Road, Mawathagama, Sri Lanka.',
+        };
+    }
+
+    /**
+     * Appends the template's uploaded back-side PDF (stored on the
+     * 'public' disk, same as the bottom image / QR code) as extra page(s)
+     * after $frontPdfBinary (the dompdf-rendered certificate front page),
+     * producing one combined PDF. Uses setasign/fpdi, which can import
+     * pages from an existing PDF file and place them into a new one —
+     * dompdf itself has no such capability (it only renders HTML/CSS).
+     *
+     * OPTIONAL, guarded by class_exists — same pattern as
+     * buildQrDataUri()'s optional QR package check below. If the package
+     * isn't installed yet, or there's no back-side PDF on this
+     * certificate's template, the certificate is generated with just the
+     * front page (i.e. exactly what happened before this round) rather
+     * than failing outright.
+     *
+     * CHANGED this round — every "give up and return the front page only"
+     * path now writes a Log::warning() first. Previously these were
+     * silent, so there was no way to tell, from a generated certificate
+     * alone, WHY its back side didn't show up — a missing composer
+     * package and a missing/unreadable file both looked identical
+     * ("nothing happened"). Check storage/logs/laravel.log after
+     * generating a certificate whose template has a back-side PDF set;
+     * if the back side still isn't appearing, the log line says exactly
+     * which of the three guards below stopped it.
+     *
+     * REQUIRES ONE COMPOSER PACKAGE NOT YET IN THIS APP — see the
+     * delivery README for the exact command to run.
+     */
+    private function mergeBackSide(string $frontPdfBinary, ?string $backSidePdfPath): string
+    {
+        if (!$backSidePdfPath) {
+            return $frontPdfBinary; // this template has no back-side PDF configured — nothing to merge, not an error
+        }
+
+        if (!Storage::disk('public')->exists($backSidePdfPath)) {
+            \Illuminate\Support\Facades\Log::warning("Certificate back-side merge skipped: back-side PDF not found on the 'public' disk at path \"{$backSidePdfPath}\".");
+            return $frontPdfBinary;
+        }
+
+        if (!class_exists(\setasign\Fpdi\Fpdi::class)) {
+            \Illuminate\Support\Facades\Log::warning('Certificate back-side merge skipped: the setasign/fpdi-fpdf composer package is not installed. Run: composer require setasign/fpdi-fpdf');
+            return $frontPdfBinary;
+        }
+
+        $frontTmpPath = tempnam(sys_get_temp_dir(), 'cert_front_');
+        file_put_contents($frontTmpPath, $frontPdfBinary);
+
+        try {
+            $merged = new \setasign\Fpdi\Fpdi();
+
+            // Front page(s) — whatever dompdf just rendered for the
+            // certificate itself.
+            $frontPageCount = $merged->setSourceFile($frontTmpPath);
+            for ($i = 1; $i <= $frontPageCount; $i++) {
+                $templateId = $merged->importPage($i);
+                $size = $merged->getTemplateSize($templateId);
+                $merged->AddPage($size['orientation'], [$size['width'], $size['height']]);
+                $merged->useTemplate($templateId);
+            }
+
+            // Back side page(s) — the template's uploaded PDF, appended as-is.
+            $backSideAbsolutePath = Storage::disk('public')->path($backSidePdfPath);
+            $backPageCount = $merged->setSourceFile($backSideAbsolutePath);
+            for ($i = 1; $i <= $backPageCount; $i++) {
+                $templateId = $merged->importPage($i);
+                $size = $merged->getTemplateSize($templateId);
+                $merged->AddPage($size['orientation'], [$size['width'], $size['height']]);
+                $merged->useTemplate($templateId);
+            }
+
+            return $merged->Output('S');
+        } catch (\Throwable $e) {
+            // A corrupt/encrypted/unreadable back-side PDF (FPDI's free
+            // tier can't open password-protected files) shouldn't take
+            // the whole certificate down with it — log the real reason
+            // and fall back to the front page only.
+            \Illuminate\Support\Facades\Log::warning('Certificate back-side merge failed: ' . $e->getMessage());
+            return $frontPdfBinary;
+        } finally {
+            @unlink($frontTmpPath);
+        }
     }
 
     /**

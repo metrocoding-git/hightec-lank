@@ -157,10 +157,27 @@
                                     <th>#</th>
                                     <th>Student</th>
                                     <th>Reg No</th>
+                                    <th>Stage</th>
+                                    <th>NIC Number</th>
                                     <th>Course</th>
                                     <th>Module</th>
+                                    <th>Theory Subjects</th>
+                                    <th>Practical Subjects</th>
+                                    <th>Created Date</th>
+                                    <th>Total</th>
+                                    <th>Result</th>
+                                    <th>Grade</th>
+                                    <th>Student Category</th>
+                                    <th>Address</th>
+                                    <th>Name Verified</th>
+                                    <th>NIC / ID No. Verified</th>
+                                    <th>Address Verified</th>
+                                    <th>Start Date</th>
+                                    <th>Created By</th>
+                                    <th>Intake</th>
+                                    <th>FS Conduct Branch</th>
+                                    <th>Intake Branch</th>
                                     <th>Certificate #</th>
-                                    <th>Stage</th>
                                     <th>Director Training Signed</th>
                                     <th>Managing Director Signed</th>
                                     <th>Downloaded</th>
@@ -169,7 +186,15 @@
                             </thead>
                             <tbody>
                                 @forelse (($assessments ?? collect()) as $i => $a)
-                                    @php $cert = $a->certificate; @endphp
+                                    @php
+                                        $cert = $a->certificate;
+                                        $assessedCourseId = optional($a->template->course)->id;
+                                        $categoryKey = $a->student_id . '-' . $assessedCourseId;
+                                        $studentCategory =
+                                            optional(($categoriesByPair ?? collect())->get($categoryKey))->category_name ?? '-';
+                                        $theoryProgress = $a->theoryProgress ?? ['completed' => 0, 'total' => 0];
+                                        $practicalProgress = $a->practicalProgress ?? ['completed' => 0, 'total' => 0];
+                                    @endphp
                                     <tr data-assessment-id="{{ $a->id }}" data-cert-id="{{ optional($cert)->id }}"
                                         data-cert-status="{{ optional($cert)->status }}"
                                         data-downloaded="{{ $cert && $cert->downloaded_at ? 1 : 0 }}">
@@ -183,9 +208,6 @@
                                         <td>{{ $i + 1 }}</td>
                                         <td>{{ $a->student->student_name ?? '-' }}</td>
                                         <td>{{ $a->student->admission_number ?? '-' }}</td>
-                                        <td>{{ $a->template->course->name ?? '-' }}</td>
-                                        <td>{{ $a->template->module_name ?? '-' }}</td>
-                                        <td>{{ $cert->certificate_number ?? '-' }}</td>
                                         <td>
                                             @if (!$cert)
                                                 <span class="cert-badge cert-badge-none">Not generated</span>
@@ -197,6 +219,51 @@
                                                 <span class="cert-badge cert-badge-approved">Approved</span>
                                             @endif
                                         </td>
+                                        <td>{{ $a->student->national_id_number ?? '-' }}</td>
+                                        <td>{{ $a->template->course->name ?? '-' }}</td>
+                                        <td>{{ $a->template->module_name ?? '-' }}</td>
+                                        <td>{{ $theoryProgress['completed'] }}/{{ $theoryProgress['total'] }}</td>
+                                        <td>{{ $practicalProgress['completed'] }}/{{ $practicalProgress['total'] }}</td>
+                                        <td>{{ optional($a->assessed_at)->format('Y-m-d') }}</td>
+                                        <td>{{ $a->total_marks }} / {{ $a->max_marks }}</td>
+                                        <td>
+                                            @if ($a->is_qualified)
+                                                <span class="badge badge-success">PASS</span>
+                                            @else
+                                                <span class="badge badge-danger">FAIL</span>
+                                            @endif
+                                        </td>
+                                        <td>{{ $a->grade ?? '-' }}</td>
+                                        <td>{{ $studentCategory }}</td>
+                                        <td>{{ $a->student->permanent_address ?? '-' }}</td>
+                                        <td>
+                                            @if ($a->student && $a->student->isVerified('Full Name Verified'))
+                                                <span class="text-success">YES</span>
+                                            @else
+                                                NO
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if ($a->student && $a->student->isVerified('NIC Verified'))
+                                                <span class="text-success">YES</span>
+                                            @else
+                                                NO
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if ($a->student && $a->student->isVerified('Address Verified'))
+                                                <span class="text-success">YES</span>
+                                            @else
+                                                NO
+                                            @endif
+                                        </td>
+                                        <td>{{ $a->studentCourse->intake->start_date ?? '-' }}</td>
+                                        <td>{{ $a->evaluator->name ?? '-' }}</td>
+                                        <td>{{ $a->studentCourse->intake->name ?? '-' }}</td>
+                                        <td>{{ $a->evaluator->branches->first()->name ?? '-' }}</td>
+                                        <td>{{ $a->studentCourse->branch->name ?? '-' }}</td>
+                                        <td>{{ $cert->certificate_number ?? '-' }}</td>
+                                        
                                         <td>
                                             @if ($cert && $cert->conductor_signed_at)
                                                 <span class="cert-yes">Yes</span>
@@ -226,7 +293,7 @@
                                                 <span class="cert-no">No</span>
                                             @endif
                                         </td>
-                                        <td>
+                                        <td class="text-nowrap">
                                             @if ($cert && $cert->status === 'approved')
                                                 <a href="{{ route('certificate.download', ['id' => $cert->id]) }}"
                                                     class="btn btn-sm btn-outline-success" target="_blank"
@@ -234,11 +301,19 @@
                                                     <i class="fa-solid fa-download"></i>
                                                 </a>
                                             @endif
+                                            {{-- NEW — same per-row "PDF" action the Final Assessment Marks
+                                                 list already has (the assessment's own PDF, distinct from the
+                                                 certificate download above). --}}
+                                            <a href="{{ url('/student/student-info/assessment/' . $a->id . '/pdf') }}"
+                                                class="btn btn-sm btn-outline-primary" target="_blank"
+                                                title="Assessment PDF">
+                                                <i class="fa-solid fa-file-pdf"></i>
+                                            </a>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="12" class="text-center">No PASSed assessments found for these
+                                        <td colspan="29" class="text-center">No PASSed assessments found for these
                                             filters.</td>
                                     </tr>
                                 @endforelse
@@ -250,7 +325,10 @@
         </div>
     </section>
 
-    {{-- ===================== Generate modal (item 5 — template + issue date) ===================== --}}
+    {{-- ===================== Generate modal (certificate template is now
+         auto-selected per course — see the "course template want auto
+         select" request; only Date of Issue and Course End Date are
+         asked for here) ===================== --}}
     <div class="modal fade" id="certGenerateModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -263,22 +341,16 @@
                     <p id="cert-generate-summary" class="ampl-muted"></p>
 
                     <div class="form-group">
-                        <label>Certificate Template <span class="text-danger">*</span></label>
-                        <select id="cert-generate-template" class="primary_select form-control">
-                            <option value="">— Select a template —</option>
-                            @foreach ($templateOptions ?? [] as $t)
-                                <option value="{{ $t->id }}">{{ $t->name }}</option>
-                            @endforeach
-                        </select>
-                        @if (!count($templateOptions ?? []))
-                            <small class="text-danger">No active certificate templates exist yet — create one
-                                first under Certificate Templates.</small>
-                        @endif
+                        <label>Date of Issue <span class="text-danger">*</span></label>
+                        <input type="date" id="cert-generate-issue-date" class="form-control">
                     </div>
 
                     <div class="form-group mb-0">
-                        <label>Date of Issue <span class="text-danger">*</span></label>
-                        <input type="date" id="cert-generate-issue-date" class="form-control">
+                        <label>Course End Date <span class="text-danger">*</span></label>
+                        <input type="date" id="cert-generate-course-end-date" class="form-control">
+                        <small class="ampl-muted">Must be on/after the course's start date, and the gap between them
+                            must cover the course's full duration (e.g. a 2-month course needs at least 60
+                            days).</small>
                     </div>
 
                     <div id="cert-generate-error" class="ampl-banner ampl-banner-error mt-15" style="display:none;">
@@ -754,7 +826,7 @@
                     });
                 }
 
-                // ---------------- Generate (item 5 — pick a template + issue date first) ----------------
+                // ---------------- Generate (template is auto-selected server-side per course; only Date of Issue + Course End Date are asked for) ----------------
                 var pendingGenerateIds = [];
 
                 $('#cert-generate-btn').on('click', function() {
@@ -777,27 +849,29 @@
                         return;
                     }
 
-                    var summary = pendingGenerateIds.length + ' certificate(s) will be generated.';
+                    var summary = pendingGenerateIds.length +
+                        ' certificate(s) will be generated (certificate template is auto-selected per course).';
                     if (skippedCount > 0) summary += ' ' + skippedCount +
                         ' selected row(s) already have one and will be skipped.';
                     $('#cert-generate-summary').text(summary);
                     $('#cert-generate-error').hide().text('');
-                    $('#cert-generate-template').val('');
                     // "genarate date (default set today)" — pre-filled here, still editable.
-                    $('#cert-generate-issue-date').val(new Date().toISOString().slice(0, 10));
+                    var today = new Date().toISOString().slice(0, 10);
+                    $('#cert-generate-issue-date').val(today);
+                    $('#cert-generate-course-end-date').val(today);
                     $('#certGenerateModal').modal('show');
                 });
 
                 $('#cert-generate-confirm').on('click', function() {
-                    var templateId = $('#cert-generate-template').val();
                     var issueDate = $('#cert-generate-issue-date').val();
+                    var courseEndDate = $('#cert-generate-course-end-date').val();
 
-                    if (!templateId) {
-                        $('#cert-generate-error').text('Select a Certificate Template first.').show();
-                        return;
-                    }
                     if (!issueDate) {
                         $('#cert-generate-error').text('Date of Issue is required.').show();
+                        return;
+                    }
+                    if (!courseEndDate) {
+                        $('#cert-generate-error').text('Course End Date is required.').show();
                         return;
                     }
 
@@ -812,13 +886,19 @@
                         },
                         body: JSON.stringify({
                             student_assessment_ids: pendingGenerateIds,
-                            certificate_template_id: templateId,
                             issue_date: issueDate,
+                            course_end_date: courseEndDate,
                         }),
                     }).then(function(data) {
                         $('#certGenerateModal').modal('hide');
-                        alert(data.created.length + ' certificate(s) generated.' + (data.skipped
-                            .length ? ' ' + data.skipped.length + ' skipped.' : ''));
+                        var msg = data.created.length + ' certificate(s) generated.';
+                        if (data.skipped.length) {
+                            msg += ' ' + data.skipped.length + ' skipped:\n' + data.skipped.map(
+                                function(s) {
+                                    return '- ' + s.reason;
+                                }).join('\n');
+                        }
+                        alert(msg);
                         window.location.reload();
                     }).catch(function(err) {
                         $('#cert-generate-error').text(err.message).show();

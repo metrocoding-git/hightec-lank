@@ -1,11 +1,4 @@
 <?php
-/**
- * ============================================================================
- * REPLACES the Certificate.php delivered last round — place at:
- * app/Models/Certificate.php
- * ============================================================================
- */
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -32,7 +25,9 @@ class Certificate extends Model
         'downloaded_at',
         'download_count',
         'certificate_template_id',
-        'issue_date'
+        'issue_date',
+        'course_end_date',
+        'pv_number',
     ];
 
     protected $casts = [

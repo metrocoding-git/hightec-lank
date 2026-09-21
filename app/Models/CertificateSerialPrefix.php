@@ -41,7 +41,7 @@ class CertificateSerialPrefix extends Model
             $row->last_number += 1;
             $row->save();
 
-            return $row->prefix . '-' . str_pad((string) $row->last_number, 4, '0', STR_PAD_LEFT);
+            return $row->prefix . '/' . str_pad((string) $row->last_number, 8, '0', STR_PAD_LEFT);
         });
     }
 }
