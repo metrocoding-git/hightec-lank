@@ -6,6 +6,7 @@ use App\Models\Invoice;
 
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
+use App\Models\Certificate;
 use App\Models\FeeInvoices;
 use App\Models\Role;
 use App\Models\FeesGroup;
@@ -204,14 +205,14 @@ class InvoiceController extends Controller
             ->addColumn('action', function ($row) {
                 $user = Auth::user();
                 $items = [];
- 
+                $certLocked = $this->invoiceHasCertificateLock($row->student_id ?? null, $row->id);
                 if ($user->hasPermission('fees.payment-history')) {
                     $items[] = '<a class="dropdown-item" data-toggle="modal" data-target="#viewPaymentHistoryModal"
                                    data-invoice-id="' . $row->id . '">
                                     <i class="fa-solid fa-clock-rotate-left text-muted"></i> View Payment
                                 </a>';
                 }
- 
+
                 if ($user->hasPermission('fees.invoice-item-print')) {
                     $items[] = '<a class="dropdown-item" data-toggle="modal" data-target="#makeInvoiceModal"
                                    data-student-id="' . ($row->student_id ?? '') . '"
@@ -226,8 +227,8 @@ class InvoiceController extends Controller
                                     <i class="fa-solid fa-check text-muted"></i> Mark as Paid
                                 </a>';
                 }
- 
-                if ($row->invoice_type !== 'item_sell' && $user->hasPermission('fees.return-fee-data')) {
+
+                if (!$certLocked && $row->invoice_type !== 'item_sell' && $user->hasPermission('fees.return-fee-data')) {
                     $items[] = '<a class="dropdown-item" data-toggle="modal" data-target="#returnFeeModal"
                                    data-invoice-id="' . $row->id . '"
                                    data-student-id="' . ($row->student_id ?? '') . '"
@@ -237,18 +238,24 @@ class InvoiceController extends Controller
                                     <i class="fa-solid fa-rotate-left text-muted"></i> Return
                                 </a>';
                 }
- 
+
+                if ($certLocked) {
+                    $items[] = '<span class="dropdown-item-text text-muted small">
+                                <i class="fa-solid fa-lock"></i> Certificate generated — return/refund locked
+                            </span>';
+                }
+
                 if ($user->hasPermission('fees.invoice-print')) {
                     $items[] = '<a class="dropdown-item" href="' . route('fees.invoice-print', $row->id) . '"
                                    target="_blank">
                                     <i class="fa-solid fa-print text-muted"></i> Re-Print
                                 </a>';
                 }
- 
+
                 if (empty($items)) {
                     return '<span class="text-muted">&mdash;</span>';
                 }
- 
+
                 return '
                 <div class="dropdown modern-row-actions">
                     <button class="btn-row-action" type="button" data-toggle="dropdown" aria-expanded="false">
@@ -260,7 +267,7 @@ class InvoiceController extends Controller
                 </div>';
             })
 
-            
+
             ->rawColumns(['payment_status', 'action', 'inv_payment_status'])
             ->make(true);
     }
@@ -481,11 +488,12 @@ class InvoiceController extends Controller
 
         return response()->json([
             'total_amount' => $invoice->total_amount,
-            'paid_amount_sum' => $totalPaidAmount, 
+            'paid_amount_sum' => $totalPaidAmount,
             'due_amount' => $dueAmount,
-            'main_invoice_number' => $invoice->main_invoice_number, 
+            'main_invoice_number' => $invoice->main_invoice_number,
             'invoice_type' => $invoice->invoice_type,
             'payments' => $payments,
+            'certificate_locked' => $this->invoiceHasCertificateLock($invoice->student_id, $invoice->id),
         ]);
     }
 
@@ -500,6 +508,12 @@ class InvoiceController extends Controller
         try {
             $originalPayment = InvoicesPayments::findOrFail($paymentId);
             $invoice = FeeInvoices::findOrFail($originalPayment->invoice_id);
+            if ($this->invoiceHasCertificateLock($invoice->student_id, $invoice->id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'A certificate has already been generated for this course — this payment can no longer be refunded.',
+                ], 422);
+            }
 
             $create_user_id = Auth::check() ? Auth::id() : null;
             $user_branch_ids = UserBranch::where('user_id', $create_user_id)
@@ -911,6 +925,31 @@ class InvoiceController extends Controller
         $next = ((int) $maxNumber) + 1;
 
         return $code . '-' . str_pad($next, 6, '0', STR_PAD_LEFT);
+    }
+
+    private function invoiceHasCertificateLock(?int $studentId, int $invoiceId): bool
+    {
+        if (!$studentId) {
+            return false;
+        }
+
+        $courseIds = PaidCourse::where('invoice_id', $invoiceId)
+            ->pluck('course_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($courseIds)) {
+            return false;
+        }
+
+        return Certificate::whereHas('studentAssessment', function ($q) use ($studentId, $courseIds) {
+            $q->where('student_id', $studentId)
+                ->whereHas('studentCourse', function ($q2) use ($courseIds) {
+                    $q2->whereIn('course_id', $courseIds);
+                });
+        })->exists();
     }
 
 

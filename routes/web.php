@@ -266,6 +266,7 @@ Route::middleware(['permission'])->group(function () {
             Route::get('get-courses/{intakeId}', [StudentController::class, 'getSearchCoursesByIntake'])->name('student.add-intake.get-courses')->withoutMiddleware(['permission']);
             Route::get('intake-course-search', [StudentController::class, 'intakeCourseSearch'])->name('student.intake-course.search')->withoutMiddleware(['permission']);
             Route::post('{id}/update-status', [StudentController::class, 'updateStatus'])->name('student.add-intake.update-status');
+            Route::post('check-conflicts', [StudentController::class, 'checkCourseConflicts'])->name('student.add-intake-with-courses.check-conflicts')->withoutMiddleware(['permission']);
         });
 
         // ================= SCAN ATTENDANCE ROUTES ================= //

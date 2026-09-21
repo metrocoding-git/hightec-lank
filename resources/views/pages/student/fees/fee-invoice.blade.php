@@ -77,6 +77,228 @@
                 justify-content: center;
                 transition: background-color .15s ease, color .15s ease, border-color .15s ease;
             }
+
+            /* ============================================================
+               Payment History modal — this block was referenced by the
+               HTML/JS (invoice-history-card, record-count-badge,
+               payment-summary-stats/stat-chip, payment-history-table,
+               method-badge, payment-type-pill, certLockedBanner, and the
+               read-only row-returned/amount-highlight pair used in the
+               View Payment Details modal) but was never actually defined
+               anywhere in this file, so the modal rendered unstyled.
+               ============================================================ */
+
+            .invoice-history-card {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 10px;
+                padding: 14px 18px;
+                border-radius: 12px;
+                background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08));
+                border: 1px solid rgba(102, 126, 234, 0.15);
+            }
+
+            .invoice-history-card .title-group {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .invoice-history-card .title-icon {
+                width: 40px;
+                height: 40px;
+                border-radius: 10px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient(135deg, var(--gradient_1), var(--gradient_2));
+                color: #fff;
+                font-size: 1.1rem;
+                flex-shrink: 0;
+            }
+
+            .invoice-history-card h3 {
+                font-weight: 700;
+                font-size: 1.15rem;
+                margin: 0;
+            }
+
+            .record-count-badge {
+                display: inline-block;
+                padding: 6px 14px;
+                border-radius: 999px;
+                background: rgba(102, 126, 234, 0.1);
+                color: #5a4fcf;
+                font-weight: 600;
+                font-size: 0.85rem;
+                white-space: nowrap;
+            }
+
+            /* Certificate-lock banner (uses Bootstrap's alert/alert-warning as its
+               base — this just tightens spacing/icon alignment to match the rest
+               of this modal's polish). */
+            #certLockedBanner {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                border-radius: 8px;
+                font-size: 0.9rem;
+                font-weight: 500;
+                margin-top: 14px;
+            }
+
+            .payment-summary-stats {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 12px;
+                margin: 18px 0 22px;
+            }
+
+            .stat-chip {
+                flex: 1 1 180px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 14px 16px;
+                border-radius: 10px;
+                border: 1px solid var(--border_color);
+                background: #fff;
+            }
+
+            .stat-chip .stat-icon {
+                width: 38px;
+                height: 38px;
+                border-radius: 9px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1rem;
+                flex-shrink: 0;
+            }
+
+            .stat-chip .stat-label {
+                display: block;
+                font-size: 0.75rem;
+                color: #8a90a2;
+                text-transform: uppercase;
+                letter-spacing: .03em;
+                margin-bottom: 2px;
+            }
+
+            .stat-chip .stat-value {
+                display: block;
+                font-size: 1.05rem;
+                font-weight: 700;
+                color: #2b2f3a;
+            }
+
+            .stat-chip.stat-total .stat-icon {
+                background: rgba(102, 126, 234, 0.12);
+                color: #667eea;
+            }
+
+            .stat-chip.stat-paid .stat-icon {
+                background: rgba(40, 167, 69, 0.12);
+                color: #28a745;
+            }
+
+            .stat-chip.stat-due .stat-icon {
+                background: rgba(255, 193, 7, 0.15);
+                color: #b8860b;
+            }
+
+            .payment-history-table {
+                width: 100%;
+                border-collapse: separate;
+                border-spacing: 0;
+                margin-bottom: 18px;
+                font-size: 0.9rem;
+            }
+
+            .payment-history-table thead th {
+                background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+                color: #fff;
+                font-weight: 600;
+                text-align: left;
+                padding: 10px 12px;
+                white-space: nowrap;
+            }
+
+            .payment-history-table thead th:first-child {
+                border-top-left-radius: 8px;
+            }
+
+            .payment-history-table thead th:last-child {
+                border-top-right-radius: 8px;
+            }
+
+            .payment-history-table tbody td {
+                padding: 10px 12px;
+                border-bottom: 1px solid var(--border_color);
+                vertical-align: middle;
+            }
+
+            .payment-history-table tbody tr:hover {
+                background-color: rgba(0, 0, 0, 0.025);
+            }
+
+            .payment-history-table .payment-history-empty {
+                text-align: center;
+                padding: 24px;
+                color: #9aa1ac;
+            }
+
+            .method-badge {
+                display: inline-block;
+                padding: 4px 10px;
+                border-radius: 999px;
+                font-size: 0.78rem;
+                font-weight: 600;
+                white-space: nowrap;
+            }
+
+            .method-badge.method-cash {
+                background: rgba(40, 167, 69, 0.12);
+                color: #1e7e34;
+            }
+
+            .method-badge.method-invoice {
+                background: rgba(102, 126, 234, 0.12);
+                color: #4c4ec4;
+            }
+
+            .method-badge.method-bank_transfer {
+                background: rgba(23, 162, 184, 0.12);
+                color: #117a8b;
+            }
+
+            .method-badge.method-default {
+                background: rgba(108, 117, 125, 0.12);
+                color: #495057;
+            }
+
+            .payment-type-pill {
+                display: inline-block;
+                padding: 3px 9px;
+                border-radius: 999px;
+                background: #f1f3f9;
+                color: #5b6270;
+                font-size: 0.75rem;
+                font-weight: 500;
+                text-transform: capitalize;
+            }
+
+            /* View Payment Details (read-only) modal — highlights a return/refund row */
+            .row-returned {
+                background-color: rgba(220, 53, 69, 0.05);
+            }
+
+            .amount-highlight {
+                color: #dc3545;
+                font-weight: 700;
+            }
         </style>
     @endpush
 
@@ -628,6 +850,14 @@
                                                     <h3 class="mb-0">Payment History</h3>
                                                 </div>
                                                 <span class="record-count-badge" id="mainInvoiceNumber">&nbsp;</span>
+                                            </div>
+                                            {{-- CERTIFICATE LOCK: shown when getPaymentHistory() reports
+                                                 certificate_locked = true for this invoice's course — a
+                                                 certificate has already been generated, so Return and
+                                                 Refund are hidden below and this explains why. --}}
+                                            <div id="certLockedBanner" class="alert alert-warning d-none" role="alert">
+                                                <i class="fa-solid fa-lock"></i>
+                                                A certificate has already been generated for this course — return and refund are locked.
                                             </div>
                                             <div id="paymentHistoryContent">
                                                 <!-- Payment history will be loaded here via AJAX -->
@@ -1430,6 +1660,7 @@
                 url: `/student/fees/invoice-list/payment-history/${invoiceId}`, // New route for fetching payment history
                 type: 'GET',
                 beforeSend: function() {
+                    modal.find('#certLockedBanner').addClass('d-none');
                     modal.find('#paymentHistoryContent').html(`
                         <div class="text-center">
                             <div class="spinner-border" role="status">
@@ -1443,7 +1674,7 @@
                     console.log('Payment history response:', response);
                     modal.find('#totalAmountDisplay').text(response.total_amount);
                     modal.find('#mainInvoiceNumber').text(response.main_invoice_number ?
-                        ('Invoice: ' + response.main_invoice_number) : ' ');
+                        ('Invoice: ' + response.main_invoice_number) : ' ');
                     modal.find('#paidAmountDisplay').text(response
                         .paid_amount_sum); // Display sum of paid amounts
                     modal.find('#dueAmountDisplay').text(response.due_amount);
@@ -1454,6 +1685,14 @@
 
                     modal.find('#paymentAmountInput').attr('max', response.due_amount);
                     var isItemSell = response.invoice_type === 'item_sell';
+
+                    // CERTIFICATE LOCK: getPaymentHistory() now reports certificate_locked when a
+                    // Certificate already exists for this invoice's course(s) (see
+                    // InvoiceController::invoiceHasCertificateLock()). When locked, the Refund
+                    // action is hidden below (mirrors the server-side block in refundPayment())
+                    // and the banner near the top of the modal is shown.
+                    var certLocked = !!response.certificate_locked;
+                    modal.find('#certLockedBanner').toggleClass('d-none', !certLocked);
 
                     let historyHtml =
                         '<table class="payment-history-table"><thead><tr><th>Invoice Number</th><th>Course Name</th><th>Amount</th><th>Method</th><th>Type</th><th>Receipt No.</th><th>Date</th><th>Action</th></tr></thead><tbody>';
@@ -1518,6 +1757,7 @@
                                 isCurrentMonth, isItemSell);
 
                             if (
+                                !certLocked &&
                                 canRefundFeesPayment &&
                                 isRefundable &&
                                 payment.payment_invoice_number == null
@@ -1911,6 +2151,7 @@
                 url: `/student/fees/invoice-list/payment-history/${invoiceId}`,
                 type: 'GET',
                 beforeSend: function() {
+                    modal.find('#certLockedBanner').addClass('d-none');
                     modal.find('#paymentHistoryContent').html(`
                 <div class="text-center">
                     <div class="spinner-border" role="status">
@@ -1923,12 +2164,18 @@
                 success: function(response) {
                     modal.find('#totalAmountDisplay').text(response.total_amount);
                     modal.find('#mainInvoiceNumber').text(response.main_invoice_number ?
-                        ('Invoice: ' + response.main_invoice_number) : ' ');
+                        ('Invoice: ' + response.main_invoice_number) : ' ');
                     modal.find('#paidAmountDisplay').text(response.paid_amount_sum);
                     modal.find('#dueAmountDisplay').text(response.due_amount);
                     modal.find('#paymentAmountInput').attr('max', response.due_amount);
 
                     var isItemSell = response.invoice_type === 'item_sell';
+
+                    // CERTIFICATE LOCK: same flag as the show.bs.modal handler above — see the
+                    // comment there. Kept in both places since this is the near-duplicate
+                    // row-renderer this file already has for the modal's re-render path.
+                    var certLocked = !!response.certificate_locked;
+                    modal.find('#certLockedBanner').toggleClass('d-none', !certLocked);
 
                     // Build the history table HTML (reuse your existing code)
                     let historyHtml =
@@ -1954,7 +2201,8 @@
                                 actionDropdown +=
                                     `<a class="dropdown-item view-bank-details-btn" href="#" data-payment-id="${payment.id}" data-bank-date="${payment.bank_payment_date}" data-bank-amount="${payment.bank_payment_amount}" data-payment-file="${payment.payment_file || ''}"><i class="fa-solid fa-building-columns text-success"></i> View Bank Details</a>`;
                             }
-                            if (canRefundFeesPayment && !isItemSell && payment.payment_status !==
+                            if (!certLocked && canRefundFeesPayment && !isItemSell && payment
+                                .payment_status !==
                                 'refunded' && payment.amount >
                                 0) { // added !isItemSell check
                                 actionDropdown +=

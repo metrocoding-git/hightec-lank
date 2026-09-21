@@ -53,6 +53,76 @@
         .text-muted {
             color: #9aa1ac !important;
         }
+
+        /* ===================== NEW — course-conflict / certificate-lock UI
+           ("want some validation in backend" + "if add any one to front end
+           ui is beautifull"). Kept visually consistent with the two
+           existing alert boxes (studentCountAlert / courseStatusAlert)
+           already on this modal, just with its own two states. ===================== */
+        .cert-conflict-box {
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-top: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .cert-conflict-box.cc-danger {
+            background: #fdecea;
+            color: #a12a2a;
+            border: 1px solid #f5c6c6;
+        }
+
+        .cert-conflict-box.cc-warning {
+            background: #fff8e6;
+            color: #8a6300;
+            border: 1px solid #f5e3ab;
+        }
+
+        .cert-conflict-box i {
+            margin-right: 6px;
+        }
+
+        .cc-confirm-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 10px 0 0 0;
+            padding-top: 10px;
+            border-top: 1px dashed rgba(0, 0, 0, 0.12);
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .cc-confirm-label input[type="checkbox"] {
+            width: 17px;
+            height: 17px;
+            cursor: pointer;
+        }
+
+        /* Small "Certified / locked" pill appended next to the status badge
+           in the list — a certificate has been generated for this row, so
+           status/course/delete are frozen (category is still editable). */
+        .cert-lock-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 700;
+            background: #eef1f5;
+            color: #5a6472;
+            border: 1px solid #dde2e8;
+            white-space: nowrap;
+        }
+
+        .cert-lock-badge i {
+            margin-right: 3px;
+        }
+
+        .dropdown-item-text {
+            display: block;
+            padding: 6px 20px;
+        }
     </style>
 @endpush
 @section('title')
@@ -260,10 +330,21 @@
                 <form method="POST" action="{{ route('student.add-intake-with-courses.store') }}">
                     @csrf
                     <input type="hidden" name="user_id" value="{{ Auth::id() }}">
+                    {{-- NEW — set by JS only once the user has ticked the "return
+                         the old enrollment" confirmation box; see
+                         checkCourseConflicts() / storeStudentIntakeWithCourses()
+                         in the controller. Left blank, the array is simply
+                         empty/filtered server-side and changes nothing. --}}
+                    <input type="hidden" name="confirm_return_course_ids[]" id="confirm_return_course_id_input"
+                        value="">
                     <div class="modal-body">
                         <div id="studentCountAlert" class="alert alert-info col-12 text-center" style="display:none;">
                         </div>
                         <div id="courseStatusAlert" class="alert col-12 text-center" style="display:none;"></div>
+                        {{-- NEW — course-conflict / certificate-lock warnings (see
+                             CSS block above and the JS at the bottom of this
+                             file). --}}
+                        <div id="courseConflictAlert" class="cert-conflict-box" style="display:none;"></div>
                         <div class="row">
 
                             <!-- Student Selection -->
@@ -666,13 +747,47 @@
                     });
             }
 
-            $('#addStudentIntakeModal').on('show.bs.modal', function() {
+            // ---------------- NEW — course conflict / certificate-lock state ----------------
+            // "want some validation in backend" — the real rules are enforced
+            // server-side (see storeStudentIntakeWithCourses()); this block
+            // is only what lets the Assign button reflect that BEFORE the
+            // user submits, instead of them finding out from a page reload.
+            // Three independent gates all have to be true for Assign to be
+            // enabled — merged into one place so the two AJAX checks
+            // (expiry/count vs. conflict) can never race each other and
+            // leave a stale enabled/disabled state.
+            var canAddByExpiry = false;
+            var conflictBlocks = false; // duplicate or certificate_locked — never overridable
+            var conflictNeedsConfirm = false;
+            var conflictConfirmed = false;
+
+            function refreshAssignButtonState() {
+                var enabled = canAddByExpiry && !conflictBlocks && (!conflictNeedsConfirm || conflictConfirmed);
+                $('#assignBtn').prop('disabled', !enabled);
+            }
+
+            function resetConflictUI() {
+                conflictBlocks = false;
+                conflictNeedsConfirm = false;
+                conflictConfirmed = false;
+                $('#courseConflictAlert').hide().removeClass('cc-danger cc-warning').html('');
+                $('#confirm_return_course_id_input').val('');
+                refreshAssignButtonState();
+            }
+
+            function clearAllAlerts() {
                 clearAlerts();
+                canAddByExpiry = false;
+                resetConflictUI();
+            }
+
+            $('#addStudentIntakeModal').on('show.bs.modal', function() {
+                clearAllAlerts();
                 $('#assignBtn').prop('disabled', true);
             });
 
             $('#modal_student_id, #modal_branch_id, #modal_intake_id').on('change', function() {
-                clearAlerts();
+                clearAllAlerts();
             });
 
 
@@ -680,6 +795,9 @@
             $('#modal_course_ids').on('change', function() {
                 const intakeId = $('#modal_intake_id').val();
                 const courseId = $(this).val();
+                const studentId = $('#modal_student_id').val();
+
+                resetConflictUI();
 
                 if (intakeId && courseId) {
                     $.ajax({
@@ -708,8 +826,7 @@
                                     )
                                     .fadeIn();
 
-                                // enable Assign button
-                                $('#assignBtn').prop('disabled', false);
+                                canAddByExpiry = true;
                             } else {
                                 $('#courseStatusAlert')
                                     .removeClass('alert-success')
@@ -719,10 +836,10 @@
                                     )
                                     .fadeIn();
 
-                                // disable Assign button
-                                $('#assignBtn').prop('disabled', true);
+                                canAddByExpiry = false;
                             }
 
+                            refreshAssignButtonState();
                         },
                         error: function() {
                             $('#studentCountAlert')
@@ -731,14 +848,75 @@
                                 .text('Error fetching course info.')
                                 .fadeIn();
 
+                            canAddByExpiry = false;
+                            refreshAssignButtonState();
+
                             setTimeout(() => $('#studentCountAlert').fadeOut(), 5000);
                         }
                     });
                 } else {
                     $('#studentCount').text('');
+                    canAddByExpiry = false;
+                    refreshAssignButtonState();
                 }
 
+                // NEW — "same student same intake same course can't be create 2
+                // time / if add same course another intake ... ask ... if
+                // genarated certificate for some course can't be again add".
+                // A read-only pre-flight check so the modal can warn (or ask
+                // for confirmation) before Assign is even clickable. The
+                // actual rule enforcement happens again, authoritatively,
+                // server-side on submit — this call alone is never trusted.
+                if (studentId && intakeId && courseId) {
+                    $.ajax({
+                        url: "{{ route('student.add-intake-with-courses.check-conflicts') }}",
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            student_id: studentId,
+                            intake_id: intakeId,
+                            course_ids: [courseId]
+                        },
+                        success: function(response) {
+                            var r = (response.results && response.results[0]) || null;
+                            if (!r || r.status === 'ok') {
+                                return;
+                            }
+
+                            if (r.status === 'duplicate' || r.status === 'certificate_locked') {
+                                conflictBlocks = true;
+                                $('#courseConflictAlert')
+                                    .addClass('cc-danger')
+                                    .html('<i class="fa-solid fa-circle-exclamation"></i> ' + r
+                                        .message)
+                                    .fadeIn();
+                            } else if (r.status === 'needs_confirmation') {
+                                conflictNeedsConfirm = true;
+                                $('#courseConflictAlert')
+                                    .addClass('cc-warning')
+                                    .html(
+                                        '<i class="fa-solid fa-triangle-exclamation"></i> ' +
+                                        r.message +
+                                        '<label class="cc-confirm-label"><input type="checkbox" id="confirmReturnOldCourse" data-course-id="' +
+                                        r.course_id +
+                                        '"> Yes, return the old enrollment and add this new one</label>'
+                                    )
+                                    .fadeIn();
+                            }
+
+                            refreshAssignButtonState();
+                        }
+                    });
+                }
             });
+
+            $(document).on('change', '#confirmReturnOldCourse', function() {
+                conflictConfirmed = $(this).is(':checked');
+                $('#confirm_return_course_id_input').val(conflictConfirmed ? $(this).data(
+                    'course-id') : '');
+                refreshAssignButtonState();
+            });
+
 
             // Handle branch change event to load intakes dynamically (Modal)
             $('#modal_branch_id').on('change', function() {
@@ -887,6 +1065,7 @@
                 $('#modal_enrolled_at').val('{{ date('Y-m-d') }}');
                 $('#modal_status').val('pending');
                 $('#modal_notes').val('');
+                resetConflictUI();
 
                 // Trigger niceSelect update if using niceSelect
                 $('.primary_select').each(function() {
@@ -1139,6 +1318,12 @@
         // nothing. Added here, following the same confirm + ajax + toastr pattern
         // already used by changeStatus() above, posting to the real
         // student.add-intake.destroy route.
+        //
+        // UPDATED this round: the controller's destroy method now always
+        // returns JSON (including a certificate-lock rejection with
+        // success:false), where before it sometimes returned a redirect —
+        // this callback now actually reads response.success instead of
+        // assuming any HTTP 200 means the delete happened.
         function deleteIntake(id) {
             if (!confirm('Are you sure you want to remove this intake? This cannot be undone.')) {
                 return;
@@ -1155,7 +1340,11 @@
                     'Accept': 'application/json'
                 },
                 success: function(response) {
-                    toastr.success('Intake removed successfully!');
+                    if (response && response.success === false) {
+                        toastr.error(response.message || 'Failed to remove intake');
+                        return;
+                    }
+                    toastr.success((response && response.message) || 'Intake removed successfully!');
                     table.ajax.reload(null, false);
                 },
                 error: function(xhr, status, error) {

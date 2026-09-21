@@ -85,6 +85,18 @@ class ScanAttendanceController extends Controller
             }
         } elseif (!$this->hasCoursePayment($student, $courseId)) {
 
+            // "if return payment not any course payment for Daily Attendance
+            // course dont attend" — was there ever a payment for this course
+            // that has since been fully returned, or was there simply never
+            // one? Different message either way, same net effect: blocked.
+            if ($this->courseEverPaid($student, $courseId)) {
+                return response()->json([
+                    'status' => 'payment_returned',
+                    'message' => "{$student->student_name}'s payment for this course has been returned — attendance can't be started until a new payment is made.",
+                    'student' => $this->studentPayload($student),
+                ], 422);
+            }
+
             return response()->json([
                 'status' => 'no_payment',
                 'message' => "{$student->student_name} has no payment recorded for this course yet — attendance can't be started until a payment is made.",
@@ -1124,13 +1136,43 @@ class ScanAttendanceController extends Controller
 
     private function hasCoursePayment(Student $student, int $courseId): bool
     {
-        $totalPaid = DB::table('paid_courses')
+        return $this->courseNetPaidAmount($student, $courseId) > 0;
+    }
+
+    private function courseNetPaidAmount(Student $student, int $courseId): float
+    {
+        $invoiceIds = DB::table('paid_courses')
             ->join('fee_invoices', 'fee_invoices.id', '=', 'paid_courses.invoice_id')
             ->where('fee_invoices.student_id', $student->id)
             ->where('paid_courses.course_id', $courseId)
-            ->sum('paid_courses.paid_amount');
+            ->pluck('fee_invoices.id')
+            ->unique();
 
-        return $totalPaid > 0;
+        if ($invoiceIds->isEmpty()) {
+            return 0.0;
+        }
+
+        $totalPaid = (float) DB::table('paid_courses')
+            ->whereIn('invoice_id', $invoiceIds)
+            ->where('course_id', $courseId)
+            ->sum('paid_amount');
+
+        $totalReturned = (float) DB::table('return_fees')
+            ->whereIn('invoice_id', $invoiceIds)
+            ->sum('return_amount');
+
+        return round($totalPaid - $totalReturned, 2);
+    }
+
+    /** Was there ever a payment recorded at all (regardless of any later return)? Used only
+     *  to pick the right error message in scanCourse() — "no payment yet" vs "payment returned". */
+    private function courseEverPaid(Student $student, int $courseId): bool
+    {
+        return DB::table('paid_courses')
+            ->join('fee_invoices', 'fee_invoices.id', '=', 'paid_courses.invoice_id')
+            ->where('fee_invoices.student_id', $student->id)
+            ->where('paid_courses.course_id', $courseId)
+            ->sum('paid_courses.paid_amount') > 0;
     }
 
     private function practicalConcurrencyError(Student $student, int $courseId, int $subjectId): ?array

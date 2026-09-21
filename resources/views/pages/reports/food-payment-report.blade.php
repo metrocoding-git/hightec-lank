@@ -368,7 +368,8 @@
                         </div>
                         <div class="col-md-2">
                             <div class="summary-card">
-                                <div class="val">{{ number_format($foodPayments->sum('total_food_amount'), 2) }}</div>
+                                {{-- <div class="val">{{ number_format($foodPayments->sum('total_food_amount'), 2) }}</div> --}}
+                                <div class="val">-</div>
                                 <div class="lbl">Total Amount</div>
                             </div>
                         </div>

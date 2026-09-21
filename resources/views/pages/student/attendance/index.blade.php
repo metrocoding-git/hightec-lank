@@ -913,6 +913,7 @@
                     after_checking_wait: 'Please wait a moment',
                     after_checking_open: 'Close practical session first',
                     no_payment: 'No payment for this course',
+                    payment_returned: 'Course payment was returned',
                     practical_already_open: 'Another practical subject is open',
                     vehicle_required: 'Vehicle required to start',
                     vehicle_mismatch: 'Vehicle does not match',

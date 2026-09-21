@@ -6,6 +6,7 @@ use App\Models\Student;
 use App\Models\FeeInvoice;
 use App\Models\BloodGroup;
 use App\Models\Branch;
+use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\District;
 use App\Models\FeeInvoices;
@@ -867,25 +868,61 @@ class StudentController extends Controller
 
             ->addColumn('enroll_date', fn($row) => $row->created_at ? $row->created_at->format('Y-m-d') : '-')
 
+            // "if genarated certificate cant be return or change course or
+            // change status" — a small lock badge is appended to the status
+            // pill so it's visible at a glance which rows are locked, before
+            // the user even opens the row's action menu (which also hides
+            // the locked actions server-side below).
             ->addColumn('status', function ($row) {
-                return '<span class="badge badge-info">' . ucfirst($row->status) . '</span>';
+                $badge = '<span class="badge badge-info">' . ucfirst($row->status) . '</span>';
+                if ($this->studentCourseHasCertificate($row)) {
+                    $badge .= ' <span class="cert-lock-badge" title="Certificate already generated — locked"><i class="fa-solid fa-lock"></i> Certified</span>';
+                }
+                return $badge;
             })
 
             ->addColumn('note', fn($row) => $row->notes)
 
             // ======================
-            // ACTIONS COLUMN (Section 26: modernized + permission-gated)
+            // ACTIONS COLUMN (Section 26: modernized + permission-gated;
+            // this round adds a certificate lock — "if genarated certificate
+            // cant be return or change course or change status. only can be
+            // change student category only")
             // ======================
 
             ->addColumn('actions', function ($row) {
                 $user = Auth::user();
                 $items = [];
+                $certLocked = $this->studentCourseHasCertificate($row);
 
                 if ($user->hasPermission('student.add-intake.update-category')) {
                     $items[] = '<a class="dropdown-item" href="javascript:void(0);"
                                 onclick="openEditCategoryModal(' . $row->id . ', ' . $row->student_category_id . '); return false;">
                                 <i class="fa-solid fa-layer-group text-warning"></i> Edit Category
                             </a>';
+                }
+
+                if ($certLocked) {
+                    // Certificate already generated for this enrollment — status,
+                    // course and delete are all frozen. Category is still editable
+                    // (handled above, unconditionally).
+                    $items[] = '<span class="dropdown-item-text text-muted small">
+                                <i class="fa-solid fa-lock"></i> Certificate generated — locked
+                            </span>';
+
+                    if (empty($items)) {
+                        return '<span class="text-muted">&mdash;</span>';
+                    }
+
+                    return '
+                <div class="dropdown modern-row-actions">
+                    <button class="btn-row-action" type="button" data-toggle="dropdown" aria-expanded="false">
+                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        ' . implode('', $items) . '
+                    </div>
+                </div>';
                 }
 
                 if ($row->status == 'pending') {
@@ -974,6 +1011,10 @@ class StudentController extends Controller
         ]);
 
         try {
+            // "only can be change student category only" — category stays
+            // editable even after a certificate has been generated, so no
+            // lock check here (deliberately, unlike changeCourse/updateStatus/
+            // destroy below).
             $studentCourse = StudentCourse::findOrFail($id);
             $studentCourse->student_category_id = $request->student_category_id;
             $studentCourse->updated_by = Auth::id();
@@ -992,6 +1033,14 @@ class StudentController extends Controller
     }
 
 
+    // "same student same intake same course can't be create 2 time / if add
+    // same course another intake ... want to show now active one for that
+    // course and ask ... if ok then old one return and add new one / if
+    // genarated certificate for some course can't be again add" — all three
+    // rules are enforced here, server-side, regardless of what the browser
+    // already checked via checkCourseConflicts() below (that endpoint exists
+    // purely so the modal can warn the user *before* they submit; it is not
+    // trusted on its own).
     public function storeStudentIntakeWithCourses(Request $request)
     {
         $validatedData = $request->validate([
@@ -1001,24 +1050,88 @@ class StudentController extends Controller
             'course_ids' => 'required|array',
             'course_ids.*' => 'exists:courses,id',
             'notes' => 'nullable|string',
+            // Course ids the user has explicitly confirmed, in the modal,
+            // should have their existing (different-intake) enrollment
+            // returned so this new one can be added.
+            'confirm_return_course_ids' => 'nullable|array',
+            'confirm_return_course_ids.*' => 'nullable|integer',
         ]);
 
-        // Check if student is already enrolled in this intake
-        $courseExists = StudentCourse::where('student_id', $validatedData['student_id'])
-            ->where('intake_id', $validatedData['intake_id'])
-            ->whereIn('course_id', $validatedData['course_ids'])
-            ->exists();
+        $studentId = $validatedData['student_id'];
+        $intakeId = $validatedData['intake_id'];
+        $confirmReturnIds = collect($request->input('confirm_return_course_ids', []))
+            ->filter() // drops null/empty entries from the always-present hidden input
+            ->map(fn($v) => (int) $v)
+            ->all();
 
-        if ($courseExists) {
-            return back()->withErrors(['intake_id' => 'Student is already enrolled in this intake this course. Please edit the existing enrollment instead.']);
+        $toReturn = [];
+        $blocked = [];
+
+        foreach ($validatedData['course_ids'] as $courseId) {
+            // BUG FIX: course_ids arrives from the <select> as a STRING
+            // ("12"), while $confirmReturnIds below is built as ints. The
+            // in_array(..., true) check further down uses strict ===
+            // comparison, so "12" === 12 was always false — the "Yes,
+            // return the old enrollment" checkbox was silently ignored no
+            // matter what the user ticked, and every confirmed submission
+            // still got rejected with the "Confirm in the form..." error.
+            // Casting once here keeps $courseId an int for the rest of this
+            // loop (the confirm check, StudentCourse::create() below, etc).
+            $courseId = (int) $courseId;
+            $course = Course::find($courseId);
+            $courseName = $course->name ?? ('Course #' . $courseId);
+
+            // Rule 1: exact duplicate — same student + same intake + same course.
+            $duplicate = StudentCourse::where('student_id', $studentId)
+                ->where('intake_id', $intakeId)
+                ->where('course_id', $courseId)
+                ->exists();
+
+            if ($duplicate) {
+                $blocked[] = "Student is already enrolled in \"{$courseName}\" for this intake.";
+                continue;
+            }
+
+            // Rule 3 checked before rule 2's "return old" flow, so a
+            // certificate always wins even if the user already ticked the
+            // confirm box before the page had a chance to tell them.
+            if ($this->courseHasCertificateForStudent($studentId, $courseId)) {
+                $blocked[] = "A certificate has already been generated for \"{$courseName}\" for this student — this course can't be added again.";
+                continue;
+            }
+
+            // Rule 2: student already has a live (non-returned) enrollment in
+            // this same course under a DIFFERENT intake.
+            $activeElsewhere = StudentCourse::where('student_id', $studentId)
+                ->where('course_id', $courseId)
+                ->where('intake_id', '!=', $intakeId)
+                ->where('status', '!=', 'return')
+                ->first();
+
+            if ($activeElsewhere) {
+                if (!in_array($courseId, $confirmReturnIds, true)) {
+                    $blocked[] = "Student already has an active enrollment in \"{$courseName}\" under another intake. Confirm in the form to return that one and add this new enrollment.";
+                    continue;
+                }
+
+                $toReturn[] = $activeElsewhere;
+            }
         }
 
+        if (!empty($blocked)) {
+            return back()->withErrors(['course_ids' => $blocked])->withInput();
+        }
 
-        // Start transaction
         DB::beginTransaction();
 
-        $student = Student::find($validatedData['student_id']);
+        $student = Student::find($studentId);
         try {
+            foreach ($toReturn as $old) {
+                $old->status = 'return';
+                $old->updated_by = Auth::id();
+                $old->save();
+            }
+
             // Insert course enrollments
             foreach ($validatedData['course_ids'] as $courseId) {
                 StudentCourse::create([
@@ -1036,12 +1149,97 @@ class StudentController extends Controller
             }
 
             DB::commit();
-            return back()->with('success', 'Student enrolled in intake and courses successfully.');
+
+            $message = 'Student enrolled in intake and courses successfully.';
+            if (!empty($toReturn)) {
+                $message .= ' ' . count($toReturn) . ' previous enrollment(s) in the same course were marked as returned.';
+            }
+
+            return back()->with('success', $message);
         } catch (\Exception $e) {
             DB::rollback();
             return back()->withErrors(['error' => 'Failed to enroll student. Please try again.']);
         }
     }
+
+    // Read-only pre-flight check the Add Student Course modal calls (via
+    // AJAX, on course selection) so it can warn the user — or ask them to
+    // confirm returning an old enrollment — BEFORE they hit Assign. The
+    // real, authoritative enforcement of the same three rules lives in
+    // storeStudentIntakeWithCourses() above; this endpoint is purely UX.
+    public function checkCourseConflicts(Request $request)
+    {
+        $validated = $request->validate([
+            'student_id' => 'required|exists:students,id',
+            'intake_id' => 'required|exists:intakes,id',
+            'course_ids' => 'required|array',
+            'course_ids.*' => 'exists:courses,id',
+        ]);
+
+        $studentId = $validated['student_id'];
+        $intakeId = $validated['intake_id'];
+        $results = [];
+
+        foreach ($validated['course_ids'] as $courseId) {
+            $course = Course::find($courseId);
+            $courseName = $course->name ?? ('Course #' . $courseId);
+
+            $duplicate = StudentCourse::where('student_id', $studentId)
+                ->where('intake_id', $intakeId)
+                ->where('course_id', $courseId)
+                ->exists();
+
+            if ($duplicate) {
+                $results[] = [
+                    'course_id' => $courseId,
+                    'course_name' => $courseName,
+                    'status' => 'duplicate',
+                    'message' => "Student is already enrolled in \"{$courseName}\" for this intake.",
+                ];
+                continue;
+            }
+
+            if ($this->courseHasCertificateForStudent($studentId, $courseId)) {
+                $results[] = [
+                    'course_id' => $courseId,
+                    'course_name' => $courseName,
+                    'status' => 'certificate_locked',
+                    'message' => "A certificate has already been generated for \"{$courseName}\" for this student — this course can't be added again.",
+                ];
+                continue;
+            }
+
+            $activeElsewhere = StudentCourse::with('intake')
+                ->where('student_id', $studentId)
+                ->where('course_id', $courseId)
+                ->where('intake_id', '!=', $intakeId)
+                ->where('status', '!=', 'return')
+                ->first();
+
+            if ($activeElsewhere) {
+                $oldIntakeName = optional($activeElsewhere->intake)->name ?? 'another intake';
+                $results[] = [
+                    'course_id' => $courseId,
+                    'course_name' => $courseName,
+                    'status' => 'needs_confirmation',
+                    'old_student_course_id' => $activeElsewhere->id,
+                    'old_intake_name' => $oldIntakeName,
+                    'old_status' => $activeElsewhere->status,
+                    'message' => "Student already has an active enrollment in \"{$courseName}\" under intake \"{$oldIntakeName}\" (status: " . ucfirst($activeElsewhere->status) . '). Return that one and add this new enrollment instead?',
+                ];
+                continue;
+            }
+
+            $results[] = [
+                'course_id' => $courseId,
+                'course_name' => $courseName,
+                'status' => 'ok',
+            ];
+        }
+
+        return response()->json(['results' => $results]);
+    }
+
 
     public function updateStatus(Request $request, $id)
     {
@@ -1051,13 +1249,31 @@ class StudentController extends Controller
                 'status' => 'required|in:pending,start,return,complete',
             ]);
 
-            // Also update the status in related student_courses records
-            DB::table('student_courses')
-                ->where('id', $id)
-                ->update([
-                    'status' => $validatedData['status'],
-                    'updated_at' => now()
-                ]);
+            $studentCourse = StudentCourse::find($id);
+            if (!$studentCourse) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Enrollment not found.'
+                ], 404);
+            }
+
+            // "if genarated certificate cant be return or change course or
+            // change status"
+            if ($this->studentCourseHasCertificate($studentCourse)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'A certificate has already been generated for this enrollment — its status can no longer be changed.',
+                ], 422);
+            }
+
+            $studentCourse->status = $validatedData['status'];
+            $studentCourse->updated_at = now();
+            $studentCourse->save();
+
+            // Keep the student_courses record's own status in sync (the
+            // model above IS the student_courses row already, so this used
+            // to be a redundant second query against the same table under a
+            // different name — kept as a plain save() instead).
 
             return response()->json([
                 'success' => true,
@@ -1078,8 +1294,30 @@ class StudentController extends Controller
 
     public function destroyStudentAddIntakeWithCourses($id)
     {
-        StudentCourse::where('id', $id)->delete();
-        return back()->with('success', 'Intake enrollment removed successfully.');
+        $studentCourse = StudentCourse::find($id);
+
+        if (!$studentCourse) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Enrollment not found.',
+            ], 404);
+        }
+
+        // "if genarated certificate cant be return or change course or
+        // change status" — delete is included under this same lock.
+        if ($this->studentCourseHasCertificate($studentCourse)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'A certificate has already been generated for this enrollment — it can no longer be removed.',
+            ], 422);
+        }
+
+        $studentCourse->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Intake enrollment removed successfully.',
+        ]);
     }
 
     public function intakeCourseSearch(Request $request)
@@ -1113,6 +1351,37 @@ class StudentController extends Controller
         ]);
     }
     // ===============
+
+    // "if genarated certificate for some course can't be again add" / "if
+    // genarated certificate cant be return or change course or change
+    // status" — both rules boil down to "has a Certificate row ever been
+    // generated for this student in this course". Certificate belongs to
+    // StudentAssessment, and StudentAssessment belongs to StudentCourse via
+    // student_course_id (confirmed by the existing
+    // StudentAssessmentController — e.g. its store() sets
+    // 'student_course_id' => $validated['student_course_id'] and its
+    // existingForCourse() looks assessments up the same way), so this reads
+    // that same chain rather than guessing at a different one.
+    private function studentCourseHasCertificate(StudentCourse $studentCourse): bool
+    {
+        return Certificate::whereHas('studentAssessment', function ($q) use ($studentCourse) {
+            $q->where('student_course_id', $studentCourse->id);
+        })->exists();
+    }
+
+    // Same check as above, but keyed by student + course rather than a
+    // specific StudentCourse row — used when deciding whether a *new*
+    // enrollment (which doesn't have a student_courses row yet) is allowed
+    // to be created at all for that course.
+    private function courseHasCertificateForStudent(int $studentId, int $courseId): bool
+    {
+        return Certificate::whereHas('studentAssessment', function ($q) use ($studentId, $courseId) {
+            $q->where('student_id', $studentId)
+                ->whereHas('studentCourse', function ($q2) use ($courseId) {
+                    $q2->where('course_id', $courseId);
+                });
+        })->exists();
+    }
 
 
     private function generateNextAdmissionNumber()
@@ -1448,6 +1717,15 @@ class StudentController extends Controller
 
         try {
             $studentCourse = StudentCourse::findOrFail($id);
+
+            // "if genarated certificate cant be return or change course or
+            // change status"
+            if ($this->studentCourseHasCertificate($studentCourse)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'A certificate has already been generated for this enrollment — the course can no longer be changed.'
+                ]);
+            }
 
             // OPTIONAL: Prevent duplicate same course
             if ($studentCourse->course_id == $request->course_id) {
