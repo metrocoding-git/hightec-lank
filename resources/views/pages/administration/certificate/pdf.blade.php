@@ -215,7 +215,7 @@
 
         .cert-footer {
             position: absolute;
-            top: 485pt;
+            top: 475pt;
             left: 48pt;
             width: 512pt;
         }
@@ -281,13 +281,13 @@
 
         .qr-image {
             position: absolute;
-            top: 656.6pt;
+            top: 646.6pt;
             left: 100.8pt;
         }
 
         .qr-caption {
             position: absolute;
-            top: 712.6pt;
+            top: 702.6pt;
             left: 56pt;
             width: 150pt;
             text-align: center;
@@ -298,7 +298,7 @@
 
         .bottom-image-block {
             position: absolute;
-            top: 658.6pt;
+            top: 648.6pt;
             left: 442.9pt;
             width: 123pt;
             text-align: left;
@@ -346,6 +346,9 @@
 
         .footer-band-name {
             font-weight: bold;
+            /* "that wabt come one line" — force the institute name onto a
+               single line instead of wrapping inside its table-cell. */
+            white-space: nowrap;
         }
 
         .footer-band-reg {
@@ -484,25 +487,18 @@
             </div>
             <div class="footer-band-row">
                 <span class="footer-band-address">{{ $footerAddress }}&nbsp;&nbsp;&nbsp;https://highteclanka.com</span>
-                <span class="footer-band-reg">PV 81127</span>
+                {{-- "that want genarate after managing director sign that
+                     want save databse. that is want securet metho because
+                     that very important number for certificate securety"
+                     — PV No. is no longer static text. It's set only in
+                     CertificateController::signOwner() (nextPvNumber()),
+                     stored in certificates.pv_number, and blank here until
+                     the Managing Director has signed. --}}
+                <span class="footer-band-reg">{{ $certificate->pv_number ?? '' }}</span>
             </div>
         </div>
     </div>
 
-    {{--
-        REMOVED — "certificate want join back side page to next page".
-        This block used to render certificate_templates.back_side_content
-        (typed text) as a literal second HTML page, but that field was
-        replaced a couple rounds ago by back_side_pdf_path (an uploaded
-        PDF file), which dompdf can't render as HTML at all. The back
-        side is now handled entirely in
-        CertificateController::renderCertificatePdf() /
-        mergeBackSide(): the template's uploaded back-side PDF's own
-        page(s) are appended, as themselves, after whatever this template
-        (pdf.blade.php) renders as the front page — so there is nothing
-        left for this file to do for the back side; it only ever renders
-        the front page now.
-    --}}
 </body>
 
 </html>

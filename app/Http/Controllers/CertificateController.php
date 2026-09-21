@@ -588,6 +588,7 @@ class CertificateController extends Controller
             $certificate->owner_signed_by = Auth::id();
             $certificate->owner_signed_at = now();
             $certificate->status = 'approved';
+            $certificate->pv_number = $this->nextPvNumber();
             $certificate->pdf_path = $this->renderCertificatePdf($certificate);
             $certificate->save();
 
@@ -645,6 +646,7 @@ class CertificateController extends Controller
                     $certificate->owner_signed_by = null;
                     $certificate->owner_signed_at = null;
                     $certificate->status = 'conductor_signed';
+                    $certificate->pv_number = null;
                     $certificate->pdf_path = $this->renderCertificatePdf($certificate);
                     $certificate->save();
                     $reverted[] = ['id' => $certificate->id, 'to' => 'conductor_signed'];
@@ -776,6 +778,16 @@ class CertificateController extends Controller
             $number = sprintf('HTL-%s-%05d', $year, $count);
             $count++;
         } while (Certificate::where('certificate_number', $number)->exists());
+
+        return $number;
+    }
+
+
+    private function nextPvNumber(): string
+    {
+        do {
+            $number = 'PV ' . random_int(100000, 999999);
+        } while (Certificate::where('pv_number', $number)->exists());
 
         return $number;
     }
@@ -964,7 +976,7 @@ class CertificateController extends Controller
 
         return match (true) {
             stripos($branchName, 'kurunegala') !== false => 'No. 549, Kandy Road, Mawathagama, Sri Lanka.',
-            stripos($branchName, 'kaduwela') !== false => 'PLACEHOLDER — TELL ME THE REAL KADUWELA BRANCH ADDRESS, Sri Lanka.',
+            stripos($branchName, 'kaduwela') !== false => '404/22 Vaikkiya Waththa Rd, Kaduwela 10640',
             // Fallback for a branch that's neither of the two named ones
             // (or no branch on record at all) — same as Kurunegala for
             // now, since that's the only confirmed address I have.

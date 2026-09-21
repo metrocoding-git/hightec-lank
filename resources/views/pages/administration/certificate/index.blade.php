@@ -263,7 +263,7 @@
                                         <td>{{ $a->evaluator->branches->first()->name ?? '-' }}</td>
                                         <td>{{ $a->studentCourse->branch->name ?? '-' }}</td>
                                         <td>{{ $cert->certificate_number ?? '-' }}</td>
-                                        
+
                                         <td>
                                             @if ($cert && $cert->conductor_signed_at)
                                                 <span class="cert-yes">Yes</span>
@@ -313,7 +313,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="29" class="text-center">No PASSed assessments found for these
+                                        <td colspan="30" class="text-center">No PASSed assessments found for these
                                             filters.</td>
                                     </tr>
                                 @endforelse
@@ -366,10 +366,10 @@
 
     {{-- ===================== Sign — Director Training modal ===================== --}}
     <div class="modal fade" id="certSignConductorModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-lg cert-sign-modal-dialog" role="document">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Sign — Director Training</h5>
+                <div class="modal-header cert-sign-modal-header">
+                    <h5 class="modal-title"><i class="fa-solid fa-signature mr-2"></i>Sign — Director Training</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
                 </div>
@@ -377,15 +377,22 @@
                     <p id="cert-sign-conductor-summary" class="ampl-muted"></p>
 
                     <div class="cert-sign-toggle">
-                        <button type="button" class="btn btn-sm btn-outline-primary cert-mode-btn active"
-                            data-role="conductor" data-mode="draw">Draw</button>
-                        <button type="button" class="btn btn-sm btn-outline-primary cert-mode-btn" data-role="conductor"
-                            data-mode="upload">Upload</button>
+                        <button type="button" class="btn btn-sm cert-mode-btn active" data-role="conductor"
+                            data-mode="draw"><i class="fa-solid fa-pen-nib"></i> Draw</button>
+                        <button type="button" class="btn btn-sm cert-mode-btn" data-role="conductor"
+                            data-mode="upload"><i class="fa-solid fa-upload"></i> Upload</button>
                     </div>
                     <div class="cert-sign-draw" data-role="conductor">
-                        <canvas class="cert-sign-canvas" data-role="conductor"></canvas>
-                        <button type="button" class="btn btn-sm btn-outline-secondary cert-clear-btn"
-                            data-role="conductor">Clear</button>
+                        <div class="cert-sign-pad-wrap">
+                            <canvas class="cert-sign-canvas" data-role="conductor"></canvas>
+                            <div class="cert-sign-hint" data-role="conductor">
+                                <i class="fa-solid fa-pen"></i>
+                                <span>Sign here using your mouse, trackpad, or touchscreen</span>
+                            </div>
+                            <button type="button" class="cert-clear-fab" data-role="conductor" title="Clear signature">
+                                <i class="fa-solid fa-rotate-left"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="cert-sign-upload" data-role="conductor" style="display:none;">
                         <input type="file" accept="image/png,image/jpeg" class="form-control cert-upload-input"
@@ -406,10 +413,10 @@
 
     {{-- ===================== Sign — Managing Director modal ===================== --}}
     <div class="modal fade" id="certSignOwnerModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-lg cert-sign-modal-dialog" role="document">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Sign — Managing Director</h5>
+                <div class="modal-header cert-sign-modal-header">
+                    <h5 class="modal-title"><i class="fa-solid fa-signature mr-2"></i>Sign — Managing Director</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
                 </div>
@@ -418,15 +425,22 @@
                     <p class="ampl-muted">This finalizes the certificate(s) and unlocks download.</p>
 
                     <div class="cert-sign-toggle">
-                        <button type="button" class="btn btn-sm btn-outline-primary cert-mode-btn active"
-                            data-role="owner" data-mode="draw">Draw</button>
-                        <button type="button" class="btn btn-sm btn-outline-primary cert-mode-btn" data-role="owner"
-                            data-mode="upload">Upload</button>
+                        <button type="button" class="btn btn-sm cert-mode-btn active" data-role="owner"
+                            data-mode="draw"><i class="fa-solid fa-pen-nib"></i> Draw</button>
+                        <button type="button" class="btn btn-sm cert-mode-btn" data-role="owner"
+                            data-mode="upload"><i class="fa-solid fa-upload"></i> Upload</button>
                     </div>
                     <div class="cert-sign-draw" data-role="owner">
-                        <canvas class="cert-sign-canvas" data-role="owner"></canvas>
-                        <button type="button" class="btn btn-sm btn-outline-secondary cert-clear-btn"
-                            data-role="owner">Clear</button>
+                        <div class="cert-sign-pad-wrap">
+                            <canvas class="cert-sign-canvas" data-role="owner"></canvas>
+                            <div class="cert-sign-hint" data-role="owner">
+                                <i class="fa-solid fa-pen"></i>
+                                <span>Sign here using your mouse, trackpad, or touchscreen</span>
+                            </div>
+                            <button type="button" class="cert-clear-fab" data-role="owner" title="Clear signature">
+                                <i class="fa-solid fa-rotate-left"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="cert-sign-upload" data-role="owner" style="display:none;">
                         <input type="file" accept="image/png,image/jpeg" class="form-control cert-upload-input"
@@ -586,30 +600,157 @@
             font-size: 12px;
         }
 
+        /* ===================== Signature UI — made bigger/friendlier per
+           "sign is not user frient and ui beautifull ... want come full
+           and big size ... useing touch pad or useing pan in window".
+           The modal is now modal-lg (wider dialog), the pad itself is
+           much taller with a responsive breakpoint, and a "Sign here"
+           hint + a dedicated round Clear button sit on top of it instead
+           of the pad being a bare unlabeled rectangle. ===================== */
+        .cert-sign-modal-dialog {
+            max-width: 760px;
+        }
+
+        .cert-sign-modal-header {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            border-bottom: none;
+        }
+
+        .cert-sign-modal-header .modal-title {
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .cert-sign-modal-header .close {
+            color: #fff;
+            opacity: .85;
+            text-shadow: none;
+        }
+
+        .cert-sign-modal-header .close:hover {
+            opacity: 1;
+        }
+
         .cert-sign-toggle {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 8px;
+            display: inline-flex;
+            gap: 0;
+            margin-bottom: 14px;
             margin-top: 10px;
+            background: #f0f2f5;
+            border-radius: 999px;
+            padding: 4px;
+        }
+
+        .cert-mode-btn {
+            border: none;
+            background: transparent;
+            color: #6b7784;
+            font-weight: 600;
+            padding: 8px 20px;
+            border-radius: 999px;
+            transition: background-color .15s ease, color .15s ease;
+        }
+
+        .cert-mode-btn i {
+            margin-right: 6px;
         }
 
         .cert-mode-btn.active {
-            background: #1d4e89;
-            color: #fff;
-            border-color: #1d4e89;
+            background: #fff;
+            color: #1d4e89;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+        }
+
+        .cert-sign-pad-wrap {
+            position: relative;
         }
 
         .cert-sign-canvas {
             width: 100%;
-            height: 150px;
-            border: 1px dashed #c3cbd3;
-            border-radius: 6px;
+            height: 320px;
+            border: 2px dashed #c3cbd3;
+            border-radius: 12px;
             background: #fff;
             touch-action: none;
+            display: block;
         }
 
-        .cert-clear-btn {
-            margin-top: 6px;
+        @media (max-width: 576px) {
+            .cert-sign-canvas {
+                height: 220px;
+            }
+        }
+
+        /* Fills the frame with a clear "sign in this box, along this
+           line" guide instead of a plain blank rectangle — much easier
+           to read on a touchpad or pen-tablet where there's no physical
+           edge to feel for. */
+        .cert-sign-pad-wrap::after {
+            content: '';
+            position: absolute;
+            left: 8%;
+            right: 8%;
+            bottom: 22%;
+            border-bottom: 2px solid #dfe3e8;
+            pointer-events: none;
+        }
+
+        .cert-sign-hint {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            transform: translateY(-50%);
+            text-align: center;
+            color: #b0b8c1;
+            font-size: 15px;
+            font-weight: 600;
+            pointer-events: none;
+            transition: opacity .12s ease;
+        }
+
+        .cert-sign-hint i {
+            display: block;
+            font-size: 22px;
+            margin-bottom: 6px;
+            color: #c7cbd6;
+        }
+
+        .cert-sign-hint.cert-sign-hint-hidden {
+            opacity: 0;
+        }
+
+        .cert-clear-fab {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid #e1e6eb;
+            background: #fff;
+            color: #6b7784;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+            cursor: pointer;
+            transition: background-color .15s ease, color .15s ease;
+        }
+
+        .cert-clear-fab:hover {
+            background: #fdecea;
+            color: #a12a2a;
+            border-color: #f5c6c6;
+        }
+
+        .cert-sign-upload {
+            padding: 30px;
+            border: 2px dashed #c3cbd3;
+            border-radius: 12px;
+            text-align: center;
+            background: #fafbfc;
         }
 
         /* Row-selection checkbox — same pill/gradient style as the Credit Invoice
@@ -920,6 +1061,17 @@
                     signaturePads[role] = new SignaturePad(canvas, {
                         backgroundColor: 'rgb(255,255,255)'
                     });
+
+                    // "sign is not user frient" — a plain blank rectangle gave
+                    // no clue where or how to sign. The hint text fades out
+                    // the moment a stroke starts, and comes back if the pad
+                    // is cleared, so it never gets in the way of the actual
+                    // signature or ends up baked into the saved PNG.
+                    var $hint = $('.cert-sign-hint[data-role="' + role + '"]').removeClass(
+                        'cert-sign-hint-hidden');
+                    signaturePads[role].addEventListener('beginStroke', function() {
+                        $hint.addClass('cert-sign-hint-hidden');
+                    });
                 }
 
                 $('#certSignConductorModal').on('shown.bs.modal', function() {
@@ -944,9 +1096,14 @@
                     }
                 });
 
-                $('.cert-clear-btn').on('click', function() {
+                // Round "clear" button that now sits on top of the pad itself
+                // (bigger and easier to hit than the old text-link style
+                // button used to be) — also brings the "sign here" hint
+                // back so it's obvious the pad is empty again.
+                $(document).on('click', '.cert-clear-fab', function() {
                     var role = $(this).data('role');
                     if (signaturePads[role]) signaturePads[role].clear();
+                    $('.cert-sign-hint[data-role="' + role + '"]').removeClass('cert-sign-hint-hidden');
                 });
 
                 function signatureBlob(role) {
