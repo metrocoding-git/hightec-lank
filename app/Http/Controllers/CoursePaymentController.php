@@ -27,7 +27,7 @@ class CoursePaymentController extends Controller
             DB::raw("CONCAT(students.student_name) AS student_name"),
 
             DB::raw("
-                CASE 
+                CASE
                     WHEN students.is_old_stu = 1
                         OR EXISTS (
                             SELECT 1
@@ -38,7 +38,7 @@ class CoursePaymentController extends Controller
                     THEN 1
                     ELSE 0
                 END AS is_admission
-            
+
             ")
         )
             ->get();
@@ -68,6 +68,12 @@ class CoursePaymentController extends Controller
         ]);
 
 
+        if (!$this->hasRequiredFeeTypePayment($request->student_id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Student register payment does not exist for this student. Please add register payment first.',
+            ], 422);
+        }
 
         try {
             $coursePrice = $request->course_price;
@@ -253,6 +259,35 @@ class CoursePaymentController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * "before payment store want check if has fee payment fee_type_id is
+     * want 1" — does this student have at least one fee payment on record
+     * (a non-returned FeeInvoices row) whose invoice_items include
+     * fee_type_id = 1? Queried with the query builder rather than an
+     * Eloquent model, since no InvoiceItem model was shared with me — only
+     * the table name and its two relevant columns (invoice_id, fee_type_id).
+     *
+     * NOTE: this only checks that such an invoice_items row EXISTS, not
+     * that it's fully paid off — "check if has fee payment fee_type_id 1"
+     * read most literally as "has a fee type 1 charge on record at all". If
+     * you actually meant "has fully PAID fee type 1" (e.g. it must be
+     * settled to zero due), say so and I'll tighten this to also check the
+     * linked fee_invoices.payment_status = 'full'.
+     *
+     * Also currently applied to ALL payment types this method handles
+     * (course, nvq, food) — flag it if fee_type_id 1 should only gate one
+     * of those (e.g. only 'course') rather than all three.
+     */
+    private function hasRequiredFeeTypePayment(int $studentId): bool
+    {
+        return DB::table('invoice_items')
+            ->join('fee_invoices', 'fee_invoices.id', '=', 'invoice_items.invoice_id')
+            ->where('fee_invoices.student_id', $studentId)
+            ->where('fee_invoices.payment_status', '!=', 'returned')
+            ->where('invoice_items.fee_type_id', 1)
+            ->exists();
     }
 
     private function generateLunchboxNumber(int $branchId, string $fromDate): string
