@@ -73,6 +73,13 @@ class ScanAttendanceController extends Controller
                 'student' => $this->studentPayload($student),
             ], 422);
         }
+
+        // "dont get after genarete attenadens that course related" — once a
+        // certificate has been generated for this student's enrolment in
+        // this course, the course is done: no more attendance (Daily,
+        // Theory, or Practical) should be recorded against it. Checked
+        // before the open/close branch below since this blocks the course
+        // outright, regardless of whether a session happens to be open.
         if ($this->courseHasCertificateForStudent($student->id, $courseId)) {
             return response()->json([
                 'status' => 'certificate_locked',
@@ -93,10 +100,7 @@ class ScanAttendanceController extends Controller
             }
         } elseif (!$this->hasCoursePayment($student, $courseId)) {
 
-            // "if return payment not any course payment for Daily Attendance
-            // course dont attend" — was there ever a payment for this course
-            // that has since been fully returned, or was there simply never
-            // one? Different message either way, same net effect: blocked.
+            
             if ($this->courseEverPaid($student, $courseId)) {
                 return response()->json([
                     'status' => 'payment_returned',
@@ -219,10 +223,41 @@ class ScanAttendanceController extends Controller
                     continue;
                 }
 
+                // Same subject can be assigned under more than one of the
+                // student's active courses (e.g. two courses started
+                // together) — mark attendance under all of them.
                 foreach ($matches as $enrolment) {
+                    // "dont get after genarete attenadens that course
+                    // related" — skip any course this subject is assigned
+                    // under that already has a certificate generated; report
+                    // it back per-course like not_assigned, rather than
+                    // silently dropping it.
                     if ($this->courseHasCertificateForStudent($student->id, $enrolment->course_id)) {
                         $results[] = [
                             'action' => 'certificate_locked',
+                            'subject_id' => $subjectId,
+                            'course_id' => $enrolment->course_id,
+                        ];
+                        continue;
+                    }
+
+                    // "StudentCourse has that select course related but not
+                    // any invoice payment ... or refunt that course invoice
+                    // that time that course dont consider in that course
+                    // (course or subject attenadance)" — same net-of-returns
+                    // payment gate Daily Attendance (scanCourse) already
+                    // enforces before it'll open a course, applied here too:
+                    // no invoice ever raised for this course at all, or one
+                    // was raised and has since been fully returned — either
+                    // way this enrolment is skipped for Subject/Theory
+                    // attendance, same per-course reporting style as
+                    // not_assigned/certificate_locked above rather than
+                    // failing the whole scan.
+                    if (!$this->hasCoursePayment($student, $enrolment->course_id)) {
+                        $results[] = [
+                            'action' => $this->courseEverPaid($student, $enrolment->course_id)
+                                ? 'payment_returned'
+                                : 'no_payment',
                             'subject_id' => $subjectId,
                             'course_id' => $enrolment->course_id,
                         ];
@@ -1201,6 +1236,8 @@ class ScanAttendanceController extends Controller
         $invoiceIds = DB::table('paid_courses')
             ->join('fee_invoices', 'fee_invoices.id', '=', 'paid_courses.invoice_id')
             ->where('fee_invoices.student_id', $student->id)
+            ->where('fee_invoices.payment_status', '!=', 'returned')
+
             ->where('paid_courses.course_id', $courseId)
             ->pluck('fee_invoices.id')
             ->unique();

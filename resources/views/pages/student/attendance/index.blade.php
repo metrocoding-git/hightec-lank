@@ -947,6 +947,14 @@
                         cls = 'action-error';
                         pill = 'pill-error';
                         label = 'Certificate already generated';
+                    } else if (r.action === 'no_payment') {
+                        cls = 'action-error';
+                        pill = 'pill-error';
+                        label = 'No payment for this course';
+                    } else if (r.action === 'payment_returned') {
+                        cls = 'action-error';
+                        pill = 'pill-error';
+                        label = 'Course payment was returned';
                     }
 
                     const undoable = (r.action === 'in' || r.action === 'out') && !!r.session_id;
