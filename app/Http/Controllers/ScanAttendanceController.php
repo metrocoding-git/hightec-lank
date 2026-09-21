@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AssignSubjects;
+use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\Student;
 use App\Models\StudentCourse;
@@ -69,6 +70,13 @@ class ScanAttendanceController extends Controller
             return response()->json([
                 'status' => 'not_enrolled',
                 'message' => "{$student->student_name} has not started this course.",
+                'student' => $this->studentPayload($student),
+            ], 422);
+        }
+        if ($this->courseHasCertificateForStudent($student->id, $courseId)) {
+            return response()->json([
+                'status' => 'certificate_locked',
+                'message' => "{$student->student_name} already has a certificate for this course — attendance can no longer be recorded.",
                 'student' => $this->studentPayload($student),
             ], 422);
         }
@@ -211,10 +219,16 @@ class ScanAttendanceController extends Controller
                     continue;
                 }
 
-                // Same subject can be assigned under more than one of the
-                // student's active courses (e.g. two courses started
-                // together) — mark attendance under all of them.
                 foreach ($matches as $enrolment) {
+                    if ($this->courseHasCertificateForStudent($student->id, $enrolment->course_id)) {
+                        $results[] = [
+                            'action' => 'certificate_locked',
+                            'subject_id' => $subjectId,
+                            'course_id' => $enrolment->course_id,
+                        ];
+                        continue;
+                    }
+
                     $result = $this->markSession(
                         $student,
                         $enrolment->intake_id,
@@ -264,6 +278,7 @@ class ScanAttendanceController extends Controller
         $subjects = collect();
         $branchIds = [];
         $hadAssignedPractical = false;
+        $hadCertificateLockedCourse = false;
 
         foreach ($enrolments as $enrolment) {
             $subjectIds = AssignSubjects::where('intake_id', $enrolment->intake_id)
@@ -283,6 +298,14 @@ class ScanAttendanceController extends Controller
             }
 
             $hadAssignedPractical = true;
+
+            // "dont get after genarete attenadens that course related" — a
+            // course that already has a certificate is done; don't even
+            // offer its practical subjects for picking.
+            if ($this->courseHasCertificateForStudent($student->id, $enrolment->course_id)) {
+                $hadCertificateLockedCourse = true;
+                continue;
+            }
 
             if (!$this->openCourseSession($student, $enrolment->course_id)) {
                 continue;
@@ -328,6 +351,14 @@ class ScanAttendanceController extends Controller
         }
 
         if ($subjects->isEmpty()) {
+            if ($hadCertificateLockedCourse) {
+                return response()->json([
+                    'status' => 'certificate_locked',
+                    'message' => "{$student->student_name} already has a certificate for this course — practical attendance can no longer be recorded.",
+                    'student' => $this->studentPayload($student),
+                ], 422);
+            }
+
             if ($hadAssignedPractical) {
                 return response()->json([
                     'status' => 'practical_not_started',
@@ -393,6 +424,21 @@ class ScanAttendanceController extends Controller
             return response()->json([
                 'status' => 'not_assigned',
                 'message' => 'This subject is not assigned under any of this student\'s active courses.',
+                'student' => $this->studentPayload($student),
+            ], 422);
+        }
+
+        // "dont get after genarete attenadens that course related" — drop any
+        // matched enrolment whose course already has a certificate before
+        // even checking whether its course attendance is open.
+        $matches = $matches->reject(function ($enrolment) use ($student) {
+            return $this->courseHasCertificateForStudent($student->id, $enrolment->course_id);
+        })->values();
+
+        if ($matches->isEmpty()) {
+            return response()->json([
+                'status' => 'certificate_locked',
+                'message' => "{$student->student_name} already has a certificate for this course — practical attendance can no longer be recorded.",
                 'student' => $this->studentPayload($student),
             ], 422);
         }
@@ -1139,6 +1185,17 @@ class ScanAttendanceController extends Controller
         return $this->courseNetPaidAmount($student, $courseId) > 0;
     }
 
+    /**
+     * "if return payment not any course payment for Daily Attendance course
+     * dont attend" — paid_courses.paid_amount only ever grows (it's set
+     * when an invoice payment is made) and is never adjusted when that
+     * payment is later returned — a return is logged separately, in
+     * return_fees, against the invoice. So checking paid_courses.paid_amount
+     * alone would still show a course as "paid" even after its entire
+     * payment has since been returned, incorrectly letting Daily Attendance
+     * start. This nets out anything returned against the same invoice(s)
+     * before deciding whether there's really a payment on record.
+     */
     private function courseNetPaidAmount(Student $student, int $courseId): float
     {
         $invoiceIds = DB::table('paid_courses')
@@ -1173,6 +1230,29 @@ class ScanAttendanceController extends Controller
             ->where('fee_invoices.student_id', $student->id)
             ->where('paid_courses.course_id', $courseId)
             ->sum('paid_courses.paid_amount') > 0;
+    }
+
+    /**
+     * "dont get after genarete attenadens that course related" — once a
+     * Certificate has been generated for this student's enrolment in this
+     * course, no more attendance should be recorded against it, by any
+     * method (Daily/Course, Theory/Subject, or Practical). Same
+     * certificate-chain check as
+     * StudentController::courseHasCertificateForStudent() and
+     * InvoiceController::invoiceHasCertificateLock() — Certificate belongs
+     * to StudentAssessment, which belongs to StudentCourse via
+     * student_course_id. Deliberately duplicated here rather than shared,
+     * matching this codebase's existing convention (no shared
+     * trait/service for this check).
+     */
+    private function courseHasCertificateForStudent(int $studentId, int $courseId): bool
+    {
+        return Certificate::whereHas('studentAssessment', function ($q) use ($studentId, $courseId) {
+            $q->where('student_id', $studentId)
+                ->whereHas('studentCourse', function ($q2) use ($courseId) {
+                    $q2->where('course_id', $courseId);
+                });
+        })->exists();
     }
 
     private function practicalConcurrencyError(Student $student, int $courseId, int $subjectId): ?array

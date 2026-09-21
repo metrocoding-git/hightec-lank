@@ -914,6 +914,7 @@
                     after_checking_open: 'Close practical session first',
                     no_payment: 'No payment for this course',
                     payment_returned: 'Course payment was returned',
+                    certificate_locked: 'Certificate already generated',
                     practical_already_open: 'Another practical subject is open',
                     vehicle_required: 'Vehicle required to start',
                     vehicle_mismatch: 'Vehicle does not match',
@@ -942,6 +943,10 @@
                         cls = 'action-error';
                         pill = 'pill-error';
                         label = 'Subject not assigned';
+                    } else if (r.action === 'certificate_locked') {
+                        cls = 'action-error';
+                        pill = 'pill-error';
+                        label = 'Certificate already generated';
                     }
 
                     const undoable = (r.action === 'in' || r.action === 'out') && !!r.session_id;

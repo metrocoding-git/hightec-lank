@@ -433,6 +433,20 @@ class CertificateController extends Controller
                     'generated_at'            => now(),
                 ]);
 
+                // "certificate genarate time want auto that StudentCourse
+                // status complete" — the enrolment a certificate is
+                // generated for is done at that point; auto-complete it
+                // the same way the Student Add Intake list's own
+                // "Complete" row-action already does (same 'complete'
+                // status value, StudentController::updateStatus()).
+                // Guarded on ->studentCourse existing since $course above
+                // can fall back to $assessment->template->course when
+                // there's no linked enrolment at all.
+                if ($assessment->studentCourse) {
+                    $assessment->studentCourse->status = 'complete';
+                    $assessment->studentCourse->save();
+                }
+
                 $certificate->pdf_path = $this->renderCertificatePdf($certificate->fresh(['studentAssessment']));
                 $certificate->save();
 
@@ -617,6 +631,14 @@ class CertificateController extends Controller
      * (a warning before the confirm, see certificate-index.blade.php),
      * not by erasing that a download happened.
      *
+     * "if genarate undo status go back in StudentCourse?" — yes, but only
+     * in the 'generated' case below, where the certificate is deleted
+     * outright. Stepping back from approved->conductor_signed or
+     * conductor_signed->generated still leaves a real Certificate row in
+     * place, so the enrolment is still genuinely done — only undoing the
+     * ORIGINAL generate (the one that set status = 'complete' in
+     * generate() above) reverses that side effect too.
+     *
      * Body: { certificate_ids: [1,2,3] }
      */
     public function undo(Request $request)
@@ -630,7 +652,7 @@ class CertificateController extends Controller
         $skipped = [];
 
         foreach ($data['certificate_ids'] as $certId) {
-            $certificate = Certificate::find($certId);
+            $certificate = Certificate::with('studentAssessment.studentCourse')->find($certId);
 
             if (!$certificate) {
                 $skipped[] = ['id' => $certId, 'reason' => 'Certificate not found'];
@@ -669,7 +691,29 @@ class CertificateController extends Controller
                     if ($certificate->pdf_path) {
                         Storage::disk('local')->delete($certificate->pdf_path);
                     }
-                    $certificate->delete();
+
+                    // "if genarate undo status go back in StudentCourse?" —
+                    // undoing the original generate() reverses its
+                    // status = 'complete' side effect too, back to
+                    // 'start' (the status an enrolment has for the
+                    // entire time it's actively being trained — the same
+                    // state Student Add Intake's own Start row-action
+                    // sets). Guarded the same way generate() itself was
+                    // — a certificate with no linked studentCourse simply
+                    // has nothing to revert. Wrapped in a transaction,
+                    // same as generate() itself, so the status revert and
+                    // the certificate delete either both happen or
+                    // neither does.
+                    DB::transaction(function () use ($certificate) {
+                        $studentCourse = optional($certificate->studentAssessment)->studentCourse;
+                        if ($studentCourse) {
+                            $studentCourse->status = 'start';
+                            $studentCourse->save();
+                        }
+
+                        $certificate->delete();
+                    });
+
                     $reverted[] = ['id' => $certId, 'to' => 'not_generated'];
                     break;
 
