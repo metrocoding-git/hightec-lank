@@ -297,76 +297,82 @@ class ItemSellController extends Controller
 
 
 
-    public function returnItemSell($id)
+    public function returnItemSell(Request $request, $id)
     {
+        $itemSellBatch = ItemSellBatch::with('items')->findOrFail($id);
 
+        // Guard against returning an already-returned batch a second time —
+        // the dropdown link already hides once status is 'R', but this route
+        // is reachable directly by URL too, so it needs its own check.
+        if ($itemSellBatch->status === 'R') {
+            return redirect()
+                ->back()
+                ->with('error', 'This item batch has already been returned.');
+        }
+
+        // "if payment type bank payment. that can be return only deposit
+        // month is equal to current month"
+        [$canReturn, $blockMessage] = $this->bankTransferReturnWindowCheck($itemSellBatch);
+        if (!$canReturn) {
+            return redirect()
+                ->back()
+                ->with('error', $blockMessage);
+        }
 
         try {
-            $itemSellItem = ItemSellItem::where('item_sell_batch_id', $id)->get();
-            $itemSellBatch = ItemSellBatch::findOrFail($id);
             $returnDate = Carbon::today()->format('Y-m-d');
-            $fee_invoice = FeeInvoices::where('main_invoice_number', $itemSellBatch->invoice_number)->first();
-            $fee_invoice_payment = InvoicesPayments::where('invoice_id', $fee_invoice->id)->first();
-            $fee_invoice->paid_amount -= $fee_invoice_payment->amount;
-            $fee_invoice->due_amount += $fee_invoice_payment->amount;
-            $fee_invoice->payment_status = 'returned';
-            $fee_invoice->save();
+            $returnReason = $request->return_reason ?? 'Item returned from sell (Batch ID: ' . $itemSellBatch->id . ')';
 
+            // "if do any return in item sell that want do recorded as a cash
+            // negative transaction" — logged once per batch return, before
+            // the batch/items are zeroed out below.
+            $this->recordCashNegativeReturn($itemSellBatch, $returnReason);
 
+            foreach ($itemSellBatch->items as $item) {
+                // BUG FIX: originally captured $availableQuantity up front but
+                // then read $item->quantity (already zeroed by the update()
+                // just below it) — and via a typo ($item->quantityy) — when
+                // decrementing the batch totals, so returned quantity/value
+                // never actually made it back out of the batch's own totals.
+                // Captured once, up front, and used consistently below.
+                $returnedQuantity = (float) $item->quantity;
 
-            InvoicesPayments::create([
-                'invoice_id' => $fee_invoice->id,
-                'amount' => - ($fee_invoice_payment->amount),
-                'payment_method' => $fee_invoice_payment->payment_method,
-                'payment_type' => 'item_sell_return',
-                'receipt_number' => 'RET-' . time() . '-' . uniqid(),
-                'create_user_id' => Auth::id(),
-                'branch_id' => $fee_invoice_payment->branch_id,
-                'notes' => 'Return item sell',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+                if ($returnedQuantity > 0) {
+                    $currentBalance = ItemInventory::getCurrentBalance($item->item_id, $itemSellBatch->branch_id);
 
+                    ItemInventory::create([
+                        'item_id' => $item->item_id,
+                        'transaction_type' => 'sell_return',
+                        'transaction_id' => $itemSellBatch->id,
+                        'branch_id' => $itemSellBatch->branch_id,
+                        'quantity' => $returnedQuantity,
+                        'current_balance' => $currentBalance + $returnedQuantity,
+                        'reference_no' => $itemSellBatch->reference_no,
+                        'transaction_date' => $returnDate,
+                        'description' => $returnReason,
+                    ]);
+                }
 
-
-            foreach ($itemSellItem as $item) {
-
-
-                $availableQuantity = $item->quantity;
-
-                $currentBalance = ItemInventory::getCurrentBalance($item->item_id, $itemSellBatch->branch_id);
-                $newBalance = $currentBalance + $availableQuantity;
-                ItemInventory::create([
-                    'item_id' => $item->item_id,
-                    'transaction_type' => 'sell_return',
-                    'transaction_id' => $itemSellBatch->id,
-                    'branch_id' => $itemSellBatch->branch_id,
-                    'quantity' => $item->quantity,
-                    'current_balance' => $newBalance,
-                    'reference_no' => $itemSellBatch->reference_no,
-                    'transaction_date' => $returnDate,
-                    'description' => $request->return_reason ?? 'Item returned from sell',
-                ]);
-
-
-                $newQuantity = $item->quantity - $item->quantity;
                 $item->update([
-                    'quantity' => $newQuantity,
-                    'sub_total' => $newQuantity * $item->unit_price,
+                    'quantity' => 0,
+                    'sub_total' => 0,
                 ]);
-
-
-                // Update the ItemSellBatch totals
-                $itemSellBatch->total_quantity -= $item->quantityy;
-                $itemSellBatch->total_sell_price -= ($item->quantity * $item->unit_price);
-                $itemSellBatch->total_due += ($item->quantity * $item->unit_price);
-                $itemSellBatch->status = 'R';
-                $itemSellBatch->save();
             }
+
+            // Whole-batch return (there's no partial-item return flow in this
+            // form) — zero everything out, same end state directReturnItemSell()
+            // already puts the batch into.
+            $itemSellBatch->update([
+                'total_quantity' => 0,
+                'total_sell_price' => 0,
+                'total_paid' => 0,
+                'total_due' => 0,
+                'status' => 'R',
+            ]);
 
             return redirect()
                 ->back()
-                ->with('success', 'Item return processed successfully!',);
+                ->with('success', 'Item return processed successfully!');
         } catch (\Throwable $e) {
 
             return redirect()
@@ -448,6 +454,39 @@ class ItemSellController extends Controller
         try {
             $itemSellBatch = ItemSellBatch::with('items')->findOrFail($id);
 
+            // Guard against returning an already-returned batch a second time.
+            if ($itemSellBatch->status === 'R') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This item batch has already been returned.',
+                ], 422);
+            }
+
+            // "if payment type bank payment. that can be return only deposit
+            // month is equal to current month" — this is the endpoint the
+            // Return button in item-sell-list.blade.php actually calls (its
+            // href points at returnItemSell(), but the click handler calls
+            // preventDefault() and always hits this AJAX route instead), so
+            // this is where the check has to live to actually take effect.
+            [$canReturn, $blockMessage] = $this->bankTransferReturnWindowCheck($itemSellBatch);
+            if (!$canReturn) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $blockMessage,
+                ], 422);
+            }
+
+            // "if do any return in item sell that want do recorded as a cash
+            // negative transaction" — this endpoint previously never touched
+            // FeeInvoices/InvoicesPayments at all, so a return made through
+            // the actual UI button left no financial record behind — only
+            // returnItemSell() (unreachable from the UI, see note above) did.
+            // Logged before the batch/items are zeroed out below.
+            $this->recordCashNegativeReturn(
+                $itemSellBatch,
+                'Full item return from sell (Batch ID: ' . $itemSellBatch->id . ')'
+            );
+
             foreach ($itemSellBatch->items as $itemSellItem) {
                 // Update inventory for each item in the batch
                 $currentBalance = ItemInventory::getCurrentBalance($itemSellItem->item_id, $itemSellBatch->branch_id);
@@ -504,5 +543,107 @@ class ItemSellController extends Controller
         ])->findOrFail($id);
 
         return view('pages.account.inventory.item-sell-invoice', compact('itemSellBatch'));
+    }
+
+    // =====================================================================
+    // Return helpers (shared by returnItemSell() and directReturnItemSell())
+    // =====================================================================
+
+    /**
+     * "if payment type bank payment. that can be return only deposit month
+     * is equal to current month" — a Bank Transfer sale can only be
+     * returned while we're still in the same calendar month (and year) the
+     * deposit itself was made in (bank_payment_date). Any other payment
+     * method (Invoice, Cash, etc.) has no such restriction and is always
+     * returnable.
+     *
+     * Returns [bool $canReturn, ?string $blockMessage].
+     */
+    private function bankTransferReturnWindowCheck(ItemSellBatch $itemSellBatch): array
+    {
+        if ($itemSellBatch->payment_method !== 'Bank Transfer') {
+            return [true, null];
+        }
+
+        if (!$itemSellBatch->bank_payment_date) {
+            return [
+                false,
+                'This bank transfer sale has no deposit date on record, so the return window cannot be verified.',
+            ];
+        }
+
+        $depositDate = Carbon::parse($itemSellBatch->bank_payment_date);
+        $now = Carbon::now();
+
+        if ($depositDate->isSameMonth($now)) {
+            return [true, null];
+        }
+
+        return [
+            false,
+            'This sale was paid by bank transfer with a deposit date of ' . $depositDate->format('F Y')
+                . ' — bank transfer sales can only be returned within the same month the deposit was made ('
+                . $now->format('F Y') . ').',
+        ];
+    }
+
+    /**
+     * "if do any return in item sell that want do recorded as a cash
+     * negative transaction" — every item sell return, however it's
+     * triggered, writes a negative InvoicesPayments row against the sale's
+     * own fee invoice: the same ledger saveItemSellData() already writes
+     * the original payment to (payment_type 'item_sell'), and the one
+     * everywhere else in this app reads back for payment history/reports.
+     * The negative row is always payment_method 'Cash', regardless of how
+     * the sale was originally paid — a return is money physically handed
+     * back, not the original bank transfer or invoice charge un-happening
+     * — so it always shows up as a negative Cash entry wherever this table
+     * is read for cash-flow reporting.
+     *
+     * NOTE: no separate "cash book"/cash-transactions table was shared with
+     * me for this module. If one already exists elsewhere in this app that
+     * item sell returns are meant to post to as well, point me at its model
+     * and columns and I'll wire this up to write there too.
+     */
+    private function recordCashNegativeReturn(ItemSellBatch $itemSellBatch, string $note): void
+    {
+        if (!$itemSellBatch->invoice_number) {
+            return; // nothing was ever invoiced for this sale — nothing to reverse
+        }
+
+        $feeInvoice = FeeInvoices::where('main_invoice_number', $itemSellBatch->invoice_number)->first();
+
+        if (!$feeInvoice) {
+            return;
+        }
+
+        $originalPayment = InvoicesPayments::where('invoice_id', $feeInvoice->id)
+            ->where('payment_type', 'item_sell')
+            ->orderByDesc('id')
+            ->first();
+
+        $returnAmount = (float) ($originalPayment->amount ?? $feeInvoice->paid_amount ?? 0);
+
+        if ($returnAmount <= 0) {
+            return; // nothing was actually paid — nothing to hand back as cash
+        }
+
+        $feeInvoice->paid_amount = max(0, (float) $feeInvoice->paid_amount - $returnAmount);
+        $feeInvoice->due_amount = (float) $feeInvoice->due_amount + $returnAmount;
+        $feeInvoice->payment_status = 'returned';
+        $feeInvoice->save();
+
+        InvoicesPayments::create([
+            'invoice_id' => $feeInvoice->id,
+            'amount' => -$returnAmount,
+            'payment_method' => 'Cash',
+            'payment_type' => 'item_sell_return',
+            'receipt_number' => 'RET-' . time() . '-' . uniqid(),
+            'create_user_id' => Auth::id(),
+            'branch_id' => $itemSellBatch->branch_id,
+            'notes' => $note,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }

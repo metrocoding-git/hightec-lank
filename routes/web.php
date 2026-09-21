@@ -473,6 +473,7 @@ Route::middleware(['permission'])->group(function () {
     });
 
 
+
     // ================= REPORT ROUTES ================= //
     Route::prefix('reports')->group(function () {
         Route::get('course-paid', [ReportController::class, 'coursePaid'])->name('reports.course-paid');

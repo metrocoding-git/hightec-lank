@@ -207,7 +207,7 @@
                             <div class="col-lg-4 no-gutters">
                                 <div class="main-title">
                                     <h3 class="mb-15">@lang('inventory.item_sell_list')
-                                        
+
                                     </h3>
                                 </div>
                             </div>
@@ -889,11 +889,24 @@ dom: "<'dt-toolbar d-flex justify-content-between align-items-center flex-wrap g
                             toastr.success('Item batch returned successfully!');
                             location.reload();
                         } else {
-                            toastr.error('Failed to return item batch.');
+                            // BUG FIX: response.success can be false with a 200
+                            // status too (not just via the error callback below) —
+                            // show the server's actual reason either way instead
+                            // of a generic message.
+                            toastr.error(response.message || 'Failed to return item batch.');
                         }
                     },
-                    error: function() {
-                        toastr.error('Error returning item batch.');
+                    error: function(xhr) {
+                        // BUG FIX: this previously always showed a generic
+                        // "Error returning item batch." message, discarding the
+                        // server's actual reason — e.g. the new bank-transfer
+                        // return-window message ("...can only be returned
+                        // within the same month the deposit was made...") or
+                        // "already been returned" never reached the user.
+                        var message = (xhr.responseJSON && xhr.responseJSON.message) ?
+                            xhr.responseJSON.message :
+                            'Error returning item batch.';
+                        toastr.error(message);
                     }
                 });
             });
