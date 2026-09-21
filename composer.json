@@ -15,6 +15,7 @@
         "laravel/tinker": "^2.10.1",
         "maatwebsite/excel": "^3.1",
         "picqer/php-barcode-generator": "^3.2",
+        "setasign/fpdi-fpdf": "^2.3",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "yajra/laravel-datatables-oracle": "^12.6"
     },
