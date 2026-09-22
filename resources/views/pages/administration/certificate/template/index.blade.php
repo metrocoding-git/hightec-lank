@@ -103,13 +103,42 @@
                                             @endif
                                         </td>
                                         <td class="text-nowrap">
+                                            {{--
+                                                BUG FIX — "why?" (Disable "undefined"?): this table
+                                                uses responsive: true with 10 columns, so on anything
+                                                but a wide screen DataTables Responsive collapses
+                                                columns — including, often, this last Actions column —
+                                                and MOVES their contents (the actual button elements)
+                                                into a synthetic "child" row it generates below the
+                                                real one. The buttons' click handlers used to do
+                                                $(this).closest('tr') to read data-id/data-name/etc.,
+                                                but Responsive's child row is a different <tr> that
+                                                carries none of those attributes — only the ORIGINAL
+                                                row above does — so that lookup came back `undefined`.
+                                                Fix: put the same data-* attributes directly on each
+                                                button too, and read them off $(this) in the JS below
+                                                instead of walking up to .closest('tr'). Since
+                                                Responsive relocates the real button node (not a copy),
+                                                its own attributes are never lost no matter which row
+                                                it currently lives in.
+                                            --}}
                                             @if ($canUpdate)
-                                                <button type="button" class="btn btn-sm btn-outline-primary ct-edit-btn">
+                                                <button type="button" class="btn btn-sm btn-outline-primary ct-edit-btn"
+                                                    data-id="{{ $t->id }}" data-name="{{ $t->name }}"
+                                                    data-course-ids="{{ $t->courses->pluck('id')->toJson() }}"
+                                                    data-line1="{{ $t->course_name_line1 }}"
+                                                    data-line2="{{ $t->course_name_line2 }}"
+                                                    data-duration="{{ $t->duration }}"
+                                                    data-serial-prefix="{{ $t->serialPrefix->prefix ?? '' }}"
+                                                    data-image-url="{{ $t->bottom_image_path ? asset('storage/' . $t->bottom_image_path) : '' }}"
+                                                    data-qr-image-url="{{ $t->qr_code_image_path ? asset('storage/' . $t->qr_code_image_path) : '' }}"
+                                                    data-back-side-pdf-url="{{ $t->back_side_pdf_path ? asset('storage/' . $t->back_side_pdf_path) : '' }}">
                                                     <i class="fa-solid fa-pen"></i>
                                                 </button>
                                             @endif
                                             @if ($canDisable)
-                                                <button type="button" class="btn btn-sm btn-outline-danger ct-disable-btn">
+                                                <button type="button" class="btn btn-sm btn-outline-danger ct-disable-btn"
+                                                    data-id="{{ $t->id }}" data-name="{{ $t->name }}">
                                                     <i class="fa-solid fa-ban"></i>
                                                 </button>
                                             @endif
@@ -345,37 +374,44 @@
                     $('#ctFormModal').modal('show');
                 });
 
+                // BUG FIX (see the blade comment above the buttons for the
+                // full "why?"): read id/name/etc. straight off the clicked
+                // BUTTON ($(this)) instead of walking up to its <tr> —
+                // DataTables Responsive can relocate this button into a
+                // synthetic child row that doesn't carry the row's own
+                // data-* attributes, which is what was producing
+                // "undefined" values.
                 $(document).on('click', '.ct-edit-btn', function() {
-                    var $tr = $(this).closest('tr');
+                    var $btn = $(this);
                     resetForm();
-                    editingId = $tr.data('id');
+                    editingId = $btn.data('id');
                     $('#ctFormModalTitle').text('Edit Certificate Template');
-                    $('#ct-name').val($tr.data('name'));
+                    $('#ct-name').val($btn.data('name'));
 
                     // jQuery auto-parses a data-course-ids="[1,2,3]" attribute
                     // into a real array; .val() on a multi-select needs the
                     // option values as strings to match correctly.
-                    var courseIds = $tr.data('course-ids') || [];
+                    var courseIds = $btn.data('course-ids') || [];
                     $('#ct-course-ids').val(courseIds.map(String));
 
-                    $('#ct-line1').val($tr.data('line1'));
-                    $('#ct-line2').val($tr.data('line2'));
-                    $('#ct-duration').val($tr.data('duration'));
-                    $('#ct-serial-prefix').val($tr.data('serial-prefix'));
+                    $('#ct-line1').val($btn.data('line1'));
+                    $('#ct-line2').val($btn.data('line2'));
+                    $('#ct-duration').val($btn.data('duration'));
+                    $('#ct-serial-prefix').val($btn.data('serial-prefix'));
 
-                    var imageUrl = $tr.data('image-url');
+                    var imageUrl = $btn.data('image-url');
                     if (imageUrl) {
                         $('#ct-current-image').attr('src', imageUrl);
                         $('#ct-current-image-wrap').show();
                     }
 
-                    var qrUrl = $tr.data('qr-image-url');
+                    var qrUrl = $btn.data('qr-image-url');
                     if (qrUrl) {
                         $('#ct-current-qr').attr('src', qrUrl);
                         $('#ct-current-qr-wrap').show();
                     }
 
-                    var backSideUrl = $tr.data('back-side-pdf-url');
+                    var backSideUrl = $btn.data('back-side-pdf-url');
                     if (backSideUrl) {
                         $('#ct-current-back-side-link').attr('href', backSideUrl);
                         $('#ct-current-back-side-wrap').show();
@@ -462,10 +498,12 @@
                         });
                 });
 
+                // Same fix as .ct-edit-btn above — read straight off the
+                // clicked button ($(this)) rather than $(this).closest('tr').
                 $(document).on('click', '.ct-disable-btn', function() {
-                    var $tr = $(this).closest('tr');
-                    var id = $tr.data('id');
-                    var name = $tr.data('name');
+                    var $btn = $(this);
+                    var id = $btn.data('id');
+                    var name = $btn.data('name');
 
                     if (!confirm('Disable "' + name +
                             '"? This cannot be undone from here — it will stop appearing as a choice when generating new certificates and will disappear from this list, but certificates already generated with it are unaffected.'
