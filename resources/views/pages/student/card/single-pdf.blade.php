@@ -594,7 +594,7 @@
                 <img src="{{ public_path('uploads/settings/logo.png') }}">
 
                 <span class="org-name">
-                    HIGHTEC LANKA INTERNATIONAL
+                    STUDENT ID CARD
                 </span>
 
             </div>
