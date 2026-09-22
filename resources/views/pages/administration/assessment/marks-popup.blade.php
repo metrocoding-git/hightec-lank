@@ -185,6 +185,24 @@
             color: #37474f;
         }
 
+        /* NEW — "there want link final attendace card for link locate that
+           card": a link inside the new .header block to this student's
+           real Practical/Theory Attendance Card (StudentPracticalCardController
+           ::show(), route `student-practical-card.show` — the same route
+           StudentController's own student-list dropdown already links to
+           as "Attendance Card"). Reuses .ampl-btn/.ampl-btn-outline, but
+           those are normally <button>s with a margin-top meant for stacking
+           under a form field — neither makes sense for an inline link
+           sitting next to the header's meta-grid, so both are overridden
+           here, scoped to just this header so nothing elsewhere changes. */
+        .header a.ampl-btn {
+            flex-shrink: 0;
+            margin-top: 0;
+            text-decoration: none;
+            display: inline-block;
+            white-space: nowrap;
+        }
+
         .ampl-grid3 {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -438,6 +456,17 @@
             existing: "{{ url('/student/student-info/assessment/existing') }}",
             template: "{{ url('/student/student-info/assessment/template') }}",
             store: "{{ route('student-assessment.store') }}",
+            // NEW — "there want link final attendace card for link locate
+            // that card": links to this student's real Practical/Theory
+            // Attendance Card (StudentPracticalCardController::show(), the
+            // same `student-practical-card.show` route StudentController's
+            // own student-list dropdown already opens as "Attendance
+            // Card"). That route only takes a student id and defaults to
+            // whichever course was enrolled last — passing course_id here
+            // as a query param (buildCardData() already reads
+            // $request->input('course_id')) makes it land directly on THIS
+            // course's card instead.
+            attendanceCard: "{{ route('student-practical-card.show', [$studentCourse->student_id, 'course_id' => $studentCourse->course_id]) }}",
         };
 
         @php
@@ -834,7 +863,16 @@
                         .label/.value are all new). ctx.photoUrl is a new
                         field added to window.__CONTEXT__ above, built
                         server-side with asset('storage/...') since that
-                        Blade helper can't be called from client-side JS. */}
+                        Blade helper can't be called from client-side JS.
+
+                        NEW — "there want link final attendace card for link
+                        locate that card": a "View Attendance Card" link
+                        added at the end of this header, opening this
+                        student's real Practical/Theory Attendance Card
+                        (window.__ROUTES__.attendanceCard, built server-side
+                        above) in a new tab — same route/target="_blank"
+                        pattern the student list's own dropdown already uses
+                        to reach that same page. */}
                     <div className="header">
                         {ctx.photoUrl && (
                             <img className="photo" src={ctx.photoUrl} alt="photo" />
@@ -857,6 +895,16 @@
                                 </div>
                             </div>
                         </div>
+                        {window.__ROUTES__.attendanceCard && (
+                            <a
+                                className="ampl-btn ampl-btn-outline"
+                                href={window.__ROUTES__.attendanceCard}
+                                target="_blank"
+                                rel="noopener"
+                            >
+                                View Attendance Card
+                            </a>
+                        )}
                     </div>
 
                     {/* "before student assesment mark. want display student related
