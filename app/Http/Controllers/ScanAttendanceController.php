@@ -100,7 +100,10 @@ class ScanAttendanceController extends Controller
             }
         } elseif (!$this->hasCoursePayment($student, $courseId)) {
 
-            
+            // "if return payment not any course payment for Daily Attendance
+            // course dont attend" — was there ever a payment for this course
+            // that has since been fully returned, or was there simply never
+            // one? Different message either way, same net effect: blocked.
             if ($this->courseEverPaid($student, $courseId)) {
                 return response()->json([
                     'status' => 'payment_returned',
@@ -596,7 +599,18 @@ class ScanAttendanceController extends Controller
                     'message' => 'Select a vehicle before starting practical attendance.',
                 ];
             }
-            return null;
+
+            // "if in some vehicall without out cant be still in onther
+            // student in that vehical. but vehical name 'Common' is dont
+            // consider" — a vehicle that's already checked out (an open
+            // practical session, time_in set, no time_out yet) under a
+            // DIFFERENT student can't be picked to start a new session,
+            // since that would mean two students "using" the same physical
+            // vehicle at once. Only checked here, on the START branch —
+            // closing an existing session (the branch below) never claims a
+            // new vehicle, so it's not subject to this. The "Common"
+            // vehicle is a shared/pool vehicle, explicitly exempt.
+            return $this->vehicleInUseError($vehicleId, $student->id);
         }
 
         if (!is_null($vehicleId) && (int) $vehicleId !== (int) $open->vehicle_id) {
@@ -610,6 +624,55 @@ class ScanAttendanceController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * "if in some vehicall without out cant be still in onther student in
+     * that vehical. but vehical name 'Common' is dont consider" — a vehicle
+     * currently checked out under a still-open practical session (time_in
+     * set, time_out still null) belonging to a DIFFERENT student can't be
+     * picked to start a new practical session, since the same physical
+     * vehicle can't really be with two students at once. The vehicle named
+     * "Common" (a shared/pool vehicle, by exact name — matched
+     * case-insensitively in case of stray capitalization) is deliberately
+     * exempt from this rule, matching "is dont consider" — it can be picked
+     * freely regardless of how many other open sessions are using it.
+     *
+     * Deliberately NOT scoped to the same course/subject the way
+     * practicalConcurrencyError() is above — a vehicle is one physical
+     * object shared across the whole branch, so this checks for ANY other
+     * student's open session today, any course/subject, using this vehicle.
+     */
+    private function vehicleInUseError(?int $vehicleId, int $excludeStudentId): ?array
+    {
+        if (is_null($vehicleId)) {
+            return null;
+        }
+
+        $vehicle = TrainingVehicle::find($vehicleId);
+
+        if (!$vehicle || strcasecmp(trim((string) $vehicle->name), 'Common') === 0) {
+            return null;
+        }
+
+        $openSession = SubjectAttendanceSession::with('student:id,student_name')
+            ->where('vehicle_id', $vehicleId)
+            ->where('student_id', '!=', $excludeStudentId)
+            ->whereDate('attendance_date', now()->toDateString())
+            ->notCheckpoint()
+            ->open()
+            ->first();
+
+        if (!$openSession) {
+            return null;
+        }
+
+        $otherStudentName = $openSession->student->student_name ?? 'another student';
+
+        return [
+            'status' => 'vehicle_in_use',
+            'message' => "This vehicle ({$vehicle->name}) is already checked out to {$otherStudentName} and hasn't been checked back in — select a different vehicle, or wait until it's checked back in.",
+        ];
     }
 
 
@@ -1035,7 +1098,7 @@ class ScanAttendanceController extends Controller
                 'intake_id' => $intakeId,
                 'subject_id' => null,
                 'time_in' => $startedAt,
-                'time_out' => $startedAt->copy()->addMinutes(20),
+                'time_out' => $startedAt->copy()->addMinutes(2),
                 'marked_in_by' => $markedBy,
                 'marked_out_by' => $markedBy,
             ]
@@ -1056,7 +1119,7 @@ class ScanAttendanceController extends Controller
                 'intake_id' => $intakeId,
                 'subject_id' => null,
                 'time_in' => $endedAt,
-                'time_out' => $endedAt->copy()->addMinutes(10),
+                'time_out' => $endedAt->copy()->addMinutes(1),
                 'marked_in_by' => $markedBy,
                 'marked_out_by' => $markedBy,
             ]
@@ -1236,8 +1299,6 @@ class ScanAttendanceController extends Controller
         $invoiceIds = DB::table('paid_courses')
             ->join('fee_invoices', 'fee_invoices.id', '=', 'paid_courses.invoice_id')
             ->where('fee_invoices.student_id', $student->id)
-            ->where('fee_invoices.payment_status', '!=', 'returned')
-
             ->where('paid_courses.course_id', $courseId)
             ->pluck('fee_invoices.id')
             ->unique();
