@@ -170,7 +170,8 @@ return [
                         ['key' => 'add-student.update', 'label' => 'Edit', 'flag' => 'Described as add-only originally, but this route exists under the same prefix — confirm it is reachable. Also covers add-student.edit form-load.'],
                         ['key' => 'add-student.destroy', 'label' => 'Delete', 'flag' => 'Described as add-only originally, but this route exists under the same prefix — confirm it is reachable.'],
                         ['key' => 'add-student.verify', 'label' => 'Verify', 'flag' => 'Described as add-only originally, but this route exists under the same prefix — confirm it is reachable.'],
-                        ['key' => 'add-student.verify.submit', 'label' => 'Verify Submit', 'flag' => 'POST companion to add-student.verify — normally granted together with it.'],
+                        ['key' => 'add-student.verify.submit', 'label' => 'Verify Submit', 'flag' => 'POST companion to add-student.verify — normally granted together with it. NOTE: as of this pass, this permission alone is no longer sufficient once the student has a certificate generated — see add-student.verify.submit.certified below.'],
+                        ['key' => 'add-student.verify.submit.certified', 'label' => 'Verify Submit (After Certificate Generated)', 'flag' => "NEW — per your request: \"i want new permition 'after certificate genarate Verify Submit' then. if student genarated any one cerificate that stundet Verify Submit can be do that permition only.\" This is a SEPARATE, stricter permission from add-student.verify.submit above. The moment a student has any certificate generated (checked across ALL their courses/assessments via a new studentHasAnyCertificate() helper, not just one course), submitting Verify for that student requires THIS permission specifically — holding only add-student.verify.submit is no longer enough. Enforced in two places: verify.blade.php picks whichever of the two permissions applies before deciding whether to show the submit form, and verifySubmit() in the controller re-checks the same thing authoritatively (same defense-in-depth pattern already used elsewhere in this controller, e.g. studentCourseHasCertificate()). The verify page also shows a 'Certificate already generated — please check' warning banner to anyone who opens it for such a student, regardless of which permission they hold."],
                     ],
                 ],
                 [
@@ -238,7 +239,6 @@ return [
                         ['key' => 'certificate.sign-conductor', 'label' => 'Sign — Assessment Conductor', 'flag' => 'Step 1 of signing. The controller rejects signing as Owner on a certificate the Conductor hasn\'t signed yet, regardless of what this permission allows.'],
                         ['key' => 'certificate.sign-owner', 'label' => 'Sign — Owner', 'flag' => 'Step 2 — finalizes the certificate and unlocks download. Replaces certificate.approve from the first version of this feature, which no longer exists.'],
                         ['key' => 'certificate.undo', 'label' => 'Undo', 'flag' => 'Undo the step by step process.'],
-                    
                     ],
                 ],
             ],

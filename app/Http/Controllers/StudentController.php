@@ -1383,6 +1383,19 @@ class StudentController extends Controller
         })->exists();
     }
 
+    // "if student genarated any one cerificate that stundet Verify Submit
+    // can be do that permition only" — same relation chain as the two
+    // helpers above, but NOT scoped to one course: this is true the moment
+    // the student has a certificate generated for ANY of their courses,
+    // since Verify Submit edits core student fields (name/NIC/address/
+    // phone) that an already-issued certificate depends on.
+    private function studentHasAnyCertificate(int $studentId): bool
+    {
+        return Certificate::whereHas('studentAssessment', function ($q) use ($studentId) {
+            $q->where('student_id', $studentId);
+        })->exists();
+    }
+
 
     private function generateNextAdmissionNumber()
     {
@@ -1557,7 +1570,14 @@ class StudentController extends Controller
     public function verify($id)
     {
         $student = Student::findOrFail($id);
-        return view('pages.student.student-info.verify', compact('student'));
+
+        // "then want alert there has certificated genarated pleace check" —
+        // computed here (not in the view) so the same flag also drives which
+        // permission verifySubmit() below requires, keeping the view and the
+        // authoritative server-side check reading from one definition.
+        $hasCertificate = $this->studentHasAnyCertificate($student->id);
+
+        return view('pages.student.student-info.verify', compact('student', 'hasCertificate'));
     }
 
 
@@ -1570,6 +1590,21 @@ class StudentController extends Controller
         ]);
 
         $student = Student::findOrFail($studentId);
+
+        // "if student genarated any one cerificate that stundet Verify
+        // Submit can be do that permition only" — the plain add-student.
+        // verify.submit permission (already checked by route middleware /
+        // the button-level check in verify.blade.php) is NOT enough once
+        // this student has any certificate generated; a separate, stricter
+        // permission takes over. Enforced here authoritatively, same
+        // defense-in-depth pattern as studentCourseHasCertificate() etc.
+        // above — the blade hides the form for this case too, but this
+        // check does not trust that.
+        if ($this->studentHasAnyCertificate($student->id) && !Auth::user()->hasPermission('add-student.verify.submit.certified')) {
+            return back()->withErrors([
+                'verification_items' => 'This student already has a certificate generated. You do not have permission to submit verification for a student in this state — please check.',
+            ]);
+        }
 
         // ---- SAVE SIGNATURE ----
         $folder = storage_path('app/public/signatures/students/');

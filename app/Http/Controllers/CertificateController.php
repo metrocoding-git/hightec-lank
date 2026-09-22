@@ -745,7 +745,7 @@ class CertificateController extends Controller
         $this->recordDownload($certificate);
 
         $studentName = optional($certificate->studentAssessment->student)->student_name ?? 'certificate';
-        $filename = Str::slug($studentName) . '-' . $certificate->certificate_number . '.pdf';
+        $filename = Str::slug($studentName) . '-' . $this->safeFilenameSegment($certificate->certificate_number) . '.pdf';
 
         return Storage::disk('local')->download($certificate->pdf_path, $filename);
     }
@@ -787,12 +787,13 @@ class CertificateController extends Controller
         $usedNames = [];
         foreach ($downloadable as $certificate) {
             $studentName = optional($certificate->studentAssessment->student)->student_name ?? 'certificate';
-            $entryName = Str::slug($studentName) . '-' . $certificate->certificate_number . '.pdf';
+            $safeCertNumber = $this->safeFilenameSegment($certificate->certificate_number);
+            $entryName = Str::slug($studentName) . '-' . $safeCertNumber . '.pdf';
 
             $suffix = 1;
             $finalName = $entryName;
             while (in_array($finalName, $usedNames, true)) {
-                $finalName = Str::slug($studentName) . '-' . $certificate->certificate_number . '-' . $suffix . '.pdf';
+                $finalName = Str::slug($studentName) . '-' . $safeCertNumber . '-' . $suffix . '.pdf';
                 $suffix++;
             }
             $usedNames[] = $finalName;
@@ -834,6 +835,11 @@ class CertificateController extends Controller
         } while (Certificate::where('pv_number', $number)->exists());
 
         return $number;
+    }
+    
+    private function safeFilenameSegment(?string $value): string
+    {
+        return str_replace(['/', '\\'], '-', (string) $value);
     }
 
     private function recordDownload(Certificate $certificate): void

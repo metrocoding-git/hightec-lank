@@ -20,10 +20,15 @@
     </section>
 
     @php
-        // Button-level permission (Section 25). The window itself (GET add-student.verify)
-        // is already gated by route middleware, but the actual submit action has its own
-        // separate key, so a viewer without it can see the page but not act on it.
-        $canSubmitVerification = Auth::user()->hasPermission('add-student.verify.submit');
+        // "if student genarated any one cerificate that stundet Verify
+        // Submit can be do that permition only" — once this student has a
+        // certificate generated (for any course, computed in the controller
+        // via studentHasAnyCertificate()), the normal add-student.verify.
+        // submit permission is no longer what governs the submit button; a
+        // separate, stricter permission does. Outside that case, behavior
+        // is unchanged from before.
+        $requiredPermission = $hasCertificate ? 'add-student.verify.submit.certified' : 'add-student.verify.submit';
+        $canSubmitVerification = Auth::user()->hasPermission($requiredPermission);
     @endphp
 
     <div class="container mt-4">
@@ -39,11 +44,28 @@
                 <p><strong>National ID:</strong> {{ $student->national_id_number }}</p>
             </div>
 
+            @if ($hasCertificate)
+                {{-- "then want alert there has certificated genarated pleace
+                     check" — shown to everyone who opens this page for this
+                     student, regardless of whether they hold the stricter
+                     permission below. --}}
+                <div class="alert alert-warning">
+                    <strong>Certificate already generated.</strong> This student has at least one certificate
+                    generated. Please check before verifying — editing verified details here can put this
+                    student's record out of sync with an already-issued certificate.
+                </div>
+            @endif
+
             @if ($student->is_verified)
                 <div class="alert alert-success"><strong>Already Verified</strong></div>
             @elseif (!$canSubmitVerification)
                 <div class="alert alert-secondary text-muted">
-                    You do not have permission to submit student verification.
+                    @if ($hasCertificate)
+                        You do not have permission to submit verification for a student who already has a
+                        certificate generated.
+                    @else
+                        You do not have permission to submit student verification.
+                    @endif
                 </div>
             @else
                 <form method="POST" enctype="multipart/form-data"

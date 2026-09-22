@@ -654,3 +654,5 @@ ALTER TABLE `certificates`
 -- 09/22
 ALTER TABLE certificates
 ADD COLUMN pv_number VARCHAR(255) NULL UNIQUE AFTER certificate_number;
+
+INSERT INTO `permissions` (`id`, `permission_name`, `label`, `created_at`, `updated_at`) VALUES (NULL, 'add-student.verify.submit.certified', 'Verify Submit (After Certificate Generated)', NULL, NULL);
