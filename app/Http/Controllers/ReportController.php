@@ -1980,19 +1980,25 @@ class ReportController extends Controller
 
         if ($request->filled('branch_id')) {
             $branchId = $request->branch_id;
-            $query->whereHas('student', function ($q) use ($branchId) {
-                $q->where('branch_id', $branchId);
-            });
             $query->where(function ($q) use ($branchId) {
+                // Case 1: markedInBy has EXACTLY ONE branch, and it's this one.
                 $q->whereHas('markedInBy', function ($userQuery) use ($branchId) {
                     $userQuery
+                        ->has('branches', '=', 1)
                         ->whereHas('branches', function ($branchQuery) use ($branchId) {
                             $branchQuery->where('branches.id', $branchId);
-                        })
-                        ->whereDoesntHave('branches', function ($branchQuery) use ($branchId) {});
+                        });
                 })
-                    ->orWhereHas('intake', function ($intakeQuery) use ($branchId) {
-                        $intakeQuery->where('branch_id', $branchId);
+                    // Case 2: markedInBy does NOT have exactly one branch
+                    // (no markedInBy at all, 0 branches, or 2+ branches) —
+                    // the accessor falls back to the intake's branch.
+                    ->orWhere(function ($q2) use ($branchId) {
+                        $q2->whereDoesntHave('markedInBy', function ($userQuery) {
+                            $userQuery->has('branches', '=', 1);
+                        })
+                            ->whereHas('intake', function ($intakeQuery) use ($branchId) {
+                                $intakeQuery->where('branch_id', $branchId);
+                            });
                     });
             });
         }
@@ -2064,7 +2070,6 @@ class ReportController extends Controller
 
         return $query;
     }
-
     public function studentAttendance(Request $request)
     {
         $intakes = Intake::all();
