@@ -164,8 +164,8 @@ class InvoicePaymentController extends Controller
     //         ->addColumn('action', function ($row) {
 
     //             if ($row->payment_invoice_number) {
-    //                 return '<a href="' . route('invoice-payments.print', $row->payment_invoice_number) . '" 
-    //                 target="_blank" 
+    //                 return '<a href="' . route('invoice-payments.print', $row->payment_invoice_number) . '"
+    //                 target="_blank"
     //                 class="primary-btn small btn-primary text-white">
     //                 Reprint
     //             </a>';
@@ -399,12 +399,13 @@ class InvoicePaymentController extends Controller
             payment_invoice_number,
             MIN(id) as id,
             MAX(created_at) as created_at,
+            MAX(updated_at) as updated_at,
             MAX(payment_invoice_open_date) as payment_invoice_open_date,
- 
- 
+
+
             SUM(amount) as total_amount,
             SUM(invoice_payment_amount) as total_confirm_amount,
- 
+
             COUNT(*) as total_count,
             SUM(CASE WHEN invoice_payment_confirm = 1 THEN 1 ELSE 0 END) as confirmed_count,
             SUM(CASE WHEN invoice_payment_confirm IS NULL THEN 1 ELSE 0 END) as pending_count,
@@ -632,6 +633,26 @@ class InvoicePaymentController extends Controller
                 }
 
                 return '-';
+            })
+            ->addColumn('created_at', function ($row) {
+                return $row->created_at ? date('Y-m-d h:i A', strtotime($row->created_at)) : '-';
+            })
+
+            ->addColumn('updated_at', function ($row) {
+                return $row->updated_at ? date('Y-m-d h:i A', strtotime($row->updated_at)) : '-';
+            })
+
+            ->addColumn('created_by', function ($row) {
+                $payment = InvoicesPayments::find($row->id);
+                return $payment?->createUser?->name ?? '-';
+            })
+
+            ->addColumn('updated_by', function ($row) {
+                $payment = InvoicesPayments::where('payment_invoice_number', $row->payment_invoice_number)
+                    ->orderBy('updated_at', 'desc')
+                    ->first();
+
+                return $payment?->updateUser?->name ?? '-';
             })
 
             // action

@@ -257,6 +257,10 @@
                                                 <th>Status</th>
                                                 <th>Create Date</th>
                                                 <th>Complete date</th>
+                                                <th>Created At</th>
+                                                <th>Updated At</th>
+                                                <th>Created By</th>
+                                                <th>Updated By</th>
 
                                                 <th>Note</th>
                                                 <th>Action</th>
@@ -521,6 +525,18 @@
                         data: 'complete_date'
                     },
                     {
+                        data: 'created_at'
+                    },
+                    {
+                        data: 'updated_at'
+                    },
+                    {
+                        data: 'created_by'
+                    },
+                    {
+                        data: 'updated_by'
+                    },
+                    {
                         data: 'note'
                     },
                     {
@@ -542,7 +558,7 @@
                 $('#date_range').val('');
                 $('#branch-select').val('');
                 $('#status-select').val('all');
-                $('#student-search').val(''); 
+                $('#student-search').val('');
                 $('#table_id').DataTable().ajax.reload();
             })
 
