@@ -26,7 +26,7 @@
                 <div class="id-card-header">
                     <div class="header-line1">
                         <img src="{{ asset('uploads/settings/logo.png') }}" class="company-logo">
-                        <span class="org-name">HIGHTEC LANKA INTERNATIONAL</span>
+                        <span class="org-name">STUDENT ID CARD</span>
                     </div>
                     {{-- <div class="header-line2">VOCATIONAL &amp; TECHNICAL TRAINING INSTITUTE(PVT)LTD</div> --}}
                 </div>
