@@ -421,6 +421,8 @@
                                                     <th>Duration</th>
                                                     <th>Vehicle</th>
                                                     <th>Note</th>
+                                                    <th>Created At</th>
+                                                    <th>Updated At</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -456,10 +458,14 @@
                                                         <td>{{ $session->duration_label }}</td>
                                                         <td>{{ $session->vehicle->name ?? '-' }}</td>
                                                         <td>{{ $session->note ?? '-' }}</td>
+                                                        <td>{{ $session->created_at ? $session->created_at->format('Y-m-d h:i A') : '-' }}
+                                                        </td>
+                                                        <td>{{ $session->updated_at ? $session->updated_at->format('Y-m-d h:i A') : '-' }}
+                                                        </td>
                                                     </tr>
                                                 @empty
                                                     <tr>
-                                                        <td colspan="15" class="text-center">No records found.</td>
+                                                        <td colspan="17" class="text-center">No records found.</td>
                                                     </tr>
                                                 @endforelse
                                             </tbody>

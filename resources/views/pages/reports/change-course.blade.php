@@ -268,6 +268,7 @@
                                                     <th>Branch</th>
                                                     <th>Changed By</th>
                                                     <th>Changed Date</th>
+                                                    <th>Created At</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -283,10 +284,12 @@
                                                         <td>{{ $row->changed_by ?? '-' }}</td>
                                                         <td>{{ $row->changed_date ? \Carbon\Carbon::parse($row->changed_date)->format('Y-m-d') : '-' }}
                                                         </td>
+                                                        <td>{{ $row->created_date ? \Carbon\Carbon::parse($row->created_date)->format('Y-m-d h:i A') : '-' }}
+                                                        </td>
                                                     </tr>
                                                 @empty
                                                     <tr>
-                                                        <td colspan="9" class="text-center">No records found.</td>
+                                                        <td colspan="10" class="text-center">No records found.</td>
                                                     </tr>
                                                 @endforelse
                                             </tbody>

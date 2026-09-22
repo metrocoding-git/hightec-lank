@@ -573,6 +573,9 @@
                                             <th>Invoice No.</th>
                                             <th>Create Date</th>
                                             <th>Update Date</th>
+                                            <th>Created By</th>
+                                            <th>Created At</th>
+                                            <th>Updated At</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -599,10 +602,16 @@
                                                 <td>{{ $fp->invoice?->main_invoice_number ?? 'N/A' }}</td>
                                                 <td>{{ $fp->invoice?->created_at ?? 'N/A' }}</td>
                                                 <td>{{ $fp->invoice?->updated_at ?? 'N/A' }}</td>
+                                                <td>{{ $fp->invoice?->createUser?->name ?? '-' }}</td>
+                                                {{-- These are this food-payment row's own timestamps —
+                                                     "Create Date"/"Update Date" above are the linked
+                                                     invoice's, kept as-is for backward compatibility. --}}
+                                                <td>{{ $fp->created_at ? $fp->created_at->format('Y-m-d h:i A') : '-' }}</td>
+                                                <td>{{ $fp->updated_at ? $fp->updated_at->format('Y-m-d h:i A') : '-' }}</td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="20" class="text-center">No records found.</td>
+                                                <td colspan="23" class="text-center">No records found.</td>
                                             </tr>
                                         @endforelse
                                     </tbody>

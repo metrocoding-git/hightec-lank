@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Branch;
 use App\Models\Course;
+use App\Models\FeeInvoices;
+use App\Models\FoodPayment;
 use App\Models\Intake;
 use App\Models\InvoicePaymentReceipt;
 use App\Models\PaidCourse;
@@ -23,10 +25,6 @@ class ReportController extends Controller
 {
 
 
-    // ARCHITECTURE (this pass): rebuilt to match the Student Attendance
-    // report's pattern — filter form, ->paginate() for on-screen display,
-    // inline server-computed analytics, dedicated cursor-based export.
-    // Replaces the earlier zero-filter, load-everything version.
     public function sellItems(Request $request)
     {
         $query = $this->applySellItemsFilters(ItemSellItem::query(), $request);
@@ -161,6 +159,8 @@ class ReportController extends Controller
                 'Invoice Number',
                 'Note',
                 'Status',
+                'Created At',
+                'Updated At',
             ]);
 
             $rowNo = 0;
@@ -198,6 +198,8 @@ class ReportController extends Controller
                     $batch->invoice_number ?: '-',
                     $batch->description ?? '-',
                     $this->sellStatusLabel($batch->status ?? null),
+                    $batch->created_at ? \Carbon\Carbon::parse($batch->created_at)->format('Y-m-d h:i A') : '-',
+                    $batch->updated_at ? \Carbon\Carbon::parse($batch->updated_at)->format('Y-m-d h:i A') : '-',
                 ]);
             }
             fclose($handle);
@@ -367,6 +369,8 @@ class ReportController extends Controller
                 'Course Expiration',
                 'Note',
                 'Status',
+                'Created At',
+                'Updated At',
             ]);
 
             $rowNo = 0;
@@ -401,6 +405,8 @@ class ReportController extends Controller
                     $expireStatus,
                     $batch->description ?? '-',
                     ($batch->issue_status ?? null) == 'I' ? 'Issued' : 'Returned',
+                    $batch->created_at ? \Carbon\Carbon::parse($batch->created_at)->format('Y-m-d h:i A') : '-',
+                    $batch->updated_at ? \Carbon\Carbon::parse($batch->updated_at)->format('Y-m-d h:i A') : '-',
                 ]);
             }
             fclose($handle);
@@ -443,7 +449,8 @@ class ReportController extends Controller
         $payments = $query
             ->with([
                 'invoice',
-                'invoice.createUser',
+                'createUser',
+                'updateUser',
                 'invoice.branch',
                 'invoice.student',
                 'invoice.student.studentCategory',
@@ -481,11 +488,14 @@ class ReportController extends Controller
                     'bank_payment_date' => $row->bank_payment_date,
                     'notes' => $row->notes ?? '-',
                     'create_user' => $row->createUser?->name ?? ($row->invoice?->createUser?->name ?? 'N/A'),
+                    'update_user' => $row->updateUser?->name ?? ($row->invoice?->updateUser?->name ?? 'N/A'),
                     'invoice_payment_status' => $this->getInvoicePaymentStatus($row),
                     'invoice_payment_amount' => $row->payment_method == 'Invoice' ? $row->invoice_payment_amount : null,
                     'box_number' => $row->payment_type === 'food'
                         ? ($row->invoice?->foodPayment?->lunchbox_number ?? '-')
                         : '-',
+                    'created_at' => $row->created_at,
+                    'updated_at' => $row->updated_at,
                 ];
             });
 
@@ -569,7 +579,8 @@ class ReportController extends Controller
         $query = $this->applyStudentsPaidFilters(InvoicesPayments::query(), $request)
             ->with([
                 'invoice',
-                'invoice.createUser',
+                'createUser',
+                'updateUser',
                 'invoice.branch',
                 'invoice.student',
                 'invoice.student.studentCategory',
@@ -610,9 +621,12 @@ class ReportController extends Controller
                 'Bank Payment Date',
                 'Note',
                 'Create User',
+                'Update User',
                 'Invoice Payment Status',
                 'Invoice Payment Amount',
                 'Lunch Box Number',
+                'Created At',
+                'Updated At',
             ]);
 
             $rowNo = 0;
@@ -637,12 +651,15 @@ class ReportController extends Controller
                         ? \Carbon\Carbon::parse($row->bank_payment_date)->format('m/d/Y')
                         : '-',
                     $row->notes ?? '-',
-                    $row->createUser?->name ?? ($row->invoice?->createUser?->name ?? 'N/A'),
+                    $row->createUser?->name ?? ($row->createUser?->name ?? 'N/A'),
+                    $row->updateUser?->name ?? ($row->updateUser?->name ?? 'N/A'),
                     $this->getInvoicePaymentStatus($row),
                     $row->payment_method == 'Invoice' ? $row->invoice_payment_amount : '-',
                     $row->payment_type === 'food'
                         ? ($row->invoice?->foodPayment?->lunchbox_number ?? '-')
                         : '-',
+                    $row->created_at ? \Carbon\Carbon::parse($row->created_at)->format('Y-m-d h:i A') : '-',
+                    $row->updated_at ? \Carbon\Carbon::parse($row->updated_at)->format('Y-m-d h:i A') : '-',
                 ]);
             }
 
@@ -743,7 +760,7 @@ class ReportController extends Controller
         $courseCount = $analyticsRows->count();
 
         $paidCourses = $query
-            ->with(['course', 'invoice.student', 'invoice.branch'])
+            ->with(['course', 'invoice.student', 'invoice.branch', 'invoice.createUser'])
             ->orderByDesc('id')
             ->paginate(50)
             ->appends($request->query());
@@ -822,7 +839,7 @@ class ReportController extends Controller
     public function exportCoursePaid(Request $request)
     {
         $query = $this->applyCoursePaidFilters(PaidCourse::query(), $request)
-            ->with(['course', 'invoice.student'])
+            ->with(['course', 'invoice.student', 'invoice.createUser'])
             ->orderBy('id', 'asc');
 
         $filename = 'Course-Paid-Report_' . now()->format('Y-m-d_His') . '.csv';
@@ -840,6 +857,9 @@ class ReportController extends Controller
                 'Due Amount',
                 'Payment Status',
                 'Payment Method',
+                'Created By',
+                'Created At',
+                'Updated At',
             ]);
 
             $rowNo = 0;
@@ -854,6 +874,9 @@ class ReportController extends Controller
                     number_format((float) $paidCourse->due_amount, 2, '.', ''),
                     $this->coursePaidStatusLabel($paidCourse->payment_status),
                     $paidCourse->payment_method,
+                    $paidCourse->invoice?->createUser?->name ?? '-',
+                    $paidCourse->created_at ? \Carbon\Carbon::parse($paidCourse->created_at)->format('Y-m-d h:i A') : '-',
+                    $paidCourse->updated_at ? \Carbon\Carbon::parse($paidCourse->updated_at)->format('Y-m-d h:i A') : '-',
                 ]);
             }
             fclose($handle);
@@ -949,6 +972,10 @@ class ReportController extends Controller
             'fee_invoices.payment_method',
             'fee_invoices.create_date as invoice_create_date',
             'fee_invoices.updated_at as invoice_paid_date',
+            // "want add created at and updated at" — fee_invoices.updated_at is
+            // already selected above (as invoice_paid_date / "Last Payment
+            // Date"), so only created_at is genuinely new here.
+            'fee_invoices.created_at as invoice_created_at',
             'course_categories.category_name as course_category_name',
             DB::raw('(SELECT COALESCE(SUM(ip.amount),0) FROM invoices_payments ip WHERE ip.invoice_id = fee_invoices.id AND ip.payment_method = "Cash") as cash_amount'),
             DB::raw('(SELECT COALESCE(SUM(ip.amount),0) FROM invoices_payments ip WHERE ip.invoice_id = fee_invoices.id AND ip.payment_method = "Bank Transfer") as bank_amount'),
@@ -1014,6 +1041,7 @@ class ReportController extends Controller
                 'Cash',
                 'Bank Transfer',
                 'Invoice',
+                'Created At',
             ]);
 
             $rowNo = 0;
@@ -1036,6 +1064,7 @@ class ReportController extends Controller
                     number_format((float) $data->cash_amount, 2, '.', ''),
                     number_format((float) $data->bank_amount, 2, '.', ''),
                     number_format((float) $data->invoice_amount, 2, '.', ''),
+                    $data->invoice_created_at ? \Carbon\Carbon::parse($data->invoice_created_at)->format('Y-m-d h:i A') : '-',
                 ]);
             }
             fclose($handle);
@@ -1105,6 +1134,9 @@ class ReportController extends Controller
             DB::raw('(fee_invoices.total_amount - fee_invoices.paid_amount) as due_amount'),
             'fee_invoices.create_date as invoice_create_date',
             'fee_invoices.updated_at as invoice_paid_date',
+            // fee_invoices.updated_at is already selected above (as
+            // invoice_paid_date / "Last Payment Date") — only created_at is new.
+            'fee_invoices.created_at as invoice_created_at',
             'course_categories.category_name as course_category_name',
             DB::raw('(SELECT COALESCE(SUM(ip.amount),0) FROM invoices_payments ip WHERE ip.invoice_id = fee_invoices.id AND ip.payment_method = "Cash") as cash_amount'),
             DB::raw('(SELECT COALESCE(SUM(ip.amount),0) FROM invoices_payments ip WHERE ip.invoice_id = fee_invoices.id AND ip.payment_method = "Bank Transfer") as bank_amount'),
@@ -1170,6 +1202,7 @@ class ReportController extends Controller
                 'Cash',
                 'Bank Transfer',
                 'Invoice',
+                'Created At',
             ]);
 
             $rowNo = 0;
@@ -1193,6 +1226,7 @@ class ReportController extends Controller
                     number_format((float) $data->cash_amount, 2, '.', ''),
                     number_format((float) $data->bank_amount, 2, '.', ''),
                     number_format((float) $data->invoice_amount, 2, '.', ''),
+                    $data->invoice_created_at ? \Carbon\Carbon::parse($data->invoice_created_at)->format('Y-m-d h:i A') : '-',
                 ]);
             }
             fclose($handle);
@@ -1404,6 +1438,10 @@ class ReportController extends Controller
             'branches.name as branch_name',
             'sc.updated_at as changed_date',
             'users.name as changed_by',
+            // "Changed Date" above is already sc.updated_at — created_at is
+            // the only genuinely new value here. student_courses has no
+            // confirmed creator column, so no "Created By" is added.
+            'sc.created_at as created_date',
         ];
     }
 
@@ -1452,7 +1490,7 @@ class ReportController extends Controller
         return response()->streamDownload(function () use ($query) {
             $handle = fopen('php://output', 'w');
             fwrite($handle, "\xEF\xBB\xBF");
-            fputcsv($handle, ['No', 'Student No', 'Student Name', 'Old Course', 'New Course', 'Intake', 'Branch', 'Changed By', 'Changed Date']);
+            fputcsv($handle, ['No', 'Student No', 'Student Name', 'Old Course', 'New Course', 'Intake', 'Branch', 'Changed By', 'Changed Date', 'Created At']);
 
             $rowNo = 0;
             foreach ($query->cursor() as $row) {
@@ -1467,6 +1505,7 @@ class ReportController extends Controller
                     $row->branch_name ?? '-',
                     $row->changed_by ?? '-',
                     $row->changed_date ? \Carbon\Carbon::parse($row->changed_date)->format('Y-m-d') : '-',
+                    $row->created_date ? \Carbon\Carbon::parse($row->created_date)->format('Y-m-d h:i A') : '-',
                 ]);
             }
             fclose($handle);
@@ -1646,6 +1685,7 @@ class ReportController extends Controller
             'Student Name',
             'Reg. No',
             'Branch',
+            'Updated At',
             'Item No',
             'Item Receipt No',
             'Item Main Invoice No',
@@ -1688,6 +1728,7 @@ class ReportController extends Controller
                     $student->student_name ?? '-',
                     $student->admission_number ?? '-',
                     $branch->name ?? '-',
+                    optional($receipt->updated_at)->format('Y-m-d h:i A') ?? '-',
                 ];
 
                 if ($receipt->items->isEmpty()) {
@@ -1882,6 +1923,9 @@ class ReportController extends Controller
                 'Invoice No.',
                 'Create Date',
                 'Update Date',
+                'Created By',
+                'Created At',
+                'Updated At',
             ]);
 
             $rowNo = 0;
@@ -1909,6 +1953,9 @@ class ReportController extends Controller
                     $fp->invoice?->main_invoice_number ?? 'N/A',
                     $fp->invoice?->created_at ?? 'N/A',
                     $fp->invoice?->updated_at ?? 'N/A',
+                    $fp->invoice?->createUser?->name ?? '-',
+                    $fp->created_at ? \Carbon\Carbon::parse($fp->created_at)->format('Y-m-d h:i A') : '-',
+                    $fp->updated_at ? \Carbon\Carbon::parse($fp->updated_at)->format('Y-m-d h:i A') : '-',
                 ]);
             }
             fclose($handle);
@@ -2113,6 +2160,11 @@ class ReportController extends Controller
                 'Duration',
                 'Vehicle',
                 'Note',
+                // "student-attendance report want add created at and updated
+                // at only" — appended at the end so every existing column
+                // (and anything reading this CSV by position) is unaffected.
+                'Created At',
+                'Updated At',
             ]);
 
             foreach ($query->cursor() as $session) {
@@ -2132,6 +2184,8 @@ class ReportController extends Controller
                     $session->duration_label,
                     $session->vehicle->name ?? '',
                     $session->note ?? '',
+                    optional($session->created_at)->format('Y-m-d h:i A') ?? '-',
+                    optional($session->updated_at)->format('Y-m-d h:i A') ?? '-',
                 ]);
             }
 

@@ -298,6 +298,8 @@
                                                     <th>Invoice Number</th>
                                                     <th>Note</th>
                                                     <th>@lang('common.status')</th>
+                                                    <th>Created At</th>
+                                                    <th>Updated At</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -376,10 +378,12 @@
                                                                 @lang('inventory.N/A')
                                                             @endif
                                                         </td>
+                                                        <td>{{ $value->itemSellBatch->created_at ? $value->itemSellBatch->created_at->format('Y-m-d h:i A') : '-' }}</td>
+                                                        <td>{{ $value->itemSellBatch->updated_at ? $value->itemSellBatch->updated_at->format('Y-m-d h:i A') : '-' }}</td>
                                                     </tr>
                                                 @empty
                                                     <tr>
-                                                        <td colspan="20" class="text-center">No records found.</td>
+                                                        <td colspan="23" class="text-center">No records found.</td>
                                                     </tr>
                                                 @endforelse
                                             </tbody>

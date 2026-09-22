@@ -16,7 +16,6 @@
                 <h1>Certificate Templates</h1>
                 <div class="bc-pages">
                     <a href="{{ route('dashboard') }}">@lang('common.dashboard')</a>
-                    <a href="{{ route('certificate.index') }}">Certificate Management</a>
                     <a href="#">Certificate Templates</a>
                 </div>
             </div>

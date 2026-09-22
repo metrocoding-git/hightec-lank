@@ -279,6 +279,8 @@
                                                     <th>Create user</th>
                                                     <th>Course Expiration</th>
                                                     <th>@lang('common.status')</th>
+                                                    <th>Created At</th>
+                                                    <th>Updated At</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -308,10 +310,12 @@
                                                                 @lang('inventory.returned')
                                                             @endif
                                                         </td>
+                                                        <td>{{ $batchData->batch->created_at ? $batchData->batch->created_at->format('Y-m-d h:i A') : '-' }}</td>
+                                                        <td>{{ $batchData->batch->updated_at ? $batchData->batch->updated_at->format('Y-m-d h:i A') : '-' }}</td>
                                                     </tr>
                                                 @empty
                                                     <tr>
-                                                        <td colspan="13" class="text-center">No records found.</td>
+                                                        <td colspan="15" class="text-center">No records found.</td>
                                                     </tr>
                                                 @endforelse
                                             </tbody>

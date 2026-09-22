@@ -428,6 +428,8 @@
                                                 <th>Inv Paid Amount</th>
 
                                                 <th>Inv. Pay Status</th>
+                                                <th>Created At</th>
+                                                    <th>Updated At</th>
                                                 <th>@lang('common.action')</th>
                                             </tr>
                                         </thead>
@@ -1391,17 +1393,20 @@
                     name: 'inv_payment_status',
                     orderable: false,
                     searchable: false
-                }, // ← computed
+                }, 
                 {
-                    // ARCHITECTURAL LIMITATION: this whole column's HTML (the Return Fee,
-                    // Mark as Paid, Refund, Add Invoice Number, print, and payment-history
-                    // action links/buttons) is built server-side by the fee.invoice.datatable
-                    // controller method (InvoiceController::invoiceDatatable), which was not
-                    // provided in this pass. Button-level permission gating for these actions
-                    // (fees.add-payment, fees.mark-as-paid, fees.refund-payment,
-                    // fees.invoice-item-print, fees.return-fee-data,
-                    // fees.confirm-invoice-payment, fees.payment-history) has to happen in
-                    // that controller, not here — this blade file has no access to that HTML.
+                    data: 'created_at',
+                    name: 'created_at',
+                    orderable: true,
+                    searchable: false
+                },
+                {
+                    data: 'updated_at',
+                    name: 'updated_at',
+                    orderable: true,
+                    searchable: false
+                },
+                {
                     data: 'action',
                     name: 'action',
                     orderable: false,

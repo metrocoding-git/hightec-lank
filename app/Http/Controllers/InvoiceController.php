@@ -182,6 +182,12 @@ class InvoiceController extends Controller
                 }
                 return '<span class="badge badge-danger">Not Opened</span>';
             })
+            ->addColumn('created_at', function ($row) {
+                return \Carbon\Carbon::parse($row->create_date)->format('m/d/Y');
+            })
+            ->addColumn('updated_at', function ($row) {
+                return \Carbon\Carbon::parse($row->updated_at)->format('m/d/Y');
+            })
 
             ->filter(function ($query) {
                 $keyword = request('search.value');

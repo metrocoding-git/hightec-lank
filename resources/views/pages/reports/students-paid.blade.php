@@ -321,9 +321,12 @@
                                                     <th>Bank Payment Date</th>
                                                     <th>Note</th>
                                                     <th>Create User</th>
+                                                    <th>Updated By</th>
                                                     <th>Invoice Payment Status</th>
                                                     <th>Invoice Payment Amount</th>
                                                     <th>Lunch Box Number</th>
+                                                    <th>Created At</th>
+                                                    <th>Updated At</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -347,13 +350,16 @@
                                                         </td>
                                                         <td>{{ $row->notes }}</td>
                                                         <td>{{ $row->create_user }}</td>
+                                                        <td>{{ $row->create_user }}</td>
                                                         <td>{{ $row->invoice_payment_status }}</td>
                                                         <td>{{ $row->invoice_payment_amount ?? '-' }}</td>
                                                         <td>{{ $row->box_number }}</td>
+                                                        <td>{{ $row->created_at ? \Carbon\Carbon::parse($row->created_at)->format('Y-m-d h:i A') : '-' }}</td>
+                                                        <td>{{ $row->updated_at ? \Carbon\Carbon::parse($row->updated_at)->format('Y-m-d h:i A') : '-' }}</td>
                                                     </tr>
                                                 @empty
                                                     <tr>
-                                                        <td colspan="18" class="text-center">No records found.</td>
+                                                        <td colspan="19" class="text-center">No records found.</td>
                                                     </tr>
                                                 @endforelse
                                             </tbody>

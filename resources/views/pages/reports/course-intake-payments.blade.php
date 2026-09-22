@@ -210,6 +210,7 @@
                                             <th>Cash</th>
                                             <th>Bank Transfer</th>
                                             <th>Invoice</th>
+                                            <th>Created At</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -235,10 +236,11 @@
                                                 <td>{{ number_format($data->cash_amount, 2) }}</td>
                                                 <td>{{ number_format($data->bank_amount, 2) }}</td>
                                                 <td>{{ number_format($data->invoice_amount, 2) }}</td>
+                                                <td>{{ $data->invoice_created_at ? \Carbon\Carbon::parse($data->invoice_created_at)->format('Y-m-d h:i A') : '-' }}</td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="17" class="text-center">No records found.</td>
+                                                <td colspan="18" class="text-center">No records found.</td>
                                             </tr>
                                         @endforelse
                                     </tbody>

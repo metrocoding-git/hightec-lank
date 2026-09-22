@@ -295,6 +295,9 @@
                                                     <th>Due Amount</th>
                                                     <th>Payment Status</th>
                                                     <th>Payment Method</th>
+                                                    <th>Created By</th>
+                                                    <th>Created At</th>
+                                                    <th>Updated At</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -318,10 +321,13 @@
                                                             </span>
                                                         </td>
                                                         <td>{{ $paidCourse->payment_method }}</td>
+                                                        <td>{{ $paidCourse->invoice?->createUser?->name ?? '-' }}</td>
+                                                        <td>{{ $paidCourse->created_at ? $paidCourse->created_at->format('Y-m-d h:i A') : '-' }}</td>
+                                                        <td>{{ $paidCourse->updated_at ? $paidCourse->updated_at->format('Y-m-d h:i A') : '-' }}</td>
                                                     </tr>
                                                 @empty
                                                     <tr>
-                                                        <td colspan="8" class="text-center">No records found.</td>
+                                                        <td colspan="11" class="text-center">No records found.</td>
                                                     </tr>
                                                 @endforelse
                                             </tbody>

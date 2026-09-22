@@ -344,6 +344,7 @@
                                                     <th>Student Name</th>
                                                     <th>Reg. No</th>
                                                     <th>Branch</th>
+                                                    <th>Updated At</th>
                                                     <th>Actions</th>
                                                 </tr>
                                             </thead>
@@ -382,6 +383,7 @@
                                                         <td>{{ $student->student_name ?? '-' }}</td>
                                                         <td>{{ $student->admission_number ?? '-' }}</td>
                                                         <td>{{ $branch->name ?? '-' }}</td>
+                                                        <td>{{ optional($receipt->updated_at)->format('Y-m-d h:i A') ?? '-' }}</td>
                                                         <td>
                                                             <button type="button" class="items-toggle-btn toggle-items"
                                                                 data-receipt-id="{{ $receipt->id }}"> <i
@@ -392,11 +394,11 @@
                                                     </tr>
                                                     <tr class="child-item-row" data-child-for="{{ $receipt->id }}"
                                                         style="display:none;">
-                                                        <td colspan="13"></td>
+                                                        <td colspan="14"></td>
                                                     </tr>
                                                 @empty
                                                     <tr>
-                                                        <td colspan="13" class="text-center">No records found.</td>
+                                                        <td colspan="14" class="text-center">No records found.</td>
                                                     </tr>
                                                 @endforelse
                                             </tbody>
