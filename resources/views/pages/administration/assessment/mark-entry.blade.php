@@ -1,7 +1,4 @@
 @extends('layouts.app')
-@section('title')
-    Final Assessment Marks
-@endsection
 @push('css')
     <style>
         .ampl-card {
@@ -10,18 +7,6 @@
             padding: 18px 20px;
             margin-bottom: 16px;
             box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
-        }
-
-        .ampl-findform {
-            display: flex;
-            gap: 12px;
-            align-items: flex-end;
-            flex-wrap: wrap;
-        }
-
-        .ampl-findform>div {
-            flex: 1;
-            min-width: 220px;
         }
 
         .ampl-input {
@@ -36,14 +21,6 @@
         .ampl-input:focus {
             outline: none;
             border-color: #1d4e89;
-        }
-
-        label {
-            font-weight: 600;
-            font-size: 13px;
-            color: #37474f;
-            display: block;
-            margin-bottom: 4px;
         }
 
         .ampl-filter-label {
@@ -61,11 +38,6 @@
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-        }
-
-        .ampl-btn-primary:disabled {
-            opacity: .6;
-            cursor: default;
         }
 
         .ampl-btn-outline {
@@ -106,77 +78,13 @@
         }
 
         .ampl-studentrow {
-            /* display: flex; */
-            gap: 24px;
-            flex-wrap: wrap;
             font-size: 14px;
             color: #37474f;
-        }
-
-        .ampl-grid2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-        }
-
-        @media (max-width: 767px) {
-            .ampl-grid2 {
-                grid-template-columns: 1fr;
-            }
         }
 
         .ampl-muted {
             color: #8a95a1;
             font-size: 13px;
-        }
-
-        .ampl-tablewrap {
-            overflow-x: auto;
-        }
-
-        .ampl-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-
-        .ampl-table th,
-        .ampl-table td {
-            border: 1px solid #e1e6eb;
-            padding: 8px;
-            vertical-align: middle;
-        }
-
-        .ampl-table th {
-            background: #f4f6f8;
-            text-align: left;
-        }
-
-        .ampl-titlerow td {
-            background: #eef3f9;
-        }
-
-        .ampl-yieldcell {
-            text-align: center;
-            font-weight: 700;
-            background: #f9fbfc;
-        }
-
-        .ampl-totalcell {
-            text-align: right;
-            font-weight: 700;
-        }
-
-        .ampl-pass {
-            color: #1e7a43;
-            font-weight: 700;
-            margin-top: 4px;
-        }
-
-        .ampl-fail {
-            color: #a12a2a;
-            font-weight: 700;
-            margin-top: 4px;
         }
 
         .ampl-badge {
@@ -230,6 +138,9 @@
         }
     </style>
 @endpush
+@section('title')
+    Final Assessment Marks
+@endsection
 @section('mainContent')
     @php
         $canAddAssessment = Auth::user()->hasPermission('student-assessment.store');
@@ -247,12 +158,81 @@
             </div>
         </div>
     </section>
+
+    {{-- ===== Find Student (plain HTML + jQuery, no React / @verbatim) ===== --}}
     <section class="admin-visitor-area up_admin_visitor">
         <div class="container-fluid p-0">
-            <div id="assessment-mark-root"></div>
+            @if ($canAddAssessment)
+                <div class="ampl-card col-12">
+                    <form id="ampl-find-form" class="form-horizontal row pb-0 mb-0">
+                        <div class="col-12">
+                            <input type="text" id="ampl-regno" class="ampl-input" placeholder="Enter Student Reg Number"
+                                autocomplete="off">
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" id="ampl-find-btn"
+                                class="primary-btn small fix-gr-bg me-2 p-2 mt-1 col-12">Find Student</button>
+                        </div>
+                    </form>
+                    <div id="ampl-restoring" class="ampl-muted mt-10" style="display:none;">Restoring your last search…
+                    </div>
+                </div>
+            @endif
+
+            <div id="ampl-banner" class="ampl-banner" style="display:none;"></div>
+
+            {{-- Student + course picker --}}
+            <div id="ampl-student-card" class="ampl-card" style="display:none;">
+                <div class="ampl-studentrow text-center">
+                    <strong id="ampl-student-title"></strong>
+                </div>
+                <div class="mt-10">
+                    <div class="col-12">
+                        <select id="ampl-course-select" class="form-control col-12">
+                            <option value="">Select Course</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="ampl-no-existing" class="mt-10" style="display:none;">
+                    <div class="ampl-muted">
+                        No existing assessment for this course. A marks-entry window should have
+                        opened automatically — if your browser blocked it, use the button below.
+                    </div>
+                    <button type="button" id="ampl-open-marks" class="ampl-btn ampl-btn-outline col-12">
+                        Open Marks-Entry Window
+                    </button>
+                </div>
+            </div>
+
+            {{-- Existing assessment --}}
+            <div id="ampl-existing-card" class="ampl-card col-12" style="display:none;">
+                <div class="ampl-context-ribbon row">
+                    <span class="chip col-5" id="ampl-ex-name"></span>
+                    <span class="chip col-2" id="ampl-ex-regno"></span>
+                    <span class="chip col-5" id="ampl-ex-module"></span>
+                </div>
+                <div class="ampl-studentrow text-center">
+                    <h4 style="margin:0;" id="ampl-ex-module-title"></h4>
+                    <span id="ampl-ex-badge" class="ampl-badge mt-1"></span>
+                </div>
+                <div class="ampl-muted mt-10 text-center" id="ampl-ex-note"></div>
+                <div class="mt-15 row">
+                    <a id="ampl-ex-pdf" href="#" target="_blank" rel="noreferrer"
+                        class="primary-btn small fix-gr-bg col-12 p-2">Export PDF</a>
+                    <button type="button" id="ampl-undo-btn" class="ampl-btn ampl-btn-danger col-12 mt-2 text-center"
+                        style="display:none;">
+                        Undo This Assessment
+                    </button>
+                    <div id="ampl-locked-note" class="ampl-locked-note col-12 mt-2 text-center" style="display:none;">
+                        Only the staff member who created this, within 2 days, can undo it.
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
-    <section class="admin-visitor-area up_admin_visitor mt-10">
+
+    {{-- ===== Filters + table ===== --}}
+    <section class="admin-visitor-area up_admin_visitor full_wide_table mt-10">
         <div class="container-fluid p-0">
             <div class="white-box p-20 mb-20 mt-40">
                 <form method="GET" action="{{ route('student-assessment.index') }}" class="row align-items-end mb-15">
@@ -275,7 +255,7 @@
                         </select>
                     </div>
                     <div class="col-lg-4 mb-2">
-                        <select name="created_by" class="primary_select form-control ajax_selectl">
+                        <select name="created_by" class="primary_select form-control ajax_select">
                             <option value="">Everyone</option>
                             @foreach ($creatorOptions ?? [] as $u)
                                 <option value="{{ $u->id }}"
@@ -286,19 +266,13 @@
                         </select>
                     </div>
                     <div class="col-lg-6 mb-2">
-                        <label class="ampl-filter-label">Created Date Range</label>
+                        <span class="ampl-filter-label">Created Date Range</span>
                         <input type="text" id="filter_date_range" name="date_range" class="form-control"
-                            value="{{ request('date_range') }}" placeholder="Select Created Date Range" autocomplete="off">
+                            value="{{ request('date_range') }}" placeholder="Select Created Date Range"
+                            autocomplete="off">
                     </div>
-                    {{-- NEW — separate range filter for the course's Start
-                         Date (the intake's start_date, same value the
-                         "Start Date" table column already shows). Kept as
-                         its own field/picker rather than reusing
-                         filter_date_range, since it filters a different
-                         column (studentCourse.intake.start_date, not
-                         assessed_at). --}}
                     <div class="col-lg-6 mb-2">
-                        <label class="ampl-filter-label">Course Start Date Range</label>
+                        <span class="ampl-filter-label">Course Start Date Range</span>
                         <input type="text" id="filter_start_date_range" name="start_date_range" class="form-control"
                             value="{{ request('start_date_range') }}" placeholder="Select Course Start Date Range"
                             autocomplete="off">
@@ -326,181 +300,155 @@
                                 </button>
                             </div>
                             <div class="col-2">
-                   
-                                <a href="/student/student-info/assessment"
-                                    class="primary-btn small fix-gr-bg col-12 p-2">
-                                   Reset
-                                </a>
+                                <a href="{{ route('student-assessment.index') }}"
+                                    class="primary-btn small fix-gr-bg col-12 p-2">Reset</a>
                             </div>
                         </div>
                     </div>
                 </form>
             </div>
-            <div class="white-box">
-                <div class="row">
-                    <div class="col-lg-4 no-gutters">
-                        <div class="main-title">
-                            <h3 class="mb-15">Final Assessment Records</h3>
+
+            <div class="row mt-20">
+                <div class="col-lg-12">
+                    <div class="white-box">
+                        <div class="row">
+                            <div class="col-lg-4 no-gutters">
+                                <div class="main-title">
+                                    <h3 class="mb-15">Final Assessment Records</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <x-table>
+                                    <table id="table_id"
+                                        class="table data-table Crm_table_active3 no-footer dtr-inline collapsed"
+                                        cellspacing="0" width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                <th>#</th>
+                                                <th>Student</th>
+                                                <th>Reg No</th>
+                                                <th>NIC Number</th>
+                                                <th>Course</th>
+                                                <th>Module</th>
+                                                <th>Theory Subjects</th>
+                                                <th>Practical Subjects</th>
+                                                <th>Created Date</th>
+                                                <th>Total</th>
+                                                <th>Result</th>
+                                                <th>Grade</th>
+                                                <th>Student Category</th>
+                                                <th>Address</th>
+                                                <th>Name Verified</th>
+                                                <th>NIC / ID No. Verified</th>
+                                                <th>Address Verified</th>
+                                                <th>Start Date</th>
+                                                <th>Created By</th>
+                                                <th>Intake</th>
+                                                <th>FS Conduct Branch</th>
+                                                <th>Intake Branch</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($recent ?? collect() as $i => $a)
+                                                @php
+                                                    $assessedCourseId = optional($a->template->course)->id;
+                                                    $categoryKey = $a->student_id . '-' . $assessedCourseId;
+                                                    $studentCategory =
+                                                        optional($categoriesByPair->get($categoryKey))->category_name ??
+                                                        '-';
+                                                    $theoryProgress = $a->theoryProgress ?? [
+                                                        'completed' => 0,
+                                                        'total' => 0,
+                                                    ];
+                                                    $practicalProgress = $a->practicalProgress ?? [
+                                                        'completed' => 0,
+                                                        'total' => 0,
+                                                    ];
+                                                @endphp
+                                                <tr>
+                                                    <td></td>
+                                                    <td>{{ $i + 1 }}</td>
+                                                    <td>{{ $a->student->student_name ?? '-' }}</td>
+                                                    <td>{{ $a->student->admission_number ?? '-' }}</td>
+                                                    <td>{{ $a->student->national_id_number ?? '-' }}</td>
+                                                    <td>{{ $a->template->course->name ?? '-' }}</td>
+                                                    <td>{{ $a->template->module_name ?? '-' }}</td>
+                                                    <td>{{ $theoryProgress['completed'] }}/{{ $theoryProgress['total'] }}
+                                                    </td>
+                                                    <td>{{ $practicalProgress['completed'] }}/{{ $practicalProgress['total'] }}
+                                                    </td>
+                                                    <td>{{ optional($a->assessed_at)->format('Y-m-d') }}</td>
+                                                    <td>{{ $a->total_marks }} / {{ $a->max_marks }}</td>
+                                                    <td>
+                                                        @if ($a->is_qualified)
+                                                            <span class="badge badge-success">PASS</span>
+                                                        @else
+                                                            <span class="badge badge-danger">FAIL</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>{{ $a->grade ?? '-' }}</td>
+                                                    <td>{{ $studentCategory }}</td>
+                                                    <td>{{ $a->student->permanent_address ?? '-' }}</td>
+                                                    <td>
+                                                        @if ($a->student && $a->student->isVerified('Full Name Verified'))
+                                                            <span class="text-success">YES</span>
+                                                        @else
+                                                            NO
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @if ($a->student && $a->student->isVerified('NIC Verified'))
+                                                            <span class="text-success">YES</span>
+                                                        @else
+                                                            NO
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @if ($a->student && $a->student->isVerified('Address Verified'))
+                                                            <span class="text-success">YES</span>
+                                                        @else
+                                                            NO
+                                                        @endif
+                                                    </td>
+                                                    <td>{{ $a->studentCourse->intake->start_date ?? '-' }}</td>
+                                                    <td>{{ $a->evaluator->name ?? '-' }}</td>
+                                                    <td>{{ $a->studentCourse->intake->name ?? '-' }}</td>
+                                                    <td>{{ $a->evaluator->branches->first()->name ?? '-' }}</td>
+                                                    <td>{{ $a->studentCourse->branch->name ?? '-' }}</td>
+                                                    <td>
+                                                        <a href="{{ url('/student/student-info/assessment/' . $a->id . '/pdf') }}"
+                                                            class="btn btn-sm btn-outline-primary" target="_blank">PDF</a>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </x-table>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="table-responsive">
-                    <x-table>
-                        <table id="table_id" class="table " cellspacing="0" width="100%">
-                            <thead>
-                                <tr>
-                                    <th></th>
-                                    <th>#</th>
-                                    <th>Student</th>
-                                    <th>Reg No</th>
-                                    <th>NIC Number</th>
-                                    <th>Course</th>
-                                    <th>Module</th>
-                                    {{-- NEW — "like 12/20" completed/total
-                                         columns, same figures the marks
-                                         popup already shows for one
-                                         student, reused here per row. --}}
-                                    <th>Theory Subjects</th>
-                                    <th>Practical Subjects</th>
-                                    <th>Created Date</th>
-                                    <th>Total</th>
-                                    <th>Result</th>
-                                    <th>Grade</th>
-                                    <th>Student Category</th>
-                                    <th>Address</th>
-                                    <th>Name Verified</th>
-                                    <th>NIC / ID No. Verified</th>
-                                    <th>Address Verified</th>
-                                    <th>Start Date</th>
-                                    <th>Created By</th>
-                                    <th>Intake</th>
-                                    <th>FS Conduct Branch</th>
-                                    <th>Intake Branch</th>
-
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse (($recent ?? collect()) as $i => $a)
-                                    @php
-                                        $assessedCourseId = optional($a->template->course)->id;
-                                        $categoryKey = $a->student_id . '-' . $assessedCourseId;
-                                        $studentCategory =
-                                            optional($categoriesByPair->get($categoryKey))->category_name ?? '-';
-                                        $theoryProgress = $a->theoryProgress ?? ['completed' => 0, 'total' => 0];
-                                        $practicalProgress = $a->practicalProgress ?? ['completed' => 0, 'total' => 0];
-                                    @endphp
-                                    <tr>
-                                        <td></td>
-                                        <td>{{ $i + 1 }}</td>
-                                        <td>{{ $a->student->student_name ?? '-' }}</td>
-                                        <td>{{ $a->student->admission_number ?? '-' }}</td>
-                                        <td>{{ $a->student->national_id_number ?? '-' }}</td>
-                                        <td>{{ $a->template->course->name ?? '-' }}</td>
-                                        <td>{{ $a->template->module_name ?? '-' }}</td>
-                                        <td>{{ $theoryProgress['completed'] }}/{{ $theoryProgress['total'] }}</td>
-                                        <td>{{ $practicalProgress['completed'] }}/{{ $practicalProgress['total'] }}</td>
-                                        <td>{{ optional($a->assessed_at)->format('Y-m-d') }}</td>
-                                        <td>{{ $a->total_marks }} / {{ $a->max_marks }}</td>
-                                        <td>
-                                            @if ($a->is_qualified)
-                                                <span class="badge badge-success">PASS</span>
-                                            @else
-                                                <span class="badge badge-danger">FAIL</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            {{-- grade now stores the letter band (A / B+ / B / C) or FAIL,
-                                                 computed in StudentAssessmentController::percentageToGrade() --}}
-                                            {{ $a->grade ?? '-' }}
-                                        </td>
-                                        <td>{{ $studentCategory }}</td>
-                                        <td>{{ $a->student->permanent_address ?? '-' }}</td>
-                                        <td>
-                                            @if ($a->student && $a->student->isVerified('Full Name Verified'))
-                                                <span class="text-success">YES</span>
-                                            @else
-                                                NO
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if ($a->student && $a->student->isVerified('NIC Verified'))
-                                                <span class="text-success">YES</span>
-                                            @else
-                                                NO
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if ($a->student && $a->student->isVerified('Address Verified'))
-                                                <span class="text-success">YES</span>
-                                            @else
-                                                NO
-                                            @endif
-                                        </td>
-                                        <td>{{ $a->studentCourse->intake->start_date ?? '-' }}</td>
-                                        <td>{{ $a->evaluator->name ?? '-' }}</td>
-                                        <td>{{ $a->studentCourse->intake->name ?? '-' }}</td>
-                                        <td>{{ $a->evaluator->branches->first()->name ?? '-' }}</td>
-                                        <td>{{ $a->studentCourse->branch->name ?? '-' }}</td>
-
-                                        <td>
-                                            <a href="{{ url('/student/student-info/assessment/' . $a->id . '/pdf') }}"
-                                                class="btn btn-sm btn-outline-primary" target="_blank">PDF</a>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="24" class="text-center">No assessments found.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </x-table>
                 </div>
             </div>
         </div>
     </section>
 @endsection
-@include('components.partials.data_table_js')
-@include('components.partials.multi_select_js')
-@include('components.partials.date_picker_css_js')
+
 @include('components.partials.data_table_css')
-@push('script')
-    <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap4.min.css">
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-daterangepicker/3.1.0/daterangepicker.css">
+@include('components.partials.data_table_js')
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
-    <script src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-daterangepicker/3.1.0/daterangepicker.js"></script>
+@pushOnce('scripts')
     <script>
-        window.__CSRF_TOKEN__ = "{{ csrf_token() }}";
-        window.__ROUTES__ = {
-            find: "{{ route('student-assessment.find') }}",
-            existing: "{{ url('/student/student-info/assessment/existing') }}",
-            marksPopup: "{{ url('/student/student-info/assessment/marks-popup') }}",
-            assessmentBase: "{{ url('/student/student-info/assessment') }}",
-        };
-        window.__PERMISSIONS__ = {
-            canAdd: @json($canAddAssessment),
-            canUndo: @json($canUndoAssessment),
-        };
-
-
+        /* ================= DataTable + date pickers (same as other pages) ================= */
         flatpickr("#filter_date_range", {
             mode: "range",
             dateFormat: "Y-m-d",
             allowInput: true,
         });
 
-        // NEW — Course Start Date Range filter, same flatpickr range
-        // picker/settings as Created Date Range above (this page uses
-        // flatpickr, not the bootstrap-daterangepicker jQuery plugin those
-        // <link>/<script> tags above load — those were already unused in
-        // this file before this change and are left as-is).
         flatpickr("#filter_start_date_range", {
             mode: "range",
             dateFormat: "Y-m-d",
@@ -515,15 +463,10 @@
                 ">" +
                 "<'row'<'col-sm-12'tr>>" +
                 "<'gap-2 mt-3'<'dt-info'i><'dt-pagination'p>> ",
-
             paging: true,
             searching: true,
             ordering: true,
             info: true,
-            lengthMenu: [
-                [25, 50, 100, -1],
-                [25, 50, 100, "All"]
-            ],
             buttons: [{
                     extend: 'copyHtml5',
                     title: getFileName(),
@@ -555,335 +498,340 @@
                     titleAttr: 'Print'
                 }
             ],
+            lengthMenu: [
+                [25, 50, 100, -1],
+                [25, 50, 100, "All"]
+            ],
             pageLength: 100,
             language: {
                 search: '<i class=""></i>',
                 searchPlaceholder: 'Search...',
+                emptyTable: 'No assessments found.',
                 paginate: {
                     previous: '<i class="fa-solid fa-angle-left"></i>',
                     next: '<i class="fa-solid fa-angle-right"></i>'
                 }
             },
         });
-    </script>
-    @verbatim
-        <script type="text/babel" data-presets="react">
-        async function apiFetch(url, options = {}) {
-            const opts = Object.assign({}, options);
-            opts.headers = Object.assign({
-                'X-CSRF-TOKEN': window.__CSRF_TOKEN__,
-                'Accept': 'application/json',
-            }, options.headers || {});
-            let res;
-            try {
-                res = await fetch(url, opts);
-            } catch (err) {
-                throw new Error('Network error — could not reach the server.');
+
+        /* ================= Find Student / marks entry (jQuery) ================= */
+        (function() {
+            var CSRF = "{{ csrf_token() }}";
+            var ROUTES = {
+                find: "{{ route('student-assessment.find') }}",
+                existing: "{{ url('/student/student-info/assessment/existing') }}",
+                marksPopup: "{{ url('/student/student-info/assessment/marks-popup') }}",
+                assessmentBase: "{{ url('/student/student-info/assessment') }}"
+            };
+            var POPUP_FEATURES =
+                'width=1100,height=850,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes';
+
+            var state = {
+                regNo: '',
+                student: null,
+                courses: [],
+                studentCourseId: '',
+                existing: null,
+                canUndo: false,
+                busy: false
+            };
+
+            function esc(s) {
+                return $('<div>').text(s == null ? '' : String(s)).html();
             }
-            let data = null;
-            try {
-                data = await res.json();
-            } catch (err) {
-                throw new Error(`Server returned a non-JSON response (HTTP ${res.status}). Check the route/URL.`);
-            }
-            if (!res.ok) {
-                if (res.status === 422 && data.errors) {
-                    const msgs = Object.values(data.errors).flat().join(' ');
-                    throw new Error(msgs || data.message || 'Validation failed.');
+
+            function ajaxErrorMessage(xhr) {
+                var data = xhr.responseJSON;
+                if (!data) {
+                    return xhr.status === 0 ?
+                        'Network error — could not reach the server.' :
+                        'Server returned a non-JSON response (HTTP ' + xhr.status + '). Check the route/URL.';
                 }
-                throw new Error(data.message || `Request failed (HTTP ${res.status}).`);
-            }
-            return data;
-        }
-        const POPUP_FEATURES = 'width=1100,height=850,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes';
-        function watchPopupAndRefreshOnClose(popup) {
-            if (!popup) return;
-            const timer = setInterval(() => {
-                if (popup.closed) {
-                    clearInterval(timer);
-                    window.location.reload();
+                if (xhr.status === 422 && data.errors) {
+                    var msgs = [];
+                    $.each(data.errors, function(k, v) {
+                        msgs = msgs.concat(v);
+                    });
+                    return msgs.join(' ') || data.message || 'Validation failed.';
                 }
-            }, 500);
-        }
-        function updateUrl(admissionNumber, studentCourseId) {
-            const params = new URLSearchParams(window.location.search);
-            if (admissionNumber) {
-                params.set('admission_number', admissionNumber);
-            } else {
-                params.delete('admission_number');
+                return data.message || ('Request failed (HTTP ' + xhr.status + ').');
             }
-            if (studentCourseId) {
-                params.set('student_course_id', studentCourseId);
-            } else {
-                params.delete('student_course_id');
+
+            function api(url, method, body) {
+                return $.ajax({
+                    url: url,
+                    type: method || 'GET',
+                    headers: {
+                        'X-CSRF-TOKEN': CSRF,
+                        'Accept': 'application/json'
+                    },
+                    contentType: body ? 'application/json' : undefined,
+                    data: body ? JSON.stringify(body) : undefined,
+                    dataType: 'json'
+                });
             }
-            const qs = params.toString();
-            const newUrl = window.location.pathname + (qs ? `?${qs}` : '');
-            window.history.replaceState(null, '', newUrl);
-        }
-        function App() {
-            const [regNo, setRegNo] = React.useState('');
-            const [busy, setBusy] = React.useState(false);
-            const [restoring, setRestoring] = React.useState(true);
-            const [banner, setBanner] = React.useState(null);
-            const [student, setStudent] = React.useState(null);
-            const [courses, setCourses] = React.useState([]);
-            const [studentCourseId, setStudentCourseId] = React.useState('');
-            const [courseId, setCourseId] = React.useState('');
-            const [existingAssessment, setExistingAssessment] = React.useState(null);
-            const [canUndo, setCanUndo] = React.useState(false);
-            async function resolveCourseSelection(scId, popup) {
+
+            function showBanner(type, text) {
+                $('#ampl-banner')
+                    .removeClass('ampl-banner-error ampl-banner-success')
+                    .addClass('ampl-banner-' + type)
+                    .text(text)
+                    .show();
+            }
+
+            function hideBanner() {
+                $('#ampl-banner').hide().text('');
+            }
+
+            function setBusy(b) {
+                state.busy = b;
+                $('#ampl-find-btn').prop('disabled', b).text(b ? 'Searching…' : 'Find Student');
+                $('#ampl-course-select').prop('disabled', b);
+                $('#ampl-undo-btn').prop('disabled', b).text(b ? 'Undoing…' : 'Undo This Assessment');
+                render();
+            }
+
+            function updateUrl(admissionNumber, studentCourseId) {
+                var params = new URLSearchParams(window.location.search);
+                if (admissionNumber) params.set('admission_number', admissionNumber);
+                else params.delete('admission_number');
+                if (studentCourseId) params.set('student_course_id', studentCourseId);
+                else params.delete('student_course_id');
+                var qs = params.toString();
+                window.history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''));
+            }
+
+            function watchPopupAndRefreshOnClose(popup) {
+                if (!popup) return;
+                var timer = setInterval(function() {
+                    if (popup.closed) {
+                        clearInterval(timer);
+                        window.location.reload();
+                    }
+                }, 500);
+            }
+
+            function render() {
+                // Student card
+                if (state.student) {
+                    $('#ampl-student-title').text(state.student.name + ' - ' + state.student.admission_number);
+                    $('#ampl-student-card').show();
+                } else {
+                    $('#ampl-student-card').hide();
+                }
+
+                // "No existing" helper
+                $('#ampl-no-existing').toggle(!state.existing && !!state.studentCourseId && !state.busy);
+
+                // Existing assessment card
+                var ex = state.existing;
+                if (ex && state.student) {
+                    var moduleName = ex.template ? ex.template.module_name : '';
+                    $('#ampl-ex-name').text(state.student.name);
+                    $('#ampl-ex-regno').text(state.student.admission_number);
+                    $('#ampl-ex-module').text(moduleName);
+                    $('#ampl-ex-module-title').text(moduleName);
+                    $('#ampl-ex-badge')
+                        .removeClass('ampl-badge-open ampl-badge-locked')
+                        .addClass(state.canUndo ? 'ampl-badge-open' : 'ampl-badge-locked')
+                        .text(state.canUndo ? 'Undo available' : 'Locked');
+                    $('#ampl-ex-note').text(
+                        'This student already has a saved assessment for this course (by ' +
+                        (ex.evaluator ? ex.evaluator.name : 'unknown') + ', ' +
+                        (ex.created_at ? ex.created_at.substring(0, 10) : '') + ').'
+                    );
+                    $('#ampl-ex-pdf').attr('href', ROUTES.assessmentBase + '/' + ex.id + '/pdf');
+                    $('#ampl-undo-btn').toggle(state.canUndo);
+                    $('#ampl-locked-note').toggle(!state.canUndo);
+                    $('#ampl-existing-card').show();
+                } else {
+                    $('#ampl-existing-card').hide();
+                }
+            }
+
+            function fillCourses() {
+                var $sel = $('#ampl-course-select');
+                var html = '<option value="">Select Course</option>';
+                $.each(state.courses, function(_, c) {
+                    html += '<option value="' + esc(c.student_course_id) + '">' + esc(c.course_name) +
+                        '</option>';
+                });
+                $sel.html(html).val(state.studentCourseId || '');
+            }
+
+            function resolveCourseSelection(scId, popup) {
                 setBusy(true);
-                setBanner(null);
-                try {
-                    const data = await apiFetch(`${window.__ROUTES__.existing}/${scId}`);
-                    if (data.status === 'ok' && data.assessment) {
-                        setExistingAssessment(data.assessment);
-                        setCanUndo(!!data.can_undo);
-                        if (popup && !popup.closed) popup.close();
-                    } else {
-                        setExistingAssessment(null);
-                        setCanUndo(false);
-                        if (popup) {
-                            popup.location = `${window.__ROUTES__.marksPopup}/${scId}`;
-                            popup.focus();
-                            watchPopupAndRefreshOnClose(popup);
-                        }
-                    }
-                } catch (err) {
-                    if (popup && !popup.closed) popup.close();
-                    setBanner({ type: 'error', text: err.message });
-                } finally {
-                    setBusy(false);
-                }
-            }
-            React.useEffect(() => {
-                function handleMessage(e) {
-                    if (e.origin !== window.location.origin) return;
-                    if (!e.data || e.data.type !== 'assessment-saved') return;
-                    if (String(e.data.studentCourseId) === String(studentCourseId)) {
-                        resolveCourseSelection(studentCourseId, null);
-                    }
-                }
-                window.addEventListener('message', handleMessage);
-                return () => window.removeEventListener('message', handleMessage);
-            }, [studentCourseId]);
-            React.useEffect(() => {
-                const params = new URLSearchParams(window.location.search);
-                const savedAdmissionNumber = params.get('admission_number');
-                const savedStudentCourseId = params.get('student_course_id');
-                if (!savedAdmissionNumber) {
-                    setRestoring(false);
-                    return;
-                }
-                (async () => {
-                    setBusy(true);
-                    try {
-                        const data = await apiFetch(window.__ROUTES__.find, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ admission_number: savedAdmissionNumber }),
-                        });
-                        setStudent(data.student);
-                        setCourses(data.courses || []);
-                        setRegNo(savedAdmissionNumber);
-                        if (savedStudentCourseId) {
-                            const sc = (data.courses || []).find(
-                                (c) => String(c.student_course_id) === String(savedStudentCourseId)
-                            );
-                            if (sc) {
-                                setStudentCourseId(savedStudentCourseId);
-                                setCourseId(sc.course_id);
-                                await resolveCourseSelection(savedStudentCourseId, null);
+                hideBanner();
+                return api(ROUTES.existing + '/' + scId)
+                    .done(function(data) {
+                        if (data.status === 'ok' && data.assessment) {
+                            state.existing = data.assessment;
+                            state.canUndo = !!data.can_undo;
+                            if (popup && !popup.closed) popup.close();
+                        } else {
+                            state.existing = null;
+                            state.canUndo = false;
+                            if (popup) {
+                                popup.location = ROUTES.marksPopup + '/' + scId;
+                                popup.focus();
+                                watchPopupAndRefreshOnClose(popup);
                             }
                         }
-                    } catch (err) {
-                        updateUrl('', '');
-                    } finally {
+                    })
+                    .fail(function(xhr) {
+                        if (popup && !popup.closed) popup.close();
+                        showBanner('error', ajaxErrorMessage(xhr));
+                    })
+                    .always(function() {
                         setBusy(false);
-                        setRestoring(false);
-                    }
-                })();
-            }, []);
-            async function handleFind(e) {
-                e.preventDefault();
-                if (!regNo.trim()) return;
-                setBusy(true);
-                setBanner(null);
-                try {
-                    const data = await apiFetch(window.__ROUTES__.find, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ admission_number: regNo.trim() }),
                     });
-                    setStudent(data.student);
-                    setCourses(data.courses || []);
-                    setStudentCourseId('');
-                    setCourseId('');
-                    setExistingAssessment(null);
-                    updateUrl(regNo.trim(), '');
-                } catch (err) {
-                    setStudent(null);
-                    setCourses([]);
-                    setExistingAssessment(null);
-                    setBanner({ type: 'error', text: err.message });
-                } finally {
-                    setBusy(false);
-                }
             }
-            function handleCourseChange(e) {
-                const scId = e.target.value;
-                setStudentCourseId(scId);
-                setExistingAssessment(null);
-                setCanUndo(false);
+
+            function findStudent(admissionNumber) {
+                return api(ROUTES.find, 'POST', {
+                    admission_number: admissionNumber
+                });
+            }
+
+            // Find Student submit
+            $('#ampl-find-form').on('submit', function(e) {
+                e.preventDefault();
+                var regNo = $.trim($('#ampl-regno').val());
+                if (!regNo) return;
+                state.regNo = regNo;
+                setBusy(true);
+                hideBanner();
+                findStudent(regNo)
+                    .done(function(data) {
+                        state.student = data.student;
+                        state.courses = data.courses || [];
+                        state.studentCourseId = '';
+                        state.existing = null;
+                        state.canUndo = false;
+                        fillCourses();
+                        updateUrl(regNo, '');
+                    })
+                    .fail(function(xhr) {
+                        state.student = null;
+                        state.courses = [];
+                        state.existing = null;
+                        showBanner('error', ajaxErrorMessage(xhr));
+                    })
+                    .always(function() {
+                        setBusy(false);
+                    });
+            });
+
+            // Course selected
+            $('#ampl-course-select').on('change', function() {
+                var scId = $(this).val();
+                state.studentCourseId = scId;
+                state.existing = null;
+                state.canUndo = false;
                 if (!scId) {
-                    setCourseId('');
-                    updateUrl(regNo, '');
+                    updateUrl(state.regNo, '');
+                    render();
                     return;
                 }
-                const sc = courses.find((c) => String(c.student_course_id) === String(scId));
+                var sc = state.courses.filter(function(c) {
+                    return String(c.student_course_id) === String(scId);
+                })[0];
                 if (!sc) {
-                    setBanner({ type: 'error', text: 'Could not match that selection back to a course — the course list looks malformed.' });
+                    showBanner('error',
+                        'Could not match that selection back to a course — the course list looks malformed.'
+                        );
                     return;
                 }
-                setCourseId(sc.course_id);
-                updateUrl(regNo, scId);
-                const popup = window.open('', 'assessmentMarksPopup', POPUP_FEATURES);
+                updateUrl(state.regNo, scId);
+                // open synchronously (user gesture) so the browser doesn't block it
+                var popup = window.open('', 'assessmentMarksPopup', POPUP_FEATURES);
                 resolveCourseSelection(scId, popup);
-            }
-            function handleOpenMarksWindow() {
-                if (!studentCourseId) return;
-                const popup = window.open(
-                    `${window.__ROUTES__.marksPopup}/${studentCourseId}`,
-                    'assessmentMarksPopup',
-                    POPUP_FEATURES
-                );
+            });
+
+            // Manual "Open Marks-Entry Window"
+            $('#ampl-open-marks').on('click', function() {
+                if (!state.studentCourseId) return;
+                var popup = window.open(ROUTES.marksPopup + '/' + state.studentCourseId, 'assessmentMarksPopup',
+                    POPUP_FEATURES);
                 if (popup) {
                     popup.focus();
                     watchPopupAndRefreshOnClose(popup);
                 }
-            }
-            async function handleUndo() {
-                if (!existingAssessment) return;
-                if (!window.confirm('Undo this assessment? This cannot be redone once the 2-day window passes.')) return;
-                const popup = window.open('', 'assessmentMarksPopup', POPUP_FEATURES);
+            });
+
+            // Undo
+            $('#ampl-undo-btn').on('click', function() {
+                if (!state.existing) return;
+                if (!window.confirm(
+                    'Undo this assessment? This cannot be redone once the 2-day window passes.'))
+                    return;
+                var popup = window.open('', 'assessmentMarksPopup', POPUP_FEATURES);
                 setBusy(true);
-                setBanner(null);
-                try {
-                    await apiFetch(`${window.__ROUTES__.assessmentBase}/${existingAssessment.id}`, { method: 'DELETE' });
-                    setBanner({ type: 'success', text: 'Assessment undone. Opening a fresh marks-entry window…' });
-                    setExistingAssessment(null);
-                    setCanUndo(false);
-                    if (popup && studentCourseId) {
-                        popup.location = `${window.__ROUTES__.marksPopup}/${studentCourseId}`;
-                        popup.focus();
-                        watchPopupAndRefreshOnClose(popup);
-                    } else if (popup) {
-                        popup.close();
-                    }
-                } catch (err) {
-                    if (popup && !popup.closed) popup.close();
-                    setBanner({ type: 'error', text: err.message });
-                } finally {
-                    setBusy(false);
+                hideBanner();
+                api(ROUTES.assessmentBase + '/' + state.existing.id, 'DELETE')
+                    .done(function() {
+                        showBanner('success', 'Assessment undone. Opening a fresh marks-entry window…');
+                        state.existing = null;
+                        state.canUndo = false;
+                        if (popup && state.studentCourseId) {
+                            popup.location = ROUTES.marksPopup + '/' + state.studentCourseId;
+                            popup.focus();
+                            watchPopupAndRefreshOnClose(popup);
+                        } else if (popup) {
+                            popup.close();
+                        }
+                    })
+                    .fail(function(xhr) {
+                        if (popup && !popup.closed) popup.close();
+                        showBanner('error', ajaxErrorMessage(xhr));
+                    })
+                    .always(function() {
+                        setBusy(false);
+                    });
+            });
+
+            // Popup tells us it saved
+            window.addEventListener('message', function(e) {
+                if (e.origin !== window.location.origin) return;
+                if (!e.data || e.data.type !== 'assessment-saved') return;
+                if (String(e.data.studentCourseId) === String(state.studentCourseId)) {
+                    resolveCourseSelection(state.studentCourseId, null);
                 }
-            }
-            return (
-                <div>
-                    {window.__PERMISSIONS__.canAdd && (
-                        <div className="ampl-card col-12">
-                            <form onSubmit={handleFind} className="form-horizontal row pb-0 mb-0">
-                                <div class="col-12">
-                                    <input
-                                        type="text"
-                                        className="ampl-input"
-                                        value={regNo}
-                                        onChange={(e) => setRegNo(e.target.value)}
-                                        placeholder="Enter Student Reg Number"
-                                    />
-                                </div>
-                                <div class="col-12">
-                                    <button type="submit" className="primary-btn small fix-gr-bg me-2 p-2 mt-1 col-12" disabled={busy}>
-                                        {busy ? 'Searching…' : 'Find Student'}
-                                    </button>
-                                </div>
-                            </form>
-                            {restoring && <div className="ampl-muted mt-10">Restoring your last search…</div>}
-                        </div>
-                    )}
-                    {banner && <div className={`ampl-banner ampl-banner-${banner.type}`}>{banner.text}</div>}
-                    {student && (
-                        <div className="ampl-card">
-                            <div className="ampl-studentrow text-center">
-                                <div><strong>{student.name} - {student.admission_number}</strong></div>
-                            </div>
-                            <div className="mt-10">
-                                <div class="col-12">
-                                    <select className="primary_select form-control col-12" value={studentCourseId} onChange={handleCourseChange} disabled={busy}>
-                                        <option value="">Select Course </option>
-                                        {courses.map((c) => (
-                                            <option key={c.student_course_id} value={c.student_course_id}>{c.course_name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-                            {!existingAssessment && studentCourseId && !busy && (
-                                <div className="mt-10">
-                                    <div className="ampl-muted">
-                                        No existing assessment for this course. A marks-entry window should have
-                                        opened automatically — if your browser blocked it, use the button below.
-                                    </div>
-                                    <button type="button" className="ampl-btn ampl-btn-outline col-12" onClick={handleOpenMarksWindow}>
-                                        Open Marks-Entry Window
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                    {existingAssessment && (
-                        <div className="ampl-card col-12">
-                            <div className="ampl-context-ribbon row">
-                                <span className="chip col-5">{student.name}</span>
-                                <span className="chip col-2">{student.admission_number}</span>
-                                <span className="chip col-5">{existingAssessment.template.module_name}</span>
-                            </div>
-                            <div className="ampl-studentrow text-center">
-                                <h4 style={{ margin: 0 }}>{existingAssessment.template.module_name}</h4>
-                                <span className={`ampl-badge mt-1 ${canUndo ? 'ampl-badge-open' : 'ampl-badge-locked'}`}>
-                                    {canUndo ? 'Undo available' : 'Locked'}
-                                </span>
-                            </div>
-                            <div className="ampl-muted mt-10 text-center">
-                                This student already has a saved assessment for this course
-                                (by {existingAssessment.evaluator ? existingAssessment.evaluator.name : 'unknown'},{' '}
-                                {existingAssessment.created_at ? existingAssessment.created_at.substring(0, 10) : ''}).
-                            </div>
-                            <div className="mt-15 row">
-                                <a
-                                    href={`${window.__ROUTES__.assessmentBase}/${existingAssessment.id}/pdf`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="primary-btn small fix-gr-bg col-12 p-2"
-                                    style={{ marginRight: 10 }}
-                                >
-                                    Export PDF
-                                </a>
-                                {canUndo ? (
-                                    <button type="button" className="ampl-btn ampl-btn-danger col-12 mt-2 text-center" onClick={handleUndo} disabled={busy}>
-                                        {busy ? 'Undoing…' : 'Undo This Assessment'}
-                                    </button>
-                                ) : (
-                                    <div className="ampl-locked-note col-12 mt-2 text-center">
-                                        Only the staff member who created this, within 2 days, can undo it.
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        }
-        ReactDOM.createRoot(document.getElementById('assessment-mark-root')).render(<App />);
+            });
+
+            // Restore last search from URL
+            (function restore() {
+                var params = new URLSearchParams(window.location.search);
+                var savedReg = params.get('admission_number');
+                var savedSc = params.get('student_course_id');
+                if (!savedReg) return;
+                $('#ampl-restoring').show();
+                setBusy(true);
+                findStudent(savedReg)
+                    .done(function(data) {
+                        state.regNo = savedReg;
+                        state.student = data.student;
+                        state.courses = data.courses || [];
+                        $('#ampl-regno').val(savedReg);
+                        var sc = savedSc ? state.courses.filter(function(c) {
+                            return String(c.student_course_id) === String(savedSc);
+                        })[0] : null;
+                        if (sc) state.studentCourseId = savedSc;
+                        fillCourses();
+                        setBusy(false);
+                        if (sc) resolveCourseSelection(savedSc, null);
+                    })
+                    .fail(function() {
+                        updateUrl('', '');
+                        setBusy(false);
+                    })
+                    .always(function() {
+                        $('#ampl-restoring').hide();
+                    });
+            })();
+
+            render();
+        })
+        ();
     </script>
-    @endverbatim
-@endpush
+@endPushOnce
