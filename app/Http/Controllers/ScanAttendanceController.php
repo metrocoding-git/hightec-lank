@@ -1240,6 +1240,7 @@ class ScanAttendanceController extends Controller
     {
         $totals = DB::table('fee_invoices')
             ->join('paid_courses', 'paid_courses.invoice_id', '=', 'fee_invoices.id')
+            ->where('fee_invoices.payment_status', '!=', 'returned')
             ->where('fee_invoices.student_id', $student->id)
             ->where('fee_invoices.invoice_type', 'course')
             ->where('paid_courses.course_id', $courseId)

@@ -68,7 +68,8 @@ class CoursePaymentController extends Controller
         ]);
 
 
-        if (!$this->hasRequiredFeeTypePayment($request->student_id)) {
+        $is_old_student = Student::find($request->student_id)->is_old_stu;
+        if (!$this->hasRequiredFeeTypePayment($request->student_id) && !$is_old_student) {
             return response()->json([
                 'success' => false,
                 'message' => 'Student register payment does not exist for this student. Please add register payment first.',
