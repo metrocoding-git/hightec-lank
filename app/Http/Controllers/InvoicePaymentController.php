@@ -343,15 +343,19 @@ class InvoicePaymentController extends Controller
                 }
 
                 if ($row->invoice->invoice_type === 'course') {
-                    return optional($row->invoice->paidCourses->first()?->course)->name ?? '-';
+                    return optional($row->invoice->paidCourses->course)->name ?? '-';
                 }
 
                 if ($row->invoice->invoice_type === 'nvq') {
-                    return 'NVQ - ' . (optional($row->invoice->paidCourses->first()?->course)->name ?? '-');
+                    return 'NVQ - ' . (optional($row->invoice->paidCourses->course)->name ?? '-');
                 }
 
                 if ($row->invoice->invoice_type === 'item_sell') {
                     return 'Item Sell';
+                }
+
+                if($row->invoice->invoice_type === 'food') {
+                    return 'Food';
                 }
 
                 return '-';
