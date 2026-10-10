@@ -135,9 +135,12 @@ class ReportController extends Controller
         $filename = 'Item-Sell-Report_' . now()->format('Y-m-d_His') . '.csv';
         $headers = ['Content-Type' => 'text/csv', 'Content-Disposition' => "attachment; filename=\"{$filename}\""];
 
-        return response()->streamDownload(function () use ($query) {
+        $exportMeta = $this->sellItemsExportMeta($request);
+
+        return response()->streamDownload(function () use ($query, $exportMeta) {
             $handle = fopen('php://output', 'w');
             fwrite($handle, "\xEF\xBB\xBF");
+            $this->writeExportHeader($handle, $exportMeta);
             fputcsv($handle, [
                 'No',
                 'Reference No',
@@ -351,9 +354,12 @@ class ReportController extends Controller
         $filename = 'Item-Issue-Report_' . now()->format('Y-m-d_His') . '.csv';
         $headers = ['Content-Type' => 'text/csv', 'Content-Disposition' => "attachment; filename=\"{$filename}\""];
 
-        return response()->streamDownload(function () use ($query) {
+        $exportMeta = $this->issueItemsExportMeta($request);
+
+        return response()->streamDownload(function () use ($query, $exportMeta) {
             $handle = fopen('php://output', 'w');
             fwrite($handle, "\xEF\xBB\xBF");
+            $this->writeExportHeader($handle, $exportMeta);
             fputcsv($handle, [
                 'No',
                 'Item Name',
@@ -601,9 +607,12 @@ class ReportController extends Controller
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 
-        return response()->streamDownload(function () use ($query) {
+        $exportMeta = $this->studentsPaidExportMeta($request);
+
+        return response()->streamDownload(function () use ($query, $exportMeta) {
             $handle = fopen('php://output', 'w');
             fwrite($handle, "\xEF\xBB\xBF"); // UTF-8 BOM so Excel renders names correctly
+            $this->writeExportHeader($handle, $exportMeta);
 
             fputcsv($handle, [
                 'No',
@@ -845,9 +854,12 @@ class ReportController extends Controller
         $filename = 'Course-Paid-Report_' . now()->format('Y-m-d_His') . '.csv';
         $headers = ['Content-Type' => 'text/csv', 'Content-Disposition' => "attachment; filename=\"{$filename}\""];
 
-        return response()->streamDownload(function () use ($query) {
+        $exportMeta = $this->coursePaidExportMeta($request);
+
+        return response()->streamDownload(function () use ($query, $exportMeta) {
             $handle = fopen('php://output', 'w');
             fwrite($handle, "\xEF\xBB\xBF");
+            $this->writeExportHeader($handle, $exportMeta);
             fputcsv($handle, [
                 'No',
                 'Student Name',
@@ -1021,9 +1033,12 @@ class ReportController extends Controller
         $filename = 'Course-Dates-Payments-Report_' . now()->format('Y-m-d_His') . '.csv';
         $headers = ['Content-Type' => 'text/csv', 'Content-Disposition' => "attachment; filename=\"{$filename}\""];
 
-        return response()->streamDownload(function () use ($query) {
+        $exportMeta = $this->studentsDatesPaymentsExportMeta($request);
+
+        return response()->streamDownload(function () use ($query, $exportMeta) {
             $handle = fopen('php://output', 'w');
             fwrite($handle, "\xEF\xBB\xBF");
+            $this->writeExportHeader($handle, $exportMeta);
             fputcsv($handle, [
                 'No',
                 'Invoice No',
@@ -1181,9 +1196,12 @@ class ReportController extends Controller
         $filename = 'Course-Intake-Payments-Report_' . now()->format('Y-m-d_His') . '.csv';
         $headers = ['Content-Type' => 'text/csv', 'Content-Disposition' => "attachment; filename=\"{$filename}\""];
 
-        return response()->streamDownload(function () use ($query) {
+        $exportMeta = $this->courseIntakePaymentsExportMeta($request);
+
+        return response()->streamDownload(function () use ($query, $exportMeta) {
             $handle = fopen('php://output', 'w');
             fwrite($handle, "\xEF\xBB\xBF");
+            $this->writeExportHeader($handle, $exportMeta);
             fputcsv($handle, [
                 'No',
                 'Invoice No',
@@ -1355,9 +1373,12 @@ class ReportController extends Controller
         $filename = 'Students-Intake-Balance-Report_' . now()->format('Y-m-d_His') . '.csv';
         $headers = ['Content-Type' => 'text/csv', 'Content-Disposition' => "attachment; filename=\"{$filename}\""];
 
-        return response()->streamDownload(function () use ($query) {
+        $exportMeta = $this->studentsIntakeBalanceExportMeta($request);
+
+        return response()->streamDownload(function () use ($query, $exportMeta) {
             $handle = fopen('php://output', 'w');
             fwrite($handle, "\xEF\xBB\xBF");
+            $this->writeExportHeader($handle, $exportMeta);
             fputcsv($handle, ['No', 'Intake', 'Course', 'Total Amount', 'Paid Amount', 'Balance']);
 
             $rowNo = 0;
@@ -1487,9 +1508,12 @@ class ReportController extends Controller
         $filename = 'Change-Course-Report_' . now()->format('Y-m-d_His') . '.csv';
         $headers = ['Content-Type' => 'text/csv', 'Content-Disposition' => "attachment; filename=\"{$filename}\""];
 
-        return response()->streamDownload(function () use ($query) {
+        $exportMeta = $this->changeCourseExportMeta($request);
+
+        return response()->streamDownload(function () use ($query, $exportMeta) {
             $handle = fopen('php://output', 'w');
             fwrite($handle, "\xEF\xBB\xBF");
+            $this->writeExportHeader($handle, $exportMeta);
             fputcsv($handle, ['No', 'Student No', 'Student Name', 'Old Course', 'New Course', 'Intake', 'Branch', 'Changed By', 'Changed Date', 'Created At']);
 
             $rowNo = 0;
@@ -1696,9 +1720,12 @@ class ReportController extends Controller
         // ->cursor() rather than ->get() so an export with no date filter
         // (every receipt ever) streams row-by-row instead of loading the
         // whole filtered set into memory at once.
-        return response()->stream(function () use ($query, $columns) {
+        $exportMeta = $this->invoicePaymentsExportMeta($request);
+
+        return response()->stream(function () use ($query, $columns, $exportMeta) {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF"); // UTF-8 BOM so Excel renders names correctly
+            $this->writeExportHeader($out, $exportMeta);
             fputcsv($out, $columns);
 
             $rowNo = 0;
@@ -1899,9 +1926,12 @@ class ReportController extends Controller
         $filename = 'Food-Payment-Report_' . now()->format('Y-m-d_His') . '.csv';
         $headers = ['Content-Type' => 'text/csv', 'Content-Disposition' => "attachment; filename=\"{$filename}\""];
 
-        return response()->streamDownload(function () use ($query) {
+        $exportMeta = $this->foodPaymentExportMeta($request);
+
+        return response()->streamDownload(function () use ($query, $exportMeta) {
             $handle = fopen('php://output', 'w');
             fwrite($handle, "\xEF\xBB\xBF");
+            $this->writeExportHeader($handle, $exportMeta);
             fputcsv($handle, [
                 'No',
                 'Lunchbox No.',
@@ -2143,11 +2173,14 @@ class ReportController extends Controller
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 
-        return response()->streamDownload(function () use ($query) {
+        $exportMeta = $this->studentAttendanceExportMeta($request);
+
+        return response()->streamDownload(function () use ($query, $exportMeta) {
             $out = fopen('php://output', 'w');
 
             // Excel needs a UTF-8 BOM to display non-ASCII names correctly.
             fwrite($out, "\xEF\xBB\xBF");
+            $this->writeExportHeader($out, $exportMeta);
 
             fputcsv($out, [
                 'Date',
@@ -2196,5 +2229,259 @@ class ReportController extends Controller
 
             fclose($out);
         }, $filename, $headers);
+    }
+
+    // =====================================================================
+    // EXPORT HEADER — every CSV export now opens with a short title block:
+    //
+    //   Report,        <report name>
+    //   Generated At,  <date time>
+    //   Generated By,  <user>
+    //   Filters,       None — <default window> | (one line per filter below)
+    //   ,              <filter label>, <filter value>
+    //   <blank line>
+    //   <normal column header row + data, unchanged>
+    //
+    // The meta is built BEFORE the stream closure runs (auth/user lookups
+    // happen in the normal request cycle), then written inside it. Every
+    // *ExportMeta() mirrors its own apply*Filters()/build*Query() exactly,
+    // including when a default date window kicks in, so the header always
+    // describes what is really in the file.
+    // =====================================================================
+
+    private function writeExportHeader($handle, array $meta): void
+    {
+        fputcsv($handle, ['Report', $meta['report']]);
+        fputcsv($handle, ['Generated At', now()->format('Y-m-d h:i A')]);
+        fputcsv($handle, ['Generated By', $meta['user']]);
+
+        if (empty($meta['filters'])) {
+            fputcsv($handle, ['Filters', 'None']);
+        } else {
+            fputcsv($handle, ['Filters']);
+            foreach ($meta['filters'] as $label => $value) {
+                fputcsv($handle, ['', $label, $value]);
+            }
+        }
+
+        fputcsv($handle, []);
+    }
+
+    private function buildExportMeta(string $reportName, array $filters): array
+    {
+        $user = auth()->user();
+
+        return [
+            'report'  => $reportName,
+            'user'    => $user ? ($user->name ?? trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''))) : '-',
+            // drop anything not actually applied
+            'filters' => array_filter($filters, fn($v) => $v !== null && $v !== ''),
+        ];
+    }
+
+    // id → readable name for dropdown filters; falls back to "#id" if the
+    // row no longer exists so the header never blanks out silently.
+    private function exportLookup(string $modelClass, $id, string $column = 'name'): ?string
+    {
+        if ($id === null || $id === '') {
+            return null;
+        }
+        $value = $modelClass::whereKey($id)->value($column);
+
+        return $value ?: "#{$id}";
+    }
+
+    private function exportDateRange(Request $request, string $defaultLabel, bool $defaultApplies): ?string
+    {
+        if ($request->filled('date_range')) {
+            $dates = explode(' to ', $request->date_range);
+            $from = trim($dates[0] ?? '');
+            $to = trim($dates[1] ?? '') ?: $from;
+
+            return $from === $to ? $from : "{$from} to {$to}";
+        }
+
+        return $defaultApplies ? $defaultLabel : null;
+    }
+
+    private function sellItemsExportMeta(Request $request): array
+    {
+        $defaultApplies = !($request->filled('payment_method') || $request->filled('status') || $request->filled('search_text'));
+
+        return $this->buildExportMeta('Item Sell Report', [
+            'Sell Date'      => $this->exportDateRange($request, 'Last 30 days (default)', $defaultApplies),
+            'Payment Method' => $request->payment_method,
+            'Status'         => $request->filled('status') ? $this->sellStatusLabel($request->status) : null,
+            'Search'         => $request->search_text,
+        ]);
+    }
+
+    private function issueItemsExportMeta(Request $request): array
+    {
+        $defaultApplies = !($request->filled('issue_status') || $request->filled('course_id') || $request->filled('intake_id') || $request->filled('search_text'));
+
+        return $this->buildExportMeta('Item Issue Report', [
+            'Issue Date' => $this->exportDateRange($request, 'Last 30 days (default)', $defaultApplies),
+            'Status'     => $request->filled('issue_status') ? ($request->issue_status == 'I' ? 'Issued' : 'Returned') : null,
+            'Course'     => $this->exportLookup(Course::class, $request->course_id),
+            'Intake'     => $this->exportLookup(Intake::class, $request->intake_id),
+            'Search'     => $request->search_text,
+        ]);
+    }
+
+    private function studentsPaidExportMeta(Request $request): array
+    {
+        $defaultApplies = !($request->filled('payment_method') || $request->filled('branch_id') || $request->filled('payment_type') || $request->filled('search_text'));
+
+        $paymentTypeLabels = [
+            'course_fee' => 'Course + Fee',
+            'course'     => 'Course',
+            'fee'        => 'Fee',
+            'nvq'        => 'NVQ',
+            'food'       => 'Food',
+            'item_sell'  => 'Item Sell',
+        ];
+
+        return $this->buildExportMeta('Students Payment Report', [
+            'Payment Date'   => $this->exportDateRange($request, 'Today only (default)', $defaultApplies),
+            'Payment Method' => $request->payment_method,
+            'Branch'         => $this->exportLookup(Branch::class, $request->branch_id),
+            'Payment Type'   => $request->filled('payment_type')
+                ? ($paymentTypeLabels[$request->payment_type] ?? ucfirst($request->payment_type))
+                : null,
+            'Search'         => $request->search_text,
+        ]);
+    }
+
+    private function coursePaidExportMeta(Request $request): array
+    {
+        $defaultApplies = !($request->filled('branch_id') || $request->filled('course_id') || $request->filled('payment_status') || $request->filled('payment_method') || $request->filled('search_text'));
+
+        return $this->buildExportMeta('Course Paid Report', [
+            'Invoice Date'   => $this->exportDateRange($request, 'Last 30 days (default)', $defaultApplies),
+            'Branch'         => $this->exportLookup(Branch::class, $request->branch_id),
+            'Course'         => $this->exportLookup(Course::class, $request->course_id),
+            'Payment Status' => $request->filled('payment_status') ? $this->coursePaidStatusLabel($request->payment_status) : null,
+            'Payment Method' => $request->payment_method,
+            'Search'         => $request->search_text,
+        ]);
+    }
+
+    private function studentsDatesPaymentsExportMeta(Request $request): array
+    {
+        // buildStudentsDatesPaymentsQuery() ALWAYS applies a date window
+        // (last 30 days when none is picked), regardless of other filters.
+        return $this->buildExportMeta('Course Dates Payments Report', [
+            'Date Range' => $this->exportDateRange($request, 'Last 30 days (default)', true),
+            'Branch'     => $this->exportLookup(Branch::class, $request->branch_id),
+            'Search'     => $request->search_text,
+        ]);
+    }
+
+    // Shared by the two intake-based reports — same filter rules in both
+    // build*Query() methods: an Intake overrides To Date + Branch.
+    private function intakeReportFilters(Request $request): array
+    {
+        if ($request->filled('intake_id')) {
+            return [
+                'Intake' => $this->exportLookup(Intake::class, $request->intake_id),
+                'Search' => $request->search_text,
+            ];
+        }
+
+        return [
+            'Intake Start Up To' => $request->filled('to_date') ? $request->to_date : now()->format('Y-m-d') . ' (default: today)',
+            'Branch'             => $this->exportLookup(Branch::class, $request->branch_id),
+            'Search'             => $request->search_text,
+        ];
+    }
+
+    private function courseIntakePaymentsExportMeta(Request $request): array
+    {
+        return $this->buildExportMeta('Course Intake Payments Report', $this->intakeReportFilters($request));
+    }
+
+    private function studentsIntakeBalanceExportMeta(Request $request): array
+    {
+        return $this->buildExportMeta('Students Intake Balance Report', $this->intakeReportFilters($request));
+    }
+
+    private function changeCourseExportMeta(Request $request): array
+    {
+        $defaultApplies = !($request->filled('branch_id') || $request->filled('new_course_id') || $request->filled('search_text'));
+
+        return $this->buildExportMeta('Change Course Report', [
+            'Changed Date' => $this->exportDateRange($request, 'Last 30 days (default)', $defaultApplies),
+            'Branch'       => $this->exportLookup(Branch::class, $request->branch_id),
+            'New Course'   => $this->exportLookup(Course::class, $request->new_course_id),
+            'Search'       => $request->search_text,
+        ]);
+    }
+
+    private function invoicePaymentsExportMeta(Request $request): array
+    {
+        // applyInvoicePaymentFilters() always falls back to the last 30 days
+        // when no date range is given, even with other filters set.
+        return $this->buildExportMeta('Invoice Payments Report', [
+            'Receipt Date'   => $this->exportDateRange($request, 'Last 30 days (default)', true),
+            'Branch'         => $this->exportLookup(Branch::class, $request->branch_id),
+            'Payment Method' => $request->payment_method,
+            'Search'         => $request->search_text,
+        ]);
+    }
+
+    private function foodPaymentExportMeta(Request $request): array
+    {
+        // Same "has filters" test as buildFoodPaymentQuery() — when nothing
+        // is set, the report is limited to food periods covering today.
+        $hasFilters = $request->filled('branch_id') || $request->filled('course_id') || $request->filled('letter')
+            || $request->filled('meal') || $request->filled('date_range') || $request->filled('month')
+            || $request->filled('year') || $request->filled('search_text') || $request->has('status');
+
+        $status = $request->input('status', '1');
+
+        return $this->buildExportMeta('Food Payment Report', [
+            'Food Period'     => $this->exportDateRange($request, 'Covering today (' . today()->toDateString() . ', default)', !$hasFilters),
+            'Branch'          => $this->exportLookup(Branch::class, $request->branch_id),
+            'Course'          => $this->exportLookup(Course::class, $request->course_id),
+            'Lunchbox Group'  => $request->letter,
+            'Meal'            => $request->filled('meal') ? ucfirst($request->meal) : null,
+            'Month'           => $request->filled('month') ? \Carbon\Carbon::create()->month((int) $request->month)->format('F') : null,
+            'Year'            => $request->year,
+            // status defaults to '1' (active) in the query when not sent at all
+            'Status'          => $status === '' ? 'All' : ($status === '1' ? 'Active' : 'Inactive'),
+            'Search'          => $request->search_text,
+        ]);
+    }
+
+    private function studentAttendanceExportMeta(Request $request): array
+    {
+        $typeLabels = [
+            'course'          => 'Daily Attendance',
+            'subject'         => 'Theory',
+            'practical'       => 'Practical',
+            'before_checking' => 'Before Checking',
+            'after_checking'  => 'After Checking',
+        ];
+        $statusLabels = [
+            'completed'   => 'Completed',
+            'in_progress' => 'In Progress',
+        ];
+
+        return $this->buildExportMeta('Student Attendance Report', [
+            'Date From'      => $request->date_from,
+            'Date To'        => $request->date_to,
+            'Branch'         => $this->exportLookup(Branch::class, $request->branch_id),
+            'Intake'         => $this->exportLookup(Intake::class, $request->intake_id),
+            'Course'         => $this->exportLookup(Course::class, $request->course_id),
+            'Subject'        => $this->exportLookup(Subject::class, $request->subject_id),
+            'Type'           => $request->filled('type') ? ($typeLabels[$request->type] ?? $request->type) : null,
+            'Vehicle'        => $this->exportLookup(TrainingVehicle::class, $request->vehicle_id),
+            'Marked In By'   => $this->exportLookup(User::class, $request->marked_in_by),
+            'Marked Out By'  => $this->exportLookup(User::class, $request->marked_out_by),
+            'Status'         => $request->filled('status') ? ($statusLabels[$request->status] ?? $request->status) : null,
+            'Register No.'   => $request->admission_number,
+            'Student Name'   => $request->student_name,
+        ]);
     }
 }

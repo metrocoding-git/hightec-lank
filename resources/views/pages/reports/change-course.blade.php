@@ -207,41 +207,8 @@
                 </form>
             </div>
 
-            @if ($courseBreakdown->count() > 0 || $dailyTrend->count() > 0)
-                <div class="white-box p-20 mb-20">
-                    <div class="rp-section-header">
-                        <span class="rp-icon"><i class="fa-solid fa-chart-pie"></i></span>
-                        <h3>Analytics — Filtered Results</h3>
-                    </div>
-                    <div class="rp-stat-row">
-                        <div class="rp-stat-card">
-                            <div class="rp-stat-value">{{ number_format($changeCount) }}</div>
-                            <div class="rp-stat-label">Course changes in range</div>
-                        </div>
-                    </div>
-                    <div class="rp-chart-row">
-                        <div class="rp-chart-card">
-                            <h5>Changes Over Time</h5>
-                            @if ($dailyTrend->count() > 0)
-                                <div id="trend-chart" style="height:220px;"></div>
-                            @else
-                                <div class="rp-chart-empty">No changes in this range yet.</div>
-                            @endif
-                        </div>
-                        <div class="rp-chart-card">
-                            <h5>Top New Courses</h5>
-                            @if ($courseBreakdown->count() > 0)
-                                <div id="course-chart" style="height:220px;"></div>
-                                <div id="course-legend" class="chart-legend"></div>
-                            @else
-                                <div class="rp-chart-empty">No changes in this range yet.</div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            @endif
 
-            <div class="row mt-20">
+            <div class="row mb-20">
                 <div class="col-lg-12">
                     <div class="white-box">
                         <div class="row">
@@ -309,6 +276,40 @@
                     </div>
                 </div>
             </div>
+
+            @if ($courseBreakdown->count() > 0 || $dailyTrend->count() > 0)
+                <div class="white-box p-20 mb-20">
+                    <div class="rp-section-header">
+                        <span class="rp-icon"><i class="fa-solid fa-chart-pie"></i></span>
+                        <h3>Analytics — Filtered Results</h3>
+                    </div>
+                    <div class="rp-stat-row">
+                        <div class="rp-stat-card">
+                            <div class="rp-stat-value">{{ number_format($changeCount) }}</div>
+                            <div class="rp-stat-label">Course changes in range</div>
+                        </div>
+                    </div>
+                    <div class="rp-chart-row">
+                        <div class="rp-chart-card">
+                            <h5>Changes Over Time</h5>
+                            @if ($dailyTrend->count() > 0)
+                                <div id="trend-chart" style="height:220px;"></div>
+                            @else
+                                <div class="rp-chart-empty">No changes in this range yet.</div>
+                            @endif
+                        </div>
+                        <div class="rp-chart-card">
+                            <h5>Top New Courses</h5>
+                            @if ($courseBreakdown->count() > 0)
+                                <div id="course-chart" style="height:220px;"></div>
+                                <div id="course-legend" class="chart-legend"></div>
+                            @else
+                                <div class="rp-chart-empty">No changes in this range yet.</div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
     </section>
 @endsection

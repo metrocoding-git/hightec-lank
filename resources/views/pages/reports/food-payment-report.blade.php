@@ -383,21 +383,6 @@
                 </div>
             @endif
 
-            @if ($mealBreakdown->count() > 0)
-                <div class="white-box p-20 mb-20">
-                    <div class="rp-section-header">
-                        <span class="rp-icon"><i class="fa-solid fa-chart-pie"></i></span>
-                        <h3>Analytics — Filtered Results</h3>
-                    </div>
-                    <div class="rp-chart-row">
-                        <div class="rp-chart-card">
-                            <h5>Meals Served</h5>
-                            <div id="meal-chart" style="height:220px;"></div>
-                            <div id="meal-legend" class="chart-legend"></div>
-                        </div>
-                    </div>
-                </div>
-            @endif
 
             {{-- ===== GROUPED VIEW ===== --}}
             <div class="white-box">
@@ -631,6 +616,22 @@
                 </div>
             </div>
 
+
+            @if ($mealBreakdown->count() > 0)
+                <div class="white-box p-20 mb-20">
+                    <div class="rp-section-header">
+                        <span class="rp-icon"><i class="fa-solid fa-chart-pie"></i></span>
+                        <h3>Analytics — Filtered Results</h3>
+                    </div>
+                    <div class="rp-chart-row">
+                        <div class="rp-chart-card">
+                            <h5>Meals Served</h5>
+                            <div id="meal-chart" style="height:220px;"></div>
+                            <div id="meal-legend" class="chart-legend"></div>
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
     </section>
 @endsection

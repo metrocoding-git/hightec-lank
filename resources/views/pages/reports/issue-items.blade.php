@@ -214,41 +214,9 @@
                 </form>
             </div>
 
-            @if ($statusBreakdown->count() > 0 || $dailyTrend->count() > 0)
-                <div class="white-box p-20 mb-20">
-                    <div class="rp-section-header">
-                        <span class="rp-icon"><i class="fa-solid fa-chart-pie"></i></span>
-                        <h3>Analytics — Filtered Results</h3>
-                    </div>
-                    <div class="rp-stat-row">
-                        <div class="rp-stat-card">
-                            <div class="rp-stat-value">{{ number_format($itemCount) }}</div>
-                            <div class="rp-stat-label">Issue records in range</div>
-                        </div>
-                    </div>
-                    <div class="rp-chart-row">
-                        <div class="rp-chart-card">
-                            <h5>Issues Over Time</h5>
-                            @if ($dailyTrend->count() > 0)
-                                <div id="trend-chart" style="height:220px;"></div>
-                            @else
-                                <div class="rp-chart-empty">No issues in this range yet.</div>
-                            @endif
-                        </div>
-                        <div class="rp-chart-card">
-                            <h5>By Status</h5>
-                            @if ($statusBreakdown->count() > 0)
-                                <div id="status-chart" style="height:220px;"></div>
-                                <div id="status-legend" class="chart-legend"></div>
-                            @else
-                                <div class="rp-chart-empty">No issues in this range yet.</div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            @endif
 
-            <div class="row mt-20">
+
+            <div class="row mb-20">
                 <div class="col-lg-12">
                     <div class="white-box">
                         <div class="row">
@@ -310,8 +278,10 @@
                                                                 @lang('inventory.returned')
                                                             @endif
                                                         </td>
-                                                        <td>{{ $batchData->batch->created_at ? $batchData->batch->created_at->format('Y-m-d h:i A') : '-' }}</td>
-                                                        <td>{{ $batchData->batch->updated_at ? $batchData->batch->updated_at->format('Y-m-d h:i A') : '-' }}</td>
+                                                        <td>{{ $batchData->batch->created_at ? $batchData->batch->created_at->format('Y-m-d h:i A') : '-' }}
+                                                        </td>
+                                                        <td>{{ $batchData->batch->updated_at ? $batchData->batch->updated_at->format('Y-m-d h:i A') : '-' }}
+                                                        </td>
                                                     </tr>
                                                 @empty
                                                     <tr>
@@ -326,7 +296,8 @@
                                     <div class="rp-pagination-info"> Showing
                                         <strong>{{ $itemIssues->firstItem() ?? 0 }}</strong> –
                                         <strong>{{ $itemIssues->lastItem() ?? 0 }}</strong> of
-                                        <strong>{{ number_format($itemIssues->total()) }}</strong> records </div>
+                                        <strong>{{ number_format($itemIssues->total()) }}</strong> records
+                                    </div>
                                     <div class="rp-pagination"> {{ $itemIssues->links('pagination::bootstrap-4') }} </div>
                                 </div>
                             </div>
@@ -334,6 +305,40 @@
                     </div>
                 </div>
             </div>
+
+            @if ($statusBreakdown->count() > 0 || $dailyTrend->count() > 0)
+                <div class="white-box p-20 mb-20">
+                    <div class="rp-section-header">
+                        <span class="rp-icon"><i class="fa-solid fa-chart-pie"></i></span>
+                        <h3>Analytics — Filtered Results</h3>
+                    </div>
+                    <div class="rp-stat-row">
+                        <div class="rp-stat-card">
+                            <div class="rp-stat-value">{{ number_format($itemCount) }}</div>
+                            <div class="rp-stat-label">Issue records in range</div>
+                        </div>
+                    </div>
+                    <div class="rp-chart-row">
+                        <div class="rp-chart-card">
+                            <h5>Issues Over Time</h5>
+                            @if ($dailyTrend->count() > 0)
+                                <div id="trend-chart" style="height:220px;"></div>
+                            @else
+                                <div class="rp-chart-empty">No issues in this range yet.</div>
+                            @endif
+                        </div>
+                        <div class="rp-chart-card">
+                            <h5>By Status</h5>
+                            @if ($statusBreakdown->count() > 0)
+                                <div id="status-chart" style="height:220px;"></div>
+                                <div id="status-legend" class="chart-legend"></div>
+                            @else
+                                <div class="rp-chart-empty">No issues in this range yet.</div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
     </section>
 @endsection

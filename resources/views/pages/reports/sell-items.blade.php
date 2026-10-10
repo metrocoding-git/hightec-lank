@@ -216,50 +216,9 @@
                 </form>
             </div>
 
-            @if ($statusBreakdown->count() > 0 || $dailyTrend->count() > 0)
-                <div class="white-box p-20 mb-20">
-                    <div class="rp-section-header">
-                        <span class="rp-icon"><i class="fa-solid fa-chart-pie"></i></span>
-                        <h3>Analytics — Filtered Results</h3>
-                    </div>
-                    <div class="rp-stat-row">
-                        <div class="rp-stat-card">
-                            <div class="rp-stat-value">Rs. {{ number_format($grandTotal, 2) }}</div>
-                            <div class="rp-stat-label">Total Sales (Rs.)</div>
-                        </div>
-                        <div class="rp-stat-card">
-                            <div class="rp-stat-value">{{ number_format($itemCount) }}</div>
-                            <div class="rp-stat-label">Line items in range</div>
-                        </div>
-                        <div class="rp-stat-card">
-                            <div class="rp-stat-value">Rs.
-                                {{ number_format($itemCount > 0 ? $grandTotal / $itemCount : 0, 2) }}</div>
-                            <div class="rp-stat-label">Average per Line Item (Rs.)</div>
-                        </div>
-                    </div>
-                    <div class="rp-chart-row">
-                        <div class="rp-chart-card">
-                            <h5>Sales Trend</h5>
-                            @if ($dailyTrend->count() > 0)
-                                <div id="trend-chart" style="height:220px;"></div>
-                            @else
-                                <div class="rp-chart-empty">No sales in this range yet.</div>
-                            @endif
-                        </div>
-                        <div class="rp-chart-card">
-                            <h5>By Status</h5>
-                            @if ($statusBreakdown->count() > 0)
-                                <div id="status-chart" style="height:220px;"></div>
-                                <div id="status-legend" class="chart-legend"></div>
-                            @else
-                                <div class="rp-chart-empty">No sales in this range yet.</div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            @endif
 
-            <div class="row mt-20">
+
+            <div class="row mb-20">
                 <div class="col-lg-12">
                     <div class="white-box">
                         <div class="row">
@@ -378,8 +337,10 @@
                                                                 @lang('inventory.N/A')
                                                             @endif
                                                         </td>
-                                                        <td>{{ $value->itemSellBatch->created_at ? $value->itemSellBatch->created_at->format('Y-m-d h:i A') : '-' }}</td>
-                                                        <td>{{ $value->itemSellBatch->updated_at ? $value->itemSellBatch->updated_at->format('Y-m-d h:i A') : '-' }}</td>
+                                                        <td>{{ $value->itemSellBatch->created_at ? $value->itemSellBatch->created_at->format('Y-m-d h:i A') : '-' }}
+                                                        </td>
+                                                        <td>{{ $value->itemSellBatch->updated_at ? $value->itemSellBatch->updated_at->format('Y-m-d h:i A') : '-' }}
+                                                        </td>
                                                     </tr>
                                                 @empty
                                                     <tr>
@@ -394,7 +355,8 @@
                                     <div class="rp-pagination-info"> Showing
                                         <strong>{{ $itemSells->firstItem() ?? 0 }}</strong> –
                                         <strong>{{ $itemSells->lastItem() ?? 0 }}</strong> of
-                                        <strong>{{ number_format($itemSells->total()) }}</strong> records </div>
+                                        <strong>{{ number_format($itemSells->total()) }}</strong> records
+                                    </div>
                                     <div class="rp-pagination"> {{ $itemSells->links('pagination::bootstrap-4') }} </div>
                                 </div>
                             </div>
@@ -402,6 +364,49 @@
                     </div>
                 </div>
             </div>
+
+            @if ($statusBreakdown->count() > 0 || $dailyTrend->count() > 0)
+                <div class="white-box p-20 mb-20">
+                    <div class="rp-section-header">
+                        <span class="rp-icon"><i class="fa-solid fa-chart-pie"></i></span>
+                        <h3>Analytics — Filtered Results</h3>
+                    </div>
+                    <div class="rp-stat-row">
+                        <div class="rp-stat-card">
+                            <div class="rp-stat-value">Rs. {{ number_format($grandTotal, 2) }}</div>
+                            <div class="rp-stat-label">Total Sales (Rs.)</div>
+                        </div>
+                        <div class="rp-stat-card">
+                            <div class="rp-stat-value">{{ number_format($itemCount) }}</div>
+                            <div class="rp-stat-label">Line items in range</div>
+                        </div>
+                        <div class="rp-stat-card">
+                            <div class="rp-stat-value">Rs.
+                                {{ number_format($itemCount > 0 ? $grandTotal / $itemCount : 0, 2) }}</div>
+                            <div class="rp-stat-label">Average per Line Item (Rs.)</div>
+                        </div>
+                    </div>
+                    <div class="rp-chart-row">
+                        <div class="rp-chart-card">
+                            <h5>Sales Trend</h5>
+                            @if ($dailyTrend->count() > 0)
+                                <div id="trend-chart" style="height:220px;"></div>
+                            @else
+                                <div class="rp-chart-empty">No sales in this range yet.</div>
+                            @endif
+                        </div>
+                        <div class="rp-chart-card">
+                            <h5>By Status</h5>
+                            @if ($statusBreakdown->count() > 0)
+                                <div id="status-chart" style="height:220px;"></div>
+                                <div id="status-legend" class="chart-legend"></div>
+                            @else
+                                <div class="rp-chart-empty">No sales in this range yet.</div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
     </section>
 @endsection

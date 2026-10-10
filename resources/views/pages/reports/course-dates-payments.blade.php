@@ -198,33 +198,9 @@
                 </form>
             </div>
 
-            @if ($methodBreakdown->count() > 0)
-                <div class="white-box p-20 mb-20">
-                    <div class="rp-section-header">
-                        <span class="rp-icon"><i class="fa-solid fa-chart-pie"></i></span>
-                        <h3>Analytics — Filtered Results</h3>
-                    </div>
-                    <div class="rp-stat-row">
-                        <div class="rp-stat-card">
-                            <div class="rp-stat-value">Rs. {{ number_format($grandPaid, 2) }}</div>
-                            <div class="rp-stat-label">Total Paid (Rs.)</div>
-                        </div>
-                        <div class="rp-stat-card">
-                            <div class="rp-stat-value">{{ number_format($invoiceCount) }}</div>
-                            <div class="rp-stat-label">Invoices in range</div>
-                        </div>
-                    </div>
-                    <div class="rp-chart-row">
-                        <div class="rp-chart-card">
-                            <h5>By Payment Method</h5>
-                            <div id="method-chart" style="height:220px;"></div>
-                            <div id="method-legend" class="chart-legend"></div>
-                        </div>
-                    </div>
-                </div>
-            @endif
 
-            <div class="row mt-20">
+
+            <div class="row mb-20">
                 <div class="col-lg-12">
                     <div class="white-box">
                         <div class="main-title mb-15">
@@ -276,7 +252,8 @@
                                                 <td>{{ number_format($data->cash_amount, 2) }}</td>
                                                 <td>{{ number_format($data->bank_amount, 2) }}</td>
                                                 <td>{{ number_format($data->invoice_amount, 2) }}</td>
-                                                <td>{{ $data->invoice_created_at ? \Carbon\Carbon::parse($data->invoice_created_at)->format('Y-m-d h:i A') : '-' }}</td>
+                                                <td>{{ $data->invoice_created_at ? \Carbon\Carbon::parse($data->invoice_created_at)->format('Y-m-d h:i A') : '-' }}
+                                                </td>
                                             </tr>
                                         @empty
                                             <tr>
@@ -299,6 +276,32 @@
                     </div>
                 </div>
             </div>
+
+            @if ($methodBreakdown->count() > 0)
+                <div class="white-box p-20 mb-20">
+                    <div class="rp-section-header">
+                        <span class="rp-icon"><i class="fa-solid fa-chart-pie"></i></span>
+                        <h3>Analytics — Filtered Results</h3>
+                    </div>
+                    <div class="rp-stat-row">
+                        <div class="rp-stat-card">
+                            <div class="rp-stat-value">Rs. {{ number_format($grandPaid, 2) }}</div>
+                            <div class="rp-stat-label">Total Paid (Rs.)</div>
+                        </div>
+                        <div class="rp-stat-card">
+                            <div class="rp-stat-value">{{ number_format($invoiceCount) }}</div>
+                            <div class="rp-stat-label">Invoices in range</div>
+                        </div>
+                    </div>
+                    <div class="rp-chart-row">
+                        <div class="rp-chart-card">
+                            <h5>By Payment Method</h5>
+                            <div id="method-chart" style="height:220px;"></div>
+                            <div id="method-legend" class="chart-legend"></div>
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
     </section>
 @endsection
