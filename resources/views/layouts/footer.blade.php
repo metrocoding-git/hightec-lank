@@ -185,6 +185,57 @@
 
 <script src="{{ asset('js/app.js') }}"></script>
 <script src="{{ asset('chat/js/custom.js') }}"></script>
+{{-- ================= SESSION EXPIRY HANDLING =================
+     1) Any AJAX / fetch call that comes back 401 or 419 -> go to login.
+     2) Auto logout: after SESSION_LIFETIME minutes with no activity,
+        the page goes to the login page by itself (no stale screen). --}}
+<script>
+    (function () {
+        var LOGIN_URL = @json(route('login'));
+        var LIFETIME_MS = {{ (int) config('session.lifetime', 120) }} * 60 * 1000;
+        var leaving = false;
+
+        function goToLogin() {
+            if (leaving) return;
+            leaving = true;
+            window.location.href = LOGIN_URL;
+        }
+
+        // jQuery AJAX (DataTables, dropdowns, modals, bulk actions)
+        if (window.jQuery) {
+            jQuery(document).ajaxError(function (event, xhr) {
+                if (xhr && (xhr.status === 401 || xhr.status === 419)) goToLogin();
+            });
+            jQuery(document).ajaxComplete(resetTimer);
+        }
+
+        // fetch() (React pages: mark entry, marks popup, templates)
+        if (window.fetch) {
+            var originalFetch = window.fetch;
+            window.fetch = function () {
+                return originalFetch.apply(this, arguments).then(function (res) {
+                    var sentToLogin = res.redirected && res.url.split('?')[0] === LOGIN_URL;
+                    if (res.status === 401 || res.status === 419 || sentToLogin) goToLogin();
+                    resetTimer();
+                    return res;
+                });
+            };
+        }
+
+        // Auto logout timer (server session ends after SESSION_LIFETIME idle minutes)
+        var timer = null;
+        function resetTimer() {
+            clearTimeout(timer);
+            timer = setTimeout(goToLogin, LIFETIME_MS + 5000);
+        }
+        resetTimer();
+
+        // Page restored from Back/Forward cache -> reload so the server can check the session
+        window.addEventListener('pageshow', function (e) {
+            if (e.persisted) window.location.reload();
+        });
+    })();
+</script>
 @yield('script')
 @stack('script')
 @stack('scripts')

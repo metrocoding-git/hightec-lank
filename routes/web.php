@@ -41,7 +41,26 @@ use App\Http\Controllers\StudentAssessmentController;
 use App\Http\Controllers\TrainingVehicleController;
 use App\Http\Controllers\StudentPracticalCardController;
 
-Route::middleware(['permission'])->group(function () {
+// ================= LOGIN / LOGOUT ROUTES (public) =================
+// Must stay OUTSIDE the protected group, otherwise the login page itself
+// would require being logged in (redirect loop).
+Route::middleware('guest')->group(function () {
+    Route::get('login', [LoginController::class, 'index'])->name('login');
+    Route::post('login', [LoginController::class, 'login'])->name('login.post');
+});
+
+// Logout works even if the session already expired (no auth middleware),
+// so the button never shows an error page.
+Route::post('logout', [LoginController::class, 'logout'])->name('logout');
+Route::get('logout', fn () => redirect()->route('login'));
+
+// ================= PROTECTED ROUTES =================
+// 'auth' runs on EVERY route below, including the ones that use
+// ->withoutMiddleware(['permission']) - those skip only the permission check.
+Route::middleware(['auth', 'permission'])->group(function () {
+
+    Route::get('/', fn () => redirect()->route('dashboard'))->withoutMiddleware(['permission']);
+
 
     // ================= ADMINISTRATION ROUTES ================= //
     Route::prefix('administration')->group(callback: function () {
@@ -502,13 +521,6 @@ Route::middleware(['permission'])->group(function () {
     });
 
     Route::get('dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
-
-    // ================= LOGIN ROUTES =================
-    Route::prefix('')->group(function () {
-        Route::get('login', [LoginController::class, 'index'])->name('login')->withoutMiddleware(['permission']);
-        Route::post('login', [LoginController::class, 'login'])->name('login.post')->withoutMiddleware(['permission']);
-        Route::post('logout', [LoginController::class, 'logout'])->name('logout')->withoutMiddleware(['permission']); // Add logout route
-    });
 
     // ================= ROLE MANAGEMENT ROUTES =================
     Route::prefix('role-management')->group(function () {

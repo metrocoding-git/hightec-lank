@@ -16,15 +16,17 @@ class PermissionMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Backup check ('auth' middleware normally catches this first).
         if (!Auth::check()) {
-            return redirect('login');
+            return $request->expectsJson()
+                ? response()->json(['message' => 'Unauthenticated.'], 401)
+                : redirect()->guest(route('login'));
         }
 
         $user = Auth::user();
         $routeName = $request->route()->getName(); // Get the current route name
 
         if (!$user->role || !$user->role->permissions->contains('permission_name', $routeName)) {
-        
             abort(403, 'Unauthorized action.');
         }
 
