@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\AssessmentTemplate;
@@ -836,7 +837,7 @@ class CertificateController extends Controller
 
         return $number;
     }
-    
+
     private function safeFilenameSegment(?string $value): string
     {
         return str_replace(['/', '\\'], '-', (string) $value);
@@ -896,21 +897,11 @@ class CertificateController extends Controller
 
         $studentCourse = optional($certificate->studentAssessment)->studentCourse;
 
-        // CHANGED this round — "From:" now uses the course's real,
-        // scheduled start date (studentCourse.intake.start_date, the same
-        // value used to validate at generate() time and already shown as
-        // "Start Date" on the Final Assessment Marks list), instead of
-        // the enrollment row's created_at timestamp (which was never the
-        // actual course start date, just whenever that DB row happened to
-        // be inserted).
+
         $startDate = optional(optional($studentCourse)->intake)->start_date
             ? Carbon::parse($studentCourse->intake->start_date)
             : null;
 
-        // CHANGED this round — "to" now uses the certificate's own
-        // course_end_date (a real field entered at generate time — see
-        // the "add course end date" request), replacing the previous
-        // fallback to issue_date/generated_at.
         $endDate = $certificate->course_end_date ? Carbon::parse($certificate->course_end_date) : null;
 
         $durationWords = optional($certificate->certificateTemplate)->duration;
@@ -918,41 +909,14 @@ class CertificateController extends Controller
         $bottomImagePath = optional($certificate->certificateTemplate)->bottom_image_path;
         $bottomImageDims = $this->scaledImageDimensions($bottomImagePath, 'public', 123, 92);
 
-        // NEW — "bottom left side qr to want add qr image": the
-        // Certificate Templates screen has had a "QR Code Image" upload
-        // (qr_code_image_path) for a couple of rounds now, but nothing
-        // ever actually rendered it onto the certificate — the PDF was
-        // still only using buildQrDataUri()'s AUTO-GENERATED barcode
-        // (which also needs its own separate, optional composer package,
-        // and just encodes the certificate number as a QR pattern; it's
-        // not an uploaded image at all). Now the template's own uploaded
-        // QR image takes priority, sized/scaled the exact same safe way
-        // the bottom image already is (see scaledImageDimensions()'s
-        // doc-comment for why explicit width/height beats CSS
-        // max-width/max-height in dompdf). The auto-generated QR is kept
-        // as a fallback ONLY for a template with no uploaded QR image at
-        // all, so nothing regresses for a template that was relying on
-        // it before.
+
         $qrImagePath = optional($certificate->certificateTemplate)->qr_code_image_path;
         $qrImageDims = $this->scaledImageDimensions($qrImagePath, 'public', 55, 55);
 
-        // NEW — "certificate want add footer details... check intake
-        // start branch withing branch change only address" — the new
-        // institute footer band (name / address / website / TVEC Reg No.
-        // / PV No.) is the same on every certificate EXCEPT the address
-        // line, which depends on which branch the student's course ran
-        // at (studentCourse->branch — the same relation already shown as
-        // "Intake Branch" in the assessment/certificate lists).
         $branchName = optional(optional($studentCourse)->branch)->name;
         $footerAddress = $this->branchFooterAddress($branchName);
+        $tvecRegNo = $this->branchTvecNumber($branchName);
 
-        // Shrink-to-fit for long names — see the class-doc comment above.
-        // 41 characters is roughly the longest that fits on one line at
-        // the full 20pt size inside the name's 412pt-wide blank line,
-        // measured against the real embedded name font; anything longer
-        // scales down proportionally instead of wrapping onto the NIC
-        // line below it. Floors at 13pt so an extreme outlier still stays
-        // legible rather than shrinking to nothing.
         $studentName = optional(optional($certificate->studentAssessment)->student)->student_name ?? '';
         $nameLength = mb_strlen($studentName);
         $nameFontSize = $nameLength > 41 ? max(10, round(20 * (41 / $nameLength))) : 14;
@@ -972,6 +936,9 @@ class CertificateController extends Controller
             'qrImageWidth'              => $qrImageDims['width'] ?? null,
             'qrImageHeight'             => $qrImageDims['height'] ?? null,
             'footerAddress'             => $footerAddress,
+            'tvecRegNo'                 => $tvecRegNo,
+            'headingFontDataUri'        => $this->publicFontToDataUri('UnifrakturCook-Bold.ttf'),
+            'courseFontDataUri'         => $this->publicFontToDataUri('Orbitron-VariableFont_wght.ttf'),
             'bottomImageDataUri'        => $bottomImagePath
                 ? $this->fileToDataUri($bottomImagePath, 'public')
                 : null,
@@ -1001,25 +968,6 @@ class CertificateController extends Controller
         return $path;
     }
 
-    /**
-     * "certificate want add footer details... check intake start branch
-     * withing branch change only address. there 2 branches kurunegala
-     * and kaduwela" — the institute name, website, TVEC Reg No. and PV
-     * No. printed in the new footer band are the same on every
-     * certificate; only this address line changes, based on which
-     * branch the student's course ran at.
-     *
-     * *** NEEDS YOUR CONFIRMATION BEFORE THIS PRINTS ON A REAL
-     * CERTIFICATE *** — see the delivery README. The Kurunegala address
-     * below is my best reading of the reference photo you sent ("No.
-     * 549, Kandy Road, Mawathagama, Sri Lanka.") — Mawathagama is a town
-     * in the Kurunegala district, so I assumed that's the Kurunegala
-     * branch's own address, but please double check the exact wording.
-     * The Kaduwela address is a PLACEHOLDER — I don't have your real
-     * Kaduwela branch address, so I can't invent one for an official
-     * document. Replace the placeholder string below (or tell me the
-     * real address and I'll do it).
-     */
     private function branchFooterAddress(?string $branchName): string
     {
         $branchName = $branchName ? trim($branchName) : '';
@@ -1032,6 +980,27 @@ class CertificateController extends Controller
             // now, since that's the only confirmed address I have.
             default => 'No. 549, Kandy Road, Mawathagama, Sri Lanka.',
         };
+    }
+
+    private function branchTvecNumber(?string $branchName): string
+    {
+        $branchName = $branchName ? trim($branchName) : '';
+
+        return match (true) {
+            stripos($branchName, 'kurunegala') !== false => 'TVEC Re. No. P12/1255',
+            stripos($branchName, 'kaduwela') !== false   => 'TVEC Re. No. P12/0113',
+            // Other branch or no branch: same fallback as the address (Kurunegala)
+            default => 'TVEC Re. No. P12/1255',
+        };
+    }
+
+    private function publicFontToDataUri(string $filename): ?string
+    {
+        $path = public_path('fonts/' . $filename);
+
+        return is_file($path)
+            ? 'data:font/ttf;base64,' . base64_encode(file_get_contents($path))
+            : null;
     }
 
     /**

@@ -16,19 +16,23 @@
             box-sizing: border-box;
         }
 
-        @font-face {
-            font-family: 'UnifrakturCookPDF';
-            src: url('{{ public_path('fonts/UnifrakturCook-Bold.ttf') }}') format('truetype');
-            font-weight: 400;
-            font-style: normal;
-        }
+        @if ($headingFontDataUri)
+            @font-face {
+                font-family: 'UnifrakturCookPDF';
+                src: url({{ $headingFontDataUri }}) format('truetype');
+                font-weight: bold;
+                font-style: normal;
+            }
+        @endif
 
-        @font-face {
-            font-family: 'OrbitronVariableFont_wght';
-            src: url('{{ public_path('fonts/Orbitron-VariableFont_wght.ttf') }}') format('truetype');
-            font-weight: 400;
-            font-style: normal;
-        }
+        @if ($courseFontDataUri)
+            @font-face {
+                font-family: 'OrbitronVariableFont_wght';
+                src: url({{ $courseFontDataUri }}) format('truetype');
+                font-weight: bold;
+                font-style: normal;
+            }
+        @endif
 
         body {
             margin: 0;
@@ -62,8 +66,8 @@
             width: 512pt;
             margin: 0;
             text-align: center;
-            font-family: 'UnifrakturCookPDF';
-            font-weight: 700;
+            font-family: 'UnifrakturCookPDF', 'DejaVu Serif', serif;
+            font-weight: bold;
             font-style: normal;
             font-size: 36pt;
             line-height: 1;
@@ -138,7 +142,7 @@
             width: 512pt;
             margin: 0;
             text-align: center;
-            font-family: 'OrbitronVariableFont_wght';
+            font-family: 'OrbitronVariableFont_wght', 'DejaVu Sans', sans-serif;
             font-style: normal;
             font-weight: bold;
             font-size: 20pt;
@@ -152,7 +156,7 @@
             width: 512pt;
             margin: 0;
             text-align: center;
-            font-family: 'OrbitronVariableFont_wght';
+            font-family: 'OrbitronVariableFont_wght', 'DejaVu Sans', sans-serif;
             font-style: normal;
             font-weight: bold;
             font-size: 20pt;
@@ -482,19 +486,12 @@
              website, TVEC Reg No. and PV No. --}}
         <div class="footer-band">
             <div class="footer-band-row">
-                <span class="footer-band-name">HIGHTEC LANKA INTERNATIONAL VOCATIONAL TECHNICAL TRAINING INSTITUTE (PVT) LTD.</span>
-                <span class="footer-band-reg">TVEC Re. No. P12/0113</span>
+                <span class="footer-band-name">HIGHTEC LANKA INTERNATIONAL VOCATIONAL TECHNICAL TRAINING INSTITUTE (PVT)
+                    LTD.</span>
+                <span class="footer-band-reg">{{ $tvecRegNo }}</span>
             </div>
             <div class="footer-band-row">
-                <span class="footer-band-address">{{ $footerAddress }}&nbsp;&nbsp;&nbsp;https://highteclanka.com</span>
-                {{-- "that want genarate after managing director sign that
-                     want save databse. that is want securet metho because
-                     that very important number for certificate securety"
-                     — PV No. is no longer static text. It's set only in
-                     CertificateController::signOwner() (nextPvNumber()),
-                     stored in certificates.pv_number, and blank here until
-                     the Managing Director has signed. --}}
-                <span class="footer-band-reg">{{ $certificate->pv_number ?? '' }}</span>
+                <span class="footer-band-address">{{ $footerAddress }}&nbsp;&nbsp;&nbsp;https://highteclanka.com</span>                <span class="footer-band-reg">PV 81127</span>
             </div>
         </div>
     </div>
