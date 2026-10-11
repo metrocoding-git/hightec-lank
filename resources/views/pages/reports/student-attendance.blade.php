@@ -50,13 +50,13 @@
             color: #1a7f45;
         }
 
-                    #table_id thead tr th {
-                background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
-                color: #fff;
-                font-weight: 600;
-                white-space: nowrap;
-                border: none;
-            }
+        #table_id thead tr th {
+            background: linear-gradient(90deg, var(--gradient_1) 0%, var(--gradient_2) 100%);
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            border: none;
+        }
 
         /* Analytics section (new) */
         .analytics-card-header {
@@ -325,66 +325,7 @@
                         </form>
                     </div>
 
-                    <div class="white-box mt-20">
-                        <div class="summary-cards">
-                            <div class="summary-card">
-                                <div class="summary-value">{{ number_format($totalCount) }}</div>
-                                <div class="summary-label">Sessions matching filter</div>
-                            </div>
-                            <div class="summary-card">
-                                <div class="summary-value">{{ number_format($inProgressCount) }}</div>
-                                <div class="summary-label">Still checked in (no time out yet)</div>
-                            </div>
-                            <div class="summary-card">
-                                <div class="summary-value">{{ intdiv($totalMinutes, 60) }}h {{ $totalMinutes % 60 }}m
-                                </div>
-                                <div class="summary-label">Total duration (completed sessions)</div>
-                            </div>
-                        </div>
-                    </div>
 
-                    {{-- Analytics (new) --}}
-                    <div class="white-box mt-20">
-                        <div class="row">
-                            <div class="col-lg-12 no-gutters">
-                                <div class="main-title analytics-card-header">
-                                    <span class="title-icon"><i class="ti-bar-chart"></i></span>
-                                    <div>
-                                        <h3 class="mb-0">Analytics &mdash; Filtered Results</h3>
-                                        <span class="analytics-subtitle">Based on the {{ number_format($totalCount) }} session(s) matching your current filters</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        @if ($typeBreakdown->isEmpty() && $dailyTrend->isEmpty())
-                            <div class="analytics-empty">No attendance data to chart for the current filters.</div>
-                        @else
-                            <div class="row mt-15">
-                                <div class="col-lg-5 mb-4">
-                                    <h4 class="chart-subtitle">Sessions by Type</h4>
-                                    @if ($typeBreakdown->isEmpty())
-                                        <div class="analytics-empty">No data.</div>
-                                    @else
-                                        <div id="attendanceTypeChart" style="height:220px;"></div>
-                                        <div id="attendanceTypeLegend" class="chart-legend"></div>
-                                    @endif
-                                </div>
-                                <div class="col-lg-7 mb-4">
-                                    <h4 class="chart-subtitle">Sessions Over Time
-                                        @if (!request()->filled('date_from') && !request()->filled('date_to'))
-                                            (last 30 days)
-                                        @endif
-                                    </h4>
-                                    @if ($dailyTrend->isEmpty())
-                                        <div class="analytics-empty">No data.</div>
-                                    @else
-                                        <div id="attendanceTrendChart" style="height:220px;"></div>
-                                    @endif
-                                </div>
-                            </div>
-                        @endif
-                    </div>
                 </div>
             </div>
 
@@ -431,7 +372,7 @@
                                                         <td>{{ $session->attendance_date->format('Y-m-d') }}</td>
                                                         <td>{{ $session->student->admission_number ?? '-' }}</td>
                                                         <td>{{ $session->student->student_name ?? '-' }}</td>
-                                                        <td>{{$session->attendance_branch?->name ?? '-' }}</td>
+                                                        <td>{{ $session->attendance_branch?->name ?? '-' }}</td>
                                                         <td>{{ $session->intake->name ?? '-' }}</td>
                                                         <td>{{ $session->course->name ?? '-' }}</td>
                                                         <td>
@@ -486,6 +427,68 @@
                 </div>
             </div>
 
+            <div class="white-box mt-20">
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <div class="summary-value">{{ number_format($totalCount) }}</div>
+                        <div class="summary-label">Sessions matching filter</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-value">{{ number_format($inProgressCount) }}</div>
+                        <div class="summary-label">Still checked in (no time out yet)</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-value">{{ intdiv($totalMinutes, 60) }}h {{ $totalMinutes % 60 }}m
+                        </div>
+                        <div class="summary-label">Total duration (completed sessions)</div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Analytics (new) --}}
+            <div class="white-box mt-20">
+                <div class="row">
+                    <div class="col-lg-12 no-gutters">
+                        <div class="main-title analytics-card-header">
+                            <span class="title-icon"><i class="ti-bar-chart"></i></span>
+                            <div>
+                                <h3 class="mb-0">Analytics &mdash; Filtered Results</h3>
+                                <span class="analytics-subtitle">Based on the {{ number_format($totalCount) }} session(s)
+                                    matching your current filters</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @if ($typeBreakdown->isEmpty() && $dailyTrend->isEmpty())
+                    <div class="analytics-empty">No attendance data to chart for the current filters.</div>
+                @else
+                    <div class="row mt-15">
+                        <div class="col-lg-5 mb-4">
+                            <h4 class="chart-subtitle">Sessions by Type</h4>
+                            @if ($typeBreakdown->isEmpty())
+                                <div class="analytics-empty">No data.</div>
+                            @else
+                                <div id="attendanceTypeChart" style="height:220px;"></div>
+                                <div id="attendanceTypeLegend" class="chart-legend"></div>
+                            @endif
+                        </div>
+                        <div class="col-lg-7 mb-4">
+                            <h4 class="chart-subtitle">Sessions Over Time
+                                @if (!request()->filled('date_from') && !request()->filled('date_to'))
+                                    (last 30 days)
+                                @endif
+                            </h4>
+                            @if ($dailyTrend->isEmpty())
+                                <div class="analytics-empty">No data.</div>
+                            @else
+                                <div id="attendanceTrendChart" style="height:220px;"></div>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+            </div>
+
 
         </div>
     </section>
@@ -493,7 +496,7 @@
 
 @push('script')
     <script>
-        $(function () {
+        $(function() {
             var typeData = @json($typeBreakdown);
             var trendData = @json($dailyTrend);
 
@@ -508,15 +511,16 @@
                     data: typeData,
                     colors: donutPalette,
                     resize: true,
-                    formatter: function (y) {
+                    formatter: function(y) {
                         return y;
                     }
                 });
 
                 var legendHtml = '';
-                typeData.forEach(function (row, i) {
+                typeData.forEach(function(row, i) {
                     var color = donutPalette[i % donutPalette.length];
-                    legendHtml += '<span class="legend-item"><span class="legend-dot" style="background:' + color + ';"></span>' + row.label + ' (' + row.value + ')</span>';
+                    legendHtml += '<span class="legend-item"><span class="legend-dot" style="background:' +
+                        color + ';"></span>' + row.label + ' (' + row.value + ')</span>';
                 });
                 $('#attendanceTypeLegend').html(legendHtml);
             }

@@ -1700,7 +1700,7 @@
                     modal.find('#certLockedBanner').toggleClass('d-none', !certLocked);
 
                     let historyHtml =
-                        '<table class="payment-history-table"><thead><tr><th>Invoice Number</th><th>Course Name</th><th>Amount</th><th>Method</th><th>Type</th><th>Receipt No.</th><th>Date</th><th>Action</th></tr></thead><tbody>';
+                        '<table class="payment-history-table"><thead><tr><th>Invoice Number</th><th>Amount</th><th>Method</th><th>Type</th><th>Receipt No.</th><th>Date</th><th>Action</th></tr></thead><tbody>';
                     if (response.payments.length > 0) {
                         let baseUrl = "{{ url('/student/fees/invoice-item-print') }}";
                         response.payments.forEach(function(payment) {
@@ -1788,7 +1788,6 @@
                                         ${payment.payment_invoice_number || 'N/A'}
                                         ${payment.invoice_payment_confirm == 1 ? '- C' : ''}
                                     </td>
-                                    <td>${courseName || 'N/A'}</td>
                                     <td>${payment.amount}</td>
                                     <td>${paymentMethodBadge(payment.payment_method)}</td>
                                     <td><span class="payment-type-pill">${(payment.payment_type || 'N/A').toString().replace(/_/g, ' ')}</span></td>
@@ -2220,7 +2219,6 @@
                                         ${payment.payment_invoice_number || 'N/A'}
                                         ${payment.invoice_payment_confirm == 1 ? '- C' : ''}
                              </td>
-                            <td>${courseName || 'N/A'}</td>
                             <td>${payment.amount}</td>
                             <td>${paymentMethodBadge(payment.payment_method)}</td>
                             <td><span class="payment-type-pill">${(payment.payment_type || 'N/A').toString().replace(/_/g, ' ')}</span></td>

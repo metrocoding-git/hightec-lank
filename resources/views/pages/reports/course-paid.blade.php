@@ -239,37 +239,9 @@
                 </form>
             </div>
 
-            @if ($statusBreakdown->count() > 0)
-                <div class="white-box p-20 mb-20">
-                    <div class="rp-section-header">
-                        <span class="rp-icon"><i class="fa-solid fa-chart-pie"></i></span>
-                        <h3>Analytics — Filtered Results</h3>
-                    </div>
-                    <div class="rp-stat-row">
-                        <div class="rp-stat-card">
-                            <div class="rp-stat-value">Rs. {{ number_format($grandPaid, 2) }}</div>
-                            <div class="rp-stat-label">Total Paid (Rs.)</div>
-                        </div>
-                        <div class="rp-stat-card">
-                            <div class="rp-stat-value">Rs. {{ number_format($grandDue, 2) }}</div>
-                            <div class="rp-stat-label">Total Due (Rs.)</div>
-                        </div>
-                        <div class="rp-stat-card">
-                            <div class="rp-stat-value">{{ number_format($courseCount) }}</div>
-                            <div class="rp-stat-label">Course payments in range</div>
-                        </div>
-                    </div>
-                    <div class="rp-chart-row">
-                        <div class="rp-chart-card">
-                            <h5>Paid Amount by Status</h5>
-                            <div id="status-chart" style="height:220px;"></div>
-                            <div id="status-legend" class="chart-legend"></div>
-                        </div>
-                    </div>
-                </div>
-            @endif
 
-            <div class="row mt-20">
+
+            <div class="row mb-20">
                 <div class="col-lg-12">
                     <div class="white-box">
                         <div class="row">
@@ -322,8 +294,10 @@
                                                         </td>
                                                         <td>{{ $paidCourse->payment_method }}</td>
                                                         <td>{{ $paidCourse->invoice?->createUser?->name ?? '-' }}</td>
-                                                        <td>{{ $paidCourse->created_at ? $paidCourse->created_at->format('Y-m-d h:i A') : '-' }}</td>
-                                                        <td>{{ $paidCourse->updated_at ? $paidCourse->updated_at->format('Y-m-d h:i A') : '-' }}</td>
+                                                        <td>{{ $paidCourse->created_at ? $paidCourse->created_at->format('Y-m-d h:i A') : '-' }}
+                                                        </td>
+                                                        <td>{{ $paidCourse->updated_at ? $paidCourse->updated_at->format('Y-m-d h:i A') : '-' }}
+                                                        </td>
                                                     </tr>
                                                 @empty
                                                     <tr>
@@ -348,6 +322,36 @@
                     </div>
                 </div>
             </div>
+
+            @if ($statusBreakdown->count() > 0)
+                <div class="white-box p-20 mb-20">
+                    <div class="rp-section-header">
+                        <span class="rp-icon"><i class="fa-solid fa-chart-pie"></i></span>
+                        <h3>Analytics — Filtered Results</h3>
+                    </div>
+                    <div class="rp-stat-row">
+                        <div class="rp-stat-card">
+                            <div class="rp-stat-value">Rs. {{ number_format($grandPaid, 2) }}</div>
+                            <div class="rp-stat-label">Total Paid (Rs.)</div>
+                        </div>
+                        <div class="rp-stat-card">
+                            <div class="rp-stat-value">Rs. {{ number_format($grandDue, 2) }}</div>
+                            <div class="rp-stat-label">Total Due (Rs.)</div>
+                        </div>
+                        <div class="rp-stat-card">
+                            <div class="rp-stat-value">{{ number_format($courseCount) }}</div>
+                            <div class="rp-stat-label">Course payments in range</div>
+                        </div>
+                    </div>
+                    <div class="rp-chart-row">
+                        <div class="rp-chart-card">
+                            <h5>Paid Amount by Status</h5>
+                            <div id="status-chart" style="height:220px;"></div>
+                            <div id="status-legend" class="chart-legend"></div>
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
     </section>
 @endsection
