@@ -61,6 +61,24 @@ class FeeInvoices extends Model
         return $this->hasMany(InvoicesPayments::class, 'invoice_id', 'id');
     }
 
+    /**
+     * "invoice list cant be return if has any ... invoice payment" — an
+     * invoice can only be returned when it has no payments made with the
+     * "Invoice" payment method, or every such payment has already been
+     * refunded. True = something still blocks the return.
+     */
+    public static function hasOpenInvoiceMethodPayment(int $invoiceId): bool
+    {
+        return InvoicesPayments::where('invoice_id', $invoiceId)
+            ->where('payment_method', 'Invoice')
+            ->where('amount', '>', 0)
+            ->where(function ($q) {
+                $q->whereNull('payment_status')
+                    ->orWhere('payment_status', '!=', 'refunded');
+            })
+            ->exists();
+    }
+
     public function paidCourses()
     {
         return $this->hasOne(PaidCourse::class, 'invoice_id');

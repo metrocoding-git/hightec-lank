@@ -215,6 +215,39 @@
                                     </div>
                                 </div>
 
+                                <div class="col-lg-4 mt-2">
+                                    <div class="primary_input">
+                                        <select class="primary_select form-control" name="assessment_grade">
+                                            <option value="">Grade: All</option>
+                                            @foreach ($gradeOptions as $grade)
+                                                <option value="{{ $grade }}" @selected($selectedAssessmentGrade === $grade)>{{ $grade }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-4 mt-2">
+                                    <div class="primary_input">
+                                        <select class="primary_select form-control" name="assessment_evaluator">
+                                            <option value="">Evaluator: All</option>
+                                            @foreach ($evaluators as $evaluator)
+                                                <option value="{{ $evaluator->id }}" @selected((string) $selectedEvaluatorId === (string) $evaluator->id)>{{ $evaluator->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-4 mt-2">
+                                    <div class="primary_input">
+                                        <select class="primary_select form-control" name="certificate_status">
+                                            <option value="">Certificate: All</option>
+                                            <option value="not_generated" @selected($selectedCertificateStatus === 'not_generated')>Passed, not generated</option>
+                                            <option value="pending" @selected($selectedCertificateStatus === 'pending')>Generated, waiting signatures</option>
+                                            <option value="approved" @selected($selectedCertificateStatus === 'approved')>Approved</option>
+                                        </select>
+                                    </div>
+                                </div>
+
                                 <div class="col-lg-12 mt-10 text-right">
                                     <div class="row">
                                         <button type="submit" class="primary-btn small fix-gr-bg p-2 col-8">
@@ -267,6 +300,10 @@
                                                 <th>Final Assessment</th>
                                                 <th>Result</th>
                                                 <th>Assessment Date</th>
+                                                <th>Grade</th>
+                                                <th>Marks</th>
+                                                <th>Evaluator</th>
+                                                <th>Certificate</th>
                                                 <th>Card</th>
                                             </tr>
                                         </thead>
@@ -295,6 +332,24 @@
                                                         @endif
                                                     </td>
                                                     <td>{{ $student->final_assessment_date ?? '-' }}</td>
+                                                    <td>{{ $student->final_assessment_grade ?? '-' }}</td>
+                                                    <td>{{ $student->final_assessment_marks ?? '-' }}</td>
+                                                    <td>{{ $student->final_assessment_evaluator ?? '-' }}</td>
+                                                    <td>
+                                                        @switch($student->certificate_status)
+                                                            @case('approved')
+                                                                <span class="badge badge-success">Approved</span>
+                                                            @break
+                                                            @case('conductor_signed')
+                                                                <span class="badge badge-warning">Waiting MD sign</span>
+                                                            @break
+                                                            @case('generated')
+                                                                <span class="badge badge-warning">Waiting signatures</span>
+                                                            @break
+                                                            @default
+                                                                -
+                                                        @endswitch
+                                                    </td>
                                                     <td>
                                                         <a href="{{ route('student-practical-card.show', $student->id) }}"
                                                             target="_blank" rel="noopener"
@@ -305,7 +360,7 @@
                                                 </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="9" class="text-center">
+                                                    <td colspan="13" class="text-center">
                                                         @if ($hasFilter ?? false)
                                                             No students found.
                                                         @else

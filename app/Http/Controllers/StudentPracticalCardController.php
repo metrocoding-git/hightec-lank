@@ -39,6 +39,13 @@ class StudentPracticalCardController extends Controller
             'selectedAssessmentStatus' => $request->input('assessment_status'),
             'selectedAssessmentResult' => $request->input('assessment_result'),
             'assessmentDateRange' => $request->input('assessment_date_range'),
+            'selectedAssessmentGrade' => $request->input('assessment_grade'),
+            'selectedEvaluatorId' => $request->input('assessment_evaluator'),
+            'selectedCertificateStatus' => $request->input('certificate_status'),
+            'gradeOptions' => ['A', 'B+', 'B', 'C', 'FAIL'],
+            'evaluators' => \App\Models\User::whereIn('id', StudentAssessment::whereNotNull('evaluator_id')->distinct()->pluck('evaluator_id'))
+                ->orderBy('name')
+                ->get(['id', 'name']),
         ]);
     }
 
@@ -53,7 +60,10 @@ class StudentPracticalCardController extends Controller
             || $request->filled('q')
             || $request->filled('assessment_status')
             || $request->filled('assessment_result')
-            || $request->filled('assessment_date_range');
+            || $request->filled('assessment_date_range')
+            || $request->filled('assessment_grade')
+            || $request->filled('assessment_evaluator')
+            || $request->filled('certificate_status');
     }
 
     /**
@@ -127,6 +137,35 @@ class StudentPracticalCardController extends Controller
             }
         }
 
+        // More Final Assessment filters: grade, evaluator, certificate stage.
+        if ($request->filled('assessment_grade')) {
+            $wantGrade = strtoupper($request->input('assessment_grade'));
+            $students = $students->filter(
+                fn($s) => $s->final_assessment_done && strtoupper((string) $s->final_assessment_grade) === $wantGrade
+            )->values();
+        }
+
+        if ($request->filled('assessment_evaluator')) {
+            $wantEvaluator = (int) $request->input('assessment_evaluator');
+            $students = $students->filter(
+                fn($s) => $s->final_assessment_done && (int) $s->final_assessment_evaluator_id === $wantEvaluator
+            )->values();
+        }
+
+        if ($request->filled('certificate_status')) {
+            $wantCert = $request->input('certificate_status');
+            $students = $students->filter(function ($s) use ($wantCert) {
+                $status = $s->certificate_status; // null = no certificate yet
+
+                return match ($wantCert) {
+                    'not_generated' => $s->final_assessment_passed && $status === null,
+                    'pending' => in_array($status, ['generated', 'conductor_signed'], true),
+                    'approved' => $status === 'approved',
+                    default => true,
+                };
+            })->values();
+        }
+
         return $students;
     }
 
@@ -151,9 +190,10 @@ class StudentPracticalCardController extends Controller
 
         $studentCourseIds = $relevantCourseByStudent->pluck('id')->filter()->values();
 
-        $assessmentsByStudentCourseId = StudentAssessment::whereIn('student_course_id', $studentCourseIds)
+        $assessmentsByStudentCourseId = StudentAssessment::with(['evaluator:id,name', 'certificate:id,student_assessment_id,status'])
+            ->whereIn('student_course_id', $studentCourseIds)
             ->orderBy('created_at')
-            ->get(['student_course_id', 'is_qualified', 'assessed_at'])
+            ->get(['id', 'student_course_id', 'is_qualified', 'assessed_at', 'grade', 'total_marks', 'max_marks', 'evaluator_id'])
             ->groupBy('student_course_id')
             ->map(fn($rows) => $rows->last());
 
@@ -167,6 +207,13 @@ class StudentPracticalCardController extends Controller
             $student->final_assessment_date = ($assessment && $assessment->assessed_at)
                 ? $assessment->assessed_at->format('Y-m-d')
                 : null;
+            $student->final_assessment_grade = $assessment->grade ?? null;
+            $student->final_assessment_marks = ($assessment && $assessment->max_marks > 0)
+                ? $assessment->total_marks . ' / ' . $assessment->max_marks
+                : null;
+            $student->final_assessment_evaluator_id = $assessment->evaluator_id ?? null;
+            $student->final_assessment_evaluator = optional(optional($assessment)->evaluator)->name;
+            $student->certificate_status = optional(optional($assessment)->certificate)->status;
 
             return $student;
         });
@@ -203,38 +250,62 @@ class StudentPracticalCardController extends Controller
             $selectedCourseId = $courses->first()->id;
         }
 
+        // "view templete want select intake and coure both ... card is change
+        // intake wise and course wise" — subjects are assigned per intake +
+        // course (assign_subjects), so the template is picked by both. Only
+        // intakes that actually have subjects assigned for this course are
+        // offered, newest first; the newest one is the default.
+        $intakes = $selectedCourseId ? $this->templateIntakesForCourse($selectedCourseId) : collect();
+
+        $selectedIntakeId = null;
+
+        if ($request->filled('intake_id') && $intakes->contains('id', (int) $request->input('intake_id'))) {
+            $selectedIntakeId = (int) $request->input('intake_id');
+        } elseif ($intakes->isNotEmpty()) {
+            $selectedIntakeId = $intakes->first()->id;
+        }
+
+        $practicalSubjects = $selectedCourseId ? $this->templateSubjectRows($selectedCourseId, $selectedIntakeId, 'P') : [];
+        $theorySubjects = $selectedCourseId ? $this->templateSubjectRows($selectedCourseId, $selectedIntakeId, 'T') : [];
+
         return view('pages.student.attendance.practical-card-template', [
             'courses' => $courses,
+            'intakes' => $intakes,
             'selectedCourseId' => $selectedCourseId,
-            'practicalSubjects' => $selectedCourseId ? $this->templateSubjectRows($selectedCourseId, 'P') : [],
-            'theorySubjects' => $selectedCourseId ? $this->templateSubjectRows($selectedCourseId, 'T') : [],
+            'selectedIntakeId' => $selectedIntakeId,
+            'practicalSubjects' => $practicalSubjects,
+            'theorySubjects' => $theorySubjects,
+            'practicalTotals' => $this->templateTotals($practicalSubjects),
         ]);
     }
 
     /**
      * NEW — Excel export of the Practical template (Subject / Demonstrator
-     * Time / Practical Time) for a selected course.
+     * Time / Practical Time) for a selected intake + course, with a totals row.
      */
     public function exportTemplatePractical(Request $request)
     {
         $course = $this->requireTemplateCourse($request);
+        $intakeId = $request->filled('intake_id') ? (int) $request->input('intake_id') : null;
+        $rows = $this->templateSubjectRows($course->id, $intakeId, 'P');
 
         return Excel::download(
-            $this->templateExport($this->templateSubjectRows($course->id, 'P'), true),
+            $this->templateExport($rows, true, $this->templateTotals($rows)),
             'practical-template-' . Str::slug($course->name) . '-' . now()->format('Y-m-d_His') . '.xlsx'
         );
     }
 
     /**
      * NEW — Excel export of the Theory template (Subject only) for a
-     * selected course.
+     * selected intake + course.
      */
     public function exportTemplateTheory(Request $request)
     {
         $course = $this->requireTemplateCourse($request);
+        $intakeId = $request->filled('intake_id') ? (int) $request->input('intake_id') : null;
 
         return Excel::download(
-            $this->templateExport($this->templateSubjectRows($course->id, 'T'), false),
+            $this->templateExport($this->templateSubjectRows($course->id, $intakeId, 'T'), false),
             'theory-template-' . Str::slug($course->name) . '-' . now()->format('Y-m-d_His') . '.xlsx'
         );
     }
@@ -249,16 +320,32 @@ class StudentPracticalCardController extends Controller
         return $course;
     }
 
+    /** Intakes that have subjects assigned for this course, newest first. */
+    private function templateIntakesForCourse(int $courseId)
+    {
+        $intakeIds = AssignSubjects::where('course_id', $courseId)
+            ->whereNotNull('intake_id')
+            ->distinct()
+            ->pluck('intake_id');
+
+        return \App\Models\Intake::whereIn('id', $intakeIds)
+            ->orderByDesc('start_date')
+            ->orderByDesc('id')
+            ->get(['id', 'name', 'start_date']);
+    }
+
     /**
-     * Subject list for the template page/export — just the subjects a
-     * course is assigned (name + planned demonstrator/practical time, from
+     * Subject list for the template page/export — the subjects assigned to
+     * this intake + course (name + planned demonstrator/practical time, from
      * assign_subjects), with NO student and NO attendance data at all.
-     * Deliberately separate from buildSubjectRows() below (which is
-     * per-student and stays exactly as it was) rather than reusing it.
+     * Without an intake it falls back to every intake's assignments for the
+     * course (the old behaviour). Deliberately separate from
+     * buildSubjectRows() below (per-student) rather than reusing it.
      */
-    private function templateSubjectRows(int $courseId, string $subjectType): array
+    private function templateSubjectRows(int $courseId, ?int $intakeId, string $subjectType): array
     {
         $assignments = AssignSubjects::where('course_id', $courseId)
+            ->when($intakeId, fn($q) => $q->where('intake_id', $intakeId))
             ->orderBy('id')
             ->get(['subject_id', 'demonstrator_time', 'practical_time'])
             ->keyBy('subject_id');
@@ -283,6 +370,8 @@ class StudentPracticalCardController extends Controller
                 'subject' => $subject->name,
                 'demonstrator_time' => $this->formatPlannedTime($assignment->demonstrator_time ?? null),
                 'practical_time' => $this->formatPlannedTime($assignment->practical_time ?? null),
+                'demonstrator_minutes' => $this->parsePlannedMinutes($assignment->demonstrator_time ?? null),
+                'practical_minutes' => $this->parsePlannedMinutes($assignment->practical_time ?? null),
             ];
         }
 
@@ -290,20 +379,39 @@ class StudentPracticalCardController extends Controller
     }
 
     /**
+     * "want added total amaounts" (attendance time totals, template only) —
+     * total planned Demonstrator time, Practical time and both together.
+     */
+    private function templateTotals(array $rows): array
+    {
+        $demo = array_sum(array_column($rows, 'demonstrator_minutes'));
+        $practical = array_sum(array_column($rows, 'practical_minutes'));
+
+        return [
+            'subjects' => count($rows),
+            'demonstrator' => $this->formatMinutes($demo),
+            'practical' => $this->formatMinutes($practical),
+            'overall' => $this->formatMinutes($demo + $practical),
+        ];
+    }
+
+    /**
      * Single-sheet Excel export for the template page — an anonymous class
      * implementing the Laravel Excel concerns directly, so this stays in
      * the controller with no separate Export class file.
      */
-    private function templateExport(array $rows, bool $includeTimes)
+    private function templateExport(array $rows, bool $includeTimes, ?array $totals = null)
     {
-        return new class($rows, $includeTimes) implements FromArray, WithHeadings, ShouldAutoSize {
+        return new class($rows, $includeTimes, $totals) implements FromArray, WithHeadings, ShouldAutoSize {
             protected array $rows;
             protected bool $includeTimes;
+            protected ?array $totals;
 
-            public function __construct(array $rows, bool $includeTimes)
+            public function __construct(array $rows, bool $includeTimes, ?array $totals)
             {
                 $this->rows = $rows;
                 $this->includeTimes = $includeTimes;
+                $this->totals = $totals;
             }
 
             public function headings(): array
@@ -323,6 +431,11 @@ class StudentPracticalCardController extends Controller
                         : [$index + 1, $row['subject']];
                 }
 
+                if ($this->includeTimes && $this->totals) {
+                    $out[] = ['', 'Total (hh:mm)', $this->totals['demonstrator'], $this->totals['practical']];
+                    $out[] = ['', 'Total Demonstrator + Practical (hh:mm)', $this->totals['overall'], ''];
+                }
+
                 return $out;
             }
         };
@@ -338,12 +451,29 @@ class StudentPracticalCardController extends Controller
     {
         $student = Student::with('branch')->findOrFail($id);
 
+        // Close any Daily Attendance left without a time-out on earlier days,
+        // so the card shows the automatic 5 PM (or last-activity) out time.
+        ScanAttendanceController::autoCloseMissingDailyOut();
+
+        // One enrolment per course. When a student has more than one row for
+        // the same course (e.g. stu-40110: intake 77 "return", then intake 79
+        // "start"), use the active one — start/complete first, then pending,
+        // returned last; newest wins within the same status. Previously the
+        // OLDEST row was used, so a returned enrolment (and its intake's
+        // subject list) could be shown instead of the real one.
+        $statusRank = ['start' => 0, 'complete' => 0, 'pending' => 1, 'return' => 2];
+
         $studentCourses = StudentCourse::with('course:id,name')
             ->where('student_id', $student->id)
             ->orderBy('id')
             ->get()
             ->filter(fn($sc) => $sc->course)
-            ->unique('course_id')
+            ->groupBy('course_id')
+            ->map(fn($rows) => $rows->sortBy([
+                fn($a, $b) => ($statusRank[$a->status] ?? 3) <=> ($statusRank[$b->status] ?? 3),
+                fn($a, $b) => $b->id <=> $a->id,
+            ])->first())
+            ->sortBy('id')
             ->values();
 
         if ($studentCourses->isEmpty()) {
@@ -387,6 +517,7 @@ class StudentPracticalCardController extends Controller
             'courses' => $studentCourses,
             'selectedCourseId' => $selectedCourseId,
             'selectedCourse' => $selectedCourse,
+            'selectedIntakeName' => optional(\App\Models\Intake::find($selectedEnrolment->intake_id))->name,
             'practicalSubjects' => $practical['rows'],
             'practicalTotalDemonstratorTime' => $practical['totalDemonstratorTime'],
             'practicalTotalPracticalTime' => $practical['totalPracticalTime'],

@@ -436,6 +436,15 @@ class ReportController extends Controller
         $grandTotal = (float) (clone $query)->sum('amount');
         $count = (clone $query)->count();
 
+        // "collection report want iddentifiy what are the return what are the
+        // refund" — separate totals for normal payments, returns (Return Fee /
+        // item sell return) and refunds (Refund on a single payment).
+        $typeTotals = [
+            'payment' => (float) $this->whereEntryType(clone $query, 'payment')->sum('amount'),
+            'return' => (float) $this->whereEntryType(clone $query, 'return')->sum('amount'),
+            'refund' => (float) $this->whereEntryType(clone $query, 'refund')->sum('amount'),
+        ];
+
         $methodBreakdown = (clone $query)
             ->selectRaw('payment_method, SUM(amount) as total')
             ->groupBy('payment_method')
@@ -486,6 +495,7 @@ class ReportController extends Controller
                     'invoice_number' => $row->invoice?->main_invoice_number ?? 'N/A',
                     'receipt_number' => $row->receipt_number ?? 'N/A',
                     'payment_name' => $this->getPaymentName($row),
+                    'entry_type' => $this->paymentEntryType($row),
                     'amount' => (float) $row->amount,
                     'payment_method' => $row->payment_method,
                     'payment_date' => $row->created_at,
@@ -510,6 +520,7 @@ class ReportController extends Controller
             'payments',
             'grandTotal',
             'count',
+            'typeTotals',
             'methodBreakdown',
             'dailyTrend'
         ));
@@ -531,7 +542,7 @@ class ReportController extends Controller
         } elseif ($applyDefaultDateWindow) {
             // Today only, when nothing else narrows the result set either —
             // keeps the default page load fast on a table that only grows.
-            $hasOtherFilters = $request->filled('payment_method') || $request->filled('branch_id') || $request->filled('payment_type') || $request->filled('search_text');
+            $hasOtherFilters = $request->filled('payment_method') || $request->filled('branch_id') || $request->filled('payment_type') || $request->filled('search_text') || $request->filled('entry_type');
             if (!$hasOtherFilters) {
                 $query->whereDate('created_at', '>=', now()->startOfDay());
             }
@@ -552,6 +563,10 @@ class ReportController extends Controller
                 }
             });
         }
+        if ($request->filled('entry_type')) {
+            $this->whereEntryType($query, $request->entry_type);
+        }
+
         // Free-text search across receipt / invoice / student — added so this
         // report has the same kind of broad search Invoice Payments already had.
         if ($request->filled('search_text')) {
@@ -622,6 +637,7 @@ class ReportController extends Controller
                 'Invoice Number',
                 'Receipt Number',
                 'Payment Name',
+                'Entry Type',
                 'Paid Amount',
                 'Payment Method',
                 'Payment Date',
@@ -651,6 +667,7 @@ class ReportController extends Controller
                     $row->invoice?->main_invoice_number ?? 'N/A',
                     $row->receipt_number ?? 'N/A',
                     $this->getPaymentName($row),
+                    ucfirst($this->paymentEntryType($row)),
                     number_format((float) $row->amount, 2, '.', ''),
                     $row->payment_method,
                     $row->created_at ? \Carbon\Carbon::parse($row->created_at)->format('m/d/Y') : 'N/A',
@@ -676,10 +693,46 @@ class ReportController extends Controller
         }, $filename, $headers);
     }
 
+    /**
+     * payment / return / refund for one invoices_payments row:
+     *  - return = Return Fee (payment_type 'return') or an item sell return
+     *    ('item_sell_return')
+     *  - refund = Refund of a single payment (payment_type 'refund'), plus any
+     *    other negative row
+     *  - payment = everything else
+     */
+    private function paymentEntryType($row): string
+    {
+        if (in_array($row->payment_type, ['return', 'item_sell_return'], true)) {
+            return 'return';
+        }
+
+        if ($row->payment_type === 'refund' || (float) $row->amount < 0) {
+            return 'refund';
+        }
+
+        return 'payment';
+    }
+
+    /** Same split as paymentEntryType(), as a query filter. */
+    private function whereEntryType($query, string $type)
+    {
+        return match ($type) {
+            'return' => $query->whereIn('payment_type', ['return', 'item_sell_return']),
+            'refund' => $query->whereNotIn('payment_type', ['return', 'item_sell_return'])
+                ->where(fn($q) => $q->where('payment_type', 'refund')->orWhere('amount', '<', 0)),
+            'payment' => $query->whereNotIn('payment_type', ['return', 'item_sell_return', 'refund'])
+                ->where('amount', '>=', 0),
+            default => $query,
+        };
+    }
+
     private function getPaymentName($feeInvoice)
     {
 
         if ($feeInvoice->amount < 0) {
+            // Returns and refunds were both labelled "Refund Payment" before.
+            $suffix = $this->paymentEntryType($feeInvoice) === 'return' ? 'Return' : 'Refund Payment';
 
             $originalPayment = InvoicesPayments::whereHas('invoice', function ($q) use ($feeInvoice) {
                 $q->where('main_invoice_number', $feeInvoice->invoice->main_invoice_number);
@@ -692,27 +745,27 @@ class ReportController extends Controller
 
                 switch ($originalPayment->payment_type) {
                     case 'food':
-                        return 'Food Fee - Refund Payment';
+                        return 'Food Fee - ' . $suffix;
 
                     case 'course':
-                        return 'Course Payment - Refund Payment';
+                        return 'Course Payment - ' . $suffix;
 
                     case 'nvq':
-                        return 'NVQ Payment - Refund Payment';
+                        return 'NVQ Payment - ' . $suffix;
 
                     case 'fee':
                         $feeName = $originalPayment->invoice->invoice_item[0]->fee_type->name ?? '';
-                        return ($feeName ?: 'Fee') . ' - Refund Payment';
+                        return ($feeName ?: 'Fee') . ' - ' . $suffix;
 
                     case 'item_sell':
-                        return 'Item Sell - Refund Payment';
+                        return 'Item Sell - ' . $suffix;
 
                     default:
-                        return ucfirst($originalPayment->payment_type) . ' - Refund Payment';
+                        return ucfirst($originalPayment->payment_type) . ' - ' . $suffix;
                 }
             }
 
-            return 'Refund Payment';
+            return $suffix;
         }
 
         if ($feeInvoice->payment_type === 'course') {

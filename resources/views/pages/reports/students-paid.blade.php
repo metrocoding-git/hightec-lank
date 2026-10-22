@@ -209,6 +209,16 @@
                             </select>
                         </div>
 
+                        {{-- Payment / Return / Refund --}}
+                        <div class="col-md-3 mt-10">
+                            <select name="entry_type" class="form-control primary_select " id="entry_type">
+                                <option value="">Payments, Returns &amp; Refunds</option>
+                                <option value="payment" {{ request('entry_type') == 'payment' ? 'selected' : '' }}>Payments only</option>
+                                <option value="return" {{ request('entry_type') == 'return' ? 'selected' : '' }}>Returns only</option>
+                                <option value="refund" {{ request('entry_type') == 'refund' ? 'selected' : '' }}>Refunds only</option>
+                            </select>
+                        </div>
+
                         {{-- Search --}}
                         <div class="col-12 mt-10">
                             <input type="text" name="search_text" class="form-control"
@@ -272,6 +282,7 @@
                                                     <th>Invoice Number</th>
                                                     <th>Receipt Number</th>
                                                     <th>Payment Name</th>
+                                                    <th>Entry Type</th>
                                                     <th>Paid Amount</th>
                                                     <th>Payment Method</th>
                                                     <th>Payment Date</th>
@@ -298,6 +309,15 @@
                                                         <td>{{ $row->invoice_number }}</td>
                                                         <td>{{ $row->receipt_number }}</td>
                                                         <td>{{ $row->payment_name }}</td>
+                                                        <td>
+                                                            @if ($row->entry_type === 'return')
+                                                                <span class="badge badge-warning">Return</span>
+                                                            @elseif ($row->entry_type === 'refund')
+                                                                <span class="badge badge-danger">Refund</span>
+                                                            @else
+                                                                <span class="badge badge-success">Payment</span>
+                                                            @endif
+                                                        </td>
                                                         <td class="{{ $row->amount < 0 ? 'text-danger' : '' }}">
                                                             {{ number_format($row->amount, 2) }}</td>
                                                         <td>{{ $row->payment_method }}</td>
@@ -320,7 +340,7 @@
                                                     </tr>
                                                 @empty
                                                     <tr>
-                                                        <td colspan="19" class="text-center">No records found.</td>
+                                                        <td colspan="22" class="text-center">No records found.</td>
                                                     </tr>
                                                 @endforelse
                                             </tbody>
@@ -351,6 +371,18 @@
                         <div class="rp-stat-card">
                             <div class="rp-stat-value">Rs. {{ number_format($grandTotal, 2) }}</div>
                             <div class="rp-stat-label">Net Collected (Rs.)</div>
+                        </div>
+                        <div class="rp-stat-card">
+                            <div class="rp-stat-value">Rs. {{ number_format($typeTotals['payment'], 2) }}</div>
+                            <div class="rp-stat-label">Payments (Rs.)</div>
+                        </div>
+                        <div class="rp-stat-card">
+                            <div class="rp-stat-value text-warning">Rs. {{ number_format($typeTotals['return'], 2) }}</div>
+                            <div class="rp-stat-label">Returns (Rs.)</div>
+                        </div>
+                        <div class="rp-stat-card">
+                            <div class="rp-stat-value text-danger">Rs. {{ number_format($typeTotals['refund'], 2) }}</div>
+                            <div class="rp-stat-label">Refunds (Rs.)</div>
                         </div>
                         <div class="rp-stat-card">
                             <div class="rp-stat-value">{{ number_format($count) }}</div>

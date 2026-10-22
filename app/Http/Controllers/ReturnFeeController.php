@@ -75,6 +75,15 @@ class ReturnFeeController extends Controller
         // Check if return amount is not greater than the current paid amount
         $invoice = FeeInvoices::findOrFail($validated['invoice_id']);
 
+        // "invoice list cant be return if has any ... invoice payment" — an
+        // invoice with an "Invoice" payment-method payment that hasn't been
+        // refunded yet can't be returned.
+        if (FeeInvoices::hasOpenInvoiceMethodPayment($invoice->id)) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'This invoice has an "Invoice" payment that has not been refunded. Refund that payment first, then return the invoice.');
+        }
+
         if ($validated['return_amount'] > $invoice->paid_amount) {
             return redirect()->back()
                 ->withInput()
@@ -101,8 +110,8 @@ class ReturnFeeController extends Controller
             InvoicesPayments::create([
                 'invoice_id'      => $invoice->id,
                 'amount'          => -$validated['return_amount'],
-                'payment_method'  => 'cash',
-                'payment_type'    => 'return',
+                'payment_method'  => 'Cash', // same spelling as every other Cash row
+                'payment_type'    => 'return', // shown as "Return" (not Refund) in the Collection Report
                 'receipt_number'  => 'RET-' . time() . '-' . uniqid(),
                 'create_user_id'  => Auth::id(),
                 'branch_id'       => $invoice->branch_id,
