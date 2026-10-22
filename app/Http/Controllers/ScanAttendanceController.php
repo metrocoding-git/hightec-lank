@@ -17,8 +17,30 @@ use Illuminate\Support\Facades\DB;
 
 class ScanAttendanceController extends Controller
 {
+    /**
+     * "berfor checking and after checking is want only course id 38 only" —
+     * the automatic Before Checking / After Checking rows (and their wait
+     * gates) only apply to these courses (38 = Forklift Operator). Every
+     * other course skips them entirely. Add more ids here if needed later.
+     */
+    private const CHECKPOINT_COURSE_IDS = [38];
+
+    /**
+     * "daly attandence can be some time missing out.. like that time auto do
+     * out 5.00pm on that day" — Daily (course) attendance left without a
+     * time-out is closed automatically at this time on its own date. If the
+     * student had anything recorded later than this on that day (a practical,
+     * an after-checking row, ...), the end of that last activity is used
+     * instead, so evening sessions aren't cut short.
+     */
+    public const AUTO_OUT_TIME = '17:00:00';
+
     public function index()
     {
+        // Close any Daily Attendance left open on a previous day before the
+        // page loads (also run nightly by the scheduler — see routes/console.php).
+        self::autoCloseMissingDailyOut();
+
 
         $userCourseIds = $this->currentUserCourseIds();
 
@@ -139,8 +161,8 @@ class ScanAttendanceController extends Controller
         // Opening a course session auto-creates its own "before checking"
         // attendance row (max one per student/course/day) — surfaced here
         // too, so it shows up in Today's Scans immediately, not just after
-        // the next page load.
-        if ($result['action'] === 'in') {
+        // the next page load. Only for the courses in CHECKPOINT_COURSE_IDS.
+        if ($result['action'] === 'in' && $this->usesCheckpoints($courseId)) {
             $checkpoint = $this->stampBeforeChecking(
                 $student->id,
                 $studentCourse->intake_id,
@@ -267,13 +289,18 @@ class ScanAttendanceController extends Controller
                         continue;
                     }
 
+                    // "theory attendace ... dont do limt for one" — a theory
+                    // subject can be attended any number of times by the same
+                    // student (each scan opens or closes a session), so
+                    // allowRepeat is on, same as practical.
                     $result = $this->markSession(
                         $student,
                         $enrolment->intake_id,
                         $enrolment->course_id,
                         $subjectId,
                         $vehicleId,
-                        $note
+                        $note,
+                        true
                     );
                     $result['subject_id'] = $subjectId;
                     $result['course_id'] = $enrolment->course_id;
@@ -553,7 +580,7 @@ class ScanAttendanceController extends Controller
                 // practical session), always reflecting only the LATEST
                 // practical close for this course (max one row per
                 // student/course/day, updated in place each time).
-                if ($result['action'] === 'out') {
+                if ($result['action'] === 'out' && $this->usesCheckpoints($enrolment->course_id)) {
                     $checkpoint = $this->stampAfterChecking(
                         $student->id,
                         $enrolment->intake_id,
@@ -895,6 +922,76 @@ class ScanAttendanceController extends Controller
     }
 
     // =====================================================================
+    // Auto time-out for Daily Attendance left open
+    // =====================================================================
+
+    /**
+     * Closes every Daily (course) attendance session from a PREVIOUS day
+     * that still has no time-out. Today's open sessions are never touched,
+     * because a student may still be training this evening.
+     *
+     * Time-out used = the latest of:
+     *   - 5:00 PM on the session's own date (AUTO_OUT_TIME),
+     *   - the session's own time-in (a session started after 5 PM),
+     *   - the end of anything else recorded for the same student + course
+     *     on that date (practicals, theory, before/after checking).
+     *
+     * Only the time-out is filled in; marked_out_by stays empty so it is
+     * clear no staff member scanned it, and the note says it was automatic.
+     * Returns the number of sessions closed.
+     */
+    public static function autoCloseMissingDailyOut(): int
+    {
+        $openSessions = SubjectAttendanceSession::query()
+            ->whereNull('subject_id')
+            ->whereNull('checkpoint_type')
+            ->whereNull('time_out')
+            ->whereDate('attendance_date', '<', now()->toDateString())
+            ->get();
+
+        $closed = 0;
+
+        foreach ($openSessions as $session) {
+            $date = $session->attendance_date->toDateString();
+            $timeOut = \Illuminate\Support\Carbon::parse($date . ' ' . self::AUTO_OUT_TIME);
+
+            if ($session->time_in && $session->time_in->gt($timeOut)) {
+                $timeOut = $session->time_in->copy();
+            }
+
+            $lastActivity = SubjectAttendanceSession::query()
+                ->where('student_id', $session->student_id)
+                ->where('course_id', $session->course_id)
+                ->whereDate('attendance_date', $date)
+                ->where('id', '!=', $session->id)
+                ->selectRaw('MAX(GREATEST(time_in, COALESCE(time_out, time_in))) as last_at')
+                ->value('last_at');
+
+            if ($lastActivity) {
+                $lastActivity = \Illuminate\Support\Carbon::parse($lastActivity);
+
+                if ($lastActivity->gt($timeOut)) {
+                    $timeOut = $lastActivity;
+                }
+            }
+
+            $session->time_out = $timeOut;
+            $session->note = trim(($session->note ? $session->note . ' | ' : '') . 'Auto time-out (no out scan)');
+            $session->save();
+
+            $closed++;
+        }
+
+        return $closed;
+    }
+
+    /** Whether Before/After Checking applies to this course (see CHECKPOINT_COURSE_IDS). */
+    private function usesCheckpoints($courseId): bool
+    {
+        return in_array((int) $courseId, self::CHECKPOINT_COURSE_IDS, true);
+    }
+
+    // =====================================================================
     // Shared helpers
     // =====================================================================
 
@@ -1137,6 +1234,10 @@ class ScanAttendanceController extends Controller
 
     private function recomputeAfterChecking(int $studentId, int $courseId, string $date, int $excludeSessionId): void
     {
+        if (!$this->usesCheckpoints($courseId)) {
+            return; // no After Checking rows for this course
+        }
+
         $nextLatest = SubjectAttendanceSession::where('student_id', $studentId)
             ->where('course_id', $courseId)
             ->whereDate('attendance_date', $date)

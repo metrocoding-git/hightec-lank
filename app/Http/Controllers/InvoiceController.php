@@ -234,7 +234,17 @@ class InvoiceController extends Controller
                                 </a>';
                 }
 
-                if (!$certLocked && $row->invoice_type !== 'item_sell' && $user->hasPermission('fees.return-fee-data')) {
+                // Return is only allowed when the invoice has no "Invoice"
+                // payment-method payments, or all of them are refunded.
+                $invoicePaymentLocked = FeeInvoices::hasOpenInvoiceMethodPayment($row->id);
+
+                if (!$certLocked && $invoicePaymentLocked && $row->invoice_type !== 'item_sell' && $user->hasPermission('fees.return-fee-data')) {
+                    $items[] = '<span class="dropdown-item-text text-muted small">
+                                <i class="fa-solid fa-lock"></i> Return locked — refund the Invoice payment(s) first
+                            </span>';
+                }
+
+                if (!$certLocked && !$invoicePaymentLocked && $row->invoice_type !== 'item_sell' && $user->hasPermission('fees.return-fee-data')) {
                     $items[] = '<a class="dropdown-item" data-toggle="modal" data-target="#returnFeeModal"
                                    data-invoice-id="' . $row->id . '"
                                    data-student-id="' . ($row->student_id ?? '') . '"

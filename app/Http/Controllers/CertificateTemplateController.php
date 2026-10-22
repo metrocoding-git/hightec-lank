@@ -19,6 +19,7 @@ class CertificateTemplateController extends Controller
         // underneath for old certificates. Hence ->active() here, where
         // the original had no filter at all.
         $templates = CertificateTemplate::with(['courses', 'serialPrefix'])
+            ->withCount(['certificates as pending_certificates_count' => fn($q) => $q->where('status', '!=', 'approved')])
             ->active()
             ->orderByDesc('id')
             ->get();
@@ -100,6 +101,10 @@ class CertificateTemplateController extends Controller
     {
         $template = CertificateTemplate::findOrFail($id);
 
+        if ($lock = $this->pendingCertificatesLockMessage($template, 'edited')) {
+            return response()->json(['status' => 'locked', 'message' => $lock], 422);
+        }
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'course_ids' => 'nullable|array',
@@ -175,6 +180,11 @@ class CertificateTemplateController extends Controller
     public function destroy($id)
     {
         $template = CertificateTemplate::findOrFail($id);
+
+        if ($lock = $this->pendingCertificatesLockMessage($template, 'disabled')) {
+            return response()->json(['status' => 'locked', 'message' => $lock], 422);
+        }
+
         $template->is_active = false;
         $template->save();
 
@@ -182,6 +192,22 @@ class CertificateTemplateController extends Controller
             'status' => 'ok',
             'message' => 'Certificate template disabled.',
         ]);
+    }
+
+    /**
+     * Null when the template can be changed, otherwise why not: it still has
+     * certificates that aren't approved yet (see
+     * CertificateTemplate::pendingCertificatesCount()).
+     */
+    private function pendingCertificatesLockMessage(CertificateTemplate $template, string $action): ?string
+    {
+        $pending = $template->pendingCertificatesCount();
+
+        if ($pending === 0) {
+            return null;
+        }
+
+        return "This template can't be {$action}: {$pending} certificate(s) made from it are not complete yet (waiting for Director Training / Managing Director signature). Finish or undo them first.";
     }
 
     /**

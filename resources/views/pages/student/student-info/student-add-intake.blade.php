@@ -1432,6 +1432,9 @@
                         $('#changeCourseModal').modal('hide');
 
                         setTimeout(() => location.reload(), 1000);
+                    } else if (response.code === 'no_invoice') {
+                        // No invoice for the new course — show a clear alert.
+                        alert(response.message);
                     } else {
                         toastr.error(response.message || 'Failed to update');
                     }

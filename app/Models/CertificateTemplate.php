@@ -46,6 +46,24 @@ class CertificateTemplate extends Model
         return $this->belongsToMany(Course::class, 'certificate_template_course')->withTimestamps();
     }
 
+    public function certificates()
+    {
+        return $this->hasMany(Certificate::class, 'certificate_template_id');
+    }
+
+    /**
+     * "if has some template one or more certficate in genrated but without
+     * complete then cant be edit" — certificates made from this template that
+     * are not yet approved (Managing Director hasn't signed). Their PDF is
+     * re-rendered from the template at each signing step, so editing the
+     * template would change them half-way. Approved certificates keep their
+     * saved PDF and are not affected by later template edits.
+     */
+    public function pendingCertificatesCount(): int
+    {
+        return $this->certificates()->where('status', '!=', 'approved')->count();
+    }
+
     public function serialPrefix()
     {
         return $this->belongsTo(CertificateSerialPrefix::class, 'serial_prefix_id');

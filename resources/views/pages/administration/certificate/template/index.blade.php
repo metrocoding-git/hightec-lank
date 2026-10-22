@@ -122,6 +122,11 @@
                                                 its own attributes are never lost no matter which row
                                                 it currently lives in.
                                             --}}
+                                            @if ($t->pending_certificates_count > 0)
+                                                <span class="ct-muted small" title="Certificates from this template are waiting for signatures. It can be edited again once they are approved (or undone).">
+                                                    <i class="fa-solid fa-lock"></i> Locked ({{ $t->pending_certificates_count }} pending)
+                                                </span>
+                                            @else
                                             @if ($canUpdate)
                                                 <button type="button" class="btn btn-sm btn-outline-primary ct-edit-btn"
                                                     data-id="{{ $t->id }}" data-name="{{ $t->name }}"
@@ -141,6 +146,7 @@
                                                     data-id="{{ $t->id }}" data-name="{{ $t->name }}">
                                                     <i class="fa-solid fa-ban"></i>
                                                 </button>
+                                            @endif
                                             @endif
                                         </td>
                                     </tr>

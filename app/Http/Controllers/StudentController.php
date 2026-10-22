@@ -1770,6 +1770,27 @@ class StudentController extends Controller
                 ]);
             }
 
+            // "course change : that time want check invoice has to change new
+            // course. if not invoice do show alert" — the student must already
+            // have a (not returned) course invoice for the NEW course.
+            $hasNewCourseInvoice = DB::table('fee_invoices')
+                ->join('paid_courses', 'paid_courses.invoice_id', '=', 'fee_invoices.id')
+                ->where('fee_invoices.student_id', $studentCourse->student_id)
+                ->where('fee_invoices.invoice_type', 'course')
+                ->where('fee_invoices.payment_status', '!=', 'returned')
+                ->where('paid_courses.course_id', $request->course_id)
+                ->exists();
+
+            if (!$hasNewCourseInvoice) {
+                $newCourseName = optional(\App\Models\Course::find($request->course_id))->name ?? 'the selected course';
+
+                return response()->json([
+                    'success' => false,
+                    'code' => 'no_invoice',
+                    'message' => "No invoice found for {$newCourseName}. Create the course invoice for this student first, then change the course."
+                ]);
+            }
+
             $studentCourse->change_course_id = $request->course_id;
             $studentCourse->updated_by = Auth::id();
             $studentCourse->save();

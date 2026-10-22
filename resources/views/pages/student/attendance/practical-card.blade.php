@@ -539,7 +539,7 @@
                     </div>
 
                     @if (empty($practicalSubjects))
-                        <div class="empty-state">No practical subjects are assigned to this course.</div>
+                        <div class="empty-state">No practical subjects are assigned to this course{{ $selectedIntakeName ? ' for intake ' . $selectedIntakeName : '' }}. Assign subjects to this intake &amp; course first.</div>
                     @else
                         <table class="attendance">
                             <thead>
@@ -776,7 +776,7 @@
                     </div>
 
                     @if (empty($theorySubjects))
-                        <div class="empty-state">No theory subjects are assigned to this course.</div>
+                        <div class="empty-state">No theory subjects are assigned to this course{{ $selectedIntakeName ? ' for intake ' . $selectedIntakeName : '' }}. Assign subjects to this intake &amp; course first.</div>
                     @else
                         <table class="attendance">
                             <thead>

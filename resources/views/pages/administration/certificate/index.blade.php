@@ -998,7 +998,10 @@
                     $('#cert-generate-error').hide().text('');
                     // "genarate date (default set today)" — pre-filled here, still editable.
                     var today = new Date().toISOString().slice(0, 10);
-                    $('#cert-generate-issue-date').val(today);
+                    // Date of Issue can't be before the last certificate's issue date.
+                    var lastIssueDate = @json($lastIssueDate);
+                    var defaultIssueDate = (lastIssueDate && lastIssueDate > today) ? lastIssueDate : today;
+                    $('#cert-generate-issue-date').attr('min', lastIssueDate || '').val(defaultIssueDate);
                     $('#cert-generate-course-end-date').val(today);
                     $('#certGenerateModal').modal('show');
                 });
@@ -1009,6 +1012,11 @@
 
                     if (!issueDate) {
                         $('#cert-generate-error').text('Date of Issue is required.').show();
+                        return;
+                    }
+                    var minIssueDate = $('#cert-generate-issue-date').attr('min');
+                    if (minIssueDate && issueDate < minIssueDate) {
+                        $('#cert-generate-error').text("Date of Issue can't be earlier than the last certificate's issue date (" + minIssueDate + ').').show();
                         return;
                     }
                     if (!courseEndDate) {
@@ -1059,7 +1067,9 @@
                     canvas.height = canvas.offsetHeight * ratio;
                     canvas.getContext('2d').scale(ratio, ratio);
                     signaturePads[role] = new SignaturePad(canvas, {
-                        backgroundColor: 'rgb(255,255,255)'
+                        backgroundColor: 'rgb(255,255,255)',
+                        // "signs are want come blue color like orginal pen sign"
+                        penColor: 'rgb(14, 47, 150)'
                     });
 
                     // "sign is not user frient" — a plain blank rectangle gave

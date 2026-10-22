@@ -253,10 +253,13 @@
     <div class="cards-page-wrap">
 
         <div class="toolbar no-print">
-            <div class="field">
-                <label for="course_id">Course</label>
-                <form method="GET" action="{{ route('student-practical-card.template') }}" id="templateCourseForm">
-                    <select name="course_id" id="course_id" onchange="document.getElementById('templateCourseForm').submit();">
+            {{-- Template is chosen by Course AND Intake (subjects are assigned per intake + course). --}}
+            <form method="GET" action="{{ route('student-practical-card.template') }}" id="templateCourseForm"
+                style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+                <div class="field">
+                    <label for="course_id">Course</label>
+                    <select name="course_id" id="course_id"
+                        onchange="document.getElementById('intake_id').value=''; document.getElementById('templateCourseForm').submit();">
                         @forelse ($courses as $course)
                             <option value="{{ $course->id }}" @selected($course->id == $selectedCourseId)>
                                 {{ $course->name }}
@@ -265,8 +268,20 @@
                             <option value="">No courses found</option>
                         @endforelse
                     </select>
-                </form>
-            </div>
+                </div>
+                <div class="field">
+                    <label for="intake_id">Intake</label>
+                    <select name="intake_id" id="intake_id" onchange="document.getElementById('templateCourseForm').submit();">
+                        @forelse ($intakes as $intake)
+                            <option value="{{ $intake->id }}" @selected($intake->id == $selectedIntakeId)>
+                                {{ $intake->name }}
+                            </option>
+                        @empty
+                            <option value="">No intake has subjects for this course</option>
+                        @endforelse
+                    </select>
+                </div>
+            </form>
 
             <div class="actions">
                 <a href="{{ route('student-practical-card.index') }}" class="btn">
@@ -290,14 +305,14 @@
                     Print Theory Template
                 </button>
                 @if ($selectedCourseId)
-                    <a href="{{ route('student-practical-card.template.export.practical', ['course_id' => $selectedCourseId]) }}"
+                    <a href="{{ route('student-practical-card.template.export.practical', ['course_id' => $selectedCourseId, 'intake_id' => $selectedIntakeId]) }}"
                         class="btn btn-excel">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
                         </svg>
                         Export Practical Excel
                     </a>
-                    <a href="{{ route('student-practical-card.template.export.theory', ['course_id' => $selectedCourseId]) }}"
+                    <a href="{{ route('student-practical-card.template.export.theory', ['course_id' => $selectedCourseId, 'intake_id' => $selectedIntakeId]) }}"
                         class="btn btn-excel">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
@@ -324,13 +339,20 @@
             </div>
 
             <div class="card-title-bar">Practical Attendance Card Template</div>
+            @php
+                $tplCourseName = optional($courses->firstWhere('id', $selectedCourseId))->name;
+                $tplIntakeName = optional($intakes->firstWhere('id', $selectedIntakeId))->name;
+            @endphp
+            <div style="text-align:center; font-size:12px; padding:6px 0; color:#334;">
+                <strong>Course:</strong> {{ $tplCourseName ?? '-' }} &nbsp;|&nbsp; <strong>Intake:</strong> {{ $tplIntakeName ?? '-' }}
+            </div>
 
             <div class="table-area">
                 <div class="section-block">
                     <div class="section-heading">Practical Subjects</div>
 
                     @if (empty($practicalSubjects))
-                        <div class="empty-state">No practical subjects are assigned to this course.</div>
+                        <div class="empty-state">No practical subjects are assigned to this intake &amp; course.</div>
                     @else
                         <table class="attendance">
                             <thead>
@@ -351,6 +373,19 @@
                                     </tr>
                                 @endforeach
                             </tbody>
+                            <tfoot>
+                                <tr style="font-weight:bold; background:#eef2f7;">
+                                    <td></td>
+                                    <td style="text-align:right;">Total ({{ $practicalTotals['subjects'] }} subjects) &nbsp; hh:mm</td>
+                                    <td class="center"><span class="chip">{{ $practicalTotals['demonstrator'] }}</span></td>
+                                    <td class="center"><span class="chip">{{ $practicalTotals['practical'] }}</span></td>
+                                </tr>
+                                <tr style="font-weight:bold; background:#e3e9f2;">
+                                    <td></td>
+                                    <td style="text-align:right;">Total Demonstrator + Practical Time</td>
+                                    <td class="center" colspan="2"><span class="chip">{{ $practicalTotals['overall'] }}</span></td>
+                                </tr>
+                            </tfoot>
                         </table>
                     @endif
                 </div>
@@ -371,13 +406,20 @@
             </div>
 
             <div class="card-title-bar">Theory Attendance Card Template</div>
+            @php
+                $tplCourseName = optional($courses->firstWhere('id', $selectedCourseId))->name;
+                $tplIntakeName = optional($intakes->firstWhere('id', $selectedIntakeId))->name;
+            @endphp
+            <div style="text-align:center; font-size:12px; padding:6px 0; color:#334;">
+                <strong>Course:</strong> {{ $tplCourseName ?? '-' }} &nbsp;|&nbsp; <strong>Intake:</strong> {{ $tplIntakeName ?? '-' }}
+            </div>
 
             <div class="table-area">
                 <div class="section-block">
                     <div class="section-heading">Theory Subjects</div>
 
                     @if (empty($theorySubjects))
-                        <div class="empty-state">No theory subjects are assigned to this course.</div>
+                        <div class="empty-state">No theory subjects are assigned to this intake &amp; course.</div>
                     @else
                         <table class="attendance">
                             <thead>
@@ -394,6 +436,12 @@
                                     </tr>
                                 @endforeach
                             </tbody>
+                            <tfoot>
+                                <tr style="font-weight:bold; background:#eef2f7;">
+                                    <td></td>
+                                    <td>Total Theory Subjects: {{ count($theorySubjects) }}</td>
+                                </tr>
+                            </tfoot>
                         </table>
                     @endif
                 </div>

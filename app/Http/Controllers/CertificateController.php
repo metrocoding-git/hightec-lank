@@ -9,6 +9,7 @@ use App\Models\CertificateSerialPrefix;
 use App\Models\CertificateTemplate;
 use App\Models\Course;
 use App\Models\StudentAssessment;
+use App\Models\StudentCourse;
 use App\Models\Subject;
 use App\Models\SubjectAttendanceSession;
 use Carbon\Carbon;
@@ -140,7 +141,10 @@ class CertificateController extends Controller
         // generate() below), so $templateOptions is no longer needed
         // here or in the view.
 
-        return view('pages.administration.certificate.index', compact('assessments', 'courseOptions', 'categoriesByPair'));
+        // Date of Issue can't be earlier than this (see generate()).
+        $lastIssueDate = optional($this->lastIssueDate())->toDateString();
+
+        return view('pages.administration.certificate.index', compact('assessments', 'courseOptions', 'categoriesByPair', 'lastIssueDate'));
     }
 
     /**
@@ -315,12 +319,25 @@ class CertificateController extends Controller
         $issueDate = $data['issue_date'] ?? now()->toDateString();
         $courseEndDate = Carbon::parse($data['course_end_date'])->startOfDay();
 
+        // "genarate issue date ... next genarate cant be do past date. only
+        // nest one can we do genarateted date or future date" — the Date of
+        // Issue can't go back before the latest issue date already used.
+        $lastIssueDate = $this->lastIssueDate();
+
+        if ($lastIssueDate && Carbon::parse($issueDate)->startOfDay()->lt($lastIssueDate)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Date of Issue can't be earlier than the last certificate's issue date ({$lastIssueDate->format('Y-m-d')}). Use {$lastIssueDate->format('Y-m-d')} or a later date.",
+            ], 422);
+        }
+
         $created = [];
         $skipped = [];
 
         foreach ($data['student_assessment_ids'] as $assessmentId) {
             $assessment = StudentAssessment::with([
                 'certificate',
+                'student:id,student_name,admission_number',
                 'studentCourse.intake',
                 'studentCourse.course',
                 'template.course',
@@ -357,6 +374,49 @@ class CertificateController extends Controller
                 $skipped[] = [
                     'id' => $assessmentId,
                     'reason' => "No certificate template is linked to course \"{$course->name}\" yet — link one under Certificate Templates first.",
+                ];
+                continue;
+            }
+
+            // "that student can be have that course only one stated in
+            // inatke.. if has 2 or more ... cant be genarate" — the start
+            // date comes from Student Intake & Courses, so it's only reliable
+            // when the student has exactly ONE started/completed enrolment in
+            // this course (returned/pending ones don't count).
+            $activeEnrolments = StudentCourse::with('intake:id,name')
+                ->where('student_id', $assessment->student_id)
+                ->where('course_id', $course->id)
+                ->whereIn('status', ['start', 'complete'])
+                ->get();
+
+            if ($activeEnrolments->count() > 1) {
+                $intakeNames = $activeEnrolments
+                    ->map(fn($e) => optional($e->intake)->name ?? ('intake #' . $e->intake_id))
+                    ->implode(', ');
+
+                $skipped[] = [
+                    'id' => $assessmentId,
+                    'reason' => "{$this->studentLabel($assessment)} has {$activeEnrolments->count()} started enrolments in \"{$course->name}\" ({$intakeNames}) — keep only one in Student Intake & Courses so the correct start date can be used.",
+                ];
+                continue;
+            }
+
+            // "cant be genarate has some course balance (only course
+            // balance)" — course invoices only (not other fee types).
+            $balance = $this->courseBalance($assessment->student_id, $course->id);
+
+            if ($balance === null) {
+                $skipped[] = [
+                    'id' => $assessmentId,
+                    'reason' => "{$this->studentLabel($assessment)} has no course invoice for \"{$course->name}\" — cannot confirm the course fee is paid.",
+                ];
+                continue;
+            }
+
+            if ($balance > 0) {
+                $skipped[] = [
+                    'id' => $assessmentId,
+                    'reason' => "{$this->studentLabel($assessment)} still has a course balance of Rs. " . number_format($balance, 2) . " for \"{$course->name}\".",
                 ];
                 continue;
             }
@@ -462,6 +522,49 @@ class CertificateController extends Controller
             'created' => $created,
             'skipped' => $skipped,
         ]);
+    }
+
+    /** Latest issue date used by any certificate so far (null if none). */
+    private function lastIssueDate(): ?Carbon
+    {
+        $last = Certificate::max('issue_date');
+
+        return $last ? Carbon::parse($last)->startOfDay() : null;
+    }
+
+    /**
+     * Course-fee balance for this student + course: total minus paid over
+     * every course invoice (invoice_type 'course', not returned) linked to
+     * the course via paid_courses. Null when there is no such invoice at all.
+     */
+    private function courseBalance(int $studentId, int $courseId): ?float
+    {
+        $invoiceIds = DB::table('fee_invoices')
+            ->join('paid_courses', 'paid_courses.invoice_id', '=', 'fee_invoices.id')
+            ->where('fee_invoices.student_id', $studentId)
+            ->where('fee_invoices.invoice_type', 'course')
+            ->where('fee_invoices.payment_status', '!=', 'returned')
+            ->where('paid_courses.course_id', $courseId)
+            ->distinct()
+            ->pluck('fee_invoices.id');
+
+        if ($invoiceIds->isEmpty()) {
+            return null;
+        }
+
+        $totals = DB::table('fee_invoices')
+            ->whereIn('id', $invoiceIds)
+            ->selectRaw('SUM(total_amount) as total, SUM(paid_amount) as paid')
+            ->first();
+
+        return round((float) $totals->total - (float) $totals->paid, 2);
+    }
+
+    private function studentLabel(StudentAssessment $assessment): string
+    {
+        $student = $assessment->student;
+
+        return $student ? ($student->admission_number . ' ' . $student->student_name) : 'This student';
     }
 
     /**
@@ -944,8 +1047,9 @@ class CertificateController extends Controller
                 : null,
             'bottomImageWidth'          => $bottomImageDims['width'] ?? null,
             'bottomImageHeight'         => $bottomImageDims['height'] ?? null,
-            'ownerSignatureDataUri'     => $this->fileToDataUri($certificate->owner_signature_path, 'local'),
-            'conductorSignatureDataUri' => $this->fileToDataUri($certificate->conductor_signature_path, 'local'),
+            // "signs are want come blue color like orginal pen sign"
+            'ownerSignatureDataUri'     => $this->signatureToBlueDataUri($certificate->owner_signature_path),
+            'conductorSignatureDataUri' => $this->signatureToBlueDataUri($certificate->conductor_signature_path),
             'nameFontDataUri'           => $this->fontToDataUri('certificate-name-font.ttf'),
             'gradeFontDataUri'          => $this->fontToDataUri('certificate-grade-font.ttf'),
         ])->setPaper('letter', 'portrait');
@@ -1135,6 +1239,81 @@ class CertificateController extends Controller
         $svg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(140)->generate($certificate->certificate_number);
 
         return 'data:image/svg+xml;base64,' . base64_encode($svg);
+    }
+
+    /**
+     * Signature as a blue "pen ink" PNG data: URI. Works for drawn and
+     * uploaded signatures alike (black, grey or any dark ink on a white or
+     * transparent background): the background becomes transparent and the
+     * strokes become blue ink, keeping their soft edges. Falls back to the
+     * original image if GD isn't available or the file can't be read.
+     */
+    private function signatureToBlueDataUri(?string $path): ?string
+    {
+        if (!$path || !Storage::disk('local')->exists($path)) {
+            return null;
+        }
+
+        if (!function_exists('imagecreatefromstring')) {
+            return $this->fileToDataUri($path, 'local');
+        }
+
+        $source = @imagecreatefromstring(Storage::disk('local')->get($path));
+
+        if (!$source) {
+            return $this->fileToDataUri($path, 'local');
+        }
+
+        // Keep it light — a phone photo of a signature can be huge.
+        $width = imagesx($source);
+        $height = imagesy($source);
+        $maxWidth = 900;
+
+        if ($width > $maxWidth) {
+            $scaled = imagescale($source, $maxWidth);
+            imagedestroy($source);
+            $source = $scaled;
+            $width = imagesx($source);
+            $height = imagesy($source);
+        }
+
+        $out = imagecreatetruecolor($width, $height);
+        imagealphablending($out, false);
+        imagesavealpha($out, true);
+        imagefill($out, 0, 0, imagecolorallocatealpha($out, 0, 0, 0, 127));
+
+        [$inkR, $inkG, $inkB] = [14, 47, 150]; // ballpoint blue
+
+        for ($y = 0; $y < $height; $y++) {
+            for ($x = 0; $x < $width; $x++) {
+                $rgba = imagecolorat($source, $x, $y);
+                $alpha = ($rgba >> 24) & 0x7F;          // 0 = opaque, 127 = transparent
+                $r = ($rgba >> 16) & 0xFF;
+                $g = ($rgba >> 8) & 0xFF;
+                $b = $rgba & 0xFF;
+
+                $opacity = 1 - ($alpha / 127);
+                $lightness = (0.299 * $r + 0.587 * $g + 0.114 * $b) / 255;
+                $ink = (1 - $lightness) * $opacity;     // how much "ink" this pixel holds
+
+                if ($ink < 0.12) {
+                    continue;                           // background / paper noise
+                }
+
+                $ink = min(1, ($ink - 0.12) / 0.6);     // stretch so strokes look solid
+                $outAlpha = (int) round(127 * (1 - $ink));
+                imagesetpixel($out, $x, $y, imagecolorallocatealpha($out, $inkR, $inkG, $inkB, $outAlpha));
+            }
+        }
+
+        imagedestroy($source);
+
+        ob_start();
+        imagepng($out);
+        $png = ob_get_clean();
+        imagedestroy($out);
+
+        return 'data:image/png;base64,' . base64_encode($png);
     }
 
     /**
