@@ -965,14 +965,15 @@ class StudentController extends Controller
                 }
 
                 if ($row->status == 'return') {
-                    if ($user->hasPermission('student.add-intake.update-status')) {
-                        $items[] = '<a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'start\')">
-                                    <i class="fa-solid fa-rotate-left text-info"></i> Restart
-                                </a>';
-                        $items[] = '<a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'complete\')">
-                                    <i class="fa-solid fa-check text-success"></i> Complete
-                                </a>';
-                    }
+                    // if ($user->hasPermission('student.add-intake.update-status')) {
+                    //     $items[] = '<a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'start\')">
+                    //                 <i class="fa-solid fa-rotate-left text-info"></i> Restart
+                    //             </a>';
+                    //     $items[] = '<a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'complete\')">
+                    //                 <i class="fa-solid fa-check text-success"></i> Complete
+                    //             </a>';
+                    // }
+                    $items[] = '';
                 }
 
                 if (empty($items)) {
@@ -1266,9 +1267,37 @@ class StudentController extends Controller
                 ], 422);
             }
 
-            $studentCourse->status = $validatedData['status'];
-            $studentCourse->updated_at = now();
-            $studentCourse->save();
+            // "cant be start same course 2 or more start. only can be one
+            // time one start" — starting this enrollment while the student
+            // already has the same course started elsewhere needs a
+            // confirmation; on confirm the old one(s) are returned.
+            $toReturn = collect();
+
+            if ($validatedData['status'] === 'start') {
+                $check = $this->sameCourseStartCheck(
+                    $studentCourse,
+                    (int) ($studentCourse->change_course_id ?: $studentCourse->course_id),
+                    $request->boolean('confirm_return')
+                );
+
+                if ($check['response']) {
+                    return $check['response'];
+                }
+
+                $toReturn = $check['toReturn'];
+            }
+
+            DB::transaction(function () use ($studentCourse, $validatedData, $toReturn) {
+                foreach ($toReturn as $old) {
+                    $old->status = 'return';
+                    $old->updated_by = Auth::id();
+                    $old->save();
+                }
+
+                $studentCourse->status = $validatedData['status'];
+                $studentCourse->updated_at = now();
+                $studentCourse->save();
+            });
 
             // Keep the student_courses record's own status in sync (the
             // model above IS the student_courses row already, so this used
@@ -1290,6 +1319,62 @@ class StudentController extends Controller
                 'message' => 'Failed to update status. Please try again.'
             ], 500);
         }
+    }
+
+    /**
+     * "Student Intake & Courses cant be start same course 2 or more start" —
+     * looks for OTHER enrollments of the same student that are already
+     * started in $courseId (a changed course counts as its new course:
+     * COALESCE(change_course_id, course_id)).
+     *
+     * Returns ['response' => JsonResponse|null, 'toReturn' => Collection]:
+     *  - none found               -> no response, nothing to return
+     *  - found, one has a cert    -> blocking response
+     *  - found, not confirmed     -> response asking for confirmation
+     *                                (code "already_started")
+     *  - found, confirmed         -> no response, toReturn = those enrollments
+     */
+    private function sameCourseStartCheck(StudentCourse $studentCourse, int $courseId, bool $confirmed, bool $httpErrors = true): array
+    {
+        $others = StudentCourse::with(['intake:id,name', 'course:id,name'])
+            ->where('student_id', $studentCourse->student_id)
+            ->where('id', '!=', $studentCourse->id)
+            ->where('status', 'start')
+            ->whereRaw('COALESCE(change_course_id, course_id) = ?', [$courseId])
+            ->get();
+
+        if ($others->isEmpty()) {
+            return ['response' => null, 'toReturn' => collect()];
+        }
+
+        $courseName = optional(Course::find($courseId))->name ?? 'this course';
+        $intakeNames = $others->map(fn($o) => optional($o->intake)->name ?? ('intake #' . $o->intake_id))->implode(', ');
+
+        foreach ($others as $other) {
+            if ($this->studentCourseHasCertificate($other)) {
+                return [
+                    'response' => response()->json([
+                        'success' => false,
+                        'code' => 'certificate_locked',
+                        'message' => "\"{$courseName}\" is already started under {$intakeNames} and a certificate has been generated for it — it can't be returned, so this one can't be started.",
+                    ], $httpErrors ? 422 : 200),
+                    'toReturn' => collect(),
+                ];
+            }
+        }
+
+        if (!$confirmed) {
+            return [
+                'response' => response()->json([
+                    'success' => false,
+                    'code' => 'already_started',
+                    'message' => "\"{$courseName}\" is already started for this student under {$intakeNames}. Return the old one and start this one?",
+                ], $httpErrors ? 409 : 200),
+                'toReturn' => collect(),
+            ];
+        }
+
+        return ['response' => null, 'toReturn' => $others];
     }
 
     public function destroyStudentAddIntakeWithCourses($id)
@@ -1791,9 +1876,37 @@ class StudentController extends Controller
                 ]);
             }
 
-            $studentCourse->change_course_id = $request->course_id;
-            $studentCourse->updated_by = Auth::id();
-            $studentCourse->save();
+            // A changed course counts as that new course: if this enrollment
+            // is started and the student already has the new course started
+            // elsewhere, ask first, then return the old one.
+            $toReturn = collect();
+
+            if ($studentCourse->status === 'start') {
+                $check = $this->sameCourseStartCheck(
+                    $studentCourse,
+                    (int) $request->course_id,
+                    $request->boolean('confirm_return'),
+                    false
+                );
+
+                if ($check['response']) {
+                    return $check['response'];
+                }
+
+                $toReturn = $check['toReturn'];
+            }
+
+            DB::transaction(function () use ($studentCourse, $request, $toReturn) {
+                foreach ($toReturn as $old) {
+                    $old->status = 'return';
+                    $old->updated_by = Auth::id();
+                    $old->save();
+                }
+
+                $studentCourse->change_course_id = $request->course_id;
+                $studentCourse->updated_by = Auth::id();
+                $studentCourse->save();
+            });
 
             return response()->json([
                 'success' => true,
