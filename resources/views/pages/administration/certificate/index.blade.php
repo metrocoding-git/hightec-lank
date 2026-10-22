@@ -998,10 +998,8 @@
                     $('#cert-generate-error').hide().text('');
                     // "genarate date (default set today)" — pre-filled here, still editable.
                     var today = new Date().toISOString().slice(0, 10);
-                    // Date of Issue can't be before the last certificate's issue date.
-                    var lastIssueDate = @json($lastIssueDate);
-                    var defaultIssueDate = (lastIssueDate && lastIssueDate > today) ? lastIssueDate : today;
-                    $('#cert-generate-issue-date').attr('min', lastIssueDate || '').val(defaultIssueDate);
+                    // (Date of Issue vs each template's last issue date is checked server-side.)
+                    $('#cert-generate-issue-date').val(today);
                     $('#cert-generate-course-end-date').val(today);
                     $('#certGenerateModal').modal('show');
                 });
@@ -1012,11 +1010,6 @@
 
                     if (!issueDate) {
                         $('#cert-generate-error').text('Date of Issue is required.').show();
-                        return;
-                    }
-                    var minIssueDate = $('#cert-generate-issue-date').attr('min');
-                    if (minIssueDate && issueDate < minIssueDate) {
-                        $('#cert-generate-error').text("Date of Issue can't be earlier than the last certificate's issue date (" + minIssueDate + ').').show();
                         return;
                     }
                     if (!courseEndDate) {

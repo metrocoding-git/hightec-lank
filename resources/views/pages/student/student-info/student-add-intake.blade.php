@@ -1272,7 +1272,7 @@
         });
 
         // Function to handle status changes
-        function changeStatus(id, newStatus) {
+        function changeStatus(id, newStatus, confirmReturn) {
             // Show loading state
             $.ajax({
                 url: '{{ route('student.add-intake.update-status', ':id') }}'.replace(':id', id),
@@ -1280,6 +1280,7 @@
                 data: {
                     _token: '{{ csrf_token() }}',
                     status: newStatus,
+                    confirm_return: confirmReturn ? 1 : 0,
                 },
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
@@ -1298,6 +1299,15 @@
                     }
                 },
                 error: function(xhr, status, error) {
+                    // Same course already started elsewhere — ask, then
+                    // return the old one and start this one.
+                    if (xhr.status === 409 && xhr.responseJSON && xhr.responseJSON.code === 'already_started') {
+                        if (confirm(xhr.responseJSON.message)) {
+                            changeStatus(id, newStatus, true);
+                        }
+                        return;
+                    }
+
                     console.error('Error updating status:', error);
                     console.error('XHR response:', xhr.responseText);
 
@@ -1417,13 +1427,18 @@
             let id = $('#change_student_intake_id').val();
             let course_id = $('#change_course_id').val();
 
+            submitChangeCourse(id, course_id, false);
+        });
+
+        function submitChangeCourse(id, course_id, confirmReturn) {
             $.ajax({
                 url: '{{ route('student.add-intake-with-courses.change-course', ':id') }}'.replace(':id',
                     id),
                 type: 'POST',
                 data: {
                     _token: '{{ csrf_token() }}',
-                    course_id: course_id
+                    course_id: course_id,
+                    confirm_return: confirmReturn ? 1 : 0
                 },
                 success: function(response) {
 
@@ -1435,6 +1450,11 @@
                     } else if (response.code === 'no_invoice') {
                         // No invoice for the new course — show a clear alert.
                         alert(response.message);
+                    } else if (response.code === 'already_started') {
+                        // New course is already started elsewhere — ask first.
+                        if (confirm(response.message)) {
+                            submitChangeCourse(id, course_id, true);
+                        }
                     } else {
                         toastr.error(response.message || 'Failed to update');
                     }
@@ -1443,7 +1463,7 @@
                     toastr.error('Something went wrong!');
                 }
             });
-        });
+        }
 
 
         function openEditCategoryModal(studentCourseId, currentCategoryId) {
