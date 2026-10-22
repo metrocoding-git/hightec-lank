@@ -141,10 +141,7 @@ class CertificateController extends Controller
         // generate() below), so $templateOptions is no longer needed
         // here or in the view.
 
-        // Date of Issue can't be earlier than this (see generate()).
-        $lastIssueDate = optional($this->lastIssueDate())->toDateString();
-
-        return view('pages.administration.certificate.index', compact('assessments', 'courseOptions', 'categoriesByPair', 'lastIssueDate'));
+        return view('pages.administration.certificate.index', compact('assessments', 'courseOptions', 'categoriesByPair'));
     }
 
     /**
@@ -319,18 +316,6 @@ class CertificateController extends Controller
         $issueDate = $data['issue_date'] ?? now()->toDateString();
         $courseEndDate = Carbon::parse($data['course_end_date'])->startOfDay();
 
-        // "genarate issue date ... next genarate cant be do past date. only
-        // nest one can we do genarateted date or future date" — the Date of
-        // Issue can't go back before the latest issue date already used.
-        $lastIssueDate = $this->lastIssueDate();
-
-        if ($lastIssueDate && Carbon::parse($issueDate)->startOfDay()->lt($lastIssueDate)) {
-            return response()->json([
-                'success' => false,
-                'message' => "Date of Issue can't be earlier than the last certificate's issue date ({$lastIssueDate->format('Y-m-d')}). Use {$lastIssueDate->format('Y-m-d')} or a later date.",
-            ], 422);
-        }
-
         $created = [];
         $skipped = [];
 
@@ -417,6 +402,19 @@ class CertificateController extends Controller
                 $skipped[] = [
                     'id' => $assessmentId,
                     'reason' => "{$this->studentLabel($assessment)} still has a course balance of Rs. " . number_format($balance, 2) . " for \"{$course->name}\".",
+                ];
+                continue;
+            }
+
+            // "genarate issue date ... next genarate cant be do past date" —
+            // per TEMPLATE: courses sharing one certificate template share one
+            // date order; another template's dates don't affect it.
+            $lastIssueDate = $this->lastIssueDate($certificateTemplate->id);
+
+            if ($lastIssueDate && Carbon::parse($issueDate)->startOfDay()->lt($lastIssueDate)) {
+                $skipped[] = [
+                    'id' => $assessmentId,
+                    'reason' => "{$this->studentLabel($assessment)}: Date of Issue can't be earlier than the last \"{$certificateTemplate->name}\" certificate's issue date ({$lastIssueDate->format('Y-m-d')}).",
                 ];
                 continue;
             }
@@ -524,10 +522,10 @@ class CertificateController extends Controller
         ]);
     }
 
-    /** Latest issue date used by any certificate so far (null if none). */
-    private function lastIssueDate(): ?Carbon
+    /** Latest issue date used so far by certificates of this template (null if none). */
+    private function lastIssueDate(int $templateId): ?Carbon
     {
-        $last = Certificate::max('issue_date');
+        $last = Certificate::where('certificate_template_id', $templateId)->max('issue_date');
 
         return $last ? Carbon::parse($last)->startOfDay() : null;
     }

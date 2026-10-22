@@ -710,6 +710,8 @@
                         state.canUndo = false;
                         fillCourses();
                         updateUrl(regNo, '');
+                        // A course started more than once is left out of the list.
+                        if (data.warning) showBanner('error', data.warning);
                     })
                     .fail(function(xhr) {
                         state.student = null;

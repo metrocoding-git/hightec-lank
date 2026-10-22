@@ -221,11 +221,35 @@ class StudentAssessmentController extends Controller
             ], 404);
         }
 
-        $courses = StudentCourse::with('course:id,name')
+        $startedRows = StudentCourse::with(['course:id,name', 'intake:id,name'])
             ->where('student_id', $student->id)
             ->where('status', 'start')
             ->get()
-            ->filter(fn($sc) => $sc->course)
+            ->filter(fn($sc) => $sc->course);
+
+        // "if has same course 2 or more started dont do move final assemnt
+        // ... before 1 stop" — a course started more than once can't be
+        // assessed until only one is left started (keeps the start date —
+        // and later the certificate — correct).
+        $duplicateWarnings = $startedRows
+            ->groupBy('course_id')
+            ->filter(fn($rows) => $rows->count() > 1)
+            ->map(fn($rows) => '"' . $rows->first()->course->name . '" is started ' . $rows->count() . ' times ('
+                . $rows->map(fn($r) => optional($r->intake)->name ?? ('intake #' . $r->intake_id))->implode(', ')
+                . ') — return the extra one in Student Intake & Courses before entering marks.')
+            ->values();
+
+        $duplicateCourseIds = $startedRows->groupBy('course_id')->filter(fn($rows) => $rows->count() > 1)->keys()->all();
+
+        if ($duplicateWarnings->isNotEmpty() && $startedRows->whereNotIn('course_id', $duplicateCourseIds)->isEmpty()) {
+            return response()->json([
+                'status' => 'duplicate_started_course',
+                'message' => $duplicateWarnings->implode(' '),
+            ], 422);
+        }
+
+        $courses = $startedRows
+            ->whereNotIn('course_id', $duplicateCourseIds)
             ->map(fn($sc) => [
                 'student_course_id' => $sc->id,
                 'course_id' => $sc->course_id,
@@ -282,7 +306,26 @@ class StudentAssessmentController extends Controller
             ],
             'courses' => $courses,
             'vehicles' => $vehicles,
+            'warning' => $duplicateWarnings->isNotEmpty() ? $duplicateWarnings->implode(' ') : null,
         ]);
+    }
+
+    /** Message when this enrollment's course is started more than once for the student, else null. */
+    private function duplicateStartedMessage(StudentCourse $studentCourse): ?string
+    {
+        $rows = StudentCourse::with(['intake:id,name', 'course:id,name'])
+            ->where('student_id', $studentCourse->student_id)
+            ->where('course_id', $studentCourse->course_id)
+            ->where('status', 'start')
+            ->get();
+
+        if ($rows->count() < 2) {
+            return null;
+        }
+
+        return '"' . (optional($rows->first()->course)->name ?? 'This course') . '" is started ' . $rows->count() . ' times ('
+            . $rows->map(fn($r) => optional($r->intake)->name ?? ('intake #' . $r->intake_id))->implode(', ')
+            . ') — return the extra one in Student Intake & Courses before entering marks.';
     }
 
     /** AJAX: the active assessment template for one course, with its title/sub-title tree. */
@@ -323,6 +366,13 @@ class StudentAssessmentController extends Controller
             'marks.*.marks' => 'nullable|numeric|min:0',
             'marks.*.remarks' => 'nullable|string|max:500',
         ]);
+
+        if ($dupMessage = $this->duplicateStartedMessage(StudentCourse::findOrFail($validated['student_course_id']))) {
+            return response()->json([
+                'status' => 'duplicate_started_course',
+                'message' => $dupMessage,
+            ], 422);
+        }
 
         $alreadyExists = StudentAssessment::where('student_course_id', $validated['student_course_id'])->exists();
 
@@ -540,6 +590,10 @@ class StudentAssessmentController extends Controller
     {
         $studentCourse = StudentCourse::with(['student.branch:id,name', 'student.verifications', 'course:id,name'])
             ->findOrFail($studentCourseId);
+
+        if ($dupMessage = $this->duplicateStartedMessage($studentCourse)) {
+            abort(422, $dupMessage);
+        }
 
         $user = Auth::user();
         $branchId = UserBranch::where('user_id', $user->id)->first()?->branch_id;
