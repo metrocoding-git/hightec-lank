@@ -937,9 +937,18 @@ class StudentController extends Controller
 
                 if ($row->status == 'pending') {
                     if ($user->hasPermission('student.add-intake.update-status')) {
-                        $items[] = '<a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'start\')">
-                                    <i class="fa-solid fa-play text-info"></i> Start
-                                </a>';
+                        $effectiveCourseId = (int) ($row->change_course_id ?: $row->course_id);
+
+                        if ($this->studentHasCourseInvoice((int) $row->student_id, $effectiveCourseId)) {
+                            $items[] = '<a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'start\')">
+                                        <i class="fa-solid fa-play text-info"></i> Start
+                                    </a>';
+                        } else {
+                            $items[] = '<span class="dropdown-item-text text-muted small" title="Create the course invoice first">
+                                        <i class="fa-solid fa-play"></i> Start
+                                        <span class="badge badge-danger ml-1">No invoice</span>
+                                    </span>';
+                        }
                     }
 
                     if ($user->hasPermission('student.add-intake.destroy')) {
@@ -1284,6 +1293,21 @@ class StudentController extends Controller
             $toReturn = collect();
 
             if ($validatedData['status'] === 'start') {
+                // An enrollment can't be started unless the student has a
+                // (not returned) course invoice for that course. A changed
+                // course counts as its new course.
+                $effectiveCourseId = (int) ($studentCourse->change_course_id ?: $studentCourse->course_id);
+
+                if (!$this->studentHasCourseInvoice((int) $studentCourse->student_id, $effectiveCourseId)) {
+                    $courseName = optional(Course::find($effectiveCourseId))->name ?? 'this course';
+
+                    return response()->json([
+                        'success' => false,
+                        'code' => 'no_invoice',
+                        'message' => "No invoice found for \"{$courseName}\". Create the course invoice for this student first, then start the course.",
+                    ], 422);
+                }
+
                 $check = $this->sameCourseStartCheck(
                     $studentCourse,
                     (int) ($studentCourse->change_course_id ?: $studentCourse->course_id),
@@ -1491,6 +1515,19 @@ class StudentController extends Controller
         })->exists();
     }
 
+
+    // True when the student has a course invoice (not returned) that
+    // includes $courseId. Used to block Start and Change Course.
+    private function studentHasCourseInvoice(int $studentId, int $courseId): bool
+    {
+        return DB::table('fee_invoices')
+            ->join('paid_courses', 'paid_courses.invoice_id', '=', 'fee_invoices.id')
+            ->where('fee_invoices.student_id', $studentId)
+            ->where('fee_invoices.invoice_type', 'course')
+            ->where('fee_invoices.payment_status', '!=', 'returned')
+            ->where('paid_courses.course_id', $courseId)
+            ->exists();
+    }
 
     private function generateNextAdmissionNumber()
     {
@@ -1868,15 +1905,7 @@ class StudentController extends Controller
             // "course change : that time want check invoice has to change new
             // course. if not invoice do show alert" — the student must already
             // have a (not returned) course invoice for the NEW course.
-            $hasNewCourseInvoice = DB::table('fee_invoices')
-                ->join('paid_courses', 'paid_courses.invoice_id', '=', 'fee_invoices.id')
-                ->where('fee_invoices.student_id', $studentCourse->student_id)
-                ->where('fee_invoices.invoice_type', 'course')
-                ->where('fee_invoices.payment_status', '!=', 'returned')
-                ->where('paid_courses.course_id', $request->course_id)
-                ->exists();
-
-            if (!$hasNewCourseInvoice) {
+            if (!$this->studentHasCourseInvoice((int) $studentCourse->student_id, (int) $request->course_id)) {
                 $newCourseName = optional(\App\Models\Course::find($request->course_id))->name ?? 'the selected course';
 
                 return response()->json([
