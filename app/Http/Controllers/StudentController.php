@@ -778,6 +778,8 @@ class StudentController extends Controller
             'student.studentCategory',
             'change_course',
             'studentCategory',
+            'user',
+            'updatedBy'
         ]);
 
 
@@ -881,6 +883,14 @@ class StudentController extends Controller
                 return $badge;
             })
 
+            ->addColumn('created_by', fn($row) => $row->user->name ?? '-')
+
+            ->addColumn('updated_by', fn($row) => $row->updatedBy->name ?? '-')
+
+            ->addColumn('updated_at', fn($row) => $row->updated_at ? $row->updated_at->format('Y-m-d') : '-')
+
+            ->addColumn('created_at', fn($row) => $row->created_at ? $row->created_at->format('Y-m-d') : '-')
+
             ->addColumn('note', fn($row) => $row->notes)
 
             // ======================
@@ -951,9 +961,9 @@ class StudentController extends Controller
                         $items[] = '<a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'return\')">
                                     <i class="fa-solid fa-arrow-rotate-left text-warning"></i> Return
                                 </a>';
-                        $items[] = '<a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'complete\')">
-                                    <i class="fa-solid fa-check text-success"></i> Complete
-                                </a>';
+                        // $items[] = '<a class="dropdown-item" href="#" onclick="changeStatus(' . $row->id . ', \'complete\')">
+                        //             <i class="fa-solid fa-check text-success"></i> Complete
+                        //         </a>';
                     }
 
                     if ($user->hasPermission('student.add-intake-with-courses.change-course')) {

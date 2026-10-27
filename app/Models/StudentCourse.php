@@ -54,6 +54,11 @@ class StudentCourse extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
     public function studentCategory(): BelongsTo
     {
         return $this->belongsTo(StudentCategory::class, 'student_category_id');

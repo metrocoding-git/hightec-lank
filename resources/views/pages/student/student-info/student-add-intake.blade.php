@@ -305,6 +305,10 @@
                                                 <th>Enrollment Date</th>
                                                 <th>Status</th>
                                                 <th>Note</th>
+                                                <th>Created By</th>
+                                                <th>Updated By</th>
+                                                <th>Created At</th>
+                                                <th>Updated At</th>
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
@@ -658,6 +662,18 @@
                 },
                 {
                     data: 'note'
+                },
+                {
+                    data: 'created_by'
+                },
+                {
+                    data: 'updated_by'
+                },
+                {
+                    data: 'created_at'
+                },
+                {
+                    data: 'updated_at'
                 },
                 {
                     data: 'actions',
