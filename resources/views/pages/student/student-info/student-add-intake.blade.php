@@ -1315,6 +1315,12 @@
                     }
                 },
                 error: function(xhr, status, error) {
+                    // No course invoice for this course — can't start.
+                    if (xhr.responseJSON && xhr.responseJSON.code === 'no_invoice') {
+                        alert(xhr.responseJSON.message);
+                        return;
+                    }
+
                     // Same course already started elsewhere — ask, then
                     // return the old one and start this one.
                     if (xhr.status === 409 && xhr.responseJSON && xhr.responseJSON.code === 'already_started') {
