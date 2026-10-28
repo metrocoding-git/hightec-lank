@@ -310,14 +310,8 @@ class ItemSellController extends Controller
                 ->with('error', 'This item batch has already been returned.');
         }
 
-        // "if payment type bank payment. that can be return only deposit
-        // month is equal to current month"
-        [$canReturn, $blockMessage] = $this->bankTransferReturnWindowCheck($itemSellBatch);
-        if (!$canReturn) {
-            return redirect()
-                ->back()
-                ->with('error', $blockMessage);
-        }
+        // Returns are never blocked any more — the refund method is decided
+        // by returnPaymentMethod() (bank out vs cash out) instead.
 
         try {
             $returnDate = Carbon::today()->format('Y-m-d');
@@ -462,19 +456,10 @@ class ItemSellController extends Controller
                 ], 422);
             }
 
-            // "if payment type bank payment. that can be return only deposit
-            // month is equal to current month" — this is the endpoint the
-            // Return button in item-sell-list.blade.php actually calls (its
-            // href points at returnItemSell(), but the click handler calls
-            // preventDefault() and always hits this AJAX route instead), so
-            // this is where the check has to live to actually take effect.
-            [$canReturn, $blockMessage] = $this->bankTransferReturnWindowCheck($itemSellBatch);
-            if (!$canReturn) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $blockMessage,
-                ], 422);
-            }
+            // This is the endpoint the Return button actually calls. Returns
+            // are never blocked — see returnPaymentMethod() for the rule that
+            // decides bank out vs cash out.
+            $refundMethod = $this->returnPaymentMethod($itemSellBatch);
 
             // "if do any return in item sell that want do recorded as a cash
             // negative transaction" — this endpoint previously never touched
@@ -519,7 +504,8 @@ class ItemSellController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Item batch returned successfully!'
+                'message' => 'Item batch returned successfully! Recorded as '
+                    . ($refundMethod === 'Bank Transfer' ? 'bank out' : 'cash out') . ' in the collection report.',
             ]);
         } catch (\Throwable $e) {
             return response()->json([
@@ -550,41 +536,23 @@ class ItemSellController extends Controller
     // =====================================================================
 
     /**
-     * "if payment type bank payment. that can be return only deposit month
-     * is equal to current month" — a Bank Transfer sale can only be
-     * returned while we're still in the same calendar month (and year) the
-     * deposit itself was made in (bank_payment_date). Any other payment
-     * method (Invoice, Cash, etc.) has no such restriction and is always
-     * returnable.
-     *
-     * Returns [bool $canReturn, ?string $blockMessage].
+     * How an item sell return is paid back (never blocks the return):
+     *  - Bank Transfer sale AND bank deposit month == current month
+     *      -> "Bank Transfer" (bank out)
+     *  - anything else (other month, no deposit date, cash, invoice, ...)
+     *      -> "Cash" (cash out)
      */
-    private function bankTransferReturnWindowCheck(ItemSellBatch $itemSellBatch): array
+    private function returnPaymentMethod(ItemSellBatch $itemSellBatch): string
     {
-        if ($itemSellBatch->payment_method !== 'Bank Transfer') {
-            return [true, null];
+        if (
+            $itemSellBatch->payment_method === 'Bank Transfer'
+            && $itemSellBatch->bank_payment_date
+            && Carbon::parse($itemSellBatch->bank_payment_date)->isSameMonth(Carbon::now())
+        ) {
+            return 'Bank Transfer';
         }
 
-        if (!$itemSellBatch->bank_payment_date) {
-            return [
-                false,
-                'This bank transfer sale has no deposit date on record, so the return window cannot be verified.',
-            ];
-        }
-
-        $depositDate = Carbon::parse($itemSellBatch->bank_payment_date);
-        $now = Carbon::now();
-
-        if ($depositDate->isSameMonth($now)) {
-            return [true, null];
-        }
-
-        return [
-            false,
-            'This sale was paid by bank transfer with a deposit date of ' . $depositDate->format('F Y')
-                . ' — bank transfer sales can only be returned within the same month the deposit was made ('
-                . $now->format('F Y') . ').',
-        ];
+        return 'Cash';
     }
 
     /**
@@ -594,11 +562,10 @@ class ItemSellController extends Controller
      * own fee invoice: the same ledger saveItemSellData() already writes
      * the original payment to (payment_type 'item_sell'), and the one
      * everywhere else in this app reads back for payment history/reports.
-     * The negative row is always payment_method 'Cash', regardless of how
-     * the sale was originally paid — a return is money physically handed
-     * back, not the original bank transfer or invoice charge un-happening
-     * — so it always shows up as a negative Cash entry wherever this table
-     * is read for cash-flow reporting.
+     * The negative row's payment_method follows returnPaymentMethod():
+     * "Bank Transfer" (bank out) when the sale was a bank transfer deposited
+     * in the current month, otherwise "Cash" (cash out). Either way it shows
+     * as a "Return" entry in the Collection Report.
      *
      * NOTE: no separate "cash book"/cash-transactions table was shared with
      * me for this module. If one already exists elsewhere in this app that
@@ -607,14 +574,44 @@ class ItemSellController extends Controller
      */
     private function recordCashNegativeReturn(ItemSellBatch $itemSellBatch, string $note): void
     {
-        if (!$itemSellBatch->invoice_number) {
-            return; // nothing was ever invoiced for this sale — nothing to reverse
-        }
+        $feeInvoice = $itemSellBatch->invoice_number
+            ? (FeeInvoices::where('main_invoice_number', $itemSellBatch->invoice_number)
+                ->where('invoice_type', 'item_sell')
+                ->where('branch_id', $itemSellBatch->branch_id)
+                ->first()
+                ?? FeeInvoices::where('main_invoice_number', $itemSellBatch->invoice_number)->first())
+            : null;
 
-        $feeInvoice = FeeInvoices::where('main_invoice_number', $itemSellBatch->invoice_number)->first();
-
+        // Older sales were saved without a fee invoice, so their return never
+        // reached the collection report. Create the missing invoice from the
+        // batch (before it is zeroed out) so the return is still recorded.
         if (!$feeInvoice) {
-            return;
+            $paid = (float) $itemSellBatch->total_paid;
+            if ($paid <= 0) {
+                return; // nothing was paid — nothing to hand back
+            }
+
+            try {
+                $feeInvoice = FeeInvoices::create([
+                    'branch_id' => $itemSellBatch->branch_id,
+                    'student_id' => $itemSellBatch->student_id,
+                    'create_date' => $itemSellBatch->sell_date ?? now()->toDateString(),
+                    'due_date' => $itemSellBatch->sell_date ?? now()->toDateString(),
+                    'payment_status' => 'full',
+                    'payment_method' => $itemSellBatch->payment_method,
+                    'total_amount' => (float) $itemSellBatch->total_sell_price,
+                    'paid_amount' => $paid,
+                    'due_amount' => (float) $itemSellBatch->total_due,
+                    'main_invoice_number' => $itemSellBatch->invoice_number ?: ('INV-S-RET-' . $itemSellBatch->id),
+                    'create_user_id' => Auth::id(),
+                    'notes' => 'Created on return for item sell batch #' . $itemSellBatch->id,
+                    'invoice_type' => 'item_sell',
+                ]);
+            } catch (\Throwable $e) {
+                // Never block the return itself (e.g. a non-student sale with no student_id).
+                \Illuminate\Support\Facades\Log::warning('Item sell return #' . $itemSellBatch->id . ' not recorded in collection: ' . $e->getMessage());
+                return;
+            }
         }
 
         $originalPayment = InvoicesPayments::where('invoice_id', $feeInvoice->id)
@@ -623,6 +620,9 @@ class ItemSellController extends Controller
             ->first();
 
         $returnAmount = (float) ($originalPayment->amount ?? $feeInvoice->paid_amount ?? 0);
+        if ($returnAmount <= 0) {
+            $returnAmount = (float) $itemSellBatch->total_paid;
+        }
 
         if ($returnAmount <= 0) {
             return; // nothing was actually paid — nothing to hand back as cash
@@ -633,15 +633,21 @@ class ItemSellController extends Controller
         $feeInvoice->payment_status = 'returned';
         $feeInvoice->save();
 
+        // Bank out (same deposit month) or cash out (everything else).
+        $method = $this->returnPaymentMethod($itemSellBatch);
+        $isBankOut = $method === 'Bank Transfer';
+
         InvoicesPayments::create([
             'invoice_id' => $feeInvoice->id,
             'amount' => -$returnAmount,
-            'payment_method' => 'Cash',
+            'payment_method' => $method,
+            'bank_payment_amount' => $isBankOut ? -$returnAmount : null,
+            'bank_payment_date' => $isBankOut ? now()->toDateString() : null,
             'payment_type' => 'item_sell_return',
             'receipt_number' => 'RET-' . time() . '-' . uniqid(),
             'create_user_id' => Auth::id(),
             'branch_id' => $itemSellBatch->branch_id,
-            'notes' => $note,
+            'notes' => $note . ($isBankOut ? ' [Bank out]' : ' [Cash out]'),
             'created_at' => now(),
             'updated_at' => now(),
         ]);

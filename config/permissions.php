@@ -485,6 +485,20 @@ return [
                         ['key' => 'reports.student-attendance.export', 'label' => 'Export'],
                     ],
                 ],
+                [
+                    'name' => 'NVQ Payment (Completion > 75%)',
+                    'window' => ['key' => 'reports.nvq-payment', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'reports.nvq-payment.export', 'label' => 'Export'],
+                    ],
+                ],
+                [
+                    'name' => 'Item Stock Balance (Branch-wise)',
+                    'window' => ['key' => 'reports.item-stock', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'reports.item-stock.export', 'label' => 'Export'],
+                    ],
+                ],
             ],
         ],
 

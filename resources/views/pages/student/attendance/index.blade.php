@@ -606,9 +606,8 @@
                                     </div>
                                     <div class="col-lg-4 mb-15">
                                         <div class="primary_input">
-                                            <label class="primary_input_label" for="practical_vehicle_id">Vehicle
-                                                (optional)</label>
-                                            <select class="primary_select form-control" id="practical_vehicle_id">
+                                            <label class="primary_input_label" for="practical_vehicle_id">Vehicle</label>
+                                            <select class="primary_select form-control" id="practical_vehicle_id" required>
                                                 <option value="">No vehicle</option>
                                             </select>
                                             <small class="text-muted">Only vehicles available at this student's branch are
@@ -665,6 +664,7 @@
                                         <th>Student</th>
                                         <th>Course</th>
                                         <th>Subject</th>
+                                        <th title="Practice time still not completed for this practical subject (read only)">Practice Remaining</th>
                                         <th>Action</th>
                                         <th>Status</th>
                                         <th></th>
@@ -961,7 +961,7 @@
                     const undoable = (r.action === 'in' || r.action === 'out') && !!r.session_id;
                     addLogRow(r.time || new Date(), res.student.name, res.student.admission_number,
                         courseLabel(r.course_id), subjectLabel(r.subject_id), label, 'OK', cls, pill,
-                        r.session_id || null, undoable);
+                        r.session_id || null, undoable, r.progress || null);
                 });
 
                 // "Before checking" (course just opened) / "after checking" (a
@@ -1186,8 +1186,17 @@
                 return count > 1 ? count : null;
             }
 
+            // Read-only "practice time not completed" cell for practical subjects.
+            function progressCell(p) {
+                if (!p) return '<span class="text-muted">-</span>';
+                if (p.completed) {
+                    return `<span class="badge badge-success">Completed</span><div class="small text-muted">${p.done} / ${p.required}</div>`;
+                }
+                return `<strong class="text-danger">${p.remaining}</strong> left<div class="small text-muted">Done ${p.done} of ${p.required}</div>`;
+            }
+
             function addLogRow(time, student, regNo, course, subject, action, status, cls, pill,
-                sessionId, undoable) {
+                sessionId, undoable, progress) {
                 $('#scan_log_empty').hide();
 
                 const t = (time instanceof Date) ? time.toLocaleTimeString() : time;
@@ -1205,7 +1214,7 @@
                 const rowCls = (cls || '') + (repeatCount ? ' row-repeat' : '');
 
                 const row =
-                    `<tr id="${rowId}" class="${rowCls}"><td>${t}</td><td>${regNo || '-'}</td><td>${student}</td><td>${course || '-'}</td><td>${subjectHtml}</td><td>${action}</td><td>${statusHtml}</td><td>${undoCell}</td></tr>`;
+                    `<tr id="${rowId}" class="${rowCls}"><td>${t}</td><td>${regNo || '-'}</td><td>${student}</td><td>${course || '-'}</td><td>${subjectHtml}</td><td>${progressCell(progress)}</td><td>${action}</td><td>${statusHtml}</td><td>${undoCell}</td></tr>`;
                 $('#scan_log tbody').prepend(row);
 
                 // Brief flash so the newest row is easy to spot.
@@ -1262,7 +1271,7 @@
                         let cls = row.cls,
                             pill = row.pill;
                         addLogRow(row.time, row.student, row.reg_no, row.course, row.subject, row
-                            .action, row.status, cls, pill, row.session_id, row.undoable);
+                            .action, row.status, cls, pill, row.session_id, row.undoable, row.progress || null);
                     });
                 }
             });

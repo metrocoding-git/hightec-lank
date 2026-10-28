@@ -812,7 +812,9 @@
                     Auth::user()->hasPermission('reports.change-course') ||
                     Auth::user()->hasPermission('reports.invoice-payments') ||
                     Auth::user()->hasPermission('reports.food-payment') ||
-                    Auth::user()->hasPermission('reports.student-attendance')))
+                    Auth::user()->hasPermission('reports.student-attendance') ||
+                    Auth::user()->hasPermission('reports.nvq-payment') ||
+                    Auth::user()->hasPermission('reports.item-stock')))
             <span class="menu_seperator" id="seperator_reports_section" data-section="reports_section">Reports
                 Section
             </span>
@@ -829,7 +831,9 @@
                     Auth::user()->hasPermission('reports.change-course') ||
                     Auth::user()->hasPermission('reports.invoice-payments') ||
                     Auth::user()->hasPermission('reports.food-payment') ||
-                    Auth::user()->hasPermission('reports.student-attendance')))
+                    Auth::user()->hasPermission('reports.student-attendance') ||
+                    Auth::user()->hasPermission('reports.nvq-payment') ||
+                    Auth::user()->hasPermission('reports.item-stock')))
             <li
                 class="reports_section {{ request()->is('reports') || request()->is('reports/*') ? 'mm-active' : '' }}">
                 <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
@@ -916,6 +920,24 @@
                             <a href="/reports/invoice-payments"
                                 class="{{ request()->is('reports/invoice-payments') ? 'active a' : '' }}">
                                 Credit Invoice Payments
+                            </a>
+                        </li>
+                    @endif
+
+                    @if (Auth::user()->hasPermission('reports.nvq-payment'))
+                        <li>
+                            <a href="/reports/nvq-payment"
+                                class="{{ request()->is('reports/nvq-payment') ? 'active a' : '' }}">
+                                NVQ Payment (Completion &gt; 75%)
+                            </a>
+                        </li>
+                    @endif
+
+                    @if (Auth::user()->hasPermission('reports.item-stock'))
+                        <li>
+                            <a href="/reports/item-stock"
+                                class="{{ request()->is('reports/item-stock') ? 'active a' : '' }}">
+                                Item Stock Balance (Branch-wise)
                             </a>
                         </li>
                     @endif

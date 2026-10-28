@@ -75,7 +75,12 @@
                                         <td>{{ $t->course_name_line1 }}{{ $t->course_name_line2 ? ' / ' . $t->course_name_line2 : '' }}
                                         </td>
                                         <td>{{ $t->duration ?? '—' }}</td>
-                                        <td>{{ $t->serialPrefix->prefix ?? '—' }}</td>
+                                        <td>{{ $t->serialPrefix->prefix ?? '—' }}
+                                            @if ($t->serialPrefix)
+                                                <div class="ct-muted" style="font-size:11px;">Next:
+                                                    <strong>{{ \App\Models\CertificateSerialPrefix::previewNext($t->serialPrefix->prefix) }}</strong></div>
+                                            @endif
+                                        </td>
                                         <td>
                                             @if ($t->bottom_image_path)
                                                 <img src="{{ asset('storage/' . $t->bottom_image_path) }}" alt=""
@@ -213,14 +218,15 @@
                             <label>Serial Number Prefix (optional)</label>
                             <input type="text" id="ct-serial-prefix" class="form-control" maxlength="50"
                                 list="ct-serial-prefix-options"
-                                placeholder='e.g. "STB-NW" → STB-NW-0001, STB-NW-0002, ...'>
+                                placeholder='e.g. "WL/OP/10" → WL/OP/10, WL/OP/11, WL/OP/12, ...'>
                             <datalist id="ct-serial-prefix-options">
                                 @foreach ($serialPrefixOptions ?? [] as $p)
                                     <option value="{{ $p->prefix }}">
                                 @endforeach
                             </datalist>
-                            <small class="ct-muted">Type an existing prefix to keep using its running number, or a
-                                new one to start a fresh series at 0001.</small>
+                            <small class="ct-muted">End it with the first certificate number — e.g. "WL/OP/10"
+                                gives WL/OP/10 to the first certificate, then WL/OP/11, WL/OP/12, … (+1 each time).
+                                Type an existing prefix to continue that series.</small>
                         </div>
                     </div>
 

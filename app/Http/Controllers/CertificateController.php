@@ -368,20 +368,53 @@ class CertificateController extends Controller
             // date comes from Student Intake & Courses, so it's only reliable
             // when the student has exactly ONE started/completed enrolment in
             // this course (returned/pending ones don't count).
-            $activeEnrolments = StudentCourse::with('intake:id,name')
+            //
+            // FIX: the old check only looked at enrolments with exactly the
+            // same course_id, so it missed two start dates coming from
+            // LINKED courses — courses linked to the same certificate
+            // template (e.g. "Crawler Excavator Operator" and "Excavator
+            // Operator (Discount Package)") or an enrolment whose course was
+            // changed into this one (change_course_id). Those all end up on
+            // the same certificate, so every one of them is counted now.
+            $linkedCourseIds = $this->linkedCourseIds(
+                $certificateTemplate,
+                $course->id,
+                optional($assessment->studentCourse)->change_course_id
+            );
+
+            $activeEnrolments = StudentCourse::with(['intake:id,name,start_date', 'course:id,name', 'change_course:id,name'])
                 ->where('student_id', $assessment->student_id)
-                ->where('course_id', $course->id)
                 ->whereIn('status', ['start', 'complete'])
+                ->where(function ($q) use ($linkedCourseIds) {
+                    $q->whereIn('course_id', $linkedCourseIds)
+                        ->orWhereIn('change_course_id', $linkedCourseIds);
+                })
                 ->get();
 
             if ($activeEnrolments->count() > 1) {
-                $intakeNames = $activeEnrolments
-                    ->map(fn($e) => optional($e->intake)->name ?? ('intake #' . $e->intake_id))
-                    ->implode(', ');
+                $details = $activeEnrolments
+                    ->map(function ($e) {
+                        $courseName = optional($e->change_course)->name ?? optional($e->course)->name ?? ('course #' . $e->course_id);
+                        $intakeName = optional($e->intake)->name ?? ('intake #' . $e->intake_id);
+                        $start = optional($e->intake)->start_date
+                            ? Carbon::parse($e->intake->start_date)->format('Y-m-d')
+                            : 'no start date';
+                        return "{$courseName} — {$intakeName}, start {$start}";
+                    })
+                    ->implode('; ');
+
+                $distinctStarts = $activeEnrolments
+                    ->map(fn($e) => optional($e->intake)->start_date ? Carbon::parse($e->intake->start_date)->toDateString() : null)
+                    ->unique()
+                    ->count();
+
+                $what = $distinctStarts > 1
+                    ? "{$distinctStarts} different start dates"
+                    : "{$activeEnrolments->count()} started enrolments";
 
                 $skipped[] = [
                     'id' => $assessmentId,
-                    'reason' => "{$this->studentLabel($assessment)} has {$activeEnrolments->count()} started enrolments in \"{$course->name}\" ({$intakeNames}) — keep only one in Student Intake & Courses so the correct start date can be used.",
+                    'reason' => "{$this->studentLabel($assessment)} has {$what} across linked courses for this certificate ({$details}) — the certificate can't be generated. Keep only one started enrolment in Student Intake & Courses (return the other).",
                 ];
                 continue;
             }
@@ -520,6 +553,27 @@ class CertificateController extends Controller
             'created' => $created,
             'skipped' => $skipped,
         ]);
+    }
+
+    /**
+     * Every course that ends up on the same certificate as $courseId: the
+     * course itself, the enrolment's changed course (if any), and all
+     * courses linked to the same certificate template.
+     */
+    private function linkedCourseIds(CertificateTemplate $template, int $courseId, $changeCourseId = null): array
+    {
+        $ids = DB::table('certificate_template_course')
+            ->where('certificate_template_id', $template->id)
+            ->pluck('course_id')
+            ->map(fn($id) => (int) $id)
+            ->all();
+
+        $ids[] = $courseId;
+        if ($changeCourseId) {
+            $ids[] = (int) $changeCourseId;
+        }
+
+        return array_values(array_unique($ids));
     }
 
     /** Latest issue date used so far by certificates of this template (null if none). */

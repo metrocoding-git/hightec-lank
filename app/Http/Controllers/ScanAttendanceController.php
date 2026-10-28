@@ -572,6 +572,12 @@ class ScanAttendanceController extends Controller
                 );
                 $result['subject_id'] = $subjectId;
                 $result['course_id'] = $enrolment->course_id;
+                $result['progress'] = $this->practiceProgress(
+                    (int) $student->id,
+                    $enrolment->intake_id ? (int) $enrolment->intake_id : null,
+                    (int) $enrolment->course_id,
+                    (int) $subjectId
+                );
                 $results[] = $result;
 
                 // Closing a practical session (re)stamps the "after
@@ -727,6 +733,7 @@ class ScanAttendanceController extends Controller
             ->get();
 
         $rows = [];
+        $progressCache = [];
 
         foreach ($sessions as $session) {
             if ($session->isCheckpoint()) {
@@ -738,6 +745,22 @@ class ScanAttendanceController extends Controller
             $regNo = $session->student->admission_number ?? '-';
             $courseName = $session->course->name ?? '-';
             $subjectLabel = $session->subject->name ?? 'Daily Attendance';
+
+            // Read-only "practice time not completed yet" for practical
+            // subjects — planned practical time minus everything done so far.
+            $progress = null;
+            if ($session->subject_id && optional($session->subject)->type === 'P') {
+                $key = $session->student_id . '|' . $session->intake_id . '|' . $session->course_id . '|' . $session->subject_id;
+                if (!array_key_exists($key, $progressCache)) {
+                    $progressCache[$key] = $this->practiceProgress(
+                        (int) $session->student_id,
+                        $session->intake_id ? (int) $session->intake_id : null,
+                        (int) $session->course_id,
+                        (int) $session->subject_id
+                    );
+                }
+                $progress = $progressCache[$key];
+            }
 
             if ($session->time_in) {
                 $rows[] = [
@@ -753,6 +776,7 @@ class ScanAttendanceController extends Controller
                     'cls' => 'action-in',
                     'pill' => 'pill-in',
                     'undoable' => is_null($session->time_out),
+                    'progress' => $progress,
                 ];
             }
 
@@ -770,6 +794,7 @@ class ScanAttendanceController extends Controller
                     'cls' => 'action-out',
                     'pill' => 'pill-out',
                     'undoable' => true,
+                    'progress' => $progress,
                 ];
             }
         }
@@ -777,6 +802,71 @@ class ScanAttendanceController extends Controller
         usort($rows, fn($a, $b) => $a['sort'] <=> $b['sort']);
 
         return response()->json(['rows' => $rows]);
+    }
+
+    /**
+     * Practice time for one practical subject: planned practical_time (from
+     * assign_subjects, same source as the Practical Card) vs everything the
+     * student has done so far (closed, non-checkpoint sessions). Returns null
+     * when no practical time is planned for the subject. Read-only.
+     */
+    private function practiceProgress(int $studentId, ?int $intakeId, int $courseId, int $subjectId): ?array
+    {
+        $assignment = AssignSubjects::where('course_id', $courseId)
+            ->where('subject_id', $subjectId)
+            ->when($intakeId, fn($q) => $q->where('intake_id', $intakeId))
+            ->orderByDesc('id')
+            ->first(['practical_time']);
+
+        $required = $this->plannedMinutes($assignment->practical_time ?? null);
+        if ($required <= 0) {
+            return null;
+        }
+
+        $done = SubjectAttendanceSession::where('student_id', $studentId)
+            ->where('course_id', $courseId)
+            ->where('subject_id', $subjectId)
+            ->notCheckpoint()
+            ->whereNotNull('time_in')
+            ->whereNotNull('time_out')
+            ->get(['time_in', 'time_out'])
+            ->sum(function ($s) {
+                $start = \Illuminate\Support\Carbon::parse($s->time_in->format('H:i:s'));
+                $end = \Illuminate\Support\Carbon::parse($s->time_out->format('H:i:s'));
+                if ($end->lessThan($start)) {
+                    $end->addDay();
+                }
+                return (int) $start->diffInMinutes($end);
+            });
+
+        $remaining = max(0, $required - $done);
+
+        return [
+            'required' => $this->hhmm($required),
+            'done' => $this->hhmm($done),
+            'remaining' => $this->hhmm($remaining),
+            'completed' => $remaining === 0,
+        ];
+    }
+
+    private function plannedMinutes($value): int
+    {
+        if ($value === null || $value === '') {
+            return 0;
+        }
+        if (is_numeric($value)) {
+            return (int) $value;
+        }
+        if (preg_match('/^(\d{1,3}):(\d{2})$/', trim((string) $value), $m)) {
+            return ((int) $m[1] * 60) + (int) $m[2];
+        }
+        return 0;
+    }
+
+    private function hhmm(int $minutes): string
+    {
+        $minutes = max(0, $minutes);
+        return sprintf('%02d:%02d', intdiv($minutes, 60), $minutes % 60);
     }
 
     /** One summary row for a "before checking" / "after checking" attendance row. */
