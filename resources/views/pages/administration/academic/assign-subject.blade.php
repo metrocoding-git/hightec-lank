@@ -134,6 +134,10 @@
             </div>
         </div>
     </section>
+
+    <div class="container-fluid p-0">
+        @include('components.partials.permanent-delete-note', ['rule' => 'assign_subject'])
+    </div>
     <section class="admin-visitor-area up_st_admin_visitor">
         <div class="container-fluid p-0">
 

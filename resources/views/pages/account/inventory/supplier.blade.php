@@ -159,6 +159,10 @@
             </div>
         </div>
     </section>
+
+    <div class="container-fluid p-0">
+        @include('components.partials.permanent-delete-note', ['rule' => 'supplier'])
+    </div>
     @php
         // Button-level permissions (Section 34).
         $canAddSupplier = Auth::user()->hasPermission('supplier-store');
