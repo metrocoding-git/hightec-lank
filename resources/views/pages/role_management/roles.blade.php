@@ -145,6 +145,10 @@
         </div>
     </section>
 
+    <div class="container-fluid p-0">
+        @include('components.partials.permanent-delete-note', ['rule' => 'role'])
+    </div>
+
     @php
         $canAddRole = Auth::user()->hasPermission('roles.store');
         $canEditRole = Auth::user()->hasPermission('roles.update');
@@ -233,16 +237,16 @@
                                                         @php
                                                             $routeList = [];
 
-                    //                                         if ($canEditRole) {
-                    //                                             $routeList[] =
-                    //                                                 '<a class="dropdown-item edit-role-btn" href="#"
-                    // data-id="' .
-                    //                                                 $role->id .
-                    //                                                 '"
-                    // data-name="' .
-                    //                                                 $role->role_name .
-                    //                                                 '">Edit</a>';
-                    //                                         }
+                                                            if ($canEditRole) {
+                                                                $routeList[] =
+                                                                    '<a class="dropdown-item edit-role-btn" href="#"
+                    data-id="' .
+                                                                    $role->id .
+                                                                    '"
+                    data-name="' .
+                                                                    $role->role_name .
+                                                                    '">Edit</a>';
+                                                            }
 
                                                             if ($canGrantPermission) {
                                                                 $routeList[] =
@@ -357,7 +361,7 @@
             $(document).on('click', '.delete-role-btn', function(e) {
                 e.preventDefault();
                 var id = $(this).data('id');
-                if (confirm('Are you sure you want to delete this role?')) {
+                if (confirm(window.__permanentDeleteAlert || 'Are you sure you want to delete this role?')) {
                     $.ajax({
                         url: "{{ url('role-management/roles') }}/" + id,
                         type: "POST", // Laravel uses POST for DELETE with _method field

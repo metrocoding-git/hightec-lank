@@ -159,6 +159,10 @@
         </div>
     </section>
 
+    <div class="container-fluid p-0">
+        @include('components.partials.permanent-delete-note', ['rule' => 'assessment_undo'])
+    </div>
+
     {{-- ===== Find Student (plain HTML + jQuery, no React / @verbatim) ===== --}}
     <section class="admin-visitor-area up_admin_visitor">
         <div class="container-fluid p-0">
@@ -764,7 +768,7 @@
             // Undo
             $('#ampl-undo-btn').on('click', function() {
                 if (!state.existing) return;
-                if (!window.confirm(
+                if (!window.confirm((window.__permanentDeleteInfo ? window.__permanentDeleteInfo + '\n\n' : '') +
                     'Undo this assessment? This cannot be redone once the 2-day window passes.'))
                     return;
                 var popup = window.open('', 'assessmentMarksPopup', POPUP_FEATURES);

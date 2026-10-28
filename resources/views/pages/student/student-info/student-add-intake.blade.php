@@ -147,6 +147,10 @@
         </div>
     </section>
 
+    <div class="container-fluid p-0">
+        @include('components.partials.permanent-delete-note', ['rule' => 'enrolment'])
+    </div>
+
     <section class="admin-visitor-area up_st_admin_visitor">
         <div class="container-fluid p-0">
             @if ($canAddStudentIntake)
@@ -1357,7 +1361,7 @@
         // this callback now actually reads response.success instead of
         // assuming any HTTP 200 means the delete happened.
         function deleteIntake(id) {
-            if (!confirm('Are you sure you want to remove this intake? This cannot be undone.')) {
+            if (!confirm(window.__permanentDeleteAlert || 'Are you sure you want to remove this intake? This cannot be undone.')) {
                 return;
             }
 

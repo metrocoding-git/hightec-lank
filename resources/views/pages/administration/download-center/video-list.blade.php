@@ -242,6 +242,10 @@
             </div>
         </div>
     </section>
+
+    <div class="container-fluid p-0">
+        @include('components.partials.permanent-delete-note', ['rule' => 'video'])
+    </div>
     <section class="admin-visitor-area up_st_admin_visitor">
         <div class="container-fluid p-0">
             @php
