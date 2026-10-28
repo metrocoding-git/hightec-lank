@@ -1130,7 +1130,7 @@ class CertificateController extends Controller
 
         return match (true) {
             stripos($branchName, 'kurunegala') !== false => 'No. 549, Kandy Road, Mawathagama, Sri Lanka.',
-            stripos($branchName, 'kaduwela') !== false => '404/22 Vaikkiya Waththa Rd, Kaduwela 10640',
+            stripos($branchName, 'kaduwela') !== false => 'No. 404/51C, Velkkiyawattha Road,Ihala Bomiriya, Kaduwela, Sri Lanka.',
             // Fallback for a branch that's neither of the two named ones
             // (or no branch on record at all) — same as Kurunegala for
             // now, since that's the only confirmed address I have.
@@ -1143,8 +1143,8 @@ class CertificateController extends Controller
         $branchName = $branchName ? trim($branchName) : '';
 
         return match (true) {
-            stripos($branchName, 'kurunegala') !== false => 'TVEC Re. No. P12/1255',
-            stripos($branchName, 'kaduwela') !== false   => 'TVEC Re. No. P12/0113',
+            stripos($branchName, 'kurunegala') !== false => 'TVEC Re. No. P12/0113',
+            stripos($branchName, 'kaduwela') !== false   => 'TVEC Re. No. P01/1255',
             // Other branch or no branch: same fallback as the address (Kurunegala)
             default => 'TVEC Re. No. P12/1255',
         };
