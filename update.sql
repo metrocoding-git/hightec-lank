@@ -132,6 +132,24 @@ CREATE TABLE
   )
 
 
+-- 28/10/2026 — NVQ Payment report + Item Stock Balance report permissions
+-- (granted to Admin, role_id 1; grant other roles from Role Management)
+INSERT INTO `permissions` (`permission_name`, `label`, `created_at`, `updated_at`)
+SELECT * FROM (
+    SELECT 'reports.nvq-payment' AS permission_name, 'View' AS label, NOW() AS c, NOW() AS u UNION ALL
+    SELECT 'reports.nvq-payment.export', 'Export', NOW(), NOW() UNION ALL
+    SELECT 'reports.item-stock', 'View', NOW(), NOW() UNION ALL
+    SELECT 'reports.item-stock.export', 'Export', NOW(), NOW()
+) AS t
+WHERE NOT EXISTS (SELECT 1 FROM `permissions` p WHERE p.permission_name = t.permission_name);
+
+INSERT INTO `role_permissions` (`role_id`, `permission_id`, `created_at`, `updated_at`)
+SELECT 1, p.id, NOW(), NOW()
+FROM `permissions` p
+WHERE p.permission_name IN ('reports.nvq-payment', 'reports.nvq-payment.export', 'reports.item-stock', 'reports.item-stock.export')
+  AND NOT EXISTS (SELECT 1 FROM `role_permissions` rp WHERE rp.role_id = 1 AND rp.permission_id = p.id);
+
+
 -- 28/10/2026 — Leave requests
 CREATE TABLE IF NOT EXISTS `leave_requests` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
