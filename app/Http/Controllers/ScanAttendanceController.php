@@ -393,13 +393,14 @@ class ScanAttendanceController extends Controller
                     ->count();
 
 
-                $isOpen = SubjectAttendanceSession::where('student_id', $student->id)
+                $openSession = SubjectAttendanceSession::where('student_id', $student->id)
                     ->where('course_id', $enrolment->course_id)
                     ->where('subject_id', $s->id)
                     ->whereDate('attendance_date', now()->toDateString())
                     ->notCheckpoint()
                     ->open()
-                    ->exists();
+                    ->first(['id', 'vehicle_id']);
+                $isOpen = (bool) $openSession;
 
                 $existing = $subjects->get($s->id);
                 $subjects->put($s->id, [
@@ -407,6 +408,7 @@ class ScanAttendanceController extends Controller
                     'done_count' => max($existing['done_count'] ?? 0, $doneCount),
                     'done_today' => max($existing['done_today'] ?? 0, $doneToday),
                     'is_open' => ($existing['is_open'] ?? false) || $isOpen,
+                    'open_vehicle_id' => $existing['open_vehicle_id'] ?? optional($openSession)->vehicle_id,
                 ]);
             }
 
@@ -454,6 +456,7 @@ class ScanAttendanceController extends Controller
                 'done_count' => $data['done_count'],
                 'done_today' => $data['done_today'],
                 'is_open' => $data['is_open'],
+                'open_vehicle_id' => $data['open_vehicle_id'] ?? null,
             ])->values(),
             'vehicles' => $vehicles,
         ]);
@@ -464,8 +467,12 @@ class ScanAttendanceController extends Controller
         $request->validate([
             'identifier' => 'required|string',
             'subject_id' => 'required|exists:subjects,id',
-            'vehicle_id' => 'nullable|exists:training_vehicles,id',
+            // Vehicle is mandatory for practical attendance — both when
+            // starting and when ending a practical session.
+            'vehicle_id' => 'required|exists:training_vehicles,id',
             'note' => 'nullable|string|max:1000',
+        ], [
+            'vehicle_id.required' => 'Select a vehicle — a vehicle is required for practical attendance.',
         ]);
 
         $student = $this->findStudent($request->input('identifier'));
@@ -646,13 +653,22 @@ class ScanAttendanceController extends Controller
             return $this->vehicleInUseError($vehicleId, $student->id);
         }
 
-        if (!is_null($vehicleId) && (int) $vehicleId !== (int) $open->vehicle_id) {
+        if (is_null($vehicleId)) {
+            return [
+                'status' => 'vehicle_required',
+                'message' => 'Select a vehicle before ending practical attendance.',
+            ];
+        }
+
+        // A session started before the vehicle became mandatory may have no
+        // vehicle — any vehicle is accepted to close it.
+        if (!is_null($open->vehicle_id) && (int) $vehicleId !== (int) $open->vehicle_id) {
             $startedWith = $open->vehicle->name ?? null;
             return [
                 'status' => 'vehicle_mismatch',
                 'message' => $startedWith
-                    ? "Selected vehicle doesn't match the vehicle this session was started with ({$startedWith}) — select that vehicle, or leave it blank."
-                    : "Selected vehicle doesn't match the vehicle this session was started with — select the original vehicle, or leave it blank.",
+                    ? "Selected vehicle doesn't match the vehicle this session was started with ({$startedWith}) — select that vehicle."
+                    : "Selected vehicle doesn't match the vehicle this session was started with — select the original vehicle.",
             ];
         }
 
