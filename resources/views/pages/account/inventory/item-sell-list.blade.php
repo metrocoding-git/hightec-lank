@@ -349,25 +349,20 @@
 
 
                                                                     @php
-                                                                        // Bank Transfer sales can only be returned in the
-                                                                        // same month as their bank payment date (same rule
-                                                                        // ItemSellController::bankTransferReturnWindowCheck()
-                                                                        // enforces) — hide the Return action otherwise.
-                                                                        $bankReturnLocked = $value->payment_method === 'Bank Transfer'
-                                                                            && (!$value->bank_payment_date
-                                                                                || !\Carbon\Carbon::parse($value->bank_payment_date)->isSameMonth(now()));
+                                                                        // Returns are never blocked. Bank Transfer sale in
+                                                                        // the same deposit month -> bank out; otherwise ->
+                                                                        // cash out (ItemSellController::returnPaymentMethod()).
+                                                                        $returnAsBank = $value->payment_method === 'Bank Transfer'
+                                                                            && $value->bank_payment_date
+                                                                            && \Carbon\Carbon::parse($value->bank_payment_date)->isSameMonth(now());
                                                                     @endphp
-                                                                    @if ($value->status != 'R' && $canReturnItemSell && !$bankReturnLocked)
+                                                                    @if ($value->status != 'R' && $canReturnItemSell)
                                                                         <a class="dropdown-item return-button"
                                                                             data-id="{{ $value->id }}"
-                                                                            title="Return Item Sell"
-                                                                            href="{{ route('return-item-sell', $value->id) }}">@lang('inventory.return')</a>
-                                                                    @elseif ($value->status != 'R' && $canReturnItemSell && $bankReturnLocked)
-                                                                        <span class="dropdown-item-text text-muted small"
-                                                                            title="Bank Transfer sales can only be returned in the same month as the bank payment date">
-                                                                            <i class="fa-solid fa-lock"></i> Return locked (bank payment
-                                                                            {{ $value->bank_payment_date ? \Carbon\Carbon::parse($value->bank_payment_date)->format('M Y') : 'date missing' }})
-                                                                        </span>
+                                                                            data-refund="{{ $returnAsBank ? 'bank out' : 'cash out' }}"
+                                                                            title="Return Item Sell — recorded as {{ $returnAsBank ? 'bank out' : 'cash out' }}"
+                                                                            href="{{ route('return-item-sell', $value->id) }}">@lang('inventory.return')
+                                                                            <small class="text-muted">({{ $returnAsBank ? 'Bank out' : 'Cash out' }})</small></a>
                                                                     @endif
                                                                 </x-drop-down>
                                                             </td>
@@ -891,6 +886,10 @@ dom: "<'dt-toolbar d-flex justify-content-between align-items-center flex-wrap g
             $('.return-button').click(function(e) {
                 e.preventDefault();
                 var sellBatchId = $(this).data('id');
+                var refundAs = $(this).data('refund') || 'cash out';
+                if (!confirm('Return this item sell? It will be recorded as ' + refundAs + ' in the collection report.')) {
+                    return;
+                }
 
                 $.ajax({
                     url: '{{ url('account/inventory/item-sell') }}' + '/' + sellBatchId +
@@ -901,7 +900,7 @@ dom: "<'dt-toolbar d-flex justify-content-between align-items-center flex-wrap g
                     },
                     success: function(response) {
                         if (response.success) {
-                            toastr.success('Item batch returned successfully!');
+                            toastr.success(response.message || 'Item batch returned successfully!');
                             location.reload();
                         } else {
                             // BUG FIX: response.success can be false with a 200

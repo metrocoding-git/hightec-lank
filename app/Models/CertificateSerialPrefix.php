@@ -20,42 +20,84 @@ class CertificateSerialPrefix extends Model
     /**
      * Atomically claim the next serial number in this series.
      *
-     * "if back 20 cirial number certificate. if genarate onther set ... auto
-     * fill for blank 20 and next one go 31" — numbers freed by undoing a
-     * certificate (deleting it at the "generated" stage) are reused first,
-     * lowest gap first. Only when there is no gap does the counter move on
-     * (last_number + 1). Example: 1-30 issued, #20 undone -> next is 20,
-     * the one after is 31.
+     * Prefix ending in a number (e.g. "WL/OP/10"): that number IS the first
+     * certificate number, and every next one adds 1 —
+     *   WL/OP/10, WL/OP/11, WL/OP/12, ...
+     * Leading zeros are kept ("FL/OP/0010" -> "FL/OP/0011").
      *
-     * lockForUpdate() on the series row means two certificates generated at
-     * the same moment still can't get the same number.
+     * Prefix with no number at the end (e.g. "FL/OP/", "STB-AD"): unchanged
+     * old behaviour — prefix + 8-digit running number (FL/OP/00000001).
+     *
+     * Either way, a number freed by undoing a generated certificate is
+     * reused first (lowest gap first) before the series moves on, and the
+     * series row is locked so two certificates generated at the same moment
+     * can't get the same number.
      */
     public static function nextSerialFor(int $prefixId): string
     {
         return DB::transaction(function () use ($prefixId) {
             $row = self::where('id', $prefixId)->lockForUpdate()->firstOrFail();
 
-            $base = self::serialBase($row->prefix);
+            [$base, $start, $width] = self::parsePrefix($row->prefix);
 
-            $used = DB::table('certificates')
+            // Every certificate number already taken in this series.
+            $taken = DB::table('certificates')
                 ->where('certificate_number', 'like', addcslashes($base, '%_\\') . '%')
                 ->pluck('certificate_number')
-                ->map(fn($number) => substr($number, strlen($base)))
-                ->filter(fn($digits) => ctype_digit($digits))
-                ->map(fn($digits) => (int) $digits)
                 ->flip();
 
-            for ($n = 1; $n <= $row->last_number; $n++) {
-                if (!$used->has($n)) {
-                    return self::formatSerial($row->prefix, $n); // fill the gap
-                }
+            $n = $start;
+            while ($taken->has(self::formatNumber($base, $n, $width))) {
+                $n++;
             }
 
-            $row->last_number += 1;
-            $row->save();
+            if ($n > (int) $row->last_number) {
+                $row->last_number = $n;
+                $row->save();
+            }
 
-            return self::formatSerial($row->prefix, $row->last_number);
+            return self::formatNumber($base, $n, $width);
         });
+    }
+
+    /**
+     * Splits a prefix into [base, first number, digit width].
+     *   "WL/OP/10" -> ["WL/OP/", 10, 2]
+     *   "FL/OP/"   -> ["FL/OP/", 1, 8]   (old style: running number appended)
+     *   "STB-AD"   -> ["STB-AD/", 1, 8]
+     */
+    public static function parsePrefix(string $prefix): array
+    {
+        $prefix = trim($prefix);
+
+        if (preg_match('/^(.*?)(\d+)$/', $prefix, $m)) {
+            return [$m[1], (int) $m[2], strlen($m[2])];
+        }
+
+        return [self::serialBase($prefix), 1, 8];
+    }
+
+    public static function formatNumber(string $base, int $number, int $width): string
+    {
+        return $base . str_pad((string) $number, $width, '0', STR_PAD_LEFT);
+    }
+
+    /** The number the next certificate in this series will get (preview only). */
+    public static function previewNext(string $prefix): string
+    {
+        [$base, $start, $width] = self::parsePrefix($prefix);
+
+        $taken = DB::table('certificates')
+            ->where('certificate_number', 'like', addcslashes($base, '%_\\') . '%')
+            ->pluck('certificate_number')
+            ->flip();
+
+        $n = $start;
+        while ($taken->has(self::formatNumber($base, $n, $width))) {
+            $n++;
+        }
+
+        return self::formatNumber($base, $n, $width);
     }
 
     /**

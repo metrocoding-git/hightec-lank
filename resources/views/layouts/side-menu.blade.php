@@ -812,7 +812,9 @@
                     Auth::user()->hasPermission('reports.change-course') ||
                     Auth::user()->hasPermission('reports.invoice-payments') ||
                     Auth::user()->hasPermission('reports.food-payment') ||
-                    Auth::user()->hasPermission('reports.student-attendance')))
+                    Auth::user()->hasPermission('reports.student-attendance') ||
+                    Auth::user()->hasPermission('reports.nvq-payment') ||
+                    Auth::user()->hasPermission('reports.item-stock')))
             <span class="menu_seperator" id="seperator_reports_section" data-section="reports_section">Reports
                 Section
             </span>
@@ -829,7 +831,9 @@
                     Auth::user()->hasPermission('reports.change-course') ||
                     Auth::user()->hasPermission('reports.invoice-payments') ||
                     Auth::user()->hasPermission('reports.food-payment') ||
-                    Auth::user()->hasPermission('reports.student-attendance')))
+                    Auth::user()->hasPermission('reports.student-attendance') ||
+                    Auth::user()->hasPermission('reports.nvq-payment') ||
+                    Auth::user()->hasPermission('reports.item-stock')))
             <li
                 class="reports_section {{ request()->is('reports') || request()->is('reports/*') ? 'mm-active' : '' }}">
                 <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
@@ -920,6 +924,24 @@
                         </li>
                     @endif
 
+                    @if (Auth::user()->hasPermission('reports.nvq-payment'))
+                        <li>
+                            <a href="/reports/nvq-payment"
+                                class="{{ request()->is('reports/nvq-payment') ? 'active a' : '' }}">
+                                NVQ Payment (Completion &gt; 75%)
+                            </a>
+                        </li>
+                    @endif
+
+                    @if (Auth::user()->hasPermission('reports.item-stock'))
+                        <li>
+                            <a href="/reports/item-stock"
+                                class="{{ request()->is('reports/item-stock') ? 'active a' : '' }}">
+                                Item Stock Balance (Branch-wise)
+                            </a>
+                        </li>
+                    @endif
+
                     @if (Auth::user()->hasPermission('reports.food-payment'))
                         <li>
                             <a href="/reports/food-payment-report"
@@ -942,6 +964,45 @@
         @endif
         {{-- ----- --}}
         {{-- ================== --}}
+
+        {{-- Leave Section --}}
+        @if (Auth::check() && (Auth::user()->hasPermission('leave.my') || Auth::user()->hasPermission('leave.review-list')))
+            <span class="menu_seperator" id="seperator_leave_section" data-section="leave_section">Leave
+                Section
+            </span>
+            <li class="leave_section {{ request()->is('leave') || request()->is('leave/*') ? 'mm-active' : '' }}">
+                <a href="javascript:void(0)" class="has-arrow" aria-expanded="false">
+                    <div class="nav_icon_small">
+                        <span class="fas fa-calendar-check"></span>
+                    </div>
+                    <div class="nav_title">
+                        <span>Leave</span>
+                    </div>
+                </a>
+                <ul class="mm-collapse {{ request()->is('leave') || request()->is('leave/*') ? 'mm-show' : '' }}">
+                    @if (Auth::user()->hasPermission('leave.my'))
+                        <li>
+                            <a href="/leave/my-leaves" class="{{ request()->is('leave/my-leaves') ? 'active a' : '' }}">
+                                My Leaves
+                            </a>
+                        </li>
+                    @endif
+                    @if (Auth::user()->hasPermission('leave.review-list'))
+                        <li>
+                            <a href="/leave/requests" class="{{ request()->is('leave/requests') ? 'active a' : '' }}">
+                                Leave Requests
+                                @php
+                                    $__pendingLeaves = \App\Models\LeaveRequest::visibleToReviewer(Auth::user())->where('status', 'pending')->where('user_id', '!=', Auth::id())->count();
+                                @endphp
+                                @if ($__pendingLeaves > 0)
+                                    <span class="badge badge-warning ml-1">{{ $__pendingLeaves }}</span>
+                                @endif
+                            </a>
+                        </li>
+                    @endif
+                </ul>
+            </li>
+        @endif
 
         {{-- Role Management Section --}}
         @if (Auth::check() &&

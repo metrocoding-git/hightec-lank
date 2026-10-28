@@ -214,6 +214,15 @@ class PermissionSeeder extends Seeder
             'role-management.store-user',
             'role-management.user-list',
             'role-management.get-student-details',
+            'reports.nvq-payment',
+            'reports.nvq-payment.export',
+            'reports.item-stock',
+            'reports.item-stock.export',
+            'leave.my',
+            'leave.store',
+            'leave.cancel',
+            'leave.review-list',
+            'leave.review',
         ];
 
         foreach ($permissions as $permission) {

@@ -485,6 +485,41 @@ return [
                         ['key' => 'reports.student-attendance.export', 'label' => 'Export'],
                     ],
                 ],
+                [
+                    'name' => 'NVQ Payment (Completion > 75%)',
+                    'window' => ['key' => 'reports.nvq-payment', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'reports.nvq-payment.export', 'label' => 'Export'],
+                    ],
+                ],
+                [
+                    'name' => 'Item Stock Balance (Branch-wise)',
+                    'window' => ['key' => 'reports.item-stock', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'reports.item-stock.export', 'label' => 'Export'],
+                    ],
+                ],
+            ],
+        ],
+
+        [
+            'name' => 'Leave',
+            'windows' => [
+                [
+                    'name' => 'My Leaves (apply — sees own leaves only)',
+                    'window' => ['key' => 'leave.my', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'leave.store', 'label' => 'Apply'],
+                        ['key' => 'leave.cancel', 'label' => 'Cancel own pending'],
+                    ],
+                ],
+                [
+                    'name' => 'Leave Requests (review other staff)',
+                    'window' => ['key' => 'leave.review-list', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'leave.review', 'label' => 'Accept / Not Accept'],
+                    ],
+                ],
             ],
         ],
 

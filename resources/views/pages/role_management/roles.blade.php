@@ -233,16 +233,16 @@
                                                         @php
                                                             $routeList = [];
 
-                                                            if ($canEditRole) {
-                                                                $routeList[] =
-                                                                    '<a class="dropdown-item edit-role-btn" href="#"
-                    data-id="' .
-                                                                    $role->id .
-                                                                    '"
-                    data-name="' .
-                                                                    $role->role_name .
-                                                                    '">Edit</a>';
-                                                            }
+                    //                                         if ($canEditRole) {
+                    //                                             $routeList[] =
+                    //                                                 '<a class="dropdown-item edit-role-btn" href="#"
+                    // data-id="' .
+                    //                                                 $role->id .
+                    //                                                 '"
+                    // data-name="' .
+                    //                                                 $role->role_name .
+                    //                                                 '">Edit</a>';
+                    //                                         }
 
                                                             if ($canGrantPermission) {
                                                                 $routeList[] =

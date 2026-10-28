@@ -607,12 +607,12 @@
                                     <div class="col-lg-4 mb-15">
                                         <div class="primary_input">
                                             <label class="primary_input_label" for="practical_vehicle_id">Vehicle
-                                                (optional)</label>
-                                            <select class="primary_select form-control" id="practical_vehicle_id">
-                                                <option value="">No vehicle</option>
+                                                <span class="text-danger">*</span></label>
+                                            <select class="primary_select form-control" id="practical_vehicle_id" required>
+                                                <option value="">Select vehicle</option>
                                             </select>
-                                            <small class="text-muted">Only vehicles available at this student's branch are
-                                                listed.</small>
+                                            <small class="text-muted" id="practical_vehicle_hint">Required. Only vehicles
+                                                available at this student's branch are listed.</small>
                                         </div>
                                     </div>
                                     <div class="col-lg-4 mb-15">
@@ -665,6 +665,7 @@
                                         <th>Student</th>
                                         <th>Course</th>
                                         <th>Subject</th>
+                                        <th title="Practice time still not completed for this practical subject (read only)">Practice Remaining</th>
                                         <th>Action</th>
                                         <th>Status</th>
                                         <th></th>
@@ -745,9 +746,32 @@
 
             // ---- Section 3 practical subject picker: same full-row highlight
             // treatment as the Section 2 checklist, applied to the radio list. ----
+            let practicalVehicles = [];
+            let practicalSubjects = [];
+
+            function refreshVehicleSelect() {
+                if (typeof $.fn.niceSelect === 'function') {
+                    if ($('#practical_vehicle_id').next('.nice-select').length) {
+                        $('#practical_vehicle_id').niceSelect('destroy');
+                    }
+                    $('#practical_vehicle_id').niceSelect();
+                }
+            }
+
+            function syncVehicleWithSubject() {
+                const subjectId = $('input[name="practical_subject"]:checked').val();
+                const subject = practicalSubjects.find(s => String(s.id) === String(subjectId));
+                if (subject && subject.is_open && subject.open_vehicle_id &&
+                    $('#practical_vehicle_id option[value="' + subject.open_vehicle_id + '"]').length) {
+                    $('#practical_vehicle_id').val(String(subject.open_vehicle_id));
+                }
+                refreshVehicleSelect();
+            }
+
             $('#practical_subject_list').on('change', 'input[type="radio"]', function() {
                 $('#practical_subject_list .form-check').removeClass('row-checked');
                 $(this).closest('.form-check').addClass('row-checked');
+                syncVehicleWithSubject();
             });
             $('#practical_subject_list').on('click', '.form-check', function(e) {
                 if ($(e.target).is('input, label')) return;
@@ -961,7 +985,7 @@
                     const undoable = (r.action === 'in' || r.action === 'out') && !!r.session_id;
                     addLogRow(r.time || new Date(), res.student.name, res.student.admission_number,
                         courseLabel(r.course_id), subjectLabel(r.subject_id), label, 'OK', cls, pill,
-                        r.session_id || null, undoable);
+                        r.session_id || null, undoable, r.progress || null);
                 });
 
                 // "Before checking" (course just opened) / "after checking" (a
@@ -1061,19 +1085,27 @@
                 // Vehicle list is scoped server-side: prefers the logged-in
                 // staff user's own branch, falling back to the student's
                 // enrolment branch(es).
-                let vehicleOptions = '<option value="">No vehicle</option>';
-                (res.vehicles || []).forEach(v => {
+                practicalVehicles = res.vehicles || [];
+                practicalSubjects = res.subjects || [];
+                let vehicleOptions = '<option value="">Select vehicle</option>';
+                practicalVehicles.forEach(v => {
                     const label = v.name + (v.vehicle_number ? (' - ' + v.vehicle_number) : '');
                     vehicleOptions += `<option value="${v.id}">${label}</option>`;
                 });
                 $('#practical_vehicle_id').html(vehicleOptions).val('');
 
-                if (typeof $.fn.niceSelect === 'function') {
-                    if ($('#practical_vehicle_id').next('.nice-select').length) {
-                        $('#practical_vehicle_id').niceSelect('destroy');
-                    }
-                    $('#practical_vehicle_id').niceSelect();
+                if (!practicalVehicles.length) {
+                    $('#practical_vehicle_hint').html(
+                        '<span class="text-danger">No vehicles are available for this branch — add a vehicle before marking practical attendance.</span>'
+                    );
+                } else {
+                    $('#practical_vehicle_hint').text(
+                        "Required. Only vehicles available at this student's branch are listed.");
                 }
+
+                // An In Progress subject must be ended with the same vehicle it
+                // was started with — preselect it.
+                syncVehicleWithSubject();
 
                 $('#practical_note').val('');
                 $('#practical_confirm_box').show();
@@ -1082,6 +1114,13 @@
             $('#practical_submit_btn').on('click', function() {
                 const subjectId = $('input[name="practical_subject"]:checked').val();
                 if (!subjectId || !practicalIdentifier) return;
+
+                const vehicleId = $('#practical_vehicle_id').val();
+                if (!vehicleId) {
+                    showFeedback('danger', 'Select a vehicle — a vehicle is required for practical attendance.');
+                    $('#practical_vehicle_id').next('.nice-select').addClass('open');
+                    return;
+                }
 
                 const $btn = $(this);
                 setButtonLoading($btn, true);
@@ -1095,7 +1134,7 @@
                     data: {
                         identifier: practicalIdentifier,
                         subject_id: subjectId,
-                        vehicle_id: $('#practical_vehicle_id').val() || null,
+                        vehicle_id: vehicleId,
                         note: $('#practical_note').val() || null,
                     },
                     success: function(res) {
@@ -1186,8 +1225,17 @@
                 return count > 1 ? count : null;
             }
 
+            // Read-only "practice time not completed" cell for practical subjects.
+            function progressCell(p) {
+                if (!p) return '<span class="text-muted">-</span>';
+                if (p.completed) {
+                    return `<span class="badge badge-success">Completed</span><div class="small text-muted">${p.done} / ${p.required}</div>`;
+                }
+                return `<strong class="text-danger">${p.remaining}</strong> left<div class="small text-muted">Done ${p.done} of ${p.required}</div>`;
+            }
+
             function addLogRow(time, student, regNo, course, subject, action, status, cls, pill,
-                sessionId, undoable) {
+                sessionId, undoable, progress) {
                 $('#scan_log_empty').hide();
 
                 const t = (time instanceof Date) ? time.toLocaleTimeString() : time;
@@ -1205,7 +1253,7 @@
                 const rowCls = (cls || '') + (repeatCount ? ' row-repeat' : '');
 
                 const row =
-                    `<tr id="${rowId}" class="${rowCls}"><td>${t}</td><td>${regNo || '-'}</td><td>${student}</td><td>${course || '-'}</td><td>${subjectHtml}</td><td>${action}</td><td>${statusHtml}</td><td>${undoCell}</td></tr>`;
+                    `<tr id="${rowId}" class="${rowCls}"><td>${t}</td><td>${regNo || '-'}</td><td>${student}</td><td>${course || '-'}</td><td>${subjectHtml}</td><td>${progressCell(progress)}</td><td>${action}</td><td>${statusHtml}</td><td>${undoCell}</td></tr>`;
                 $('#scan_log tbody').prepend(row);
 
                 // Brief flash so the newest row is easy to spot.
@@ -1262,7 +1310,7 @@
                         let cls = row.cls,
                             pill = row.pill;
                         addLogRow(row.time, row.student, row.reg_no, row.course, row.subject, row
-                            .action, row.status, cls, pill, row.session_id, row.undoable);
+                            .action, row.status, cls, pill, row.session_id, row.undoable, row.progress || null);
                     });
                 }
             });
