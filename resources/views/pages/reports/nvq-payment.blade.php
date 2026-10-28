@@ -154,6 +154,8 @@
                     Completion % = completed subjects ÷ assigned subjects (theory + practical). A practical subject is
                     complete when its practice time is done; a theory subject when it has been attended.
                 </p>
+                                                <div class="rp-table-wrapper">
+
                 <x-table>
                     <table id="table_id" class="table" cellspacing="0" width="100%">
                         <thead>
@@ -212,6 +214,7 @@
                         </tbody>
                     </table>
                 </x-table>
+                </div>
                 <div class="rp-pagination-wrapper d-flex justify-content-between align-items-center flex-wrap mt-10">
                     <div class="rp-pagination-info">Showing <strong>{{ $data->firstItem() ?? 0 }}</strong> –
                         <strong>{{ $data->lastItem() ?? 0 }}</strong> of <strong>{{ number_format($data->total()) }}</strong>
