@@ -130,3 +130,46 @@ CREATE TABLE
     CONSTRAINT fk_student_attendance_imports_course FOREIGN KEY (course_id) REFERENCES courses (id) ON DELETE CASCADE,
     CONSTRAINT fk_student_attendance_imports_uploaded_by FOREIGN KEY (uploaded_by) REFERENCES users (id) ON DELETE SET NULL
   )
+
+
+-- 28/10/2026 — Leave requests
+CREATE TABLE IF NOT EXISTS `leave_requests` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT UNSIGNED NOT NULL,
+  `branch_id` BIGINT UNSIGNED NULL,
+  `leave_type` VARCHAR(50) NOT NULL,
+  `from_date` DATE NOT NULL,
+  `to_date` DATE NOT NULL,
+  `day_part` VARCHAR(20) NOT NULL DEFAULT 'full',
+  `days` DECIMAL(5,1) NOT NULL DEFAULT 0,
+  `reason` TEXT NOT NULL,
+  `contact_during_leave` VARCHAR(255) NULL,
+  `attachment` VARCHAR(255) NULL,
+  `status` VARCHAR(20) NOT NULL DEFAULT 'pending',
+  `reviewed_by` BIGINT UNSIGNED NULL,
+  `reviewed_at` TIMESTAMP NULL,
+  `review_note` TEXT NULL,
+  `created_at` TIMESTAMP NULL,
+  `updated_at` TIMESTAMP NULL,
+  PRIMARY KEY (`id`),
+  INDEX `leave_requests_user_status` (`user_id`, `status`),
+  INDEX `leave_requests_status_from` (`status`, `from_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO `permissions` (`permission_name`, `label`, `created_at`, `updated_at`)
+SELECT * FROM (
+    SELECT 'leave.my' AS permission_name, 'View' AS label, NOW() AS c, NOW() AS u UNION ALL
+    SELECT 'leave.store', 'Apply', NOW(), NOW() UNION ALL
+    SELECT 'leave.cancel', 'Cancel own pending', NOW(), NOW() UNION ALL
+    SELECT 'leave.review-list', 'View', NOW(), NOW() UNION ALL
+    SELECT 'leave.review', 'Accept / Not Accept', NOW(), NOW()
+) AS t
+WHERE NOT EXISTS (SELECT 1 FROM `permissions` p WHERE p.permission_name = t.permission_name);
+
+-- Admin (role 1) gets everything; grant "My Leaves" + Apply to staff roles
+-- and "Leave Requests" + Accept to reviewer roles from Role Management.
+INSERT INTO `role_permissions` (`role_id`, `permission_id`, `created_at`, `updated_at`)
+SELECT 1, p.id, NOW(), NOW()
+FROM `permissions` p
+WHERE p.permission_name IN ('leave.my', 'leave.store', 'leave.cancel', 'leave.review-list', 'leave.review')
+  AND NOT EXISTS (SELECT 1 FROM `role_permissions` rp WHERE rp.role_id = 1 AND rp.permission_id = p.id);

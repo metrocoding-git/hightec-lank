@@ -28,6 +28,7 @@ use App\Http\Controllers\StudentCategoryController;
 use App\Http\Controllers\ItemSellController;
 use App\Http\Controllers\NvqPaymentReportController;
 use App\Http\Controllers\ItemStockReportController;
+use App\Http\Controllers\LeaveRequestController;
 use App\Http\Controllers\VideoListController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\CertificateController;
@@ -524,6 +525,18 @@ Route::middleware(['auth', 'permission'])->group(function () {
         Route::get('nvq-payment/export', [NvqPaymentReportController::class, 'export'])->name('reports.nvq-payment.export');
         Route::get('item-stock', [ItemStockReportController::class, 'index'])->name('reports.item-stock');
         Route::get('item-stock/export', [ItemStockReportController::class, 'export'])->name('reports.item-stock.export');
+    });
+
+    // ================= LEAVE REQUEST ROUTES ================= //
+    Route::prefix('leave')->group(function () {
+        Route::get('my-leaves', [LeaveRequestController::class, 'myLeaves'])->name('leave.my');
+        Route::post('apply', [LeaveRequestController::class, 'store'])->name('leave.store');
+        Route::post('{id}/cancel', [LeaveRequestController::class, 'cancel'])->name('leave.cancel');
+        Route::get('requests', [LeaveRequestController::class, 'reviewList'])->name('leave.review-list');
+        Route::post('{id}/review', [LeaveRequestController::class, 'review'])->name('leave.review');
+        // Owner or an in-scope reviewer only — checked in the controller.
+        Route::get('{id}', [LeaveRequestController::class, 'show'])->whereNumber('id')->name('leave.show')->withoutMiddleware(['permission']);
+        Route::get('{id}/attachment', [LeaveRequestController::class, 'attachment'])->whereNumber('id')->name('leave.attachment')->withoutMiddleware(['permission']);
     });
 
     Route::get('dashboard', [HomeController::class, 'dashboard'])->name('dashboard');

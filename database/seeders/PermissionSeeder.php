@@ -218,6 +218,11 @@ class PermissionSeeder extends Seeder
             'reports.nvq-payment.export',
             'reports.item-stock',
             'reports.item-stock.export',
+            'leave.my',
+            'leave.store',
+            'leave.cancel',
+            'leave.review-list',
+            'leave.review',
         ];
 
         foreach ($permissions as $permission) {

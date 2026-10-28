@@ -503,6 +503,27 @@ return [
         ],
 
         [
+            'name' => 'Leave',
+            'windows' => [
+                [
+                    'name' => 'My Leaves (apply — sees own leaves only)',
+                    'window' => ['key' => 'leave.my', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'leave.store', 'label' => 'Apply'],
+                        ['key' => 'leave.cancel', 'label' => 'Cancel own pending'],
+                    ],
+                ],
+                [
+                    'name' => 'Leave Requests (review other staff)',
+                    'window' => ['key' => 'leave.review-list', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'leave.review', 'label' => 'Accept / Not Accept'],
+                    ],
+                ],
+            ],
+        ],
+
+        [
             'name' => 'Role Management',
             'windows' => [
                 [
