@@ -108,6 +108,8 @@ class CertificateController extends Controller
                 optional(optional(optional($a->evaluator)->branches)->first())->name ?? '-',
                 optional(optional($a->studentCourse)->branch)->name ?? '-',
                 $cert->certificate_number ?? '-',
+                $cert && $cert->issue_date ? Carbon::parse($cert->issue_date)->format('Y-m-d') : '-',
+                $cert && $cert->course_end_date ? Carbon::parse($cert->course_end_date)->format('Y-m-d') : '-',
                 $cert && $cert->conductor_signed_at ? 'Yes ' . $cert->conductor_signed_at->format('Y-m-d') : 'No',
                 $cert && $cert->owner_signed_at ? 'Yes ' . $cert->owner_signed_at->format('Y-m-d') : 'No',
                 $cert && $cert->downloaded_at ? 'Yes (' . $cert->download_count . 'x) ' . $cert->downloaded_at->format('Y-m-d') : 'No',
@@ -119,7 +121,7 @@ class CertificateController extends Controller
             'Theory Subjects', 'Practical Subjects', 'Created Date', 'Total', 'Result', 'Grade',
             'Student Category', 'Address', 'Name Verified', 'NIC / ID No. Verified', 'Address Verified',
             'Start Date', 'Evaluator (Created By)', 'Intake', 'FS Conduct Branch (Evaluator)',
-            'Intake Branch (Course Start)', 'Certificate #', 'Director Training Signed',
+            'Intake Branch (Course Start)', 'Certificate #', 'Date of Issue', 'Course End Date', 'Director Training Signed',
             'Managing Director Signed', 'Downloaded',
         ];
 
