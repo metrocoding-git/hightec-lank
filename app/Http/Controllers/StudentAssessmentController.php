@@ -74,7 +74,8 @@ class StudentAssessmentController extends Controller
             });
         }
         if ($request->filled('date_range')) {
-            $dateRangeParts = array_map('trim', explode(' - ', $request->date_range));
+            // flatpickr range mode sends "2026-10-01 to 2026-10-14"; older links use " - ".
+            $dateRangeParts = array_map('trim', preg_split('/\s+(?:to|-)\s+/', trim($request->date_range)));
 
             if (count($dateRangeParts) === 2 && $dateRangeParts[0] !== '' && $dateRangeParts[1] !== '') {
                 try {
@@ -96,7 +97,8 @@ class StudentAssessmentController extends Controller
         }
 
         if ($request->filled('start_date_range')) {
-            $startDateRangeParts = array_map('trim', explode(' - ', $request->start_date_range));
+            // flatpickr range mode sends "2026-10-01 to 2026-10-14"; older links use " - ".
+            $startDateRangeParts = array_map('trim', preg_split('/\s+(?:to|-)\s+/', trim($request->start_date_range)));
 
             if (count($startDateRangeParts) === 2 && $startDateRangeParts[0] !== '' && $startDateRangeParts[1] !== '') {
                 try {

@@ -346,6 +346,7 @@
         .footer-band-address {
             display: table-cell;
             text-align: left;
+            font-size: 6.5pt;
         }
 
         .footer-band-name {

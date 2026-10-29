@@ -325,6 +325,13 @@ Route::middleware(['auth', 'permission'])->group(function () {
             Route::get('/', [CertificateController::class, 'index'])
                 ->name('certificate.index');
 
+            // Excel export of the filtered list. Uses the same permission as
+            // viewing the page (checked in the controller), so no new
+            // permission row is needed.
+            Route::get('export-excel', [CertificateController::class, 'exportExcel'])
+                ->name('certificate.export-excel')
+                ->withoutMiddleware(['permission']);
+
             Route::post('generate', [CertificateController::class, 'generate'])
                 ->name('certificate.generate');
 

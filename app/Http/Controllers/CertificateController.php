@@ -19,7 +19,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
-use ZipArchive;
 
 class CertificateController extends Controller
 {
@@ -30,14 +29,141 @@ class CertificateController extends Controller
      */
     public function index(Request $request)
     {
-        // WIDENED this round — "list want add all assment list table
-        // details all": these extra eager loads (student.verifications,
-        // evaluator.branches, studentCourse.intake, studentCourse.branch)
-        // are what the new Theory/Practical Subjects, Student Category,
-        // verification badges, Start Date, Intake, and branch columns
-        // below need — the exact same relations
-        // StudentAssessmentController::index() already loads for the
-        // Final Assessment Marks list.
+        $assessments = $this->filteredAssessments($request);
+
+        // NEW — same "Student Category" batched lookup the Final
+        // Assessment Marks list uses for its own column.
+        $categoriesByPair = $this->resolveCourseCategoriesForRecent($assessments);
+
+        $courseIds = AssessmentTemplate::pluck('course_id')->unique();
+        $courseOptions = Course::whereIn('id', $courseIds)->orderBy('name')->get(['id', 'name']);
+
+        // Filter dropdowns: branches (used for both evaluator branch and
+        // course start branch) and the evaluators who have done assessments.
+        $branchOptions = \App\Models\Branch::orderBy('name')->get(['id', 'name']);
+        $evaluatorOptions = \App\Models\User::whereIn(
+            'id',
+            StudentAssessment::whereNotNull('evaluator_id')->distinct()->pluck('evaluator_id')
+        )->orderBy('name')->get(['id', 'name']);
+
+        return view('pages.administration.certificate.index', compact(
+            'assessments',
+            'courseOptions',
+            'categoriesByPair',
+            'branchOptions',
+            'evaluatorOptions'
+        ));
+    }
+
+    /**
+     * Excel export of the Certificate Management list — EVERY row that
+     * matches the current filters (not just the rows on screen), with the
+     * same columns as the table.
+     */
+    public function exportExcel(Request $request)
+    {
+        abort_unless(optional(Auth::user())->hasPermission('certificate.index'), 403, 'Unauthorized action.');
+
+        $assessments = $this->filteredAssessments($request);
+        $categoriesByPair = $this->resolveCourseCategoriesForRecent($assessments);
+
+        $stageLabel = fn($cert) => match (optional($cert)->status) {
+            null => 'Not generated',
+            'generated' => 'Awaiting Director Training',
+            'conductor_signed' => 'Awaiting Managing Director',
+            'approved' => 'Approved',
+            default => ucfirst((string) $cert->status),
+        };
+        $yesNo = fn($v) => $v ? 'YES' : 'NO';
+
+        $rows = [];
+        foreach ($assessments->values() as $i => $a) {
+            $cert = $a->certificate;
+            $theory = $a->theoryProgress ?? ['completed' => 0, 'total' => 0];
+            $practical = $a->practicalProgress ?? ['completed' => 0, 'total' => 0];
+            $categoryKey = $a->student_id . '-' . optional($a->template->course)->id;
+
+            $rows[] = [
+                $i + 1,
+                $a->student->student_name ?? '-',
+                $a->student->admission_number ?? '-',
+                $stageLabel($cert),
+                $a->student->national_id_number ?? '-',
+                $a->template->course->name ?? '-',
+                $a->template->module_name ?? '-',
+                $theory['completed'] . '/' . $theory['total'],
+                $practical['completed'] . '/' . $practical['total'],
+                optional($a->assessed_at)->format('Y-m-d') ?? '-',
+                $a->total_marks . ' / ' . $a->max_marks,
+                $a->is_qualified ? 'PASS' : 'FAIL',
+                $a->grade ?? '-',
+                optional($categoriesByPair->get($categoryKey))->category_name ?? '-',
+                $a->student->permanent_address ?? '-',
+                $yesNo($a->student && $a->student->isVerified('Full Name Verified')),
+                $yesNo($a->student && $a->student->isVerified('NIC Verified')),
+                $yesNo($a->student && $a->student->isVerified('Address Verified')),
+                optional(optional($a->studentCourse)->intake)->start_date ?? '-',
+                $a->evaluator->name ?? '-',
+                optional(optional($a->studentCourse)->intake)->name ?? '-',
+                optional(optional(optional($a->evaluator)->branches)->first())->name ?? '-',
+                optional(optional($a->studentCourse)->branch)->name ?? '-',
+                $cert->certificate_number ?? '-',
+                $cert && $cert->conductor_signed_at ? 'Yes ' . $cert->conductor_signed_at->format('Y-m-d') : 'No',
+                $cert && $cert->owner_signed_at ? 'Yes ' . $cert->owner_signed_at->format('Y-m-d') : 'No',
+                $cert && $cert->downloaded_at ? 'Yes (' . $cert->download_count . 'x) ' . $cert->downloaded_at->format('Y-m-d') : 'No',
+            ];
+        }
+
+        $headings = [
+            'No', 'Student', 'Reg No', 'Stage', 'NIC Number', 'Course', 'Module',
+            'Theory Subjects', 'Practical Subjects', 'Created Date', 'Total', 'Result', 'Grade',
+            'Student Category', 'Address', 'Name Verified', 'NIC / ID No. Verified', 'Address Verified',
+            'Start Date', 'Evaluator (Created By)', 'Intake', 'FS Conduct Branch (Evaluator)',
+            'Intake Branch (Course Start)', 'Certificate #', 'Director Training Signed',
+            'Managing Director Signed', 'Downloaded',
+        ];
+
+        $export = new class($rows, $headings) implements
+            \Maatwebsite\Excel\Concerns\FromArray,
+            \Maatwebsite\Excel\Concerns\WithHeadings,
+            \Maatwebsite\Excel\Concerns\ShouldAutoSize {
+            public function __construct(private array $rows, private array $headings) {}
+
+            public function array(): array
+            {
+                return $this->rows;
+            }
+
+            public function headings(): array
+            {
+                return $this->headings;
+            }
+        };
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            $export,
+            'Certificate_Management_' . now()->format('Y-m-d_His') . '.xlsx'
+        );
+    }
+
+    /**
+     * The filtered list shared by index() and exportExcel(): every PASSed
+     * assessment matching the request's filters, with Theory/Practical
+     * progress attached.
+     *
+     * Filters (same meaning as on Final Assessment Marks):
+     *  - date_range          "Created Date Range"  -> assessed_at
+     *  - start_date_range    "Course Start Date Range" -> intake start_date
+     *  - evaluator_branch_id evaluator's branch ("FS Conduct Branch")
+     *  - evaluator_id        evaluator name ("Created By")
+     *  - course_branch_id    branch the course was started in ("Intake Branch")
+     */
+    private function filteredAssessments(Request $request)
+    {
+        // WIDENED earlier — "list want add all assment list table details
+        // all": these eager loads are what the Theory/Practical Subjects,
+        // Student Category, verification badges, Start Date, Intake, and
+        // branch columns need.
         $query = StudentAssessment::with([
             'student.verifications',
             'template.course',
@@ -102,13 +228,38 @@ class CertificateController extends Controller
             });
         }
 
+        if ($range = $this->parseDateRange($request->input('date_range'))) {
+            $query->whereBetween('assessed_at', $range);
+        }
+
+        if ($range = $this->parseDateRange($request->input('start_date_range'))) {
+            $query->whereHas('studentCourse.intake', function ($q) use ($range) {
+                $q->whereBetween('start_date', [$range[0]->toDateString(), $range[1]->toDateString()]);
+            });
+        }
+
+        if ($request->filled('evaluator_branch_id')) {
+            $branchId = (int) $request->evaluator_branch_id;
+            $query->whereHas('evaluator.branches', function ($q) use ($branchId) {
+                $q->where('branches.id', $branchId);
+            });
+        }
+
+        if ($request->filled('evaluator_id')) {
+            $query->where('evaluator_id', (int) $request->evaluator_id);
+        }
+
+        if ($request->filled('course_branch_id')) {
+            $courseBranchId = (int) $request->course_branch_id;
+            $query->whereHas('studentCourse', function ($q) use ($courseBranchId) {
+                $q->where('branch_id', $courseBranchId);
+            });
+        }
+
         $assessments = $query->get();
 
-        // NEW — "list want add all assment list table details all": the
-        // same Theory/Practical Subjects progress figures the Final
-        // Assessment Marks list already computes per row, via
-        // countSubjectCompletion() below (deliberately duplicated from
-        // StudentAssessmentController — see that method's doc-comment).
+        // Same Theory/Practical Subjects progress figures the Final
+        // Assessment Marks list computes per row.
         $assessments->each(function ($a) {
             if ($a->studentCourse) {
                 $a->theoryProgress = $this->countSubjectCompletion(
@@ -129,19 +280,35 @@ class CertificateController extends Controller
             }
         });
 
-        // NEW — same "Student Category" batched lookup the Final
-        // Assessment Marks list uses for its own column.
-        $categoriesByPair = $this->resolveCourseCategoriesForRecent($assessments);
+        return $assessments;
+    }
 
-        $courseIds = AssessmentTemplate::pluck('course_id')->unique();
-        $courseOptions = Course::whereIn('id', $courseIds)->orderBy('name')->get(['id', 'name']);
+    /**
+     * "2026-10-01 to 2026-10-31" (flatpickr range), "2026-10-01 - 2026-10-31",
+     * or a single date -> [from startOfDay, to endOfDay]. Null if empty or
+     * unreadable (a bad value never breaks the page).
+     */
+    private function parseDateRange(?string $value): ?array
+    {
+        $value = trim((string) $value);
 
-        // REMOVED — the Generate modal no longer asks the user to pick a
-        // certificate template; it's auto-selected per course (see
-        // generate() below), so $templateOptions is no longer needed
-        // here or in the view.
+        if ($value === '') {
+            return null;
+        }
 
-        return view('pages.administration.certificate.index', compact('assessments', 'courseOptions', 'categoriesByPair'));
+        $parts = array_values(array_filter(
+            array_map('trim', preg_split('/\s+(?:to|-)\s+/', $value)),
+            fn($p) => $p !== ''
+        ));
+
+        try {
+            $from = Carbon::parse($parts[0])->startOfDay();
+            $to = Carbon::parse($parts[1] ?? $parts[0])->endOfDay();
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        return $from->lte($to) ? [$from, $to] : [$to->copy()->startOfDay(), $from->copy()->endOfDay()];
     }
 
     /**
@@ -907,8 +1074,10 @@ class CertificateController extends Controller
     }
 
     /**
-     * Bulk-download many approved certificates as a single ZIP. Each
-     * included certificate is also marked downloaded.
+     * Bulk download: every selected, fully approved certificate merged into
+     * ONE PDF (front + back pages of each, in the order they were selected),
+     * instead of a ZIP of separate files. Each included certificate is
+     * marked downloaded.
      * Body: { certificate_ids: [1,2,3] }
      */
     public function bulkDownload(Request $request)
@@ -918,49 +1087,70 @@ class CertificateController extends Controller
             'certificate_ids.*' => 'integer|distinct',
         ]);
 
-        $certificates = Certificate::with('studentAssessment.student')
-            ->whereIn('id', $data['certificate_ids'])
-            ->get();
+        $order = array_flip(array_map('intval', $data['certificate_ids']));
 
-        $downloadable = $certificates->filter(function ($c) {
-            return $c->isApproved() && $c->pdf_path && Storage::disk('local')->exists($c->pdf_path);
-        });
+        $downloadable = Certificate::with('studentAssessment.student')
+            ->whereIn('id', $data['certificate_ids'])
+            ->get()
+            ->filter(fn($c) => $c->isApproved() && $c->pdf_path && Storage::disk('local')->exists($c->pdf_path))
+            ->sortBy(fn($c) => $order[$c->id] ?? PHP_INT_MAX)
+            ->values();
 
         if ($downloadable->isEmpty()) {
             return response()->json(['success' => false, 'message' => 'None of the selected certificates are fully approved/downloadable yet.'], 422);
         }
 
-        $zipName = 'certificates-' . now()->format('Ymd-His') . '.zip';
-        $zipPath = storage_path('app/tmp/' . $zipName);
-
-        if (!is_dir(dirname($zipPath))) {
-            mkdir(dirname($zipPath), 0755, true);
+        if (!class_exists(\setasign\Fpdi\Fpdi::class)) {
+            return response()->json(['success' => false, 'message' => 'PDF merge library missing. Run: composer require setasign/fpdi-fpdf'], 500);
         }
 
-        $zip = new ZipArchive();
-        $zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+        // Large batches: give the merge enough time/memory.
+        @set_time_limit(300);
 
-        $usedNames = [];
+        $merged = new \setasign\Fpdi\Fpdi();
+        $merged->SetAutoPageBreak(false);
+        $included = [];
+        $failed = [];
+
         foreach ($downloadable as $certificate) {
-            $studentName = optional($certificate->studentAssessment->student)->student_name ?? 'certificate';
-            $safeCertNumber = $this->safeFilenameSegment($certificate->certificate_number);
-            $entryName = Str::slug($studentName) . '-' . $safeCertNumber . '.pdf';
+            try {
+                $pageCount = $merged->setSourceFile(Storage::disk('local')->path($certificate->pdf_path));
 
-            $suffix = 1;
-            $finalName = $entryName;
-            while (in_array($finalName, $usedNames, true)) {
-                $finalName = Str::slug($studentName) . '-' . $safeCertNumber . '-' . $suffix . '.pdf';
-                $suffix++;
+                for ($i = 1; $i <= $pageCount; $i++) {
+                    $templateId = $merged->importPage($i);
+                    $size = $merged->getTemplateSize($templateId);
+                    $merged->AddPage($size['orientation'], [$size['width'], $size['height']]);
+                    $merged->useTemplate($templateId);
+                }
+
+                $included[] = $certificate;
+            } catch (\Throwable $e) {
+                // One unreadable PDF shouldn't stop the rest.
+                \Illuminate\Support\Facades\Log::warning("Bulk certificate merge skipped #{$certificate->id} ({$certificate->certificate_number}): " . $e->getMessage());
+                $failed[] = $certificate->certificate_number;
             }
-            $usedNames[] = $finalName;
+        }
 
-            $zip->addFile(Storage::disk('local')->path($certificate->pdf_path), $finalName);
+        if (empty($included)) {
+            return response()->json(['success' => false, 'message' => 'The selected certificate PDFs could not be read.'], 500);
+        }
+
+        foreach ($included as $certificate) {
             $this->recordDownload($certificate);
         }
 
-        $zip->close();
+        $filename = 'certificates-' . count($included) . '-' . now()->format('Ymd-His') . '.pdf';
 
-        return response()->download($zipPath, $zipName)->deleteFileAfterSend(true);
+        $headers = [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        if ($failed) {
+            $headers['X-Skipped-Certificates'] = implode(', ', $failed);
+        }
+
+        return response($merged->Output('S'), 200, $headers);
     }
 
     /**
