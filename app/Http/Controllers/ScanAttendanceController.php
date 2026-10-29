@@ -423,13 +423,13 @@ class ScanAttendanceController extends Controller
         }
 
         if ($subjects->isEmpty()) {
-            if ($hadCertificateLockedCourse) {
-                return response()->json([
-                    'status' => 'certificate_locked',
-                    'message' => "{$student->student_name} already has a certificate for this course — practical attendance can no longer be recorded.",
-                    'student' => $this->studentPayload($student),
-                ], 422);
-            }
+            // if ($hadCertificateLockedCourse) {
+            //     return response()->json([
+            //         'status' => 'certificate_locked',
+            //         'message' => "{$student->student_name} already has a certificate for this course — practical attendance can no longer be recorded.",
+            //         'student' => $this->studentPayload($student),
+            //     ], 422);
+            // }
 
             if ($hadAssignedPractical) {
                 return response()->json([
@@ -508,17 +508,17 @@ class ScanAttendanceController extends Controller
         // "dont get after genarete attenadens that course related" — drop any
         // matched enrolment whose course already has a certificate before
         // even checking whether its course attendance is open.
-        $matches = $matches->reject(function ($enrolment) use ($student) {
-            return $this->courseHasCertificateForStudent($student->id, $enrolment->course_id);
-        })->values();
+        // $matches = $matches->reject(function ($enrolment) use ($student) {
+        //     return $this->courseHasCertificateForStudent($student->id, $enrolment->course_id);
+        // })->values();
 
-        if ($matches->isEmpty()) {
-            return response()->json([
-                'status' => 'certificate_locked',
-                'message' => "{$student->student_name} already has a certificate for this course — practical attendance can no longer be recorded.",
-                'student' => $this->studentPayload($student),
-            ], 422);
-        }
+        // if ($matches->isEmpty()) {
+        //     return response()->json([
+        //         'status' => 'certificate_locked',
+        //         'message' => "{$student->student_name} already has a certificate for this course — practical attendance can no longer be recorded.",
+        //         'student' => $this->studentPayload($student),
+        //     ], 422);
+        // }
 
         // Narrow down to enrolments whose course attendance is currently
         // open — practical attendance can't be started/continued otherwise.
