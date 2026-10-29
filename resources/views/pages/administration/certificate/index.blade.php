@@ -557,6 +557,8 @@
                                 <th>FS Conduct Branch</th>
                                 <th>Intake Branch</th>
                                 <th>Certificate #</th>
+                                <th>Date of Issue</th>
+                                <th>Course End Date</th>
                                 <th>Director Training Signed</th>
                                 <th>Managing Director Signed</th>
                                 <th>Downloaded</th>
@@ -646,6 +648,8 @@
                                     <td>{{ optional(optional($a->evaluator)->branches)->first()->name ?? '-' }}</td>
                                     <td>{{ $a->studentCourse->branch->name ?? '-' }}</td>
                                     <td>{{ $cert->certificate_number ?? '-' }}</td>
+                                    <td>{{ $cert && $cert->issue_date ? \Carbon\Carbon::parse($cert->issue_date)->format('Y-m-d') : '-' }}</td>
+                                    <td>{{ $cert && $cert->course_end_date ? \Carbon\Carbon::parse($cert->course_end_date)->format('Y-m-d') : '-' }}</td>
                                     <td>
                                         @if ($cert && $cert->conductor_signed_at)
                                             <span class="cert-yes">Yes</span>

@@ -300,6 +300,8 @@
                                                 <th>Final Assessment</th>
                                                 <th>Result</th>
                                                 <th>Assessment Date</th>
+                                                <th title="Theory subjects completed / assigned for this course (same as Certificate Management)">Theory Subjects</th>
+                                                <th title="Practical subjects completed / assigned for this course (same as Certificate Management)">Practical Subjects</th>
                                                 <th>Grade</th>
                                                 <th>Marks</th>
                                                 <th>Evaluator</th>
@@ -332,6 +334,17 @@
                                                         @endif
                                                     </td>
                                                     <td>{{ $student->final_assessment_date ?? '-' }}</td>
+                                                    @foreach (['theory', 'practical'] as $subjectType)
+                                                        @php $sp = $student->subject_progress[$subjectType] ?? null; @endphp
+                                                        <td>
+                                                            @if ($sp && $sp['total'] > 0)
+                                                                <span 
+                                                                    title="{{ $sp['completed'] }} of {{ $sp['total'] }} completed">{{ $sp['completed'] }}/{{ $sp['total'] }}</span>
+                                                            @else
+                                                                -
+                                                            @endif
+                                                        </td>
+                                                    @endforeach
                                                     <td>{{ $student->final_assessment_grade ?? '-' }}</td>
                                                     <td>{{ $student->final_assessment_marks ?? '-' }}</td>
                                                     <td>{{ $student->final_assessment_evaluator ?? '-' }}</td>
@@ -360,7 +373,7 @@
                                                 </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="13" class="text-center">
+                                                    <td colspan="15" class="text-center">
                                                         @if ($hasFilter ?? false)
                                                             No students found.
                                                         @else
