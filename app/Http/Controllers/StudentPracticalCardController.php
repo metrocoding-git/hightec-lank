@@ -184,7 +184,7 @@ class StudentPracticalCardController extends Controller
         }
 
         $relevantCourseByStudent = $courseQuery
-            ->get(['id', 'student_id', 'course_id'])
+            ->get(['id', 'student_id', 'course_id', 'intake_id'])
             ->groupBy('student_id')
             ->map(fn($rows) => $rows->unique('course_id')->last());
 
@@ -197,8 +197,20 @@ class StudentPracticalCardController extends Controller
             ->groupBy('student_course_id')
             ->map(fn($rows) => $rows->last());
 
-        return $students->map(function ($student) use ($relevantCourseByStudent, $assessmentsByStudentCourseId) {
+        // Theory / Practical subjects completed for the same course the
+        // assessment columns use — same count as Scan Attendance and
+        // Certificate Management.
+        $scanAttendance = app(ScanAttendanceController::class);
+
+        return $students->map(function ($student) use ($relevantCourseByStudent, $assessmentsByStudentCourseId, $scanAttendance) {
             $relevantCourse = $relevantCourseByStudent->get($student->id);
+            $student->subject_progress = $relevantCourse
+                ? $scanAttendance->subjectCompletion(
+                    (int) $student->id,
+                    $relevantCourse->intake_id ? (int) $relevantCourse->intake_id : null,
+                    (int) $relevantCourse->course_id
+                )
+                : null;
             $assessment = $relevantCourse ? $assessmentsByStudentCourseId->get($relevantCourse->id) : null;
 
             $student->final_assessment_done = (bool) $assessment;

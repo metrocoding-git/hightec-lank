@@ -666,6 +666,8 @@
                                         <th>Course</th>
                                         <th>Subject</th>
                                         <th title="Practice time still not completed for this practical subject (read only)">Practice Remaining</th>
+                                        <th title="Theory subjects completed / assigned for this course (same as Certificate Management)">Theory Subjects</th>
+                                        <th title="Practical subjects completed / assigned for this course (same as Certificate Management)">Practical Subjects</th>
                                         <th>Action</th>
                                         <th>Status</th>
                                         <th></th>
@@ -947,7 +949,7 @@
                 const label = statusLabels[res.status] || 'Error';
                 const name = res.student ? res.student.name : identifier;
                 const regNo = res.student ? (res.student.admission_number || '-') : identifier;
-                addLogRow(new Date(), name, regNo, '-', '-', '-', label, 'action-error', 'pill-error', null, false);
+                addLogRow(new Date(), name, regNo, '-', '-', '-', label, 'action-error', 'pill-error', null, false, null, null);
                 showFeedback('danger', res.message || 'Something went wrong.');
             }
 
@@ -985,7 +987,7 @@
                     const undoable = (r.action === 'in' || r.action === 'out') && !!r.session_id;
                     addLogRow(r.time || new Date(), res.student.name, res.student.admission_number,
                         courseLabel(r.course_id), subjectLabel(r.subject_id), label, 'OK', cls, pill,
-                        r.session_id || null, undoable, r.progress || null);
+                        r.session_id || null, undoable, r.progress || null, subjectProgressFor(res, r.course_id));
                 });
 
                 // "Before checking" (course just opened) / "after checking" (a
@@ -996,12 +998,12 @@
                     addLogRow(res.before_checking.starts_at, res.student.name, res.student
                         .admission_number, res.before_checking.course || '-', 'Before Checking',
                         'By ' + (res.before_checking.by || '-'), 'Active', 'action-already',
-                        'pill-already', null, false);
+                        'pill-already', null, false, null, subjectProgressFor(res, res.before_checking.course_id));
                 }
                 (res.after_checking || []).forEach(evt => {
                     addLogRow(evt.starts_at, res.student.name, res.student.admission_number, evt
                         .course || '-', 'After Checking', 'By ' + (evt.by || '-'), 'Active',
-                        'action-already', 'pill-already', null, false);
+                        'action-already', 'pill-already', null, false, null, subjectProgressFor(res, evt.course_id));
                 });
 
                 const intakeNote = res.intake_name ? ` (Intake: ${res.intake_name})` : '';
@@ -1234,8 +1236,21 @@
                 return `<strong class="text-danger">${p.remaining}</strong> left<div class="small text-muted">Done ${p.done} of ${p.required}</div>`;
             }
 
+            // Theory / Practical subjects completed for the row's course,
+            // from the scan response (keyed by course id).
+            function subjectProgressFor(res, courseId) {
+                if (!res || !res.subject_progress || courseId === undefined || courseId === null) return null;
+                return res.subject_progress[courseId] || null;
+            }
+
+            function subjectCountCell(c) {
+                if (!c || !c.total) return '<span class="text-muted">-</span>';
+                const done = c.completed >= c.total;
+                return `<span class="badge ${done ? 'badge-success' : 'badge-light'}" title="${c.completed} of ${c.total} completed">${c.completed}/${c.total}</span>`;
+            }
+
             function addLogRow(time, student, regNo, course, subject, action, status, cls, pill,
-                sessionId, undoable, progress) {
+                sessionId, undoable, progress, subjects) {
                 $('#scan_log_empty').hide();
 
                 const t = (time instanceof Date) ? time.toLocaleTimeString() : time;
@@ -1253,7 +1268,7 @@
                 const rowCls = (cls || '') + (repeatCount ? ' row-repeat' : '');
 
                 const row =
-                    `<tr id="${rowId}" class="${rowCls}"><td>${t}</td><td>${regNo || '-'}</td><td>${student}</td><td>${course || '-'}</td><td>${subjectHtml}</td><td>${progressCell(progress)}</td><td>${action}</td><td>${statusHtml}</td><td>${undoCell}</td></tr>`;
+                    `<tr id="${rowId}" class="${rowCls}"><td>${t}</td><td>${regNo || '-'}</td><td>${student}</td><td>${course || '-'}</td><td>${subjectHtml}</td><td>${progressCell(progress)}</td><td>${subjectCountCell(subjects && subjects.theory)}</td><td>${subjectCountCell(subjects && subjects.practical)}</td><td>${action}</td><td>${statusHtml}</td><td>${undoCell}</td></tr>`;
                 $('#scan_log tbody').prepend(row);
 
                 // Brief flash so the newest row is easy to spot.
@@ -1310,7 +1325,8 @@
                         let cls = row.cls,
                             pill = row.pill;
                         addLogRow(row.time, row.student, row.reg_no, row.course, row.subject, row
-                            .action, row.status, cls, pill, row.session_id, row.undoable, row.progress || null);
+                            .action, row.status, cls, pill, row.session_id, row.undoable, row.progress || null,
+                            row.subjects || null);
                     });
                 }
             });
