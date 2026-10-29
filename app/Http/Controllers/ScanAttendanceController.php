@@ -102,13 +102,13 @@ class ScanAttendanceController extends Controller
         // Theory, or Practical) should be recorded against it. Checked
         // before the open/close branch below since this blocks the course
         // outright, regardless of whether a session happens to be open.
-        if ($this->courseHasCertificateForStudent($student->id, $courseId)) {
-            return response()->json([
-                'status' => 'certificate_locked',
-                'message' => "{$student->student_name} already has a certificate for this course — attendance can no longer be recorded.",
-                'student' => $this->studentPayload($student),
-            ], 422);
-        }
+        // if ($this->courseHasCertificateForStudent($student->id, $courseId)) {
+        //     return response()->json([
+        //         'status' => 'certificate_locked',
+        //         'message' => "{$student->student_name} already has a certificate for this course — attendance can no longer be recorded.",
+        //         'student' => $this->studentPayload($student),
+        //     ], 422);
+        // }
 
         // If this scan is about to CLOSE an open course session, enforce the
         // "after checking" gate first.
