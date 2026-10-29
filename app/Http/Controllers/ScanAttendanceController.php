@@ -84,7 +84,7 @@ class ScanAttendanceController extends Controller
         $studentCourse = StudentCourse::with(['intake:id,name', 'course:id,name'])
             ->where('student_id', $student->id)
             ->where('course_id', $courseId)
-            ->where('status', 'start')
+            ->whereIn('status', ['start', 'complete'])
             ->latest()
             ->first();
 
@@ -156,6 +156,9 @@ class ScanAttendanceController extends Controller
             'student' => $this->studentPayload($student),
             'intake_name' => $studentCourse->intake->name ?? null,
             'results' => [$result],
+            'subject_progress' => [
+                $courseId => $this->subjectCompletion((int) $student->id, $studentCourse->intake_id ? (int) $studentCourse->intake_id : null, (int) $courseId),
+            ],
         ];
 
         // Opening a course session auto-creates its own "before checking"
@@ -176,6 +179,7 @@ class ScanAttendanceController extends Controller
                 'ends_at' => $checkpoint->time_out->format('h:i A'),
                 'by' => optional(Auth::user())->name,
                 'course' => $studentCourse->course->name ?? null,
+                'course_id' => (int) $courseId,
             ];
         }
 
@@ -313,6 +317,7 @@ class ScanAttendanceController extends Controller
             'status' => 'ok',
             'student' => $this->studentPayload($student),
             'results' => $results,
+            'subject_progress' => $this->subjectProgressForResults($student, $enrolments, $results),
             'balance_alerts' => $this->courseBalanceAlerts($student, $results),
         ]);
     }
@@ -607,6 +612,7 @@ class ScanAttendanceController extends Controller
                         'ends_at' => $checkpoint->time_out->format('h:i A'),
                         'by' => optional(Auth::user())->name,
                         'course' => $enrolment->course->name ?? null,
+                        'course_id' => (int) $enrolment->course_id,
                     ];
                 }
             }
@@ -617,6 +623,7 @@ class ScanAttendanceController extends Controller
             'student' => $this->studentPayload($student),
             'results' => $results,
             'after_checking' => $afterCheckingEvents,
+            'subject_progress' => $this->subjectProgressForResults($student, $enrolments, $results),
             'balance_alerts' => $this->courseBalanceAlerts($student, $results),
         ]);
     }
@@ -750,10 +757,23 @@ class ScanAttendanceController extends Controller
 
         $rows = [];
         $progressCache = [];
+        $subjectsCache = [];
 
         foreach ($sessions as $session) {
+            // Theory / Practical subjects completed so far for this
+            // student + course (same count as Certificate Management).
+            $subjectsKey = $session->student_id . '|' . $session->intake_id . '|' . $session->course_id;
+            if (!array_key_exists($subjectsKey, $subjectsCache)) {
+                $subjectsCache[$subjectsKey] = $this->subjectCompletion(
+                    (int) $session->student_id,
+                    $session->intake_id ? (int) $session->intake_id : null,
+                    (int) $session->course_id
+                );
+            }
+            $subjects = $subjectsCache[$subjectsKey];
+
             if ($session->isCheckpoint()) {
-                $rows[] = $this->checkpointLogRow($session);
+                $rows[] = $this->checkpointLogRow($session) + ['subjects' => $subjects];
                 continue;
             }
 
@@ -793,6 +813,7 @@ class ScanAttendanceController extends Controller
                     'pill' => 'pill-in',
                     'undoable' => is_null($session->time_out),
                     'progress' => $progress,
+                    'subjects' => $subjects,
                 ];
             }
 
@@ -811,6 +832,7 @@ class ScanAttendanceController extends Controller
                     'pill' => 'pill-out',
                     'undoable' => true,
                     'progress' => $progress,
+                    'subjects' => $subjects,
                 ];
             }
         }
@@ -818,6 +840,91 @@ class ScanAttendanceController extends Controller
         usort($rows, fn($a, $b) => $a['sort'] <=> $b['sort']);
 
         return response()->json(['rows' => $rows]);
+    }
+
+    /**
+     * How many Theory and Practical subjects this student has COMPLETED in
+     * this course, out of how many are assigned to the intake + course.
+     * Same rule as Certificate Management's "Theory Subjects" / "Practical
+     * Subjects" columns (CertificateController::countSubjectCompletion()):
+     *  - theory: completed once it has any attended time
+     *  - practical: completed once attended time >= planned practical_time
+     * Returns ['theory' => ['completed', 'total'], 'practical' => [...]].
+     * Public so Student Attendance Cards can show the same numbers.
+     */
+    public function subjectCompletion(int $studentId, ?int $intakeId, int $courseId): array
+    {
+        $assignments = AssignSubjects::where('course_id', $courseId)
+            ->when($intakeId, fn($q) => $q->where('intake_id', $intakeId))
+            ->get(['subject_id', 'practical_time'])
+            ->keyBy('subject_id');
+
+        $subjects = Subject::whereIn('id', $assignments->keys())
+            ->whereIn('type', ['T', 'P'])
+            ->get(['id', 'type']);
+
+        $result = [
+            'theory' => ['completed' => 0, 'total' => 0],
+            'practical' => ['completed' => 0, 'total' => 0],
+        ];
+
+        if ($subjects->isEmpty()) {
+            return $result;
+        }
+
+        $minutesBySubject = SubjectAttendanceSession::where('student_id', $studentId)
+            ->where('course_id', $courseId)
+            ->whereIn('subject_id', $subjects->pluck('id'))
+            ->whereNull('checkpoint_type')
+            ->get(['subject_id', 'time_in', 'time_out'])
+            ->groupBy('subject_id')
+            ->map(fn($sessions) => $sessions->sum(function ($s) {
+                if (!$s->time_in || !$s->time_out) {
+                    return 0;
+                }
+                $start = \Illuminate\Support\Carbon::parse($s->time_in->format('H:i:s'));
+                $end = \Illuminate\Support\Carbon::parse($s->time_out->format('H:i:s'));
+                if ($end->lessThan($start)) {
+                    $end->addDay();
+                }
+                return (int) $start->diffInMinutes($end);
+            }));
+
+        foreach ($subjects as $subject) {
+            $actual = $minutesBySubject->get($subject->id, 0);
+
+            if ($subject->type === 'T') {
+                $result['theory']['total']++;
+                if ($actual > 0) {
+                    $result['theory']['completed']++;
+                }
+            } else {
+                $result['practical']['total']++;
+                $planned = $this->plannedMinutes($assignments->get($subject->id)->practical_time ?? null);
+                if ($planned > 0 && $actual >= $planned) {
+                    $result['practical']['completed']++;
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /** subjectCompletion() for every course touched by a scan, keyed by course_id. */
+    private function subjectProgressForResults(Student $student, Collection $enrolments, array $results): array
+    {
+        $map = [];
+
+        foreach (array_unique(array_filter(array_column($results, 'course_id'))) as $courseId) {
+            $enrolment = $enrolments->firstWhere('course_id', (int) $courseId);
+            $map[$courseId] = $this->subjectCompletion(
+                (int) $student->id,
+                $enrolment && $enrolment->intake_id ? (int) $enrolment->intake_id : null,
+                (int) $courseId
+            );
+        }
+
+        return $map;
     }
 
     /**
@@ -1139,19 +1246,22 @@ class ScanAttendanceController extends Controller
     {
         return StudentCourse::with(['intake:id,name', 'course:id,name'])
             ->where('student_id', $student->id)
-            ->where('status', 'start')
+            ->whereIn('status', ['start', 'complete'])
             ->get();
     }
 
     /** Of the given enrolments, which have this subject assigned (via assign_subjects)? */
     private function enrolmentsAssignedSubject(Collection $enrolments, int $subjectId): Collection
     {
+        // One match per COURSE: a student with the same course started twice
+        // (old duplicate rows) would otherwise be marked twice in one scan,
+        // which opens the session and closes it again at the same second.
         return $enrolments->filter(function ($enrolment) use ($subjectId) {
             return AssignSubjects::where('intake_id', $enrolment->intake_id)
                 ->where('course_id', $enrolment->course_id)
                 ->where('subject_id', $subjectId)
                 ->exists();
-        })->values();
+        })->sortByDesc('id')->unique('course_id')->values();
     }
 
     private function currentUserCourseIds(): array

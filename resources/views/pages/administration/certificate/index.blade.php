@@ -5,6 +5,14 @@
 
 @push('css')
     <style>
+        .ampl-filter-label {
+            font-weight: 600;
+            font-size: 12px;
+            color: #6b7784;
+            display: block;
+            margin-bottom: 4px;
+        }
+
         .ampl-muted {
             color: #8a95a1;
             font-size: 13px;
@@ -398,6 +406,51 @@
                                 Downloaded</option>
                         </select>
                     </div>
+                    <div class="col-lg-6 mb-2">
+                        <span class="ampl-filter-label">Final Assessment Created Date Range</span>
+                        <input type="text" id="cert_filter_date_range" name="date_range" class="form-control"
+                            value="{{ request('date_range') }}" placeholder="Select Created Date Range"
+                            autocomplete="off">
+                    </div>
+                    <div class="col-lg-6 mb-2">
+                        <span class="ampl-filter-label">Course Start Date Range</span>
+                        <input type="text" id="cert_filter_start_date_range" name="start_date_range"
+                            class="form-control" value="{{ request('start_date_range') }}"
+                            placeholder="Select Course Start Date Range" autocomplete="off">
+                    </div>
+                    <div class="col-lg-4 mb-2">
+                        <select name="evaluator_branch_id" class="primary_select form-control ajax_selectl">
+                            <option value="">All Evaluator Branches</option>
+                            @foreach ($branchOptions ?? [] as $b)
+                                <option value="{{ $b->id }}"
+                                    {{ (string) request('evaluator_branch_id') === (string) $b->id ? 'selected' : '' }}>
+                                    {{ $b->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-lg-4 mb-2">
+                        <select name="evaluator_id" class="primary_select form-control ajax_selectl">
+                            <option value="">All Evaluators</option>
+                            @foreach ($evaluatorOptions ?? [] as $ev)
+                                <option value="{{ $ev->id }}"
+                                    {{ (string) request('evaluator_id') === (string) $ev->id ? 'selected' : '' }}>
+                                    {{ $ev->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-lg-4 mb-2">
+                        <select name="course_branch_id" class="primary_select form-control ajax_selectl">
+                            <option value="">All Course Start Branches</option>
+                            @foreach ($branchOptions ?? [] as $b)
+                                <option value="{{ $b->id }}"
+                                    {{ (string) request('course_branch_id') === (string) $b->id ? 'selected' : '' }}>
+                                    {{ $b->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                     <div class="col-lg-12">
                         <input type="text" name="q" class="form-control" value="{{ request('q') }}"
                             placeholder="Search (Name / Reg No / NIC)">
@@ -405,10 +458,17 @@
 
                     <div class="col-12 mt-10">
                         <div class="row align-items-center">
-                            <div class="col-10">
+                            <div class="col-8">
                                 <button type="submit" class="primary-btn small fix-gr-bg col-12 p-2">
                                     <span class="ti-search pr-2"></span> Search
                                 </button>
+                            </div>
+                            <div class="col-2">
+                                {{-- Excel of ALL rows matching the filters above (not just the rows on screen) --}}
+                                <a href="{{ route('certificate.export-excel', request()->query()) }}"
+                                    class="primary-btn small fix-gr-bg col-12 p-2 text-white text-center d-block">
+                                    <i class="fa-solid fa-file-excel"></i> Export Excel
+                                </a>
                             </div>
                             <div class="col-2">
                                 {{-- An <a> styled as a button (a <button> wrapping an <a> submits the form) --}}
@@ -442,7 +502,7 @@
                         @endif
 
                         <button type="button" id="cert-download-btn" class="ampl-btn ampl-btn-outline col-3">
-                            <i class="fa-solid fa-download"></i> Download Certificate(s)
+                            <i class="fa-solid fa-download"></i> Download Certificate(s) — one PDF
                         </button>
 
                         @if ($undoCertificate)
@@ -497,6 +557,8 @@
                                 <th>FS Conduct Branch</th>
                                 <th>Intake Branch</th>
                                 <th>Certificate #</th>
+                                <th>Date of Issue</th>
+                                <th>Course End Date</th>
                                 <th>Director Training Signed</th>
                                 <th>Managing Director Signed</th>
                                 <th>Downloaded</th>
@@ -586,6 +648,8 @@
                                     <td>{{ optional(optional($a->evaluator)->branches)->first()->name ?? '-' }}</td>
                                     <td>{{ $a->studentCourse->branch->name ?? '-' }}</td>
                                     <td>{{ $cert->certificate_number ?? '-' }}</td>
+                                    <td>{{ $cert && $cert->issue_date ? \Carbon\Carbon::parse($cert->issue_date)->format('Y-m-d') : '-' }}</td>
+                                    <td>{{ $cert && $cert->course_end_date ? \Carbon\Carbon::parse($cert->course_end_date)->format('Y-m-d') : '-' }}</td>
                                     <td>
                                         @if ($cert && $cert->conductor_signed_at)
                                             <span class="cert-yes">Yes</span>
@@ -794,6 +858,12 @@
             let date = now.toISOString().slice(0, 10);
             let time = now.toTimeString().slice(0, 8).replace(/:/g, '-');
             return 'Certificate_Management_' + date + '__' + time;
+        }
+
+        // Same range pickers as Final Assessment Marks.
+        if (typeof flatpickr !== 'undefined') {
+            flatpickr('#cert_filter_date_range', { mode: 'range', dateFormat: 'Y-m-d', allowInput: true });
+            flatpickr('#cert_filter_start_date_range', { mode: 'range', dateFormat: 'Y-m-d', allowInput: true });
         }
 
         $(function() {
