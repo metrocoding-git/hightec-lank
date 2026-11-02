@@ -135,6 +135,27 @@ class SubjectAttendanceSession extends Model
         };
     }
 
+    /**
+     * True when the time-out was written by the automatic time-out
+     * (ScanAttendanceController::autoCloseMissingDailyOut), not by a scan.
+     */
+    public function getIsAutoOutAttribute(): bool
+    {
+        return $this->time_out
+            && is_null($this->marked_out_by)
+            && str_contains((string) $this->note, \App\Http\Controllers\ScanAttendanceController::AUTO_OUT_NOTE);
+    }
+
+    /** "Out By" text: the staff member, or "AUTO OUT" for automatic time-outs. */
+    public function getOutByLabelAttribute(): string
+    {
+        if ($this->is_auto_out) {
+            return 'AUTO OUT';
+        }
+
+        return optional($this->markedOutBy)->name ?? '';
+    }
+
     /** Duration in minutes, null while still open (no time_out yet). */
     public function getDurationMinutesAttribute(): ?int
     {

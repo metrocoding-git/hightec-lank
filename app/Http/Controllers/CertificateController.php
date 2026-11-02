@@ -108,6 +108,7 @@ class CertificateController extends Controller
                 optional(optional(optional($a->evaluator)->branches)->first())->name ?? '-',
                 optional(optional($a->studentCourse)->branch)->name ?? '-',
                 $cert->certificate_number ?? '-',
+                $cert && $cert->generated_at ? Carbon::parse($cert->generated_at)->format('Y-m-d') : '-',
                 $cert && $cert->issue_date ? Carbon::parse($cert->issue_date)->format('Y-m-d') : '-',
                 $cert && $cert->course_end_date ? Carbon::parse($cert->course_end_date)->format('Y-m-d') : '-',
                 $cert && $cert->conductor_signed_at ? 'Yes ' . $cert->conductor_signed_at->format('Y-m-d') : 'No',
@@ -121,7 +122,7 @@ class CertificateController extends Controller
             'Theory Subjects', 'Practical Subjects', 'Created Date', 'Total', 'Result', 'Grade',
             'Student Category', 'Address', 'Name Verified', 'NIC / ID No. Verified', 'Address Verified',
             'Start Date', 'Evaluator (Created By)', 'Intake', 'FS Conduct Branch (Evaluator)',
-            'Intake Branch (Course Start)', 'Certificate #', 'Date of Issue', 'Course End Date', 'Director Training Signed',
+            'Intake Branch (Course Start)', 'Certificate #', 'Generated Date', 'Date of Issue', 'Course End Date', 'Director Training Signed',
             'Managing Director Signed', 'Downloaded',
         ];
 
@@ -159,6 +160,7 @@ class CertificateController extends Controller
      *  - evaluator_branch_id evaluator's branch ("FS Conduct Branch")
      *  - evaluator_id        evaluator name ("Created By")
      *  - course_branch_id    branch the course was started in ("Intake Branch")
+     *  - generated_date_range certificate generated date (certificates.generated_at)
      */
     private function filteredAssessments(Request $request)
     {
@@ -237,6 +239,14 @@ class CertificateController extends Controller
         if ($range = $this->parseDateRange($request->input('start_date_range'))) {
             $query->whereHas('studentCourse.intake', function ($q) use ($range) {
                 $q->whereBetween('start_date', [$range[0]->toDateString(), $range[1]->toDateString()]);
+            });
+        }
+
+        // Certificate generated date (certificates.generated_at). Only rows
+        // that already have a certificate can match.
+        if ($range = $this->parseDateRange($request->input('generated_date_range'))) {
+            $query->whereHas('certificate', function ($q) use ($range) {
+                $q->whereBetween('generated_at', $range);
             });
         }
 
@@ -1294,6 +1304,10 @@ class CertificateController extends Controller
             // "signs are want come blue color like orginal pen sign"
             'ownerSignatureDataUri'     => $this->signatureToBlueDataUri($certificate->owner_signature_path),
             'conductorSignatureDataUri' => $this->signatureToBlueDataUri($certificate->conductor_signature_path),
+            // Fonts used in the CorelDRAW design (236_2_FL_1.cdr) — only
+            // the ones whose .ttf has been put in resources/fonts/certificate/
+            // are used; any missing one keeps the font the PDF used before.
+            'designFonts'               => $this->certificateDesignFonts(),
             'nameFontDataUri'           => $this->fontToDataUri('certificate-name-font.ttf'),
             'gradeFontDataUri'          => $this->fontToDataUri('certificate-grade-font.ttf'),
         ])->setPaper('letter', 'portrait');
@@ -1592,6 +1606,47 @@ class CertificateController extends Controller
      *   resources/fonts/certificate-name-font.ttf
      *   resources/fonts/certificate-grade-font.ttf
      */
+    /**
+     * The certificate design's own fonts (from the CorelDRAW file
+     * 236_2_FL_1.cdr). These are commercial fonts, so they are NOT shipped
+     * with the app — copy the .ttf files from a PC where the design opens
+     * correctly into resources/fonts/certificate/ with these names:
+     *
+     *   Ebrima.ttf                      body text ("has successfully completed ...",
+     *                                   grade line, "conducted at this institute", dates)
+     *   HandelGothic.ttf                course name
+     *   Arial.ttf, Arial-Bold.ttf       signer names / titles, certificate number
+     *   TrebuchetMS.ttf, TrebuchetMS-Bold.ttf
+     *                                   ISO caption, address / TVEC band
+     *   ArnoPro-BoldItalicSubhead.ttf   student name (OTF must be converted to TTF)
+     *
+     * Returns [cssFamily => [uri, weight, style]] for files that exist.
+     */
+    private function certificateDesignFonts(): array
+    {
+        $map = [
+            'CdrEbrima'       => ['Ebrima.ttf', 'any', 'normal'],
+            'CdrHandelGothic' => ['HandelGothic.ttf', 'any', 'normal'], // one weight only
+            'CdrArial'        => ['Arial.ttf', 'normal', 'normal'],
+            'CdrArialBold'    => ['Arial-Bold.ttf', 'bold', 'normal'],
+            'CdrTrebuchet'    => ['TrebuchetMS.ttf', 'normal', 'normal'],
+            'CdrTrebuchetBold' => ['TrebuchetMS-Bold.ttf', 'bold', 'normal'],
+            'CdrArnoPro'      => ['ArnoPro-BoldItalicSubhead.ttf', 'bold', 'italic'],
+        ];
+
+        $fonts = [];
+
+        foreach ($map as $family => [$file, $weight, $style]) {
+            $uri = $this->fontToDataUri('certificate/' . $file);
+
+            if ($uri) {
+                $fonts[$family] = ['uri' => $uri, 'weight' => $weight, 'style' => $style];
+            }
+        }
+
+        return $fonts;
+    }
+
     private function fontToDataUri(string $filename): ?string
     {
         $path = resource_path('fonts/' . $filename);
