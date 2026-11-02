@@ -2271,7 +2271,7 @@ class ReportController extends Controller
                     optional($session->time_in)->format('h:i A'),
                     $session->markedInBy->name ?? '',
                     $session->time_out ? $session->time_out->format('h:i A') : 'Still in',
-                    $session->markedOutBy->name ?? '',
+                    $session->out_by_label,
                     $session->duration_label,
                     $session->vehicle->name ?? '',
                     $session->note ?? '',

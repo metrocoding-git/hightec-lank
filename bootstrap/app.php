@@ -26,6 +26,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // No browser cache for app pages (Back button after logout).
         $middleware->web(append: [
             \App\Http\Middleware\PreventBackHistory::class,
+            // Deactivated users are logged out on their next request.
+            \App\Http\Middleware\EnsureUserIsActive::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
