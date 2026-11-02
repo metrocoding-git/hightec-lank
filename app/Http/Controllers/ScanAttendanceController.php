@@ -35,10 +35,35 @@ class ScanAttendanceController extends Controller
      */
     public const AUTO_OUT_TIME = '17:00:00';
 
+    /**
+     * "want work every daya 10.30" — from this time each night the SAME
+     * day's open Daily Attendance is closed too (earlier days are always
+     * closed). The time written is still AUTO_OUT_TIME / last activity, not
+     * 10:30 PM. The scheduler runs at this time (routes/console.php); the
+     * Scan Attendance and Attendance Card pages also run it when opened, so
+     * it still happens if the server cron isn't set up.
+     */
+    public const AUTO_OUT_RUN_TIME = '22:30';
+
+    /**
+     * Note written on every auto-closed row. Also how those rows are
+     * recognised (SubjectAttendanceSession::$is_auto_out) — keep this text.
+     */
+    public const AUTO_OUT_NOTE = 'Auto time-out (no out scan)';
+
+    /**
+     * "can be attendace mark after genarate certificate" — attendance
+     * (Daily, Theory, Practical) can still be marked after a certificate
+     * has been generated (enrolment status 'complete' is fine too). Set to
+     * true to block attendance again once a certificate exists.
+     */
+    private const BLOCK_ATTENDANCE_AFTER_CERTIFICATE = false;
+
     public function index()
     {
-        // Close any Daily Attendance left open on a previous day before the
-        // page loads (also run nightly by the scheduler — see routes/console.php).
+        // Close any Daily Attendance left open (previous days, and today's
+        // after AUTO_OUT_RUN_TIME) before the page loads — also run every
+        // night by the scheduler, see routes/console.php.
         self::autoCloseMissingDailyOut();
 
 
@@ -57,7 +82,9 @@ class ScanAttendanceController extends Controller
             $subjects = Subject::where('type', 'T')->orderBy('name')->get(['id', 'name', 'code', 'type']);
         }
 
-        return view('pages.student.attendance.index', compact('courses', 'subjects'));
+        $lastAutoOut = self::lastAutoOutRun();
+
+        return view('pages.student.attendance.index', compact('courses', 'subjects', 'lastAutoOut'));
     }
 
     // =====================================================================
@@ -102,7 +129,7 @@ class ScanAttendanceController extends Controller
         // Theory, or Practical) should be recorded against it. Checked
         // before the open/close branch below since this blocks the course
         // outright, regardless of whether a session happens to be open.
-        if ($this->courseHasCertificateForStudent($student->id, $courseId)) {
+        if ($this->attendanceLockedByCertificate($student->id, $courseId)) {
             return response()->json([
                 'status' => 'certificate_locked',
                 'message' => "{$student->student_name} already has a certificate for this course — attendance can no longer be recorded.",
@@ -261,7 +288,7 @@ class ScanAttendanceController extends Controller
                     // under that already has a certificate generated; report
                     // it back per-course like not_assigned, rather than
                     // silently dropping it.
-                    if ($this->courseHasCertificateForStudent($student->id, $enrolment->course_id)) {
+                    if ($this->attendanceLockedByCertificate($student->id, $enrolment->course_id)) {
                         $results[] = [
                             'action' => 'certificate_locked',
                             'subject_id' => $subjectId,
@@ -372,7 +399,7 @@ class ScanAttendanceController extends Controller
             // "dont get after genarete attenadens that course related" — a
             // course that already has a certificate is done; don't even
             // offer its practical subjects for picking.
-            if ($this->courseHasCertificateForStudent($student->id, $enrolment->course_id)) {
+            if ($this->attendanceLockedByCertificate($student->id, $enrolment->course_id)) {
                 $hadCertificateLockedCourse = true;
                 continue;
             }
@@ -509,7 +536,7 @@ class ScanAttendanceController extends Controller
         // matched enrolment whose course already has a certificate before
         // even checking whether its course attendance is open.
         $matches = $matches->reject(function ($enrolment) use ($student) {
-            return $this->courseHasCertificateForStudent($student->id, $enrolment->course_id);
+            return $this->attendanceLockedByCertificate($student->id, $enrolment->course_id);
         })->values();
 
         if ($matches->isEmpty()) {
@@ -746,6 +773,7 @@ class ScanAttendanceController extends Controller
             'course:id,name',
             'markedInBy:id,name',
             'markedOutBy:id,name',
+            'vehicle:id,name,vehicle_number',
         ])
             ->whereDate('attendance_date', now()->toDateString())
             ->where(function ($q) use ($userId) {
@@ -814,10 +842,12 @@ class ScanAttendanceController extends Controller
                     'undoable' => is_null($session->time_out),
                     'progress' => $progress,
                     'subjects' => $subjects,
+                    'vehicle' => $this->vehicleLabel($session->vehicle),
                 ];
             }
 
             if ($session->time_out) {
+                $isAutoOut = $session->is_auto_out;
                 $rows[] = [
                     'session_id' => $session->id,
                     'sort' => $session->time_out->timestamp,
@@ -826,13 +856,14 @@ class ScanAttendanceController extends Controller
                     'reg_no' => $regNo,
                     'course' => $courseName,
                     'subject' => $subjectLabel,
-                    'action' => 'Time Out',
-                    'status' => 'OK',
-                    'cls' => 'action-out',
-                    'pill' => 'pill-out',
-                    'undoable' => true,
+                    'action' => $isAutoOut ? 'Time Out (AUTO)' : 'Time Out',
+                    'status' => $isAutoOut ? 'Auto out' : 'OK',
+                    'cls' => $isAutoOut ? 'action-already' : 'action-out',
+                    'pill' => $isAutoOut ? 'pill-error' : 'pill-out',
+                    'undoable' => !$isAutoOut,
                     'progress' => $progress,
                     'subjects' => $subjects,
+                    'vehicle' => $this->vehicleLabel($session->vehicle),
                 ];
             }
         }
@@ -1139,63 +1170,102 @@ class ScanAttendanceController extends Controller
     // =====================================================================
 
     /**
-     * Closes every Daily (course) attendance session from a PREVIOUS day
-     * that still has no time-out. Today's open sessions are never touched,
-     * because a student may still be training this evening.
+     * Closes Daily (course) attendance sessions that still have no time-out:
+     *  - every PREVIOUS day, always;
+     *  - TODAY as well, once it's AUTO_OUT_RUN_TIME (10:30 PM) or later.
      *
-     * Time-out used = the latest of:
+     * Time-out written = the latest of:
      *   - 5:00 PM on the session's own date (AUTO_OUT_TIME),
      *   - the session's own time-in (a session started after 5 PM),
      *   - the end of anything else recorded for the same student + course
      *     on that date (practicals, theory, before/after checking).
      *
-     * Only the time-out is filled in; marked_out_by stays empty so it is
-     * clear no staff member scanned it, and the note says it was automatic.
-     * Returns the number of sessions closed.
+     * Rows are left with marked_out_by empty and note AUTO_OUT_NOTE, so they
+     * are shown as "Auto out" everywhere. Each run is logged and its time
+     * remembered (lastAutoOutRun()). Returns the number of sessions closed.
      */
     public static function autoCloseMissingDailyOut(): int
     {
+        $now = now();
+        $includeToday = $now->format('H:i') >= self::AUTO_OUT_RUN_TIME;
+
         $openSessions = SubjectAttendanceSession::query()
             ->whereNull('subject_id')
             ->whereNull('checkpoint_type')
             ->whereNull('time_out')
-            ->whereDate('attendance_date', '<', now()->toDateString())
+            ->whereDate('attendance_date', $includeToday ? '<=' : '<', $now->toDateString())
             ->get();
 
         $closed = 0;
 
         foreach ($openSessions as $session) {
-            $date = $session->attendance_date->toDateString();
-            $timeOut = \Illuminate\Support\Carbon::parse($date . ' ' . self::AUTO_OUT_TIME);
+            try {
+                $date = $session->attendance_date->toDateString();
+                $timeOut = \Illuminate\Support\Carbon::parse($date . ' ' . self::AUTO_OUT_TIME);
 
-            if ($session->time_in && $session->time_in->gt($timeOut)) {
-                $timeOut = $session->time_in->copy();
-            }
-
-            $lastActivity = SubjectAttendanceSession::query()
-                ->where('student_id', $session->student_id)
-                ->where('course_id', $session->course_id)
-                ->whereDate('attendance_date', $date)
-                ->where('id', '!=', $session->id)
-                ->selectRaw('MAX(GREATEST(time_in, COALESCE(time_out, time_in))) as last_at')
-                ->value('last_at');
-
-            if ($lastActivity) {
-                $lastActivity = \Illuminate\Support\Carbon::parse($lastActivity);
-
-                if ($lastActivity->gt($timeOut)) {
-                    $timeOut = $lastActivity;
+                if ($session->time_in && $session->time_in->gt($timeOut)) {
+                    $timeOut = $session->time_in->copy();
                 }
+
+                $lastActivity = SubjectAttendanceSession::query()
+                    ->where('student_id', $session->student_id)
+                    ->where('course_id', $session->course_id)
+                    ->whereDate('attendance_date', $date)
+                    ->where('id', '!=', $session->id)
+                    ->selectRaw('MAX(GREATEST(time_in, COALESCE(time_out, time_in))) as last_at')
+                    ->value('last_at');
+
+                if ($lastActivity) {
+                    $lastActivity = \Illuminate\Support\Carbon::parse($lastActivity);
+
+                    if ($lastActivity->gt($timeOut)) {
+                        $timeOut = $lastActivity;
+                    }
+                }
+
+                // Never in the future (e.g. a page opened at 10:31 PM for a
+                // student whose practical ended "later" by a clock mistake).
+                if ($timeOut->gt($now)) {
+                    $timeOut = $now->copy();
+                }
+
+                $session->time_out = $timeOut;
+                $session->marked_out_by = null;
+                $session->note = trim(($session->note ? $session->note . ' | ' : '') . self::AUTO_OUT_NOTE);
+                $session->save();
+
+                $closed++;
+            } catch (\Throwable $e) {
+                // One bad row must not stop the rest from being closed.
+                \Illuminate\Support\Facades\Log::warning("attendance:auto-out could not close session #{$session->id}: " . $e->getMessage());
             }
+        }
 
-            $session->time_out = $timeOut;
-            $session->note = trim(($session->note ? $session->note . ' | ' : '') . 'Auto time-out (no out scan)');
-            $session->save();
+        try {
+            \Illuminate\Support\Facades\Cache::forever('attendance_auto_out_last_run', [
+                'at' => $now->format('Y-m-d h:i A'),
+                'closed' => $closed,
+                'included_today' => $includeToday,
+            ]);
+        } catch (\Throwable $e) {
+            // cache unavailable — not important
+        }
 
-            $closed++;
+        if ($closed > 0) {
+            \Illuminate\Support\Facades\Log::info("attendance:auto-out closed {$closed} daily attendance session(s)" . ($includeToday ? ' (including today)' : ''));
         }
 
         return $closed;
+    }
+
+    /** When auto time-out last ran, for the note on the Scan Attendance page. */
+    public static function lastAutoOutRun(): ?array
+    {
+        try {
+            return \Illuminate\Support\Facades\Cache::get('attendance_auto_out_last_run');
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     /** Whether Before/After Checking applies to this course (see CHECKPOINT_COURSE_IDS). */
@@ -1518,6 +1588,7 @@ class ScanAttendanceController extends Controller
                 'session_id' => $open->id,
                 'action' => 'out',
                 'time' => $open->time_out->format('h:i A'),
+                'vehicle' => $this->vehicleLabel($open->vehicle),
             ];
         }
 
@@ -1550,7 +1621,20 @@ class ScanAttendanceController extends Controller
             'session_id' => $session->id,
             'action' => 'in',
             'time' => $session->time_in->format('h:i A'),
+            'vehicle' => $this->vehicleLabel($session->vehicle),
         ];
+    }
+
+    /** "Name (number)" for the Today's Scans Vehicle column, null if none. */
+    private function vehicleLabel(?TrainingVehicle $vehicle): ?string
+    {
+        if (!$vehicle) {
+            return null;
+        }
+
+        $name = trim((string) $vehicle->name);
+
+        return $vehicle->vehicle_number ? "{$name} ({$vehicle->vehicle_number})" : $name;
     }
 
     private function courseBalanceAlert(Student $student, int $courseId): ?array
@@ -1661,6 +1745,13 @@ class ScanAttendanceController extends Controller
      * matching this codebase's existing convention (no shared
      * trait/service for this check).
      */
+    /** True only when certificates should block attendance (see BLOCK_ATTENDANCE_AFTER_CERTIFICATE). */
+    private function attendanceLockedByCertificate(int $studentId, int $courseId): bool
+    {
+        return self::BLOCK_ATTENDANCE_AFTER_CERTIFICATE
+            && $this->courseHasCertificateForStudent($studentId, $courseId);
+    }
+
     private function courseHasCertificateForStudent(int $studentId, int $courseId): bool
     {
         return Certificate::whereHas('studentAssessment', function ($q) use ($studentId, $courseId) {

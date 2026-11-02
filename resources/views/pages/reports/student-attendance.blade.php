@@ -395,7 +395,13 @@
                                                                 <span class="status-pill pill-in">Still in</span>
                                                             @endif
                                                         </td>
-                                                        <td>{{ $session->markedOutBy->name ?? '-' }}</td>
+                                                        <td>
+                                                            @if ($session->is_auto_out)
+                                                                <span class="badge badge-warning" title="Closed automatically — no out scan">AUTO OUT</span>
+                                                            @else
+                                                                {{ $session->markedOutBy->name ?? '-' }}
+                                                            @endif
+                                                        </td>
                                                         <td>{{ $session->duration_label }}</td>
                                                         <td>{{ $session->vehicle->name ?? '-' }}</td>
                                                         <td>{{ $session->note ?? '-' }}</td>

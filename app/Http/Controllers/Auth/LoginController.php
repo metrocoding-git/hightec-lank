@@ -38,6 +38,21 @@ class LoginController extends Controller
             ]);
         }
 
+        // Deactivated users (users.status = 0) can't log in. Checked only
+        // after the password is confirmed, so the message doesn't reveal
+        // which emails exist to someone guessing.
+        if (!(bool) $user->status) {
+            if (\Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
+                throw ValidationException::withMessages([
+                    'email' => ['This account has been deactivated. Please contact the administrator.'],
+                ]);
+            }
+
+            throw ValidationException::withMessages([
+                'email' => [trans('auth.failed')],
+            ]);
+        }
+
         // Attempt to authenticate the user with email, password, and role_id
         $credentials = [
             'email' => $request->email,
