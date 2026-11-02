@@ -418,6 +418,12 @@
                             class="form-control" value="{{ request('start_date_range') }}"
                             placeholder="Select Course Start Date Range" autocomplete="off">
                     </div>
+                    <div class="col-lg-12 mb-2">
+                        <span class="ampl-filter-label">Certificate Generated Date Range</span>
+                        <input type="text" id="cert_filter_generated_date_range" name="generated_date_range"
+                            class="form-control" value="{{ request('generated_date_range') }}"
+                            placeholder="Select Certificate Generated Date Range" autocomplete="off">
+                    </div>
                     <div class="col-lg-4 mb-2">
                         <select name="evaluator_branch_id" class="primary_select form-control ajax_selectl">
                             <option value="">All Evaluator Branches</option>
@@ -557,6 +563,7 @@
                                 <th>FS Conduct Branch</th>
                                 <th>Intake Branch</th>
                                 <th>Certificate #</th>
+                                <th>Generated Date</th>
                                 <th>Date of Issue</th>
                                 <th>Course End Date</th>
                                 <th>Director Training Signed</th>
@@ -648,6 +655,7 @@
                                     <td>{{ optional(optional($a->evaluator)->branches)->first()->name ?? '-' }}</td>
                                     <td>{{ $a->studentCourse->branch->name ?? '-' }}</td>
                                     <td>{{ $cert->certificate_number ?? '-' }}</td>
+                                    <td>{{ $cert && $cert->generated_at ? \Carbon\Carbon::parse($cert->generated_at)->format('Y-m-d') : '-' }}</td>
                                     <td>{{ $cert && $cert->issue_date ? \Carbon\Carbon::parse($cert->issue_date)->format('Y-m-d') : '-' }}</td>
                                     <td>{{ $cert && $cert->course_end_date ? \Carbon\Carbon::parse($cert->course_end_date)->format('Y-m-d') : '-' }}</td>
                                     <td>
@@ -864,6 +872,7 @@
         if (typeof flatpickr !== 'undefined') {
             flatpickr('#cert_filter_date_range', { mode: 'range', dateFormat: 'Y-m-d', allowInput: true });
             flatpickr('#cert_filter_start_date_range', { mode: 'range', dateFormat: 'Y-m-d', allowInput: true });
+            flatpickr('#cert_filter_generated_date_range', { mode: 'range', dateFormat: 'Y-m-d', allowInput: true });
         }
 
         $(function() {

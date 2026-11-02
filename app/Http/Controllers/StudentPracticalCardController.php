@@ -614,7 +614,9 @@ class StudentPracticalCardController extends Controller
                     'time_out' => $s->time_out,
                     'duration' => $this->formatMinutes($minutes),
                     'vehicle' => $s->vehicle->name ?? '-',
-                    'marked_by' => optional($s->markedOutBy)->name ?? optional($s->markedInBy)->name ?? '-',
+                    'marked_by' => $s->is_auto_out
+                    ? 'AUTO OUT (' . (optional($s->markedInBy)->name ?? '-') . ')'
+                    : (optional($s->markedOutBy)->name ?? optional($s->markedInBy)->name ?? '-'),
                 ];
             })->values();
 
@@ -698,7 +700,9 @@ class StudentPracticalCardController extends Controller
                 'time_out' => $s->time_out,
                 'duration' => $this->formatMinutes($minutes),
                 'vehicle' => $s->vehicle->name ?? '-',
-                'marked_by' => optional($s->markedOutBy)->name ?? optional($s->markedInBy)->name ?? '-',
+                'marked_by' => $s->is_auto_out
+                    ? 'AUTO OUT (' . (optional($s->markedInBy)->name ?? '-') . ')'
+                    : (optional($s->markedOutBy)->name ?? optional($s->markedInBy)->name ?? '-'),
             ];
         })->values();
 

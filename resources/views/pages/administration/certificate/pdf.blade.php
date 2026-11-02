@@ -39,6 +39,23 @@
             padding: 0;
         }
 
+        {{-- Fonts from the CorelDRAW design, when their files are present
+             (CertificateController::certificateDesignFonts). Each section
+             below lists its design font first; a missing file falls back to
+             the next font in that list, i.e. what the PDF used before. --}}
+        @foreach ($designFonts ?? [] as $family => $font)
+            {{-- A single-weight font ('any') is registered as normal AND bold,
+                 so sections styled bold still use it. --}}
+            @foreach ($font['weight'] === 'any' ? ['normal', 'bold'] : [$font['weight']] as $weight)
+                @font-face {
+                    font-family: '{{ $family }}';
+                    src: url({{ $font['uri'] }}) format('truetype');
+                    font-weight: {{ $weight }};
+                    font-style: {{ $font['style'] }};
+                }
+            @endforeach
+        @endforeach
+
         @if ($nameFontDataUri)
             @font-face {
                 font-family: 'CertNameFont';
@@ -55,7 +72,7 @@
             position: relative;
             width: 612pt;
             height: 792pt;
-            font-family: 'EB Garamond', 'DejaVu Serif', 'Times New Roman', serif;
+            font-family: 'CdrEbrima', 'EB Garamond', 'DejaVu Serif', 'Times New Roman', serif;
             color: #111;
         }
 
@@ -84,7 +101,7 @@
         }
 
         .cert-name {
-            font-family: 'CertNameFont', 'DejaVu Serif', 'Times New Roman', serif;
+            font-family: 'CdrArnoPro', 'CertNameFont', 'DejaVu Serif', 'Times New Roman', serif;
             font-style: italic;
             font-weight: bold;
             font-size: 14pt;
@@ -142,7 +159,7 @@
             width: 512pt;
             margin: 0;
             text-align: center;
-            font-family: 'OrbitronVariableFont_wght', 'DejaVu Sans', sans-serif;
+            font-family: 'CdrHandelGothic', 'OrbitronVariableFont_wght', 'DejaVu Sans', sans-serif;
             font-style: normal;
             font-weight: bold;
             font-size: 20pt;
@@ -156,7 +173,7 @@
             width: 512pt;
             margin: 0;
             text-align: center;
-            font-family: 'OrbitronVariableFont_wght', 'DejaVu Sans', sans-serif;
+            font-family: 'CdrHandelGothic', 'OrbitronVariableFont_wght', 'DejaVu Sans', sans-serif;
             font-style: normal;
             font-weight: bold;
             font-size: 20pt;
@@ -200,7 +217,7 @@
             width: 512pt;
             margin: 0;
             text-align: center;
-            font-family: 'Montserrat', 'Helvetica', 'DejaVu Sans', Arial, sans-serif;
+            font-family: 'CdrEbrima', 'Montserrat', 'Helvetica', 'DejaVu Sans', Arial, sans-serif;
             font-size: 12pt;
             line-height: 1;
         }
@@ -232,7 +249,7 @@
         .footer-col {
             width: 33.33%;
             text-align: center;
-            font-family: 'Helvetica', 'DejaVu Sans', Arial, sans-serif;
+            font-family: 'CdrArial', 'Helvetica', 'DejaVu Sans', Arial, sans-serif;
             font-size: 8pt;
             padding: 0 4pt;
         }
@@ -265,6 +282,7 @@
 
         .footer-signer-name {
             display: block;
+            font-family: 'CdrArialBold', 'CdrArial', 'Helvetica', 'DejaVu Sans', Arial, sans-serif;
             margin-top: 0pt;
             font-weight: bold;
             font-size: 8pt;
@@ -272,7 +290,7 @@
 
         .footer-issue-date {
             margin-top: 9pt;
-            font-family: 'Montserrat', 'Helvetica', 'DejaVu Sans', Arial, sans-serif;
+            font-family: 'CdrEbrima', 'Montserrat', 'Helvetica', 'DejaVu Sans', Arial, sans-serif;
             font-size: 11pt;
             white-space: nowrap;
         }
@@ -295,7 +313,7 @@
             left: 56pt;
             width: 150pt;
             text-align: center;
-            font-family: 'Helvetica', 'DejaVu Sans', Arial, sans-serif;
+            font-family: 'CdrTrebuchet', 'Helvetica', 'DejaVu Sans', Arial, sans-serif;
             font-size: 8pt;
             line-height: 1.21;
         }
@@ -327,7 +345,7 @@
             left: 48pt;
             width: 512pt;
             padding-top: 5pt;
-            font-family: 'Helvetica', 'DejaVu Sans', Arial, sans-serif;
+            font-family: 'CdrTrebuchet', 'Helvetica', 'DejaVu Sans', Arial, sans-serif;
             font-size: 7.5pt;
             color: #333;
         }
@@ -350,6 +368,7 @@
         }
 
         .footer-band-name {
+            font-family: 'CdrTrebuchetBold', 'CdrTrebuchet', 'Helvetica', 'DejaVu Sans', Arial, sans-serif;
             font-weight: bold;
             /* "that wabt come one line" — force the institute name onto a
                single line instead of wrapping inside its table-cell. */

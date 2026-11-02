@@ -655,6 +655,13 @@
                     <div class="white-box">
                         <div class="main-title mb-15">
                             <h3>Today's Scans</h3>
+                            {{-- Proof the automatic Daily Attendance time-out is running --}}
+                            <small class="text-muted d-block">
+                                Auto time-out runs every night at 10:30 PM (missing outs are set to 5:00 PM and marked AUTO OUT).
+                                @if (!empty($lastAutoOut))
+                                    Last run: {{ $lastAutoOut['at'] }} — closed {{ $lastAutoOut['closed'] }}.
+                                @endif
+                            </small>
                         </div>
                         <div class="table-responsive mt-10">
                             <table class="table school-table-style" id="scan_log">
@@ -665,6 +672,7 @@
                                         <th>Student</th>
                                         <th>Course</th>
                                         <th>Subject</th>
+                                        <th>Vehicle</th>
                                         <th title="Practice time still not completed for this practical subject (read only)">Practice Remaining</th>
                                         <th title="Theory subjects completed / assigned for this course (same as Certificate Management)">Theory Subjects</th>
                                         <th title="Practical subjects completed / assigned for this course (same as Certificate Management)">Practical Subjects</th>
@@ -949,7 +957,7 @@
                 const label = statusLabels[res.status] || 'Error';
                 const name = res.student ? res.student.name : identifier;
                 const regNo = res.student ? (res.student.admission_number || '-') : identifier;
-                addLogRow(new Date(), name, regNo, '-', '-', '-', label, 'action-error', 'pill-error', null, false, null, null);
+                addLogRow(new Date(), name, regNo, '-', '-', '-', label, 'action-error', 'pill-error', null, false, null, null, null);
                 showFeedback('danger', res.message || 'Something went wrong.');
             }
 
@@ -987,7 +995,8 @@
                     const undoable = (r.action === 'in' || r.action === 'out') && !!r.session_id;
                     addLogRow(r.time || new Date(), res.student.name, res.student.admission_number,
                         courseLabel(r.course_id), subjectLabel(r.subject_id), label, 'OK', cls, pill,
-                        r.session_id || null, undoable, r.progress || null, subjectProgressFor(res, r.course_id));
+                        r.session_id || null, undoable, r.progress || null, subjectProgressFor(res, r.course_id),
+                        r.vehicle || null);
                 });
 
                 // "Before checking" (course just opened) / "after checking" (a
@@ -1250,7 +1259,7 @@
             }
 
             function addLogRow(time, student, regNo, course, subject, action, status, cls, pill,
-                sessionId, undoable, progress, subjects) {
+                sessionId, undoable, progress, subjects, vehicle) {
                 $('#scan_log_empty').hide();
 
                 const t = (time instanceof Date) ? time.toLocaleTimeString() : time;
@@ -1268,7 +1277,7 @@
                 const rowCls = (cls || '') + (repeatCount ? ' row-repeat' : '');
 
                 const row =
-                    `<tr id="${rowId}" class="${rowCls}"><td>${t}</td><td>${regNo || '-'}</td><td>${student}</td><td>${course || '-'}</td><td>${subjectHtml}</td><td>${progressCell(progress)}</td><td>${subjectCountCell(subjects && subjects.theory)}</td><td>${subjectCountCell(subjects && subjects.practical)}</td><td>${action}</td><td>${statusHtml}</td><td>${undoCell}</td></tr>`;
+                    `<tr id="${rowId}" class="${rowCls}"><td>${t}</td><td>${regNo || '-'}</td><td>${student}</td><td>${course || '-'}</td><td>${subjectHtml}</td><td>${vehicle ? $('<span>').text(vehicle).html() : '<span class="text-muted">-</span>'}</td><td>${progressCell(progress)}</td><td>${subjectCountCell(subjects && subjects.theory)}</td><td>${subjectCountCell(subjects && subjects.practical)}</td><td>${action}</td><td>${statusHtml}</td><td>${undoCell}</td></tr>`;
                 $('#scan_log tbody').prepend(row);
 
                 // Brief flash so the newest row is easy to spot.
@@ -1326,7 +1335,7 @@
                             pill = row.pill;
                         addLogRow(row.time, row.student, row.reg_no, row.course, row.subject, row
                             .action, row.status, cls, pill, row.session_id, row.undoable, row.progress || null,
-                            row.subjects || null);
+                            row.subjects || null, row.vehicle || null);
                     });
                 }
             });
