@@ -814,6 +814,7 @@
                     Auth::user()->hasPermission('reports.food-payment') ||
                     Auth::user()->hasPermission('reports.student-attendance') ||
                     Auth::user()->hasPermission('reports.nvq-payment') ||
+                    Auth::user()->hasPermission('reports.nvq-practical-completion') ||
                     Auth::user()->hasPermission('reports.item-stock')))
             <span class="menu_seperator" id="seperator_reports_section" data-section="reports_section">Reports
                 Section
@@ -833,6 +834,7 @@
                     Auth::user()->hasPermission('reports.food-payment') ||
                     Auth::user()->hasPermission('reports.student-attendance') ||
                     Auth::user()->hasPermission('reports.nvq-payment') ||
+                    Auth::user()->hasPermission('reports.nvq-practical-completion') ||
                     Auth::user()->hasPermission('reports.item-stock')))
             <li
                 class="reports_section {{ request()->is('reports') || request()->is('reports/*') ? 'mm-active' : '' }}">
@@ -929,6 +931,15 @@
                             <a href="/reports/nvq-payment"
                                 class="{{ request()->is('reports/nvq-payment') ? 'active a' : '' }}">
                                 NVQ Payment (Completion &gt; 75%)
+                            </a>
+                        </li>
+                    @endif
+
+                    @if (Auth::user()->hasPermission('reports.nvq-practical-completion'))
+                        <li>
+                            <a href="/reports/nvq-practical-completion"
+                                class="{{ request()->is('reports/nvq-practical-completion') ? 'active a' : '' }}">
+                                NVQ Paid — Practical Completion
                             </a>
                         </li>
                     @endif

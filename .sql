@@ -656,3 +656,17 @@ ALTER TABLE certificates
 ADD COLUMN pv_number VARCHAR(255) NULL UNIQUE AFTER certificate_number;
 
 INSERT INTO `permissions` (`id`, `permission_name`, `label`, `created_at`, `updated_at`) VALUES (NULL, 'add-student.verify.submit.certified', 'Verify Submit (After Certificate Generated)', NULL, NULL);
+
+-- 11/08
+
+INSERT INTO permissions (permission_name, created_at, updated_at)
+SELECT p.name, NOW(), NOW()
+FROM (SELECT 'reports.nvq-practical-completion' AS name
+      UNION ALL SELECT 'reports.nvq-practical-completion.export') p
+WHERE NOT EXISTS (SELECT 1 FROM permissions x WHERE x.permission_name = p.name);
+
+INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at)
+SELECT 1, x.id, NOW(), NOW()
+FROM permissions x
+WHERE x.permission_name IN ('reports.nvq-practical-completion', 'reports.nvq-practical-completion.export')
+  AND NOT EXISTS (SELECT 1 FROM role_permissions r WHERE r.role_id = 1 AND r.permission_id = x.id);

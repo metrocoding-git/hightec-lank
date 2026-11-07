@@ -493,6 +493,13 @@ return [
                     ],
                 ],
                 [
+                    'name' => 'NVQ Paid — Practical Completion',
+                    'window' => ['key' => 'reports.nvq-practical-completion', 'label' => 'View'],
+                    'buttons' => [
+                        ['key' => 'reports.nvq-practical-completion.export', 'label' => 'Export'],
+                    ],
+                ],
+                [
                     'name' => 'Item Stock Balance (Branch-wise)',
                     'window' => ['key' => 'reports.item-stock', 'label' => 'View'],
                     'buttons' => [
