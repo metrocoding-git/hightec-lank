@@ -27,6 +27,7 @@ use App\Http\Controllers\TopicOverviewController;
 use App\Http\Controllers\StudentCategoryController;
 use App\Http\Controllers\ItemSellController;
 use App\Http\Controllers\NvqPaymentReportController;
+use App\Http\Controllers\NvqPracticalCompletionReportController;
 use App\Http\Controllers\ItemStockReportController;
 use App\Http\Controllers\LeaveRequestController;
 use App\Http\Controllers\VideoListController;
@@ -530,6 +531,8 @@ Route::middleware(['auth', 'permission'])->group(function () {
         Route::get('/reports/student-attendance/export', [ReportController::class, 'exportStudentAttendance'])->name('reports.student-attendance.export');
         Route::get('nvq-payment', [NvqPaymentReportController::class, 'index'])->name('reports.nvq-payment');
         Route::get('nvq-payment/export', [NvqPaymentReportController::class, 'export'])->name('reports.nvq-payment.export');
+        Route::get('nvq-practical-completion', [NvqPracticalCompletionReportController::class, 'index'])->name('reports.nvq-practical-completion');
+        Route::get('nvq-practical-completion/export', [NvqPracticalCompletionReportController::class, 'export'])->name('reports.nvq-practical-completion.export');
         Route::get('item-stock', [ItemStockReportController::class, 'index'])->name('reports.item-stock');
         Route::get('item-stock/export', [ItemStockReportController::class, 'export'])->name('reports.item-stock.export');
     });

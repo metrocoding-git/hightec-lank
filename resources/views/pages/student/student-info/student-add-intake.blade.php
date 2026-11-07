@@ -123,6 +123,29 @@
             display: block;
             padding: 6px 20px;
         }
+
+        /* Mobile: keep the filter Search button always visible and on top of
+           the filter dropdowns (it was getting hidden on phones). */
+        @media (max-width: 991.98px) {
+            .filter_card .filter-search-col {
+                display: block !important;
+                position: relative;
+                z-index: 5;
+                clear: both;
+                margin-top: 15px !important;
+            }
+
+            .filter_card #filterBtn {
+                display: block !important;
+                width: 100%;
+                visibility: visible !important;
+            }
+
+            .filter_card .nice-select .list {
+                max-height: 260px;
+                overflow-y: auto;
+            }
+        }
     </style>
 @endpush
 @section('title')
@@ -259,7 +282,7 @@
                                 </div>
 
                                 @if ($canSearchStudentIntake)
-                                    <div class="col-lg-12 mt-10 text-right">
+                                    <div class="col-12 col-lg-12 mt-10 text-right filter-search-col">
                                         <button type="submit" id="filterBtn"
                                             class="primary-btn small fix-gr-bg col-12 p-2">
                                             <span class="ti-search pr-2"></span> Search

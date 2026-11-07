@@ -9,6 +9,8 @@
     <script src="{{ asset('backEnd/') }}/vendors/js/vfs_fonts.js"></script>
     <script src="{{ asset('backEnd/js/vfs_fonts.js') }}"></script>
     <script src="{{ asset('backEnd/') }}/vendors/js/buttons.html5.min.js"></script>
+    {{-- Excel / CSV exports: numbers as numbers, dates as dates --}}
+    <script src="{{ asset('backEnd/js/datatable-export-types.js') }}?v=20261108"></script>
     <script src="{{ asset('backEnd/') }}/vendors/js/buttons.print.min.js"></script>
     <script src="{{ asset('backEnd/') }}/vendors/js/dataTables.rowReorder.min.js"></script>
     <script src="{{ asset('backEnd/') }}/vendors/js/dataTables.responsive.min.js"></script>

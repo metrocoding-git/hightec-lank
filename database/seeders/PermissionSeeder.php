@@ -216,6 +216,8 @@ class PermissionSeeder extends Seeder
             'role-management.get-student-details',
             'reports.nvq-payment',
             'reports.nvq-payment.export',
+            'reports.nvq-practical-completion',
+            'reports.nvq-practical-completion.export',
             'reports.item-stock',
             'reports.item-stock.export',
             'leave.my',
