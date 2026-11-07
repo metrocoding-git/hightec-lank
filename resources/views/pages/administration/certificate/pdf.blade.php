@@ -381,6 +381,26 @@
             text-align: right;
             white-space: nowrap;
         }
+
+        /* "kaduwela address eka witharak line 2kata yano, ekata ganna
+           kurunegala eka wage" — the address row keeps to ONE line for every
+           branch: no wrapping, and the right-hand cell of this row only
+           holds the short "PV 81127", so the address gets the width. */
+        .footer-band-address {
+            white-space: nowrap;
+        }
+
+        .footer-band-row-address .footer-band-reg {
+            width: 55pt;
+        }
+
+        /* "Course Name — Line 1 / Line 2 bold karanna tikak" — the course
+           font has no separate bold face, so each line is drawn a second
+           time a hair to the right (.cert-course-weight), which thickens the
+           strokes slightly. */
+        .cert-course-weight {
+            margin-left: 0.45pt !important;
+        }
     </style>
 </head>
 
@@ -417,8 +437,10 @@
         <p class="cert-body-line2">and maintenance programme of</p>
 
         <p class="cert-course-line1">{{ $courseLine1 }}</p>
+        <p class="cert-course-line1 cert-course-weight">{{ $courseLine1 }}</p>
         @if ($courseLine2)
             <p class="cert-course-line2">{{ $courseLine2 }}</p>
+            <p class="cert-course-line2 cert-course-weight">{{ $courseLine2 }}</p>
         @endif
 
         <p class="cert-grade-line">
@@ -510,7 +532,7 @@
                     LTD.</span>
                 <span class="footer-band-reg">{{ $tvecRegNo }}</span>
             </div>
-            <div class="footer-band-row">
+            <div class="footer-band-row footer-band-row-address">
                 <span class="footer-band-address">{{ $footerAddress }}&nbsp;&nbsp;&nbsp;https://highteclanka.com</span>                <span class="footer-band-reg">PV 81127</span>
             </div>
         </div>

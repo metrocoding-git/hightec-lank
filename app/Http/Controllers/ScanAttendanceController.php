@@ -499,12 +499,11 @@ class ScanAttendanceController extends Controller
         $request->validate([
             'identifier' => 'required|string',
             'subject_id' => 'required|exists:subjects,id',
-            // Vehicle is mandatory for practical attendance — both when
-            // starting and when ending a practical session.
-            'vehicle_id' => 'required|exists:training_vehicles,id',
+            // Vehicle is mandatory to START a practical session. When ENDING
+            // one that already has a vehicle, the vehicle it started with is
+            // used (no need to pick it again) — see practicalVehicleError().
+            'vehicle_id' => 'nullable|exists:training_vehicles,id',
             'note' => 'nullable|string|max:1000',
-        ], [
-            'vehicle_id.required' => 'Select a vehicle — a vehicle is required for practical attendance.',
         ]);
 
         $student = $this->findStudent($request->input('identifier'));
@@ -687,11 +686,13 @@ class ScanAttendanceController extends Controller
             return $this->vehicleInUseError($vehicleId, $student->id);
         }
 
+        // Ending a session: the vehicle it was started with is already known,
+        // so no vehicle needs to be picked again.
         if (is_null($vehicleId)) {
-            return [
+            return is_null($open->vehicle_id) ? [
                 'status' => 'vehicle_required',
                 'message' => 'Select a vehicle before ending practical attendance.',
-            ];
+            ] : null;
         }
 
         // A session started before the vehicle became mandatory may have no
@@ -1109,9 +1110,11 @@ class ScanAttendanceController extends Controller
                 ], 403);
             }
 
+            // Undoing the time-out only reopens the session. The vehicle
+            // was chosen at time-in, so it stays — ending the session again
+            // doesn't need the vehicle to be picked again.
             $session->update([
                 'time_out' => null,
-                'vehicle_id' => null,
                 'note' => null,
                 'marked_out_by' => null,
             ]);
@@ -1578,11 +1581,19 @@ class ScanAttendanceController extends Controller
             ->first();
 
         if ($open) {
-            $open->update([
+            $update = [
                 'time_out' => now(),
                 'note' => $note,
                 'marked_out_by' => Auth::id(),
-            ]);
+            ];
+
+            // Keep the vehicle the session was started with; only fill it in
+            // when the session somehow has none.
+            if (is_null($open->vehicle_id) && $vehicleId) {
+                $update['vehicle_id'] = $vehicleId;
+            }
+
+            $open->update($update);
 
             return [
                 'session_id' => $open->id,

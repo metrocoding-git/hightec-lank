@@ -1127,7 +1127,11 @@
                 if (!subjectId || !practicalIdentifier) return;
 
                 const vehicleId = $('#practical_vehicle_id').val();
-                if (!vehicleId) {
+                // Ending an In Progress session that already has a vehicle
+                // doesn't need one picked — the server uses the time-in vehicle.
+                const pickedSubject = practicalSubjects.find(s => String(s.id) === String(subjectId));
+                const endsWithKnownVehicle = !!(pickedSubject && pickedSubject.is_open && pickedSubject.open_vehicle_id);
+                if (!vehicleId && !endsWithKnownVehicle) {
                     showFeedback('danger', 'Select a vehicle — a vehicle is required for practical attendance.');
                     $('#practical_vehicle_id').next('.nice-select').addClass('open');
                     return;
@@ -1145,7 +1149,7 @@
                     data: {
                         identifier: practicalIdentifier,
                         subject_id: subjectId,
-                        vehicle_id: vehicleId,
+                        vehicle_id: vehicleId || null,
                         note: $('#practical_note').val() || null,
                     },
                     success: function(res) {

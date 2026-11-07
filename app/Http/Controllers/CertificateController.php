@@ -1336,7 +1336,7 @@ class CertificateController extends Controller
 
         return match (true) {
             stripos($branchName, 'kurunegala') !== false => 'No. 549, Kandy Road, Mawathagama, Sri Lanka.',
-            stripos($branchName, 'kaduwela') !== false => 'No. 404/51C, Velkkiyawattha Road,Ihala Bomiriya, Kaduwela, Sri Lanka.',
+            stripos($branchName, 'kaduwela') !== false => 'No. 404/51C, Velkkiyawattha Road, Ihala Bomiriya, Kaduwela, Sri Lanka.',
             // Fallback for a branch that's neither of the two named ones
             // (or no branch on record at all) — same as Kurunegala for
             // now, since that's the only confirmed address I have.
