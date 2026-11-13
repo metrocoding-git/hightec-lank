@@ -67,9 +67,34 @@
         return { h: h, i: i, s: s, ampm: !!m[4] };
     }
 
+    // "11/05/2026" style dates: the app shows most of them month-first
+    // (m/d/Y, e.g. Invoice, Item Sell, reports) but a few day-first (d/m/Y,
+    // e.g. Food Payment). So the order is decided per COLUMN from its own
+    // values (see slashOrder): a first number above 12 means day-first, a
+    // second number above 12 means month-first; when no value tells, it is
+    // month-first like most of the app.
+    var NUMERIC_DMY = /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})(?:[ T,].*)?$/;
+
+    function slashOrder(texts) {
+        var dayFirst = false, monthFirst = false;
+        $.each(texts, function (i, text) {
+            var m = NUMERIC_DMY.exec($.trim(String(text)));
+            if (!m) {
+                return;
+            }
+            if (+m[1] > 12) {
+                dayFirst = true;
+            }
+            if (+m[2] > 12) {
+                monthFirst = true;
+            }
+        });
+        return dayFirst && !monthFirst ? 'dmy' : 'mdy';
+    }
+
     // Date (optionally with a time) in the formats the app shows.
-    // Day-first for d/m/y, as used in Sri Lanka.
-    function parseDate(raw) {
+    // order: 'mdy' (default) or 'dmy' for n/n/yyyy dates.
+    function parseDate(raw, order) {
         var str = $.trim(String(raw)).replace(/\s+/g, ' ');
         if (str.length < 8 || str.length > 30) {
             return null;
@@ -86,7 +111,17 @@
         if ((m = /^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/.exec(datePart))) {
             y = +m[1]; mo = +m[2]; d = +m[3];
         } else if ((m = /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/.exec(datePart))) {
-            d = +m[1]; mo = +m[2]; y = +m[3];
+            var a = +m[1], b = +m[2];
+            y = +m[3];
+            if (order === 'dmy') {
+                d = a; mo = b;
+            } else {
+                mo = a; d = b;
+            }
+            // That value can only be read the other way (e.g. 25/10/2026).
+            if (mo > 12 && d <= 12) {
+                var swap = mo; mo = d; d = swap;
+            }
         } else if ((m = /^(\d{1,2})(?:st|nd|rd|th)?[ \-]([A-Za-z]{3,9})\.?,?[ \-](\d{4})$/.exec(datePart))) {
             d = +m[1]; mo = MONTHS[m[2].toLowerCase()]; y = +m[3];
         } else if ((m = /^([A-Za-z]{3,9})\.? (\d{1,2})(?:st|nd|rd|th)?,? (\d{4})$/.exec(datePart))) {
@@ -244,6 +279,21 @@
                 return;
             }
 
+            // Decide m/d/Y vs d/m/Y once per column (letters of the cell ref).
+            var colTexts = {};
+            $('sheetData row c[t="inlineStr"]', sheet).each(function () {
+                var s = this.getAttribute('s');
+                if (s === '2' || s === '51') {
+                    return;
+                }
+                var col = (this.getAttribute('r') || '').replace(/\d+/g, '');
+                (colTexts[col] = colTexts[col] || []).push($(this).find('t').text());
+            });
+            var colOrder = {};
+            $.each(colTexts, function (col, texts) {
+                colOrder[col] = slashOrder(texts);
+            });
+
             $('sheetData row c', sheet).each(function () {
                 var cell = this;
                 var s = cell.getAttribute('s');
@@ -265,7 +315,7 @@
                     return;
                 }
 
-                var dt = parseDate(text);
+                var dt = parseDate(text, colOrder[(cell.getAttribute('r') || '').replace(/\d+/g, '')]);
                 if (dt) {
                     setNumberCell(sheet, cell, excelSerial(dt), dt.t ? st.datetime : st.date);
                     return;
@@ -298,7 +348,7 @@
 
     // ---- CSV ------------------------------------------------------------
 
-    function csvValue(val) {
+    function csvValue(val, order) {
         if (val === null || val === undefined || typeof val === 'number') {
             return val;
         }
@@ -307,7 +357,7 @@
             return val;
         }
 
-        var dt = parseDate(text);
+        var dt = parseDate(text, order);
         if (dt) {
             var out = dt.y + '-' + pad(dt.m) + '-' + pad(dt.d);
             if (dt.t) {
@@ -331,9 +381,15 @@
 
     function typeCsvData(data) {
         try {
-            $.each(data.body || [], function (r, row) {
+            var body = data.body || [];
+            var orders = [];
+            var cols = body.length ? body[0].length : 0;
+            for (var c = 0; c < cols; c++) {
+                orders[c] = slashOrder($.map(body, function (row) { return [row[c]]; }));
+            }
+            $.each(body, function (r, row) {
                 for (var c = 0; c < row.length; c++) {
-                    row[c] = csvValue(row[c]);
+                    row[c] = csvValue(row[c], orders[c]);
                 }
             });
         } catch (err) {
@@ -389,6 +445,7 @@
     // Exposed for testing / reuse.
     window.DtExportTypes = {
         parseDate: parseDate,
+        slashOrder: slashOrder,
         parseNumber: parseNumber,
         parseTime: parseTime,
         typeExcelCells: typeExcelCells,

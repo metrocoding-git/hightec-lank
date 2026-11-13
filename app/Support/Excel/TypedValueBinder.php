@@ -15,7 +15,7 @@ use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
  * (config/excel.php -> value_binder.default):
  *
  *  - dates written as text ("2026-11-02", "2026-11-02 14:30", "2026-11-02
- *    02:30 PM", "02/11/2026", "2 Nov 2026") become real Excel dates
+ *    02:30 PM", "11/02/2026" (m/d/Y), "2 Nov 2026") become real Excel dates
  *    (yyyy-mm-dd, or yyyy-mm-dd hh:mm when there is a time);
  *  - "Rs. 12,500.00" / "12,500" / "LKR 500" become numbers (#,##0.00 / #,##0);
  *  - plain numbers stay numbers (as before);
@@ -92,7 +92,12 @@ class TypedValueBinder extends DefaultValueBinder
         if (preg_match('/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/', $datePart, $m)) {
             [$y, $mo, $d] = [(int) $m[1], (int) $m[2], (int) $m[3]];
         } elseif (preg_match('/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/', $datePart, $m)) {
-            [$d, $mo, $y] = [(int) $m[1], (int) $m[2], (int) $m[3]]; // day first (Sri Lanka)
+            // n/n/yyyy: month first like the rest of the app (m/d/Y); a
+            // value that only works day-first (e.g. 25/10/2026) is read that way.
+            [$mo, $d, $y] = [(int) $m[1], (int) $m[2], (int) $m[3]];
+            if ($mo > 12 && $d <= 12) {
+                [$mo, $d] = [$d, $mo];
+            }
         } elseif (preg_match('/^(\d{1,2})(?:st|nd|rd|th)?[ \-]([A-Za-z]{3,9})\.?,?[ \-](\d{4})$/', $datePart, $m)) {
             [$d, $mo, $y] = [(int) $m[1], self::MONTHS[strtolower($m[2])] ?? 0, (int) $m[3]];
         } elseif (preg_match('/^([A-Za-z]{3,9})\.? (\d{1,2})(?:st|nd|rd|th)?,? (\d{4})$/', $datePart, $m)) {
