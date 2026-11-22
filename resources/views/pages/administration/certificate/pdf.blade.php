@@ -9,7 +9,11 @@
     <style>
         @page {
             margin: 0;
-            size: 612pt 792pt;
+            /* A4 height (842pt): the pre-printed paper is A4 and its orange
+               border starts below where a Letter page (792pt) ended. Width and
+               every top position are unchanged, so the rest prints exactly
+               where it did before. */
+            size: 612pt 842pt;
         }
 
         * {
@@ -71,9 +75,22 @@
         .cert-page {
             position: relative;
             width: 612pt;
-            height: 792pt;
+            height: 842pt;
             font-family: 'CdrEbrima', 'EB Garamond', 'DejaVu Serif', 'Times New Roman', serif;
             color: #111;
+        }
+
+        /* World map behind the text, as in the design ("Mobile Crane ricoh
+           print" CorelDRAW file / sample PDF): the exact map shape and
+           colour taken from that design, same size and place on the page
+           (x 62–546pt, around the NIC … From lines). */
+        .cert-world-map {
+            position: absolute;
+            top: 281pt;
+            left: 62pt;
+            width: 484pt;
+            height: 220pt;
+            z-index: 0;
         }
 
         .cert-heading {
@@ -339,9 +356,15 @@
            either. Only $footerAddress varies per certificate (by
            branch) — everything else here is fixed text; see
            CertificateController::branchFooterAddress(). */
+        /* "footer line eka (address, numbers thiyena line deka) orange
+           kallata enna one yatama" — both footer lines sit at the very
+           bottom of the sheet, in the orange border of the printed paper
+           (was top: 758pt). Same place as the CorelDRAW design (lines at
+           ~812–831pt of the A4 sheet). Move this one value if the printer
+           needs it a little higher / lower. */
         .footer-band {
             position: absolute;
-            top: 758pt;
+            top: 807pt;
             left: 48pt;
             width: 512pt;
             padding-top: 5pt;
@@ -417,6 +440,10 @@
     @endphp
 
     <div class="cert-page">
+        @if (!empty($worldMapDataUri))
+            <img class="cert-world-map" src="{{ $worldMapDataUri }}" alt="">
+        @endif
+
         <h1 class="cert-heading">This is to certify that</h1>
 
         <div class="cert-name-wrap">

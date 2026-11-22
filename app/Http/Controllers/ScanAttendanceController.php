@@ -26,30 +26,48 @@ class ScanAttendanceController extends Controller
     private const CHECKPOINT_COURSE_IDS = [38];
 
     /**
-     * "daly attandence can be some time missing out.. like that time auto do
-     * out 5.00pm on that day" — Daily (course) attendance left without a
-     * time-out is closed automatically at this time on its own date. If the
-     * student had anything recorded later than this on that day (a practical,
-     * an after-checking row, ...), the end of that last activity is used
-     * instead, so evening sessions aren't cut short.
+     * "auto attendance ra 12ta wadanna, time eka 6.30ta off wuna wage out
+     * nokarapu okkoma — course attendance, theory attendance, practical
+     * attendance" — every attendance session left without a time-out (Daily
+     * course attendance, Theory and Practical; not Before/After Checking) is
+     * closed as if the student went out at 6:30 PM on that session's own
+     * date. A session that started after 6:30 PM is closed at its own
+     * time-in (0 minutes).
      */
-    public const AUTO_OUT_TIME = '17:00:00';
+    public const AUTO_OUT_TIME = '18:30:00';
 
     /**
-     * "want work every daya 10.30" — from this time each night the SAME
-     * day's open Daily Attendance is closed too (earlier days are always
-     * closed). The time written is still AUTO_OUT_TIME / last activity, not
-     * 10:30 PM. The scheduler runs at this time (routes/console.php); the
-     * Scan Attendance and Attendance Card pages also run it when opened, so
-     * it still happens if the server cron isn't set up.
+     * Runs every night at midnight (routes/console.php) and closes every
+     * PREVIOUS day's open sessions — a session is never closed on its own
+     * day, so students still on the ground in the evening aren't cut off.
+     * The Scan Attendance and Attendance Card pages also run it when opened,
+     * so it still happens if the server cron isn't set up.
      */
-    public const AUTO_OUT_RUN_TIME = '22:30';
+    public const AUTO_OUT_RUN_TIME = '00:00';
 
     /**
-     * Note written on every auto-closed row. Also how those rows are
-     * recognised (SubjectAttendanceSession::$is_auto_out) — keep this text.
+     * Theory / Practical sessions are auto-closed only from this date on.
+     * Older open ones (hundreds, back to August in the data) are left as
+     * they are: closing them all at 6:30 PM at once would credit hours of
+     * practice time nobody did and could make students "complete". Set to
+     * null to close the old ones too. Daily (course) attendance is closed
+     * for every previous day, as before.
+     */
+    public const AUTO_OUT_THEORY_PRACTICAL_FROM = '2026-11-23';
+
+    /**
+     * Marker written in the note of every auto-closed row. Also how those
+     * rows are recognised (SubjectAttendanceSession::$is_auto_out) — keep
+     * this text.
      */
     public const AUTO_OUT_NOTE = 'Auto time-out (no out scan)';
+
+    /**
+     * "note eka danna athulen gahuwe maga aruna ekak kiyala" — the full
+     * note written on those rows, so anyone reading it knows the time-out
+     * was missed and filled in by the system, not scanned.
+     */
+    public const AUTO_OUT_NOTE_FULL = 'Auto time-out (no out scan) — out scan was missed; time-out 6:30 PM entered by the system';
 
     /**
      * "can be attendace mark after genarate certificate" — attendance
@@ -61,9 +79,9 @@ class ScanAttendanceController extends Controller
 
     public function index()
     {
-        // Close any Daily Attendance left open (previous days, and today's
-        // after AUTO_OUT_RUN_TIME) before the page loads — also run every
-        // night by the scheduler, see routes/console.php.
+        // Close any attendance left open on previous days before the page
+        // loads — also run every night at midnight by the scheduler, see
+        // routes/console.php.
         self::autoCloseMissingDailyOut();
 
 
@@ -1173,71 +1191,55 @@ class ScanAttendanceController extends Controller
     // =====================================================================
 
     /**
-     * Closes Daily (course) attendance sessions that still have no time-out:
-     *  - every PREVIOUS day, always;
-     *  - TODAY as well, once it's AUTO_OUT_RUN_TIME (10:30 PM) or later.
+     * Closes EVERY attendance session (Daily course attendance, Theory,
+     * Practical — not Before/After Checking) that still has no time-out on
+     * a PREVIOUS day. Time-out written = 6:30 PM on the session's own date
+     * (AUTO_OUT_TIME), or its own time-in if it started after 6:30 PM.
      *
-     * Time-out written = the latest of:
-     *   - 5:00 PM on the session's own date (AUTO_OUT_TIME),
-     *   - the session's own time-in (a session started after 5 PM),
-     *   - the end of anything else recorded for the same student + course
-     *     on that date (practicals, theory, before/after checking).
-     *
-     * Rows are left with marked_out_by empty and note AUTO_OUT_NOTE, so they
-     * are shown as "Auto out" everywhere. Each run is logged and its time
+     * Rows are left with marked_out_by empty and note AUTO_OUT_NOTE_FULL, so
+     * they are shown as "AUTO OUT" everywhere. Each run is logged and its time
      * remembered (lastAutoOutRun()). Returns the number of sessions closed.
+     *
+     * (Kept its old name — the console command and the pages call it.)
      */
     public static function autoCloseMissingDailyOut(): int
     {
         $now = now();
-        $includeToday = $now->format('H:i') >= self::AUTO_OUT_RUN_TIME;
+        $today = $now->toDateString();
 
         $openSessions = SubjectAttendanceSession::query()
-            ->whereNull('subject_id')
             ->whereNull('checkpoint_type')
             ->whereNull('time_out')
-            ->whereDate('attendance_date', $includeToday ? '<=' : '<', $now->toDateString())
+            ->whereNotNull('time_in')
+            ->whereDate('attendance_date', '<', $today)
+            ->when(self::AUTO_OUT_THEORY_PRACTICAL_FROM, function ($q) {
+                $q->where(function ($w) {
+                    $w->whereNull('subject_id')
+                        ->orWhereDate('attendance_date', '>=', self::AUTO_OUT_THEORY_PRACTICAL_FROM);
+                });
+            })
             ->get();
 
         $closed = 0;
+        $byType = ['daily' => 0, 'theory_practical' => 0];
 
         foreach ($openSessions as $session) {
             try {
                 $date = $session->attendance_date->toDateString();
                 $timeOut = \Illuminate\Support\Carbon::parse($date . ' ' . self::AUTO_OUT_TIME);
 
+                // Started after 6:30 PM — close at its own time-in.
                 if ($session->time_in && $session->time_in->gt($timeOut)) {
                     $timeOut = $session->time_in->copy();
                 }
 
-                $lastActivity = SubjectAttendanceSession::query()
-                    ->where('student_id', $session->student_id)
-                    ->where('course_id', $session->course_id)
-                    ->whereDate('attendance_date', $date)
-                    ->where('id', '!=', $session->id)
-                    ->selectRaw('MAX(GREATEST(time_in, COALESCE(time_out, time_in))) as last_at')
-                    ->value('last_at');
-
-                if ($lastActivity) {
-                    $lastActivity = \Illuminate\Support\Carbon::parse($lastActivity);
-
-                    if ($lastActivity->gt($timeOut)) {
-                        $timeOut = $lastActivity;
-                    }
-                }
-
-                // Never in the future (e.g. a page opened at 10:31 PM for a
-                // student whose practical ended "later" by a clock mistake).
-                if ($timeOut->gt($now)) {
-                    $timeOut = $now->copy();
-                }
-
                 $session->time_out = $timeOut;
                 $session->marked_out_by = null;
-                $session->note = trim(($session->note ? $session->note . ' | ' : '') . self::AUTO_OUT_NOTE);
+                $session->note = trim(($session->note ? $session->note . ' | ' : '') . self::AUTO_OUT_NOTE_FULL);
                 $session->save();
 
                 $closed++;
+                $byType[$session->subject_id ? 'theory_practical' : 'daily']++;
             } catch (\Throwable $e) {
                 // One bad row must not stop the rest from being closed.
                 \Illuminate\Support\Facades\Log::warning("attendance:auto-out could not close session #{$session->id}: " . $e->getMessage());
@@ -1248,14 +1250,13 @@ class ScanAttendanceController extends Controller
             \Illuminate\Support\Facades\Cache::forever('attendance_auto_out_last_run', [
                 'at' => $now->format('Y-m-d h:i A'),
                 'closed' => $closed,
-                'included_today' => $includeToday,
             ]);
         } catch (\Throwable $e) {
             // cache unavailable — not important
         }
 
         if ($closed > 0) {
-            \Illuminate\Support\Facades\Log::info("attendance:auto-out closed {$closed} daily attendance session(s)" . ($includeToday ? ' (including today)' : ''));
+            \Illuminate\Support\Facades\Log::info("attendance:auto-out closed {$closed} session(s): {$byType['daily']} daily, {$byType['theory_practical']} theory/practical");
         }
 
         return $closed;
