@@ -1296,6 +1296,8 @@ class CertificateController extends Controller
             'tvecRegNo'                 => $tvecRegNo,
             'headingFontDataUri'        => $this->publicFontToDataUri('UnifrakturCook-Bold.ttf'),
             'courseFontDataUri'         => $this->publicFontToDataUri('Orbitron-VariableFont_wght.ttf'),
+            // World map behind the text, from the certificate design.
+            'worldMapDataUri'           => $this->publicImageToDataUri('images/certificate/world-map.png'),
             'bottomImageDataUri'        => $bottomImagePath
                 ? $this->fileToDataUri($bottomImagePath, 'public')
                 : null,
@@ -1310,7 +1312,7 @@ class CertificateController extends Controller
             'designFonts'               => $this->certificateDesignFonts(),
             'nameFontDataUri'           => $this->fontToDataUri('certificate-name-font.ttf'),
             'gradeFontDataUri'          => $this->fontToDataUri('certificate-grade-font.ttf'),
-        ])->setPaper('letter', 'portrait');
+        ])->setPaper([0, 0, 612, 842], 'portrait'); // Letter width, A4 height — see pdf.blade.php @page
 
         // "certificate want join back side page to next page" — the
         // template's uploaded back-side PDF (certificate_templates
@@ -1354,6 +1356,15 @@ class CertificateController extends Controller
             // Other branch or no branch: same fallback as the address (Kurunegala)
             default => 'TVEC Re. No. P12/1255',
         };
+    }
+
+    private function publicImageToDataUri(string $relativePath): ?string
+    {
+        $path = public_path($relativePath);
+
+        return is_file($path)
+            ? 'data:image/png;base64,' . base64_encode(file_get_contents($path))
+            : null;
     }
 
     private function publicFontToDataUri(string $filename): ?string

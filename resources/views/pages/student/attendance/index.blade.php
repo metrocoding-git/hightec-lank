@@ -6,7 +6,35 @@
 @section('mainContent')
     {{-- Styled inline (not via @push('css')) — this layout doesn't appear to
          output @stack('css') anywhere, so pushed styles were being silently
-         dropped. A <style> tag works fine anywhere in the HTML, including
+         dropped. A <style>
+        /* Today's Scans — Theory / Practical subjects done/total. The theme
+           makes .badge text white, so badge-light showed an empty white box;
+           these set both colours explicitly. */
+        .subj-count {
+            display: inline-block;
+            min-width: 38px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.3;
+            text-align: center;
+            white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .subj-count.subj-count-open {
+            background: #eef0f6 !important;
+            color: #2f3446 !important;
+            border: 1px solid #d5d9e6;
+        }
+
+        .subj-count.subj-count-done {
+            background: #1e9e5a !important;
+            color: #ffffff !important;
+            border: 1px solid #1e9e5a;
+        }
+ tag works fine anywhere in the HTML, including
          here in the body, so this guarantees it actually renders. --}}
     <style>
         /* ---- Method selector: icon cards ---- */
@@ -657,7 +685,7 @@
                             <h3>Today's Scans</h3>
                             {{-- Proof the automatic Daily Attendance time-out is running --}}
                             <small class="text-muted d-block">
-                                Auto time-out runs every night at 10:30 PM (missing outs are set to 5:00 PM and marked AUTO OUT).
+                                Auto time-out runs every night at 12:00 midnight: any course, theory or practical attendance from that day still missing an out is set to 6:30 PM and marked AUTO OUT.
                                 @if (!empty($lastAutoOut))
                                     Last run: {{ $lastAutoOut['at'] }} — closed {{ $lastAutoOut['closed'] }}.
                                 @endif
@@ -1259,7 +1287,7 @@
             function subjectCountCell(c) {
                 if (!c || !c.total) return '<span class="text-muted">-</span>';
                 const done = c.completed >= c.total;
-                return `<span class="badge ${done ? 'badge-success' : 'badge-light'}" title="${c.completed} of ${c.total} completed">${c.completed}/${c.total}</span>`;
+                return `<span class="subj-count ${done ? 'subj-count-done' : 'subj-count-open'}" title="${c.completed} of ${c.total} completed">${c.completed}/${c.total}</span>`;
             }
 
             function addLogRow(time, student, regNo, course, subject, action, status, cls, pill,

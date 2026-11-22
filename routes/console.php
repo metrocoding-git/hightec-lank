@@ -9,16 +9,16 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// "daly attandence can be some time missing out.. like that time auto do out
-// 5.00pm on that day" + "want work every daya 10.30" — every night at 10:30 PM
-// this closes Daily Attendance still missing a time-out: today's and any
-// earlier day's. The time written is 5:00 PM (or the end of that day's last
-// activity if later), and the row is marked "AUTO OUT". Safe to run any
-// number of times.
+// "auto attendance ra 12ta wadanna, 6.30ta off wuna wage out nokarapu okkoma"
+// — every night at 12:00 midnight this closes every attendance session
+// (Daily course attendance, Theory, Practical) from a previous day that is
+// still missing a time-out. The time written is 6:30 PM of that day (or the
+// time-in if it started after 6:30 PM), and the row is marked "AUTO OUT"
+// with a note saying the out scan was missed. Safe to run any number of times.
 Artisan::command('attendance:auto-out', function () {
     $closed = ScanAttendanceController::autoCloseMissingDailyOut();
-    $this->info("Closed {$closed} daily attendance session(s) with a missing time-out.");
-})->purpose('Auto time-out Daily Attendance still missing a time-out');
+    $this->info("Closed {$closed} attendance session(s) with a missing time-out.");
+})->purpose('Auto time-out (6:30 PM) for attendance still missing a time-out on previous days');
 
 // Needs the usual Laravel cron entry on the server (runs every minute, Laravel
 // decides what is due):
